@@ -95,6 +95,7 @@ Phase 5 회고가 Foundation을 되먹이는 것이 이 구조의 핵심이다 �
 | 코드 참조 | 실제 파일 경로·클래스·함수·엔드포인트를 **그대로 인용**한다. 추상적으로 쓰면 태스크 추출이 코드를 찾지 못한다 |
 | 다이어그램 | 문서 안에서는 ASCII 박스. grep·LLM 친화적이어야 한다. mermaid 는 사람이 볼 Artifact 리포트에서만 |
 | 완료 조건 | Task별 체크박스로. 그대로 `acceptance_criteria` 가 된다 |
+| 디자인 | 시안은 **저장소에 두지 않는다**. Figma 등 원본에 두고 링크 + 화면·상태 목록만 적는다 |
 | 날짜 | 확정·갱신 표시를 인라인으로 남긴다 (`[확정 2026-09-01]`) |
 | 인덱스 | `features/README.md` 와 `decisions/README.md` 는 `scripts/rebuild_doc_index.py` 가 생성한다. 직접 편집하지 않는다 |
 
