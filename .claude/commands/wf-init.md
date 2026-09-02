@@ -65,13 +65,46 @@ python3 scripts/check_architecture.py
 
 ## 4. CLAUDE.md 채우기
 
+**사용자가 미리 채워두기를 기대하지 않는다.** 여기서 채운다.
+
 ```bash
 grep -n "TODO" CLAUDE.md
 ```
 
-- 프로젝트 한 줄 설명, 스택
-- **테스트·린트·빌드 명령** — Phase 3/4 가 이 명령을 실제로 실행하므로 정확해야 한다
-- `sub_categories` 값 (1단계에서 정한 역할)
+### 먼저 탐지한다
+
+물어보기 전에 저장소에서 찾을 수 있는 것은 찾는다.
+
+```bash
+ls package.json pyproject.toml setup.py Cargo.toml go.mod pom.xml build.gradle 2>/dev/null
+cat package.json 2>/dev/null | jq -r '.scripts | to_entries[] | "\(.key): \(.value)"' 2>/dev/null
+grep -A5 '\[tool.pytest' pyproject.toml 2>/dev/null
+ls Makefile 2>/dev/null && grep -E '^[a-z-]+:' Makefile
+```
+
+찾은 것을 제시하고 확인만 받는다:
+
+```
+package.json 에서 찾았습니다.
+
+  테스트   npm test        (vitest run)
+  린트     npm run lint    (eslint .)
+  빌드     npm run build   (vite build)
+
+이대로 CLAUDE.md 에 넣을까요?
+```
+
+### 채울 항목
+
+| 항목 | 어디서 |
+|---|---|
+| 프로젝트 한 줄 설명 | 1단계 `product.md` §1 |
+| 스택 | 탐지 결과 |
+| **테스트·린트·빌드 명령** | 탐지 후 확인 — Phase 3/4 가 실제로 실행하므로 틀리면 그때 막힌다 |
+| `sub_categories` | 1단계에서 정한 사용자 역할 |
+
+빈 저장소라 탐지할 것이 없으면 사용자에게 묻되, **모르면 TODO 로 남기고 넘어간다.**
+Phase 3에 도달할 때까지는 없어도 진행된다.
 
 ## 5. 마무리
 

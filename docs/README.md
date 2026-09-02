@@ -64,6 +64,7 @@ Phase 5 회고가 Foundation을 되먹이는 것이 이 구조의 핵심이다 �
 | `architecture/constraints.yaml` | 무엇을 어기면 안 되는가 (기계 검사용) | **Phase 4 스크립트** | 제약이 생길 때 |
 | `decisions/ADR-*.md` | 왜 이 기술·패턴을 골랐는가 | 사람, **Phase 1** | 결정할 때마다 (추가만) |
 | `workflow/*.md` | 워크플로우 자체의 규격 | 각 Phase 스킬 | 워크플로우를 고칠 때 |
+| `workflow/first-run-notes-template.md` | 첫 완주 때 마찰을 기록하는 양식 | 처음 쓰는 사람 | — |
 
 ---
 

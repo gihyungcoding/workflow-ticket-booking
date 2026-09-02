@@ -51,15 +51,7 @@ cp claude-workflow-starter/{.gitignore,.pre-commit-config.yaml,.mcp.json.example
 
 기존 `.gitignore` 가 있으면 병합한다 (`.state/`, `.logs/`, `.backups/`, `.mcp.json` 항목).
 
-### 2. `CLAUDE.md` 채우기
-
-`<!-- TODO -->` 로 표시된 곳을 프로젝트에 맞게 채운다.
-
-- 프로젝트 한 줄 설명, 스택
-- **테스트·린트·빌드 명령** — Phase 3/4가 이 명령을 실제로 실행한다
-- Frontend `sub_categories` 값 (앱이 여러 개인 경우)
-
-### 3. 동작 확인
+### 2. 동작 확인
 
 ```bash
 python3 scripts/wf_status.py                        # "진행 중인 태스크가 없습니다"
@@ -67,22 +59,25 @@ python3 scripts/hooks/session_start.py              # 출력 없음 (정상)
 python3 scripts/hooks/check_artifact_paths.py --all # "경로 규약 위반 없음"
 ```
 
-### 4. pre-commit (선택)
+### 3. pre-commit (선택)
 
 ```bash
 pip install pre-commit && pre-commit install
 ```
 
-### 5. Foundation 부트스트랩
+### 4. Foundation 부트스트랩
 
 ```
 /wf-init
 ```
 
-프로덕트 정의 → 아키텍처 → 첫 ADR 순으로 안내한다. 섹션마다 확인을 받으며 진행하고,
-"나중에"라고 하면 TODO 를 남기고 넘어간다.
+프로덕트 정의 → 아키텍처 → 첫 ADR 순으로 안내하고, **마지막에 `CLAUDE.md` 의 TODO 도 채운다.**
+손으로 미리 채우지 않아도 된다 — `sub_categories` 는 프로덕트 정의에서 역할을 정한 뒤에야
+값이 나오기 때문이다.
 
-### 6. 브랜치 모델
+섹션마다 확인을 받으며 진행하고, "나중에"라고 하면 TODO 를 남기고 넘어간다.
+
+### 5. 브랜치 모델
 
 git-flow 를 쓴다면 기준 브랜치를 선언한다. 미설정 시 `develop` → `main` 순으로 탐색한다.
 
@@ -90,7 +85,7 @@ git-flow 를 쓴다면 기준 브랜치를 선언한다. 미설정 시 `develop`
 git config workflow.baseBranch develop
 ```
 
-### 7. 첫 기능
+### 6. 첫 기능
 
 ```
 /wf-feature 매장검색권한        →  요구사항 문서 (§1-2 태스크 분리 포함)
@@ -100,6 +95,34 @@ git config workflow.baseBranch develop
 ```
 
 급하면 `/wf-task-new "설명"` 으로 태스크 한 건만 바로 만들 수도 있다.
+
+### 처음 쓴다면
+
+첫 완주는 **연습용 저장소에서** 하는 편이 낫다. 실제 프로젝트가 실험대가 되지 않고,
+마음껏 실패할 수 있다.
+
+```bash
+git clone <이 저장소> ~/workspace/wf-trial      # 복사가 아니라 clone
+cd ~/workspace/wf-trial
+cp docs/workflow/first-run-notes-template.md WORKFLOW-NOTES.md
+```
+
+clone 으로 시작하면 나중에 개선 사항을 `cherry-pick` 으로 되돌릴 수 있다.
+복사하면 공통 조상이 없어 수동 diff 를 떠야 한다.
+
+완주하면서 `WORKFLOW-NOTES.md` 에 마찰을 **그 자리에서** 적는다. 워크플로우 자산을
+고쳤다면 커밋 메시지를 `fix(workflow):` 로 구분해 둔다 — 나중에 이것만 골라 가져간다.
+
+```bash
+cd <이 저장소>
+git remote add trial ~/workspace/wf-trial
+git fetch trial
+git log --oneline trial/main --grep='(workflow)'
+git cherry-pick <sha>
+```
+
+가져올 것은 `.claude/`, `scripts/`, `docs/workflow/` 뿐이다.
+`product.md`·`tasks.json`·`memory-bank/` 는 그 프로젝트의 내용이지 스타터의 것이 아니다.
 
 ---
 
