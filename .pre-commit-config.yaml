@@ -26,7 +26,7 @@ repos:
         name: 산출물 경로 규약 (docs/workflow/artifact-paths.md)
         entry: python3 scripts/hooks/check_artifact_paths.py
         language: system
-        files: '^(workflow_design|memory-bank)/'
+        files: '^(workflow_design|memory-bank|docs)/'
         pass_filenames: true
 
       - id: secret-scan

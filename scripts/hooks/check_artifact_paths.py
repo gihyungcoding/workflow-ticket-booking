@@ -151,10 +151,16 @@ def scan_repo() -> dict[str, list[str]]:
 
     root = repo_root()
     try:
-        out = subprocess.run(
+        # 추적 파일 + 아직 add 하지 않은 새 파일.
+        # 미추적을 빼면 방금 만든 파일이 검사되지 않아 커밋 직전까지 위반이 드러나지 않는다.
+        tracked = subprocess.run(
             ["git", "ls-files"], capture_output=True, text=True, cwd=root, check=True
         )
-        files = out.stdout.splitlines()
+        untracked = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard"],
+            capture_output=True, text=True, cwd=root, check=True,
+        )
+        files = tracked.stdout.splitlines() + untracked.stdout.splitlines()
     except (subprocess.CalledProcessError, FileNotFoundError):
         files = [
             str(p.relative_to(root))

@@ -338,7 +338,7 @@ def git_tracked(path: Path) -> bool:
 
 #: docs/ 아래 허용 디렉터리. workflow_design 과 같은 이유로 화이트리스트다.
 ALLOWED_DOC_DIRS = frozenset(
-    {"product", "architecture", "decisions", "workflow", "project_standard_docs"}
+    {"product", "architecture", "decisions", "release", "workflow", "project_standard_docs"}
 )
 
 ADR_ID_RE = re.compile(r"^ADR-(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
