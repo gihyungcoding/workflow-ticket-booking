@@ -1,0 +1,59 @@
+{
+  "$comment": [
+    "커밋되는 프로젝트 설정. 개인 권한 allowlist 는 settings.local.json 에 둔다(.gitignore 대상).",
+    "훅 3개의 역할:",
+    "  SessionStart — 진행 중인 태스크를 컨텍스트에 주입 (세션 복구 자동화)",
+    "  PreToolUse   — 산출물 경로 규약 위반 쓰기를 차단 (문서가 아니라 실행으로 강제)",
+    "  Stop         — 저장하지 않은 워크플로우 변경이 있으면 알림",
+    "python3 을 쓰는 이유: 스크립트가 표준 라이브러리만 쓰므로 가상환경이 필요 없다."
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/session_start.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/check_artifact_paths.py\" --hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/check_uncommitted.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/*.py:*)",
+      "Bash(python3 scripts/hooks/*.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git ls-files:*)",
+      "Bash(jq:*)"
+    ]
+  }
+}

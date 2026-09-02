@@ -1,0 +1,22 @@
+# 에이전트 런타임 상태 — 커밋 대상이 아니다.
+# 경로를 workflow_design/ 로 못박지 않는다: 원본 저장소에서 CWD가 하위 디렉터리인
+# 세션이 루트에도 .state/ 를 만들어 커밋된 사고가 있었다. 깊이 무관 패턴을 쓴다.
+.state/
+.logs/
+.backups/
+
+# MCP 서버 설정 — 토큰·로컬 경로가 들어가므로 커밋하지 않는다.
+# .mcp.json.example 을 복사해서 쓴다.
+.mcp.json
+
+# Claude Code 로컬 설정 (개인 권한 allowlist)
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store

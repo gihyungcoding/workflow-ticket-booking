@@ -1,0 +1,43 @@
+# pre-commit 설정
+#
+# 설계 원칙: 초 단위로 끝나는 것만 넣는다.
+# 빌드나 테스트를 훅에 넣으면 첫 주에 전원이 `--no-verify` 를 쓰기 시작하고, 그러면
+# 훅 전체가 무력해진다. 여기 있는 검사는 전부 문자열 매칭이라 파일 수백 개에도 1초 안에 끝난다.
+#
+# 자동수정기(end-of-file-fixer, trailing-whitespace)를 넣지 않은 이유:
+# 원본 저장소에서 이 둘이 저장소의 15%를 건드려 열린 MR 대부분이 이것만으로 빨간불이 됐다.
+# 원인은 .editorconfig 부재였고, 포매터가 아니라 에디터 설정으로 푸는 문제다.
+#
+# 설치:  pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+      - id: check-json
+      - id: check-yaml
+
+  - repo: local
+    hooks:
+      - id: artifact-paths
+        name: 산출물 경로 규약 (docs/workflow/artifact-paths.md)
+        entry: python3 scripts/hooks/check_artifact_paths.py
+        language: system
+        files: '^(workflow_design|memory-bank)/'
+        pass_filenames: true
+
+      - id: secret-scan
+        name: 비밀정보 검사
+        entry: python3 scripts/hooks/check_secrets.py
+        language: system
+        pass_filenames: true
+
+      - id: no-absolute-symlink
+        name: 절대경로 심볼릭 링크 차단
+        entry: python3 scripts/hooks/check_symlinks.py
+        language: system
+        types: [symlink]
+        pass_filenames: true

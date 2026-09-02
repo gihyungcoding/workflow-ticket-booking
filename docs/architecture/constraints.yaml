@@ -1,0 +1,52 @@
+# 아키텍처 제약 — 기계가 검사하는 규칙만 여기 쓴다.
+#
+# scripts/check_architecture.py 가 이 파일을 읽어 Phase 4(검증)에서 위반을 찾는다.
+#
+# ★ 이 파일의 유일한 규칙: 검사할 수 없는 것을 쓰지 않는다.
+#   "서비스는 응집도가 높아야 한다" 같은 것은 architecture.md 에 쓴다.
+#   여기 쓰면 검사되지 않으면서 검사되는 것처럼 보인다.
+#
+# detect.type
+#   forbidden_import  paths 의 파일에서 pattern 이 발견되면 위반
+#   forbidden_path    paths 에 해당하는 파일이 존재하면 위반
+#   required_path     paths 에 해당하는 파일이 하나도 없으면 위반
+#
+# severity
+#   error   Phase 4 가 status: FAIL 로 판정한다 (다음 Phase 진입 불가)
+#   warn    경고만 남기고 진행한다
+#
+# paths 는 glob 이다 (** 지원). pattern 은 파이썬 정규식이며 줄 단위로 매칭한다.
+
+version: 1
+
+constraints: []
+
+# 예시 — 실제 제약이 생기면 위 배열에 넣는다.
+#
+# constraints:
+#   - id: ARCH-001
+#     rule: "API 계층은 리포지토리를 직접 호출하지 않는다 (서비스를 거친다)"
+#     rationale: "트랜잭션 경계를 서비스 계층에 고정하기 위함"
+#     adr: ADR-0002
+#     detect:
+#       type: forbidden_import
+#       paths: ["src/api/**/*.py"]
+#       pattern: "^\\s*from .*repositories.* import|^\\s*import .*repositories"
+#     severity: error
+#
+#   - id: ARCH-002
+#     rule: "도메인 모델은 프레임워크에 의존하지 않는다"
+#     rationale: "도메인 로직을 프레임워크 교체와 무관하게 유지"
+#     adr: ADR-0003
+#     detect:
+#       type: forbidden_import
+#       paths: ["src/domain/**/*.py"]
+#       pattern: "^\\s*from (fastapi|flask|django)|^\\s*import (fastapi|flask|django)"
+#     severity: error
+#
+#   - id: ARCH-003
+#     rule: "모든 API 모듈에는 대응하는 테스트가 있다"
+#     detect:
+#       type: required_path
+#       paths: ["tests/api/**/*.py"]
+#     severity: warn
