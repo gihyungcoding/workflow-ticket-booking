@@ -67,11 +67,35 @@ mkdir -p "$REPO_ROOT/memory-bank/$1/checkpoints"/{phase1,phase2a,phase2b,phase3,
 
 ### 6. 브랜치
 
+**기준 브랜치에서 갈라낸다.** 기준을 주지 않으면 현재 HEAD 에서 분기하므로,
+다른 태스크 작업 중에 시작하면 그 태스크의 미완성 커밋이 딸려온다.
+
 ```bash
+BASE="$(git config workflow.baseBranch || echo develop)"
+
+# 기준 브랜치가 실재하는지 — 없으면 조용히 현재 브랜치에서 갈라지지 않도록 멈춘다
+git rev-parse --verify --quiet "$BASE" >/dev/null || {
+  echo "기준 브랜치 '$BASE' 가 없습니다."
+  echo "git config workflow.baseBranch <이름> 으로 지정하거나 브랜치를 만드세요."
+  exit 1
+}
+
+# 커밋되지 않은 변경이 있으면 checkout 이 그것을 끌고 간다
+[ -z "$(git status --porcelain)" ] || {
+  echo "커밋되지 않은 변경이 있습니다. 커밋하거나 stash 후 다시 시도하세요."
+  git status --short
+  exit 1
+}
+
+git fetch origin --quiet 2>/dev/null || true          # 원격이 없어도 진행
+git checkout "$BASE" && git pull --ff-only 2>/dev/null || true
 git checkout -b "feature/task-<번호>-<짧은-slug>"
 ```
 
+`|| true` 를 붙인 이유는 원격이 없는 로컬 저장소에서도 동작해야 하기 때문이다.
+
 slug는 태스크 제목에서 뽑되 영문 소문자·하이픈으로 3~5단어.
+기준 브랜치 이름은 `CLAUDE.md` 의 브랜치 모델을 따른다.
 
 ### 7. 커밋
 

@@ -50,9 +50,24 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: <!-- 예: admin, 
 | 3 Green | `wf-develop` | `06_dev/DEV_<ID>.json` | — |
 | 4 Verify | `wf-verify` | `07_verify/VERIFY_<ID>.json` | **HITL #3** |
 | 5 Reflect | `wf-reflect` | `08_reflect/REFLECT_<ID>.json` | **HITL #4** |
+| Ship | `/wf-ship` | PR | 머지는 사람이 |
 
 전체 흐름·게이트·상태 전이는 `wf-orchestrator` 스킬이 관장한다.
 단계를 건너뛰거나 순서를 바꾸지 않는다.
+
+### 브랜치
+
+| 브랜치 | 분기 | 머지 대상 |
+|---|---|---|
+| `feature/task-NNN-slug` | 기준 브랜치 | 기준 브랜치 |
+
+기준 브랜치는 `git config workflow.baseBranch` 로 정한다 (미설정 시 `develop` → `main` 순으로 탐색).
+
+<!-- TODO: git-flow 를 쓴다면 `git config workflow.baseBranch develop` 을 실행하고,
+     release/hotfix 브랜치 규약이 정해지면 여기에 추가한다 -->
+
+**feature 브랜치는 항상 기준 브랜치에서 갈라낸다.** 다른 태스크 브랜치 위에서 시작하면
+그 태스크의 미완성 커밋이 딸려온다.
 
 ### 진입점
 
@@ -66,6 +81,7 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: <!-- 예: admin, 
 | 새 태스크 시작 | `/wf-start <TASK-ID>` |
 | 중단한 태스크 이어가기 | `/wf-resume <TASK-ID>` |
 | 전체 현황 보기 | `/wf-status` |
+| 머지 준비 (PR 생성) | `/wf-ship` |
 | 지금 상태를 체크포인트로 저장 | `/wf-checkpoint` |
 
 ---
@@ -81,6 +97,9 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: <!-- 예: admin, 
 6. **테스트를 먼저 실패시킨다(Red).** 구현부터 쓰고 테스트를 맞추는 순서는 금지다.
 7. **아키텍처 제약을 어기지 않는다.** `constraints.yaml` 의 `severity: error` 위반은
    Phase 4에서 FAIL이다. 어겨야 할 이유가 있으면 제약을 먼저 고친다(ADR과 함께).
+8. **승인 이후 코드를 고치지 않는다.** Phase 4 승인은 특정 커밋에 대한 것이다.
+   고쳐야 하면 Phase 4를 다시 거친다 — `/wf-ship` 이 대조해서 막는다.
+9. **머지·푸시·배포를 대신 실행하지 않는다.** 준비하고 명령을 제시하되 사람이 실행한다.
 
 ---
 

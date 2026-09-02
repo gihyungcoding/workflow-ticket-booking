@@ -58,10 +58,25 @@ python scripts/verify_workflow_artifacts.py --task-id <TASK-ID> --up-to-phase <�
 
 ```bash
 git branch --show-current
+BASE="$(git config workflow.baseBranch || echo develop)"
+git rev-list --count "HEAD..$BASE" 2>/dev/null    # 기준 브랜치가 얼마나 앞서갔나
 ```
 
 `activeContext.md` 의 `branch` 와 다르면 사용자에게 확인한 뒤 체크아웃한다.
 임의로 브랜치를 바꾸지 않는다.
+
+**기준 브랜치가 많이 앞서갔으면 알린다.** 오래 중단됐던 태스크일수록 그렇다.
+
+```
+feature/task-001 은 develop 보다 23 커밋 뒤처져 있습니다.
+지금 rebase 해두면 나중에 충돌을 한 번에 마주치지 않습니다.
+
+  git rebase develop
+```
+
+rebase 를 임의로 실행하지 않는다 — 충돌이 나면 사용자가 판단해야 한다.
+다만 **Phase 4를 이미 통과한 태스크라면 rebase 가 신선도를 깨뜨린다**는 점을
+함께 알린다 (`/wf-ship` 이 재검증을 요구하게 된다).
 
 ## 6. 요약 보고 후 재개
 

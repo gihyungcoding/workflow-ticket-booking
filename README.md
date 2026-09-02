@@ -5,10 +5,10 @@ Skills / Subagents / Hooks / Slash Commands 로 구성했고, 스택에 종속�
 
 ```
 Foundation (프로젝트 수준)        Workflow (태스크마다)
-  product.md                       Plan → Scenario → Red → Green → Verify → Reflect
-  architecture.md ────참조────►            HITL#1    HITL#2       HITL#3   HITL#4
-  constraints.yaml ───검증────►                                      │        │
-  ADR-*.md         ◄──────────────── ADR 제안 ────────────────────────────────┘
+  product.md                       Plan → Scenario → Red → Green → Verify → Reflect → Ship
+  architecture.md ────참조────►            HITL#1    HITL#2       HITL#3   HITL#4     │
+  constraints.yaml ───검증────►                                      │        │        ▼
+  ADR-*.md         ◄──────────────── ADR 제안 ─────────────────────────────────┘      PR
   features/*.md ──── §1-2 표 ────► tasks.json
 ```
 
@@ -26,10 +26,10 @@ Phase 5 회고가 Foundation 을 되먹이는 고리가 있어서 문서가 코�
 | **Foundation 스킬 4개** | `.claude/skills/{product-definition,architecture-doc,adr,task-authoring}/` | 문서 작성과 태스크 생성 기준 |
 | **Phase 스킬 6개 + 오케스트레이터** | `.claude/skills/wf-*/` | 각 단계의 MUST/FORBIDDEN/EXIT GATE + 절차 |
 | **서브에이전트 2개** | `.claude/agents/` | 시나리오 독립검증, 코드 리뷰 |
-| **슬래시 커맨드 9개** | `.claude/commands/` | `/wf-init` `/wf-feature` `/wf-tasks-from-doc` `/wf-task-new` `/wf-adr` `/wf-start` `/wf-resume` `/wf-status` `/wf-checkpoint` |
+| **슬래시 커맨드 10개** | `.claude/commands/` | `/wf-init` `/wf-feature` `/wf-tasks-from-doc` `/wf-task-new` `/wf-adr` `/wf-start` `/wf-resume` `/wf-ship` `/wf-status` `/wf-checkpoint` |
 | **훅 5개** | `.claude/settings.json` + `scripts/hooks/` | 세션 복구 자동화, 경로·파일명 규약 강제 |
 | **공통 규격** | `docs/workflow/` | 체크포인트·HITL·경로·태스크 스키마 |
-| **스크립트 8개** | `scripts/` | 게이트 검증, 제약 검사, 상태 집계, index 생성 |
+| **스크립트 10개** | `scripts/` | 게이트 검증, 제약 검사, 상태 집계, index 생성 |
 | **상태 저장소** | `memory-bank/` | 태스크별 체크포인트 (세션 복구) |
 | **산출물** | `workflow_design/` | Phase별 JSON/MD |
 
@@ -82,12 +82,21 @@ pip install pre-commit && pre-commit install
 프로덕트 정의 → 아키텍처 → 첫 ADR 순으로 안내한다. 섹션마다 확인을 받으며 진행하고,
 "나중에"라고 하면 TODO 를 남기고 넘어간다.
 
-### 6. 첫 기능
+### 6. 브랜치 모델
+
+git-flow 를 쓴다면 기준 브랜치를 선언한다. 미설정 시 `develop` → `main` 순으로 탐색한다.
+
+```bash
+git config workflow.baseBranch develop
+```
+
+### 7. 첫 기능
 
 ```
 /wf-feature 매장검색권한        →  요구사항 문서 (§1-2 태스크 분리 포함)
 /wf-tasks-from-doc docs/product/features/store-search-permission.md
-/wf-start TASK-001
+/wf-start TASK-001              →  Phase 1~5
+/wf-ship                        →  최종 검사 후 PR
 ```
 
 급하면 `/wf-task-new "설명"` 으로 태스크 한 건만 바로 만들 수도 있다.
@@ -103,7 +112,7 @@ pip install pre-commit && pre-commit install
 | 항목 | 원본 | 여기 |
 |---|---|---|
 | 워크플로우 규칙 | 22,146줄 | 4,500줄 |
-| 지원 스크립트 | 51개 | 8개 (+훅 5개) |
+| 지원 스크립트 | 51개 | 10개 (+훅 5개) |
 | 표준 문서 | 323파일 / 59,747줄 | 0 (확장 지점만) |
 | 상시 주입 컨텍스트 | 555줄 | 128줄 |
 | 단일 Phase 최대 주입 | 5,142줄 | 235줄 (+필요 시 references) |
@@ -143,8 +152,10 @@ pip install pre-commit && pre-commit install
 
 ## 이 스타터가 하지 않는 것
 
-- **CI 통합** — GitLab/GitHub Actions 설정은 없다. `verify_workflow_artifacts.py` 를
-  CI에서 호출하면 되지만, 프로젝트 CI가 정해진 뒤에 붙이는 편이 낫다
+- **CI 통합** — GitHub Actions 워크플로우는 아직 없다. `ship_preflight.py` 를 CI에서
+  호출하면 되지만, 스크립트가 안정된 뒤에 붙이는 편이 낫다
+- **릴리스·핫픽스** — `release/*`, `hotfix/*` 경로는 설계만 되어 있고 미구현이다.
+  머지까지(`Ship`)가 현재 범위다
 - **코딩 표준 강제** — 린트는 프로젝트 도구에 맡긴다
 - **외부 문서 연동** — Google Slides·스프레드시트에서 태스크를 뽑는 기능은 없다.
   로컬 마크다운(`docs/product/features/*.md`)만 입력으로 받는다
@@ -167,7 +178,7 @@ pip install pre-commit && pre-commit install
 │   ├── agents/                     scenario-validator, code-reviewer
 │   └── commands/                   wf-init, wf-feature, wf-tasks-from-doc,
 │                                   wf-task-new, wf-adr, wf-start, wf-resume,
-│                                   wf-status, wf-checkpoint
+│                                   wf-ship, wf-status, wf-checkpoint
 ├── docs/
 │   ├── README.md                   새 기능을 어떻게 시작하는가
 │   ├── product/
@@ -187,6 +198,8 @@ pip install pre-commit && pre-commit install
 │   ├── validate_tasks.py           스키마·WRU·순환 의존
 │   ├── validate_phase2a_gate.py
 │   ├── check_architecture.py       constraints.yaml 위반 검사
+│   ├── check_freshness.py          승인한 코드가 그대로인가
+│   ├── ship_preflight.py           머지 전 종합 검사
 │   ├── verify_workflow_artifacts.py
 │   └── hooks/                      session_start, check_artifact_paths,
 │                                   check_secrets, check_symlinks, check_uncommitted

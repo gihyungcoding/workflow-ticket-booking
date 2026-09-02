@@ -17,6 +17,7 @@ description: >-
 3. **`check_architecture.py` 를 실행한다.** `severity: error` 위반은 `status: FAIL`
 4. `code-reviewer` 서브에이전트로 변경 코드를 리뷰한다
 5. HITL#3 승인을 `AskUserQuestion` 으로 받는다
+6. **승인 시 `verified_commit` 에 현재 HEAD 를 기록한다** — 무엇을 승인했는지의 증거
 
 ## FORBIDDEN
 
@@ -32,6 +33,7 @@ description: >-
 - 모든 `acceptance_criteria` 에 판정과 증거가 있음
 - `architecture.error_count == 0` (제약이 정의된 경우)
 - `human_review.decision ∈ {APPROVE, EXCEPTION_APPROVE}`
+- `human_review.verified_commit` 기록됨
 - `CP-4.2`, `CP-4.3` 저장 및 커밋
 
 ---
@@ -178,7 +180,11 @@ TASK-001 의 변경 코드를 리뷰해주세요.
     "logging": "해당 없음"
   },
 
-  "human_review": { "decision": null }
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,       // 승인 시 기록 — Step 8
+    "verified_at": null
+  }
 }
 ```
 
@@ -211,7 +217,28 @@ Phase 4 — TASK-001    status: WARN
 > `status: FAIL` 이면 승인 선택지를 제시하지 않는다. FAIL은 롤백만 가능하다.
 
 승인 후:
+
 1. `human_review.decision` 기록
-2. `EXCEPTION_APPROVE` 면 `exceptions` 배열에 무엇을 예외 처리했는지 남긴다
-3. `CP-4.3_hitl3-approved.md` 저장
-4. `activeContext.md` 갱신, 커밋
+2. **`verified_commit` 에 현재 HEAD 를 기록한다**
+
+   ```bash
+   git rev-parse HEAD
+   ```
+
+   ```jsonc
+   "human_review": {
+     "decision": "APPROVE",
+     "verified_commit": "a3f21c9…",     // 사람이 승인한 그 코드
+     "verified_at": "2026-09-02T10:30:00Z"
+   }
+   ```
+
+   이 값이 머지 직전 `/wf-ship` 에서 대조된다. 승인 이후 소스가 바뀌면 Ship 이 막고
+   재검증을 요구한다 — 사람이 검토하지 않은 코드가 나가는 것을 막는 장치다.
+   승인 전에 미리 채워두지 않는다.
+3. `EXCEPTION_APPROVE` 면 `exceptions` 배열에 무엇을 예외 처리했는지 남긴다
+4. `CP-4.3_hitl3-approved.md` 저장
+5. `activeContext.md` 갱신, 커밋
+
+> 커밋되지 않은 변경이 있는 상태로 승인하면 `verified_commit` 이 실제 검증 대상과
+> 달라진다. 승인 전에 작업 트리가 깨끗한지 확인한다.

@@ -56,6 +56,7 @@ Foundation 은 이 스킬이 관장하지 않는다. `/wf-init`, `/wf-feature`, 
 | 3 | `wf-develop` | 테스트를 통과시키는 최소 구현을 하고 리팩토링한다 |
 | 4 | `wf-verify` | 증거 기반으로 완료를 판정한다 |
 | 5 | `wf-reflect` | 회고하고 태스크를 닫는다 |
+| Ship | `/wf-ship` | 최종 검사 후 PR 을 만든다 (머지는 사람이) |
 
 ---
 
@@ -90,6 +91,7 @@ ls "$REPO_ROOT/memory-bank/<TASK-ID>/checkpoints/"*/
 | **3 → 4** | `DEV_<ID>.json` 존재 · `test_status == "green"` · `failed == 0` · `passed ≥ red_scenarios.length` · 린트 error 0 · `CP-3.2`·`CP-3.4` 저장 |
 | **4 → 5** | `VERIFY_<ID>.json` 존재 · `status ∈ {PASS, WARN}` (FAIL 불가) · **아키텍처 제약 error 0건** · `human_review.decision ∈ {APPROVE, EXCEPTION_APPROVE}` · `CP-4.2`·`CP-4.3` 저장 |
 | **5 → DONE** | `REFLECT_<ID>.json` 존재 · `keep ≥ 1` · `insights ≥ 1` · `approved_by_human == true` · `CP-5.2`·`CP-5.3` 저장 · **모든 산출물 커밋됨** |
+| **DONE → Ship** | `ship_preflight.py` exit 0 — 산출물·**신선도**·제약·작업트리·브랜치·병합가능 |
 
 자동 검증:
 
@@ -97,6 +99,8 @@ ls "$REPO_ROOT/memory-bank/<TASK-ID>/checkpoints/"*/
 python3 scripts/verify_workflow_artifacts.py --task-id TASK-001   # 전체 산출물
 python3 scripts/validate_phase2a_gate.py --task-id TASK-001       # 2a 게이트
 python3 scripts/check_architecture.py                             # 아키텍처 제약 (Phase 4)
+python3 scripts/check_freshness.py --task-id TASK-001             # 승인한 코드 그대로인가
+python3 scripts/ship_preflight.py --task-id TASK-001              # 머지 전 종합 (Ship)
 ```
 
 ---
@@ -165,5 +169,8 @@ Phase 2a 완료 — TASK-001
 
 다음: Red 테스트 코드 생성
 ```
+
+Phase 5를 마치면 `/wf-ship` 을 안내한다 — 태스크가 DONE 이어도 머지되지 않으면
+릴리스에 포함되지 않는다.
 
 파일이 실제로 있는지 확인하고 쓴다. 만들었다고 생각하는 것과 만들어진 것은 다르다.

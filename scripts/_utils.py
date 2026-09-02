@@ -616,3 +616,106 @@ def _yaml_scalar(value: str):
     if value.lstrip("-").isdigit():
         return int(value)
     return value
+
+
+# ============================================================================
+# 브랜치 · 커밋
+#
+# git-flow 를 전제하되 브랜치 이름을 하드코딩하지 않는다. 스타터는 git-flow 가 아닌
+# 프로젝트에도 쓰이므로 프로젝트가 기준 브랜치를 선언하게 한다.
+# ============================================================================
+
+#: 워크플로우 산출물 경로. 검증 이후 이것만 바뀐 것은 코드 변경이 아니다.
+ARTIFACT_PREFIXES = ("workflow_design/", "memory-bank/", "docs/", ".claude/")
+
+
+def base_branch() -> str:
+    """기준 브랜치. feature 는 여기서 갈라지고 여기로 머지된다.
+
+    우선순위:
+      1. git config workflow.baseBranch   (프로젝트별 설정)
+      2. develop 이 실재하면 develop      (git-flow)
+      3. main / master 중 실재하는 것
+    """
+    try:
+        out = subprocess.run(
+            ["git", "config", "workflow.baseBranch"],
+            capture_output=True, text=True, cwd=repo_root(),
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except FileNotFoundError:
+        pass
+
+    for candidate in ("develop", "main", "master"):
+        if branch_exists(candidate):
+            return candidate
+    return "develop"
+
+
+def branch_exists(name: str) -> bool:
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", name],
+            capture_output=True, text=True, cwd=repo_root(),
+        )
+        return out.returncode == 0
+    except FileNotFoundError:
+        return False
+
+
+def current_branch() -> str:
+    try:
+        out = subprocess.run(
+            ["git", "branch", "--show-current"],
+            capture_output=True, text=True, cwd=repo_root(), check=True,
+        )
+        return out.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return ""
+
+
+def head_commit() -> str:
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True, text=True, cwd=repo_root(), check=True,
+        )
+        return out.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return ""
+
+
+def worktree_dirty() -> list[str]:
+    """커밋되지 않은 변경 목록. 깨끗하면 빈 리스트."""
+    try:
+        out = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True, text=True, cwd=repo_root(), check=True,
+        )
+        return [line for line in out.stdout.splitlines() if line.strip()]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return []
+
+
+def changed_files_between(base: str, head: str = "HEAD") -> tuple[list[str], str]:
+    """두 커밋 사이에 바뀐 파일 목록. 반환: (파일들, 에러메시지)."""
+    try:
+        out = subprocess.run(
+            ["git", "diff", "--name-only", f"{base}..{head}"],
+            capture_output=True, text=True, cwd=repo_root(),
+        )
+        if out.returncode != 0:
+            return [], (out.stderr.strip() or f"diff 실패: {base}..{head}")
+        return [f for f in out.stdout.splitlines() if f], ""
+    except FileNotFoundError:
+        return [], "git 을 찾을 수 없다"
+
+
+def is_source_file(path: str) -> bool:
+    """워크플로우 산출물이 아닌 실제 코드·설정인가.
+
+    Phase 4 승인 후에도 체크포인트 커밋이 이어지므로, HEAD 가 움직였다는 것만으로는
+    코드가 바뀌었다고 볼 수 없다. 이 함수가 그 구분을 한다.
+    """
+    return not path.startswith(ARTIFACT_PREFIXES)
