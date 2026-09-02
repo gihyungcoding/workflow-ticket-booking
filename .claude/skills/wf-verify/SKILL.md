@@ -14,10 +14,11 @@ description: >-
 
 1. 모든 판정에 **실행한 명령과 그 출력**을 근거로 붙인다
 2. `acceptance_criteria` 를 하나씩 대조한다 — 통째로 "충족"이라고 하지 않는다
-3. **`check_architecture.py` 를 실행한다.** `severity: error` 위반은 `status: FAIL`
-4. `code-reviewer` 서브에이전트로 변경 코드를 리뷰한다
-5. HITL#3 승인을 `AskUserQuestion` 으로 받는다
-6. **승인 시 `verified_commit` 에 현재 HEAD 를 기록한다** — 무엇을 승인했는지의 증거
+3. Frontend 태스크면 **화면을 실제로 띄워 상태별로 확인**한다 (Step 2.5)
+4. **`check_architecture.py` 를 실행한다.** `severity: error` 위반은 `status: FAIL`
+5. `code-reviewer` 서브에이전트로 변경 코드를 리뷰한다
+6. HITL#3 승인을 `AskUserQuestion` 으로 받는다
+7. **승인 시 `verified_commit` 에 현재 HEAD 를 기록한다** — 무엇을 승인했는지의 증거
 
 ## FORBIDDEN
 
@@ -25,6 +26,7 @@ description: >-
 2. ❌ 실패를 경고로 낮춰 적기
 3. ❌ `status: FAIL` 인 채로 Phase 5 진입
 4. ❌ 코드 수정 — 문제를 찾으면 Phase 3으로 되돌린다
+5. ❌ **화면을 띄워보지 않고 UI 완료 조건을 PASS 로 적기** — 기본 상태만 보고 끝내는 것도 포함
 
 ## EXIT GATE
 
@@ -64,6 +66,50 @@ git diff --stat main...HEAD            # 변경 규모
 | 응답 시간 20% 이내 증가 | **WARN** | 측정 안 함 — 성능 테스트 없음 |
 
 측정하지 않은 것은 PASS가 아니라 WARN이다. **"아마 괜찮을 것"은 증거가 아니다.**
+
+### Step 2.5 — 화면 확인 (Frontend 태스크만)
+
+`route` 가 `Frontend` 가 아니면 건너뛴다.
+
+시안이 없는 프로젝트에서는 **이것이 유일한 UI 검증 수단**이다. 시안이 있어도
+그림과 비교하는 것보다 실제로 그 상태가 되는지 보는 편이 확실하다.
+
+feature 문서 §5의 **상태 목록대로** 하나씩 확인한다.
+
+```bash
+jq -r '.source_refs.source_file' workflow_design/04_plan/PLAN_TASK-001.json
+```
+
+앱을 띄운다 — 프로젝트에 맞는 방법을 쓴다 (`run` 스킬이 대부분 처리한다).
+웹이면 브라우저 도구로, iOS 앱이면 시뮬레이터로 조작한다.
+
+각 상태를 **실제로 만들어서** 본다. 기본 상태만 보고 끝내지 않는다.
+
+| 상태 | 어떻게 만드나 |
+|---|---|
+| 기본 | 데이터가 있는 상태로 접속 |
+| 빈 목록 | 데이터를 비우거나 검색어를 없는 값으로 |
+| 로딩 | 느린 응답을 흉내내거나 로딩 순간 포착 |
+| 오류 | 서버를 끄거나 잘못된 요청 |
+| 권한 없음 | 권한 없는 계정으로 |
+
+확인 결과를 `screens` 에 기록한다. 스크린샷은 HITL 리포트 Artifact 에 첨부한다.
+
+```jsonc
+"screens": [
+  { "name": "할 일 목록", "state": "기본", "verdict": "PASS",
+    "evidence": "카드 3건, 제목·마감일·체크박스 모두 표시" },
+  { "name": "할 일 목록", "state": "빈 목록", "verdict": "PASS",
+    "evidence": "\"아직 할 일이 없습니다\" + [새로 만들기] 확인" },
+  { "name": "할 일 목록", "state": "오류", "verdict": "WARN",
+    "evidence": "서버 중단 시 빈 화면. 명세에는 [다시 시도] 버튼이 있어야 함" }
+]
+```
+
+**앱을 띄울 수 없으면** (환경 미비, 빌드 실패, 외부 의존) 그 사실을 적고 `WARN` 으로 둔다.
+확인하지 않은 것을 PASS 로 쓰지 않는다.
+
+명세에 있는 상태가 실제로 안 나오면 `status: FAIL` 이다 — 완료 조건 미충족이다.
 
 ### Step 3 — 아키텍처 제약 검증
 
@@ -160,6 +206,8 @@ TASK-001 의 변경 코드를 리뷰해주세요.
       "evidence": "측정하지 않음 — 성능 테스트 부재" }
   ],
 
+  "screens": [ /* Frontend 태스크만 — Step 2.5 */ ],
+
   "architecture": {
     "command": "python3 scripts/check_architecture.py",
     "error_count": 0,
@@ -199,6 +247,7 @@ Phase 4 — TASK-001    status: WARN
 
   테스트   18/18 통과
   린트     통과
+  화면     4개 상태 확인 — 3 PASS, 1 WARN (오류 상태에 재시도 버튼 없음)
   아키텍처 제약 2건 통과, 경고 1건 (ARCH-003)
   변경     3 files, +42 -4
   리뷰     지적 없음

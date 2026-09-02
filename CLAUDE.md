@@ -17,6 +17,10 @@
 
 Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: <!-- 예: admin, learner. 단일 앱이면 빈 배열 -->
 
+<!-- 화면이 있는 프로젝트라면 채운다. 백엔드 전용이면 이 두 줄을 지운다. -->
+- **UI 라이브러리**: (예: shadcn/ui — 근거 ADR-0002)
+- **시안**: (Figma 링크 / 없음 — 화면 명세는 feature 문서 §5)
+
 ---
 
 ## 문서 계층 (Foundation)
