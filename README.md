@@ -21,7 +21,7 @@ Phase 5 회고가 Foundation 을 되먹이는 고리가 있어서 문서가 코�
 
 | 구성요소 | 위치 | 역할 |
 |---|---|---|
-| **상시 컨텍스트** | `CLAUDE.md` | 매 요청 주입. 짧게 유지한다 (128줄) |
+| **상시 컨텍스트** | `CLAUDE.md` | 매 요청 주입. 짧게 유지한다 (147줄) |
 | **Foundation 문서** | `docs/product/` `docs/architecture/` `docs/decisions/` | 프로덕트 정의, 아키텍처, 기술 결정 |
 | **Foundation 스킬 4개** | `.claude/skills/{product-definition,architecture-doc,adr,task-authoring}/` | 문서 작성과 태스크 생성 기준 |
 | **Phase 스킬 6개 + 오케스트레이터** | `.claude/skills/wf-*/` | 각 단계의 MUST/FORBIDDEN/EXIT GATE + 절차 |
@@ -111,11 +111,11 @@ git config workflow.baseBranch develop
 
 | 항목 | 원본 | 여기 |
 |---|---|---|
-| 워크플로우 규칙 | 22,146줄 | 4,500줄 |
+| 워크플로우 규칙 | 22,146줄 | 4,783줄 |
 | 지원 스크립트 | 51개 | 10개 (+훅 5개) |
 | 표준 문서 | 323파일 / 59,747줄 | 0 (확장 지점만) |
-| 상시 주입 컨텍스트 | 555줄 | 128줄 |
-| 단일 Phase 최대 주입 | 5,142줄 | 235줄 (+필요 시 references) |
+| 상시 주입 컨텍스트 | 555줄 | 147줄 |
+| 단일 Phase 최대 주입 | 5,142줄 | 250줄 (+필요 시 references) |
 
 원본 22,146줄에는 없던 것(Foundation 문서 계층·태스크 생성 절차)이 여기에 포함되어 있으므로
 단순 비교는 아니다. 같은 범위(Phase 1~5 워크플로우)만 보면 약 3,000줄이다.
