@@ -1,7 +1,7 @@
 package com.example.ticket_booking.api;
 
-import com.example.ticket_booking.api.dto.PerformanceListResponse;
-import com.example.ticket_booking.api.dto.PerformanceResponse;
+import com.example.ticket_booking.service.PerformanceListResponse;
+import com.example.ticket_booking.service.PerformanceResponse;
 import com.example.ticket_booking.service.PerformanceService;
 import com.example.ticket_booking.service.PerformanceStatus;
 
@@ -26,7 +26,7 @@ public class PerformanceController {
             @RequestParam(required = false) PerformanceStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return performanceService.getPerformances(status, page, size);
+        return performanceService.getPerformances(status, page, Math.min(size, 100));
     }
 
     @GetMapping("/{id}")
