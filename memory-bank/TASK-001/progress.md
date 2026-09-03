@@ -3,10 +3,10 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | route=Backend, 신규 파일 12건 |
-| 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 11건, AC 8/8, HITL#1 승인 |
-| 2b Red | ✅ 완료 | CP-2.6 | 테스트 11건 전부 실패 확인, HITL#2 승인 |
-| 3 Green | ✅ 완료 | CP-3.4 | 테스트 12/12 통과, 아키텍처 제약 통과 |
-| 4 Verify | ⬜ 대기 | — | |
+| 2a Scenario | 🔄 재시도 중 (attempt 2) | CP-2.4 (SUPERSEDED) | 시나리오 11건은 완료했으나 Phase 4에서 REJECT — 커버리지 보강 필요 |
+| 2b Red | ⬜ 재작업 대기 | CP-2.6 (완료분은 유효, 추가분 필요) | 새 시나리오에 대한 Red 테스트 추가 필요 |
+| 3 Green | ⬜ 재작업 대기 | CP-3.4 (완료분은 유효, 수정 필요) | CLOSED 로직·컬럼 길이 버그 수정 필요 |
+| 4 Verify | ❌ FAIL (attempt 1) | CP-4.2 | 정확성 결함 2건 — VERIFY_TASK-001.json.reject 참고 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건
