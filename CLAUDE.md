@@ -10,9 +10,14 @@
 
 - **무엇**: 공연/행사 티켓 예매 서비스
 - **스택**: Java / Spring Boot (`backend/`, Gradle) · React + Vite (`frontend/`) · PostgreSQL
-- **테스트**: backend `./gradlew test` · frontend `npm test` (vitest run)
-- **린트**: backend TODO (도구 미정) · frontend `npm run lint` (eslint)
-- **빌드**: backend `./gradlew build` · frontend `npm run build` (vite build)
+- **테스트**: backend `./gradlew test` · frontend 미생성
+- **린트**: backend `./gradlew spotlessCheck` (google-java-format, `spotlessApply` 로 자동 수정) · frontend 미생성
+- **빌드**: backend `./gradlew build` · frontend 미생성
+
+<!-- frontend/ 는 아직 스캐폴딩되지 않았다. TASK-002(프론트) 착수 전에 만들고
+     위 세 줄의 frontend 명령을 실제 값으로 채운다:
+       npm create vite@latest frontend -- --template react-ts
+       cd frontend && npm i @mui/material @emotion/react @emotion/styled -->
 
 Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객), `organizer`(주최자), `admin`(운영자)
 
