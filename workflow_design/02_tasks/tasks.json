@@ -1,1 +1,118 @@
-[]
+[
+  {
+    "id": "TASK-001",
+    "title": "공연 목록/상세 조회 API",
+    "description": "관객이 예매 가능 여부를 화면에서 확인할 수 있도록 공연 목록/상세 조회 API를 만든다. performance 테이블을 신설하고, 예매 상태(예정/예매가능/매진/마감/취소)를 java.time.Clock 기반 시각과 좌석 수로 계산해 GET /api/performances, GET /api/performances/{id} 로 제공한다. 공연 등록·수정 API(쓰기)와 좌석 단위 데이터·API는 포함하지 않는다.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "테이블 설계, 상태 계산 로직, API 엔드포인트가 모두 서버 범위",
+    "priority": "High",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 10
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "GET /api/performances 호출 시 200과 함께 content/page/size/totalElements 형식으로 목록이 반환된다",
+        "status=OPEN 필터 시 openAt <= now <= closeAt 이고 availableSeats > 0 인 공연만 반환된다",
+        "availableSeats == 0 인 공연은 status: SOLD_OUT 으로 반환된다",
+        "cancelled == true 인 공연은 시각·좌석 수와 무관하게 status: CANCELLED 로 반환된다",
+        "start_at < now 인 공연은 상태 필터와 무관하게 목록에서 제외된다",
+        "존재하지 않는 id 로 GET /api/performances/{id} 호출 시 404와 PERFORMANCE_NOT_FOUND 코드가 반환된다",
+        "Clock 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 status 를 반환한다 (SQL now() 미사용을 리뷰로 확인)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/resources/db/migration/V1__create_performance.sql",
+          "backend/src/main/java/com/ticketbooking/repository/PerformanceRepository.java",
+          "backend/src/main/java/com/ticketbooking/service/PerformanceService.java",
+          "backend/src/main/java/com/ticketbooking/api/PerformanceController.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 2,
+        "total_score": 56,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/performance-availability.md",
+      "sections": [
+        "1-2",
+        "1-3",
+        "2",
+        "4",
+        "5"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task A"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-002",
+    "title": "공연 목록/상세 화면",
+    "description": "관객이 공연 목록과 상세를 보고 예매 가능 여부를 문의 없이 확인할 수 있는 화면을 만든다. 목록은 카드 목록으로 상태 배지를 표시하고, 상세는 공연 정보와 상태를 보여준다. 기본/로딩/빈 목록/오류 상태를 모두 처리한다. 좌석 선택 UI와 결제 진입은 포함하지 않는다.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience"
+    ],
+    "reason_primary": "화면 렌더링, 상태 표시, API 연동이 프론트 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-001"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 8
+      },
+      "risk": "low",
+      "acceptance_criteria": [
+        "목록 화면 진입 시 API 응답의 공연이 카드로 표시되고 각 카드에 상태 배지가 보인다",
+        "로딩 중에는 카드 자리에 스켈레톤이 표시된다",
+        "목록이 빈 배열이면 예정된 공연이 없습니다 안내가 표시된다",
+        "목록 API 호출이 실패하면 오류 메시지와 다시 시도 버튼이 표시된다",
+        "상세 화면에서 공연명·장소·일시·오픈/마감 시각·잔여 좌석·상태 배지가 표시된다",
+        "존재하지 않는 공연 상세로 진입(404)하면 존재하지 않는 공연입니다 안내와 목록으로 돌아가는 버튼이 표시된다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/api/performances.ts",
+          "frontend/src/pages/PerformanceListPage.tsx",
+          "frontend/src/pages/PerformanceDetailPage.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 3,
+        "risk_score": 2,
+        "total_score": 42,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/performance-availability.md",
+      "sections": [
+        "1-2",
+        "4",
+        "5"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task B"
+        }
+      ]
+    }
+  }
+]
