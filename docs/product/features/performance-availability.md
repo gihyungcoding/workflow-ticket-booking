@@ -94,7 +94,7 @@ CREATE INDEX idx_performance_start_at ON performance (start_at);
 애플리케이션이 주입하는 `java.time.Clock` 으로 얻는다. 쿼리에 `now()` 를 직접
 쓰지 않는다 — DB 의 `now()` 를 쓰면 오픈 정각·마감 1초 전 같은 경계 시나리오를
 테스트에서 고정된 시각으로 재현할 수 없다. `PerformanceService` 는 `Clock` 을
-주입받고, 테스트는 `Clock.fixed(...)` 로 대체한다.
+주입받고, 테스트는 `Clock.fixed(...)` 로 대체한다. (근거: ADR-0005)
 
 ### API
 
@@ -252,4 +252,4 @@ CREATE INDEX idx_performance_start_at ON performance (start_at);
 | 결정 | 이유 | 범위 | ADR |
 |---|---|---|---|
 | 예매 상태(UPCOMING/OPEN/SOLD_OUT/CLOSED/CANCELLED)를 DB 컬럼이 아니라 시각·좌석 수로 계산 | 시각이 지나도 컬럼을 갱신하지 않으면 실제 상태와 어긋난다 | 이 기능만 | — |
-| 시각 기준 판정에 `java.time.Clock` 주입을 쓰고 SQL `now()` 를 쓰지 않는다 | 오픈 정각·마감 1초 전 같은 경계 시나리오를 테스트에서 재현 가능하게 하기 위함 | **전체** — 좌석 선점 만료 등 다른 시각 기반 판정에도 동일하게 적용될 원칙 | 승격 후보 (미확정) |
+| 시각 기준 판정에 `java.time.Clock` 주입을 쓰고 SQL `now()` 를 쓰지 않는다 | 오픈 정각·마감 1초 전 같은 경계 시나리오를 테스트에서 재현 가능하게 하기 위함 | **전체** — 좌석 선점 만료 등 다른 시각 기반 판정에도 동일하게 적용될 원칙 | ADR-0005 |
