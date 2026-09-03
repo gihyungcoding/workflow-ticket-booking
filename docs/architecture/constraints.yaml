@@ -26,7 +26,7 @@ constraints:
     adr: ADR-0003
     detect:
       type: forbidden_import
-      paths: ["backend/src/main/java/**/controller/**/*.java"]
+      paths: ["backend/src/main/java/**/api/**/*.java"]
       pattern: "^\\s*import .*\\.repository\\..*;"
     severity: error
 
@@ -37,7 +37,7 @@ constraints:
     detect:
       type: forbidden_import
       paths: ["backend/src/main/java/**/service/**/*.java"]
-      pattern: "^\\s*import .*\\.controller\\..*;"
+      pattern: "^\\s*import .*\\.api\\..*;"
     severity: error
 
 # 예시 — 실제 제약이 생기면 위 배열에 넣는다.
