@@ -255,3 +255,4 @@ CREATE INDEX idx_performance_start_at ON performance (start_at);
 |---|---|---|---|
 | 예매 상태(UPCOMING/OPEN/SOLD_OUT/CLOSED/CANCELLED)를 DB 컬럼이 아니라 시각·좌석 수로 계산 | 시각이 지나도 컬럼을 갱신하지 않으면 실제 상태와 어긋난다 | 이 기능만 | — |
 | 시각 기준 판정에 `java.time.Clock` 주입을 쓰고 SQL `now()` 를 쓰지 않는다 | 오픈 정각·마감 1초 전 같은 경계 시나리오를 테스트에서 재현 가능하게 하기 위함 | **전체** — 좌석 선점 만료 등 다른 시각 기반 판정에도 동일하게 적용될 원칙 | ADR-0005 |
+| 백엔드 테스트 DB는 당분간 H2 인메모리를 쓰고, 좌석 선점 착수 전 Testcontainers(PostgreSQL)로 전환한다 | 로컬 Docker 인프라 미비 + 이 기능은 표준 SQL만 쓴다. 단, 좌석 선점은 PostgreSQL 전용 `ON CONFLICT` 구문(ADR-0004)에 의존해 H2로 검증 불가 | **전체** — 모든 백엔드 태스크의 테스트 DB 선택에 적용될 원칙 | ADR-0006 |
