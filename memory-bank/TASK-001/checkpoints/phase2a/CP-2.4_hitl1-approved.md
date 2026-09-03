@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-03T12:32:10Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "사용자가 시나리오 최종본(11건, acceptance_criteria 8/8 커버)을 승인했다. SCENARIO_TASK-001.json.human_input.generate_red_trigger를 true로 갱신했다."
 
@@ -66,3 +66,10 @@ Phase 2a 시나리오 최종본에 대해 사람 승인(HITL#1)을 받았다. �
 1. `python scripts/validate_phase2a_gate.py --task-id TASK-001` 로 게이트 통과를 재확인한다
 2. `activeContext.md` 를 갱신하고 커밋한다
 3. `wf-red` 스킬로 Phase 2b에 진입한다
+
+## SUPERSEDED 사유
+
+Phase 4에서 REJECT(RETRY_SCENARIO, COVERAGE_INSUFFICIENT) — status 필터의
+UPCOMING/SOLD_OUT/CANCELLED 분기를 검증하는 시나리오가 없어 CLOSED 로직 결함을
+놓쳤다. `CP-2.2_canonical-scenarios_retry1.md` 이후가 최신이다.
+`VERIFY_TASK-001.json.reject` 참고.

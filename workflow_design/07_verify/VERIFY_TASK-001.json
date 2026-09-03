@@ -104,8 +104,16 @@
   },
 
   "human_review": {
-    "decision": null,
+    "decision": "REJECT",
     "verified_commit": null,
     "verified_at": null
+  },
+
+  "reject": {
+    "type": "RETRY_SCENARIO",
+    "reason": "COVERAGE_INSUFFICIENT",
+    "feedback": "CLOSED 버그는 status 필터의 UPCOMING/SOLD_OUT/CANCELLED 분기를 검증하는 시나리오가 애초에 없어서 놓친 버그다. 시나리오를 보강(+SC-10/11 단언 강화) → Red 테스트 추가 → 구현 수정 순서로 TDD 원칙을 지킨다. Phase 2a로 롤백.",
+    "rejected_at": "2026-09-03T13:26:00Z",
+    "attempt": 1
   }
 }
