@@ -3,7 +3,7 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | route=Backend, 신규 파일 12건 |
-| 2a Scenario | ⬜ 대기 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 11건, AC 8/8, HITL#1 승인 |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |
@@ -18,3 +18,4 @@
 - [ ] `start_at < now` 인 공연은 상태 필터와 무관하게 목록에서 제외된다
 - [ ] 존재하지 않는 id 로 `GET /api/performances/{id}` 호출 시 404와 `PERFORMANCE_NOT_FOUND` 코드가 반환된다
 - [ ] `Clock` 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 `status` 를 반환한다 (SQL `now()` 미사용을 리뷰로 확인)
+- [ ] `performance` 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다 (Phase 2a HITL#1에서 사용자 요청으로 추가, AC8/F7)

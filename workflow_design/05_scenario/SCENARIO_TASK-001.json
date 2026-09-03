@@ -1,0 +1,171 @@
+{
+  "task_id": "TASK-001",
+  "scenarios": [
+    {
+      "id": "SC-01",
+      "type": "happy",
+      "title": "목록이 기본 페이지 형식으로 반환된다",
+      "given": [
+        "공연 A, B가 등록되어 있고 둘 다 startAt >= now 이다"
+      ],
+      "when": ["GET /api/performances 를 파라미터 없이 호출한다"],
+      "then": [
+        "200이 반환된다",
+        "응답 바디의 최상위 필드는 content/page/size/totalElements 정확히 4개뿐이고 그 외 필드는 없다",
+        "content 에는 A, B 가 모두 포함된다",
+        "totalElements 는 2이다"
+      ],
+      "covers": ["GET /api/performances 호출 시 200과 함께 content/page/size/totalElements 형식으로 목록이 반환된다"],
+      "flow": ["F1"]
+    },
+    {
+      "id": "SC-02",
+      "type": "happy",
+      "title": "status=OPEN 필터는 계산된 상태를 기준으로 적용된다",
+      "given": [
+        "공연 A는 openAt <= now <= closeAt 이고 availableSeats = 5 이다 (계산상 OPEN)",
+        "공연 B는 openAt <= now <= closeAt 이고 availableSeats = 0 이다 (계산상 SOLD_OUT)"
+      ],
+      "when": ["GET /api/performances?status=OPEN 을 호출한다"],
+      "then": [
+        "content 에는 공연 A만 포함된다",
+        "totalElements 는 1이다"
+      ],
+      "covers": ["status=OPEN 필터 시 openAt <= now <= closeAt 이고 availableSeats > 0 인 공연만 반환된다"],
+      "flow": ["F2", "F3"]
+    },
+    {
+      "id": "SC-03",
+      "type": "happy",
+      "title": "매진된 공연은 SOLD_OUT 으로 표시된다",
+      "given": ["공연 C는 openAt <= now <= closeAt 이고 availableSeats = 0 이다"],
+      "when": ["GET /api/performances/{C.id} 를 호출한다"],
+      "then": [
+        "200이 반환된다",
+        "응답의 status 는 \"SOLD_OUT\" 이다"
+      ],
+      "covers": ["availableSeats == 0 인 공연은 status: SOLD_OUT 으로 반환된다"],
+      "flow": ["F2"]
+    },
+    {
+      "id": "SC-04",
+      "type": "happy",
+      "title": "취소된 공연은 시각·좌석 수와 무관하게 CANCELLED 로 표시된다",
+      "given": [
+        "공연 D는 cancelled = true 이다",
+        "공연 D의 openAt <= now <= closeAt 이고 availableSeats = 10 이다 (조건만 보면 OPEN처럼 보인다)"
+      ],
+      "when": ["GET /api/performances/{D.id} 를 호출한다"],
+      "then": ["응답의 status 는 \"CANCELLED\" 이다"],
+      "covers": ["cancelled == true 인 공연은 시각·좌석 수와 무관하게 status: CANCELLED 로 반환된다"],
+      "flow": ["F2"]
+    },
+    {
+      "id": "SC-05",
+      "type": "boundary",
+      "title": "지난 공연은 필터 없는 목록에서 제외된다",
+      "given": [
+        "공연 E의 startAt < now 이다 (지난 공연)",
+        "공연 F의 startAt >= now 이다"
+      ],
+      "when": ["GET /api/performances 를 파라미터 없이 호출한다"],
+      "then": [
+        "content 에는 공연 F만 포함된다",
+        "공연 E는 content 에 없다"
+      ],
+      "covers": ["start_at < now 인 공연은 상태 필터와 무관하게 목록에서 제외된다"],
+      "flow": ["F4"]
+    },
+    {
+      "id": "SC-06",
+      "type": "boundary",
+      "title": "status 필터가 일치해도 지난 공연은 여전히 제외된다",
+      "given": [
+        "공연 E의 startAt < now 이고 now > closeAt 이다 (지난 공연이면서 마감도 지났다)",
+        "공연 F의 startAt >= now 이고 now > closeAt 이다 (아직 시작 전이지만 마감 시각은 지난 '조기 마감' 케이스 — §1-3)"
+      ],
+      "when": ["GET /api/performances?status=CLOSED 를 호출한다"],
+      "then": [
+        "content 에는 공연 F만 포함된다",
+        "공연 E는 content 에 없다"
+      ],
+      "covers": ["start_at < now 인 공연은 상태 필터와 무관하게 목록에서 제외된다"],
+      "flow": ["F3", "F4"]
+    },
+    {
+      "id": "SC-07",
+      "type": "boundary",
+      "title": "오픈 정각에 상태가 OPEN 으로 전환된다",
+      "given": [
+        "Clock 이 공연 G의 openAt 과 정확히 같은 시각 T로 고정되어 있다 (now == openAt == T)",
+        "T는 실제 시스템 시각과 다르다 (예: 몇 년 뒤의 미래 시각으로 openAt/closeAt/T를 함께 잡는다)",
+        "공연 G의 availableSeats >= 1 이고 now <= closeAt 이다"
+      ],
+      "when": ["GET /api/performances/{G.id} 를 호출한다"],
+      "then": ["응답의 status 는 \"OPEN\" 이다 (UPCOMING 이 아니다)"],
+      "notes": "T를 실제 시각과 다르게 잡는 이유: 구현이 주입된 Clock 대신 SQL now()/시스템 실제 시각을 썼다면 실제 시각은 openAt(T)에 한참 못 미쳐 status가 UPCOMING으로 나와 이 Then이 실패한다 — SQL now() 미사용도 status 값으로 간접 관찰한다.",
+      "covers": ["Clock 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 status 를 반환한다 (SQL now() 미사용을 리뷰로 확인)"],
+      "flow": ["F6"]
+    },
+    {
+      "id": "SC-08",
+      "type": "boundary",
+      "title": "마감 1초 전까지는 CLOSED 로 전환되지 않는다",
+      "given": [
+        "Clock 이 공연 H의 closeAt 보다 1초 이른 시각 T로 고정되어 있다 (now == closeAt - 1s == T)",
+        "T는 실제 시스템 시각과 다르다 (SC-07과 같은 이유 — 미래의 임의 시각으로 openAt/closeAt/T를 함께 잡는다)",
+        "공연 H의 availableSeats >= 1 이고 now >= openAt 이다"
+      ],
+      "when": ["GET /api/performances/{H.id} 를 호출한다"],
+      "then": ["응답의 status 는 \"OPEN\" 이다 (CLOSED 가 아니다)"],
+      "covers": ["Clock 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 status 를 반환한다 (SQL now() 미사용을 리뷰로 확인)"],
+      "flow": ["F6"]
+    },
+    {
+      "id": "SC-09",
+      "type": "error",
+      "title": "존재하지 않는 공연을 조회하면 404 가 반환된다",
+      "given": ["id 999 에 해당하는 공연이 존재하지 않는다"],
+      "when": ["GET /api/performances/999 를 호출한다"],
+      "then": [
+        "404가 반환된다",
+        "응답 바디의 code 는 \"PERFORMANCE_NOT_FOUND\" 이다"
+      ],
+      "covers": ["존재하지 않는 id 로 GET /api/performances/{id} 호출 시 404와 PERFORMANCE_NOT_FOUND 코드가 반환된다"],
+      "flow": ["F5"]
+    },
+    {
+      "id": "SC-10",
+      "type": "error",
+      "title": "필수 필드가 없는 공연은 저장이 거부된다",
+      "given": ["공연 데이터에서 title 이 null 이고, 나머지 필드(venue/startAt/openAt/closeAt/totalSeats/availableSeats)는 모두 유효하다"],
+      "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
+      "then": ["예외가 발생해 저장이 거부된다"],
+      "notes": "'DB에 실제로 반영되는 시점까지'인 이유: ORM 구현에 따라 저장 호출 자체는 지연 쓰기로 즉시 반영되지 않을 수 있어(예: JPA flush/commit), 그 이전에만 예외 여부를 보면 거짓 통과가 나올 수 있다 — Phase 2b는 실제 구현에 맞는 지점으로 이 경계를 옮겨야 한다. 예외의 구체 타입은 Then에서 못박지 않는다(구현 선택). 경계는 영속성 계층(Repository/엔티티)이며 이 태스크의 공개 HTTP API가 아니다 — 애노테이션-마이그레이션 일치는 애초에 HTTP로 관측할 수 없는 성질이다.",
+      "covers": ["performance 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다"],
+      "flow": ["F7"]
+    },
+    {
+      "id": "SC-11",
+      "type": "error",
+      "title": "availableSeats 가 totalSeats 보다 크면 저장이 거부된다",
+      "given": ["공연 데이터의 totalSeats = 10, availableSeats = 11 이다 (그 외 필드는 유효)"],
+      "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
+      "then": ["예외가 발생해 저장이 거부된다"],
+      "notes": "SC-10과 분리한 이유: NOT NULL은 컬럼 정의 하나로 끝나지만 이 CHECK는 두 필드 사이의 관계식이라 다른 애노테이션/구현 경로를 탄다. 'DB에 실제로 반영되는 시점까지' 표기 이유는 SC-10과 같되, 이 CHECK는 특히 DB 왕복 전에는 드러나지 않을 가능성이 크다.",
+      "covers": ["performance 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다"],
+      "flow": ["F7"]
+    }
+  ],
+  "coverage": {
+    "acceptance_criteria_total": 8,
+    "acceptance_criteria_covered": 8,
+    "uncovered": [],
+    "merged": [],
+    "intentionally_not_covered": [
+      { "item": "page/size 파라미터 기본값(0/20)·상한(100) 적용 동작", "reason": "acceptance_criteria(§4)에 없음 — Plan design.inputs의 제약일 뿐 완료 조건이 아니다" },
+      { "item": "status에 정의된 5개 값 외의 문자열 입력 시 동작", "reason": "acceptance_criteria(§4)에 없고 Plan design.outputs에도 대응 에러가 정의되어 있지 않다 — 프레임워크 기본 동작에 맡긴다" }
+    ]
+  },
+  "human_input": { "generate_red_trigger": true }
+}

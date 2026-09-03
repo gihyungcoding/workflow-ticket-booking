@@ -28,6 +28,12 @@
         "type": "int",
         "source": "쿼리 파라미터",
         "constraints": ["선택", "기본값 20", "1~100"]
+      },
+      {
+        "name": "Performance 엔티티 필드값",
+        "type": "domain object (title/venue/startAt/openAt/closeAt/totalSeats/availableSeats/cancelled)",
+        "source": "영속성 계층 경계 — API 요청이 아니라 저장을 시도하는 호출자(Repository.save 등)가 주는 값 (F7)",
+        "constraints": ["title/venue/startAt/openAt/closeAt/totalSeats/availableSeats 는 NOT NULL", "total_seats > 0", "0 <= available_seats <= total_seats"]
       }
     ],
     "outputs": [
@@ -45,6 +51,11 @@
         "name": "404 PERFORMANCE_NOT_FOUND",
         "type": "error",
         "description": "존재하지 않는 id로 상세 조회 시 {code: PERFORMANCE_NOT_FOUND, message}"
+      },
+      {
+        "name": "제약 위반 저장 거부",
+        "type": "error (persistence, F7)",
+        "description": "NOT NULL/CHECK 제약을 어긴 Performance 를 저장(flush 포함)하면 예외가 발생해 거부된다 — 이건 HTTP 응답 계약이 아니라 F7이 검증하는 영속성 계층 경계의 출력이다"
       }
     ],
     "flows": [
@@ -122,6 +133,18 @@
         "covers": [
           "Clock 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 status 를 반환한다 (SQL now() 미사용을 리뷰로 확인)"
         ]
+      },
+      {
+        "id": "F7",
+        "name": "엔티티 제약과 마이그레이션 제약의 일치",
+        "steps": [
+          "V1__create_performance.sql의 NOT NULL/CHECK 제약(title/venue/startAt/openAt/closeAt/totalSeats/availableSeats NOT NULL, total_seats > 0, 0 <= available_seats <= total_seats)을 Performance 엔티티 애노테이션으로도 표현한다",
+          "테스트는 H2 + ddl-auto=create-drop로 엔티티 애노테이션에서 스키마를 만들므로(ADR-0006), 애노테이션이 마이그레이션과 어긋나면 이 스키마 자체가 마이그레이션과 달라진다 — @DataJpaTest로 제약 위반 시 저장이 거부되는지 검증해 이 어긋남을 방지한다",
+          "예: availableSeats > totalSeats 로 저장을 시도하면 예외가 발생해야 한다"
+        ],
+        "covers": [
+          "performance 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다"
+        ]
       }
     ]
   },
@@ -137,7 +160,7 @@
   "codebase_analysis": {
     "target_files": [
       { "path": "backend/src/main/resources/db/migration/V1__create_performance.sql", "change": "신규 생성 — performance 테이블 마이그레이션 (기능 문서 §2 SQL 그대로)" },
-      { "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java", "change": "신규 생성 — JPA 엔티티 (id/title/venue/startAt/openAt/closeAt/totalSeats/availableSeats/cancelled/createdAt), status는 필드로 두지 않는다" },
+      { "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java", "change": "신규 생성 — JPA 엔티티 (id/title/venue/startAt/openAt/closeAt/totalSeats/availableSeats/cancelled/createdAt), status는 필드로 두지 않는다. V1 마이그레이션의 NOT NULL(필수 필드 전부)과 CHECK(total_seats > 0, 0<=available_seats<=total_seats)를 @Column(nullable=false)/@Check 등 애노테이션으로도 표현한다 (F7)" },
       { "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepository.java", "change": "신규 생성 — JpaRepository<Performance, Long> + start_at>=now 페이지네이션 조회 + status별 WHERE 조건 쿼리 (F3)" },
       { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceStatus.java", "change": "신규 생성 — UPCOMING/OPEN/SOLD_OUT/CLOSED/CANCELLED enum" },
       { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java", "change": "신규 생성 — Clock 주입, F2 상태 계산, DTO 매핑, 페이지네이션·필터 위임" },
@@ -156,7 +179,7 @@
     "unresolved": [
       "실제 패키지 루트는 com.example.ticket_booking 이다 (build.gradle group='com.example', 기존 TicketBookingApplication.java 위치 확인). 기능 문서 §5와 tasks.json의 implementation_spec.paths는 com.ticketbooking을 쓰고 있어 실제 코드베이스와 다르다 — 이 Plan은 실재하는 com.example.ticket_booking을 기준으로 경로를 정정했다.",
       "prod용 PostgreSQL datasource(application.properties/application-prod.properties 등) 설정이 아직 없다. 이 태스크의 acceptance_criteria는 테스트(H2)로 검증되므로 범위에 포함하지 않았으나, 실제 배포 전에는 별도로 필요하다.",
-      "테스트는 spring.jpa.hibernate.ddl-auto=create-drop + spring.flyway.enabled=false (H2)로 엔티티 애노테이션이 스키마를 만든다 — V1 마이그레이션 SQL은 테스트에서 검증되지 않으므로 엔티티 필드 제약(NOT NULL, CHECK 등)과 마이그레이션 SQL을 수동으로 일치시켜야 한다 (ADR-0006, 임시 조치)."
+      "테스트는 spring.jpa.hibernate.ddl-auto=create-drop + spring.flyway.enabled=false (H2)로 엔티티 애노테이션이 스키마를 만든다 — V1 마이그레이션 SQL 자체는 여전히 테스트에서 실행되지 않는다(ADR-0006, 임시 조치). Phase 2a에서 F7/AC8을 추가해 엔티티 애노테이션이 마이그레이션과 같은 제약을 표현하고 위반 시 거부됨은 @DataJpaTest로 검증하기로 했다 — 다만 이는 '애노테이션이 제약을 표현하는지'를 보장할 뿐 'SQL 파일 자체가 문법적으로 유효한지'는 여전히 검증하지 않는다."
     ]
   },
 
@@ -167,12 +190,22 @@
     "cancelled == true 인 공연은 시각·좌석 수와 무관하게 status: CANCELLED 로 반환된다",
     "start_at < now 인 공연은 상태 필터와 무관하게 목록에서 제외된다",
     "존재하지 않는 id 로 GET /api/performances/{id} 호출 시 404와 PERFORMANCE_NOT_FOUND 코드가 반환된다",
-    "Clock 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 status 를 반환한다 (SQL now() 미사용을 리뷰로 확인)"
+    "Clock 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 status 를 반환한다 (SQL now() 미사용을 리뷰로 확인)",
+    "performance 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다"
   ],
 
   "test_hints": {
     "framework": "JUnit5 + Spring Boot Test (H2, ADR-0006)",
     "command": "./gradlew test",
-    "mock_strategy": "PerformanceServiceTest는 PerformanceRepository를 스텁/모킹하고 Clock.fixed(...)로 경계 시각 고정 (단위). PerformanceRepositoryTest는 @DataJpaTest + H2로 F3의 상태별 WHERE 조건과 start_at>=now 조건을 실제 쿼리로 검증 (통합). PerformanceControllerTest는 @WebMvcTest + 모킹된 PerformanceService로 요청 파싱·응답 포맷·404 매핑을 검증."
-  }
+    "mock_strategy": "PerformanceServiceTest는 PerformanceRepository를 스텁/모킹하고 Clock.fixed(...)로 경계 시각 고정 (단위). PerformanceRepositoryTest는 @DataJpaTest + H2로 F3의 상태별 WHERE 조건과 start_at>=now 조건을 실제 쿼리로 검증하고(통합), F7의 NOT NULL/CHECK 제약 위반 시 저장이 거부되는지도 같은 @DataJpaTest에서 확인한다. PerformanceControllerTest는 @WebMvcTest + 모킹된 PerformanceService로 요청 파싱·응답 포맷·404 매핑을 검증."
+  },
+
+  "amendments": [
+    {
+      "when": "Phase 2a (시나리오 보완, HITL#1 이전)",
+      "what": "F7 flow와 AC8(엔티티 제약-마이그레이션 제약 일치) 추가",
+      "why": "사용자가 HITL#1에서 unresolved 항목(엔티티 애노테이션과 V1 마이그레이션 제약의 수동 동기화 리스크)을 실제 테스트로 보호하자고 요청",
+      "reference": "memory-bank/TASK-001/checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+    }
+  ]
 }
