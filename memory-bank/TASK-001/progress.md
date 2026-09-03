@@ -5,7 +5,7 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | route=Backend, 신규 파일 12건 |
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 11건, AC 8/8, HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | 테스트 11건 전부 실패 확인, HITL#2 승인 |
-| 3 Green | ⬜ 대기 | — | |
+| 3 Green | ✅ 완료 | CP-3.4 | 테스트 12/12 통과, 아키텍처 제약 통과 |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 

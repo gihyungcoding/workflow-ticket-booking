@@ -1,4 +1,4 @@
-package com.example.ticket_booking.api.dto;
+package com.example.ticket_booking.service;
 
 import java.util.List;
 

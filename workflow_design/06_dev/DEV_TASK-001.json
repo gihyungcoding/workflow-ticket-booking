@@ -1,0 +1,53 @@
+{
+  "task_id": "TASK-001",
+  "changed_files": [
+    { "path": "backend/src/main/resources/db/migration/V1__create_performance.sql",
+      "change": "신규 — performance 테이블 마이그레이션 (기능 문서 §2 SQL 그대로)", "lines_changed": 14 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+      "change": "NOT NULL(@Column(nullable=false))/CHECK(@Table의 @CheckConstraint) 애노테이션 추가, @CreationTimestamp로 createdAt 자동 채움 (F7/AC8)", "lines_changed": 27 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepository.java",
+      "change": "JpaSpecificationExecutor 추가 — 상태별 조건을 Specification으로 조합", "lines_changed": 4 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "F1(목록/페이지네이션) F2(상태 계산) F3(status 필터 Specification) F4(지난 공연 제외) F5(404) F6(Clock 기반 now) 구현", "lines_changed": 92 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceNotFoundException.java",
+      "change": "신규 — 상세 조회 실패 시 서비스가 던지는 예외", "lines_changed": 8 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+      "change": "신규 (Plan은 api/dto였으나 service로 이동 — scope_deviations 참고)", "lines_changed": 15 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceListResponse.java",
+      "change": "신규 (Plan은 api/dto였으나 service로 이동 — scope_deviations 참고)", "lines_changed": 10 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "PerformanceResponse/PerformanceListResponse import 경로를 service로 변경, size를 100으로 클램프", "lines_changed": 6 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+      "change": "신규 — @RestControllerAdvice, PerformanceNotFoundException → 404 + PERFORMANCE_NOT_FOUND 매핑", "lines_changed": 19 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java",
+      "change": "신규 — {code, message}", "lines_changed": 4 }
+  ],
+  "reused": [],
+  "test_status": "green",
+  "test_result": {
+    "command": "JAVA_HOME=<JDK21> ./gradlew clean test",
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "target_tests_passed": 11
+  },
+  "lint": {
+    "command": "N/A",
+    "errors": 0,
+    "warnings": 0,
+    "note": "backend 린트 도구 미정 (CLAUDE.md) — 이 태스크에서 신규 도입하지 않음. 컴파일 경고(deprecated API)는 0건으로 확인함"
+  },
+  "refactoring": [
+    { "what": "@org.hibernate.annotations.Check(deprecated, Hibernate 7)를 jakarta.persistence @Table(check=@CheckConstraint(...))로 교체",
+      "why": "컴파일 시 deprecation 경고가 발생해 표준 JPA 3.2 API로 대체" }
+  ],
+  "scope_deviations": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/{api/dto -> service}/PerformanceResponse.java, PerformanceListResponse.java",
+      "what": "Plan(target_files)은 api/dto 패키지를 지정했으나 service 패키지로 옮겨 구현",
+      "why": "PerformanceService가 이 두 응답 타입을 반환값으로 만들어야 하는데, api/dto에 두면 Service가 api 패키지를 import하게 되어 ARCH-002(Service는 API를 호출하지 않는다, ADR-0003)를 위반한다. python scripts/check_architecture.py 로 실제 위반을 확인한 뒤 service 패키지로 옮겨 해결했다 — Controller(API)가 Service의 타입을 반환하는 것은 허용된 방향(API→Service)이라 문제가 없다.",
+      "verified_by": "python scripts/check_architecture.py — ARCH-001/002 모두 통과로 재확인" }
+  ],
+  "notes": {
+    "plan_phase1_constraints_yaml_concern_resolved": "PLAN_TASK-001.json의 architecture_refs.note_on_constraints_yaml에 남겨둔 우려(ARCH-001/002 glob이 controller/**를 가리켜 api/** 신규 파일이 검사 안 될 수 있다는 것)는 Phase 3 시점에 constraints.yaml을 다시 확인한 결과 이미 api/**로 되어 있어 해소된 상태였다 — 실제로 ARCH-002 위반(위 scope_deviations)이 이 제약에 의해 정상적으로 잡혔다."
+  }
+}

@@ -1,6 +1,4 @@
-package com.example.ticket_booking.api.dto;
-
-import com.example.ticket_booking.service.PerformanceStatus;
+package com.example.ticket_booking.service;
 
 import java.time.Instant;
 
