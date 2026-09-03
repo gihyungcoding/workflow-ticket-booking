@@ -1,0 +1,111 @@
+{
+  "task_id": "TASK-001",
+  "status": "FAIL",
+  "status_reason": "code-reviewer 및 독립 재현으로 정확성 결함 2건을 확인했다 — (1) CLOSED 상태 판정 로직이 응답 계산(statusOf)과 DB 필터(statusSpecification)에서 서로 달라 openAt>closeAt 데이터에서 모순된 결과를 낸다, (2) title/venue 컬럼 길이가 마이그레이션(VARCHAR(200))과 엔티티(JPA 기본값 255)에서 어긋난다. 둘 다 FORBIDDEN(코드 수정 금지) 때문에 Phase 4에서 고치지 않고 FAIL로 판정한다.",
+
+  "evidence": {
+    "tests": { "command": "JAVA_HOME=<JDK21> ./gradlew clean test", "exit_code": 0,
+               "summary": "12 tests completed, 0 failed (대상 시나리오 11 + 기존 1) — build/test-results/test/TEST-*.xml 확인" },
+    "lint": { "command": "./gradlew spotlessCheck", "exit_code": 0,
+              "summary": "BUILD SUCCESSFUL — Spotless(google-java-format) 통과. 이 검증 도중 develop에 도입되어(커밋 1593e5f) feature 브랜치가 리베이스+포맷 적용된 상태(커밋 fe85807)에서 재확인함" },
+    "diff":  { "command": "git diff --stat develop...HEAD",
+               "summary": "35 files changed, 2369 insertions(+) — 백엔드 프로덕션/테스트 코드 및 워크플로우 산출물 포함" },
+    "architecture": { "command": "python3 scripts/check_architecture.py --json", "exit_code": 0,
+                       "summary": "ARCH-001/002 모두 위반 0건" }
+  },
+
+  "acceptance_criteria": [
+    { "criterion": "GET /api/performances 호출 시 200과 함께 content/page/size/totalElements 형식으로 목록이 반환된다", "verdict": "PASS",
+      "evidence": "test_sc01_목록이_기본_페이지_형식으로_반환된다 통과 — 최상위 필드 정확히 4개 확인" },
+    { "criterion": "status=OPEN 필터 시 openAt <= now <= closeAt 이고 availableSeats > 0 인 공연만 반환된다", "verdict": "PASS",
+      "evidence": "test_sc02_statusOPEN_필터는_계산된_상태를_기준으로_적용된다 통과" },
+    { "criterion": "availableSeats == 0 인 공연은 status: SOLD_OUT 으로 반환된다", "verdict": "PASS",
+      "evidence": "test_sc03_매진된_공연은_SOLD_OUT_으로_표시된다 통과" },
+    { "criterion": "cancelled == true 인 공연은 시각·좌석 수와 무관하게 status: CANCELLED 로 반환된다", "verdict": "PASS",
+      "evidence": "test_sc04_취소된_공연은_CANCELLED_로_표시된다 통과" },
+    { "criterion": "start_at < now 인 공연은 상태 필터와 무관하게 목록에서 제외된다", "verdict": "PASS",
+      "evidence": "test_sc05, test_sc06 통과" },
+    { "criterion": "존재하지 않는 id 로 GET /api/performances/{id} 호출 시 404와 PERFORMANCE_NOT_FOUND 코드가 반환된다", "verdict": "PASS",
+      "evidence": "test_sc09_존재하지_않는_공연을_조회하면_404가_반환된다 통과" },
+    { "criterion": "Clock 을 오픈 정각·마감 1초 전으로 고정한 테스트에서 경계값이 올바른 status 를 반환한다 (SQL now() 미사용을 리뷰로 확인)", "verdict": "PASS",
+      "evidence": "test_sc07, test_sc08 통과. 리뷰: grep 결과 프로덕션 코드에 Instant.now()/LocalDateTime.now()/SQL now()·CURRENT_TIMESTAMP 직접 호출 없음 — clock.instant() 만 사용 (PerformanceService.java:26,46)" },
+    { "criterion": "performance 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다", "verdict": "PASS",
+      "evidence": "test_sc10, test_sc11 통과 — 단 assertThatThrownBy(Exception.class)가 지나치게 넓다는 code_review 지적 있음 (아래 참고)" }
+  ],
+
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 0,
+    "violations": []
+  },
+
+  "regression": {
+    "full_suite": "12/12 passed (JAVA_HOME=<JDK21> ./gradlew clean test)",
+    "callers_checked": true,
+    "note": "PerformanceService/PerformanceController/Performance 엔티티는 이번 태스크에서 신규 도입 — 다른 코드가 이들을 호출하지 않음 (grep 확인)"
+  },
+
+  "scope_deviations": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/{api/dto -> service}/PerformanceResponse.java, PerformanceListResponse.java",
+      "what": "Plan(target_files)은 api/dto 패키지를 지정했으나 service 패키지로 이동해 구현 (DEV_TASK-001.json에 이미 기록)",
+      "review": "code-reviewer가 검토 후 '정당함, 조치 불필요' 판정 — ARCH-002 위반을 피하기 위한 올바른 조정이었음을 constraints.yaml 대조로 확인" }
+  ],
+
+  "code_review": {
+    "reviewer": "code-reviewer subagent",
+    "findings": [
+      {
+        "severity": "correctness",
+        "file": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+        "location": "statusOf() (98-111) vs statusSpecification() CLOSED 분기 (91-93)",
+        "summary": "CLOSED 상태의 DB 필터 조건에 openAt<=now 가 빠져 있어, openAt>closeAt인 데이터에서 statusOf()가 계산하는 status(UPCOMING)와 status=CLOSED 필터 결과가 모순된다 — 같은 행이 ?status=UPCOMING과 ?status=CLOSED 양쪽에 동시에 잡힌다.",
+        "verified_independently": true,
+        "verification_method": "구체적 데이터(openAt=2030-01-10, closeAt=2030-01-05, now=2030-01-07)를 두 메서드에 직접 대입해 재현 확인",
+        "why_not_caught": "SC-06만 CLOSED 분기를 실행하는데 openAt<closeAt인 정상 케이스만 다뤄 이 경로를 지나지 않는다. UPCOMING/SOLD_OUT/CANCELLED 상태 필터는 어떤 시나리오도 실행하지 않는다"
+      },
+      {
+        "severity": "correctness",
+        "file": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+        "location": "title, venue 필드 (31-35)",
+        "summary": "V1 마이그레이션은 VARCHAR(200)인데 엔티티에 length 지정이 없어 JPA 기본값 255가 적용된다 — H2 테스트 스키마와 운영 PostgreSQL 스키마가 어긋난다. 201~255자 title은 테스트는 통과하고 운영에서만 실패한다.",
+        "verified_independently": true,
+        "verification_method": "jakarta.persistence.Column.class 바이트코드의 AnnotationDefault 상수 풀 확인 — length() 기본값이 정수 255로 컴파일되어 있음을 직접 확인",
+        "why_not_caught": "AC8은 NOT NULL/CHECK만 언급하고 길이 제약은 acceptance_criteria에 없다 — SC-10/SC-11 둘 다 길이를 다루지 않는다"
+      },
+      {
+        "severity": "correctness (범위 밖으로 문서화됨)",
+        "file": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+        "location": "list() (24-30)",
+        "summary": "size=0/음수, page=음수 요청이 Spring Data의 IllegalArgumentException으로 이어져 처리되지 않은 채 500이 된다. Math.min(size,100)은 상한만 막는다.",
+        "verified_independently": true,
+        "verification_method": "spring-data-commons AbstractPageRequest.class 바이트코드에서 'Page index must not be less than zero'/'Page size must not be less than one' 검증 메시지 확인 — PerformanceExceptionHandler는 PerformanceNotFoundException만 처리해 이 예외는 그대로 전파됨",
+        "note": "SCENARIO_TASK-001.md '의도적으로 다루지 않는 것'에 이미 범위 밖으로 명시됐다 — acceptance_criteria 위반은 아니지만 클라이언트 입력만으로 500을 유발할 수 있어 별도 기록"
+      },
+      {
+        "severity": "test-coverage",
+        "file": "backend/src/test/java/com/example/ticket_booking/repository/PerformanceConstraintTest.java",
+        "location": "42-43, 63-64",
+        "summary": "assertThatThrownBy(...).isInstanceOf(Exception.class) 는 제약 위반이 아닌 다른 원인(매핑 오류 등)으로 실패해도 통과해버릴 만큼 느슨하다. DataIntegrityViolationException 정도로 좁히는 것을 제안."
+      },
+      {
+        "severity": "test-coverage",
+        "file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceApiTest.java",
+        "summary": "statusSpecification()의 5개 분기 중 OPEN(SC-02)과 CLOSED(SC-06)만 필터로 실행되고 UPCOMING/SOLD_OUT/CANCELLED 필터는 어떤 시나리오도 실행하지 않는다 — 위 CLOSED 결함이 이 공백에서 발생했다."
+      }
+    ]
+  },
+
+  "security": {
+    "input_validation": "id(Long), status(enum)는 Spring 타입 변환이 검증을 대신하며 비정상 값은 400으로 처리된다(프레임워크 기본). Specification/Criteria API만 사용해 문자열 조합 쿼리가 없어 SQL 인젝션 경로 없음. page/size의 음수·0 입력은 위 code_review 3번째 항목 참고(500, 범위 밖으로 이미 문서화됨).",
+    "authorization": "해당 없음 — 이 API는 읽기 전용 공개 조회이며 제품 정의(§1-1: 관객이 문의 없이 확인)상 인증·인가가 범위 밖이다.",
+    "secrets": "해당 없음 — 변경 파일에 하드코딩된 토큰·키·비밀번호 없음 (grep 확인)",
+    "logging": "해당 없음 — 변경 파일에 로깅 문 자체가 없음 (grep 확인)"
+  },
+
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}
