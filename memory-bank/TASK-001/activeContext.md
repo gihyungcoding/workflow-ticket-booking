@@ -1,8 +1,8 @@
 ---
 task_id: TASK-001
 title: "공연 목록/상세 조회 API"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design"
 status: ACTIVE
 created_at: 2026-09-03
 last_updated: 2026-09-03
@@ -12,21 +12,25 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-001-performance-list-detail-api"
 
-last_checkpoint: CP-1.3
+last_checkpoint: CP-2.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-001.json"
+  scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-001.md"
+  scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-001.json"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-001.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1(Plan)을 완료했다. `PLAN_TASK-001.json` 에 route(Backend), 4계층에 걸친
-신규 파일 12건, flow 6개(acceptance_criteria 7건 전부 커버)를 정리했다. EXIT
-GATE를 통과했으므로 다음은 Phase 2a(시나리오 설계)다.
+Phase 2a(시나리오 설계)를 완료하고 HITL#1 승인을 받았다. 시나리오 11건(happy 4 /
+boundary 4 / error 3)이 acceptance_criteria 8/8(최초 7건 + 사용자 요청으로 추가한
+NOT NULL/CHECK 제약 검증 1건)을 커버한다. 독립검증자를 4회 호출해 통과시켰다.
+EXIT GATE 통과, 다음은 Phase 2b(Red 테스트 작성)다.
 
 ## 다음 한 걸음
 
-`wf-scenario` 스킬로 `PLAN_TASK-001.json` 의 flows를 Given/When/Then 시나리오로
-옮기고 독립검증자 검증 후 HITL#1 승인을 받는다.
+`wf-red` 스킬로 `SCENARIO_TASK-001.md`의 11개 시나리오를 실패하는 테스트 코드로
+옮기고 HITL#2 승인을 받는다.
 
 ## 알아둬야 할 것
 
@@ -47,3 +51,11 @@ GATE를 통과했으므로 다음은 Phase 2a(시나리오 설계)다.
   인데 실제 API 계층 위치는 `**/api/**` (architecture.md §2) — 이대로면 Phase 4에서
   이 태스크의 신규 컨트롤러가 검사 대상에서 빠진다. Phase 4 전에 사용자와 확인해
   glob을 정정할지 결정한다
+- **Plan이 Phase 2a 중 개정됨**: F7(엔티티 제약-마이그레이션 제약 일치)과 AC8을
+  사용자 요청으로 추가했다 — `PLAN_TASK-001.json.amendments` 참고. Performance
+  엔티티는 V1 마이그레이션의 NOT NULL/CHECK를 애노테이션으로도 표현해야 하고,
+  Phase 2b는 SC-10/SC-11(저장이 "DB에 실제로 반영되는 시점까지" 거부되는지)을
+  `@DataJpaTest`로 옮겨야 한다
+- SC-07/SC-08은 Clock 고정 시각을 **실제 시스템 시각과 다르게**(예: 몇 년 뒤) 잡아야
+  한다 — 그래야 구현이 Clock 대신 SQL now()/시스템 시각을 쓰는 결함을 status 값
+  자체로 잡아낼 수 있다
