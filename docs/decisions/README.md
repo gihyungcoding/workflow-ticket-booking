@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-09-03 · 총 5건
+마지막 재생성: 2026-09-03 · 총 6건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -13,3 +13,4 @@
 | [ADR-0003](ADR-0003-layered-architecture-and-stack.md) | 레이어드 아키텍처와 Java/Spring + React + PostgreSQL 스택을 쓴다 | 채택됨 | 2026-09-02 |
 | [ADR-0004](ADR-0004-seat-hold-concurrency.md) | 좌석 선점 동시성 제어는 DB 트랜잭션(유니크 제약 + 조건부 UPSERT)만으로 처리한다 | 채택됨 | 2026-09-02 |
 | [ADR-0005](ADR-0005-clock-injection-for-time-based-decisions.md) | 시각 기준 판정은 주입된 Clock 을 쓰고 DB now() 를 직접 쓰지 않는다 | 채택됨 | 2026-09-03 |
+| [ADR-0006](ADR-0006-test-db-h2-then-testcontainers.md) | 테스트 DB는 당분간 H2 인메모리를 쓰고, 좌석 선점 착수 전 Testcontainers로 전환한다 | 채택됨 | 2026-09-03 |

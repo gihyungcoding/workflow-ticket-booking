@@ -67,6 +67,8 @@
   [ADR-0003](../decisions/ADR-0003-layered-architecture-and-stack.md)
 - 좌석 선점 동시성 제어(DB 트랜잭션만으로 처리, 규모 가정과 재검토 트리거) →
   [ADR-0004](../decisions/ADR-0004-seat-hold-concurrency.md)
+- 테스트 DB 전략(당분간 H2, 좌석 선점 착수 전 Testcontainers 전환) →
+  [ADR-0006](../decisions/ADR-0006-test-db-h2-then-testcontainers.md)
 
 ## 7. 알려진 부채
 
