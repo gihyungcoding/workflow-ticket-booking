@@ -26,8 +26,8 @@
 
 | Task | 범위 | 산출물 | 포함하지 않음 | 선행 | 추정 | 태스크 ID |
 |---|---|---|---|---|---|---|
-| A. 백엔드 — 공연 목록/상세 조회 API | `performance` 테이블, 상태 계산(Clock 기반), 목록(필터·페이지네이션)/상세 API | `performance` 마이그레이션, `PerformanceController`/`Service`/`Repository`, `GET /api/performances`, `GET /api/performances/{id}` | 공연 등록/수정 API(쓰기), 좌석 단위 데이터·API | — | 10h | |
-| B. 프론트 — 공연 목록/상세 화면 | 목록 화면(카드 목록, 상태 배지, 필터), 상세 화면(공연 정보 + 상태) | 목록·상세 컴포넌트, API 연동, 기본/로딩/빈 목록/오류 상태 | 좌석 선택 UI, 결제 진입 | A | 8h | |
+| A. 백엔드 — 공연 목록/상세 조회 API | `performance` 테이블, 상태 계산(Clock 기반), 목록(필터·페이지네이션)/상세 API | `performance` 마이그레이션, `PerformanceController`/`Service`/`Repository`, `GET /api/performances`, `GET /api/performances/{id}` | 공연 등록/수정 API(쓰기), 좌석 단위 데이터·API | — | 10h | TASK-001 |
+| B. 프론트 — 공연 목록/상세 화면 | 목록 화면(카드 목록, 상태 배지, 필터), 상세 화면(공연 정보 + 상태) | 목록·상세 컴포넌트, API 연동, 기본/로딩/빈 목록/오류 상태 | 좌석 선택 UI, 결제 진입 | A | 8h | TASK-002 |
 
 **분리 이유**: 백엔드는 상태 계산 규칙(§1-3)과 시각 처리(Clock)가 핵심이라 프론트와
 독립적으로 검증 가능해야 한다. 프론트는 API 응답의 `status` 값을 그대로 배지로
@@ -37,6 +37,8 @@
 흐름
   A(백엔드 API) ──► B(프론트 화면)
 ```
+
+[태스크 생성 2026-09-03]
 
 ### 1-3. 상세
 
