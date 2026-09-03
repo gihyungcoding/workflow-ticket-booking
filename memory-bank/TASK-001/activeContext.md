@@ -1,8 +1,8 @@
 ---
 task_id: TASK-001
 title: "공연 목록/상세 조회 API"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 created_at: 2026-09-03
 last_updated: 2026-09-03
@@ -12,25 +12,27 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-001-performance-list-detail-api"
 
-last_checkpoint: CP-2.4
+last_checkpoint: CP-2.6
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-001.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-001.md"
   scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-001.json"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-001.json"
+  test: "workflow_design/05_scenario/TEST_TASK-001.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a(시나리오 설계)를 완료하고 HITL#1 승인을 받았다. 시나리오 11건(happy 4 /
-boundary 4 / error 3)이 acceptance_criteria 8/8(최초 7건 + 사용자 요청으로 추가한
-NOT NULL/CHECK 제약 검증 1건)을 커버한다. 독립검증자를 4회 호출해 통과시켰다.
-EXIT GATE 통과, 다음은 Phase 2b(Red 테스트 작성)다.
+Phase 2b(Red)를 완료하고 HITL#2 승인을 받았다. 시나리오 11건을 테스트 11개로
+1:1 옮겨 전부 실패시켰다(UnsupportedOperationException 9건, AssertionError 2건).
+기존 테스트는 계속 통과한다. 다음은 Phase 3(Green — 실제 구현)이다.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 `SCENARIO_TASK-001.md`의 11개 시나리오를 실패하는 테스트 코드로
-옮기고 HITL#2 승인을 받는다.
+`wf-develop` 스킬로 스켈레톤의 `UnsupportedOperationException`을 실제 로직으로
+바꾸고, Phase 2b가 미룬 파일(V1 마이그레이션, PerformanceExceptionHandler,
+ErrorResponse, PerformanceNotFoundException, Performance 엔티티의 NOT NULL/CHECK
+애노테이션)을 채워 11개 테스트를 모두 통과시킨다.
 
 ## 알아둬야 할 것
 
@@ -59,3 +61,20 @@ EXIT GATE 통과, 다음은 Phase 2b(Red 테스트 작성)다.
 - SC-07/SC-08은 Clock 고정 시각을 **실제 시스템 시각과 다르게**(예: 몇 년 뒤) 잡아야
   한다 — 그래야 구현이 Clock 대신 SQL now()/시스템 시각을 쓰는 결함을 status 값
   자체로 잡아낼 수 있다
+- **이 저장소의 `./gradlew`는 JAVA_HOME이 JDK 17+ 를 가리켜야 동작한다** — 시스템
+  기본 `java`는 8이라 그대로 실행하면 "Gradle requires JVM 17 or later" 로 즉시
+  실패한다. 이 머신엔 JDK 21(Microsoft) 이 `/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home`
+  에 있다 — 매 gradlew 호출 앞에 `JAVA_HOME=<이 경로>` 를 붙인다
+- **Spring Boot 4.1.1 + Jackson 3 패키지 변경 주의** — `@DataJpaTest`는
+  `org.springframework.boot.data.jpa.test.autoconfigure`, `@AutoConfigureMockMvc`는
+  `org.springframework.boot.webmvc.test.autoconfigure`, Jackson `ObjectMapper`는
+  `tools.jackson.databind`(`JsonMapper.builder().build()`로 생성) — 흔히 아는
+  Spring Boot 2/3 패키지가 아니다 (memory: project-spring-boot4-package-changes)
+- **Phase 2b는 Java 컴파일 언어라 스켈레톤 전략을 썼다** — 프로덕션 클래스는
+  컴파일만 되는 최소 구조(필드/시그니처)이고 메서드 본문은
+  `UnsupportedOperationException`. 예외: SC-10/SC-11은 엔티티의 NOT NULL/CHECK
+  애노테이션 자체가 구현이라 아직 넣지 않았다 — Phase 3에서 `Performance.java`에
+  `@Column(nullable=false)`/`@Check` 등을 추가하는 것이 그 시나리오의 진짜 구현이다.
+  또한 V1 마이그레이션, `PerformanceExceptionHandler`, `ErrorResponse`,
+  `PerformanceNotFoundException`은 Red에 불필요해 아직 만들지 않았다
+  (memory: feedback-java-tdd-red-skeleton, `TEST_TASK-001.json.java_compiled_language_notes`)
