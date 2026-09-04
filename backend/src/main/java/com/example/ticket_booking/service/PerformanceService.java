@@ -47,6 +47,13 @@ public class PerformanceService {
   }
 
   private PerformanceResponse toResponse(Performance performance, Instant now) {
+    PerformanceStatus status =
+        PerformanceStatusRules.of(
+            Boolean.TRUE.equals(performance.getCancelled()),
+            now,
+            performance.getOpenAt(),
+            performance.getCloseAt(),
+            performance.getAvailableSeats());
     return new PerformanceResponse(
         performance.getId(),
         performance.getTitle(),
@@ -56,7 +63,7 @@ public class PerformanceService {
         performance.getCloseAt(),
         performance.getTotalSeats(),
         performance.getAvailableSeats(),
-        statusOf(performance, now));
+        status);
   }
 
   /** 목록은 status 필터와 무관하게 항상 지난 공연(startAt < now)을 제외한다 (F4). */
@@ -65,8 +72,11 @@ public class PerformanceService {
   }
 
   /**
-   * status 는 저장 컬럼이 아니라 계산값이라, {@link #statusOf} 의 5개 규칙을 그대로 WHERE 절 조건으로 옮긴다 (F3). 두 메서드는 같은 규칙을
-   * 표현하므로 한쪽을 고치면 다른 쪽도 함께 고쳐야 한다.
+   * status 는 저장 컬럼이 아니라 계산값이라, {@link PerformanceStatusRules#of} 의 5개 규칙을 WHERE 절 조건으로 옮긴다 (F3).
+   * CLOSED 분기는 openAt&lt;=now 조건을 명시하지 않지만, F8(엔티티/마이그레이션의 CHECK open_at&lt;=close_at)이 항상 성립하는 한
+   * "closeAt&lt;now" 만으로 "openAt&lt;=now AND closeAt&lt;now"(PerformanceStatusRules의 CLOSED 조건)와
+   * 동치다 — closeAt&lt;now 이고 openAt&lt;=closeAt 이면 openAt&lt;now 가 산술적으로 따라온다. F8이 깨지면(제약을 제거하면) 이
+   * 동치도 깨지므로 함께 고려한다.
    */
   private Specification<Performance> statusSpecification(PerformanceStatus status, Instant now) {
     return switch (status) {
@@ -92,21 +102,5 @@ public class PerformanceService {
           (root, query, cb) ->
               cb.and(cb.isFalse(root.get("cancelled")), cb.lessThan(root.get("closeAt"), now));
     };
-  }
-
-  /** {@link #statusSpecification} 과 같은 규칙(§1-3)을 응답에 채울 값으로 계산한다. */
-  private PerformanceStatus statusOf(Performance performance, Instant now) {
-    if (Boolean.TRUE.equals(performance.getCancelled())) {
-      return PerformanceStatus.CANCELLED;
-    }
-    if (now.isBefore(performance.getOpenAt())) {
-      return PerformanceStatus.UPCOMING;
-    }
-    if (now.isAfter(performance.getCloseAt())) {
-      return PerformanceStatus.CLOSED;
-    }
-    return performance.getAvailableSeats() > 0
-        ? PerformanceStatus.OPEN
-        : PerformanceStatus.SOLD_OUT;
   }
 }

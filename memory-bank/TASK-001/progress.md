@@ -5,8 +5,8 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | route=Backend, 신규 파일 12건 |
 | 2a Scenario | ✅ 완료 (attempt 2) | CP-2.4_retry1 | 시나리오 18건, AC 11/11, HITL#1 재승인 |
 | 2b Red | ✅ 완료 (attempt 2) | CP-2.6_retry1 | 20개 중 3개 Red(SC-15/16, F9 단위 테스트), 17개는 기존 구현으로 이미 Green. HITL#2 재승인 |
-| 3 Green | ⬜ 재작업 대기 | CP-3.4 (attempt 1 완료분은 유효, 수정 필요) | F8(CHECK 제약)·컬럼 길이·PerformanceStatusRules 반영 필요 |
-| 4 Verify | ❌ FAIL (attempt 1) | CP-4.2 | 정확성 결함 2건 — VERIFY_TASK-001.json.reject 참고. attempt 2는 Phase 2b/3 재작업 후 재검증 |
+| 3 Green | ✅ 완료 (attempt 2) | CP-3.4_retry1 | 테스트 20/20, 아키텍처·린트 통과. F7/F8/F9 구현 완료 |
+| 4 Verify | ⬜ 재검증 대기 (attempt 2) | CP-4.2 (attempt 1은 FAIL로 보존) | attempt 1 결함 2건 해결됨 — 재검증 필요 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

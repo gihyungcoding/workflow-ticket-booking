@@ -27,9 +27,9 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * TASK-001 시나리오 SC-01~SC-09, SC-12~SC-14.
  *
- * <p>SC-01~09는 attempt 1에서 이미 Green. SC-12~14(attempt 2, Phase 4 REJECT 대응)는 기존
- * 구현이 이미 올바르게 처리하던 필터 분기라 추가 즉시 통과한다 — CLOSED 분기에서만 결함이
- * 있었고 UPCOMING/SOLD_OUT/CANCELLED 분기 자체는 처음부터 맞았다(TEST_TASK-001.json 참고).
+ * <p>SC-01~09는 attempt 1에서 이미 Green. SC-12~14(attempt 2, Phase 4 REJECT 대응)는 기존 구현이 이미 올바르게 처리하던 필터
+ * 분기라 추가 즉시 통과한다 — CLOSED 분기에서만 결함이 있었고 UPCOMING/SOLD_OUT/CANCELLED 분기 자체는 처음부터
+ * 맞았다(TEST_TASK-001.json 참고).
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-001.md
  */
@@ -384,7 +384,8 @@ class PerformanceApiTest {
   @Test
   void test_sc14_statusCANCELLED_필터가_정확히_적용된다() throws Exception {
     Instant now = clock.instant();
-    // Given 공연 A는 cancelled = true 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (조건만 보면 OPEN처럼 보인다)
+    // Given 공연 A는 cancelled = true 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (조건만 보면
+    // OPEN처럼 보인다)
     performance(
         "공연 A",
         now.plus(5, ChronoUnit.DAYS),
@@ -393,7 +394,8 @@ class PerformanceApiTest {
         100,
         50,
         true);
-    // Given 공연 B는 cancelled = false 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (계산상 OPEN — 양성 대조군)
+    // Given 공연 B는 cancelled = false 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (계산상 OPEN
+    // — 양성 대조군)
     performance(
         "공연 B",
         now.plus(5, ChronoUnit.DAYS),

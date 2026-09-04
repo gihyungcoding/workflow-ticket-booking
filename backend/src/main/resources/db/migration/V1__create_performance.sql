@@ -8,7 +8,8 @@ CREATE TABLE performance (
     total_seats      INT NOT NULL CHECK (total_seats > 0),
     available_seats  INT NOT NULL CHECK (available_seats >= 0 AND available_seats <= total_seats),
     cancelled        BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (open_at <= close_at)
 );
 
 CREATE INDEX idx_performance_start_at ON performance (start_at);
