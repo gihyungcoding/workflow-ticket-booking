@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | route=Backend, 신규 파일 12건 |
 | 2a Scenario | ✅ 완료 (attempt 2) | CP-2.4_retry1 | 시나리오 18건, AC 11/11, HITL#1 재승인 |
-| 2b Red | ⬜ 재진입 대기 | CP-2.6 (attempt 1 완료분은 유효, 추가분 필요) | SC-12~18 + PerformanceStatusRules 단위 테스트(F9) 추가 필요 — 인벤토리 19개 |
+| 2b Red | ✅ 완료 (attempt 2) | CP-2.6_retry1 | 20개 중 3개 Red(SC-15/16, F9 단위 테스트), 17개는 기존 구현으로 이미 Green. HITL#2 재승인 |
 | 3 Green | ⬜ 재작업 대기 | CP-3.4 (attempt 1 완료분은 유효, 수정 필요) | F8(CHECK 제약)·컬럼 길이·PerformanceStatusRules 반영 필요 |
 | 4 Verify | ❌ FAIL (attempt 1) | CP-4.2 | 정확성 결함 2건 — VERIFY_TASK-001.json.reject 참고. attempt 2는 Phase 2b/3 재작업 후 재검증 |
 | 5 Reflect | ⬜ 대기 | — | |

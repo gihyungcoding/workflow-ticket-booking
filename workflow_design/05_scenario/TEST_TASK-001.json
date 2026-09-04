@@ -1,72 +1,80 @@
 {
   "task_id": "TASK-001",
+  "attempt": 2,
   "supersedes": "SCENARIO_TASK-001.json",
   "test_files": [
     "backend/src/test/java/com/example/ticket_booking/api/PerformanceApiTest.java",
-    "backend/src/test/java/com/example/ticket_booking/repository/PerformanceConstraintTest.java"
+    "backend/src/test/java/com/example/ticket_booking/repository/PerformanceConstraintTest.java",
+    "backend/src/test/java/com/example/ticket_booking/service/PerformanceStatusRulesTest.java"
   ],
   "test_support_files": [
     "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
     "backend/src/test/java/com/example/ticket_booking/support/ClockTestConfig.java"
   ],
+  "retry_notes": {
+    "why_mixed_result": "attempt 1이 이미 Phase 3(Green)까지 갔던 코드베이스라, 이번 재시도는 '전부 실패'가 아니라 '새로 추가된 부분 중 실제로 버그가 있는 곳만 실패'해야 정상이다. SC-12/13/14(UPCOMING/SOLD_OUT/CANCELLED 필터)와 SC-17/18(길이·시각 불변조건의 양성 대조군)은 기존 구현이 처음부터 올바르게 처리하고 있어 추가 즉시 통과했다 — 이는 '이미 구현됐다'는 정상적인 경우이지 테스트가 잘못된 신호가 아니다(wf-red Step 3 표 참고). SC-15/16(F8/컬럼 길이)과 PerformanceStatusRulesTest(F9)만 실제 미구현이라 Red다.",
+    "previous_attempt": "attempt 1의 전체 Red 기록은 memory-bank/TASK-001/checkpoints/phase2b/CP-2.5_red-code.md 에 보존되어 있다"
+  },
   "red_scenarios": [
-    { "scenario_id": "SC-01", "test_function": "test_sc01_목록이_기본_페이지_형식으로_반환된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-02", "test_function": "test_sc02_statusOPEN_필터는_계산된_상태를_기준으로_적용된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-03", "test_function": "test_sc03_매진된_공연은_SOLD_OUT_으로_표시된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-04", "test_function": "test_sc04_취소된_공연은_CANCELLED_로_표시된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-05", "test_function": "test_sc05_지난_공연은_필터_없는_목록에서_제외된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-06", "test_function": "test_sc06_status필터가_일치해도_지난_공연은_여전히_제외된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-07", "test_function": "test_sc07_오픈_정각에_상태가_OPEN_으로_전환된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-08", "test_function": "test_sc08_마감_1초_전까지는_CLOSED_로_전환되지_않는다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-09", "test_function": "test_sc09_존재하지_않는_공연을_조회하면_404가_반환된다",
-      "status": "red", "failure": "jakarta.servlet.ServletException (cause: java.lang.UnsupportedOperationException)" },
-    { "scenario_id": "SC-10", "test_function": "test_sc10_필수_필드가_없는_공연은_저장이_거부된다",
-      "status": "red", "failure": "java.lang.AssertionError: Expecting code to raise a throwable." },
-    { "scenario_id": "SC-11", "test_function": "test_sc11_availableSeats가_totalSeats보다_크면_저장이_거부된다",
-      "status": "red", "failure": "java.lang.AssertionError: Expecting code to raise a throwable." }
+    { "scenario_id": "SC-01", "test_function": "test_sc01_목록이_기본_페이지_형식으로_반환된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-02", "test_function": "test_sc02_statusOPEN_필터는_계산된_상태를_기준으로_적용된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-03", "test_function": "test_sc03_매진된_공연은_SOLD_OUT_으로_표시된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-04", "test_function": "test_sc04_취소된_공연은_CANCELLED_로_표시된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-05", "test_function": "test_sc05_지난_공연은_필터_없는_목록에서_제외된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-06", "test_function": "test_sc06_status필터가_일치해도_지난_공연은_여전히_제외된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-07", "test_function": "test_sc07_오픈_정각에_상태가_OPEN_으로_전환된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-08", "test_function": "test_sc08_마감_1초_전까지는_CLOSED_로_전환되지_않는다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-09", "test_function": "test_sc09_존재하지_않는_공연을_조회하면_404가_반환된다", "status": "green (attempt 1에서 이미 구현 완료)" },
+    { "scenario_id": "SC-10", "test_function": "test_sc10_필수_필드가_없는_공연은_저장이_거부된다", "status": "green (attempt 1 구현 유지, 단언만 DataIntegrityViolationException으로 강화됨)" },
+    { "scenario_id": "SC-11", "test_function": "test_sc11_availableSeats가_totalSeats보다_크면_저장이_거부된다", "status": "green (attempt 1 구현 유지, 단언만 DataIntegrityViolationException으로 강화됨)" },
+    { "scenario_id": "SC-12", "test_function": "test_sc12_statusUPCOMING_필터가_정확히_적용된다",
+      "status": "green (신규 시나리오지만 기존 statusSpecification()의 UPCOMING 분기가 처음부터 정확해 즉시 통과 — CLOSED에서만 결함이 있었다)" },
+    { "scenario_id": "SC-13", "test_function": "test_sc13_statusSOLD_OUT_필터가_정확히_적용된다",
+      "status": "green (신규 시나리오지만 기존 SOLD_OUT 분기가 처음부터 정확해 즉시 통과)" },
+    { "scenario_id": "SC-14", "test_function": "test_sc14_statusCANCELLED_필터가_정확히_적용된다",
+      "status": "green (신규 시나리오지만 기존 CANCELLED 분기가 처음부터 정확해 즉시 통과)" },
+    { "scenario_id": "SC-15", "test_function": "test_sc15_openAt가_closeAt보다_늦으면_저장이_거부된다",
+      "status": "red", "failure": "java.lang.AssertionError: Expecting code to raise a throwable. (F8 CHECK 제약이 아직 없음)" },
+    { "scenario_id": "SC-16", "test_function": "test_sc16_title이_200자를_초과하면_저장이_거부된다",
+      "status": "red", "failure": "java.lang.AssertionError: Expecting code to raise a throwable. (title length=200 애노테이션이 아직 없어 JPA 기본값 255 적용)" },
+    { "scenario_id": "SC-17", "test_function": "test_sc17_title이_정확히_200자면_저장된다",
+      "status": "green (제약이 아직 없어 당연히 저장됨 — 양성 대조군이라 Phase 3에서 F7 추가 후에도 계속 green이어야 함)" },
+    { "scenario_id": "SC-18", "test_function": "test_sc18_openAt이_closeAt과_같으면_저장된다",
+      "status": "green (제약이 아직 없어 당연히 저장됨 — 양성 대조군이라 Phase 3에서 F8 추가 후에도 계속 green이어야 함)" }
   ],
+  "additional_test_not_mapped_to_scenario": {
+    "test_function": "com.example.ticket_booking.service.PerformanceStatusRulesTest#다섯_상태는_서로_배타적이다",
+    "flow": "F9",
+    "status": "red",
+    "failure": "java.lang.UnsupportedOperationException (PerformanceStatusRules.of()/matches() 스켈레톤)",
+    "why_no_scenario_id": "SCENARIO_TASK-001.md '인벤토리 예외' 섹션 및 PLAN_TASK-001.json.amendments(HITL#1 재승인 시점)에 근거가 있다 — HITL#1에서 사용자가 V10(CLOSED/UPCOMING 상호배타성이 API 경계에서 재현 불가) 대응으로 직접 승인한 순수 단위 테스트"
+  },
   "red_result": {
-    "command": "./gradlew test",
-    "total": 12,
-    "failed": 11,
-    "passed": 1,
+    "command": "JAVA_HOME=<JDK21> ./gradlew clean test",
+    "total": 20,
+    "failed": 3,
+    "passed": 17,
     "existing_tests_still_passing": true,
-    "note": "passed=1 은 기존 TicketBookingApplicationTests.contextLoads() — 신규 11개는 전부 실패(Red)"
+    "note": "실패 3건 = SC-15, SC-16, PerformanceStatusRulesTest. 나머지 17건(기존 12건 + 신규 SC-12/13/14/17/18)은 attempt 1의 기존 구현이 이미 올바르거나 아직 제약이 없어 자연스럽게 green."
   },
   "inventory_check": {
-    "scenarios": 11,
-    "test_functions": 11,
-    "match": true
+    "scenarios": 18,
+    "test_functions": 18,
+    "match": true,
+    "note": "PerformanceStatusRulesTest 1건은 위 additional_test_not_mapped_to_scenario로 별도 관리 — 18:18 매칭에는 포함하지 않는다 (승인된 예외)"
   },
   "testing_preferences": {
     "framework": "JUnit5 + Spring Boot Test (H2, ADR-0006)",
-    "mock_strategy": "SC-01~SC-09: @SpringBootTest + @AutoConfigureMockMvc + 실제 Repository/H2, Clock만 테스트용 MutableClock으로 교체(@Primary). SC-10/SC-11: @DataJpaTest + PerformanceRepository.saveAndFlush로 제약 위반 시 예외를 직접 확인."
+    "mock_strategy": "SC-01~09/12~14: @SpringBootTest + @AutoConfigureMockMvc + 실제 Repository/H2, Clock만 테스트용 MutableClock으로 교체(@Primary). SC-10/11/15~18: @DataJpaTest + PerformanceRepository.saveAndFlush/TestEntityManager로 제약 위반·보존 여부를 직접 확인. PerformanceStatusRulesTest: 순수 JUnit, Spring 컨텍스트 없음."
   },
   "java_compiled_language_notes": {
-    "why_here": "wf-red 스킬은 Python(pytest) 예시를 기준으로 쓰여 있어 컴파일 언어에는 그대로 적용되지 않는다 — 존재하지 않는 클래스를 참조하면 컴파일 자체가 실패하고, 이는 스킬의 FORBIDDEN(SyntaxError/ImportError는 Red가 아니다)에 해당한다. 사용자와 합의한 처리 방식을 기록한다.",
-    "skeleton_approach": "컴파일에 필요한 최소한의 프로덕션 클래스(필드·시그니처·구조적 애노테이션)만 만들고, 메서드 본문은 UnsupportedOperationException을 던진다. Repository는 커스텀 쿼리 메서드 없이 JpaRepository 상속만 한다.",
-    "constraint_scenarios_exception": "SC-10/SC-11(F7/AC8)은 애노테이션 자체가 구현이라 일반 규칙이 적용되지 않는다 — Performance 엔티티에 NOT NULL(@Column(nullable=false))/CHECK(@Check 등) 애노테이션을 아직 넣지 않아, 저장이 그대로 성공해버려 assertThrows가 '예외를 기대했으나 없음'으로 실패한다. 이것이 이 두 시나리오의 정상적인 Red 상태다.",
-    "http_boundary_failure_shape": "SC-01~SC-09는 MockMvc로 컨트롤러를 통과하므로, 서비스가 던진 UnsupportedOperationException이 Spring Boot 기본 에러 처리에 의해 500 응답으로 변환된 뒤 jakarta.servlet.ServletException으로 테스트에 전달된다. 승인된 Then(예: '200이 반환된다')을 그대로 단언했기 때문에 실패 형태가 예외 타입이 아니라 상태 코드 불일치이며, 이는 미구현 때문임이 명백해 유효한 Red로 인정한다.",
-    "deferred_to_phase3": [
-      "backend/src/main/resources/db/migration/V1__create_performance.sql (Flyway는 테스트에서 비활성화되어 있어 Red 컴파일/실행에 불필요)",
-      "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java (404 매핑 — Red 상태에서는 어떤 예외도 PerformanceNotFoundException이 아니라 실제로 발동하지 않음)",
-      "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java (위 핸들러에서만 쓰임)",
-      "backend/src/main/java/com/example/ticket_booking/service/PerformanceNotFoundException.java (위 핸들러와 짝 — 아직 아무도 던지지 않음)",
-      "Performance 엔티티의 NOT NULL/CHECK 애노테이션 (F7 구현 그 자체)"
-    ],
+    "why_here": "wf-red 스킬은 Python(pytest) 예시를 기준으로 쓰여 있어 컴파일 언어에는 그대로 적용되지 않는다. attempt 1에서 사용자와 합의한 스켈레톤 전략(memory: feedback-java-tdd-red-skeleton)을 이번 신규 파일(PerformanceStatusRules)에도 동일하게 적용했다.",
     "spring_boot_4_package_changes_discovered": {
-      "note": "이 프로젝트의 Spring Boot 버전(4.1.1)에서 테스트 슬라이스 애노테이션과 Jackson이 예상 패키지와 다른 곳으로 이동해 있었다 — Plan 작성 시점에는 알 수 없었던 정보라 여기 기록한다.",
-      "DataJpaTest": "org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest (org.springframework.boot.test.autoconfigure.orm.jpa 아님)",
-      "AutoConfigureMockMvc": "org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc (org.springframework.boot.test.autoconfigure.web.servlet 아님)",
-      "Jackson": "com.fasterxml.jackson.databind 가 아니라 tools.jackson.databind (Jackson 3) — ObjectMapper는 JsonMapper.builder().build() 로 생성"
+      "note": "attempt 1에서 발견한 것에 이어 이번에 추가로 확인함.",
+      "DataJpaTest": "org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest",
+      "AutoConfigureMockMvc": "org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc",
+      "Jackson": "tools.jackson.databind (Jackson 3) — ObjectMapper는 JsonMapper.builder().build() 로 생성",
+      "TestEntityManager": "org.springframework.boot.jpa.test.autoconfigure.TestEntityManager (org.springframework.boot.test.autoconfigure.orm.jpa 아님) — spring-boot-jpa-test 아티팩트, memory: project-spring-boot4-package-changes 에 추가 기록 예정"
     }
   },
   "human_review": { "approved": true }

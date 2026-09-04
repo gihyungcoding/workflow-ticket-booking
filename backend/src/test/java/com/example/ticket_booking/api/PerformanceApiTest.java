@@ -25,7 +25,11 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * TASK-001 시나리오 SC-01~SC-09 (Red).
+ * TASK-001 시나리오 SC-01~SC-09, SC-12~SC-14.
+ *
+ * <p>SC-01~09는 attempt 1에서 이미 Green. SC-12~14(attempt 2, Phase 4 REJECT 대응)는 기존
+ * 구현이 이미 올바르게 처리하던 필터 분기라 추가 즉시 통과한다 — CLOSED 분기에서만 결함이
+ * 있었고 UPCOMING/SOLD_OUT/CANCELLED 분기 자체는 처음부터 맞았다(TEST_TASK-001.json 참고).
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-001.md
  */
@@ -307,5 +311,106 @@ class PerformanceApiTest {
         .perform(get("/api/performances/{id}", 999L))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("PERFORMANCE_NOT_FOUND"));
+  }
+
+  @Test
+  void test_sc12_statusUPCOMING_필터가_정확히_적용된다() throws Exception {
+    Instant now = clock.instant();
+    // Given 공연 A는 now < openAt 이다 (계산상 UPCOMING)
+    performance(
+        "공연 A",
+        now.plus(10, ChronoUnit.DAYS),
+        now.plus(1, ChronoUnit.DAYS),
+        now.plus(20, ChronoUnit.DAYS),
+        100,
+        50,
+        false);
+    // Given 공연 B는 openAt <= now <= closeAt 이고 availableSeats > 0 이다 (계산상 OPEN — 양성 대조군)
+    performance(
+        "공연 B",
+        now.plus(5, ChronoUnit.DAYS),
+        now.minus(1, ChronoUnit.DAYS),
+        now.plus(1, ChronoUnit.DAYS),
+        100,
+        50,
+        false);
+
+    // When GET /api/performances?status=UPCOMING 를 호출한다
+    Map<String, Object> json = listBody("status", "UPCOMING");
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> content = (List<Map<String, Object>>) json.get("content");
+    // Then content 에는 공연 A만 포함된다
+    assertThat(content).extracting(row -> row.get("title")).containsExactly("공연 A");
+    // Then totalElements 는 1이다
+    assertThat(((Number) json.get("totalElements")).longValue()).isEqualTo(1L);
+    // Then content 의 공연 A 항목의 status 는 "UPCOMING" 이다
+    assertThat(content.get(0).get("status")).isEqualTo("UPCOMING");
+  }
+
+  @Test
+  void test_sc13_statusSOLD_OUT_필터가_정확히_적용된다() throws Exception {
+    Instant now = clock.instant();
+    // Given 공연 A는 openAt <= now <= closeAt 이고 availableSeats = 0 이다 (계산상 SOLD_OUT)
+    performance(
+        "공연 A",
+        now.plus(5, ChronoUnit.DAYS),
+        now.minus(1, ChronoUnit.DAYS),
+        now.plus(1, ChronoUnit.DAYS),
+        100,
+        0,
+        false);
+    // Given 공연 B는 openAt <= now <= closeAt 이고 availableSeats > 0 이다 (계산상 OPEN — 양성 대조군)
+    performance(
+        "공연 B",
+        now.plus(5, ChronoUnit.DAYS),
+        now.minus(1, ChronoUnit.DAYS),
+        now.plus(1, ChronoUnit.DAYS),
+        100,
+        50,
+        false);
+
+    // When GET /api/performances?status=SOLD_OUT 를 호출한다
+    Map<String, Object> json = listBody("status", "SOLD_OUT");
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> content = (List<Map<String, Object>>) json.get("content");
+    // Then content 에는 공연 A만 포함된다
+    assertThat(content).extracting(row -> row.get("title")).containsExactly("공연 A");
+    // Then totalElements 는 1이다
+    assertThat(((Number) json.get("totalElements")).longValue()).isEqualTo(1L);
+  }
+
+  @Test
+  void test_sc14_statusCANCELLED_필터가_정확히_적용된다() throws Exception {
+    Instant now = clock.instant();
+    // Given 공연 A는 cancelled = true 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (조건만 보면 OPEN처럼 보인다)
+    performance(
+        "공연 A",
+        now.plus(5, ChronoUnit.DAYS),
+        now.minus(1, ChronoUnit.DAYS),
+        now.plus(1, ChronoUnit.DAYS),
+        100,
+        50,
+        true);
+    // Given 공연 B는 cancelled = false 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (계산상 OPEN — 양성 대조군)
+    performance(
+        "공연 B",
+        now.plus(5, ChronoUnit.DAYS),
+        now.minus(1, ChronoUnit.DAYS),
+        now.plus(1, ChronoUnit.DAYS),
+        100,
+        50,
+        false);
+
+    // When GET /api/performances?status=CANCELLED 를 호출한다
+    Map<String, Object> json = listBody("status", "CANCELLED");
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> content = (List<Map<String, Object>>) json.get("content");
+    // Then content 에는 공연 A만 포함된다
+    assertThat(content).extracting(row -> row.get("title")).containsExactly("공연 A");
+    // Then totalElements 는 1이다
+    assertThat(((Number) json.get("totalElements")).longValue()).isEqualTo(1L);
   }
 }
