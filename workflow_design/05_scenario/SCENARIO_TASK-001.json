@@ -140,8 +140,8 @@
       "title": "필수 필드가 없는 공연은 저장이 거부된다",
       "given": ["공연 데이터에서 title 이 null 이고, 나머지 필드(venue/startAt/openAt/closeAt/totalSeats/availableSeats)는 모두 유효하다"],
       "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
-      "then": ["예외가 발생해 저장이 거부된다"],
-      "notes": "'DB에 실제로 반영되는 시점까지'인 이유: ORM 구현에 따라 저장 호출 자체는 지연 쓰기로 즉시 반영되지 않을 수 있어(예: JPA flush/commit), 그 이전에만 예외 여부를 보면 거짓 통과가 나올 수 있다 — Phase 2b는 실제 구현에 맞는 지점으로 이 경계를 옮겨야 한다. 예외의 구체 타입은 Then에서 못박지 않는다(구현 선택). 경계는 영속성 계층(Repository/엔티티)이며 이 태스크의 공개 HTTP API가 아니다 — 애노테이션-마이그레이션 일치는 애초에 HTTP로 관측할 수 없는 성질이다.",
+      "then": ["DataIntegrityViolationException(또는 그 하위 타입)이 발생해 저장이 거부된다"],
+      "notes": "'DB에 실제로 반영되는 시점까지'인 이유: ORM 구현에 따라 저장 호출 자체는 지연 쓰기로 즉시 반영되지 않을 수 있어(예: JPA flush/commit), 그 이전에만 예외 여부를 보면 거짓 통과가 나올 수 있다. 예외 타입을 DataIntegrityViolationException으로 좁힌 이유(재시도 시 반영, Phase 4 code_review 지적): Exception.class는 제약과 무관한 다른 실패(매핑 오류 등)로도 통과해버릴 만큼 느슨했다. Spring Data가 영속성 예외를 DataAccessException 계열로 번역하므로 이 정도로 좁혀도 Hibernate 세부 구현에는 종속되지 않는다. 경계는 영속성 계층(Repository/엔티티)이며 이 태스크의 공개 HTTP API가 아니다 — 애노테이션-마이그레이션 일치는 애초에 HTTP로 관측할 수 없는 성질이다.",
       "covers": ["performance 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다"],
       "flow": ["F7"]
     },
@@ -151,15 +151,99 @@
       "title": "availableSeats 가 totalSeats 보다 크면 저장이 거부된다",
       "given": ["공연 데이터의 totalSeats = 10, availableSeats = 11 이다 (그 외 필드는 유효)"],
       "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
-      "then": ["예외가 발생해 저장이 거부된다"],
-      "notes": "SC-10과 분리한 이유: NOT NULL은 컬럼 정의 하나로 끝나지만 이 CHECK는 두 필드 사이의 관계식이라 다른 애노테이션/구현 경로를 탄다. 'DB에 실제로 반영되는 시점까지' 표기 이유는 SC-10과 같되, 이 CHECK는 특히 DB 왕복 전에는 드러나지 않을 가능성이 크다.",
+      "then": ["DataIntegrityViolationException(또는 그 하위 타입)이 발생해 저장이 거부된다"],
+      "notes": "SC-10과 분리한 이유: NOT NULL은 컬럼 정의 하나로 끝나지만 이 CHECK는 두 필드 사이의 관계식이라 다른 애노테이션/구현 경로를 탄다. 예외 타입을 좁힌 이유는 SC-10과 같다.",
       "covers": ["performance 테이블의 NOT NULL/CHECK 제약이 엔티티 애노테이션으로도 표현되어 있고, 위반 시 저장이 거부된다"],
       "flow": ["F7"]
+    },
+    {
+      "id": "SC-12",
+      "type": "boundary",
+      "title": "status=UPCOMING 필터가 정확히 적용된다",
+      "given": [
+        "공연 A는 now < openAt 이다 (계산상 UPCOMING)",
+        "공연 B는 openAt <= now <= closeAt 이고 availableSeats > 0 이다 (계산상 OPEN — 양성 대조군)"
+      ],
+      "when": ["GET /api/performances?status=UPCOMING 를 호출한다"],
+      "then": ["content 에는 공연 A만 포함된다", "totalElements 는 1이다", "content 의 공연 A 항목의 status 는 \"UPCOMING\" 이다"],
+      "notes": "마지막 Then(status 값 단언)은 독립검증 V3 지적으로 추가 — SOLD_OUT/CANCELLED는 SC-03/SC-04가 상세 조회로 값을 이미 단언해 SC-13/SC-14는 멤버십만 확인해도 됐지만, UPCOMING은 대응 시나리오가 없어 필터만 맞고 실제 status 값이 달라도 통과할 수 있었다.",
+      "covers": ["now < openAt 인 공연은 status: UPCOMING 으로 반환된다"],
+      "flow": ["F3"]
+    },
+    {
+      "id": "SC-13",
+      "type": "boundary",
+      "title": "status=SOLD_OUT 필터가 정확히 적용된다",
+      "given": [
+        "공연 A는 openAt <= now <= closeAt 이고 availableSeats = 0 이다 (계산상 SOLD_OUT)",
+        "공연 B는 openAt <= now <= closeAt 이고 availableSeats > 0 이다 (계산상 OPEN — 양성 대조군)"
+      ],
+      "when": ["GET /api/performances?status=SOLD_OUT 를 호출한다"],
+      "then": ["content 에는 공연 A만 포함된다", "totalElements 는 1이다"],
+      "covers": ["availableSeats == 0 인 공연은 status: SOLD_OUT 으로 반환된다"],
+      "flow": ["F3"]
+    },
+    {
+      "id": "SC-14",
+      "type": "boundary",
+      "title": "status=CANCELLED 필터가 정확히 적용된다",
+      "given": [
+        "공연 A는 cancelled = true 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (조건만 보면 OPEN처럼 보인다)",
+        "공연 B는 cancelled = false 이고, openAt <= now <= closeAt 이며 availableSeats > 0 이다 (계산상 OPEN — 양성 대조군)"
+      ],
+      "when": ["GET /api/performances?status=CANCELLED 를 호출한다"],
+      "then": ["content 에는 공연 A만 포함된다", "totalElements 는 1이다"],
+      "covers": ["cancelled == true 인 공연은 시각·좌석 수와 무관하게 status: CANCELLED 로 반환된다"],
+      "flow": ["F3"]
+    },
+    {
+      "id": "SC-15",
+      "type": "error",
+      "title": "openAt 가 closeAt 보다 늦으면 저장이 거부된다",
+      "given": ["공연 데이터의 openAt 이 closeAt 보다 1일 늦다 (그 외 필드는 유효)"],
+      "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
+      "then": ["DataIntegrityViolationException(또는 그 하위 타입)이 발생해 저장이 거부된다"],
+      "notes": "Phase 4에서 statusOf()와 statusSpecification()의 CLOSED 분기가 openAt>closeAt 데이터에서 모순되는 결함이 발견됐다. 근본 원인은 'openAt<=closeAt' 불변조건이 스키마에 없었다는 것 — 이 불변조건이 성립하면 두 메서드가 수학적으로 동치가 되어 CLOSED 분기 코드를 고치지 않고도 결함이 해소된다 (사용자 승인).",
+      "covers": ["openAt 가 closeAt 보다 늦은 공연은 저장이 거부된다"],
+      "flow": ["F8"]
+    },
+    {
+      "id": "SC-16",
+      "type": "error",
+      "title": "title 이 200자를 초과하면 저장이 거부된다",
+      "given": ["공연 데이터의 title 이 201자이다 (그 외 필드는 유효)"],
+      "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
+      "then": ["DataIntegrityViolationException(또는 그 하위 타입)이 발생해 저장이 거부된다"],
+      "notes": "Phase 4에서 title/venue에 길이 지정이 없어 JPA 기본값 255가 적용되고 V1 마이그레이션(VARCHAR(200))과 어긋나는 결함이 발견됐다. venue는 title과 같은 메커니즘이라 대표해서 하나로 다룬다.",
+      "covers": ["performance 테이블의 컬럼 길이 제약(title/venue VARCHAR(200))이 엔티티에도 표현되어 있고, 위반 시 저장이 거부된다"],
+      "flow": ["F7"]
+    },
+    {
+      "id": "SC-17",
+      "type": "boundary",
+      "title": "title 이 정확히 200자면 저장된다",
+      "given": ["공연 데이터의 title 이 정확히 200자이다 (그 외 필드는 유효)"],
+      "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
+      "then": ["예외 없이 저장된다", "저장된 데이터를 다시 조회하면 title 이 200자 그대로 보존되어 있다"],
+      "notes": "SC-16의 양성 대조군(독립검증 V10 지적) — length=199처럼 과도하게 좁은 제약(off-by-one)이 들어와도 SC-16만으로는 안 걸린다. 재조회 단언(2차 검증 V5/V10 지적)은 DB가 값을 조용히 잘라 저장해도(truncation) '예외 없음'만으로는 통과해버리는 것을 막는다.",
+      "covers": ["performance 테이블의 컬럼 길이 제약(title/venue VARCHAR(200))이 엔티티에도 표현되어 있고, 위반 시 저장이 거부된다"],
+      "flow": ["F7"]
+    },
+    {
+      "id": "SC-18",
+      "type": "boundary",
+      "title": "openAt 이 closeAt 과 같으면 저장된다",
+      "given": ["공연 데이터의 openAt 과 closeAt 이 정확히 같은 시각이다 (그 외 필드는 유효)"],
+      "when": ["이 데이터의 저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)"],
+      "then": ["예외 없이 저장된다", "저장된 데이터를 다시 조회하면 openAt 과 closeAt 이 입력한 값 그대로 보존되어 있다"],
+      "notes": "SC-15의 양성 대조군(독립검증 V10 지적) — CHECK (open_at < close_at)처럼 등호 없이 과도하게 좁게 구현해도 SC-15만으로는 안 걸린다. openAt==closeAt까지는 유효해야 F2/F3의 openAt<=now<=closeAt 경계 판정과 일관된다. 재조회 단언(2차 검증 V5/V10 지적)은 값이 왜곡 없이 그대로 저장됐는지까지 확인한다.",
+      "covers": ["openAt 가 closeAt 보다 늦은 공연은 저장이 거부된다"],
+      "flow": ["F8"]
     }
   ],
   "coverage": {
-    "acceptance_criteria_total": 8,
-    "acceptance_criteria_covered": 8,
+    "acceptance_criteria_total": 11,
+    "acceptance_criteria_covered": 11,
     "uncovered": [],
     "merged": [],
     "intentionally_not_covered": [
@@ -167,5 +251,15 @@
       { "item": "status에 정의된 5개 값 외의 문자열 입력 시 동작", "reason": "acceptance_criteria(§4)에 없고 Plan design.outputs에도 대응 에러가 정의되어 있지 않다 — 프레임워크 기본 동작에 맡긴다" }
     ]
   },
-  "human_input": { "generate_red_trigger": true }
+  "human_input": { "generate_red_trigger": true },
+  "reject_retry": {
+    "attempt": 2,
+    "reference": "workflow_design/07_verify/VERIFY_TASK-001.json (reject.type=RETRY_SCENARIO, reason=COVERAGE_INSUFFICIENT)",
+    "added_scenarios": ["SC-12", "SC-13", "SC-14", "SC-15", "SC-16", "SC-17", "SC-18"],
+    "amended_scenarios": ["SC-10", "SC-11 (Then 예외 타입을 DataIntegrityViolationException으로 좁힘)", "SC-12 (status 값 단언 추가, 독립검증 V3 지적)"],
+    "validator_rounds": [
+      { "round": 1, "warn_count": 5, "notes": "V1 MD 잔재 모순, V3 AC11 값 단언 부재, V7 예외 타입 노출(수용), V8 Plan constraints 목록 누락, V10 양성 대조군 부재" },
+      { "round": 2, "warn_count": 4, "notes": "V5/V8 SC-17/18 단언 약함(재조회 단언 추가로 사후 반영, 재검증 생략), V7 유지(수용), V10 구조적 한계 — HITL#1에서 PerformanceStatusRules 단위 테스트로 별도 처리하기로 승인 (SCENARIO에 포함 안 함, 인벤토리 예외 섹션 참고)" }
+    ]
+  }
 }
