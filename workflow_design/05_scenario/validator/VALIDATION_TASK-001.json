@@ -1,0 +1,76 @@
+{
+  "task_id": "TASK-001",
+  "attempt": 2,
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "MD 18건(SC-01~SC-18) = JSON scenarios 18건. ID·type·title·Given/When/Then 문장을 한 건씩 대조했고 불일치 없음. 지적됐던 SC-10 해설의 attempt 1 잔재는 실제로 제거됐다 — 현재 MD 142~147행은 '예외 타입을 DataIntegrityViolationException으로 좁힌 이유'를 설명하며 '구체 타입을 못박지 않는다'는 표현도 '(Hibernate 세부 구현에 종속되지 않음)'으로 한정돼 Then의 DataIntegrityViolationException 단언과 모순되지 않는다. SC-12의 세 번째 Then('content 의 공연 A 항목의 status 는 \"UPCOMING\" 이다')도 MD 192행·JSON 168행 양쪽에 동일하게 존재. 사소한 표기차 2건(SC-06 Given의 따옴표 종류, MD 커버리지 표 AC7 행이 '(SQL now() 미사용을 리뷰로 확인)' 괄호를 생략)은 GWT 본문이 아니라 판정에 영향 없음."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 18건 ≥ 2. happy 4건(SC-01/02/03/04) ≥ 1. error 5건(SC-09/10/11/15/16) ≥ 1. boundary 9건."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "Plan의 acceptance_criteria 11건을 각 시나리오 covers 문자열과 직접 대조(문자열 완전 일치 확인): (1)목록 형식→SC-01, (2)status=OPEN 필터→SC-02, (3)SOLD_OUT→SC-03·SC-13, (4)CANCELLED→SC-04·SC-14, (5)start_at<now 제외→SC-05·SC-06, (6)404→SC-09, (7)Clock 경계→SC-07·SC-08, (8)NOT NULL/CHECK→SC-10·SC-11, (9)openAt<=closeAt→SC-15·SC-18, (10)컬럼 길이→SC-16·SC-17, (11)UPCOMING→SC-12. 미커버 0건으로 JSON coverage(11/11, uncovered: [])와 일치. AC11은 SC-12가 필터 멤버십(content에 A만)에 더해 status 값 자체('UPCOMING')를 단언하므로 실질 커버 — 1차 지적 해소됨."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "시나리오가 참조하는 flow는 F1~F8 뿐이고 Plan design.flows에 F1~F8이 모두 실재한다. flow와 covers의 정합도 확인: SC-12(F3/AC11), SC-13(F3/AC3), SC-14(F3/AC4)가 요구하는 AC3/AC4/AC11이 Plan F3.covers(99~104행)에 추가돼 있고, SC-17(F7/AC10)은 F7.covers 152행, SC-18(F8/AC9)은 F8.covers 164행에 대응. 1차의 F3.covers 누락은 해소됐다."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "warn",
+      "detail": "SC-17·SC-18의 Then '예외 없이 저장된다'는 부정 단언(예외 부재)만 담고 있어, 저장이 실제로 어떤 관찰 가능한 상태로 귀결되는지를 말하지 않는다. DB가 예외 대신 조용히 잘라 저장하는 구현(예: 일부 DB의 문자열 truncation)에서는 200자 title이 잘린 채 저장돼도 이 Then은 통과한다 — 양성 대조군의 목적(경계가 정확히 200인가)이 부분적으로만 보장된다. 저장 후 재조회 값이 입력과 같다는 단언이 있어야 '거부되지 않았다'가 아니라 '온전히 저장됐다'가 관찰된다. 나머지 16건의 Then은 HTTP 상태코드·JSON 필드값·컬렉션 멤버십·totalElements 등 그대로 단언 가능한 형태이며 '올바르게/정상적으로' 류의 모호 표현은 없다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "pass",
+      "detail": "18건 모두 when 배열 원소가 1개이고 MD에도 **When** 문장이 각각 하나뿐이다. '그리고 ~하면' 형태의 복합 When 없음. SC-10/11/15/16/17/18의 '저장을 끝까지 완료하려고 시도한다 (DB에 실제로 반영되는 시점까지)'는 괄호가 시점을 한정할 뿐 동작을 추가하지 않는다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "warn",
+      "detail": "SC-10/SC-11/SC-15/SC-16의 Then이 Spring 프레임워크 클래스명 'DataIntegrityViolationException(또는 그 하위 타입)'을 직접 담고 있다. 또한 같은 4건 + SC-17/SC-18의 When '(DB에 실제로 반영되는 시점까지)'는 ORM 지연 쓰기/flush라는 영속성 메커니즘을 전제로 한 표현이다. 요청대로 의도적 트레이드오프로 유지된 사항이므로 재변경을 요구하지 않되, 규칙상 경고로 기록한다 — 이 시나리오들은 Phase 2b에서 프레임워크 교체 시 함께 수정돼야 하는 결합을 갖는다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "warn",
+      "detail": "입력 쪽은 해소됨 — SC-16/SC-17(title 길이)과 SC-15/SC-18(openAt/closeAt 순서)이 Plan design.inputs[4].constraints(36행)의 'title/venue 는 200자 이하 (F7)', 'openAt <= closeAt (F8)'에 대응한다. 남은 문제는 출력 쪽이다: SC-17/SC-18의 Then '예외 없이 저장된다'에 대응하는 출력이 design.outputs에 없다. outputs는 PerformanceListResponse / PerformanceResponse / 404 / '제약 위반 저장 거부' 4건뿐이고, 영속성 경계의 성공 결과(제약을 만족하는 데이터는 저장된다)는 명시돼 있지 않다 — Plan 쪽의 미미한 불완전성이다. 참고로 page/size 기본값·상한과 status 미정의 값 처리는 MD §의도적으로 다루지 않는 것 / JSON intentionally_not_covered에 근거와 함께 배제 선언돼 있어 문제 삼지 않는다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "pass",
+      "detail": "겹쳐 보이는 쌍을 하나씩 확인했다. SC-03/SC-13, SC-04/SC-14는 상세 조회(상태 계산, F2)와 목록 필터(WHERE 조건 변환, F3)로 코드 경로가 다르다. SC-05/SC-06은 무필터 경로와 필터+start_at 결합 경로로 다르다. SC-07/SC-08은 오픈 경계(>=)와 마감 경계(<=)로 비교 연산이 다르다. SC-02와 SC-13은 픽스처가 대칭이지만 각각 statusSpecification의 OPEN 분기와 SOLD_OUT 분기를 탄다. SC-10/11/15/16은 NOT NULL / 두 필드 관계 CHECK / 시각 관계 CHECK / 컬럼 길이로 서로 다른 애노테이션 속성을 검증한다. 동일 경로만 타는 중복 없음."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "warn",
+      "detail": "target_files의 Performance.java, V1__create_performance.sql, PerformanceService.java는 실재하는 기존 파일이고(파일 존재 확인) 기존 테스트 PerformanceApiTest·PerformanceConstraintTest도 이미 있다 — 즉 기존 동작을 바꾸는 태스크다. MD 315~320행의 회귀 분석은 사실로 확인됐다: PerformanceApiTest의 전체 픽스처가 모두 openAt<=closeAt를 만족하고 title도 전부 짧아, F8 CHECK와 length=200 추가로 새로 깨지는 기존 테스트는 없다. 다만 남는 공백이 있다: Phase 4에서 실제로 관측된 결함 증상 — 같은 행이 ?status=UPCOMING 과 ?status=CLOSED 양쪽에 잡히는 모순 — 을 API 경계에서 재현·차단하는 시나리오는 여전히 없고, 그 방어는 전적으로 'F8이 성립하면 statusOf()와 statusSpecification()이 동치'라는 Plan target_files 논증에 의존한다. 이 동치 논증 자체는 어떤 시나리오도 실행하지 않으므로, 향후 statusSpecification의 CLOSED 분기가 다시 어긋나도 이 스위트는 침묵한다. type이 regression인 시나리오도 0건이다."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 4,
+    "summary": "V1~V4 위반 없음 — MD와 JSON이 18건 전부 일치하고(SC-10 잔재 제거·SC-12 값 단언 추가 확인), acceptance_criteria 11건 전건이 covers 문자열 일치로 커버되며, 참조 flow F1~F8이 모두 Plan에 실재하고 F3.covers/inputs[4].constraints 보강도 반영돼 있다. 1차 경고 5건 중 V1/V3/V4/V8(입력 쪽)/V10(양성 대조군)은 해소됐다. 남은 경고 4건: (V5·V8) SC-17/SC-18의 Then '예외 없이 저장된다'가 예외 부재만 단언해 저장 결과를 관찰하지 않고 이에 대응하는 출력도 Plan design.outputs에 없다, (V7) 예외 클래스명 노출 — 요청대로 의도적 유지, (V10) F8 추가가 기존 픽스처를 깨지 않는다는 주장은 실제 테스트 코드 대조로 사실 확인했으나, Phase 4에서 관측된 'UPCOMING/CLOSED 동시 매칭' 증상을 API 경계에서 잡는 시나리오는 없고 statusSpecification 동치 논증이 테스트로 보호되지 않는다. 진행은 가능하되 마지막 항목은 Phase 2b 전에 사람이 인지하고 결정할 사항이다."
+  },
+  "post_validation_fix": {
+    "what": "V5/V8 대응으로 SC-17/SC-18의 Then에 재조회 값 보존 단언을 추가하고, Plan design.outputs에 '제약을 만족하는 저장 성공' 항목을 추가했다",
+    "why_no_third_round": "단언을 강화(추가)하는 것뿐 기존 GWT 구조나 대상 범위를 바꾸지 않아 새로운 위반을 만들 가능성이 낮다고 판단 — V7(의도적 유지)과 V10(GWT 1-When 원칙과 구조적으로 충돌하는 교차질의 속성이라 시나리오로 표현하기 어려움)은 사용자에게 그대로 보고하고 3차 재검증 없이 HITL#1로 진행한다"
+  }
+}
