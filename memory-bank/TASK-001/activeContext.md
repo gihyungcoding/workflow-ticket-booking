@@ -35,7 +35,19 @@ Phase 4는 WARN → EXCEPTION_APPROVE로 승인됐다. Phase 5 회고를 HITL#4�
 
 ## 다음 한 걸음
 
-없음 — 이 태스크는 종료됐다. 머지 준비는 `/wf-ship`.
+`/wf-ship` 사전 검사 7/7 통과(2026-09-07). **원격 저장소가 연결되어 있지
+않아(`git remote -v` 비어 있음) PR을 생성하지 못했다** — 실패가 아니라
+원격 부재. PR 본문은
+`/private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/2ed86711-a64a-4d44-9d85-7c2d5a0c0b4c/scratchpad/pr-body-task-001.md`
+에 준비되어 있다. 원격 추가 후:
+
+```bash
+git remote add origin <repo-url>
+git push -u origin feature/task-001-performance-list-detail-api
+gh pr create --base develop \
+  --title "TASK-001 공연 목록/상세 조회 API" \
+  --body-file <위 경로>
+```
 
 미작성 후속 항목(REFLECT_TASK-001.json 참고, 원하면 별도 태스크/ADR로):
 - ADR 후보 2건 — Java 컴파일 언어의 TDD Red 전략, 응답 DTO 패키지 소유 원칙
