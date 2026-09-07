@@ -1,18 +1,18 @@
 ---
 task_id: TASK-001
 title: "공연 목록/상세 조회 API"
-phase: "3"
-phase_name: "Phase 3 - Green (RETRY, 완료)"
+phase: "4"
+phase_name: "Phase 4 - Verify (RETRY, 완료 — EXCEPTION_APPROVE)"
 status: ACTIVE
 created_at: 2026-09-03
-last_updated: 2026-09-04
+last_updated: 2026-09-07
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-001-performance-list-detail-api"
 
-last_checkpoint: CP-3.4 (retry1)
+last_checkpoint: CP-4.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-001.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-001.md"
@@ -20,24 +20,30 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-001.json"
   test: "workflow_design/05_scenario/TEST_TASK-001.json (attempt 2)"
   dev: "workflow_design/06_dev/DEV_TASK-001.json (attempt 2)"
-  verify: "workflow_design/07_verify/VERIFY_TASK-001.json (attempt 1, FAIL — attempt 2 대기)"
+  verify: "workflow_design/07_verify/VERIFY_TASK-001.json (attempt 2, WARN, EXCEPTION_APPROVE)"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 3(Green) 재작업을 완료했다. F7(컬럼 길이)/F8(openAt<=closeAt 불변조건)을
-엔티티·마이그레이션에 추가하고, F9(PerformanceStatusRules)를 실제 로직으로
-구현했다. `PerformanceService.statusSpecification()`의 CLOSED 분기는 코드를
-고치지 않았다 — F8이 성립하는 한 이미 올바르기 때문이다(코드 주석으로 근거
-명시). 20개 테스트가 1회 시도로 전부 통과, 아키텍처·린트 통과. EXIT GATE
-통과, 다음은 Phase 4(검증) 재진입이다.
+Phase 4(검증) 재시도를 마쳤다 — status: WARN, EXCEPTION_APPROVE로 승인됨.
+attempt 1의 정확성 결함 2건(CLOSED 로직, 컬럼 길이)은 실제로 해소됐음을
+code-reviewer가 H2 생성 DDL과 실제 SQL 예외 코드까지 확인했다. 새로 발견된
+잔여 리스크 2건(F9 단위 테스트가 실제로는 statusSpecification()을 검증하지
+않는 문제, status 필터의 now==openAt/closeAt 경계 커버리지 공백)은 활성
+결함이 아니라 향후 회귀 검출 공백이라 예외 승인하고 후속 태스크로 남겼다.
+`verified_commit`은 `c0de9086e52312b3f8522a6e4b69cc8957b864fb` 로 고정됨 —
+이 커밋 이후 코드를 고치면 `/wf-ship`이 재검증을 요구한다.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4 재진입 (attempt 2):
-1. acceptance_criteria 11건 전부 대조 (AC9/AC10/AC11 신규 포함)
-2. VERIFY_TASK-001.json(attempt 1)의 두 결함(CLOSED 로직, 컬럼 길이)이
-   실제로 해결됐는지 재확인 — 특히 code-reviewer에게 F8 CHECK 제약 접근이
+`wf-reflect` 스킬로 Phase 5(회고) 진입:
+1. KPT 회고 — 이번 태스크는 Phase 4에서 두 번(attempt 1 FAIL, attempt 2
+   WARN/예외승인) 걸렸다. Problem 후보: 시나리오 작성 시 상태 필터 5개
+   분기 전부를 처음부터 커버하지 않은 것, Java 컴파일 언어의 TDD Red 정의
+   재정립에 초기 라운드를 소비한 것
+2. exceptions 배열의 후속 조치 2건(F9 서술 정정, 경계값 픽스처 추가)을
+   회고의 개선 제안 또는 별도 후속 태스크로 격상할지 결정
+3. 완료 리포트 작성 후 HITL#4 승인
    타당한지, PerformanceStatusRules.matches()가 실제로 of()에 트리비얼하게
    위임하지 않고 독립적인지 재검토를 요청한다
 3. python scripts/check_architecture.py, ./gradlew spotlessCheck 재실행
