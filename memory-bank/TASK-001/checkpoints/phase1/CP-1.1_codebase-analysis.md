@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-03T09:21:26Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "백엔드가 아직 빈 골격(TicketBookingApplication만 존재)임을 확인하고, 실제 패키지 루트(com.example.ticket_booking)와 기능 문서·태스크에 적힌 패키지(com.ticketbooking)가 다르다는 점을 발견해 실재하는 쪽으로 경로를 정정했다."
 

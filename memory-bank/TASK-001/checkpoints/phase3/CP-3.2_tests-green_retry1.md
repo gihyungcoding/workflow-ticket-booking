@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "3"
 phase_name: "Phase 3 - Green (RETRY)"
 saved_at: 2026-09-04T09:00:17Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "F7(길이)/F8(불변조건)/F9(순수 로직) 구현 완료. 20개 테스트 전부 통과(1회 시도), 아키텍처 제약·spotlessCheck 통과. CLOSED 버그는 코드를 고치지 않고 F8 CHECK 제약 추가로 근본 해결."
 

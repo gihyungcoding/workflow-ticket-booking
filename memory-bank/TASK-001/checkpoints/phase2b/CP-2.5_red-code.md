@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-03T12:54:52Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "승인된 시나리오 11건을 테스트 함수 11개로 옮겼다(1:1). Java/Spring(컴파일 언어)이라 wf-red 스킬의 Python 기준 Red 정의가 그대로 적용되지 않아, 사용자와 합의해 '컴파일되는 최소 스켈레톤 + UnsupportedOperationException' 방식을 썼다. ./gradlew test 실행 결과 신규 11개 전부 실패, 기존 테스트 1개는 계속 통과."
 

@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (RETRY)"
 saved_at: 2026-09-04T08:09:44Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 재시도 시나리오 최종본(18건)과 F9(PerformanceStatusRules 단위 테스트) 계획을 승인했다. SCENARIO_TASK-001.json.human_input.generate_red_trigger를 true로 갱신했다."
 

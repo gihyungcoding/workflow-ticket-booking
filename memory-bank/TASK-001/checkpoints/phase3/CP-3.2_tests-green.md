@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-03T13:08:36Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "스켈레톤의 UnsupportedOperationException을 실제 로직으로 교체했다. 대상 테스트 11개 + 기존 1개 = 12개 전부 통과. 아키텍처 제약(ARCH-001/002) 재확인 통과."
 

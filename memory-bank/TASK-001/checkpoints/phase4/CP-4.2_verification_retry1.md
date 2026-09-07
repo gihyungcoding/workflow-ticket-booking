@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "4"
 phase_name: "Phase 4 - Verify (RETRY)"
 saved_at: 2026-09-07T07:44:53Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "VERIFY_TASK-001.json(attempt 2) 작성 완료, status=WARN. attempt 1의 정확성 결함 2건은 실제로 해소됐음을 H2 생성 DDL·SQL 예외 원인까지 직접 확인해 검증했다. 새 활성 결함은 없으나 code-reviewer가 F9(PerformanceStatusRules)의 실효성 및 상태 필터 경계값 커버리지에서 잔여 리스크 3건을 지적했다."
 

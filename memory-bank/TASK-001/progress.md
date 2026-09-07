@@ -7,7 +7,7 @@
 | 2b Red | ✅ 완료 (attempt 2) | CP-2.6_retry1 | 20개 중 3개 Red(SC-15/16, F9 단위 테스트), 17개는 기존 구현으로 이미 Green. HITL#2 재승인 |
 | 3 Green | ✅ 완료 (attempt 2) | CP-3.4_retry1 | 테스트 20/20, 아키텍처·린트 통과. F7/F8/F9 구현 완료 |
 | 4 Verify | ✅ WARN/예외승인 (attempt 2) | CP-4.3 | attempt 1 결함 2건 해소 확인. 잔여 리스크 2건 예외 승인 — VERIFY_TASK-001.json.exceptions 참고 |
-| 5 Reflect | ⬜ 대기 | — | |
+| 5 Reflect | ✅ 완료 | CP-5.3 | KPT 승인, HITL#4 승인, 태스크 DONE |
 
 ## 완료 조건
 

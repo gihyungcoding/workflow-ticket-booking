@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-03T13:08:36Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "DEV_TASK-001.json 저장 완료. 테스트 12/12 통과, 아키텍처 제약 통과, 린트 도구 없음(기존 상태). EXIT GATE 통과."
 

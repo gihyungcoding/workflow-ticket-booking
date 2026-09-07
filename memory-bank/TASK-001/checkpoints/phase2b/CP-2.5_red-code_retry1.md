@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2b"
 phase_name: "Phase 2b - Red (RETRY)"
 saved_at: 2026-09-04T08:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "시나리오 12~18(7건)을 기존 테스트 파일에 추가하고, F9(PerformanceStatusRules) 스켈레톤 + 단위 테스트 1건을 신규 작성했다. 이번 재시도는 기존 구현이 이미 Green이었던 코드베이스 위에서 진행돼, 전체 20개 중 3개(SC-15, SC-16, PerformanceStatusRulesTest)만 Red이고 나머지는 이미 올바른 기존 구현 덕에 Green이다 — 이는 정상이며 wf-red Step 3의 '이미 구현됐는지 확인' 절차로 검증했다."
 

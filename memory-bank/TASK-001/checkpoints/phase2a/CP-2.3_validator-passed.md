@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-03T12:29:48Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "scenario-validator를 총 4회 호출했다. 1차(시나리오 9건, 경고 3) → 수정 → 2차(경고 1, 표현 수준) → 사용자 요청으로 SC-10/11 추가 + Plan에 F7/AC8 신설 → 3차(시나리오 11건, 경고 3) → 수정 → 4차(경고 1, 'flush' 어휘) → 표현 수정. 최종 VALIDATION_TASK-001.json은 4차 결과(overall.pass=true, warn 1)를 원본 그대로 저장했고, 그 이후의 'flush' 제거는 단언 내용을 바꾸지 않는 어휘 수정이라 5차 재검증 없이 반영했다."
 
