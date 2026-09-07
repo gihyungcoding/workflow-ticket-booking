@@ -1,5 +1,6 @@
 package com.example.ticket_booking.service;
 
+import com.example.ticket_booking.domain.PerformanceStatus;
 import java.time.Instant;
 
 public record PerformanceResponse(
