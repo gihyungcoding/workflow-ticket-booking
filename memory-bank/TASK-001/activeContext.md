@@ -23,6 +23,12 @@ artifacts:
   verify: "workflow_design/07_verify/VERIFY_TASK-001.json (attempt 2, WARN, EXCEPTION_APPROVE)"
   reflect: "workflow_design/08_reflect/REFLECT_TASK-001.json"
   report: "https://claude.ai/code/artifact/b36df245-d9e3-4c31-a212-d779e73c611f"
+
+pull_request:
+  number: 1
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/1"
+  base: develop
+  opened_at: 2026-09-08
 ---
 
 ## 지금 무엇을 하고 있나
@@ -31,23 +37,14 @@ artifacts:
 Phase 4는 WARN → EXCEPTION_APPROVE로 승인됐다. Phase 5 회고를 HITL#4에서
 승인받아 태스크를 DONE으로 닫았다. `verified_commit`은
 `c0de9086e52312b3f8522a6e4b69cc8957b864fb` 로 고정되어 있다 — 이후 코드를
-고치면 `/wf-ship`이 재검증을 요구한다.
+고치면 `/wf-ship`이 재검증을 요구한다. 원격 저장소(`origin` =
+gihyungcoding/workflow-ticket-booking, 사용자 제공)를 연결하고
+develop/main/feature 브랜치를 푸시한 뒤 PR #1을 생성했다.
 
 ## 다음 한 걸음
 
-`/wf-ship` 사전 검사 7/7 통과(2026-09-07). **원격 저장소가 연결되어 있지
-않아(`git remote -v` 비어 있음) PR을 생성하지 못했다** — 실패가 아니라
-원격 부재. PR 본문은
-`/private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/2ed86711-a64a-4d44-9d85-7c2d5a0c0b4c/scratchpad/pr-body-task-001.md`
-에 준비되어 있다. 원격 추가 후:
-
-```bash
-git remote add origin <repo-url>
-git push -u origin feature/task-001-performance-list-detail-api
-gh pr create --base develop \
-  --title "TASK-001 공연 목록/상세 조회 API" \
-  --body-file <위 경로>
-```
+없음 — 이 태스크는 종료됐고 PR도 열려 있다. 머지는 리뷰 후 사람이 직접
+한다 (PR #1 참고, WARN/예외승인 사유가 본문에 명시되어 있다).
 
 미작성 후속 항목(REFLECT_TASK-001.json 참고, 원하면 별도 태스크/ADR로):
 - ADR 후보 2건 — Java 컴파일 언어의 TDD Red 전략, 응답 DTO 패키지 소유 원칙
