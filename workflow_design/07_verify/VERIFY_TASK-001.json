@@ -95,8 +95,21 @@
   },
 
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
-  }
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "c0de9086e52312b3f8522a6e4b69cc8957b864fb",
+    "verified_at": "2026-09-07T07:52:00Z"
+  },
+
+  "exceptions": [
+    {
+      "finding": "PerformanceStatusRules.matches()는 src/main에서 호출되지 않으며, statusSpecification()이 아니라 of()의 로직을 재검증하는 죽은 코드다 — Plan F9가 서술한 목적('Specification 조건을 다시 표현')과 실제 구현이 어긋난다",
+      "accepted_because": "attempt 1의 실제 결함(CLOSED 로직 불일치)에 대한 방어는 SC-15(F8 DB 제약)가 담당하며 이는 유효하다. matches()가 제공하는 것은 of()의 우선순위 로직 자체가 malformed 입력에서도 자기 일관적이라는 별도의(더 약하지만 여전히 유효한) 보장이다.",
+      "follow_up": "PLAN_TASK-001.json의 F9 서술과 PerformanceStatusRules 코드 주석을 실제 동작에 맞게 정정 — Phase 5 회고에서 후속 태스크로 제안"
+    },
+    {
+      "finding": "status 필터(목록 API)의 now==openAt, now==closeAt 정확한 경계를 실행하는 시나리오가 없다 — SC-06은 경계에서 하루 떨어진 데이터, SC-07/08은 경계를 정확히 다루지만 상세 조회 경로라 Specification을 타지 않는다",
+      "accepted_because": "현재 코드(lessThan/greaterThanOrEqualTo 조합)를 직접 검산한 결과 정확하다 — now==closeAt에서 OPEN이 CLOSED보다 우선해 겹치지 않는다. 활성 결함이 아니라 향후 회귀에 대한 검출 공백이다",
+      "follow_up": "PerformanceStatusRulesTest에 now==openAt/now==closeAt 픽스처 추가, 목록 API의 status 필터 경계 시나리오 추가 — Phase 5 회고에서 후속 태스크로 제안"
+    }
+  ]
 }
