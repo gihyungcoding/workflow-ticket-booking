@@ -1,9 +1,9 @@
 package com.example.ticket_booking.api;
 
+import com.example.ticket_booking.domain.PerformanceStatus;
 import com.example.ticket_booking.service.PerformanceListResponse;
 import com.example.ticket_booking.service.PerformanceResponse;
 import com.example.ticket_booking.service.PerformanceService;
-import com.example.ticket_booking.service.PerformanceStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;

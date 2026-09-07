@@ -1,4 +1,4 @@
-package com.example.ticket_booking.service;
+package com.example.ticket_booking.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
  * 승인한 방식 — Phase 4에서 발견된 CLOSED/UPCOMING 상호배타성 결함은 F8(openAt&lt;=closeAt) 도입 이후 API로는 재현할 수 없지만(그
  * 데이터 자체가 저장 거부됨), 이 클래스는 순수 함수라 DB 제약과 무관하게 malformed 데이터(openAt&gt;closeAt)로도 호출할 수 있다 — 마지막 픽스처가
  * 정확히 원래 버그의 모양을 재현해, F8에 기대지 않고 of()/matches()가 그 경우에도 일치함을 직접 증명한다. 다만 실제 JPA
- * Specification(PerformanceService.statusSpecification())과의 런타임 동치까지는 보장하지 않는다는 한계는
- * PLAN_TASK-001.json의 F9 항목에 남아 있다.
+ * Specification(PerformanceRepositoryImpl)과의 런타임 동치까지는 보장하지 않는다는 한계는 PLAN_TASK-001.json의 F9 항목에 남아
+ * 있다.
  *
  * <p>SoT: workflow_design/04_plan/PLAN_TASK-001.json (F9), 이 클래스 자체가 근거다.
  */

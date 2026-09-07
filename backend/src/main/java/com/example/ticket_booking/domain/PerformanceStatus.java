@@ -1,4 +1,4 @@
-package com.example.ticket_booking.service;
+package com.example.ticket_booking.domain;
 
 public enum PerformanceStatus {
   UPCOMING,
