@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2b"
 phase_name: "Phase 2b - Red (RETRY)"
 saved_at: 2026-09-04T08:42:46Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 Red 재시도(SC-12~18 + F9 단위 테스트, 3건 Red/17건 Green)를 승인했다. TEST_TASK-001.json.human_review.approved를 true로 갱신했다."
 

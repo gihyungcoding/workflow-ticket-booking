@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-03T13:23:45Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "전체 테스트(12/12), 아키텍처 제약(ARCH-001/002, 위반 0), 린트(spotlessCheck 통과)를 실행해 증거를 확보했다. 검증 도중 develop에서 병행 진행된 외부 변경(Spotless 도입, constraints.yaml glob 수정)을 발견해 feature 브랜치가 리베이스+재포맷된 상태임을 확인했다 — 로직 변경 없음, 테스트/아키텍처 재확인 통과."
 

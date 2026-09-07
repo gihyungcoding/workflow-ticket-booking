@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-03T09:21:26Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "route=Backend로 결정. 테이블 신설, 상태 계산, 두 GET 엔드포인트가 모두 서버 범위이며 프론트(TASK-002)는 응답을 그대로 배지로 표시할 뿐이라 분리 신호 없음."
 

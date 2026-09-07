@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-03T09:21:26Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "PLAN_TASK-001.json 작성 완료 — route/design(inputs 4, outputs 3, flows 6)/architecture_refs/adr_refs/codebase_analysis(target_files 12, 전부 신규)/test_hints 채움. acceptance_criteria 7건 모두 flows.covers로 커버됨. EXIT GATE 통과."
 

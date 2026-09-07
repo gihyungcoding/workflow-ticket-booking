@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "4"
 phase_name: "Phase 4 - Verify (RETRY, 완료)"
 saved_at: 2026-09-07T08:16:29Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 WARN 상태의 검증 결과를 예외 승인(EXCEPTION_APPROVE)했다. exceptions 배열에 잔여 리스크 2건과 수용 근거, 후속 조치 제안을 기록했다. verified_commit을 현재 HEAD(c0de908)로 고정했다."
 

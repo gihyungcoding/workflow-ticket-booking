@@ -1,0 +1,114 @@
+{
+  "task_id": "TASK-001",
+
+  "keep": [
+    {
+      "what": "Java/Spring 컴파일 언어에서 Phase 2b(Red)를 '컴파일되는 최소 스켈레톤 + UnsupportedOperationException' 전략으로 처리한 것이 두 번의 Red 라운드(attempt 1, attempt 2) 모두에서 매끄럽게 작동했다.",
+      "evidence": "CP-2.5_red-code.md, CP-2.5_red-code_retry1.md — 두 라운드 모두 컴파일 실패 없이 '미구현이라 실패'와 '진짜 로직 버그로 실패'가 명확히 구분됐다. memory: feedback-java-tdd-red-skeleton"
+    },
+    {
+      "what": "독립검증자(scenario-validator)를 시나리오가 바뀔 때마다 반복 호출한 것이 실제로 문제를 걸러냈다 — 실행 취소 없이 승인까지 갔다면 놓쳤을 문제들이었다.",
+      "evidence": "1차 라운드에서 AC11(UPCOMING)에 값 단언이 빠진 것(V3), Plan의 F3.covers 누락(V4/V8), MD의 attempt 1 잔재 문장(V1)을 검증자가 잡아냈고 실제로 고쳐졌다 — CP-2.2_canonical-scenarios_retry1.md"
+    },
+    {
+      "what": "CLOSED 버그를 코드 패치가 아니라 도메인 불변조건(F8, openAt<=closeAt) 추가로 근본 해결한 것이 옳은 판단이었다 — 패치보다 간단했고, 독립적으로 두 번(사용자 결정 시점, Phase 4 재검증 시점) 수학적으로 검산해 확인됐다.",
+      "evidence": "PerformanceService.java의 statusSpecification() CLOSED 분기 코드는 attempt 1과 attempt 2에서 한 글자도 바뀌지 않았다 — VERIFY_TASK-001.json(attempt 2) evidence.generated_ddl_check, code-reviewer의 독립 검산"
+    }
+  ],
+
+  "problem": [
+    {
+      "what": "Phase 2a(attempt 1)에서 status 필터 파라미터가 UPCOMING/OPEN/SOLD_OUT/CLOSED/CANCELLED 5개 값을 받는데도 필터 경로 시나리오가 OPEN(SC-02)과 CLOSED(SC-06) 2개뿐이었다. 이 공백에서 CLOSED 분기의 실제 결함이 코드 리뷰 시점까지 발견되지 않고 넘어갔다.",
+      "evidence": "VERIFY_TASK-001.json(attempt 1).reject.feedback, SCENARIO_TASK-001.md의 SC-12/13/14 추가 사유 — '5개 분기 중 OPEN과 CLOSED만 필터로 실행됐다'",
+      "phase": "2a"
+    },
+    {
+      "what": "attempt 2에서 커버리지 공백을 메웠다고 판단했지만(SC-12~18, 18건), Phase 4 재검증에서 또 다른 유형의 잔여 리스크(F9 단위 테스트가 검증 대상을 잘못 겨냥함, 필터의 now==openAt/closeAt 정확한 경계가 여전히 테스트되지 않음)가 발견됐다 — 커버리지를 '늘리는 것'과 '정확한 지점을 겨냥하는 것'은 다른 문제였다.",
+      "evidence": "VERIFY_TASK-001.json(attempt 2).code_review.findings — matches()가 src/main에서 호출되지 않는 죽은 코드, PerformanceStatusRulesTest 픽스처에 now==openAt/closeAt 경계가 없음",
+      "phase": "4"
+    }
+  ],
+
+  "try": [
+    {
+      "what": "status/카테고리처럼 유한한 enum 값을 필터 파라미터로 받는 API를 설계할 때, wf-scenario의 커버리지 정책에 'enum 값 전부에 대해 최소 1개의 필터 시나리오'를 명시적 하한으로 추가한다 — 이번처럼 2/5만 커버하고도 acceptance_criteria 문자열 매칭상으로는 '커버됨'으로 보이는 착시를 막는다.",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    },
+    {
+      "what": "순수 함수로 로직을 분리해 단위 테스트하는 접근(F9 같은)을 승인할 때, '이 순수 함수가 실제로 무엇을 대신 검증하는가'를 명시적으로 확인하는 체크 항목을 scenario-validator의 V8(입출력 대응) 체크에 추가한다 — '분리된 로직에 실제 프로덕션 호출자가 있는가, 아니면 검증하려던 대상(예: JPA Specification)과 다른 것을 검증하는가'를 판정하게 한다.",
+      "target": ".claude/agents/scenario-validator.md (또는 해당 정의 파일의 V8 체크 설명)"
+    },
+    {
+      "what": "시간 비교 로직(now vs openAt/closeAt 같은)이 여러 코드 경로(단건 조회 vs 목록 필터)에 중복 구현될 때, 경계값(now==X) 시나리오를 '경로마다 최소 1개'로 요구한다 — 이번엔 SC-07/08(단건 경로)만 경계를 다뤘고 목록 필터 경로는 하루 이상 떨어진 값만 썼다.",
+      "target": "docs/workflow/task-schema.md 또는 .claude/skills/wf-scenario/references/coverage-policy.md — '같은 규칙의 중복 구현마다 경계값 커버' 절 추가"
+    }
+  ],
+
+  "insights": [
+    "테스트가 전부 green이라는 사실은 커버리지를 보장하지 않는다 — enum/필터 분기처럼 이산적인 입력 공간은 '몇 개 시나리오가 있는가'가 아니라 '몇 개 값이 실제로 실행되는가'로 판단해야 한다.",
+    "로직을 순수 함수로 분리해 단위 테스트하는 것은 그 자체로 안전망을 보장하지 않는다 — 분리된 함수가 실제 프로덕션 호출 경로에 있는지, 검증하려던 대상(이번엔 JPA Specification)과 진짜 같은 것을 표현하는지를 별도로 확인해야 한다.",
+    "컴파일 언어에서 TDD Red의 정의(스켈레톤 전략)는 프로젝트 차원에서 한 번 합의하면 이후 반복 재사용 가능한 자산이 된다 — 이번에 memory로 남긴 덕분에 attempt 2의 Red 라운드는 재논의 없이 바로 적용됐다."
+  ],
+
+  "phase_analysis": {
+    "1": { "retries": 0, "note": "—" },
+    "2a": { "retries": 1, "note": "Phase 4 REJECT(COVERAGE_INSUFFICIENT)로 재시도. 재시도 내에서도 독립검증 4라운드(경고 5→4→1→0)를 거침" },
+    "2b": { "retries": 1, "note": "Phase 2a 재시도에 연동. 기존 구현이 이미 green인 부분(SC-12/13/14/17/18)과 실제 Red(SC-15/16, F9)를 구분해 처리" },
+    "3": { "retries": 1, "note": "F7/F8/F9 구현, 1회 시도로 20/20 통과" },
+    "4": { "retries": 1, "note": "attempt 1: FAIL(정확성 결함 2건). attempt 2: WARN → EXCEPTION_APPROVE(잔여 리스크 2건)" },
+    "5": { "retries": 0, "note": "—" }
+  },
+
+  "adr_candidates": [
+    {
+      "decision": "Java/Spring 프로젝트에서 TDD Red(Phase 2b)는 컴파일되는 최소 스켈레톤(필드·시그니처·구조적 애노테이션) + 메서드 본문 UnsupportedOperationException으로 만든다. 단, 스키마 제약(NOT NULL/CHECK) 애노테이션처럼 '애노테이션 자체가 구현'인 경우는 애노테이션을 아예 넣지 않는 방식으로 예외 처리한다.",
+      "why_broader": "이 프로젝트의 모든 향후 백엔드 태스크가 wf-red를 탈 때마다 같은 컴파일 언어 문제(스킬이 Python 예시 기준이라 컴파일 에러를 Red로 인정하지 않음)에 부딪힌다. 지금은 세션 메모리(feedback-java-tdd-red-skeleton)에만 있어 이 세션을 벗어나면 재발견해야 한다",
+      "evidence": "CP-2.5_red-code.md의 decisions, TEST_TASK-001.json.java_compiled_language_notes",
+      "suggested_title": "Java 컴파일 언어에서의 TDD Red 전략"
+    },
+    {
+      "decision": "API 응답 DTO(레코드)는 그것을 생성하는 계층(Service)이 소유하는 패키지에 둔다 — Controller가 반환 타입으로 가져다 쓰는 것은 허용된 의존 방향(API→Service)이라 문제없지만, DTO를 api/dto에 두면 Service가 그 타입을 만들기 위해 api 패키지를 import하게 되어 ARCH-002(역방향 의존 금지)를 위반한다.",
+      "why_broader": "이번 태스크에서 실제로 이 실수(Plan에 api/dto로 설계 → Phase 3에서 ARCH-002 위반 발견 → service로 이동)가 발생했다. TASK-002(프론트)를 포함해 응답 DTO를 만드는 모든 향후 API 태스크에 동일한 함정이 있다",
+      "evidence": "DEV_TASK-001.json(attempt 1).scope_deviations, VERIFY_TASK-001.json(attempt 1).scope_deviations",
+      "suggested_title": "응답 DTO의 패키지 소유 원칙"
+    }
+  ],
+
+  "architecture_drift": [
+    {
+      "what": "architecture.md §2 계층 표는 API(Controller)의 책임을 '응답 변환'이라고만 적어, 응답 DTO 타입 자체를 어느 계층 패키지에 둬야 하는지 명시하지 않는다. 이 모호함이 실제로 Plan 단계에서 DTO를 api/dto로 설계하게 만들었고, Phase 3에서 ARCH-002 위반으로 나타났다.",
+      "where": "docs/architecture/architecture.md §2 (계층 표), 실제로 걸린 코드는 backend/.../service/PerformanceResponse.java (원래 계획은 api/dto)",
+      "found_how": "Phase 3에서 python scripts/check_architecture.py 실행 중 ARCH-002 위반으로 발견",
+      "suggestion": "위 ADR 후보('응답 DTO의 패키지 소유 원칙')를 채택하면 architecture.md §2 표의 API 행 '위치' 열이나 별도 각주에 'DTO는 생성 계층이 소유'를 명시할 수 있다"
+    }
+  ],
+
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§4 태스크 복잡도별 기준선 부근에 신설 절",
+      "change": "필터/카테고리 파라미터가 유한한 enum 값을 받는 경우, '값 개수만큼 최소 1개씩의 필터 시나리오'를 커버리지 하한에 명시적으로 추가한다",
+      "evidence": "TASK-001 attempt 1 — status 5개 값 중 2개만 필터 시나리오가 있어 CLOSED 결함을 놓침"
+    },
+    {
+      "target": "scenario-validator 정의 (V8 체크 항목)",
+      "section": "V8: 입출력 대응",
+      "change": "순수 함수로 분리된 로직이 단위 테스트되는 경우, 그 함수의 실제 프로덕션 호출자가 있는지, 원래 검증 대상(예: 실제 쿼리 로직)과 같은 것을 표현하는지를 확인하는 체크를 추가한다",
+      "evidence": "TASK-001 attempt 2 — PerformanceStatusRules.matches()가 프로덕션에서 호출되지 않는데도 1~2차 검증에서는 발견되지 못하고 Phase 4 code-reviewer가 처음 지적함"
+    },
+    {
+      "target": "docs/workflow/task-schema.md 또는 coverage-policy.md",
+      "section": "경계값 시나리오 관련 절",
+      "change": "같은 시간 비교 규칙이 여러 코드 경로(단건 조회 vs 목록 필터 등)에 중복 구현되는 경우, 경로마다 독립적으로 경계값(now==X) 시나리오를 요구한다",
+      "evidence": "TASK-001 attempt 2 — SC-07/08(단건 조회)만 정확한 경계를 다루고 목록 필터 경로는 경계에서 하루 떨어진 값만 사용, code-reviewer가 지적"
+    }
+  ],
+
+  "completion_report": {
+    "approved_by_human": true,
+    "approved_at": "2026-09-07T09:58:00Z",
+    "decision": "APPROVE",
+    "artifact_url": "https://claude.ai/code/artifact/b36df245-d9e3-4c31-a212-d779e73c611f",
+    "note": "회고 승인, ADR/규칙 제안은 이번엔 별도 작성하지 않고 폐기하지 않은 채 후속 태스크 후보로 REFLECT_TASK-001.json에만 남긴다"
+  }
+}

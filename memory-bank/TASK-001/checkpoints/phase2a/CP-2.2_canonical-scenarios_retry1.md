@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (RETRY)"
 saved_at: 2026-09-04T06:33:28Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Phase 4 REJECT(RETRY_SCENARIO, COVERAGE_INSUFFICIENT) attempt 1에 대응해 시나리오를 11건→18건으로 보강했다. status 필터 UPCOMING/SOLD_OUT/CANCELLED 분기(SC-12~14), 근본 원인이던 openAt<=closeAt 불변조건(SC-15, F8 신설), title/venue 컬럼 길이(SC-16), 두 제약의 양성 대조군(SC-17/18)을 추가했다. Plan에도 F8/AC9/AC10/AC11을 추가했다."
 

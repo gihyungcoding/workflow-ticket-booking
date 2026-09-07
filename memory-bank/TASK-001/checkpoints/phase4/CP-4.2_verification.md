@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-03T13:23:45Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "VERIFY_TASK-001.json 작성 완료, status=FAIL. code-reviewer가 지적한 정확성 결함 2건을 독립적으로 재현/검증했다 — (1) CLOSED 상태 로직 불일치, (2) title/venue 컬럼 길이 어긋남. 둘 다 FORBIDDEN(코드 수정 금지)에 따라 고치지 않고 기록만 했다."
 

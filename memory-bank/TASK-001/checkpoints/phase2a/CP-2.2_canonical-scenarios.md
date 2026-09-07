@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-03T09:41:18Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "시나리오 최종 11건 (happy 4 / boundary 4 / error 3). 처음 9건(acceptance_criteria 7건 매핑) 작성 후 HITL#1 검토 중 사용자 요청으로 SC-10/SC-11(NOT NULL/CHECK 제약 — Plan AC8/F7)을 추가했다."
 

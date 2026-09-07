@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "3"
 phase_name: "Phase 3 - Green (RETRY)"
 saved_at: 2026-09-04T09:00:17Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "DEV_TASK-001.json(attempt 2) 저장 완료. 테스트 20/20, 아키텍처·린트 통과. EXIT GATE 통과."
 

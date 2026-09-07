@@ -5,7 +5,7 @@ task_id: TASK-001
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (RETRY)"
 saved_at: 2026-09-04T06:33:28Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "scenario-validator를 이번 재시도에서 2회 호출(전체 누적 6회). 1차 warn 5, 2차 warn 4로 overall.pass=true 유지. VALIDATION_TASK-001.json에 2차(최종) 결과를 원본 그대로 저장했고, 이후 SC-17/18 Then 강화는 post_validation_fix로 별도 기록했다(3차 재검증 생략)."
 
