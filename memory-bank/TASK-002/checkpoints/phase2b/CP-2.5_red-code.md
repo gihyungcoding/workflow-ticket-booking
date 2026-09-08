@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-08T01:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "frontend 스캐폴딩(Vite+React+MUI+react-router-dom+Vitest+Testing Library) 구축, SC-01~06을 테스트 6건으로 옮김, 전부 Red 확인"
 

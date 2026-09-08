@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-08T02:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "api/performances.ts, StatusBadge.tsx, PerformanceListPage.tsx, PerformanceDetailPage.tsx 최소 구현 완료. 대상 테스트 6/6 통과, 빌드 성공, 백엔드 회귀 없음"
 

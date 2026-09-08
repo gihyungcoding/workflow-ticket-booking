@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "3"
 phase_name: "Phase 3 - Green (완료)"
 saved_at: 2026-09-08T02:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Green 구현 완료 — 대상 테스트 6/6, 빌드 성공, 린트 error 0(warning 2), 백엔드 회귀 없음. scope_deviations 없음"
 

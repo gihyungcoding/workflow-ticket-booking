@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-08T03:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "VERIFY_TASK-002.json 저장 — status: WARN. acceptance_criteria 6/6 PASS, 아키텍처 제약 위반 0건, code-reviewer 소견 7건(전부 승인된 6개 AC 범위 밖 엣지 케이스 또는 테스트 커버리지 갭), scope_deviations 1건(카드→상세 네비게이션 링크, DEV_TASK-002.json 기록 누락)"
 

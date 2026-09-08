@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-08T02:05:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "리팩토링 없음으로 판단"
 

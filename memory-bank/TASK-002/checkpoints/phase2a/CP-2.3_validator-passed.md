@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-08T00:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "scenario-validator 검증 PASS(경고 1건). 지적된 두 항목(SC-01 위치 기반 단언, SC-03 이중 실패 조건)을 수정 후 재저장"
 

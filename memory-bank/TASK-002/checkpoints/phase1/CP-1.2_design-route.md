@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-08T00:05:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "route를 Frontend로 확정"
 

@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "2b"
 phase_name: "Phase 2b - Red (완료)"
 saved_at: 2026-09-08T01:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 Red 테스트 6건(전부 실패)을 AskUserQuestion으로 승인. TEST_TASK-002.json human_review.approved=true로 갱신"
 

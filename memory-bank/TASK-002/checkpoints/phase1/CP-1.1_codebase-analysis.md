@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-08T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "architecture.md·ADR·constraints.yaml 확인, frontend/ 빈 상태 확인, 백엔드 응답 DTO/404 처리 확인"
 

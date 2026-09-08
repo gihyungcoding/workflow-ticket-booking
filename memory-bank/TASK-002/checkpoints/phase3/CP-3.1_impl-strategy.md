@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-08T01:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TEST_TASK-002.json human_review.approved=true 확인, 구현 순서 결정"
 

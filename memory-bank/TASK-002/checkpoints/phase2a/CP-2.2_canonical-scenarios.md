@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-08T00:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "시나리오 6건(happy 2 / error 2 / boundary 2) 작성, acceptance_criteria 6/6 커버"
 

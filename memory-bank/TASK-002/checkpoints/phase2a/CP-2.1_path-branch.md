@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-08T00:15:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "기존 시나리오 없음 — 신규 작성. PLAN_TASK-002.json의 flows(F1~F7)를 입력으로 사용"
 

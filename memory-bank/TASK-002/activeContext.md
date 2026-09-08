@@ -1,9 +1,9 @@
 ---
 task_id: TASK-002
 title: "공연 목록/상세 화면"
-phase: "4"
-phase_name: "Phase 4 - Verify (완료)"
-status: ACTIVE
+phase: "5"
+phase_name: "Phase 5 - Reflect (완료)"
+status: DONE
 created_at: 2026-09-08
 last_updated: 2026-09-08
 
@@ -12,7 +12,7 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-002-performance-list-detail-ui"
 
-last_checkpoint: CP-4.3
+last_checkpoint: CP-5.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-002.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-002.md"
@@ -21,11 +21,20 @@ artifacts:
   test: "workflow_design/05_scenario/TEST_TASK-002.json"
   dev: "workflow_design/06_dev/DEV_TASK-002.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-002.json (WARN, EXCEPTION_APPROVE)"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-002.json"
+  report: "https://claude.ai/code/artifact/af65ac1f-1c9f-497a-8a54-42214ec98d33"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4(Verify)를 마쳤다. acceptance_criteria 6/6을 단위 테스트 + 실제
+**완료됐다.** Phase 1~5를 전부 마쳤고 HITL#4에서 사용자가 회고를 승인,
+ADR 작성까지 요청해 이어서 `/wf-adr`로 ADR 2건(Vitest 테스트 프레임워크,
+react-router-dom 라우팅)을 기록한다. 태스크는 DONE으로 닫혔지만 아직
+머지되지 않았다 — `/wf-ship`이 남아 있다.
+
+### Phase 4(Verify) 요약
+
+acceptance_criteria 6/6을 단위 테스트 + 실제
 브라우저 확인(이중 증거)으로 PASS 판정했다. 로컬에 PostgreSQL/Docker가
 없고 8080 포트는 사용자의 무관한 다른 프로젝트(IntelliJ 디버그 세션)가
 점유 중이라, TASK-001 실제 백엔드 대신 API 명세(§2)와 동일한 스키마의
@@ -47,11 +56,10 @@ Phase 4(Verify)를 마쳤다. acceptance_criteria 6/6을 단위 테스트 + 실�
 
 ## 다음 한 걸음
 
-`wf-reflect` 스킬로 Phase 5(회고)를 시작한다 — KPT 회고를 하고 규칙
-개선안을 도출한다. 회고에 반드시 반영해야 할 것: (1) code_review의
-correctness/design 소견 6건(위 exceptions 참고), (2) Plan이 화면 간
-네비게이션 흐름을 놓치기 쉽다는 프로세스 개선안, (3) SC-01 테스트
-커버리지 갭.
+1. `/wf-adr`로 ADR 2건 작성 — "프론트엔드 테스트 프레임워크로 Vitest를 쓴다",
+   "클라이언트 라우팅으로 react-router-dom을 쓴다" (REFLECT_TASK-002.json
+   adr_candidates 참고)
+2. `/wf-ship` 안내 — 머지 준비(PR 생성)는 사람이 명령을 실행해야 함
 
 ## 알아둬야 할 것
 
@@ -77,3 +85,9 @@ correctness/design 소견 6건(위 exceptions 참고), (2) Plan이 화면 간
 - 좌석 선택 UI·결제 진입은 범위 밖
 - **승인 이후 코드를 고치지 않는다** — `verified_commit` 이후 소스가
   바뀌면 `/wf-ship`이 재검증을 요구한다
+- Phase 5 회고 결과(REFLECT_TASK-002.json): Keep 3 / Problem 4 / Try 3.
+  규칙 개선안 3건(wf-verify Step 2.5 모의 서버 옵션, wf-plan Step 4
+  네비게이션 흐름 체크, wf-red Step 2 스켈레톤 우선 순서) — 사용자가
+  아직 이 개선안 자체를 승인/반영하지는 않았다(회고만 승인). 아키텍처
+  drift 1건(Frontend 내부 계층 미문서화)은 보류 — TASK-003에서 같은
+  구조가 반복되는지 보고 재판단

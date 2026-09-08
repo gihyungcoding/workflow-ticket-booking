@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-08T02:40:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "전체 스위트 재확인, 아키텍처 제약 검증, 화면 4개 상태 실제 확인, 보안 점검 완료"
 

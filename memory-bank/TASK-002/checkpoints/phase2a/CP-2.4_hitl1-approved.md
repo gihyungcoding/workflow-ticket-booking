@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (완료)"
 saved_at: 2026-09-08T00:35:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 SC-01~06 시나리오를 AskUserQuestion으로 승인. generate_red_trigger=true로 갱신"
 

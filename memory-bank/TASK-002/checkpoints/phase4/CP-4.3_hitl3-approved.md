@@ -5,7 +5,7 @@ task_id: TASK-002
 phase: "4"
 phase_name: "Phase 4 - Verify (완료)"
 saved_at: 2026-09-08T03:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 VERIFY_TASK-002.json(status: WARN)을 AskUserQuestion으로 예외 승인. verified_commit = e2fed22d0897ecbd96c5d68ca1cbc9ebac97b0a9"
 
