@@ -3,7 +3,7 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | route: Frontend, flows 7건(AC 6건 전부 커버) |
-| 2a Scenario | ⬜ 대기 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 6건, 검증 PASS, HITL#1 승인 |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |

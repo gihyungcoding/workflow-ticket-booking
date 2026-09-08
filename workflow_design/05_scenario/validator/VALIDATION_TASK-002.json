@@ -1,0 +1,71 @@
+{
+  "task_id": "TASK-002",
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "MD 6건(SC-01~SC-06), JSON 6건으로 개수·ID·순서·type(happy 2/error 2/boundary 2)이 일치한다. 각 시나리오의 Given/When/Then 문장을 한 줄씩 대조했고 의미 차이는 없다. 유일한 차이는 인용부호 스타일(MD는 \"예매가능\", JSON은 '예매가능')과 MD의 줄바꿈뿐이며 문구 자체는 동일하다. covers/flow 값도 6건 모두 동일하다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 6건(≥2), happy 2건(SC-01, SC-02 ≥1), error 2건(SC-03, SC-04 ≥1). boundary 2건(SC-05, SC-06)."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "Plan의 acceptance_criteria 6건을 직접 세어 대조했다. (1)'목록 화면 진입 시…상태 배지가 보인다'→SC-01, (2)'로딩 중에는 카드 자리에 스켈레톤…'→SC-05, (3)'목록이 빈 배열이면…'→SC-06, (4)'목록 API 호출이 실패하면…'→SC-03, (5)'상세 화면에서 공연명·장소·일시…'→SC-02, (6)'존재하지 않는 공연 상세로 진입(404)…'→SC-04. 각 covers 문자열이 Plan의 AC 문자열과 글자 단위로 동일하다. 미커버 0건이며 JSON의 coverage 자기 선언(6/6, uncovered [])은 실제와 일치한다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "사용된 flow는 F1(SC-01), F5(SC-02), F4(SC-03), F6(SC-04), F2(SC-05), F3(SC-06)이며 모두 Plan design.flows에 실재한다. F7(상세 로딩)만 미사용인데, Plan이 'covers: []·공식 AC 아님'으로 표기했고 MD §생략 이유에 근거가 남아 있어 역방향 미사용은 위반으로 보지 않는다."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "warn",
+      "detail": "'내부적으로/올바르게/정상적으로' 류의 모호어는 하나도 없고 대부분의 Then은 그대로 단언으로 옮길 수 있다. 다만 두 곳이 걸린다. (1) SC-01 Then '첫 번째 카드에 \"예매가능\" 배지가, 두 번째 카드에 \"매진\" 배지가 보인다'는 렌더 순서가 응답 순서와 같다는 전제를 깔고 있는데, Given('공연 2건을 담은 200 응답')도 Plan의 F1도 정렬 보장을 명시하지 않는다. 순서 보장이 명세에 없는 상태에서 위치 기반 단언을 쓰면 테스트가 우연한 구현에 의존한다. (2) SC-03 Given '요청이 실패한다 (500 응답 또는 네트워크 오류)'는 서로 다른 두 실패 경로를 OR로 묶어 두어 Red 단계에서 어느 쪽을 재현할지 결정되지 않는다. 참고로 SC-05의 '스켈레톤이 3개 이상'은 Plan의 '3~6개'보다 상한이 느슨하지만 단언 자체는 가능해 지적 대상은 아니다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "pass",
+      "detail": "6건 모두 when 배열 원소가 1개이고 '그리고 ~하면' 형태의 복합 트리거가 없다. SC-01/03/05/06은 '목록 화면에 진입한다', SC-02/04는 '상세 화면에 진입한다' 단일 동작이다. MD §생략 이유에서 [다시 시도]/[목록으로] 클릭을 '새로운 When이 되므로 별도 시나리오 필요'라고 명시하며 When 병합을 의식적으로 피했다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "pass",
+      "detail": "When/Then에 컴포넌트명(PerformanceListPage 등)·함수명(getPerformances)·testid·SQL이 등장하지 않는다. HTTP 엔드포인트와 응답 스키마, {code: PERFORMANCE_NOT_FOUND}는 모두 Given에만 있어 허용 범위다. Then의 '예매가능/매진', '예정된 공연이 없습니다', '목록을 불러오지 못했습니다', '존재하지 않는 공연입니다'는 docs/product/features/performance-availability.md §5(라인 221~231)와 §4 완료 조건에 이미 정의된 사용자 가시 문구이므로 구현 세부가 아니다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "pass",
+      "detail": "SC-01/05/06은 input performanceListResponse, SC-02/04는 performanceDetailResponse + performanceId를 쓴다. 출력도 Plan design.outputs 6종(목록 카드/스켈레톤/빈 상태/오류/상세 기본/상세 404)과 1:1로 대응하며 범위 밖 입출력이 없다. 다만 Plan outputs는 배지의 라벨 문자열을 '상태 배지'로만 적어 두었고 'OPEN→예매가능', 'SOLD_OUT→매진' 매핑은 Plan이 아니라 feature 문서 §5에 있다 — 범위 위반은 아니지만 근거가 Plan 밖에 있다는 점은 기록해 둔다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "pass",
+      "detail": "목록 화면 시나리오가 3건(SC-01/03/05/06 중 4건)이지만 각각 성공-데이터 있음(F1)·요청 실패(F4)·pending(F2)·성공-빈 배열(F3)로 서로 다른 분기를 탄다. 상세도 200(F5)과 404(F6)로 갈린다. 같은 경로를 두 번 타는 쌍은 없다."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "n/a",
+      "detail": "Plan codebase_analysis.target_files 11개가 전부 '신규' 표기이고, 실제로 frontend/ 아래에는 .gitkeep 하나만 존재해 수정 대상 기존 파일이 없다. existing_tests도 []다. 바꿀 기존 동작이 없으므로 regression 시나리오 생략(MD §생략 이유 1번)은 타당하다."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 1,
+    "summary": "V1~V4는 모두 충족한다 — MD와 JSON이 6건 전부 일치하고, Plan의 acceptance_criteria 6건을 직접 대조한 결과 미커버가 없으며, 사용된 flow 6개가 모두 Plan에 실재한다. 다음 Phase 진행을 막는 결함은 없다. 다만 V5에서 두 가지를 사람이 알아야 한다: SC-01의 '첫 번째/두 번째 카드' 위치 기반 단언은 Plan·Given 어디에도 없는 렌더 순서 보장을 전제하고, SC-03의 Given이 '500 응답 또는 네트워크 오류'로 두 실패 경로를 OR로 묶어 Red 단계에서 재현 대상이 확정되지 않는다."
+  }
+}

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-002
 title: "공연 목록/상세 화면"
-phase: "1"
-phase_name: "Phase 1 - Plan (완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design (완료)"
 status: ACTIVE
 created_at: 2026-09-08
 last_updated: 2026-09-08
@@ -12,33 +12,40 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-002-performance-list-detail-ui"
 
-last_checkpoint: CP-1.3
+last_checkpoint: CP-2.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-002.json"
+  scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-002.md"
+  scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-002.json"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-002.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1(Plan)을 마쳤다. route는 Frontend로 확정했고, `frontend/` 가
-완전히 비어 있는 상태(이 프로젝트 첫 프론트 태스크)임을 확인해
-`PLAN_TASK-002.json` 의 `codebase_analysis.target_files` 11건을 전부 신규
-생성 대상으로 정리했다(Vite+React+TS 스캐폴딩, MUI, react-router-dom,
-Vitest+Testing Library). inputs 3 / outputs 6 / flows 7(F1~F6가 공식
-acceptance_criteria 6건을 전부 커버, F7은 화면 명세 보충용)로 정규화했다.
+Phase 2a(Scenario)를 마쳤다. SC-01~06(happy 2/error 2/boundary 2)을 작성해
+`acceptance_criteria` 6/6을 전부 커버했고, `scenario-validator` 독립검증이
+PASS(경고 1건)했다. 경고 두 건은 승인 전에 바로 고쳤다:
+- SC-01: "첫 번째/두 번째 카드" 위치 기반 단언 → 제목("재즈의 밤"=OPEN,
+  "클래식 갈라"=SOLD_OUT) 기반으로 변경(응답 순서=렌더 순서라는, 명세에
+  없는 전제 제거)
+- SC-03: Given "500 응답 또는 네트워크 오류"(OR) → "500 응답"으로 단일화
+  (Red 단계 재현 대상 확정)
 
-두 가지를 unresolved로 남겼다(사용자 확인 없이 진행하되 추적 가능하게 기록):
-1. 요구사항 문서 §1-2 표는 Task B 범위에 "필터"를 언급하지만 §4/tasks.json의
-   공식 acceptance_criteria 6건에는 없다 — 공식 AC를 완료 정의로 삼아 이번
-   태스크에서는 필터 UI를 구현하지 않는다.
-2. 프로덕션 CORS/리버스 프록시 전략은 미정 — 개발 환경은 Vite dev 서버
-   proxy(`/api` → `localhost:8080`)로 해결(백엔드 변경 없음, Frontend route
-   범위 안).
+HITL#1을 `AskUserQuestion`으로 받아 사용자가 승인했다.
+`validate_phase2a_gate.py` 7/7 통과.
 
 ## 다음 한 걸음
 
-`wf-scenario` 스킬로 Phase 2a를 시작한다 — F1~F7을 Given/When/Then
-시나리오로 옮기고 `scenario-validator` 서브에이전트 검증을 거쳐 HITL#1
-승인을 받는다.
+`wf-red` 스킬로 Phase 2b를 시작한다 — SC-01~06을 실패하는 테스트 코드로
+옮긴다. `frontend/`가 아직 비어 있으므로 Vitest+Testing Library 스캐폴딩도
+이 단계에서 함께 갖춰야 한다(PLAN_TASK-002.json codebase_analysis 참고).
+
+## 알아둬야 할 것
+
+- Phase 1에서 결정한 두 가지가 여전히 유효: (1) 필터 UI는 공식 AC 밖이라
+  구현하지 않음, (2) 프론트-백엔드 연결은 Vite dev proxy로 해결
+- SC-01/SC-03 문구를 수정했지만 재검증은 호출하지 않았다 — 타입·covers·
+  flow·개수 불변이라 안전하다고 판단(CP-2.3 decisions 참고)
 
 ## 알아둬야 할 것
 
