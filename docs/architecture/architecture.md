@@ -1,6 +1,6 @@
 # 아키텍처
 
-**최종 갱신**: 2026-09-02
+**최종 갱신**: 2026-09-08
 
 ---
 
@@ -24,9 +24,18 @@
 | 계층 | 책임 | 하지 않는 것 | 위치 |
 |---|---|---|---|
 | API (Controller) | HTTP 요청 파싱, 응답 변환, 인증 컨텍스트 전달 | 비즈니스 로직, DB 접근 | `backend/.../api` |
-| Service | 도메인 로직, 트랜잭션 경계, 좌석 선점 규칙 | HTTP 관심사, SQL 직접 작성 | `backend/.../service` |
-| Repository | 영속성 접근, 쿼리 | 도메인 규칙 판단 | `backend/.../repository` |
+| Service | 도메인 로직, 트랜잭션 경계, 좌석 선점 규칙 | HTTP 관심사, SQL/영속성 프레임워크 타입 직접 사용(쿼리 조립 포함) | `backend/.../service` |
+| domain | 도메인 모델(엔티티, 값 객체, 상태를 나타내는 enum) | 영속성 접근, HTTP 관심사, 트랜잭션 제어 — 영속 여부와 무관하게 "핵심 개념을 나타내는가"로 판단한다 | `backend/.../domain` |
+| Repository | 영속성 접근, 쿼리(조회 조건 조립 포함) | 도메인 규칙 판단 | `backend/.../repository` |
 | Frontend (React) | 화면 렌더링, 사용자 입력, API 호출 | 도메인 규칙(선점 유효성 등은 서버가 최종 판단) | `frontend/` |
+
+API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 별도로 있는
+계층이 아니라 Service와 Repository가 공유하는 모델이다 — 그래서 §1 흐름
+다이어그램에는 없다. 응답 DTO(`PerformanceResponse` 등)는 domain이 아니라
+그 값을 만드는 계층(Service)이 소유한다 — Controller가 반환 타입으로
+가져다 쓰는 것은 허용된 방향(API→Service)이라 문제없지만, DTO를
+`api/dto`에 두면 Service가 그 타입을 만들기 위해 `api` 패키지를 import해야
+해서 아래 의존 방향을 어긴다.
 
 ## 3. 의존 방향
 

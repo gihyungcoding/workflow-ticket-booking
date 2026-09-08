@@ -5,14 +5,14 @@ phase: "5"
 phase_name: "Phase 5 - Reflect (완료)"
 status: DONE
 created_at: 2026-09-03
-last_updated: 2026-09-07
+last_updated: 2026-09-08
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-001-performance-list-detail-api"
 
-last_checkpoint: CP-5.3
+last_checkpoint: CP-4.3 (retry2)
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-001.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-001.md"
@@ -20,31 +20,51 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-001.json"
   test: "workflow_design/05_scenario/TEST_TASK-001.json (attempt 2)"
   dev: "workflow_design/06_dev/DEV_TASK-001.json (attempt 2)"
-  verify: "workflow_design/07_verify/VERIFY_TASK-001.json (attempt 2, WARN, EXCEPTION_APPROVE)"
+  verify: "workflow_design/07_verify/VERIFY_TASK-001.json (attempt 3, PASS, APPROVE)"
   reflect: "workflow_design/08_reflect/REFLECT_TASK-001.json"
   report: "https://claude.ai/code/artifact/b36df245-d9e3-4c31-a212-d779e73c611f"
 
-pull_request:
-  number: 1
-  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/1"
-  base: develop
-  opened_at: 2026-09-08
+pull_requests:
+  - number: 1
+    url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/1"
+    base: develop
+    opened_at: 2026-09-07
+    state: MERGED
+    merged_at: 2026-09-07
+    note: "attempt 2 승인 코드(c0de908) — 최초 기능 구현"
+  - number: 2
+    url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/2"
+    base: develop
+    opened_at: 2026-09-08
+    state: OPEN
+    note: "PR #1 병합 이후 발견된 클린코드 문제(enum 패키지 위치, Service의 DIP 위반) 수정 — attempt 3 재검증 PASS/APPROVE 코드(dbfbf86)"
 ---
 
 ## 지금 무엇을 하고 있나
 
-완료됐다. Phase 1~5를 모두 마쳤고(2a/2b/3/4는 각각 한 번씩 재시도),
-Phase 4는 WARN → EXCEPTION_APPROVE로 승인됐다. Phase 5 회고를 HITL#4에서
-승인받아 태스크를 DONE으로 닫았다. `verified_commit`은
-`c0de9086e52312b3f8522a6e4b69cc8957b864fb` 로 고정되어 있다 — 이후 코드를
-고치면 `/wf-ship`이 재검증을 요구한다. 원격 저장소(`origin` =
-gihyungcoding/workflow-ticket-booking, 사용자 제공)를 연결하고
-develop/main/feature 브랜치를 푸시한 뒤 PR #1을 생성했다.
+완료됐다. Phase 1~5를 모두 마쳤고 PR #1까지 연 뒤 DONE으로 닫혔던 태스크를,
+사용자가 직접 코드를 읽고 지적한 클린코드 문제 2건(PerformanceStatus enum이
+domain이 아니라 service에 있어 응집도 위반, PerformanceService가 JPA
+Specification을 직접 다뤄 DIP·architecture.md §2 위반) 때문에 Phase 4만
+재오픈해 attempt 3을 수행했다. 사용자가 지정한 순서(ARCH-003 제약 선추가 →
+위반 1건 확인 → architecture.md domain 계층 문서화 → PerformanceStatus/
+PerformanceStatusRules를 domain으로 이동, 쿼리 조립을 PerformanceRepositoryImpl로
+이동 → 테스트 20건 무수정 통과 → check_freshness.py가 stale을 정확히
+검출함을 확인)를 그대로 따랐다. 리팩터가 순수 구조 변경임을 바이트 단위
+diff로 직접 증명했고(code-reviewer 서브에이전트는 인프라 문제로 3회 연속
+실패), Phase 4 attempt 3을 PASS로 재승인(APPROVE)받았다. `verified_commit`은
+이제 `dbfbf8635fc2aa68480dcd7b4225f92803241751` 로 갱신됐다 — 이후 코드를
+고치면 `/wf-ship`이 재검증을 요구한다. Phase 5(회고)는 다시 거치지 않았다 —
+이번 재오픈은 새 기능이 아니라 이미 승인된 설계에 대한 사후 품질 수정이라
+사용자가 Phase 4 재검증만 명시적으로 지시했다.
 
 ## 다음 한 걸음
 
-없음 — 이 태스크는 종료됐고 PR도 열려 있다. 머지는 리뷰 후 사람이 직접
-한다 (PR #1 참고, WARN/예외승인 사유가 본문에 명시되어 있다).
+없음 — 리팩터 커밋이 push됐고 PR #2가 열려 있다. **PR #1은 이미
+병합되어(develop `6d6afb0`, 2026-09-07) 있었다** — 리팩터 커밋 3개
+(`1d9b7f9`, `dbfbf86`, `77936fb`)는 그 이후에 만들어진 것이라 PR #1
+안에 없었고, 그래서 `gh pr edit 1` 대신 새 PR #2를 만들었다. 머지는
+사용자가 리뷰 후 직접 한다.
 
 미작성 후속 항목(REFLECT_TASK-001.json 참고, 원하면 별도 태스크/ADR로):
 - ADR 후보 2건 — Java 컴파일 언어의 TDD Red 전략, 응답 DTO 패키지 소유 원칙
@@ -77,8 +97,16 @@ develop/main/feature 브랜치를 푸시한 뒤 PR #1을 생성했다.
 - 실제 패키지 루트는 `com.example.ticket_booking`
 - `PerformanceResponse`/`PerformanceListResponse`는 `service` 패키지에 있다
   (ARCH-002 위반 회피, `DEV_TASK-001.json.scope_deviations` — attempt 1 기록,
-  attempt 2에서도 유지). architecture.md가 DTO 소유 계층을 명시하지 않는
-  drift로 REFLECT에 기록됨
+  attempt 2·3에서도 유지). **REFLECT에 기록됐던 DTO 소유 계층 drift는 Phase 4
+  attempt 3에서 architecture.md에 문서화해 해소함**
+- **PerformanceStatus/PerformanceStatusRules는 이제 `domain` 패키지에 있다**
+  (attempt 3, `service`에서 이동 — 도메인 응집도 문제 수정). `PerformanceService`는
+  더 이상 `org.springframework.data.jpa.*`/`jakarta.persistence.criteria.*`를
+  import하지 않는다 — 쿼리 조립(Specification)은 전부
+  `repository/PerformanceRepositoryImpl`(`PerformanceRepositoryCustom` 구현,
+  `SimpleJpaRepository` 상속)로 이동해 DIP를 달성함. `docs/architecture/
+  constraints.yaml`에 `ARCH-003`(Service는 영속성 프레임워크 타입을 직접
+  다루지 않는다) 신설, `architecture.md` §2에 domain 계층 문서화됨
 - **`./gradlew`는 JAVA_HOME이 JDK 17+ 를 가리켜야 동작한다** — 시스템 기본
   `java`는 8. JDK 21(Microsoft)이
   `/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home` 에 있다
