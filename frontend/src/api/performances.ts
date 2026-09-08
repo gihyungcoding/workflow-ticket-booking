@@ -22,10 +22,20 @@ export interface PerformanceListResponse {
 export class PerformanceNotFoundError extends Error {}
 
 export async function getPerformances(): Promise<PerformanceListResponse> {
-  throw new Error('Not implemented')
+  const response = await fetch('/api/performances')
+  if (!response.ok) {
+    throw new Error(`공연 목록 조회 실패: ${response.status}`)
+  }
+  return response.json()
 }
 
 export async function getPerformance(id: string): Promise<Performance> {
-  void id
-  throw new Error('Not implemented')
+  const response = await fetch(`/api/performances/${id}`)
+  if (response.status === 404) {
+    throw new PerformanceNotFoundError(`공연을 찾을 수 없습니다: ${id}`)
+  }
+  if (!response.ok) {
+    throw new Error(`공연 상세 조회 실패: ${response.status}`)
+  }
+  return response.json()
 }

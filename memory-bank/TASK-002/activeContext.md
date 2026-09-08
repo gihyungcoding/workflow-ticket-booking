@@ -1,8 +1,8 @@
 ---
 task_id: TASK-002
 title: "공연 목록/상세 화면"
-phase: "2b"
-phase_name: "Phase 2b - Red (완료)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: ACTIVE
 created_at: 2026-09-08
 last_updated: 2026-09-08
@@ -12,55 +12,55 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-002-performance-list-detail-ui"
 
-last_checkpoint: CP-2.6
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-002.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-002.md"
   scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-002.json"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-002.json"
   test: "workflow_design/05_scenario/TEST_TASK-002.json"
+  dev: "workflow_design/06_dev/DEV_TASK-002.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b(Red)를 마쳤다. `frontend/`가 완전히 비어 있던 상태에서 Vite+React+TS
-스캐폴딩부터 시작했다: `npm create vite@latest . -- --template react-ts` →
-`@mui/material`/`@emotion/*`/`react-router-dom`(런타임) +
-`vitest`/`@testing-library/react`/`@testing-library/jest-dom`/
-`@testing-library/user-event`/`jsdom`(개발) 설치 → `vite.config.ts`에
-`/api` dev proxy(→localhost:8080)와 vitest 설정 추가.
-
-SC-01~06을 `PerformanceListPage.test.tsx`(4건)·`PerformanceDetailPage.test.tsx`
-(2건)로 옮겨 6/6 Red 확인. `PerformanceListPage`/`PerformanceDetailPage`/
-`StatusBadge`/`api/performances.ts`는 타입만 실제로 채우고 함수·컴포넌트
-본문은 `throw new Error('Not implemented')`(반환형 `never`)로 스텁 처리했다
-— TASK-001에서 승인된 Java TDD Red 스켈레톤 관례(memory:
-feedback-java-tdd-red-skeleton)를 TS/React에 그대로 적용한 것.
-`tsc --noEmit` 오류 0건으로 컴파일 오류가 아님을 확인했다.
-
-HITL#2를 `AskUserQuestion`으로 받아 사용자가 승인했다.
+Phase 3(Green)을 마쳤다. `api/performances.ts`(fetch 구현, 404→
+PerformanceNotFoundError), `StatusBadge.tsx`(MUI Chip, 5개 상태 매핑),
+`PerformanceListPage.tsx`(loading/error/empty/success 4분기),
+`PerformanceDetailPage.tsx`(loading/not-found/error/success 4분기)를
+채워 대상 테스트 6/6을 Green으로 만들었다. `npm run build` 과정에서 발견한
+타입 오류 2종을 수정했다: (1) jest-dom의 vitest 매처 타입은
+`'@testing-library/jest-dom/vitest'` 서브패스 임포트로만 활성화됨(일반
+`'@testing-library/jest-dom'`으로는 안 됨) (2) 설치된 MUI 9.4.0에서
+`Stack`이 `justifyContent`/`alignItems` 직접 prop을 더 이상 지원하지
+않아(v9 API 변경) `sx` prop으로 이전. `npx oxlint` error 0(warning 2건,
+의도된 패턴이라 유지). 백엔드 `./gradlew test`로 회귀 없음 확인. 리팩토링은
+검토 후 하지 않기로 결정(CP-3.3).
 
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 Phase 3(Green)을 시작한다 — 6개 테스트를 통과시키는
-최소 구현을 `PerformanceListPage.tsx`/`PerformanceDetailPage.tsx`/
-`StatusBadge.tsx`/`api/performances.ts`에 채운다.
+`wf-verify` 스킬로 Phase 4(검증)를 시작한다 — acceptance_criteria 6건
+충족·회귀·보안·범위 이탈을 확인하고 `code-reviewer` 서브에이전트를 호출한
+뒤 HITL#3 승인을 받는다.
 
 ## 알아둬야 할 것
 
 - **Node.js가 시스템 기본 PATH에 없다** — 매 bash 명령 앞에 `nvm use v22.23.1 &&`
   를 붙여야 한다(TASK-001의 JAVA_HOME 이슈와 같은 종류의 환경 특이사항).
-  테스트: `nvm use v22.23.1 && npm --prefix frontend test`
+  테스트: `nvm use v22.23.1 && npm --prefix frontend test`, 빌드:
+  `nvm use v22.23.1 && npm --prefix frontend run build` (memory:
+  project-node-nvm-env)
 - Phase 1에서 결정한 두 가지가 여전히 유효: (1) 필터 UI는 공식 AC 밖이라
   구현하지 않음, (2) 프론트-백엔드 연결은 Vite dev proxy로 해결
+  (`vite.config.ts` server.proxy)
 - SC-05(로딩 스켈레톤) 검증은 `data-testid="performance-card-skeleton"`을
-  쓴다 — Phase 3에서 MUI `Skeleton`에 이 testid를 3~6개 부여해야 Green이 됨
-- PerformanceDetailPage.test.tsx는 `vi.mock`을 `importOriginal`로 부분
-  모킹한다(`PerformanceNotFoundError`는 실물 유지, `getPerformance`만 mock)
-  — PerformanceListPage.test.tsx는 전체 automock
-- 최초 작성 시 실수로 프로덕션 로직을 전부 구현했다가(FORBIDDEN 위반) 되돌린
-  이력이 있다 — Phase 3에서는 이미 설계된 로직(원래 작성했던 fetch/렌더링
-  코드)을 참고해도 되지만, git으로 남아있지 않으므로 새로 작성해야 한다
+  쓴다 — `PerformanceListPage.tsx`의 `Skeleton`에 이미 부여됨
+- 설치된 스택 버전이 최신이라 문서화된 예제와 다를 수 있다: MUI 9.4.0
+  (Stack의 justifyContent/alignItems는 sx로), React 19.2.8, Vite 8.2.2,
+  TypeScript 6.0.2, react-router-dom 7.18.3, vitest 5.0.0,
+  @testing-library/jest-dom 7.0.1(vitest 서브패스 필요)
+- 이번 태스크에서는 `frontend/`에 아키텍처 제약(`constraints.yaml`)이
+  아직 없다 — Phase 4의 `check_architecture.py`는 백엔드 제약 3건만 검사함
 
 ## 알아둬야 할 것
 

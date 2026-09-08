@@ -1,0 +1,39 @@
+{
+  "task_id": "TASK-002",
+  "changed_files": [
+    { "path": "frontend/src/api/performances.ts", "change": "getPerformances/getPerformance 최소 구현 (fetch, 404→PerformanceNotFoundError)", "lines_changed": 41 },
+    { "path": "frontend/src/components/StatusBadge.tsx", "change": "MUI Chip으로 5개 상태(UPCOMING/OPEN/SOLD_OUT/CLOSED/CANCELLED)→라벨/색 매핑", "lines_changed": 23 },
+    { "path": "frontend/src/pages/PerformanceListPage.tsx", "change": "loading/error/empty/success 4분기 구현, 스켈레톤에 data-testid 부여", "lines_changed": 92 },
+    { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "change": "loading/not-found/error/success 4분기 구현", "lines_changed": 68 },
+    { "path": "frontend/src/setupTests.ts", "change": "'@testing-library/jest-dom' → '@testing-library/jest-dom/vitest'로 교체 (vitest Assertion 타입 확장에는 이 서브패스가 필요)", "lines_changed": 1 },
+    { "path": "frontend/tsconfig.app.json", "change": "types 배열에서 '@testing-library/jest-dom' 제거 (vitest 서브패스 임포트로 대체됐으므로 중복/무효)", "lines_changed": 1 }
+  ],
+  "reused": [],
+  "test_status": "green",
+  "test_result": {
+    "command": "npm --prefix frontend test",
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "target_tests_passed": 6,
+    "existing_tests_still_passing": true,
+    "backend_regression_check": "cd backend && ./gradlew test → BUILD SUCCESSFUL(UP-TO-DATE), 프론트 변경이 백엔드에 영향 없음"
+  },
+  "build": {
+    "command": "npm --prefix frontend run build",
+    "status": "success",
+    "issues_found_and_fixed": [
+      "tsc: @testing-library/jest-dom의 vitest 매처 타입 미인식 → setupTests.ts에서 '/vitest' 서브패스로 임포트하도록 수정",
+      "tsc: 설치된 MUI 9.4.0에서 Stack이 justifyContent/alignItems 직접 prop을 더 이상 지원하지 않음(v9 API 변경) → sx prop으로 이전"
+    ]
+  },
+  "lint": {
+    "command": "npx oxlint",
+    "errors": 0,
+    "warnings": 2,
+    "warning_detail": "react(set-state-in-effect) × 2 (PerformanceListPage.tsx, PerformanceDetailPage.tsx) — 데이터 재조회 시작 시 로딩 상태로 되돌리는 의도된 패턴, 수정하지 않기로 결정(CP-3.2 decisions)"
+  },
+  "refactoring": [],
+  "refactoring_note": "CP-3.3 참고 — 검토 후 리팩토링하지 않기로 결정(최소 구현이 이미 단순, 목록/상세 상태 머신을 공통 훅으로 묶으면 오히려 복잡해짐)",
+  "scope_deviations": []
+}
