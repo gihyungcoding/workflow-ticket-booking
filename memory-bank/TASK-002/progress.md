@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 6건, 검증 PASS, HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | 테스트 6건 전부 Red, HITL#2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 테스트 6/6 통과, 빌드 성공, 린트 error 0 |
-| 4 Verify | ⬜ 대기 | — | |
+| 4 Verify | ✅ 완료 | CP-4.3 | status: WARN, HITL#3 예외 승인 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건
