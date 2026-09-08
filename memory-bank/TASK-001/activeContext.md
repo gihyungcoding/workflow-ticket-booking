@@ -24,11 +24,20 @@ artifacts:
   reflect: "workflow_design/08_reflect/REFLECT_TASK-001.json"
   report: "https://claude.ai/code/artifact/b36df245-d9e3-4c31-a212-d779e73c611f"
 
-pull_request:
-  number: 1
-  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/1"
-  base: develop
-  opened_at: 2026-09-08
+pull_requests:
+  - number: 1
+    url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/1"
+    base: develop
+    opened_at: 2026-09-07
+    state: MERGED
+    merged_at: 2026-09-07
+    note: "attempt 2 승인 코드(c0de908) — 최초 기능 구현"
+  - number: 2
+    url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/2"
+    base: develop
+    opened_at: 2026-09-08
+    state: OPEN
+    note: "PR #1 병합 이후 발견된 클린코드 문제(enum 패키지 위치, Service의 DIP 위반) 수정 — attempt 3 재검증 PASS/APPROVE 코드(dbfbf86)"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -51,10 +60,11 @@ diff로 직접 증명했고(code-reviewer 서브에이전트는 인프라 문제
 
 ## 다음 한 걸음
 
-새 커밋 2개(`1d9b7f9` Red, `dbfbf86` Green)가 아직 `origin`에 push되지
-않았다. PR #1 본문 갱신과 push 명령은 사용자가 직접 실행해야 한다
-(CLAUDE.md 절대 규칙 9 — 머지·푸시·배포는 사람이 실행). 다음 대화 턴에서
-정확한 명령을 제시할 것.
+없음 — 리팩터 커밋이 push됐고 PR #2가 열려 있다. **PR #1은 이미
+병합되어(develop `6d6afb0`, 2026-09-07) 있었다** — 리팩터 커밋 3개
+(`1d9b7f9`, `dbfbf86`, `77936fb`)는 그 이후에 만들어진 것이라 PR #1
+안에 없었고, 그래서 `gh pr edit 1` 대신 새 PR #2를 만들었다. 머지는
+사용자가 리뷰 후 직접 한다.
 
 미작성 후속 항목(REFLECT_TASK-001.json 참고, 원하면 별도 태스크/ADR로):
 - ADR 후보 2건 — Java 컴파일 언어의 TDD Red 전략, 응답 DTO 패키지 소유 원칙
