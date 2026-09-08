@@ -23,6 +23,14 @@ artifacts:
   verify: "workflow_design/07_verify/VERIFY_TASK-002.json (WARN, EXCEPTION_APPROVE)"
   reflect: "workflow_design/08_reflect/REFLECT_TASK-002.json"
   report: "https://claude.ai/code/artifact/af65ac1f-1c9f-497a-8a54-42214ec98d33"
+
+pull_requests:
+  - number: 3
+    url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/3"
+    base: develop
+    opened_at: 2026-09-08
+    state: OPEN
+    note: "Phase 4 WARN(EXCEPTION_APPROVE, verified_commit e2fed22) — ship_preflight 7/7 통과 후 생성"
 ---
 
 ## 지금 무엇을 하고 있나
