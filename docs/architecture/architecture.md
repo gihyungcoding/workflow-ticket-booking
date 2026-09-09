@@ -78,6 +78,10 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0004](../decisions/ADR-0004-seat-hold-concurrency.md)
 - 테스트 DB 전략(당분간 H2, 좌석 선점 착수 전 Testcontainers 전환) →
   [ADR-0006](../decisions/ADR-0006-test-db-h2-then-testcontainers.md)
+- 프론트엔드 테스트 프레임워크(Vitest + Testing Library) →
+  [ADR-0007](../decisions/ADR-0007-frontend-test-framework-vitest.md)
+- 클라이언트 라우팅(react-router-dom) →
+  [ADR-0008](../decisions/ADR-0008-client-routing-react-router-dom.md)
 
 ## 7. 알려진 부채
 

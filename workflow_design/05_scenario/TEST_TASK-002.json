@@ -1,0 +1,71 @@
+{
+  "task_id": "TASK-002",
+  "supersedes": "SCENARIO_TASK-002.json",
+  "test_files": [
+    "frontend/src/pages/PerformanceListPage.test.tsx",
+    "frontend/src/pages/PerformanceDetailPage.test.tsx"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "PerformanceListPage.test.tsx > SC-01 (happy) 목록에 공연이 카드와 상태 배지로 표시된다",
+      "status": "red",
+      "failure": "Error: Not implemented (frontend/src/pages/PerformanceListPage.tsx:2:9, throw 직접 발생)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "PerformanceDetailPage.test.tsx > SC-02 (happy) 상세 화면에 공연 정보 전체가 표시된다",
+      "status": "red",
+      "failure": "Error: Not implemented (frontend/src/pages/PerformanceDetailPage.tsx:2:9, throw 직접 발생)"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "PerformanceListPage.test.tsx > SC-03 (error) 목록 API 호출 실패 시 오류 메시지와 다시 시도 버튼이 표시된다",
+      "status": "red",
+      "failure": "Error: Not implemented (frontend/src/pages/PerformanceListPage.tsx:2:9, throw 직접 발생)"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "PerformanceDetailPage.test.tsx > SC-04 (error) 존재하지 않는 공연 상세는 404 안내를 보여준다",
+      "status": "red",
+      "failure": "Error: Not implemented (frontend/src/pages/PerformanceDetailPage.tsx:2:9, throw 직접 발생)"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "PerformanceListPage.test.tsx > SC-05 (boundary) 로딩 중에는 스켈레톤이 표시된다",
+      "status": "red",
+      "failure": "Error: Not implemented (frontend/src/pages/PerformanceListPage.tsx:2:9, throw 직접 발생)"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "PerformanceListPage.test.tsx > SC-06 (boundary) 목록이 빈 배열이면 안내 문구가 표시된다",
+      "status": "red",
+      "failure": "Error: Not implemented (frontend/src/pages/PerformanceListPage.tsx:2:9, throw 직접 발생)"
+    }
+  ],
+  "red_result": {
+    "command": "npm --prefix frontend test",
+    "total": 6,
+    "failed": 6,
+    "passed": 0,
+    "existing_tests_still_passing": true,
+    "note": "이 프로젝트의 첫 프론트엔드 테스트라 기존 프론트 테스트는 없음(N/A로 통과 처리). 백엔드 테스트는 이번 태스크에서 건드리지 않음."
+  },
+  "skeleton_convention": {
+    "reference": "memory: feedback-java-tdd-red-skeleton (Java 전용으로 기록됐던 규약을 TS/React에도 동일하게 적용)",
+    "approach": "PerformanceListPage/PerformanceDetailPage/StatusBadge 컴포넌트와 api/performances.ts의 getPerformances/getPerformance 함수는 타입 시그니처만 실장 구조로 두고 본문은 `throw new Error('Not implemented')`(반환형 `never`)로 스텁 처리했다. 타입/인터페이스(Performance, PerformanceListResponse, PerformanceStatus, PerformanceNotFoundError)는 구조이므로 실제로 채웠다 — Java 스켈레톤의 필드/시그니처 선언과 동일한 위상이다.",
+    "verification": "tsc -p tsconfig.app.json --noEmit 오류 0건 확인 — Red가 컴파일/구문 오류가 아니라 런타임 'Not implemented' throw로만 발생함을 확인했다"
+  },
+  "inventory_check": {
+    "scenarios": 6,
+    "test_functions": 6,
+    "scenario_ids": ["SC-01", "SC-02", "SC-03", "SC-04", "SC-05", "SC-06"],
+    "test_ids_found": ["SC-01", "SC-02", "SC-03", "SC-04", "SC-05", "SC-06"],
+    "match": true
+  },
+  "testing_preferences": {
+    "framework": "vitest + @testing-library/react",
+    "mock_strategy": "frontend/src/api/performances.ts 의 getPerformances/getPerformance 를 vi.mock 으로 대체 (PerformanceDetailPage.test.tsx는 importOriginal로 PerformanceNotFoundError는 실물 유지, getPerformance만 vi.fn())"
+  },
+  "human_review": { "approved": true }
+}

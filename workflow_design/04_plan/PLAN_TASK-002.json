@@ -1,0 +1,152 @@
+{
+  "task_id": "TASK-002",
+  "route": "Frontend",
+  "route_reason": "화면 렌더링·상태 배지 표시·API 연동이 주 변경 대상이며 도메인 규칙 판단이 없다 (architecture.md §2 Frontend 행)",
+
+  "design": {
+    "inputs": [
+      {
+        "name": "performanceListResponse",
+        "type": "PerformanceListResponse (content: PerformanceResponse[], page, size, totalElements)",
+        "source": "GET /api/performances (TASK-001, develop에 이미 머지됨)",
+        "constraints": ["content는 항목 0개 이상", "각 항목의 status는 서버가 계산해 내려줌 — 프론트는 재계산하지 않는다"]
+      },
+      {
+        "name": "performanceDetailResponse",
+        "type": "PerformanceResponse (id, title, venue, startAt, openAt, closeAt, totalSeats, availableSeats, status)",
+        "source": "GET /api/performances/{id}",
+        "constraints": ["id가 없으면 404 + {code: PERFORMANCE_NOT_FOUND, message}"]
+      },
+      {
+        "name": "performanceId",
+        "type": "string (URL 파라미터)",
+        "source": "라우트 /performances/:id",
+        "constraints": ["상세 화면 진입 시 필수"]
+      }
+    ],
+    "outputs": [
+      { "name": "목록 카드 UI", "type": "render", "description": "공연마다 카드 1개 — 제목·장소·공연 일시·상태 배지" },
+      { "name": "목록 스켈레톤 UI", "type": "render", "description": "로딩 중 카드 자리에 스켈레톤 3~6개" },
+      { "name": "목록 빈 상태 UI", "type": "render", "description": "content가 빈 배열이면 '예정된 공연이 없습니다'" },
+      { "name": "목록 오류 UI", "type": "render", "description": "API 실패 시 오류 메시지 + [다시 시도] 버튼(클릭 시 재요청)" },
+      { "name": "상세 기본 UI", "type": "render", "description": "공연명·장소·일시·오픈/마감 시각·잔여 좌석·상태 배지" },
+      { "name": "상세 404 UI", "type": "render", "description": "'존재하지 않는 공연입니다' + [목록으로] 버튼(클릭 시 / 로 이동)" }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "목록 - 기본(happy)",
+        "steps": [
+          "PerformanceListPage 마운트",
+          "GET /api/performances 호출",
+          "200 응답의 content 배열을 카드 목록으로 렌더",
+          "각 카드에 status 값에 대응하는 배지(라벨+색) 표시"
+        ],
+        "covers": ["목록 화면 진입 시 API 응답의 공연이 카드로 표시되고 각 카드에 상태 배지가 보인다"]
+      },
+      {
+        "id": "F2",
+        "name": "목록 - 로딩",
+        "steps": [
+          "요청 시작과 동시에 로딩 상태로 전환",
+          "카드 자리에 스켈레톤 3~6개 렌더",
+          "응답 도착 시 스켈레톤을 실제 카드로 교체"
+        ],
+        "covers": ["로딩 중에는 카드 자리에 스켈레톤이 표시된다"]
+      },
+      {
+        "id": "F3",
+        "name": "목록 - 빈 목록",
+        "steps": [
+          "GET /api/performances 200 응답, content가 빈 배열",
+          "카드 목록 대신 안내 문구 렌더"
+        ],
+        "covers": ["목록이 빈 배열이면 예정된 공연이 없습니다 안내가 표시된다"]
+      },
+      {
+        "id": "F4",
+        "name": "목록 - 오류",
+        "steps": [
+          "GET /api/performances 요청이 실패(네트워크 오류 또는 non-2xx)",
+          "오류 메시지 + [다시 시도] 버튼 렌더",
+          "[다시 시도] 클릭 시 동일 요청 재시도 (F1/F2 경로로 복귀)"
+        ],
+        "covers": ["목록 API 호출이 실패하면 오류 메시지와 다시 시도 버튼이 표시된다"]
+      },
+      {
+        "id": "F5",
+        "name": "상세 - 기본(happy)",
+        "steps": [
+          "PerformanceDetailPage 마운트, URL의 :id로 GET /api/performances/{id} 호출",
+          "200 응답을 공연명·장소·일시·오픈/마감 시각·잔여 좌석·상태 배지로 렌더"
+        ],
+        "covers": ["상세 화면에서 공연명·장소·일시·오픈/마감 시각·잔여 좌석·상태 배지가 표시된다"]
+      },
+      {
+        "id": "F6",
+        "name": "상세 - 404",
+        "steps": [
+          "GET /api/performances/{id} 가 404 + PERFORMANCE_NOT_FOUND 반환",
+          "'존재하지 않는 공연입니다' 안내와 [목록으로] 버튼 렌더",
+          "[목록으로] 클릭 시 / (목록 화면)으로 이동"
+        ],
+        "covers": ["존재하지 않는 공연 상세로 진입(404)하면 존재하지 않는 공연입니다 안내와 목록으로 돌아가는 버튼이 표시된다"]
+      },
+      {
+        "id": "F7",
+        "name": "상세 - 로딩 (보충, 공식 AC 아님)",
+        "steps": [
+          "요청 시작과 동시에 로딩 상태로 전환",
+          "상세 영역에 스켈레톤 렌더",
+          "응답 도착 시 스켈레톤을 실제 내용으로 교체"
+        ],
+        "covers": []
+      }
+    ]
+  },
+
+  "architecture_refs": {
+    "layer": "Frontend",
+    "note": "화면 렌더링·사용자 입력·API 호출만 담당하고 도메인 규칙을 판단하지 않는다 (architecture.md §2 Frontend 행) — status 값은 서버 응답을 그대로 배지로 표시하며 프론트에서 재계산하지 않는다",
+    "constraints_applied": []
+  },
+  "adr_refs": ["ADR-0002", "ADR-0003"],
+
+  "codebase_analysis": {
+    "note": "frontend/ 디렉터리가 현재 비어 있다 (package.json 없음, Vite/React 스캐폴딩 없음) — 이 프로젝트의 첫 프론트엔드 태스크다. 아래 target_files는 전부 신규 생성 대상이며, 위치는 CLAUDE.md가 선언한 스택('React + Vite, frontend/')과 태스크의 implementation_spec.paths를 따른다.",
+    "target_files": [
+      { "path": "frontend/package.json", "change": "신규 — Vite+React+TS 스캐폴딩, MUI(ADR-0002), react-router-dom, Vitest+Testing Library 의존성" },
+      { "path": "frontend/vite.config.ts", "change": "신규 — dev 서버 /api 프록시를 backend(기본 8080)로 연결, vitest 설정 포함" },
+      { "path": "frontend/tsconfig.json", "change": "신규 — TS 설정" },
+      { "path": "frontend/index.html", "change": "신규 — Vite 엔트리 HTML" },
+      { "path": "frontend/src/main.tsx", "change": "신규 — 앱 부트스트랩, MUI ThemeProvider, BrowserRouter" },
+      { "path": "frontend/src/App.tsx", "change": "신규 — 라우트 정의: / → PerformanceListPage, /performances/:id → PerformanceDetailPage" },
+      { "path": "frontend/src/api/performances.ts", "change": "신규 — getPerformances(), getPerformance(id) API 클라이언트 (implementation_spec)" },
+      { "path": "frontend/src/pages/PerformanceListPage.tsx", "change": "신규 — 목록 화면, F1~F4 (implementation_spec)" },
+      { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "change": "신규 — 상세 화면, F5~F7 (implementation_spec)" },
+      { "path": "frontend/src/components/StatusBadge.tsx", "change": "신규 — status → 라벨/색 매핑, 목록·상세가 공유" },
+      { "path": "frontend/src/setupTests.ts", "change": "신규 — Testing Library jest-dom matcher 등록" }
+    ],
+    "reusable": [],
+    "existing_tests": [],
+    "unresolved": [
+      "요구사항 문서 §1-2 태스크 분리 표는 Task B 범위에 '필터'를 포함하지만, §4 완료 조건과 tasks.json의 acceptance_criteria 6건에는 상태 필터 UI가 없다. 공식 완료 정의(acceptance_criteria)를 기준으로 이번 태스크에서는 필터 UI를 구현하지 않는다 — 필요하면 후속 태스크로 분리한다.",
+      "프로덕션 배포 시 프론트-백엔드 간 CORS/리버스 프록시 전략은 아직 정해져 있지 않다. 로컬 개발은 Vite dev 서버 프록시(vite.config.ts)로 해결하지만, 배포 전략이 정해지면 재검토가 필요하다 (백엔드 변경 없이 프론트만으로 해결 가능한 개발 단계 문제)."
+    ]
+  },
+
+  "acceptance_criteria": [
+    "목록 화면 진입 시 API 응답의 공연이 카드로 표시되고 각 카드에 상태 배지가 보인다",
+    "로딩 중에는 카드 자리에 스켈레톤이 표시된다",
+    "목록이 빈 배열이면 예정된 공연이 없습니다 안내가 표시된다",
+    "목록 API 호출이 실패하면 오류 메시지와 다시 시도 버튼이 표시된다",
+    "상세 화면에서 공연명·장소·일시·오픈/마감 시각·잔여 좌석·상태 배지가 표시된다",
+    "존재하지 않는 공연 상세로 진입(404)하면 존재하지 않는 공연입니다 안내와 목록으로 돌아가는 버튼이 표시된다"
+  ],
+
+  "test_hints": {
+    "framework": "vitest + @testing-library/react",
+    "command": "npm --prefix frontend test",
+    "mock_strategy": "frontend/src/api/performances.ts 의 getPerformances/getPerformance 함수를 vi.mock 으로 대체 — 실제 네트워크 호출 없음"
+  }
+}

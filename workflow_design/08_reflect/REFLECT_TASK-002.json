@@ -1,0 +1,121 @@
+{
+  "task_id": "TASK-002",
+
+  "keep": [
+    {
+      "what": "Java용으로 승인됐던 TDD Red 스켈레톤 관례(memory: feedback-java-tdd-red-skeleton)를 언어만 바꿔 TS/React에 그대로 적용",
+      "evidence": "CP-2.5 decisions — throw new Error('Not implemented') + 반환형 never, tsc --noEmit 오류 0건으로 컴파일 오류가 아님을 확인 후 vitest 6/6 Red 확인. 재파악 없이 바로 적용해 시간을 아꼈다"
+    },
+    {
+      "what": "Phase 1(Plan)에서 frontend/가 완전히 비어 있음을 미리 발견해 스캐폴딩 범위를 target_files에 명시",
+      "evidence": "CP-1.1 — 'frontend/ 디렉터리 확인 — package.json 없음, 완전히 빈 상태'. Phase 3에서 스캐폴딩 방식(Vite+React+MUI+router+vitest)을 즉흥적으로 정하지 않고 CP-3.1에서 그대로 실행"
+    },
+    {
+      "what": "Phase 4에서 6개 화면 상태를 실제 브라우저로 확인(모의 서버 구성)해 유닛 테스트만으론 못 잡는 문제를 발견",
+      "evidence": "VERIFY_TASK-002.json screens — 6개 상태 전부 PASS. 이 과정에서 카드→상세 링크가 실제로 동작하는지 직접 클릭해보다가 Plan에 이 흐름이 없었다는 scope_deviations를 발견하게 됨"
+    }
+  ],
+
+  "problem": [
+    {
+      "what": "Phase 3(Green) 착수 시 실수로 PerformanceListPage/DetailPage/StatusBadge/api를 완전히 동작하는 구현으로 먼저 작성했다가, Phase 2b(Red)의 FORBIDDEN('프로덕션 코드 작성 금지')을 뒤늦게 떠올리고 전부 스켈레톤으로 되돌렸다",
+      "evidence": "CP-2.5 '주의 — 최초 시도 오류 정정' — 실제로는 Phase 2b 도중 벌어진 일. 스켈레톤부터 쓰지 않고 '어차피 간단하니 구현부터'라는 유혹에 넘어간 것이 원인",
+      "phase": "2b"
+    },
+    {
+      "what": "PLAN_TASK-002.json의 flows(F1~F7)에 카드→상세 화면 이동(네비게이션)이 전혀 없었다 — 상세 화면에 도달할 UI 경로가 Plan상 존재하지 않았던 것",
+      "evidence": "VERIFY_TASK-002.json scope_deviations[0], code_review.findings[3]. Phase 4에서야 code-reviewer와 화면 확인 과정에서 발견됨. DEV_TASK-002.json.scope_deviations도 이를 기록하지 못한 채 빈 배열로 넘어감",
+      "phase": 1
+    },
+    {
+      "what": "Phase 4 화면 검증 중 예상 못한 환경 문제 두 가지가 겹쳤다 — 로컬에 PostgreSQL/Docker 데몬이 없고, 문서상 백엔드 포트(8080)를 사용자의 무관한 다른 프로젝트가 이미 점유 중이었다",
+      "evidence": "CP-4.1 decisions — docker info 확인, lsof로 8080 점유 프로세스가 IntelliJ 디버그 세션임을 확인. 계획에 없던 모의 서버(scratchpad/mock-backend.js)를 급조해야 했다",
+      "phase": 4
+    },
+    {
+      "what": "SC-01 Red 테스트가 '각 카드에 공연 일시가 보인다'는 Then을 실제로 단언하지 않아, 날짜 렌더링이 삭제돼도 테스트가 통과하는 구멍이 있었다",
+      "evidence": "VERIFY_TASK-002.json code_review.findings[0] — code-reviewer가 발견. venue만 단언하고 startAt 포맷 문자열은 단언하지 않음",
+      "phase": "2b"
+    }
+  ],
+
+  "try": [
+    {
+      "what": "wf-verify 스킬의 'Step 2.5 화면 확인'에, 실제 백엔드를 못 띄울 때 곧장 WARN으로 넘어가기 전에 'API 계약과 동일한 응답 스키마의 임시 모의 서버로 대체 검증'하는 방법을 명시적 옵션으로 추가한다",
+      "target": ".claude/skills/wf-verify/SKILL.md (Step 2.5 섹션, '앱을 띄울 수 없으면' 문단 앞)"
+    },
+    {
+      "what": "wf-plan 스킬의 Step 4(구조 정규화)에, route가 Frontend인 태스크는 화면 목록뿐 아니라 화면 간 이동(navigation) 흐름도 최소 1개 flow로 명시하도록 체크 항목을 추가한다",
+      "target": ".claude/skills/wf-plan/SKILL.md (Step 4, Frontend route 관련 안내)"
+    },
+    {
+      "what": "wf-red 스킬에 'Red 착수 전 스켈레톤(throw Not implemented)부터 커밋하고 그다음 테스트를 쓴다'는 순서를 명시해, '구현부터 하고 싶은 유혹'을 구조적으로 차단한다",
+      "target": ".claude/skills/wf-red/SKILL.md (Step 2 시작 부분)"
+    }
+  ],
+
+  "insights": [
+    "언어를 바꿔도 TDD Red의 본질(구조는 채우고 로직은 비운다)은 동일하다 — 관례를 언어별로 다시 발명하지 않아도 된다",
+    "화면 이동(네비게이션)은 '화면 자체'만큼 명시적으로 설계하지 않으면 Plan에서 누락되기 쉽다 — 각 화면의 겉모습만 outputs로 적으면 화면 사이의 연결이 빠진다",
+    "실제 백엔드를 못 띄우는 상황은 계약(API 명세)만 지켜지면 모의 서버로도 진짜 브라우저 검증이 가능하다 — '확인 못 함=WARN'이 유일한 선택지는 아니다"
+  ],
+
+  "phase_analysis": {
+    "1": { "retries": 0, "note": "frontend 빈 상태 발견, route=Frontend 확정. 네비게이션 흐름 누락(사후 발견)" },
+    "2a": { "retries": 0, "note": "독립검증 PASS(경고 1건 — SC-01 위치 단언, SC-03 이중 조건 — HITL 전 즉시 수정)" },
+    "2b": { "retries": 0, "note": "최초 시도에서 프로덕션 코드를 먼저 작성하는 실수, 스켈레톤으로 되돌림. 재시도 카운트는 증가하지 않았음(HITL#2 이전 자체 수정)" },
+    "3": { "retries": 0, "note": "빌드 중 타입 오류 2종(jest-dom 서브패스, MUI 9 Stack API) 발견·수정" },
+    "4": { "retries": 0, "note": "status: WARN, code_review 소견 7건 전부 예외 승인. 환경 문제(8080 점유, Postgres 부재)로 모의 서버 구성" },
+    "5": { "retries": 0, "note": "—" }
+  },
+
+  "adr_candidates": [
+    {
+      "decision": "프론트엔드 테스트 프레임워크로 Vitest + @testing-library/react + jsdom을 쓴다",
+      "why_broader": "이 프로젝트의 첫 프론트엔드 태스크에서 내린 결정이라 향후 모든 프론트 태스크(TASK-003+)의 테스트 작성 방식을 규정한다. CLAUDE.md의 'frontend 미생성'이 이번에 해소됐으므로 갱신도 필요하다",
+      "evidence": "CP-1.3 decisions, PLAN_TASK-002.json test_hints",
+      "suggested_title": "프론트엔드 테스트 프레임워크로 Vitest를 쓴다"
+    },
+    {
+      "decision": "클라이언트 라우팅에 react-router-dom을 쓴다",
+      "why_broader": "화면이 2개 이상인 모든 프론트 태스크가 이 위에서 라우트를 추가하게 된다 — MUI(ADR-0002)처럼 한번 정하면 바꾸는 비용이 커지는 선택",
+      "evidence": "PLAN_TASK-002.json codebase_analysis.target_files (App.tsx 라우팅), DEV_TASK-002.json",
+      "suggested_title": "클라이언트 라우팅으로 react-router-dom을 쓴다"
+    }
+  ],
+
+  "architecture_drift": [
+    {
+      "what": "architecture.md §2의 'Frontend (React)' 행은 '화면 렌더링, 사용자 입력, API 호출'까지만 적혀 있고, 이번 태스크에서 실제로 생긴 내부 계층(api/ — fetch 격리, components/ — 공유 UI, pages/ — 화면)은 문서화돼 있지 않다",
+      "where": "docs/architecture/architecture.md §2, frontend/src/{api,components,pages}",
+      "found_how": "Phase 1 코드베이스 조사 + Phase 3 구현 중 자연스럽게 형성된 구조",
+      "suggestion": "TASK-003(다음 프론트 태스크)이 같은 구조를 따르는지 확인한 뒤, 반복되는 패턴으로 확인되면 architecture.md에 Frontend 내부 계층을 문서화한다. 아직 1개 태스크뿐이라 지금 문서화하면 근거가 약하다"
+    }
+  ],
+
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-verify/SKILL.md",
+      "section": "Step 2.5 — 화면 확인",
+      "change": "'앱을 띄울 수 없으면 ... WARN으로 둔다' 문단 앞에, 실제 백엔드/의존 서비스를 못 띄우는 경우 API 계약과 동일한 스키마의 임시 모의 서버로 대체 검증할 수 있다는 옵션을 추가한다(WARN보다 우선 시도)",
+      "evidence": "TASK-002 Phase 4 — 로컬 PostgreSQL/Docker 부재 + 8080 포트 충돌로 실제 백엔드를 띄울 수 없었으나, 모의 서버로 6개 상태를 전부 실제 브라우저에서 PASS 확인함"
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 4 — 구조 정규화",
+      "change": "route가 Frontend인 태스크는 화면(outputs)만이 아니라 화면 간 이동(navigation) 흐름도 최소 1개 flow로 명시하도록 체크 항목을 추가한다",
+      "evidence": "TASK-002 PLAN의 F1~F7에 카드→상세 네비게이션이 없어 Phase 4에서야 scope_deviations로 사후 발견됨"
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 2 — 테스트 작성",
+      "change": "스켈레톤(구조만 채우고 throw로 막은 코드)을 먼저 저장·커밋 대상으로 명시한 뒤 테스트를 작성하는 순서를 권장 문구로 추가한다",
+      "evidence": "TASK-002에서 스켈레톤 대신 완전한 구현을 먼저 썼다가 FORBIDDEN 위반을 뒤늦게 발견하고 되돌린 사고(CP-2.5)"
+    }
+  ],
+
+  "completion_report": {
+    "artifact_url": "https://claude.ai/code/artifact/af65ac1f-1c9f-497a-8a54-42214ec98d33",
+    "approved_by_human": true
+  }
+}
