@@ -2,7 +2,7 @@
 
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
-| 1 Plan | 🔄 진행 중 | — | design.md/design-tokens.css 참조 필수 |
+| 1 Plan | ✅ 완료 | CP-1.3 | route: Frontend, flows 7건(AC 7건 전부 커버) |
 | 2a Scenario | ⬜ 대기 | — | |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |

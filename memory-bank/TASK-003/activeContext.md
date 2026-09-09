@@ -2,7 +2,7 @@
 task_id: TASK-003
 title: "디자인 토큰·서체 적용"
 phase: "1"
-phase_name: "Phase 1 - Plan"
+phase_name: "Phase 1 - Plan (완료)"
 status: ACTIVE
 created_at: 2026-09-09
 last_updated: 2026-09-09
@@ -12,15 +12,32 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: (없음 — 워크플로우 시작 직후)
-artifacts: {}
+last_checkpoint: CP-1.3
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-003.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-워크플로우를 막 시작했다. TASK-002(공연 목록/상세 화면) 완료 이후 별도로
-Foundation에 디자인 시스템이 신설됐다 — `docs/product/design.md`(방향·의미
-매핑·하지 않을 것), `docs/product/design-tokens.css`(색·타이포·치수 정본),
+Phase 1(Plan)을 마쳤다. route는 Frontend로 확정. inputs 3 / outputs 4 /
+flows 7(F1~F7)로 정규화했고 acceptance_criteria 7건을 전부 커버했다.
+target_files 7건 중 `frontend/src/theme/tokens.ts`·`index.ts`만 신규이고
+나머지 5개는 TASK-002가 만든 기존 파일을 수정한다.
+
+두 가지를 unresolved로 남겼다:
+1. `PerformanceListPage.tsx`/`PerformanceDetailPage.tsx`는 tasks.json의
+   `implementation_spec.paths`에 없었지만, AC2(공연명 서체)를 충족하려면
+   공연명을 렌더하는 이 두 파일에 `fontDisplay` sx 한 줄씩 추가할 수밖에
+   없어 target_files에 넣었다.
+2. `design-tokens.css`(docs/product/)를 frontend 빌드에 직접 import하지
+   않고 `theme/tokens.ts`가 값을 수기로 미러링한다 — 두 파일의 값 일치를
+   자동 검증할 수단이 없어 Phase 4에서 사람이 대조해야 한다.
+
+### 배경 (참고)
+
+TASK-002(공연 목록/상세 화면) 완료 이후 별도로 Foundation에 디자인
+시스템이 신설됐다 — `docs/product/design.md`(방향·의미 매핑·하지 않을
+것), `docs/product/design-tokens.css`(색·타이포·치수 정본),
 `constraints.yaml`의 `DESIGN-001~003`(현재 severity: warn — TASK-003이
 해소하면 error로 승격 예정).
 
@@ -35,9 +52,9 @@ absorbed_steps/description 참고).
 
 ## 다음 한 걸음
 
-프로젝트 골격(백엔드/프론트 테스트) 정상 동작 확인 완료. `wf-plan`
-스킬로 Phase 1을 시작한다 — route는 Frontend로 예상되며, Step 1.5에서
-`design.md`/`design-tokens.css`를 필수로 참조해야 한다.
+`wf-scenario` 스킬로 Phase 2a를 시작한다 — F1~F7을 Given/When/Then
+시나리오로 옮기고 `scenario-validator` 서브에이전트 검증을 거쳐 HITL#1
+승인을 받는다.
 
 ## 알아둬야 할 것
 
@@ -45,14 +62,19 @@ absorbed_steps/description 참고).
   bash 명령 앞에 붙인다 (memory: project-node-nvm-env)
 - TASK-002가 남긴 잔여 결함 3건(Roboto 미로드, `lang="en"`, title이
   템플릿 기본값 "frontend")을 이 태스크가 흡수한다 — absorbed_steps 참고
-- `implementation_spec.paths`: `frontend/src/theme/tokens.ts`,
-  `frontend/src/theme/index.ts`, `frontend/src/main.tsx`,
-  `frontend/src/components/StatusBadge.tsx`, `frontend/index.html`
+- PLAN의 target_files 7건: `frontend/src/theme/tokens.ts`(신규),
+  `frontend/src/theme/index.ts`(신규), `frontend/src/main.tsx`,
+  `frontend/src/components/StatusBadge.tsx`, `frontend/index.html`,
+  `frontend/src/pages/PerformanceListPage.tsx`,
+  `frontend/src/pages/PerformanceDetailPage.tsx`
 - acceptance_criteria 7건 중 1건은 `check_architecture.py --id DESIGN-001`
   위반 0건을 요구 — Phase 4에서 반드시 스크립트로 확인
-- 색상 리터럴은 `design-tokens.css`에만 두어야 한다(DESIGN-002) — 컴포넌트
-  코드에 `#`, `rgb(`, `rgba(` 등을 직접 쓰지 않는다
-- 상태 문구 변경(예정→예매예정 등)은 `StatusBadge.tsx`와 기존 테스트
-  (`PerformanceListPage.test.tsx`/`PerformanceDetailPage.test.tsx`)의
-  문자열 단언에도 영향을 준다 — 기존 테스트 6건이 계속 통과해야 함(AC7)
+- 색상 리터럴은 `design-tokens.css`(및 그 미러인 `theme/tokens.ts` —
+  DESIGN-002 exclude_paths 대상)에만 두어야 한다 — 다른 컴포넌트 코드에
+  `#`, `rgb(`, `rgba(` 등을 직접 쓰지 않는다
+- 상태 문구 변경(예정→예매예정 등)은 `StatusBadge.tsx`에 영향을 주지만,
+  기존 테스트 6건은 '예매가능'·'매진'만 단언해 회귀 위험이 없음을 Phase 1
+  에서 grep으로 확인했다(AC7)
+- StatusBadge의 색 매핑(STATUS_COLOR)은 이번 태스크에서 건드리지 않는다 —
+  색 구조 재설계는 범위 밖(tasks.json 설명)
 - 의존 태스크 TASK-002는 DONE·머지됨(PR #3)
