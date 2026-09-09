@@ -8,7 +8,7 @@
     "reason_primary": "테이블 설계, 상태 계산 로직, API 엔드포인트가 모두 서버 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "todo",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",
