@@ -117,8 +117,8 @@
   },
   {
     "id": "TASK-003",
-    "title": "디자인 토큰 적용",
-    "description": "docs/product/design.md 에서 정한 디자인 결정을 화면에 적용한다. 토큰을 MUI 테마에 주입해 빈 createTheme() 을 해소하고, 상태 표현을 다섯 색에서 세 층(살 수 있다 / 아직이다 / 못 산다)으로 바꿔 채도가 예매가능 하나에만 오게 한다. 매진·예매마감·공연취소 행은 전체가 물러나되 텍스트는 계속 읽힌다. 서체를 실제로 로드하고(현재 MUI 가 선언한 Roboto 가 로드되지 않아 시스템 폰트로 폴백된다), index.html 의 lang 과 title 이 템플릿 기본값인 것을 함께 고친다. 화면 구조와 정보 위계는 바꾸지 않는다 — 목록/상세 흐름, 표시 항목, API 연동은 그대로다.",
+    "title": "디자인 토큰·서체 적용",
+    "description": "docs/product/design.md 에서 정한 것 중 화면 구조와 무관한 것만 적용한다. 토큰을 MUI 테마에 주입해 빈 createTheme() 을 해소하고, 서체를 실제로 로드하며(현재 MUI 가 선언한 Roboto 가 로드되지 않아 시스템 폰트로 폴백된다), index.html 의 lang 과 title 이 템플릿 기본값인 것을 고친다. 상태 문구를 design.md §5 의미 매핑에 맞춘다(예정→예매예정, 마감→예매마감, 취소→공연취소). 상태 배지의 색 구조·행 물러남·스켈레톤 치수는 포함하지 않는다 — product.md §7 의 데이터 모델 누락 3건(가격·포스터·공연 기간)을 반영하면 목록 화면이 다시 설계되므로, 지금 만들면 버려진다.",
     "primary_category": "Frontend",
     "sub_categories": [
       "audience"
@@ -132,19 +132,16 @@
     "meta": {
       "estimate": {
         "unit": "hour",
-        "value": 10
+        "value": 5
       },
-      "risk": "medium",
+      "risk": "low",
       "acceptance_criteria": [
         "테마가 design-tokens.css 의 값으로 초기화된다 — python3 scripts/check_architecture.py --id DESIGN-001 이 위반 0건",
-        "목록에서 예매가능 배지만 별색(--color-open)이고 예매예정·매진·예매마감·공연취소 배지는 무채색이다",
-        "매진·예매마감·공연취소 공연은 행 전체가 물러나 보이되 행 안의 텍스트 대비가 4.5:1 이상이다",
+        "공연명이 Noto Serif KR, 나머지 텍스트가 IBM Plex Sans KR 로 렌더링되고 두 서체가 실제로 로드된다",
         "상태 문구가 예매가능·예매예정·매진·예매마감·공연취소로 표시된다 (design.md §5 의미 매핑)",
-        "공연명은 Noto Serif KR, 나머지 텍스트는 IBM Plex Sans KR 로 렌더링되고 두 서체가 실제로 로드된다",
         "index.html 이 lang=\"ko\" 이고 title 이 템플릿 기본값(frontend)이 아니다",
-        "스켈레톤 높이가 매직 넘버가 아니다 — python3 scripts/check_architecture.py --id DESIGN-003 이 위반 0건",
-        "오류: 목록 API 호출이 실패하면 기존과 동일하게 오류 안내와 다시 시도 버튼이 표시된다",
         "오류: 서체 로드가 실패해도 한글이 시스템 폰트로 읽힌다 (font-family 폴백 체인)",
+        "오류: 목록 API 호출이 실패하면 기존과 동일하게 오류 안내와 다시 시도 버튼이 표시된다",
         "기존 프론트 테스트 6건이 모두 통과한다 — npm test"
       ],
       "absorbed_steps": [
@@ -156,35 +153,31 @@
           "frontend/src/theme/index.ts",
           "frontend/src/main.tsx",
           "frontend/src/components/StatusBadge.tsx",
-          "frontend/src/pages/PerformanceListPage.tsx",
-          "frontend/src/pages/PerformanceDetailPage.tsx",
           "frontend/index.html"
         ]
       },
       "complexity": {
-        "size_score": 3,
-        "risk_score": 3,
-        "total_score": 45,
-        "level": "보통"
+        "size_score": 2,
+        "risk_score": 2,
+        "total_score": 32.0,
+        "level": "단순"
       }
     },
     "source_refs": {
       "source_file": "docs/product/design.md",
       "sections": [
-        "2",
         "4",
         "5",
-        "6",
         "7"
       ],
       "sections_with_ranges": [
         {
-          "section": "2",
-          "range": "방향 — 채도는 예매가능 하나에만"
+          "section": "4",
+          "range": "토큰"
         },
         {
           "section": "5",
-          "range": "의미 매핑"
+          "range": "의미 매핑 — 문구만"
         },
         {
           "section": "7",
