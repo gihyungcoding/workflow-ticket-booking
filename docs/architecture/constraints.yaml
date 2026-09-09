@@ -56,6 +56,40 @@ constraints:
       pattern: "^\\s*import org\\.springframework\\.data\\.jpa\\..*;|^\\s*import jakarta\\.persistence\\.criteria\\..*;"
     severity: error
 
+  # --- 디자인 (docs/product/design.md) ------------------------------------
+  # severity 가 warn 인 이유: 지금 develop 이 DESIGN-001 을 위반한다.
+  # error 로 켜면 그 사이 모든 태스크의 Phase 4 가 막힌다. TASK-003 에서
+  # 해소한 뒤 error 로 승격하고 그 승격을 ADR 로 남긴다. (design.md §2)
+
+  - id: DESIGN-001
+    rule: "테마가 비어 있지 않다 — 디자인 결정이 코드에 기록돼 있어야 한다"
+    rationale: "빈 테마는 라이브러리 기본값이다. 아무도 결정을 내리지 않았다는 뜻이고,
+                화면이 주제와 무관해 보이는 원인이 된다"
+    detect:
+      type: forbidden_pattern
+      paths: ["frontend/src/**/*.tsx", "frontend/src/**/*.ts"]
+      pattern: "createTheme\\(\\s*\\)"
+    severity: warn
+
+  - id: DESIGN-002
+    rule: "색상 리터럴은 디자인 토큰 파일에만 둔다"
+    rationale: "값이 두 곳에 생기면 정본이 의미를 잃고 화면마다 달라진다"
+    detect:
+      type: forbidden_pattern
+      paths: ["frontend/src/**/*.tsx", "frontend/src/**/*.ts", "frontend/src/**/*.css"]
+      exclude_paths: ["frontend/src/theme/**"]
+      pattern: "#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\("
+    severity: warn
+
+  - id: DESIGN-003
+    rule: "치수는 매직 넘버가 아니라 테마 스케일을 쓴다"
+    rationale: "스켈레톤 높이가 두 화면에서 96·240 으로 따로 논다"
+    detect:
+      type: forbidden_pattern
+      paths: ["frontend/src/**/*.tsx"]
+      pattern: "\\b(height|width|fontSize|padding|margin|borderRadius)=\\{[0-9]+\\}"
+    severity: warn
+
 # 예시 — 실제 제약이 생기면 위 배열에 넣는다.
 #
 # constraints:

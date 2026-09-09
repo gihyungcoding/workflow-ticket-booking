@@ -1,25 +1,54 @@
 /* 디자인 토큰 — 정본.
  *
- * 화면이 있는 프로젝트만 쓴다. 근거는 docs/product/design.md 다.
+ * 근거는 docs/product/design.md 다. 여기는 값만 둔다.
  *
  * ★ 색·치수 값이 정의되는 곳은 여기 하나여야 한다.
  *   constraints.yaml 의 DESIGN-002 가 이 파일 밖의 색상 리터럴을 막는다.
  *   이 파일 자체는 exclude_paths 로 검사에서 제외한다.
  *
- * UI 라이브러리를 쓴다면 이 값을 라이브러리 테마에 주입한다. 예) MUI:
- *   const tokens = getComputedStyle(document.documentElement)
- *   createTheme({ palette: { primary: { main: tokens.getPropertyValue('--color-primary') } } })
+ * MUI 테마에 주입해서 쓴다 (frontend/src/theme/). 값이 두 곳에 생기면 이 파일은
+ * 의미가 없다.
  *
- * 값이 두 곳에 생기면 이 파일은 의미가 없다.
+ * 대비는 전부 실측했다 (design.md §7). 값을 고치면 다시 잰다.
  */
 
 :root {
-  /* 색 — 역할로 이름 짓는다. --color-blue 가 아니라 --color-primary */
-  /* TODO */
+  /* --- 색 ---------------------------------------------------------------
+   * 규칙 하나: 채도가 있는 색은 --color-open 뿐이다.
+   * 관객이 목록에서 찾는 것은 "지금 살 수 있는 공연"이고, 다섯 상태가 모두
+   * 색을 가지면 그것이 묻힌다. → design.md §2
+   */
 
-  /* 타이포 — 한국어 UI 면 한글 글리프가 있는 서체인지 확인할 것 */
-  /* TODO */
+  /* 잉크 — 순검정도, 틴티드 니어블랙(#0B0B0B·#111)도 쓰지 않는다 */
+  --color-ink: #1A2027;         /* 본문·공연명      표면 16.41:1 · 캔버스 15.43:1 */
+  --color-ink-muted: #5A6570;   /* 장소·일시        표면  5.95:1 · 캔버스  5.59:1 */
+  --color-ink-faint: #6D7379;   /* 예매 불가 상태    표면  4.80:1 · 캔버스  4.51:1 */
 
-  /* 간격 — 스케일을 정하고 그 배수만 쓴다 */
-  /* TODO */
+  /* 표면 — 크림(#F4F1EA) 계열을 쓰지 않는다. 차가운 무채색이다 */
+  --color-surface: #FFFFFF;     /* 목록 행·상세 바탕 */
+  --color-canvas: #F7F8F9;      /* 페이지 바탕 */
+  --color-rule: #D3D8DC;        /* 구분선. 그림자를 대신해 구조를 만든다 */
+
+  /* 별색 — 예매 가능에만 쓴다. 화면에서 유일한 채도다 */
+  --color-open: #0E6E52;        /* 표면 6.23:1 · 배지바탕 5.43:1 */
+  --color-open-weak: #E6F2ED;   /* 배지 바탕 */
+
+  /* --- 타이포 -----------------------------------------------------------
+   * 공연명만 명조다. 한국 공연 포스터의 어휘를 한 곳에만 쓴다.
+   * 둘 다 한글 음절 범위(U+ac00-d7a3)를 실제로 포함하는 것을 확인했다.
+   */
+  --font-display: 'Noto Serif KR', serif;
+  --font-text: 'IBM Plex Sans KR', system-ui, sans-serif;
+
+  --line-height-display: 1.35;  /* 명조는 고딕보다 행간을 조금 더 준다 */
+  --line-height-text: 1.6;
+
+  /* --- 형태 -------------------------------------------------------------
+   * 그림자를 쓰지 않는다. 위계는 선과 여백으로 만든다.
+   */
+  --radius-badge: 2px;
+  --radius-surface: 2px;
+
+  /* 간격은 MUI 기본 8px 스케일을 그대로 쓴다.
+   * 바꿀 근거가 브리프에 없고, 바꾸면 기존 spacing={n} 이 전부 비례 변경된다. */
 }
