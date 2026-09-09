@@ -1,0 +1,96 @@
+{
+  "task_id": "TASK-002",
+  "scenarios": [
+    {
+      "id": "SC-01",
+      "type": "happy",
+      "title": "목록에 공연이 카드와 상태 배지로 표시된다",
+      "given": [
+        "GET /api/performances 가 공연 2건을 담은 200 응답을 반환한다 — 제목 \"재즈의 밤\"인 공연은 status: \"OPEN\", 제목 \"클래식 갈라\"인 공연은 status: \"SOLD_OUT\"이다"
+      ],
+      "when": ["관객이 공연 목록 화면에 진입한다"],
+      "then": [
+        "카드가 2개 렌더된다",
+        "각 카드에 제목·장소·공연 일시가 보인다",
+        "제목이 '재즈의 밤'인 카드에는 '예매가능' 배지가 보인다",
+        "제목이 '클래식 갈라'인 카드에는 '매진' 배지가 보인다"
+      ],
+      "covers": ["목록 화면 진입 시 API 응답의 공연이 카드로 표시되고 각 카드에 상태 배지가 보인다"],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-02",
+      "type": "happy",
+      "title": "상세 화면에 공연 정보 전체가 표시된다",
+      "given": [
+        "GET /api/performances/{id} 가 공연 1건(title, venue, startAt, openAt, closeAt, availableSeats, status: \"OPEN\")을 담은 200 응답을 반환한다"
+      ],
+      "when": ["관객이 해당 id의 공연 상세 화면에 진입한다"],
+      "then": [
+        "화면에 공연명·장소·공연 일시·오픈 시각·마감 시각·잔여 좌석 수가 보인다",
+        "'예매가능' 상태 배지가 보인다"
+      ],
+      "covers": ["상세 화면에서 공연명·장소·일시·오픈/마감 시각·잔여 좌석·상태 배지가 표시된다"],
+      "flow": "F5"
+    },
+    {
+      "id": "SC-03",
+      "type": "error",
+      "title": "목록 API 호출 실패 시 오류 메시지와 다시 시도 버튼이 표시된다",
+      "given": ["GET /api/performances 가 500 응답을 반환한다"],
+      "when": ["관객이 공연 목록 화면에 진입한다"],
+      "then": [
+        "'목록을 불러오지 못했습니다' 오류 메시지가 보인다",
+        "[다시 시도] 버튼이 보인다"
+      ],
+      "covers": ["목록 API 호출이 실패하면 오류 메시지와 다시 시도 버튼이 표시된다"],
+      "flow": "F4"
+    },
+    {
+      "id": "SC-04",
+      "type": "error",
+      "title": "존재하지 않는 공연 상세는 404 안내를 보여준다",
+      "given": ["GET /api/performances/{id} 가 404와 {code: \"PERFORMANCE_NOT_FOUND\"} 를 반환한다"],
+      "when": ["관객이 해당 id의 공연 상세 화면에 진입한다"],
+      "then": [
+        "'존재하지 않는 공연입니다' 안내가 보인다",
+        "[목록으로] 버튼이 보인다"
+      ],
+      "covers": ["존재하지 않는 공연 상세로 진입(404)하면 존재하지 않는 공연입니다 안내와 목록으로 돌아가는 버튼이 표시된다"],
+      "flow": "F6"
+    },
+    {
+      "id": "SC-05",
+      "type": "boundary",
+      "title": "로딩 중에는 스켈레톤이 표시된다",
+      "given": ["GET /api/performances 요청이 아직 응답하지 않은 상태(pending)다"],
+      "when": ["관객이 공연 목록 화면에 진입한다"],
+      "then": [
+        "카드 자리에 스켈레톤이 3개 이상 보인다",
+        "실제 공연 카드는 보이지 않는다"
+      ],
+      "covers": ["로딩 중에는 카드 자리에 스켈레톤이 표시된다"],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-06",
+      "type": "boundary",
+      "title": "목록이 빈 배열이면 안내 문구가 표시된다",
+      "given": ["GET /api/performances 가 content: [] 를 담은 200 응답을 반환한다"],
+      "when": ["관객이 공연 목록 화면에 진입한다"],
+      "then": [
+        "'예정된 공연이 없습니다' 안내가 보인다",
+        "카드가 하나도 렌더되지 않는다"
+      ],
+      "covers": ["목록이 빈 배열이면 예정된 공연이 없습니다 안내가 표시된다"],
+      "flow": "F3"
+    }
+  ],
+  "coverage": {
+    "acceptance_criteria_total": 6,
+    "acceptance_criteria_covered": 6,
+    "uncovered": [],
+    "merged": []
+  },
+  "human_input": { "generate_red_trigger": true }
+}
