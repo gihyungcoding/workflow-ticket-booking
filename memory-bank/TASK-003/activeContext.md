@@ -1,8 +1,8 @@
 ---
 task_id: TASK-003
 title: "디자인 토큰·서체 적용"
-phase: "1"
-phase_name: "Phase 1 - Plan (완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design (완료)"
 status: ACTIVE
 created_at: 2026-09-09
 last_updated: 2026-09-09
@@ -12,9 +12,12 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-1.3
+last_checkpoint: CP-2.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
+  scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
+  scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-003.json"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -50,11 +53,22 @@ Sans KR), `index.html`의 `lang`/`title` 수정, 상태 문구를 design.md §5
 목록 화면이 다시 설계되어 지금 만들면 버려지기 때문(tasks.json
 absorbed_steps/description 참고).
 
+## Phase 2a 요약
+
+시나리오 7건(happy 5/error 1/regression 1) 작성, acceptance_criteria 7/7
+커버. 독립검증 attempt 1 FAIL(SC-07의 flow가 MD/JSON 불일치) → 수정 →
+attempt 2 PASS(경고 5건, 저비용 4건은 승인 전 반영). HITL#1 승인 완료.
+
+**중요**: 이번 태스크에서 실제로 새 vitest 테스트를 작성하는 것은
+SC-01~05 5건뿐이다. SC-06(서체 폴백)은 jsdom이 폰트 로딩을 재현할 수
+없어 Phase 4 실브라우저 확인으로, SC-07(회귀)은 기존 6개 테스트 재실행
+으로 처리한다 — 새 테스트 함수를 억지로 만들지 않는다.
+
 ## 다음 한 걸음
 
-`wf-scenario` 스킬로 Phase 2a를 시작한다 — F1~F7을 Given/When/Then
-시나리오로 옮기고 `scenario-validator` 서브에이전트 검증을 거쳐 HITL#1
-승인을 받는다.
+`wf-red` 스킬로 Phase 2b를 시작한다 — SC-01~05를 실패하는 테스트 코드로
+옮긴다(신규 파일: theme.test.ts, StatusBadge 관련 확장, index.html 검사
+테스트, PerformanceListPage/DetailPage 서체 검사 추가).
 
 ## 알아둬야 할 것
 
