@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 7건, 검증 PASS(attempt 2), HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | 신규 테스트 5건 Red, HITL#2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 테스트 11/11 통과, 빌드 성공, DESIGN-001 위반 0건 |
-| 4 Verify | ⬜ 대기 | — | DESIGN-001~003 warn→error 승격 검토 포함 |
+| 4 Verify | ↩️ 재시도 | CP-3.4(retry1) | attempt 1 FAIL(결함 4+테스트갭 1) → Phase 3 재시도 완료, Phase 4 재진입 대기 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-10T00:10:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "TEST_TASK-003.json human_review.approved=true 확인, 구현 순서 결정"
 

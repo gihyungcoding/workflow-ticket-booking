@@ -1,18 +1,22 @@
 {
   "task_id": "TASK-003",
+  "attempt": 2,
+  "previous_attempt_fail_reason": "attempt 1: Phase 4 code-reviewer가 결함 4건 발견 — (1) Google Fonts에서 Noto Serif KR을 wght@600;700만 요청해 실사용 굵기(400/500)가 600으로 강제 치환 (2) StatusBadge가 MUI Chip 기본 pill(16px)을 써서 radius-badge(2px) 토큰 미도달 (3) 그림자 제거 후 구분선(color-rule) 미적용으로 카드 경계 소실 (4) tsconfig.app.json의 node 타입 확장이 target_files 밖 변경이며 부작용 있음. VERIFY_TASK-003.json 참고",
   "changed_files": [
-    { "path": "frontend/src/theme/index.ts", "change": "createAppTheme()이 palette(배경/텍스트/success)·typography(본문 서체)·shape(모서리 2px)·shadows(전부 none)를 tokens.ts 값으로 조립. theme 상수도 export", "lines_changed": 37 },
+    { "path": "frontend/src/theme/index.ts", "change": "createAppTheme()이 palette(배경/텍스트/success)·typography(본문 서체)·shape(모서리 2px)·shadows(전부 none)를 tokens.ts 값으로 조립. components.MuiChip.styleOverrides.root.borderRadius=radiusBadge(2), components.MuiCard 기본 variant=outlined + MuiPaper.styleOverrides.outlined.borderColor=colorRule 추가(retry1). theme 상수도 export", "lines_changed": 62 },
+    { "path": "frontend/src/theme/index.test.ts", "change": "SC-01에 palette.text.secondary·배지 radius·카드 테두리색 단언 추가(retry1, code-reviewer 테스트 갭 지적 반영)", "lines_changed": 11 },
     { "path": "frontend/src/components/StatusBadge.tsx", "change": "STATUS_LABEL의 UPCOMING/CLOSED/CANCELLED 문구를 예매예정/예매마감/공연취소로 변경. STATUS_COLOR는 불변", "lines_changed": 6 },
-    { "path": "frontend/index.html", "change": "lang=ko, title=공연 예매, Google Fonts(Noto Serif KR/IBM Plex Sans KR) preconnect+stylesheet link(display=swap) 추가", "lines_changed": 10 },
+    { "path": "frontend/index.html", "change": "lang=ko, title=공연 예매, Google Fonts(Noto Serif KR/IBM Plex Sans KR) preconnect+stylesheet link(display=swap) 추가. retry1: Noto Serif KR 굵기 요청을 600;700→400;500로 수정(h5=400/h6=500 실사용 굵기와 일치)", "lines_changed": 10 },
     { "path": "frontend/src/pages/PerformanceListPage.tsx", "change": "공연명 Typography에 tokens.fontDisplay sx 적용", "lines_changed": 5 },
     { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "change": "공연명 Typography에 tokens.fontDisplay sx 적용", "lines_changed": 5 },
     { "path": "frontend/src/main.tsx", "change": "빈 createTheme() 제거, theme/index.ts의 theme을 import해 사용", "lines_changed": 5 },
-    { "path": "frontend/src/pages/PerformanceListPage.test.tsx", "change": "renderPage() 헬퍼가 ThemeProvider(theme)로 감싸도록 수정 — SC-02(Red에서 이미 추가)가 실제 테마 하에서 본문 서체를 검증하려면 필요", "lines_changed": 10 },
+    { "path": "frontend/src/pages/PerformanceListPage.test.tsx", "change": "renderPage() 헬퍼가 ThemeProvider(theme)로 감싸도록 수정 — SC-02가 실제 테마 하에서 본문 서체를 검증하려면 필요", "lines_changed": 10 },
     { "path": "frontend/src/pages/PerformanceDetailPage.test.tsx", "change": "위와 동일 사유로 renderPage(id) 수정", "lines_changed": 14 },
-    { "path": "frontend/index.html.test.ts", "change": "Green 진행 중 발견한 테스트 자체 버그 수정 — Google Fonts <link> 검색 predicate가 preconnect link까지 잘못 매칭하던 것을 rel=\"stylesheet\" 조건 추가로 정확히 함(단언 완화 아님, 선택자 정확도 개선)", "lines_changed": 4 }
+    { "path": "frontend/index.html.test.ts", "change": "Google Fonts <link> 검색 predicate가 preconnect link까지 잘못 매칭하던 테스트 자체 버그를 rel=\"stylesheet\" 조건 추가로 수정", "lines_changed": 4 },
+    { "path": "frontend/tsconfig.app.json", "change": "retry1: attempt 1에서 추가했던 types:[\"node\"]와 include의 index.html.test.ts를 원상복구 — 브라우저 번들 코드에 Node 전역 타입이 노출되는 부작용 제거(index.html.test.ts는 tsc 검사 없이도 vitest로 정상 동작 재확인)", "lines_changed": 2 }
   ],
   "reused": [
-    { "path": "frontend/src/theme/tokens.ts", "symbol": "colorCanvas, colorInk, colorInkMuted, colorOpen, colorSurface, fontText, fontDisplay, radiusSurface", "note": "Phase 2b(Red)에서 이미 완전히 작성된 데이터 상수 — Green에서 로직 없이 그대로 소비" }
+    { "path": "frontend/src/theme/tokens.ts", "symbol": "colorCanvas, colorInk, colorInkMuted, colorOpen, colorRule, colorSurface, fontText, fontDisplay, radiusBadge, radiusSurface", "note": "Phase 2b(Red)에서 이미 완전히 작성된 데이터 상수 — Green에서 로직 없이 그대로 소비(retry1에서 colorRule·radiusBadge를 추가로 사용)" }
   ],
   "test_status": "green",
   "test_result": {
@@ -28,15 +32,25 @@
     "command": "npm --prefix frontend run build",
     "status": "success"
   },
+  "type_check": {
+    "command": "npx tsc -p tsconfig.app.json --noEmit",
+    "errors": 0
+  },
   "architecture_check": {
-    "command": "python3 scripts/check_architecture.py",
-    "DESIGN-001": "0건 위반 — AC1 충족 확인(check_architecture.py --id DESIGN-001 단독 실행으로도 재확인)",
-    "DESIGN-002": "0건 위반 — 색상 리터럴이 theme/ 밖으로 유입되지 않음",
-    "DESIGN-003": "경고 2건(스켈레톤 매직 넘버) — 이 태스크 범위 밖(tasks.json 설명), 변경 없음(기존과 동일)",
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "no_target": [],
+    "files_scanned": 43,
+    "DESIGN-001": "0건 위반 — AC1 충족",
+    "DESIGN-002": "0건 위반",
+    "DESIGN-003": "경고 2건(스켈레톤 매직 넘버) — 이 태스크 범위 밖(tasks.json 설명), 변경 없음",
     "ARCH-001~003": "전부 통과, 백엔드 무변경"
   },
   "lint": { "command": "npm run lint (oxlint)", "errors": 0, "warnings": 2, "warning_detail": "react(set-state-in-effect) × 2 — TASK-002에서 이미 있던 경고, 이번 태스크로 인한 신규 경고 아님" },
+  "browser_verification": {
+    "note": "retry1 수정 후 실브라우저로 재확인 — chipRadius='2px', cardBorder='1px solid rgb(211, 216, 220)'(=#D3D8DC), cardShadow='none', titleWeight 500(목록)/400(상세), document.fonts.check('400 16px \"Noto Serif KR\"')=true, document.fonts.check('500 16px \"Noto Serif KR\"')=true — 4건 결함 전부 해소 확인"
+  },
   "refactoring": [],
-  "refactoring_note": "변경 규모가 작고(테마 조립, 문구 3개, HTML 메타, sx 한 줄씩) 중복·네이밍·크기·위치 어느 기준으로도 리팩토링 대상이 드러나지 않아 별도 리팩토링 없음",
+  "refactoring_note": "attempt 2도 변경 규모가 작아(theme/index.ts에 components 블록 추가, 나머지는 1~2줄 수정) 별도 리팩토링 없음",
   "scope_deviations": []
 }

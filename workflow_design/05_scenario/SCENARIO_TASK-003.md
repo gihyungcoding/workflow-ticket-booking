@@ -16,8 +16,11 @@
 - **And** `palette.background.default` 가 `'#F7F8F9'` 다
 - **And** `palette.background.paper` 가 `'#FFFFFF'` 다
 - **And** `palette.text.primary` 가 `'#1A2027'` 다
+- **And** `palette.text.secondary` 가 `'#5A6570'` 다
 - **And** `shape.borderRadius` 가 `2` 다
 - **And** `shadows` 배열의 모든 값이 `'none'` 이다
+- **And** 배지(Chip)의 `border-radius` 오버라이드가 `2`(`--radius-badge`)다
+- **And** 카드(Paper outlined variant)의 테두리 색 오버라이드가 `'#D3D8DC'`(`--color-rule`)다
 
 covers: 테마가 design-tokens.css 의 값으로 초기화된다 — python3 scripts/check_architecture.py --id DESIGN-001 이 위반 0건
 flow: F1
@@ -114,6 +117,18 @@ Phase 4의 실브라우저 확인 몫이다 — SC-02·SC-03·SC-05는 "올바�
 정리하면 이번 태스크에서 **새로 작성하는 Red 테스트는 SC-01~05 다섯 건**
 이고, SC-06·SC-07은 각각 Phase 4 실브라우저 확인·기존 테스트 재실행으로
 처리한다 — `TEST_TASK-003.json` 에 이 구분을 명시한다.
+
+## Phase 4 FAIL 이후 보강 (VERIFY_TASK-003.json code_review)
+
+Phase 4에서 code-reviewer가 발견한 실제 결함(Google Fonts 굵기 강제 치환,
+배지 radius 미도달, 카드 구분선 소실)을 Phase 3에서 고치면서, 같은 리뷰가
+지적한 테스트 갭(`palette.text.secondary` 미검증)도 함께 닫았다. SC-01의
+Then에 `text.secondary`·배지 radius·카드 테두리색 단언을 추가했다 —
+새로운 시나리오나 새 AC가 아니라 "테마가 design-tokens.css 값으로
+초기화된다"는 기존 SC-01의 범위를 더 촘촘히 검증하는 것이라 판단해
+scenario-validator 재호출 없이 처리했다(재검증 기준은 `docs/workflow/
+reject-state-machine.md` §5 — 지목된 부분만 고치고 처음부터 다시 하지
+않는다).
 
 ## 독립검증 반영 (VALIDATION_TASK-003.json attempt 2, V4/V5/V8)
 

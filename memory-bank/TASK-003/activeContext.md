@@ -1,8 +1,8 @@
 ---
 task_id: TASK-003
 title: "디자인 토큰·서체 적용"
-phase: "4"
-phase_name: "Phase 4 - Verify (FAIL → Phase 3 롤백 예정)"
+phase: "3"
+phase_name: "Phase 3 - Green (재시도 완료, Phase 4 재진입 대기)"
 status: ACTIVE
 created_at: 2026-09-09
 last_updated: 2026-09-10
@@ -12,15 +12,15 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-4.2
+last_checkpoint: CP-3.4 (retry1)
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
   scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-003.json"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
   test: "workflow_design/05_scenario/TEST_TASK-003.json"
-  dev: "workflow_design/06_dev/DEV_TASK-003.json"
-  verify: "workflow_design/07_verify/VERIFY_TASK-003.json (FAIL)"
+  dev: "workflow_design/06_dev/DEV_TASK-003.json (attempt 2)"
+  verify_attempt1: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 1, FAIL — 재검증 전 기록)"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -117,11 +117,28 @@ radius를 실측 확인, SC-06(서체 폴백)도 웹폰트 강제 비활성화�
    노출하는 부작용(scope_deviations 참고)
 5. **[test]** `theme.palette.text.secondary` 미검증(사소한 갭)
 
+## Phase 3 재시도(retry1) 완료
+
+5건 모두 수정 완료:
+1. `index.html` Google Fonts URL을 `wght@600;700`→`400;500`으로 수정
+   (h5=400/h6=500 실사용 굵기와 일치)
+2. `theme/index.ts`에 `components.MuiChip.styleOverrides.root.borderRadius
+   = radiusBadge` 추가
+3. `theme/index.ts`에 `components.MuiCard.defaultProps.variant='outlined'`
+   + `MuiPaper.styleOverrides.outlined.borderColor = colorRule` 추가
+4. `tsconfig.app.json` 원상복구(`node` 타입/include 제거)
+5. `theme/index.test.ts`(SC-01)에 `text.secondary`·배지 radius·카드
+   테두리색 단언 추가, `SCENARIO_TASK-003.md/.json`도 동기화
+
+실브라우저로 4건 실측 재확인 완료(chipRadius=2px, cardBorder=
+`1px solid #D3D8DC`, titleWeight 500/400, Noto Serif KR 400·500 로드
+확인). 테스트 11/11, 빌드/tsc/린트 error 0, 아키텍처 error 0/no_target
+없음, 백엔드 회귀 없음.
+
 ## 다음 한 걸음
 
-**Phase 3으로 롤백**한다 — wf-verify skill 규칙상 FAIL은 승인 선택지를
-제시하지 않고 롤백만 한다. 위 5건을 고친 뒤 Phase 3 체크포인트를
-`_retry1`로 다시 저장하고 Phase 4를 재수행한다.
+`wf-verify` 스킬로 Phase 4를 재진입한다 — code-reviewer 재호출 포함
+전체 절차를 처음부터 다시 수행한다(부분 재검증이 아니라 재실행).
 
 ## 알아둬야 할 것
 

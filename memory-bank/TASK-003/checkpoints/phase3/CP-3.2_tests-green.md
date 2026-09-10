@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-10T00:30:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "theme/index.ts, StatusBadge.tsx, index.html, PerformanceListPage/DetailPage.tsx, main.tsx 구현 완료. 대상 테스트 11/11 통과, 빌드 성공, 아키텍처 DESIGN-001 위반 0건, 백엔드 회귀 없음"
 
