@@ -12,15 +12,15 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-3.4 (retry2)
+last_checkpoint: CP-3.4 (retry3)
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
   scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-003.json"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
   test: "workflow_design/05_scenario/TEST_TASK-003.json"
-  dev: "workflow_design/06_dev/DEV_TASK-003.json (attempt 3)"
-  verify_attempt1: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 1, FAIL — 재검증 전 기록, 곧 attempt 2로 갱신 예정)"
+  dev: "workflow_design/06_dev/DEV_TASK-003.json (attempt 4, 최종)"
+  verify_attempt1: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 1, FAIL — 곧 attempt 2 최종으로 갱신 예정)"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -157,10 +157,35 @@ code-reviewer를 재호출해 attempt 1의 결함 5건이 전부 해소됐음을
 `venueLineHeight/fontSize = 22.4px/14px = 1.6` — 토큰값과 정확히 일치.
 테스트 12/12, 빌드/tsc/린트 error 0, 아키텍처 정상, 백엔드 회귀 없음.
 
+## Phase 3 재시도 3(retry3) — 네 번째 같은 부류 결함
+
+code-reviewer 3차 재검증에서 line-height 수정은 확인됐지만, **또 하나의
+같은 패턴** 결함을 발견했다: `PerformanceListPage.tsx`의
+`color="text.secondary"`가 MUI v9에서 무효한 점 표기라 아무 색 규칙도
+생성되지 않고(camelCase `textSecondary`여야 함), `PerformanceDetailPage.tsx`
+는 장소·일시에 애초에 `color` 지정이 없어 둘 다 `--color-ink-muted`가
+전혀 화면에 반영되지 않고 있었다. 즉시 수정:
+
+- `PerformanceListPage.tsx`: `color="text.secondary"` → `color="textSecondary"`
+- `PerformanceDetailPage.tsx`: 장소·공연 일시·예매 오픈·예매 마감에
+  `color="textSecondary"` 추가(design-tokens.css 주석 "장소·일시"와 정확히
+  대응). 잔여 좌석은 본문색 유지(그 범주 밖)
+- `theme/index.test.tsx`에 렌더 기반 색상 회귀 단언 추가
+
+실브라우저 최종 확인: venue color = `rgb(90,101,112)`(#5A6570) 정확히
+렌더, 잔여 좌석은 의도대로 본문색 유지. 테스트 12/12, 전부 그린.
+
+**총 4회 시도**에 걸쳐 발견된 결함은 전부 "토큰 값은 있으나 MUI 내부
+규칙/오탈자에 가려 화면에 미도달"이라는 같은 패턴이었다 — 이는 Phase 5
+회고의 핵심 소재가 될 것이다. code-reviewer가 이번 diff와 무관하게 남긴
+참고 사항 4건(divider 토큰, contained 버튼 포커스, 문서 주석 오타,
+StatusBadge 색 구조)은 `DEV_TASK-003.json.code_review_residuals`에
+기록해 Phase 5로 이월한다.
+
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4를 재진입한다(attempt 2) — code-reviewer
-3차 호출을 포함해 전체 절차를 다시 수행한다.
+`wf-verify` 스킬로 Phase 4를 재진입한다(attempt 2 최종) —
+`VERIFY_TASK-003.json`을 PASS로 갱신하고 HITL#3을 진행한다.
 
 ## 알아둬야 할 것
 

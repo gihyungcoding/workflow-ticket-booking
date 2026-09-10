@@ -61,10 +61,16 @@ export function PerformanceDetailPage() {
         </Typography>
         <StatusBadge status={performance.status} />
       </Stack>
-      <Typography>{performance.venue}</Typography>
-      <Typography>공연 일시: {new Date(performance.startAt).toLocaleString()}</Typography>
-      <Typography>예매 오픈: {new Date(performance.openAt).toLocaleString()}</Typography>
-      <Typography>예매 마감: {new Date(performance.closeAt).toLocaleString()}</Typography>
+      <Typography color="textSecondary">{performance.venue}</Typography>
+      <Typography color="textSecondary">
+        공연 일시: {new Date(performance.startAt).toLocaleString()}
+      </Typography>
+      <Typography color="textSecondary">
+        예매 오픈: {new Date(performance.openAt).toLocaleString()}
+      </Typography>
+      <Typography color="textSecondary">
+        예매 마감: {new Date(performance.closeAt).toLocaleString()}
+      </Typography>
       <Typography>잔여 좌석: {performance.availableSeats}석</Typography>
     </Stack>
   )

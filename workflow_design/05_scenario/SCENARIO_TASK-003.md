@@ -23,6 +23,7 @@
 - **And** 카드(Paper outlined variant)의 테두리 색 오버라이드가 `'#D3D8DC'`(`--color-rule`)다
 - **And** 공연명(h5/h6)의 행간이 `1.35`(`--line-height-display`)다
 - **And** 본문(body1/body2)의 행간이 `1.6`(`--line-height-text`)다
+- **And** `color="textSecondary"` 로 렌더한 텍스트가 `--color-ink-muted`(`#5A6570`)로 렌더된다
 
 covers: 테마가 design-tokens.css 의 값으로 초기화된다 — python3 scripts/check_architecture.py --id DESIGN-001 이 위반 0건
 flow: F1
@@ -136,6 +137,14 @@ Phase 3에서 고치면서, 같은 리뷰가 지적한 테스트 갭(`palette.te
 같은 패턴(값은 있으나 미적용)이라 판단해 즉시 고치고, SC-01의 Then에
 행간 단언 2건을 추가했다. 또한 배지/카드 단언을 테마 설정 객체 대조에서
 **실제 렌더 결과(getComputedStyle) 대조**로 강화했다(회귀 방어력 지적 반영).
+
+**retry2 재검증 → retry3**: line-height와 렌더 기반 테스트는 정상 확인됐으나,
+또 하나의(네 번째) 같은 부류 결함을 발견했다 — `PerformanceListPage.tsx`의
+`color="text.secondary"` 표기가 MUI v9에서는 무효한 점 표기라 아무 색
+규칙도 생성되지 않고, `PerformanceDetailPage.tsx`의 장소·일시는 애초에
+`color` 지정이 없어 `--color-ink-muted`가 화면에 전혀 도달하지 않고
+있었다. 두 파일 모두 `color="textSecondary"`(camelCase)로 수정하고,
+SC-01의 렌더 기반 테스트에 이 회귀를 직접 잡는 색상 단언을 추가했다.
 
 이 모든 보강은 새로운 시나리오나 새 AC가 아니라 "테마가 design-tokens.css
 값으로 초기화된다"는 기존 SC-01의 범위를 더 촘촘히 검증하는 것이라 판단해

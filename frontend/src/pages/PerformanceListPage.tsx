@@ -80,7 +80,7 @@ export function PerformanceListPage() {
                   <Typography variant="h6" sx={{ fontFamily: fontDisplay }}>
                     {performance.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="textSecondary">
                     {performance.venue} · {new Date(performance.startAt).toLocaleString()}
                   </Typography>
                 </Box>

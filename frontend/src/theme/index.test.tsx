@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import Card from '@mui/material/Card'
 import Chip from '@mui/material/Chip'
+import Typography from '@mui/material/Typography'
 import { ThemeProvider } from '@mui/material/styles'
 import { createAppTheme } from './index'
 
@@ -39,10 +40,12 @@ describe('createAppTheme', () => {
       <ThemeProvider theme={theme}>
         <Chip label="예매가능" color="success" size="small" />
         <Card>카드 내용</Card>
+        <Typography color="textSecondary">보조 텍스트</Typography>
       </ThemeProvider>,
     )
     const chip = getByText('예매가능').closest('.MuiChip-root')
     const card = container.querySelector('.MuiCard-root')
+    const secondaryText = getByText('보조 텍스트')
 
     // Then
     // 배지(Chip)의 border-radius가 --radius-badge(2px)로 실제 렌더된다 (MUI 기본 pill 16px이 아니다)
@@ -50,5 +53,9 @@ describe('createAppTheme', () => {
 
     // 카드(Card)가 --color-rule(#D3D8DC) 테두리로 렌더된다
     expect(getComputedStyle(card!).borderColor).toBe('rgb(211, 216, 220)')
+
+    // color="textSecondary" 로 렌더한 텍스트가 --color-ink-muted(#5A6570)로 렌더된다
+    // (MUI v9에서 color="text.secondary" 점 표기는 매칭되지 않아 본문색으로 새는 회귀가 있었다)
+    expect(getComputedStyle(secondaryText).color).toBe('rgb(90, 101, 112)')
   })
 })
