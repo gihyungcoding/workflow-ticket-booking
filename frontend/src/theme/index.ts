@@ -8,6 +8,8 @@ import {
   colorRule,
   colorSurface,
   fontText,
+  lineHeightDisplay,
+  lineHeightText,
   radiusBadge,
   radiusSurface,
 } from './tokens'
@@ -31,6 +33,11 @@ export function createAppTheme(): Theme {
     },
     typography: {
       fontFamily: fontText,
+      // 공연명(h5/h6)만 명조 — 행간을 고딕보다 조금 더 준다 (design.md §4)
+      h5: { lineHeight: lineHeightDisplay },
+      h6: { lineHeight: lineHeightDisplay },
+      body1: { lineHeight: lineHeightText },
+      body2: { lineHeight: lineHeightText },
     },
     shape: {
       borderRadius: radiusSurface,

@@ -12,15 +12,15 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-3.4 (retry1)
+last_checkpoint: CP-3.4 (retry2)
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
   scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-003.json"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
   test: "workflow_design/05_scenario/TEST_TASK-003.json"
-  dev: "workflow_design/06_dev/DEV_TASK-003.json (attempt 2)"
-  verify_attempt1: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 1, FAIL — 재검증 전 기록)"
+  dev: "workflow_design/06_dev/DEV_TASK-003.json (attempt 3)"
+  verify_attempt1: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 1, FAIL — 재검증 전 기록, 곧 attempt 2로 갱신 예정)"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -135,10 +135,32 @@ radius를 실측 확인, SC-06(서체 폴백)도 웹폰트 강제 비활성화�
 확인). 테스트 11/11, 빌드/tsc/린트 error 0, 아키텍처 error 0/no_target
 없음, 백엔드 회귀 없음.
 
+## Phase 3 재시도 2(retry2) — code-reviewer 재검증에서 추가 발견분 수정
+
+code-reviewer를 재호출해 attempt 1의 결함 5건이 전부 해소됐음을 확인받는
+과정에서, **같은 패턴의 결함을 하나 더 발견**했다: `lineHeightDisplay`
+(1.35)·`lineHeightText`(1.6) 토큰이 theme에 배선되지 않아 명조 제목의
+행간(MUI 기본 1.6)이 본문(1.5)보다 커서 design.md 의도와 정반대로
+나타나고 있었다 — 배지 radius·카드 구분선과 완전히 같은 부류의 "값은
+있으나 화면에 미도달" 문제. 즉시 고쳤다:
+
+- `theme/index.ts`의 typography에 h5/h6 lineHeight=1.35, body1/body2
+  lineHeight=1.6 추가
+- 테스트 회귀 방어력도 함께 보강 — 배지/카드 단언을 "테마 설정 객체
+  대조"에서 "실제 렌더 후 getComputedStyle 대조"로 강화(code-reviewer가
+  전자는 MUI 내부 구현이 바뀌어도 계속 통과해 회귀를 못 잡는다고 지적).
+  파일을 `.test.ts`→`.test.tsx`로 변경(JSX 렌더 필요)
+- jsdom이 `box-shadow: none`을 빈 문자열로 반환하는 한계를 발견해 그
+  단언은 제외(실브라우저 확인으로 대체)
+
+실브라우저 최종 확인: `titleLineHeight/fontSize = 27px/20px = 1.35`,
+`venueLineHeight/fontSize = 22.4px/14px = 1.6` — 토큰값과 정확히 일치.
+테스트 12/12, 빌드/tsc/린트 error 0, 아키텍처 정상, 백엔드 회귀 없음.
+
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4를 재진입한다 — code-reviewer 재호출 포함
-전체 절차를 처음부터 다시 수행한다(부분 재검증이 아니라 재실행).
+`wf-verify` 스킬로 Phase 4를 재진입한다(attempt 2) — code-reviewer
+3차 호출을 포함해 전체 절차를 다시 수행한다.
 
 ## 알아둬야 할 것
 

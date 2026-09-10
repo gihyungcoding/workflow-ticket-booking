@@ -21,6 +21,8 @@
 - **And** `shadows` 배열의 모든 값이 `'none'` 이다
 - **And** 배지(Chip)의 `border-radius` 오버라이드가 `2`(`--radius-badge`)다
 - **And** 카드(Paper outlined variant)의 테두리 색 오버라이드가 `'#D3D8DC'`(`--color-rule`)다
+- **And** 공연명(h5/h6)의 행간이 `1.35`(`--line-height-display`)다
+- **And** 본문(body1/body2)의 행간이 `1.6`(`--line-height-text`)다
 
 covers: 테마가 design-tokens.css 의 값으로 초기화된다 — python3 scripts/check_architecture.py --id DESIGN-001 이 위반 0건
 flow: F1
@@ -120,12 +122,23 @@ Phase 4의 실브라우저 확인 몫이다 — SC-02·SC-03·SC-05는 "올바�
 
 ## Phase 4 FAIL 이후 보강 (VERIFY_TASK-003.json code_review)
 
-Phase 4에서 code-reviewer가 발견한 실제 결함(Google Fonts 굵기 강제 치환,
-배지 radius 미도달, 카드 구분선 소실)을 Phase 3에서 고치면서, 같은 리뷰가
-지적한 테스트 갭(`palette.text.secondary` 미검증)도 함께 닫았다. SC-01의
-Then에 `text.secondary`·배지 radius·카드 테두리색 단언을 추가했다 —
-새로운 시나리오나 새 AC가 아니라 "테마가 design-tokens.css 값으로
-초기화된다"는 기존 SC-01의 범위를 더 촘촘히 검증하는 것이라 판단해
+**attempt 1 FAIL → retry1**: Phase 4에서 code-reviewer가 발견한 실제 결함
+(Google Fonts 굵기 강제 치환, 배지 radius 미도달, 카드 구분선 소실)을
+Phase 3에서 고치면서, 같은 리뷰가 지적한 테스트 갭(`palette.text.secondary`
+미검증)도 함께 닫았다. SC-01의 Then에 `text.secondary`·배지 radius·카드
+테두리색 단언을 추가했다.
+
+**retry1 재검증 → retry2**: code-reviewer 재호출 결과 5건 전부 해소를
+확인했으나, "같은 부류"의 결함 하나를 추가로 발견했다 — `lineHeightDisplay`/
+`lineHeightText` 토큰도 어디에도 배선되지 않아 명조 제목의 행간(MUI 기본
+1.6)이 본문(1.5)보다 커서 design.md §4("명조는 고딕보다 행간을 조금 더
+준다" = 1.35 &lt; 1.6)와 정반대로 나타나고 있었다. 배지 radius·카드 구분선과
+같은 패턴(값은 있으나 미적용)이라 판단해 즉시 고치고, SC-01의 Then에
+행간 단언 2건을 추가했다. 또한 배지/카드 단언을 테마 설정 객체 대조에서
+**실제 렌더 결과(getComputedStyle) 대조**로 강화했다(회귀 방어력 지적 반영).
+
+이 모든 보강은 새로운 시나리오나 새 AC가 아니라 "테마가 design-tokens.css
+값으로 초기화된다"는 기존 SC-01의 범위를 더 촘촘히 검증하는 것이라 판단해
 scenario-validator 재호출 없이 처리했다(재검증 기준은 `docs/workflow/
 reject-state-machine.md` §5 — 지목된 부분만 고치고 처음부터 다시 하지
 않는다).
