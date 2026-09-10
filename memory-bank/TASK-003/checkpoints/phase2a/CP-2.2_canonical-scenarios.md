@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-09T00:25:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "시나리오 7건(happy 5 / error 1 / regression 1) 작성, acceptance_criteria 7/7 커버"
 

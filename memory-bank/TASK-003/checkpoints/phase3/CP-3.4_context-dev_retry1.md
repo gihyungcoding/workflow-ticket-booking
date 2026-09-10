@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green (재시도 완료)"
 saved_at: 2026-09-10T01:25:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Phase 4 FAIL 결함 5건 전부 수정 완료 — 테스트 11/11, 빌드/tsc/린트 error 0, 아키텍처 error 0/no_target 없음, 백엔드 회귀 없음, 실브라우저 재확인 완료. scope_deviations 없음(tsconfig 원상복구로 해소)"
 

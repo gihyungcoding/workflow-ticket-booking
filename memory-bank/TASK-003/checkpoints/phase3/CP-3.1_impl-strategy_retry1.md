@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green (재시도)"
 saved_at: 2026-09-10T01:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "VERIFY_TASK-003.json(FAIL)의 code_review.findings 5건을 고치는 전략 수립"
 

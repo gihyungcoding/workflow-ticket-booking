@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-09T01:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "SC-01~05를 새 테스트 5건으로 옮김, 전부 Red 확인. SC-06/07은 계획대로 새 테스트 없이 처리. 기존 6건 회귀 없음"
 

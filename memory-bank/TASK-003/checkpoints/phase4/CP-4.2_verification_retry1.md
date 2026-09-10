@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "4"
 phase_name: "Phase 4 - Verify (재수행 완료)"
 saved_at: 2026-09-10T02:35:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "VERIFY_TASK-003.json(attempt 2) 저장 — status: PASS. acceptance_criteria 7/7 PASS, code_review 결함 6건 전부 해소, 잔여 참고 4건은 Phase 5로 이월"
 

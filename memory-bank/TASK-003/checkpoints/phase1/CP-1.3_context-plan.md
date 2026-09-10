@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-09T00:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "inputs 3 / outputs 4 / flows 7(F1~F7, acceptance_criteria 7건 전부 커버) 확정, PLAN_TASK-003.json 저장"
 

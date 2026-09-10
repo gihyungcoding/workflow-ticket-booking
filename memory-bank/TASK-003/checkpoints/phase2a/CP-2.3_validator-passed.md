@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-09T00:45:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "attempt 1: overall.pass=false(V1 fail). 수정 후 attempt 2: overall.pass=true(warn 5) — 저비용 개선(flow 배열 통일, 긍정 단언, shape/shadows/display=swap 단언 추가)을 재검증 없이 반영 완료"
 

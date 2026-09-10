@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green (재시도 2 완료)"
 saved_at: 2026-09-10T01:55:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "attempt 1 FAIL(5건) + attempt 2 재검증 발견(1건) 전부 수정 완료. 테스트 12/12, 빌드/tsc/린트 error 0, 아키텍처 정상, 백엔드 회귀 없음, 실브라우저 최종 확인 완료"
 

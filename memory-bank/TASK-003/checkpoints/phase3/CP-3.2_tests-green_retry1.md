@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green (재시도)"
 saved_at: 2026-09-10T01:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Phase 4 FAIL 결함 4건 + 테스트 갭 1건 수정 완료. 테스트 11/11, 빌드/tsc/린트/아키텍처 전부 통과, 실브라우저 재확인으로 결함 해소 확증"
 

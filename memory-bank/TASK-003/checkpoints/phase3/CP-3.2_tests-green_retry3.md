@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green (재시도 3)"
 saved_at: 2026-09-10T02:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "code-reviewer 3차 재검증에서 발견한 color=\"text.secondary\" 무효 표기 결함(네 번째, 같은 부류) 수정. 테스트 12/12, 실브라우저로 ink-muted 색상까지 최종 확인"
 

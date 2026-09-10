@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "4"
 phase_name: "Phase 4 - Verify (재수행)"
 saved_at: 2026-09-10T02:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "attempt 1 FAIL 이후 3라운드에 걸친 수정을 전부 재검증 — 테스트/빌드/린트/아키텍처/실브라우저 전부 통과, code-reviewer 3차 재검증에서 결함 6건 전부 해소 확인"
 

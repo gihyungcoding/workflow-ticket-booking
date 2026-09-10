@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "3"
 phase_name: "Phase 3 - Green (재시도 2)"
 saved_at: 2026-09-10T01:50:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "code-reviewer 재검증(attempt 2)에서 lineHeight 미배선 발견 + 테스트 회귀 방어력 지적을 즉시 반영. 테스트 12/12, 실브라우저로 line-height까지 최종 확인"
 

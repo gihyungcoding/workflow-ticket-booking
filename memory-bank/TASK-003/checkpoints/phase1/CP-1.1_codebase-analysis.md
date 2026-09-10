@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-09T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "architecture.md·design.md·design-tokens.css·constraints.yaml(DESIGN-001~003) 확인, 기준선 위반 상태 확인, target_files 실재 확인"
 
