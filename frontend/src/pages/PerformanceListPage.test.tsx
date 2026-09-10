@@ -78,6 +78,44 @@ describe('PerformanceListPage', () => {
     expect(within(galaCard!).getByText('매진')).toBeInTheDocument()
   })
 
+  test('SC-02 (happy) 목록 카드의 공연명에 Noto Serif KR이 적용된다', async () => {
+    // Given
+    // PerformanceListPage 가 공연 1건("재즈의 밤")을 렌더한다
+    const response: PerformanceListResponse = {
+      content: [
+        {
+          id: 1,
+          title: '재즈의 밤',
+          venue: 'OO홀',
+          startAt: '2026-10-01T19:00:00+09:00',
+          openAt: '2026-09-10T10:00:00+09:00',
+          closeAt: '2026-09-30T23:59:59+09:00',
+          totalSeats: 100,
+          availableSeats: 10,
+          status: 'OPEN',
+        },
+      ],
+      page: 0,
+      size: 20,
+      totalElements: 1,
+    }
+    vi.mocked(getPerformances).mockResolvedValue(response)
+
+    // When
+    // 카드 안의 공연명 텍스트 요소의 스타일을 확인한다
+    renderPage()
+    const titleEl = await screen.findByText('재즈의 밤')
+    const venueEl = screen.getByText('OO홀', { exact: false })
+
+    // Then
+    // 그 요소의 font-family 에 'Noto Serif KR' 이 포함된다
+    expect(getComputedStyle(titleEl).fontFamily).toContain('Noto Serif KR')
+
+    // 같은 카드의 장소 텍스트 요소의 font-family 는 'IBM Plex Sans KR' 이다('Noto Serif KR' 이 아니다)
+    expect(getComputedStyle(venueEl).fontFamily).toContain('IBM Plex Sans KR')
+    expect(getComputedStyle(venueEl).fontFamily).not.toContain('Noto Serif KR')
+  })
+
   test('SC-03 (error) 목록 API 호출 실패 시 오류 메시지와 다시 시도 버튼이 표시된다', async () => {
     // Given
     // GET /api/performances 가 500 응답을 반환한다

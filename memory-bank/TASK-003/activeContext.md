@@ -1,23 +1,24 @@
 ---
 task_id: TASK-003
 title: "디자인 토큰·서체 적용"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design (완료)"
+phase: "2b"
+phase_name: "Phase 2b - Red (완료)"
 status: ACTIVE
 created_at: 2026-09-09
-last_updated: 2026-09-09
+last_updated: 2026-09-10
 
 primary_category: Frontend
 sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-2.4
+last_checkpoint: CP-2.6
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
   scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-003.json"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
+  test: "workflow_design/05_scenario/TEST_TASK-003.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -64,11 +65,26 @@ SC-01~05 5건뿐이다. SC-06(서체 폴백)은 jsdom이 폰트 로딩을 재현
 없어 Phase 4 실브라우저 확인으로, SC-07(회귀)은 기존 6개 테스트 재실행
 으로 처리한다 — 새 테스트 함수를 억지로 만들지 않는다.
 
+## Phase 2b 요약
+
+SC-01~05를 새 테스트 5건으로 옮겨 전부 Red 확인. tokens.ts는 데이터
+상수라 실제 값을 전부 채웠고(구조), theme/index.ts의 `createAppTheme()`
+만 `throw new Error('Not implemented')` 스켈레톤으로 남겼다. 신규 파일:
+`theme/tokens.ts`, `theme/index.ts`, `theme/index.test.ts`,
+`components/StatusBadge.test.tsx`, `index.html.test.ts`. 기존 파일에
+테스트 1건씩 추가: `PerformanceListPage.test.tsx`(SC-02),
+`PerformanceDetailPage.test.tsx`(SC-03). SC-06/07은 계획대로 새 테스트
+없음 — 기존 6건이 무변경으로 계속 통과해 SC-07이 이미 성립함을 확인.
+tsconfig.app.json에 `index.html.test.ts`를 include 추가, `types`에
+`"node"` 추가(node:fs 등 사용). tsc 오류 0건. HITL#2 승인 완료.
+
 ## 다음 한 걸음
 
-`wf-red` 스킬로 Phase 2b를 시작한다 — SC-01~05를 실패하는 테스트 코드로
-옮긴다(신규 파일: theme.test.ts, StatusBadge 관련 확장, index.html 검사
-테스트, PerformanceListPage/DetailPage 서체 검사 추가).
+`wf-develop` 스킬로 Phase 3(Green)을 시작한다 — SC-01~05를 통과시키는
+최소 구현을 `theme/index.ts`·`StatusBadge.tsx`·`index.html`·
+`PerformanceListPage.tsx`·`PerformanceDetailPage.tsx`에 채운다. Green
+이후 SC-06(서체 폴백)은 Phase 4에서 실브라우저로 별도 확인해야 함을
+잊지 않는다.
 
 ## 알아둬야 할 것
 
