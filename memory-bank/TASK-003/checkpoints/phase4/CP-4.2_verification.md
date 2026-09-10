@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-10T00:55:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "VERIFY_TASK-003.json 저장 — status: FAIL. code_review 결함 4건(correctness 1, design 3) + 테스트 갭 1건 발견. HITL#3에서 승인/예외승인 선택지 없이 Phase 3 롤백만 제시"
 

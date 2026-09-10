@@ -1,8 +1,8 @@
 ---
 task_id: TASK-003
 title: "디자인 토큰·서체 적용"
-phase: "3"
-phase_name: "Phase 3 - Green (재시도 완료, Phase 4 재진입 대기)"
+phase: "4"
+phase_name: "Phase 4 - Verify (완료, PASS)"
 status: ACTIVE
 created_at: 2026-09-09
 last_updated: 2026-09-10
@@ -12,7 +12,7 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-3.4 (retry3)
+last_checkpoint: CP-4.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
@@ -20,7 +20,7 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
   test: "workflow_design/05_scenario/TEST_TASK-003.json"
   dev: "workflow_design/06_dev/DEV_TASK-003.json (attempt 4, 최종)"
-  verify_attempt1: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 1, FAIL — 곧 attempt 2 최종으로 갱신 예정)"
+  verify: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 2, PASS, APPROVE)"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -182,10 +182,20 @@ code-reviewer 3차 재검증에서 line-height 수정은 확인됐지만, **또 
 StatusBadge 색 구조)은 `DEV_TASK-003.json.code_review_residuals`에
 기록해 Phase 5로 이월한다.
 
+## Phase 4 완료 — PASS, HITL#3 승인
+
+code-reviewer 3라운드(1차 FAIL 발견 → 2차 재검증에서 신규 1건 추가 발견
+→ 3차 재검증에서 신규 1건 추가 발견 → 최종 전부 해소 확인) 끝에 PASS
+판정. acceptance_criteria 7/7 PASS. `verified_commit =
+08f0a35feceafd2a0629ae9979fbd51c023849d7`. 잔여 참고사항 4건(divider
+토큰, contained 버튼 포커스, 문서 주석 오타, StatusBadge 색 구조)은
+`DEV_TASK-003.json.code_review_residuals`에 기록해 Phase 5로 이월.
+
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4를 재진입한다(attempt 2 최종) —
-`VERIFY_TASK-003.json`을 PASS로 갱신하고 HITL#3을 진행한다.
+`wf-reflect` 스킬로 Phase 5(회고)를 시작한다. **이번 태스크는 재시도가
+3회 발생한 이례적인 사례**라 KPT의 Problem/Try에 이 패턴("토큰 값은
+있으나 화면에 미도달"이 3번 반복됨)을 반드시 다뤄야 한다.
 
 ## 알아둬야 할 것
 

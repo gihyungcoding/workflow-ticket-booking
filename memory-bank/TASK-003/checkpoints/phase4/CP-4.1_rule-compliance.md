@@ -5,7 +5,7 @@ task_id: TASK-003
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-10T00:50:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "전체 스위트 재확인, 아키텍처 제약(no_target 포함) 검증, 화면 실브라우저 확인(SC-06 포함), 산문 규칙 대조 완료"
 
