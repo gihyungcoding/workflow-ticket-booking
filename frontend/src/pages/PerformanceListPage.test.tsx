@@ -1,16 +1,20 @@
 import { render, screen, within } from '@testing-library/react'
+import { ThemeProvider } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
 import { getPerformances } from '../api/performances'
 import type { PerformanceListResponse } from '../api/performances'
 import { PerformanceListPage } from './PerformanceListPage'
+import { theme } from '../theme'
 
 vi.mock('../api/performances')
 
 function renderPage() {
   return render(
-    <MemoryRouter>
-      <PerformanceListPage />
-    </MemoryRouter>,
+    <ThemeProvider theme={theme}>
+      <MemoryRouter>
+        <PerformanceListPage />
+      </MemoryRouter>
+    </ThemeProvider>,
   )
 }
 

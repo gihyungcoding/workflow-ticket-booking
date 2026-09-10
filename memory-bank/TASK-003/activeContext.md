@@ -1,8 +1,8 @@
 ---
 task_id: TASK-003
 title: "디자인 토큰·서체 적용"
-phase: "2b"
-phase_name: "Phase 2b - Red (완료)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: ACTIVE
 created_at: 2026-09-09
 last_updated: 2026-09-10
@@ -12,13 +12,14 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-2.6
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
   scenario_json: "workflow_design/05_scenario/SCENARIO_TASK-003.json"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
   test: "workflow_design/05_scenario/TEST_TASK-003.json"
+  dev: "workflow_design/06_dev/DEV_TASK-003.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -78,13 +79,27 @@ SC-01~05를 새 테스트 5건으로 옮겨 전부 Red 확인. tokens.ts는 데�
 tsconfig.app.json에 `index.html.test.ts`를 include 추가, `types`에
 `"node"` 추가(node:fs 등 사용). tsc 오류 0건. HITL#2 승인 완료.
 
+## Phase 3 요약
+
+`theme/index.ts`(createAppTheme), `StatusBadge.tsx`(문구 3개),
+`index.html`(lang/title/Google Fonts), `PerformanceListPage.tsx`/
+`PerformanceDetailPage.tsx`(공연명 sx), `main.tsx`(theme 배선)를 채워
+대상 테스트 11/11을 Green으로 만들었다. 첫 실행에서 3건 실패를 발견해
+수정: (1) `index.html.test.ts`의 link 검색 predicate가 preconnect
+link까지 잘못 매칭 → `rel="stylesheet"` 조건 추가 (2)(3)
+PerformanceListPage/DetailPage.test.tsx의 `renderPage`가 `ThemeProvider`
+로 감싸지 않아 본문 서체 검증이 MUI 기본 테마를 보고 있었음 →
+`ThemeProvider(theme)` 추가. `check_architecture.py --id DESIGN-001`
+위반 0건 확인(AC1). 백엔드 회귀 없음. 리팩토링은 검토 후 하지 않기로
+결정(CP-3.3).
+
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 Phase 3(Green)을 시작한다 — SC-01~05를 통과시키는
-최소 구현을 `theme/index.ts`·`StatusBadge.tsx`·`index.html`·
-`PerformanceListPage.tsx`·`PerformanceDetailPage.tsx`에 채운다. Green
-이후 SC-06(서체 폴백)은 Phase 4에서 실브라우저로 별도 확인해야 함을
-잊지 않는다.
+`wf-verify` 스킬로 Phase 4(검증)를 시작한다 — acceptance_criteria 7건
+충족을 확인한다. **SC-06(서체 로드 실패 시 폴백)은 자동 테스트가 없으므로
+반드시 실브라우저로 웹폰트 요청을 차단해 확인**해야 한다(TASK-002
+Phase 4의 모의 서버 방식 참고 가능). AC2의 "두 서체가 실제로 로드된다"
+(로드 성공 여부)도 실브라우저 확인 대상이다.
 
 ## 알아둬야 할 것
 

@@ -13,7 +13,9 @@ describe('index.html', () => {
     // When
     // 그 문서의 <html> 태그·<title>·<link> 목록을 확인한다
     const linkTags = html.match(/<link\b[^>]*>/g) ?? []
-    const fontLink = linkTags.find((tag) => tag.includes('fonts.googleapis.com'))
+    const fontLink = linkTags.find(
+      (tag) => tag.includes('fonts.googleapis.com') && tag.includes('rel="stylesheet"'),
+    )
 
     // Then
     // lang 속성이 'ko' 다

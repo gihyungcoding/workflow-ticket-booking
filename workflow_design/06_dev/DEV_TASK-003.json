@@ -1,0 +1,42 @@
+{
+  "task_id": "TASK-003",
+  "changed_files": [
+    { "path": "frontend/src/theme/index.ts", "change": "createAppTheme()이 palette(배경/텍스트/success)·typography(본문 서체)·shape(모서리 2px)·shadows(전부 none)를 tokens.ts 값으로 조립. theme 상수도 export", "lines_changed": 37 },
+    { "path": "frontend/src/components/StatusBadge.tsx", "change": "STATUS_LABEL의 UPCOMING/CLOSED/CANCELLED 문구를 예매예정/예매마감/공연취소로 변경. STATUS_COLOR는 불변", "lines_changed": 6 },
+    { "path": "frontend/index.html", "change": "lang=ko, title=공연 예매, Google Fonts(Noto Serif KR/IBM Plex Sans KR) preconnect+stylesheet link(display=swap) 추가", "lines_changed": 10 },
+    { "path": "frontend/src/pages/PerformanceListPage.tsx", "change": "공연명 Typography에 tokens.fontDisplay sx 적용", "lines_changed": 5 },
+    { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "change": "공연명 Typography에 tokens.fontDisplay sx 적용", "lines_changed": 5 },
+    { "path": "frontend/src/main.tsx", "change": "빈 createTheme() 제거, theme/index.ts의 theme을 import해 사용", "lines_changed": 5 },
+    { "path": "frontend/src/pages/PerformanceListPage.test.tsx", "change": "renderPage() 헬퍼가 ThemeProvider(theme)로 감싸도록 수정 — SC-02(Red에서 이미 추가)가 실제 테마 하에서 본문 서체를 검증하려면 필요", "lines_changed": 10 },
+    { "path": "frontend/src/pages/PerformanceDetailPage.test.tsx", "change": "위와 동일 사유로 renderPage(id) 수정", "lines_changed": 14 },
+    { "path": "frontend/index.html.test.ts", "change": "Green 진행 중 발견한 테스트 자체 버그 수정 — Google Fonts <link> 검색 predicate가 preconnect link까지 잘못 매칭하던 것을 rel=\"stylesheet\" 조건 추가로 정확히 함(단언 완화 아님, 선택자 정확도 개선)", "lines_changed": 4 }
+  ],
+  "reused": [
+    { "path": "frontend/src/theme/tokens.ts", "symbol": "colorCanvas, colorInk, colorInkMuted, colorOpen, colorSurface, fontText, fontDisplay, radiusSurface", "note": "Phase 2b(Red)에서 이미 완전히 작성된 데이터 상수 — Green에서 로직 없이 그대로 소비" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "npm --prefix frontend test",
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "target_tests_passed": 5,
+    "existing_tests_still_passing": true,
+    "backend_regression_check": "cd backend && ./gradlew test → BUILD SUCCESSFUL, 프론트 변경이 백엔드에 영향 없음"
+  },
+  "build": {
+    "command": "npm --prefix frontend run build",
+    "status": "success"
+  },
+  "architecture_check": {
+    "command": "python3 scripts/check_architecture.py",
+    "DESIGN-001": "0건 위반 — AC1 충족 확인(check_architecture.py --id DESIGN-001 단독 실행으로도 재확인)",
+    "DESIGN-002": "0건 위반 — 색상 리터럴이 theme/ 밖으로 유입되지 않음",
+    "DESIGN-003": "경고 2건(스켈레톤 매직 넘버) — 이 태스크 범위 밖(tasks.json 설명), 변경 없음(기존과 동일)",
+    "ARCH-001~003": "전부 통과, 백엔드 무변경"
+  },
+  "lint": { "command": "npm run lint (oxlint)", "errors": 0, "warnings": 2, "warning_detail": "react(set-state-in-effect) × 2 — TASK-002에서 이미 있던 경고, 이번 태스크로 인한 신규 경고 아님" },
+  "refactoring": [],
+  "refactoring_note": "변경 규모가 작고(테마 조립, 문구 3개, HTML 메타, sx 한 줄씩) 중복·네이밍·크기·위치 어느 기준으로도 리팩토링 대상이 드러나지 않아 별도 리팩토링 없음",
+  "scope_deviations": []
+}

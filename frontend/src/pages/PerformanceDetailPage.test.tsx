@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react'
+import { ThemeProvider } from '@mui/material/styles'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { getPerformance, PerformanceNotFoundError } from '../api/performances'
 import type { Performance } from '../api/performances'
 import { PerformanceDetailPage } from './PerformanceDetailPage'
+import { theme } from '../theme'
 
 vi.mock('../api/performances', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api/performances')>()
@@ -11,11 +13,13 @@ vi.mock('../api/performances', async (importOriginal) => {
 
 function renderPage(id: string) {
   return render(
-    <MemoryRouter initialEntries={[`/performances/${id}`]}>
-      <Routes>
-        <Route path="/performances/:id" element={<PerformanceDetailPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <ThemeProvider theme={theme}>
+      <MemoryRouter initialEntries={[`/performances/${id}`]}>
+        <Routes>
+          <Route path="/performances/:id" element={<PerformanceDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
   )
 }
 
