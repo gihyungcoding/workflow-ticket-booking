@@ -23,6 +23,12 @@ artifacts:
   verify: "workflow_design/07_verify/VERIFY_TASK-003.json (attempt 2, PASS, APPROVE)"
   reflect: "workflow_design/08_reflect/REFLECT_TASK-003.json"
   report: "https://claude.ai/code/artifact/ffb4a0e8-5ea3-4c90-873c-cdd5833a2b83"
+
+pull_request:
+  number: 4
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/4"
+  base: develop
+  opened_at: 2026-09-10
 ---
 
 ## 지금 무엇을 하고 있나
@@ -50,12 +56,12 @@ code-reviewer 리뷰를 3번 거치며 매번 "토큰 값은 theme에 있으나 
 [회고 리포트](https://claude.ai/code/artifact/ffb4a0e8-5ea3-4c90-873c-cdd5833a2b83)
 에 있다.
 
-태스크는 DONE으로 닫혔지만 아직 머지되지 않았다 — `/wf-ship`이 남아 있다.
+태스크는 DONE으로 닫혔고 `/wf-ship`으로 PR #4가 생성됐다 — 머지는 사람이 한다.
 
 ## 다음 한 걸음
 
-`/wf-ship`으로 머지 준비(PR 생성)를 한다. `verified_commit =
-08f0a35feceafd2a0629ae9979fbd51c023849d7`.
+리뷰 후 PR #4(https://github.com/gihyungcoding/workflow-ticket-booking/pull/4)를
+사람이 직접 머지한다. `verified_commit = 08f0a35feceafd2a0629ae9979fbd51c023849d7`.
 
 ## 알아둬야 할 것
 
