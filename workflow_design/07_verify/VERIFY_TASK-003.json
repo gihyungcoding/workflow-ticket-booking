@@ -1,0 +1,153 @@
+{
+  "task_id": "TASK-003",
+  "status": "FAIL",
+  "status_reason": "code-reviewer가 실제 결함 2건을 correctness/design으로 지목했다 — (1) Google Fonts에서 Noto Serif KR을 wght@600;700만 요청해 실제 사용 굵기(400/500)가 CSS 폰트 매칭 규칙상 600으로 강제 치환됨(설계에 없는 굵기가 임의로 나타남, 폰트 로드 성공/실패 시 굵기 위계가 달라짐) (2) StatusBadge가 MUI Chip 기본 pill(16px)을 그대로 써서 --radius-badge(2px) 토큰이 화면에 전혀 도달하지 않음 — tokens.ts의 radiusBadge가 어디서도 import되지 않음. 추가로 그림자를 전부 제거하면서 design.md가 짝으로 요구한 구분선(--color-rule)을 적용하지 않아 목록 카드 경계가 사실상 사라짐(실브라우저 확인에서도 카드 구분이 흐릿함을 직접 확인). Phase 3으로 되돌려 수정한다.",
+
+  "evidence": {
+    "tests": { "command": "npm --prefix frontend test", "exit_code": 0,
+               "summary": "Test Files 5 passed (5), Tests 11 passed (11)" },
+    "lint": { "command": "npm --prefix frontend run lint", "exit_code": 0,
+              "summary": "error 0, warning 2 (TASK-002부터 있던 기존 경고, 신규 아님)" },
+    "build": { "command": "npm --prefix frontend run build", "exit_code": 0,
+               "summary": "tsc -b && vite build 성공, 432 modules transformed" },
+    "backend_regression": { "command": "cd backend && ./gradlew test", "exit_code": 0,
+                             "summary": "BUILD SUCCESSFUL — 프론트 변경이 백엔드에 영향 없음" },
+    "diff": { "command": "git diff --stat develop...HEAD",
+              "summary": "34 files changed, 1530 insertions(+), 20 deletions(-)" }
+  },
+
+  "acceptance_criteria": [
+    { "criterion": "테마가 design-tokens.css 의 값으로 초기화된다 — python3 scripts/check_architecture.py --id DESIGN-001 이 위반 0건",
+      "verdict": "WARN",
+      "evidence": "DESIGN-001 위반 0건 확인(스크립트), theme.palette/shape/shadows 값 14/14 토큰과 정확히 일치(code-reviewer 대조). 다만 '토큰이 테마 객체에 있다'와 '화면에 실제로 적용된다' 사이에 간극이 있음 — StatusBadge의 radius가 토큰에 도달하지 않아 WARN으로 낮춤" },
+    { "criterion": "공연명이 Noto Serif KR, 나머지 텍스트가 IBM Plex Sans KR 로 렌더링되고 두 서체가 실제로 로드된다",
+      "verdict": "FAIL",
+      "evidence": "실브라우저 확인: document.fonts.check()로 두 서체 로드 성공 확인, 실제 렌더링도 확인(zoom 스크린샷). 그러나 code-reviewer가 발견: Noto Serif KR을 wght@600;700만 요청해 h5(400)/h6(500) 텍스트가 CSS 폰트 매칭 규칙상 600으로 강제 치환됨 — 설계 문서에 없는 굵기가 임의로 나타나고, 폰트 로드 성공/실패 시 굵기 위계가 달라지는 실제 결함" },
+    { "criterion": "상태 문구가 예매가능·예매예정·매진·예매마감·공연취소로 표시된다 (design.md §5 의미 매핑)",
+      "verdict": "PASS",
+      "evidence": "SC-04 테스트 통과. 실브라우저 확인: '예매가능'/'매진' 배지 텍스트 확인(나머지 3개는 시드 데이터에 없어 화면에서 직접 보지 못했으나 테스트로 확인됨)" },
+    { "criterion": "index.html 이 lang=\"ko\" 이고 title 이 템플릿 기본값(frontend)이 아니다",
+      "verdict": "PASS",
+      "evidence": "SC-05 테스트 통과. 실브라우저 확인: document.documentElement.lang === 'ko', document.title === '공연 예매', 탭 제목에도 반영됨" },
+    { "criterion": "오류: 서체 로드가 실패해도 한글이 시스템 폰트로 읽힌다 (font-family 폴백 체인)",
+      "verdict": "PASS",
+      "evidence": "실브라우저에서 웹폰트를 시스템 serif로 강제 치환하는 시뮬레이션 실행 — 한글이 tofu/깨짐 없이 정상 표시됨을 스크린샷으로 확인(SC-06, 자동 테스트 없음 — 계획대로 실브라우저 확인으로 처리)" },
+    { "criterion": "오류: 목록 API 호출이 실패하면 기존과 동일하게 오류 안내와 다시 시도 버튼이 표시된다",
+      "verdict": "PASS",
+      "evidence": "기존 SC-03 테스트(TASK-002) 무변경 통과 — 로직 변경 없음 확인(code-reviewer도 palette.error 미변경 확인)" },
+    { "criterion": "기존 프론트 테스트 6건이 모두 통과한다 — npm test",
+      "verdict": "PASS",
+      "evidence": "11개 중 기존 6건 전부 통과, 테스트 본문 무수정(하네스에 ThemeProvider만 추가)" }
+  ],
+
+  "screens": [
+    { "name": "공연 목록", "state": "기본", "verdict": "WARN", "evidence": "제목(Noto Serif KR)·본문(IBM Plex Sans KR) 서로 다른 서체 확인, 예매가능/매진 배지 색상 토큰 반영 확인(#0E6E52). 다만 카드 간 경계가 흐릿함(그림자 없음+구분선 없음, colorRule 미사용) — code-reviewer 지적과 일치" },
+    { "name": "공연 상세", "state": "기본", "verdict": "PASS", "evidence": "제목 서체·본문 서체·배지 색상 확인. 단일 화면이라 카드 경계 문제 없음" },
+    { "name": "서체 로드 실패", "state": "폴백", "verdict": "PASS", "evidence": "웹폰트 강제 비활성화 시뮬레이션 — 한글 정상 표시(tofu 없음)" },
+    { "name": "품질 하한선(design.md §7)", "state": "-", "verdict": "WARN", "evidence": "lang=ko ✓, title 실제값 ✓, 서체 실제 로드(document.fonts.check) ✓, 키보드 포커스 시각 확인(카드 포커스 시 배경색 변화) ✓, prefers-reduced-motion 해당 없음(모션 없음). 카드 경계선(위계) 미흡 — 위 findings 참고" }
+  ],
+  "screens_note": "로컬에 PostgreSQL/Docker가 없어 TASK-002와 동일하게 API 명세와 동일한 스키마의 임시 모의 서버(scratchpad, 8080)로 검증했다. 이번엔 8080 포트가 비어 있어 별도 포트 변경 없이 바로 사용, 확인 후 프로세스 종료 완료(vite.config.ts 등 변경 없음)",
+
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "status": "pass",
+    "error_count": 0,
+    "warn_count": 2,
+    "no_target": [],
+    "files_scanned": 43,
+    "violations": [
+      { "id": "DESIGN-003", "severity": "warn", "file": "frontend/src/pages/PerformanceDetailPage.tsx", "line": 37, "detail": "height={240}" },
+      { "id": "DESIGN-003", "severity": "warn", "file": "frontend/src/pages/PerformanceListPage.tsx", "line": 46, "detail": "height={96}" }
+    ],
+    "violations_note": "DESIGN-003(스켈레톤 매직 넘버)은 이번 태스크 범위 밖(tasks.json 명시) — 기존 값 그대로, 신규 위반 아님",
+    "prose_coverage": [
+      { "rule": "API: 비즈니스 로직을 다루지 않는다", "constraint": null, "state": "검사 불가 (판단 필요)" },
+      { "rule": "API: DB 접근하지 않는다", "constraint": "ARCH-001", "state": "✓" },
+      { "rule": "Service: HTTP 관심사를 다루지 않는다", "constraint": "ARCH-002", "state": "✓" },
+      { "rule": "Service: SQL/영속성 프레임워크 타입을 직접 다루지 않는다", "constraint": "ARCH-003", "state": "✓" },
+      { "rule": "domain: 영속성 접근하지 않는다", "constraint": null, "state": "⚠ 미인코딩" },
+      { "rule": "domain: HTTP 관심사를 다루지 않는다", "constraint": null, "state": "⚠ 미인코딩" },
+      { "rule": "domain: 트랜잭션 제어하지 않는다", "constraint": null, "state": "검사 불가 (판단 필요)" },
+      { "rule": "Repository: 도메인 규칙 판단하지 않는다", "constraint": null, "state": "검사 불가 (판단 필요)" },
+      { "rule": "Frontend: 도메인 규칙(선점 유효성 등)을 판단하지 않는다", "constraint": null, "state": "검사 불가 (판단 필요)" }
+    ],
+    "prose_coverage_note": "이번 diff는 frontend/ 파일만 변경했다 — API/Service/domain/Repository(백엔드) 프로즈 규칙은 diff 대상 파일이 0개라 위반 가능성 자체가 없다. Frontend의 '도메인 규칙 판단하지 않음'도 이번 변경(테마·문구·HTML 메타)이 어기지 않음을 직접 확인했다. ⚠ 미인코딩 2건은 TASK-003과 무관한 기존 갭 — Phase 5 rule_proposals로 넘긴다(이 Phase에서 제약을 추가하지 않는다)"
+  },
+
+  "regression": {
+    "full_suite": "frontend 11/11 passed(기존 6 무변경), backend BUILD SUCCESSFUL(변경 없음)",
+    "callers_checked": true
+  },
+
+  "scope_deviations": [
+    {
+      "what": "tsconfig.app.json에 types: [\"node\"] 추가 및 include에 index.html.test.ts 추가",
+      "plan_reference": "PLAN_TASK-003.json target_files 7건에 tsconfig.app.json 없음",
+      "assessment": "Phase 2b(Red)에서 index.html.test.ts의 node:fs 임포트 타입 오류를 해결하려고 추가했으나, code-reviewer가 부작용을 지적함 — 이 tsconfig가 브라우저 번들 코드(src/main.tsx 등) 전체의 컴파일 대상이라 Node 전역 타입이 앱 코드에도 노출된다(예: process.env 사용이 tsc에서 안 걸러짐, 브라우저에서는 런타임 오류). 기존에 이 프로젝트는 이 가드를 갖고 있었음",
+      "recommendation": "Phase 3 롤백 시 함께 수정 — tsconfig.app.json을 원상복구(node 타입/include 제거)하고, index.html.test.ts는 vitest 실행에만 의존(esbuild transform, tsc 검사 없이도 정상 동작 확인됨)"
+    }
+  ],
+
+  "code_review": {
+    "agent": "code-reviewer",
+    "findings": [
+      {
+        "category": "correctness",
+        "file": "frontend/index.html",
+        "line": 11,
+        "summary": "Noto Serif KR을 wght@600;700만 요청해 실제 사용 굵기(h5=400, h6=500)가 CSS 폰트 매칭 규칙상 600으로 강제 치환됨",
+        "judgment": "실제 결함으로 인정. 설계 문서에 없는 굵기가 화면에 나타나고, 폰트 로드 성공/실패에 따라 굵기 위계가 달라짐 — Phase 3 롤백해 URL에 400;500 추가(또는 Typography에 fontWeight 명시)로 수정"
+      },
+      {
+        "category": "design",
+        "file": "frontend/src/components/StatusBadge.tsx",
+        "line": 22,
+        "summary": "MUI Chip이 border-radius 32/2=16px를 하드코딩해 --radius-badge(2px) 토큰이 화면에 전혀 도달하지 않음. tokens.ts의 radiusBadge가 저장소 어디에서도 import되지 않음(전량 grep 확인)",
+        "judgment": "code-reviewer가 '이번 태스크의 결함으로 봐야 한다'고 명시적으로 판단 — PLAN/SCENARIO의 unresolved·생략 이유 목록에 STATUS_COLOR와 ink-faint만 있고 radius는 없어 인지되지 못하고 빠진 구멍. Phase 3 롤백해 MuiChip.styleOverrides.root.borderRadius=radiusBadge 추가"
+      },
+      {
+        "category": "design",
+        "file": "frontend/tsconfig.app.json",
+        "line": 7,
+        "summary": "target_files 밖 변경이고, 브라우저 번들 코드 전체에 Node 전역 타입이 노출되는 부작용",
+        "judgment": "scope_deviations에 기록. Phase 3 롤백해 원상복구"
+      },
+      {
+        "category": "design",
+        "file": "frontend/src/theme/index.ts",
+        "line": "13,36",
+        "summary": "shadows를 전부 none으로 없앴는데 design.md가 짝으로 요구한 구분선(--color-rule)을 적용하지 않아 목록 카드 경계가 사실상 사라짐(흰 카드/배경 명도 대비 약 1.04:1). tokens.ts의 colorRule이 어디에도 쓰이지 않음",
+        "judgment": "실브라우저 확인에서도 카드 구분이 흐릿함을 직접 확인해 실제 결함으로 인정. Phase 3 롤백해 Card에 outlined variant + colorRule 테두리 적용 또는 동등한 해결"
+      },
+      {
+        "category": "test",
+        "file": "frontend/src/theme/index.test.ts",
+        "line": "14-19",
+        "summary": "theme.palette.text.secondary(colorInkMuted)가 SC-01/SC-02/SC-03 어디서도 단언되지 않아 값이 잘못돼도 11건 전부 통과함",
+        "judgment": "테스트 커버리지 갭. Phase 3 롤백 시 SC-01 테스트에 단언 1줄 추가"
+      }
+    ],
+    "no_defect_confirmed": [
+      "토큰 값 14/14 정확히 일치(색상 8·서체 2·line-height 2·radius 2) — design-tokens.css와 tokens.ts 바이트 단위 대조",
+      "palette.success 오버라이드가 다른 5색(primary/secondary/error/warning/info)에 번지지 않음 — MUI createPalette가 각 색을 독립적으로 augmentColor함",
+      "contrastText 자동 계산 정상(#0E6E52 vs #fff = 6.23:1, WCAG AA 이상)",
+      "shadows 배열 길이 25 정확, as unknown as 캐스트는 타입 우회 용도일 뿐 런타임 값 정확",
+      "Google Fonts 로드 방식(preconnect 2종, display=swap) 올바름 — 굵기 인스턴스 문제와는 별개",
+      "범위 확장 없음 — STATUS_COLOR 불변, 스켈레톤 치수 불변, sx 추가는 PLAN이 승인한 범위",
+      "기존 테스트 6건 회귀 없음 — 본문 무수정, ThemeProvider 하네스 추가만"
+    ]
+  },
+
+  "security": {
+    "input_validation": "해당 없음 — 이 태스크는 사용자 입력을 다루지 않음(테마/문구/메타 변경)",
+    "authorization": "해당 없음",
+    "secrets": "하드코딩된 토큰/키/비밀번호 없음 (grep 확인)",
+    "logging": "console 로깅 없음 (grep 확인)"
+  },
+
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}

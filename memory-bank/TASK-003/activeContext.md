@@ -1,8 +1,8 @@
 ---
 task_id: TASK-003
 title: "디자인 토큰·서체 적용"
-phase: "3"
-phase_name: "Phase 3 - Green (완료)"
+phase: "4"
+phase_name: "Phase 4 - Verify (FAIL → Phase 3 롤백 예정)"
 status: ACTIVE
 created_at: 2026-09-09
 last_updated: 2026-09-10
@@ -12,7 +12,7 @@ sub_categories: ["audience"]
 target_repo: "."
 branch: "feature/task-003-design-tokens-typography"
 
-last_checkpoint: CP-3.4
+last_checkpoint: CP-4.2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-003.json"
   scenario_md: "workflow_design/05_scenario/SCENARIO_TASK-003.md"
@@ -20,6 +20,7 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-003.json"
   test: "workflow_design/05_scenario/TEST_TASK-003.json"
   dev: "workflow_design/06_dev/DEV_TASK-003.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-003.json (FAIL)"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -93,13 +94,34 @@ PerformanceListPage/DetailPage.test.tsx의 `renderPage`가 `ThemeProvider`
 위반 0건 확인(AC1). 백엔드 회귀 없음. 리팩토링은 검토 후 하지 않기로
 결정(CP-3.3).
 
+## Phase 4 요약 — status: FAIL
+
+실브라우저 확인(모의 서버, 8080 — 이번엔 비어 있어 포트 변경 불필요)으로
+lang/title/서체 로드(document.fonts.check)/색상 토큰/그림자 없음/카드
+radius를 실측 확인, SC-06(서체 폴백)도 웹폰트 강제 비활성화로 확인 완료.
+그런데 **code-reviewer가 실제 결함을 발견해 status: FAIL**:
+
+1. **[correctness]** `index.html`의 Google Fonts URL이 Noto Serif KR을
+   `wght@600;700`만 요청하는데, 실제 쓰이는 굵기는 h5=400/h6=500 —
+   CSS 폰트 매칭 규칙상 600으로 강제 치환됨. 폰트 로드 성공/실패에 따라
+   굵기 위계가 달라지는 실제 버그
+2. **[design]** `StatusBadge`가 MUI Chip 기본 pill(16px)을 그대로 써서
+   `--radius-badge`(2px) 토큰이 화면에 전혀 도달하지 않음.
+   `tokens.ts`의 `radiusBadge`가 어디서도 import 안 됨 — PLAN의
+   unresolved/생략 이유 목록에 없던, 인지하지 못하고 놓친 항목
+3. **[design]** 그림자를 전부 제거했는데 design.md가 짝으로 요구한
+   구분선(`--color-rule`)을 적용하지 않아 목록 카드 경계가 사실상 사라짐
+   (실브라우저에서도 직접 확인됨)
+4. **[design]** `tsconfig.app.json`에 `types: ["node"]`를 추가한 것이
+   target_files 밖 변경이고, 브라우저 번들 코드 전체에 Node 전역 타입을
+   노출하는 부작용(scope_deviations 참고)
+5. **[test]** `theme.palette.text.secondary` 미검증(사소한 갭)
+
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4(검증)를 시작한다 — acceptance_criteria 7건
-충족을 확인한다. **SC-06(서체 로드 실패 시 폴백)은 자동 테스트가 없으므로
-반드시 실브라우저로 웹폰트 요청을 차단해 확인**해야 한다(TASK-002
-Phase 4의 모의 서버 방식 참고 가능). AC2의 "두 서체가 실제로 로드된다"
-(로드 성공 여부)도 실브라우저 확인 대상이다.
+**Phase 3으로 롤백**한다 — wf-verify skill 규칙상 FAIL은 승인 선택지를
+제시하지 않고 롤백만 한다. 위 5건을 고친 뒤 Phase 3 체크포인트를
+`_retry1`로 다시 저장하고 Phase 4를 재수행한다.
 
 ## 알아둬야 할 것
 
