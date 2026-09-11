@@ -195,7 +195,7 @@
     "reason_primary": "seat 테이블 신설, 좌석 생성 로직, 시각·좌석수 검증이 모두 서버 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "todo",
+    "status": "in_progress",
     "meta": {
       "estimate": {
         "unit": "hour",
