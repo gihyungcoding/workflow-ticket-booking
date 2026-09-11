@@ -10,18 +10,14 @@
 
 - **무엇**: 공연/행사 티켓 예매 서비스
 - **스택**: Java / Spring Boot (`backend/`, Gradle) · React + Vite (`frontend/`) · PostgreSQL
-- **테스트**: backend `./gradlew test` · frontend 미생성
-- **린트**: backend `./gradlew spotlessCheck` (google-java-format, `spotlessApply` 로 자동 수정) · frontend 미생성
-- **빌드**: backend `./gradlew build` · frontend 미생성
-
-<!-- frontend/ 는 아직 스캐폴딩되지 않았다. TASK-002(프론트) 착수 전에 만들고
-     위 세 줄의 frontend 명령을 실제 값으로 채운다:
-       npm create vite@latest frontend -- --template react-ts
-       cd frontend && npm i @mui/material @emotion/react @emotion/styled -->
+- **테스트**: backend `./gradlew test` · frontend `npm test` (vitest)
+- **린트**: backend `./gradlew spotlessCheck` (`spotlessApply` 로 자동 수정) · frontend `npm run lint` (oxlint)
+- **빌드**: backend `./gradlew build` · frontend `npm run build`
 
 Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객), `organizer`(주최자), `admin`(운영자)
 
 - **UI 라이브러리**: MUI (Material UI) — 근거 ADR-0002
+- **디자인 정본**: `docs/product/design.md` · `design-tokens.css`
 - **시안**: 없음 — 화면 명세는 feature 문서 §5
 
 ---
@@ -35,7 +31,9 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객
 | `docs/product/product.md` | 무엇을 왜 만드는가 | 태스크 생성 |
 | `docs/product/features/*.md` | 이번에 무엇을 만드는가. **§1-2 태스크 분리 표** | 태스크 추출 |
 | `docs/architecture/architecture.md` | 시스템이 어떻게 구성되는가 | **Phase 1** |
-| `docs/architecture/constraints.yaml` | 무엇을 어기면 안 되는가 | **Phase 4** (`check_architecture.py`) |
+| `docs/architecture/constraints.yaml` | 무엇을 어기면 안 되는가 (아키텍처 + 디자인) | **Phase 4** (`check_architecture.py`) |
+| `docs/product/design.md` | 화면이 어떻게 보이는가·왜 그런가 | **Phase 1** (Frontend), **Phase 4** |
+| `docs/product/design-tokens.css` | 색·타이포·간격의 정본 | 화면 코드 전부 |
 | `docs/decisions/ADR-*.md` | 왜 이 기술·패턴을 골랐는가 | **Phase 1** |
 
 전체 흐름은 `docs/README.md` 를 본다. 부트스트랩은 `/wf-init`.
@@ -125,6 +123,7 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객
 | `docs/workflow/data-antipatterns.md` | JSON 산출물을 다루다 막혔을 때 |
 | `docs/README.md` | 기능을 어디서 시작할지 모를 때 |
 | `docs/architecture/architecture.md` | **Phase 1에서 설계할 때** |
+| `docs/product/design.md` | **Frontend 태스크의 Phase 1·4** |
 | `docs/decisions/README.md` | 이미 내려진 결정을 확인할 때 |
 
 ---

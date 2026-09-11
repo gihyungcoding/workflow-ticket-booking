@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 import { getPerformances } from '../api/performances'
 import type { Performance } from '../api/performances'
 import { StatusBadge } from '../components/StatusBadge'
+import { fontDisplay } from '../theme/tokens'
 
 type ListState =
   | { status: 'loading' }
@@ -76,8 +77,10 @@ export function PerformanceListPage() {
             <CardContent>
               <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
-                  <Typography variant="h6">{performance.title}</Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="h6" sx={{ fontFamily: fontDisplay }}>
+                    {performance.title}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
                     {performance.venue} · {new Date(performance.startAt).toLocaleString()}
                   </Typography>
                 </Box>
