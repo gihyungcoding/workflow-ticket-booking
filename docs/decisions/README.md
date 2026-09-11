@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-09-08 · 총 8건
+마지막 재생성: 2026-09-11 · 총 9건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -16,3 +16,4 @@
 | [ADR-0006](ADR-0006-test-db-h2-then-testcontainers.md) | 테스트 DB는 당분간 H2 인메모리를 쓰고, 좌석 선점 착수 전 Testcontainers로 전환한다 | 채택됨 | 2026-09-03 |
 | [ADR-0007](ADR-0007-frontend-test-framework-vitest.md) | 프론트엔드 테스트 프레임워크로 Vitest + Testing Library를 쓴다 | 채택됨 | 2026-09-08 |
 | [ADR-0008](ADR-0008-client-routing-react-router-dom.md) | 클라이언트 라우팅으로 react-router-dom을 쓴다 | 채택됨 | 2026-09-08 |
+| [ADR-0009](ADR-0009-seat-individual-rows.md) | 좌석은 구역(등급)×행×열 입력으로 서버가 개별 `seat` 행을 생성한다 | 채택됨 | 2026-09-11 |

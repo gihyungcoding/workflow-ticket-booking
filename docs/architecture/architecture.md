@@ -82,6 +82,9 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0007](../decisions/ADR-0007-frontend-test-framework-vitest.md)
 - 클라이언트 라우팅(react-router-dom) →
   [ADR-0008](../decisions/ADR-0008-client-routing-react-router-dom.md)
+- 좌석은 구역(등급)×행×열 입력으로 서버가 개별 `seat` 행을 생성한다 (좌표 기반
+  인터랙티브 배치는 하지 않음) →
+  [ADR-0009](../decisions/ADR-0009-seat-individual-rows.md)
 
 ## 7. 알려진 부채
 
