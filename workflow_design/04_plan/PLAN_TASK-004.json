@@ -58,7 +58,7 @@
       {
         "name": "PerformanceResponse (200, 취소)",
         "type": "PerformanceResponse",
-        "description": "cancelled=true 로 갱신된 결과, 이미 취소된 경우도 동일하게 200(멱등)"
+        "description": "도메인의 cancelled=true 로 갱신되고, 응답의 status 필드는 PerformanceStatusRules에 의해 CANCELLED 로 계산되어 노출된다 (PerformanceResponse에 별도 cancelled 필드는 없다). 이미 취소된 경우도 동일하게 200(멱등)"
       },
       {
         "name": "400 INVALID_TIME_ORDER",
@@ -328,5 +328,12 @@
     "mock_strategy": "PerformanceServiceTest는 PerformanceRepository/SeatRepository를 스텁하고 Clock.fixed(...)로 openAt 경계(F5/F6)를 고정해 좌석 생성 계산·검증 순서(F1~F4, F9)를 단위 테스트한다. PerformanceApiTest(기존 파일에 이어서 작성)는 MockMvc + ClockTestConfig/MutableClock 패턴을 그대로 써서 POST/PUT/cancel 엔드포인트의 요청 파싱·상태코드·에러코드 매핑을 검증한다(F1~F8, F9). seat 테이블 저장 자체는 @DataJpaTest 또는 PerformanceApiTest 안에서 SeatRepository로 실제 생성된 행 수를 조회해 확인한다(F1 AC1)."
   },
 
-  "amendments": []
+  "amendments": [
+    {
+      "when": "Phase 2a (독립검증 1차 라운드)",
+      "what": "취소 응답(design.outputs)의 서술을 'cancelled=true 로 갱신된 결과'에서 '응답의 status 필드가 PerformanceStatusRules에 의해 CANCELLED 로 계산되어 노출된다'로 정정",
+      "why": "scenario-validator가 PerformanceResponse 레코드에 cancelled 필드가 없고 status만 있음을 지적 (V5/V8). SC-11/SC-12의 Then도 '응답의 cancelled는 true'에서 '응답의 status는 CANCELLED'로 함께 수정",
+      "reference": "workflow_design/05_scenario/validator/VALIDATION_TASK-004.json (round 1)"
+    }
+  ]
 }

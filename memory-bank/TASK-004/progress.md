@@ -3,8 +3,8 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | route: Backend, flows 9건, AC 9건 전부 커버 |
-| 2a Scenario | 🔄 진행 중 | — | |
-| 2b Red | ⬜ 대기 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 15건, AC 9/9, 독립검증 3회 PASS, HITL#1 승인 |
+| 2b Red | 🔄 진행 중 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
