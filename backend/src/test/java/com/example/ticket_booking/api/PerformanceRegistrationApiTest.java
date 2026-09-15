@@ -29,8 +29,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * TASK-004 시나리오 SC-01~SC-13, SC-15~SC-24 (SC-14는 Phase 2b에서 철회 — SCENARIO_TASK-004.md 참고).
- * SC-16~SC-21은 Phase 4 1차 FAIL(VERIFY_TASK-004.json) 이후 attempt 2에서, SC-22~SC-24는 Phase 4
- * 2차 FAIL 이후 attempt 3에서 추가됐다.
+ * SC-16~SC-21은 Phase 4 1차 FAIL(VERIFY_TASK-004.json) 이후 attempt 2에서, SC-22~SC-24는 Phase 4 2차 FAIL
+ * 이후 attempt 3에서 추가됐다.
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-004.md
  */

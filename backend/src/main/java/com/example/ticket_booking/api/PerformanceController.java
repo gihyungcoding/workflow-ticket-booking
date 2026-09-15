@@ -79,6 +79,9 @@ public class PerformanceController {
   }
 
   private SectionSpec toSectionSpec(SectionRequest request) {
+    if (request == null) {
+      return null;
+    }
     return new SectionSpec(
         request.grade(),
         request.price(),

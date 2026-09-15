@@ -21,6 +21,8 @@ public class PerformanceService {
 
   private static final int MAX_SEATS = 5000;
   private static final int MAX_GRADE_LENGTH = 20;
+  private static final int MAX_TITLE_LENGTH = 200;
+  private static final int MAX_VENUE_LENGTH = 200;
 
   private final PerformanceRepository performanceRepository;
   private final SeatRepository seatRepository;
@@ -128,9 +130,15 @@ public class PerformanceService {
     if (isBlank(title) || isBlank(venue) || startAt == null || openAt == null || closeAt == null) {
       throw new InvalidRequestException("title/venue/startAt/openAt/closeAt는 필수입니다");
     }
+    if (title.length() > MAX_TITLE_LENGTH || venue.length() > MAX_VENUE_LENGTH) {
+      throw new InvalidRequestException("title/venue는 " + MAX_TITLE_LENGTH + "자를 넘을 수 없습니다");
+    }
   }
 
   private void validateSection(SectionSpec section) {
+    if (section == null) {
+      throw new InvalidSectionException("구역 정보는 비어 있을 수 없습니다");
+    }
     if (isBlank(section.grade()) || section.grade().length() > MAX_GRADE_LENGTH) {
       throw new InvalidSectionException("grade는 1~" + MAX_GRADE_LENGTH + "자여야 합니다");
     }

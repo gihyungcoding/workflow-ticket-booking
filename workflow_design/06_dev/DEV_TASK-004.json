@@ -1,7 +1,39 @@
 {
   "task_id": "TASK-004",
-  "attempt": 2,
-  "retry_note": "Phase 4 FAIL(VERIFY_TASK-004.json) → RETRY_SCENARIO → Phase 2b(SC-16~21 Red 6건) 이후 Green. attempt 1의 changed_files/reused는 아래에 그대로 보존한다.",
+  "attempt": 3,
+  "retry_note": "Phase 4 2차 검증 FAIL(VERIFY_TASK-004.json attempt 2) → RETRY_SCENARIO → Phase 2b(SC-22~24 Red 3건) 이후 Green. attempt 1/2의 changed_files/reused는 아래에 그대로 보존한다.",
+  "changed_files_attempt3": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "MAX_TITLE_LENGTH/MAX_VENUE_LENGTH(200) 상수 추가, validateRequired에 title/venue 길이 검사 추가(F10, 등록·수정 공유). validateSection 최상단에 section null 검사 추가(F11)",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "toSectionSpec이 request==null이면 null을 그대로 반환하도록 변경 — sections 배열의 null 원소가 Controller 변환 단계에서 NPE로 새지 않고 Service의 validateSection(F11)까지 통과시킨다",
+      "lines_changed": 3
+    }
+  ],
+  "test_result_attempt3": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --rerun-tasks",
+    "total": 43,
+    "passed": 43,
+    "failed": 0,
+    "target_tests_passed": 23
+  },
+  "lint_attempt3": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0,
+    "note": "spotlessApply 1회 적용(PerformanceService.java 긴 throw 줄바꿈, 테스트 파일 주석 줄바꿈) 후 재검증 통과"
+  },
+  "refactoring_attempt3": [
+    {
+      "what": "리팩토링 없음",
+      "why": "추가한 검사가 각 2줄 내외로 기존 validateRequired/validateSection/toSectionSpec 구조에 자연스럽게 들어맞아 다듬을 중복이 없다"
+    }
+  ],
+  "scope_deviations_attempt3": [],
   "changed_files_attempt2": [
     {
       "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
@@ -84,18 +116,18 @@
   ],
   "test_status": "green",
   "test_result": {
-    "command": "cd backend && ./gradlew test",
-    "total": 40,
-    "passed": 40,
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --rerun-tasks",
+    "total": 43,
+    "passed": 43,
     "failed": 0,
-    "target_tests_passed": 20,
-    "note": "이 필드는 현재(최종) 상태다 — attempt 1 시점 수치(34/34, target 14)는 changed_files_attempt1_kept_for_reference 옆의 위 test_result 대신 이 커밋 이전 git 이력 참고"
+    "target_tests_passed": 23,
+    "note": "이 필드는 현재(최종) 상태다 — attempt 1(34/34, target 14)·attempt 2(40/40, target 20) 시점 수치는 각각 test_result_attempt2와 changed_files_attempt1_kept_for_reference 옆의 커밋 이전 git 이력 참고"
   },
   "lint": {
-    "command": "cd backend && ./gradlew spotlessCheck",
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew spotlessCheck",
     "errors": 0,
     "warnings": 0,
-    "note": "spotlessApply로 자동 포맷 수정 1회 적용 후 재검증 통과 (PerformanceController/PerformanceExceptionHandler/Seat.java/SectionSpec.java/PerformanceService.java/PerformanceRegistrationApiTest.java 줄바꿈 정리)"
+    "note": "spotlessApply로 자동 포맷 수정 1회 적용 후 재검증 통과 (PerformanceService.java/PerformanceRegistrationApiTest.java 줄바꿈 정리)"
   },
   "refactoring": [
     {

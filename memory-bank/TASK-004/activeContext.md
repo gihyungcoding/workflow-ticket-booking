@@ -1,8 +1,8 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "3"
-phase_name: "Phase 3 - Green (attempt 3 진입 준비 완료, HITL#2 승인됨)"
+phase: "4"
+phase_name: "Phase 4 - Verify (재검증, attempt 3 진입 준비 완료)"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-2.6_hitl2-approved_retry2
+last_checkpoint: CP-3.4_context-dev_retry2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,21 +23,18 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b(attempt 3) Red 테스트 3건(SC-22/23/24)을 작성·실행해 Red를 확인하고 HITL#2
-승인을 받았다. 기존 20건은 계속 Green.
+Phase 3(attempt 3) Green 구현을 마쳤다. `validateRequired`(F10)에 title/venue 200자
+초과 검사(등록·수정 공유)를, `validateSection`(F11)에 section null 검사를 추가했고,
+`PerformanceController.toSectionSpec`이 null 원소를 그대로 Service까지 통과시키도록
+고쳤다. 전체 43/43 테스트 통과, 린트 error 0.
 
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 Phase 3(attempt 3, Green)을 시작한다 — 최소 구현으로 SC-22/23/24를
-통과시킨다:
-1. `PerformanceService.validateRequired`(F10, 등록·수정 공유)에 title/venue 길이
-   검사(≤200자) 추가 — 이 한 곳만 고치면 SC-22(POST)·SC-24(PUT) 둘 다 해결돼야
-   한다(공유 여부를 Red 테스트 2건이 강제한다)
-2. `PerformanceController`의 `toSectionSpec` 변환이 원소를 그대로 Service에
-   통과시키도록 수정(Controller 단계에서 먼저 NPE 나지 않게), `PerformanceService.
-   validateSection`(F11)에서 null 원소를 잡도록 검사 추가
-3. 구현 후 `PerformanceRegistrationApiTest` 클래스 전체(`./gradlew test`)와 전체
-   스위트를 실행해 43개(기존 40 + 신규 3) 전부 Green인지, 린트 error 0인지 확인
+`wf-verify` 스킬로 Phase 4 재검증(attempt 3)을 시작한다 — attempt 2 FAIL의 근거
+(title/venue 길이 500, sections null 원소 500)가 실제로 해소됐는지 code-reviewer로
+다시 확인하고, acceptance_criteria 9건을 재대조한다. attempt 1/2에서 반복됐던 패턴
+(FAIL → 롤백 → 재구현)을 감안해 이번엔 특히 "또 다른 잔여 결함이 없는지"를
+중점적으로 본다.
 
 ## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
 
