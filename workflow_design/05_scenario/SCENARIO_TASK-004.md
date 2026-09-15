@@ -1,5 +1,11 @@
 # TASK-004 시나리오
 
+> **재시도 attempt 2** (2026-09-15) — Phase 4 검증에서 code-reviewer가 재현한 결함
+> (`workflow_design/07_verify/VERIFY_TASK-004.json` code_review.findings) 때문에
+> `RETRY_SCENARIO`로 Phase 2a에 되돌아왔다. 좌석 상한(AC4)이 역방향 행 범위·정수
+> 오버플로로 완전히 우회되고, 필수 필드 누락이 500으로 새는 문제였다. SC-16~SC-20을
+> 추가한다. 기존 SC-01~13/15는 그대로 두고 손대지 않는다(이미 검증·승인됨).
+
 ## 확정한 정의 (Plan의 unresolved 해소)
 
 - **행 범위 겹침**: 두 구역의 `[rowStart, rowEnd]` 를 알파벳 구간으로 보고, 이 구간이
@@ -149,7 +155,7 @@ flow: F8
 
 ## SC-13 (error) 구역이 하나도 없는 등록 요청은 거부된다
 
-- **Given** 등록 요청의 sections 가 빈 배열이다
+- **Given** 등록 요청의 sections 가 빈 배열 `[]` 이다 (필드 자체가 없는 null 이 아니다 — null 이면 SC-16의 INVALID_REQUEST)
 - **And** 시각은 openAt <= closeAt <= startAt 을 만족한다
 - **When** POST /api/performances 를 호출한다
 - **Then** 400이 반환된다
@@ -167,4 +173,74 @@ flow: F9
 - **And** 응답의 totalSeats/availableSeats 는 5,000이다
 
 covers: (acceptance_criteria 미대응 — SC-04의 반대쪽 경계. "5,000을 넘으면" 거부라는 AC4 문구가 5,000 자체는 포함임을 확인한다.)
+flow: F1
+
+## SC-16 (error) 필수 필드가 없으면 등록이 거부된다
+
+- **Given** 등록 요청에 sections 필드 자체가 없다(JSON에 없음, null — 빈 배열 `[]` 이 아니다)
+- **And** 나머지 필드(title/venue/시각)는 유효하다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_REQUEST 이다
+
+covers: (acceptance_criteria 미대응 — Phase 4 검증에서 code-reviewer가 재현: sections/시각/title/venue 등 최상위 필수 필드가 없으면 NPE 또는 DB NOT NULL 위반으로 500이 새던 결함. title/venue/시각 누락도 같은 코드 경로(INVALID_REQUEST, F10 — 등록/수정이 공유하는 단일 null 검증 지점)로 처리되므로 대표적으로 sections 누락 하나만 시나리오로 둔다 — coverage-policy §3 "같은 코드 경로는 하나로 묶는다". 구역 내부 필드(price 등)의 누락/형식 오류는 F11/INVALID_SECTION 소관이라 여기 포함하지 않는다 — SC-17~19 참고)
+flow: F10
+
+## SC-17 (error) 구역의 rowStart가 rowEnd보다 뒤 알파벳이면 등록이 거부된다
+
+- **Given** 등록 요청에 구역 하나(rowStart="E", rowEnd="C")가 있다 (역방향 범위)
+- **And** 시각은 openAt <= closeAt <= startAt 을 만족한다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_SECTION 이다
+- **And** seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)
+
+covers: (acceptance_criteria 미대응 — Phase 4 검증에서 code-reviewer가 재현: 역방향 행 범위가 음수 좌석수로 계산돼 SEAT_LIMIT_EXCEEDED(AC4)와 DUPLICATE_SEAT_RANGE(AC5) 검사를 모두 우회하던 결함. 이 검사(F11)가 그 두 검사(F3/F4)보다 먼저 실행되어야 한다)
+flow: F11
+
+## SC-18 (error) 구역의 seatsPerRow가 0 이하이면 등록이 거부된다
+
+- **Given** 등록 요청에 구역 하나(seatsPerRow=0)가 있다
+- **And** 시각은 openAt <= closeAt <= startAt 을 만족한다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_SECTION 이다
+
+covers: (acceptance_criteria 미대응 — Phase 4 검증에서 code-reviewer가 재현: seatsPerRow가 1 미만(0 또는 음수)이면 좌석수가 0 이하이거나 음수가 되어 다른 구역의 좌석수를 상쇄하는 등 상한 검사를 무력화할 수 있던 결함. 0은 "1 이상" 규칙의 경계값이다)
+flow: F11
+
+## SC-19 (error) 구역의 rowStart가 빈 문자열이면 등록이 거부된다
+
+- **Given** 등록 요청에 구역 하나(rowStart="")가 있다
+- **And** 시각은 openAt <= closeAt <= startAt 을 만족한다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_SECTION 이다
+
+covers: (acceptance_criteria 미대응 — Phase 4 검증에서 code-reviewer가 재현: rowStart가 빈 문자열이면 charAt(0)에서 StringIndexOutOfBoundsException으로 500이 나던 결함)
+flow: F11
+
+## SC-20 (boundary) 구역의 seatsPerRow가 매우 큰 값이면 좌석 상한 초과로 거부된다
+
+- **Given** 등록 요청에 서로 겹치지 않는 구역 2개 — 구역 A(행 A~A, seatsPerRow=1,200,000,000)와 구역 B(행 B~B, seatsPerRow=1,200,000,000) — 가 있다
+- **And** 시각은 openAt <= closeAt <= startAt 을 만족한다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 SEAT_LIMIT_EXCEEDED 이다
+- **And** seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)
+
+covers: (acceptance_criteria 미대응 — Phase 4 검증에서 code-reviewer가 재현: 좌석수 합산에 int를 써서 오버플로로 음수가 되어 상한 검사를 우회하고 수억 개 Seat 객체 생성을 시도하던 보안 결함(DoS))
 flow: F3
+note: 구역을 서로 다른 행(A~A, B~B)으로 둔 것은 의도적이다 — 같은 행을 쓰면 DUPLICATE_SEAT_RANGE(409)가 먼저 발생해 이 시나리오가 검증하려는 SEAT_LIMIT_EXCEEDED 경로에 도달하지 못한다. "int 오버플로로 우회되지 않음"은 이 테스트가 통과해야 하는 이유(구현 근거)이지 Then 단언 대상이 아니다 — 관찰 가능한 단언은 400/SEAT_LIMIT_EXCEEDED/seat 0건뿐이다.
+
+## SC-21 (error) 구역명(grade)이 20자를 넘으면 등록이 거부된다
+
+- **Given** 등록 요청에 구역 하나(grade가 21자)가 있다
+- **And** 시각은 openAt <= closeAt <= startAt 을 만족한다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_SECTION 이다
+- **And** seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)
+
+covers: (acceptance_criteria 미대응 — Phase 4 검증에서 code-reviewer가 재현: grade가 길면 seatLabel(grade+행+좌석번호)이 seat_label VARCHAR(30)을 넘어 insert 시 500이 나던 결함. grade를 20자로 제한해 어떤 좌석 번호 조합에서도 라벨이 30자를 넘지 않게 한다)
+flow: F11

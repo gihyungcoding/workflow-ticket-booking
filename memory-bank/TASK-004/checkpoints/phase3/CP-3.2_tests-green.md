@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-15T00:30:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "PerformanceService의 3개 메서드와 Performance의 2개 메서드를 구현해 전체 스위트 34/34 통과"
 

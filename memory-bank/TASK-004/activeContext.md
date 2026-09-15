@@ -1,8 +1,8 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "4"
-phase_name: "Phase 4 - Verify (FAIL, 롤백 대기)"
+phase: "2b"
+phase_name: "Phase 2b - Red (재시도, attempt 2)"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-4.2
+last_checkpoint: CP-2.4_retry1
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,17 +23,39 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 검증에서 code-reviewer가 재현 가능한 결함을 찾아 status: FAIL. 좌석 상한
-(AC4)이 역방향 행 범위·정수 오버플로로 우회되고(실제 실행으로 재현), 인증 없는
-등록 엔드포인트가 이 경로로 OOM을 유발할 수 있다(DoS). Plan이 명시한 입력 검증도
-구현되지 않았다. 테스트/린트/아키텍처 제약 자체는 모두 통과했다 — 시나리오가
-다루지 않은 입력(오입력) 경로에서 결함이 드러났다.
+Phase 4 FAIL(code-reviewer가 좌석 상한 우회·DoS 가능성·입력검증 부재를 재현) 이후
+RETRY_SCENARIO로 Phase 2a를 재작업했다. 오류 시나리오 6건(SC-16~21: 필수 필드
+누락→INVALID_REQUEST/F10, 역방향 행 범위·seatsPerRow 범위·빈 rowStart·grade
+길이→INVALID_SECTION/F11, 정수 오버플로→SEAT_LIMIT_EXCEEDED/F3 boundary)을 추가해
+시나리오 총 20건, 독립검증 3회 후 PASS, HITL#1 재승인 받음. Plan에도 F10/F11 흐름과
+새 출력 2종을 반영했다.
 
 ## 다음 한 걸음
 
-사용자에게 롤백 범위를 확인받는다 — Phase 2a(오류 시나리오 보강: 역방향 행 범위,
-seatsPerRow 범위, 필수 필드 누락) → Phase 2b → Phase 3(Bean Validation + Seat FK
-애노테이션 추가) → Phase 4 재검증.
+`wf-red` 스킬로 Phase 2b를 재개한다 — SC-16~SC-21 6개를 기존
+`PerformanceRegistrationApiTest.java`에 이어서 Red 테스트로 작성한다(기존 14개는
+그대로 둔다). 전체 실행 시 기존 14개는 계속 통과, 신규 6개만 실패해야 한다.
+
+## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
+
+- **Bean Validation을 쓰지 않는다.** 기존 코드베이스가 예외-당-규칙 패턴(예:
+  `EmptySectionsException`)을 이미 쓰고 있어, 새 검증도 `InvalidRequestException`
+  (F10, 최상위 필드 null/blank)과 `InvalidSectionException`(F11, 구역 필드 형식
+  오류)이라는 수동 예외 2개로 구현한다. `@Valid`/`jakarta.validation` 은 도입하지
+  않는다
+- **검증 순서(반드시 이 순서로 구현)**: F10(필수 필드) → F9(빈 sections) →
+  F11(구역 형식) → F2(시각 순서) → F3(좌석 상한, long 산술) → F4(행 범위 겹침).
+  `sections=null`(INVALID_REQUEST)과 `sections=[]`(EMPTY_SECTIONS)은 서로 다른
+  코드 경로 — null 체크가 먼저다
+- `grade` 는 20자로 제한한다 (seat_label VARCHAR(30) 초과 방지 — F11)
+- 좌석수 합산은 `long` 으로 계산하고 5,000 이하 확인 후에만 int로 캐스팅한다 (int
+  오버플로로 상한을 우회하던 보안 결함 수정)
+- `price`/`rowStart`/`rowEnd`(A~Z 단일 대문자, rowStart<=rowEnd)/`seatsPerRow`(1
+  이상) 검증은 모두 `InvalidSectionException` 하나로 묶는다 — 시나리오는
+  SC-17/18/19/21 네 갈래만 있지만 구현은 F11 note에 적힌 다섯 갈래(rowStart>rowEnd,
+  seatsPerRow<1, 빈/잘못된 row, grade 길이, price 음수/null)를 전부 방어해야 한다
+- Seat 엔티티에 FK 애노테이션을 추가한다 (아래 기존 항목 참고) — 시나리오 없이
+  바로 고치는 순수 스키마 정합성 수정
 
 ## 알아둬야 할 것 (Phase 4 FAIL 상세)
 

@@ -1,79 +1,31 @@
 {
   "task_id": "TASK-004",
-  "attempt": 3,
+  "attempt": 2,
+  "round": 3,
   "checks": [
-    {
-      "id": "V1",
-      "name": "MD ↔ JSON 일치",
-      "verdict": "pass",
-      "detail": "MD 15건(SC-01~SC-15), JSON scenarios 15건으로 ID·type·Given/When/Then 문장이 모두 일치한다. SC-12 boundary, SC-14 regression, SC-15 boundary 타입도 양쪽 동일. SC-14 의 flow 표기는 MD '없음 (PLAN 외부 — 기존 동작 회귀 확인)' ↔ JSON null 로 의미 동등. 차이는 note 필드의 부연구 두 곳뿐이다 — SC-14 JSON note 끝의 '(독립검증 V10 반영)', SC-15 JSON note 끝의 '(독립검증 2차 라운드 부수 관찰 반영)' 가 MD에는 없다. GWT·covers·flow 에는 영향이 없어 불일치로 보지 않는다."
-    },
-    {
-      "id": "V2",
-      "name": "개수 하한",
-      "verdict": "pass",
-      "detail": "전체 15건 ≥ 2. happy 3건(SC-01, SC-06, SC-11) ≥ 1. error 9건(SC-02, SC-03, SC-04, SC-05, SC-07, SC-08, SC-09, SC-10, SC-13) ≥ 1. 그 외 boundary 2건(SC-12, SC-15), regression 1건(SC-14)."
-    },
-    {
-      "id": "V3",
-      "name": "acceptance_criteria 커버리지",
-      "verdict": "pass",
-      "detail": "Plan의 기준 9건을 직접 대조해 전부 대응 확인 — (1) seat 행 생성 → SC-01, (2) total_seats/available_seats 일치 → SC-01, (3) INVALID_TIME_ORDER → SC-02·SC-03, (4) SEAT_LIMIT_EXCEEDED → SC-04, (5) DUPLICATE_SEAT_RANGE → SC-05, (6) 오픈 전 수정 200 → SC-06, (7) REGISTRATION_ALREADY_OPEN → SC-07, (8) PERFORMANCE_NOT_FOUND → SC-09·SC-10, (9) cancel 멱등 → SC-11·SC-12. covers 문자열은 Plan acceptance_criteria 원문과 축자 일치한다. 기준 (9)의 'cancelled 가 true 로 바뀌고'를 SC-11/SC-12는 응답의 status=CANCELLED 로 단언하는데, PerformanceStatusRules.of()/matches() 에서 CANCELLED 는 cancelled==true 일 때만 산출되므로 status=CANCELLED 는 cancelled=true 의 필요충분 관측 대리값이다. 커버리지 결함 아님."
-    },
-    {
-      "id": "V4",
-      "name": "flow 대응",
-      "verdict": "pass",
-      "detail": "Plan design.flows 는 F1~F9. 시나리오 매핑 — F1:SC-01, F2:SC-02·SC-03, F3:SC-04·SC-15, F4:SC-05, F5:SC-06·SC-08, F6:SC-07, F7:SC-09·SC-10, F8:SC-11·SC-12, F9:SC-13. 존재하지 않는 flow id 를 가리키는 시나리오는 없고, 9개 flow 전부 최소 1건씩 시나리오가 붙었다. SC-14 만 flow=null 인데, V10 요구(기존 동작 회귀)에 따라 Plan 흐름 밖을 의도적으로 검증하는 시나리오이며 사유가 명시돼 있다."
-    },
-    {
-      "id": "V5",
-      "name": "Then 관찰 가능성",
-      "verdict": "pass",
-      "detail": "'내부적으로/올바르게/정상적으로' 류 표현 없음. 2차 지적의 핵심이던 SC-11/SC-12 Then 이 '응답의 cancelled는 true' → '응답의 status 는 CANCELLED' 로 바뀌었고, PerformanceResponse.java 는 실제로 cancelled 필드 없이 PerformanceStatus status 만 가져 응답 JSON 으로 그대로 단언 가능하다. 부작용 부재 단언(SC-02/04/05)과 롤백 단언(SC-07/08)도 전후 count·재조회로 단언 가능한 형태다."
-    },
-    {
-      "id": "V6",
-      "name": "When 단일성",
-      "verdict": "pass",
-      "detail": "15개 시나리오 모두 when 배열 길이가 1이고 복합 When 이 없다. SC-12 의 '다시 호출한다' 도 선행 취소 상태를 Given 으로 밀어냈으므로 When 은 단일 호출이다."
-    },
-    {
-      "id": "V7",
-      "name": "구현 누출",
-      "verdict": "warn",
-      "detail": "SC-11 의 Then 에 구현 심볼(PerformanceResponse, PerformanceStatusRules)을 담은 괄호 설명이 있었다 — note 로 분리 권고. 이 지적을 반영해 round 3 결과 확인 직후 Then 을 '응답의 status 는 CANCELLED 이다'로 단순화하고 설명은 scenario.note 로 옮겼다(아래 post_validation_fix). SC-01/02/04/05 Then 의 'seat 테이블', 'performance_id 로 seat 를 조회하면' 은 DB 수준 표현이지만 Plan acceptance_criteria 자체가 'seat 행이 생성된다' 같은 DB 용어를 쓰고 있어 시나리오가 새로 끌어들인 누출은 아니라고 판단해 유지한다."
-    },
-    {
-      "id": "V8",
-      "name": "입출력 대응",
-      "verdict": "warn",
-      "detail": "대부분 Plan 범위 안이다. 벗어난 건 SC-14 하나 — GET /api/performances/{id} 는 Plan design.inputs 의 id 항목이 'PUT /{id}, POST /{id}/cancel' 로 한정해 둔 범위 밖이고 design.outputs 에도 조회 응답이 없다. 회귀 목적의 의도된 범위 밖 시나리오임이 note 에 적혀 있어 결함은 아니지만, Plan 이 이 태스크가 건드리는 기존 표면(GET 엔드포인트)을 입출력에 담고 있지 않다는 사실은 기록해 둔다."
-    },
-    {
-      "id": "V9",
-      "name": "중복",
-      "verdict": "pass",
-      "detail": "SC-02/SC-03(OR로 묶인 두 술어의 각 분기), SC-09/SC-10(PUT vs cancel 엔드포인트), SC-10/SC-14(신규 vs 기존 404 경로), SC-04/SC-15(상한 비교의 양쪽 분기) 모두 서로 다른 코드 경로를 타 완전 중복은 없다."
-    },
-    {
-      "id": "V10",
-      "name": "회귀 누락",
-      "verdict": "pass",
-      "detail": "Plan target_files 의 기존 파일 수정 4건에 대해 regression 타입 SC-14 가 존재해 요건은 충족한다. 다만 SC-14 가 방어하는 표면은 PerformanceExceptionHandler 의 기존 404 경로 하나뿐이라 회귀 방어가 얇다는 점은 Phase 2b에서 감안할 것(기존 PerformanceApiTest/PerformanceConstraintTest 전체 실행이 나머지를 방어)."
-    }
+    { "id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass" },
+    { "id": "V2", "name": "개수 하한", "verdict": "pass" },
+    { "id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass" },
+    { "id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "2차 라운드 fail(SC-16/17/18/19 flow=null)이 SC-16→F10, SC-17/18/19→F11 배선으로 해소됨" },
+    { "id": "V5", "name": "Then 관찰 가능성", "verdict": "pass" },
+    { "id": "V6", "name": "When 단일성", "verdict": "pass" },
+    { "id": "V7", "name": "구현 누출", "verdict": "pass", "detail": "SC-20 제목의 '정수 오버플로 없이' 제거로 해소됨" },
+    { "id": "V8", "name": "입출력 대응", "verdict": "warn", "detail": "F11의 다섯 갈래 중 grade 길이·price는 시나리오가 부족했다. grade 길이는 SC-21 추가로 3차 검증 직후 자체 반영해 해소. price는 coverage-policy §3(같은 코드 경로 병합)에 따라 의도적으로 시나리오를 두지 않기로 결정(CP-2.2_retry1 decisions)" },
+    { "id": "V9", "name": "중복", "verdict": "pass" },
+    { "id": "V10", "name": "회귀 누락", "verdict": "warn", "detail": "regression 타입 시나리오 0건 — Phase 3 전체 스위트 실행에 회귀 확인을 위임하기로 결정(CP-2.2_retry1 decisions)" }
   ],
   "overall": {
     "pass": true,
     "fail_count": 0,
     "warn_count": 2,
-    "summary": "2차 라운드의 핵심 결함(PerformanceResponse에 없는 cancelled 필드를 단언하던 SC-11/SC-12)이 해소됐음을 원본 코드(PerformanceResponse.java, PerformanceStatusRules.java)로 확인했다. SC-15(정확히 5,000석 통과) boundary 추가로 SC-04 와 짝을 이룬다. V1~V4 위반 없음 — 15건 전부 MD/JSON 일치, AC 9건 전수 대응, flow F1~F9 전부 실재·전부 사용. 남은 경고 2건(V7 SC-11 표현 정리, V8 SC-14가 Plan 범위 밖의 기존 GET을 의도적으로 검증)은 Phase 2b 진행을 막지 않는 수준이다."
+    "summary": "attempt 2 3차 라운드에서 pass 도달. 1차: fail(Plan에 F10/F11 흐름 부재). 2차: fail(시나리오 flow가 Plan과 배선되지 않음). 3차: pass, 경고 2건(grade 길이 미검증 — 직후 SC-21로 자체 해소, regression 시나리오 없음 — Phase 3 전체 스위트 실행으로 대체하기로 결정)."
   },
   "post_validation_fix": {
-    "what": "SC-11 Then에서 PerformanceResponse/PerformanceStatusRules 심볼을 언급하던 괄호 설명을 삭제하고 scenario.note로 이동 (V7 반영)",
+    "what": "SC-21(grade 20자 초과 → INVALID_SECTION) 추가 — V8의 grade 길이 미검증 경고를 해소. 4차 검증은 요청하지 않음(저위험 추가, 기존 F11 패턴과 동일)",
     "files": [
       "workflow_design/05_scenario/SCENARIO_TASK-004.md",
       "workflow_design/05_scenario/SCENARIO_TASK-004.json"
     ]
-  }
+  },
+  "prior_rounds_reference": "1차·2차 라운드의 상세 findings는 이 파일의 이전 버전(git 이력)과 CP-2.2_canonical-scenarios_retry1.md의 decisions에 요약돼 있다"
 }

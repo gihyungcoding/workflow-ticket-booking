@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-14T00:00:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "PLAN_TASK-004.json의 flow 9건(F1~F9)을 시나리오 13건(happy 3 / error 9 / boundary 1)으로 옮김. acceptance_criteria 9/9 커버"
 

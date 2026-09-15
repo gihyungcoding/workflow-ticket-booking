@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-14T00:10:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "시나리오 15건(happy 3 / error 9 / boundary 2 / regression 1)을 사람이 승인, generate_red_trigger=true 로 전환"
 

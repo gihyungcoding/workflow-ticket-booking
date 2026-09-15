@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-14T00:40:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "시나리오 14건(SC-01~13,15)을 테스트 14개로 1:1 옮김. 컴파일용 스켈레톤(Seat 엔티티, Performance 상태변경 메서드, 예외 5종, DTO 3종, Service 메서드 3개)을 추가하고 전체 실행해 14/14 실패(UnsupportedOperationException), 기존 20개 테스트는 그대로 통과 확인"
 

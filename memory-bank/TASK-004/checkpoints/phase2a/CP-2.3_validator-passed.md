@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-14T00:00:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "scenario-validator 3회 라운드 끝에 overall.pass=true, warn 2건(경미)으로 수렴"
 

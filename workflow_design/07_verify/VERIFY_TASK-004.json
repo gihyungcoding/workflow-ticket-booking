@@ -141,5 +141,18 @@
     "decision": null,
     "verified_commit": null,
     "verified_at": null
+  },
+
+  "reject": {
+    "reason_code": "COVERAGE_INSUFFICIENT",
+    "type": "RETRY_SCENARIO",
+    "rollback_to": "Phase 2a",
+    "attempt": 1,
+    "decided_at": "2026-09-15T01:10:00Z",
+    "what": "역방향 행 범위(rowStart>rowEnd), seatsPerRow 범위(0 이하/정수 오버플로 방지), 필수 필드 누락에 대한 오류 시나리오가 없었다",
+    "excluded_from_scenario_rework": [
+      "Seat 엔티티의 FK 애노테이션 누락 — 관찰 가능한 API 계약을 바꾸지 않는 내부 스키마 정합성 문제라 Phase 3에서 시나리오 없이 직접 수정한다 (Performance.java 선례와 동일)"
+    ],
+    "reference": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings"
   }
 }
