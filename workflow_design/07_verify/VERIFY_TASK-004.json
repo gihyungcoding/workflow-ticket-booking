@@ -1,0 +1,145 @@
+{
+  "task_id": "TASK-004",
+  "status": "FAIL",
+  "status_reason": "code-reviewer가 확인·재현한 정확성/보안 결함이 있다 — 좌석 상한(AC4)이 역방향 행 범위·정수 오버플로로 우회되고, 인증 없는 등록 엔드포인트가 단일 요청으로 OOM/무응답을 일으킬 수 있다(DoS). Plan이 명시한 입력 제약(design.inputs)이 하나도 구현되지 않아 필수 필드 누락 시 500이 난다.",
+
+  "evidence": {
+    "tests": {
+      "command": "cd backend && ./gradlew test",
+      "exit_code": 0,
+      "summary": "34 tests, 0 failed (BUILD SUCCESSFUL) — 단, 아래 code_review 결함을 재현하는 테스트가 시나리오/테스트 세트에 없어 통과 상태로는 결함이 드러나지 않는다"
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL — error 0"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "35 files changed, 2467 insertions(+), 5 deletions(-)"
+    }
+  },
+
+  "acceptance_criteria": [
+    { "criterion": "구역 1개 이상으로 POST 시 201과 함께 seat 행 생성", "verdict": "PASS", "evidence": "test_sc01 통과" },
+    { "criterion": "performance.total_seats/available_seats == 생성된 좌석 총수", "verdict": "PASS", "evidence": "test_sc01, test_sc15 통과" },
+    { "criterion": "시각 순서 위반 시 400 INVALID_TIME_ORDER", "verdict": "PASS", "evidence": "test_sc02, test_sc03, test_sc08 통과" },
+    { "criterion": "좌석 총수 5,000 초과 시 400 SEAT_LIMIT_EXCEEDED", "verdict": "FAIL", "evidence": "code-reviewer가 재현: 구역 하나가 역방향 행 범위(rowStart>rowEnd)이면 rowCount가 음수가 되어 다른 구역의 좌석 수를 상쇄한다 — 합산이 5,000 이하로 보여 실제로는 25,000개 seat가 생성되는데도 201이 반환된다. 정수 오버플로(구역별 seatsPerRow를 극단적으로 크게 잡는 경우)로도 동일하게 우회된다. 이 경로를 검증하는 시나리오/테스트가 없어 기존 14개 테스트는 전부 통과하지만 AC4가 실질적으로 깨져 있다" },
+    { "criterion": "두 구역의 행 범위가 겹치면 409 DUPLICATE_SEAT_RANGE", "verdict": "PASS (정상 입력 범위 한정)", "evidence": "test_sc05 통과. 단, 위와 같은 역방향 구간에서는 겹침 판정식이 성립하지 않아(aStart<=bEnd && bStart<=aEnd) 이 경로도 함께 우회된다" },
+    { "criterion": "now < openAt 인 공연을 PUT으로 수정하면 200과 변경 필드 반영", "verdict": "PASS", "evidence": "test_sc06 통과" },
+    { "criterion": "now >= openAt 인 공연을 수정하려 하면 409 REGISTRATION_ALREADY_OPEN", "verdict": "PASS", "evidence": "test_sc07 통과" },
+    { "criterion": "존재하지 않는 id로 수정/취소 시 404 PERFORMANCE_NOT_FOUND", "verdict": "PASS", "evidence": "test_sc09, test_sc10 통과" },
+    { "criterion": "취소 시 status=CANCELLED, 재취소도 200(멱등)", "verdict": "PASS", "evidence": "test_sc11, test_sc12 통과" }
+  ],
+
+  "screens": [],
+
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 52,
+    "violations": [
+      { "id": "DESIGN-001", "severity": "warn", "detail": "frontend/src/main.tsx:9 createTheme() — 이 태스크 이전부터 있던 기존 부채, 무관" },
+      { "id": "DESIGN-003", "severity": "warn", "detail": "PerformanceDetailPage.tsx:36, PerformanceListPage.tsx:45 — 이 태스크 이전부터 있던 기존 부채, 무관" }
+    ],
+    "prose_coverage": [
+      { "rule": "API: 비즈니스 로직을 갖지 않는다", "constraint": null, "state": "미인코딩", "note": "이번 diff에서 위반 없음 — Controller는 api.dto→SectionSpec 필드 매핑과 Service 위임만 함(직접 확인)" },
+      { "rule": "Service: HTTP 관심사를 갖지 않는다", "constraint": "ARCH-002", "state": "✓" },
+      { "rule": "Service: SQL/영속성 프레임워크 타입을 직접 다루지 않는다", "constraint": "ARCH-003", "state": "✓" },
+      { "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어를 갖지 않는다", "constraint": null, "state": "미인코딩", "note": "이번 diff에서 위반 없음 — Seat/Performance는 순수 필드 보관·대입만 함(직접 확인)" },
+      { "rule": "Repository: 도메인 규칙을 판단하지 않는다", "constraint": null, "state": "미인코딩", "note": "SeatRepository는 JpaRepository 확장뿐, 커스텀 로직 없음(직접 확인)" }
+    ]
+  },
+
+  "regression": {
+    "full_suite": "34/34 passed",
+    "callers_checked": true,
+    "note": "PerformanceService 생성자 시그니처 변경(SeatRepository 추가)의 다른 호출처 없음 확인(grep). Performance/updateSchedule·cancel의 다른 호출처 없음"
+  },
+
+  "scope_deviations": [
+    { "what": "PerformanceService 생성자에 SeatRepository 파라미터 추가", "status": "수용 — Plan이 이미 SeatRepository 신규 생성을 예정했고 필수 의존성" }
+  ],
+
+  "code_review": {
+    "agent": "code-reviewer",
+    "findings": [
+      {
+        "severity": "correctness",
+        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:70,122,126,134",
+        "summary": "역방향 행 범위(rowStart>rowEnd) 또는 음수 seatsPerRow가 음수로 합산돼 5,000석 상한이 무력화되고 total_seats가 실제 좌석 수와 어긋난다. 겹침 판정도 역방향 구간에서 성립하지 않는다",
+        "reproduction": "sections=[{VIP,A~Y,1000},{R,Z~E,1000}] → totalSeats=25000+(-20000)=5000(상한 통과), 겹침 미탐지, 실제로는 25,000개 seat 생성"
+      },
+      {
+        "severity": "security",
+        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:70",
+        "summary": "int 오버플로로 상한 검사를 우회한 뒤 수억~수십억 개 Seat 객체 생성을 시도해 OOM/무응답 유발 — 인증 없는 엔드포인트라 요청 1건으로 가능",
+        "reproduction": "sections=[{A,A~A,1200000000},{B,B~B,1200000000}] → 합계가 int 래핑으로 음수가 되어 상한 검사 통과, generateSeats가 12억 개 Seat 생성 시도"
+      },
+      {
+        "severity": "correctness",
+        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:122",
+        "summary": "단일 구역의 rowStart>rowEnd 오타는 400이 아니라 500이 된다 (totalSeats<=0으로 DB CHECK 위반, 매핑되지 않은 예외)"
+      },
+      {
+        "severity": "correctness",
+        "location": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java:49",
+        "summary": "필수 필드 누락(sections/startAt/openAt/closeAt/title/venue/price) 시 NPE 또는 DB NOT NULL 위반으로 500 — @RequestBody에 검증이 전혀 없음"
+      },
+      {
+        "severity": "design",
+        "location": "workflow_design/04_plan/PLAN_TASK-004.json design.inputs",
+        "summary": "Plan이 명시한 입력 제약(필수, 길이, 범위, A~Z 단일 대문자, rowStart<=rowEnd)이 전혀 구현되지 않음. spring-boot-starter-validation 의존성은 이미 있으나 jakarta.validation/@Valid 사용처 0건"
+      },
+      {
+        "severity": "correctness",
+        "location": "backend/src/main/java/com/example/ticket_booking/domain/Seat.java:45",
+        "summary": "seat_label VARCHAR(30)이 grade(최대 50자) + 행 + 번호 조합(최대 56자)을 담지 못해 긴 등급명에서 insert 시 500"
+      },
+      {
+        "severity": "test",
+        "location": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
+        "summary": "구역 필드 오입력(역방향 범위, 음수/0 seatsPerRow, 필수 필드 누락) 경로를 검증하는 테스트가 전혀 없다 — 시나리오 세트 자체에 이 경로가 없어 위 결함들이 그린으로 통과했다"
+      },
+      {
+        "severity": "design",
+        "location": "backend/src/main/java/com/example/ticket_booking/domain/Seat.java:22",
+        "summary": "엔티티가 V2 마이그레이션의 FK(REFERENCES performance(id))를 애노테이션으로 표현하지 않아 테스트(H2, ddl-auto)와 프로덕션 스키마가 갈린다 — Performance.java의 선례(ADR-0006, 마이그레이션과 어긋나지 않게 유지)와 불일치"
+      },
+      {
+        "severity": "perf",
+        "priority": "low",
+        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:87",
+        "summary": "Seat가 GenerationType.IDENTITY라 saveAll에서 JDBC 배치가 비활성화됨 — 5,000석 등록 시 5,000회 왕복"
+      },
+      {
+        "severity": "security",
+        "priority": "low",
+        "location": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java:46,61,73",
+        "summary": "쓰기 엔드포인트에 인증/인가 없음 — 이번 변경의 회귀는 아니고 performance-registration.md §7에서 이미 명시적으로 범위 밖으로 결정됨(무검증 등록). 별도 태스크로 추적 권고"
+      }
+    ],
+    "no_issues": [
+      "계층 규칙(ARCH-001/002/003) 위반 없음 — Service가 api.dto를 import하지 않음(TASK-001 재발 방지 확인됨)",
+      "트랜잭션 경계(@Transactional) 적절 — 검증이 모든 save보다 앞서 부분 저장 없음",
+      "정상 입력 범위에서 겹침 판정식·시각 순서 경계(등호 포함)·오픈 판정 경계·좌석 상한 경계·좌석 라벨 조립·취소 멱등성 모두 올바름",
+      "Plan의 reusable(PerformanceNotFoundException, PerformanceResponse, ErrorResponse, Clock, MutableClock) 재사용, ADR-0005(Clock 주입) 준수"
+    ]
+  },
+
+  "security": {
+    "input_validation": "FAIL — @RequestBody에 Bean Validation이 전혀 적용되지 않아 필수 필드 누락·범위 밖 값이 NPE/DB 제약 위반(500)으로 새고, 좌석 상한 검사는 정수 오버플로로 완전히 우회 가능하다(위 code_review 참고)",
+    "authorization": "해당 없음 — 이번 기능은 인증 없음이 명시적 결정(performance-registration.md §7, ADR 없음). 등록/수정/취소 전부 무검증",
+    "secrets": "해당 없음",
+    "logging": "해당 없음",
+    "dos_risk": "FAIL — 인증 없는 POST /api/performances 에 정수 오버플로를 유발하는 seatsPerRow 값을 보내면 프로세스가 OOM/무응답에 빠질 수 있다 (code-reviewer가 재현)"
+  },
+
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}

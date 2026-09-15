@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 14건(SC-14 Red 진행 중 철회), AC 9/9, HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | 테스트 14개, 14/14 실패(UnsupportedOperationException), 기존 20개 통과, HITL#2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 테스트 34/34 통과, 린트 error 0, 리팩토링 불필요 |
-| 4 Verify | 🔄 진행 중 | — | |
+| 4 Verify | ⛔ FAIL | CP-4.2 | code-reviewer 재현 — AC4 우회(역방향 범위/정수 오버플로), DoS 가능, 입력검증 부재. 롤백 대기 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건
