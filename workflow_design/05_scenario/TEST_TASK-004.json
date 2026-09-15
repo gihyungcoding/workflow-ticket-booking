@@ -1,9 +1,29 @@
 {
   "task_id": "TASK-004",
-  "attempt": 2,
-  "retry_note": "Phase 4 FAIL(VERIFY_TASK-004.json) → RETRY_SCENARIO 이후 SC-16~21 6건을 신규 Red로 추가. 기존 SC-01~13/15(attempt 1)는 이미 Green 상태이며 이 라운드에서 변경하지 않았다 — 아래 red_scenarios_attempt1은 그 기록을 그대로 보존한다.",
+  "attempt": 3,
+  "retry_note": "Phase 4 2차 검증(재검증) FAIL → RETRY_SCENARIO 이후 SC-22~24 3건을 신규 Red로 추가. 기존 SC-01~13/15(attempt 1)·SC-16~21(attempt 2)는 이미 Green 상태이며 이 라운드에서 변경하지 않았다 — 아래 red_scenarios_attempt1/attempt2는 그 기록을 그대로 보존한다.",
   "supersedes": "SCENARIO_TASK-004.json",
   "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
+  "red_scenarios_attempt3": [
+    { "scenario_id": "SC-22", "test_function": "test_sc22_title이_200자를_넘으면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by DataIntegrityViolationException (title 201자가 그대로 insert돼 performance.title VARCHAR(200) 제약 위반 — F10에 길이 검사 미구현)" },
+    { "scenario_id": "SC-23", "test_function": "test_sc23_sections_배열에_null_원소가_있으면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by java.lang.NullPointerException (Controller의 toSectionSpec(null) 호출에서 request.grade() — F11에 배열 원소 null 검사 미구현)" },
+    { "scenario_id": "SC-24", "test_function": "test_sc24_수정_시_title이_200자를_넘으면_거부된다", "status": "red", "failure": "AssertionFailedError (400 기대, 200 실제 — validateRequired에 길이 검사가 없어 그대로 통과하고, dirty checking으로 실제 UPDATE는 커밋 시점까지 미뤄져 @Transactional 테스트 롤백 안에서는 DB 제약 위반조차 드러나지 않음. code-reviewer가 사전에 경고한 테스트 하네스 사각지대를 그대로 재현한다)" }
+  ],
+  "red_result_attempt3": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --tests com.example.ticket_booking.api.PerformanceRegistrationApiTest --rerun-tasks",
+    "total": 23,
+    "failed": 3,
+    "passed": 20,
+    "existing_tests_still_passing": true,
+    "note": "attempt 1의 14개 + attempt 2의 6개 = 기존 20개가 전부 통과, 신규 3개(SC-22~24)만 실패. 이 클래스만 재실행했으므로 total은 클래스 범위(23)이며 전체 스위트(43개 예상)는 Phase 3에서 확인한다"
+  },
+  "inventory_check_attempt3": {
+    "scenarios": 23,
+    "test_functions": 23,
+    "match": true,
+    "new_this_round": 3
+  },
+  "purity_check_attempt3": "실패 3건의 원인이 각기 다르다(DB CHECK/제약 위반, NPE, AssertionFailedError) — attempt 2와 마찬가지로 이미 구현된 메서드에 새 검증 분기가 없어서 나는 실패라 원인이 균일하지 않은 것이 정상이다(memory:feedback-java-tdd-red-skeleton §5). SC-24의 AssertionFailedError(400 기대/200 실제)는 특히 '구현이 없어서'가 맞다 — DB 제약조차 걸리지 않고 그냥 통과해버리는, 검증 부재를 가장 분명하게 보여주는 형태다.",
   "red_scenarios_attempt2": [
     { "scenario_id": "SC-16", "test_function": "test_sc16_필수_필드가_없으면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by java.lang.NullPointerException (request.sections()가 null인 채로 .stream() 호출 — F10 미구현)" },
     { "scenario_id": "SC-17", "test_function": "test_sc17_구역의_rowStart가_rowEnd보다_뒤_알파벳이면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by DataIntegrityViolationException/ConstraintViolationException (음수 total_seats로 DB CHECK 위반 — F11 미구현, 역방향 범위 미검증)" },

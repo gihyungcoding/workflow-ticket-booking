@@ -1,8 +1,8 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "2b"
-phase_name: "Phase 2b - Red (attempt 3 진입 준비 완료, HITL#1 승인됨)"
+phase: "3"
+phase_name: "Phase 3 - Green (attempt 3 진입 준비 완료, HITL#2 승인됨)"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-2.4_hitl1-approved_retry2
+last_checkpoint: CP-2.6_hitl2-approved_retry2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,25 +23,21 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 재검증(attempt 2) FAIL → Phase 2a(attempt 3) 롤백을 마쳤다. code-reviewer가
-재현한 잔여 결함 2건(title/venue 200자 초과, sections 배열 null 원소)에 대응하는
-시나리오 SC-22(title 길이, POST)·SC-23(sections null 원소)·SC-24(title 길이, PUT —
-PUT 경로도 같은 결함을 공유함을 code-reviewer가 확인해 신규 추가)를 확정했다.
-scenario-validator PASS(경고 3건, 모두 이번 범위 밖으로 판단·미수정), HITL#1 승인
-완료. `validate_phase2a_gate.py` 7/7 통과.
+Phase 2b(attempt 3) Red 테스트 3건(SC-22/23/24)을 작성·실행해 Red를 확인하고 HITL#2
+승인을 받았다. 기존 20건은 계속 Green.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 Phase 2b(attempt 3)를 시작한다 — SC-22/23/24를 실패하는 테스트로
-옮긴다. 유의할 점:
-- SC-24(PUT)를 작성할 때 `PerformanceRegistrationApiTest` 클래스 레벨의
-  `@Transactional`이 PUT 경로의 DB 제약 위반(500)을 가린다는 것을 code-reviewer가
-  발견했다 — 서비스 계층에서 던지는 예외/400 응답을 직접 단언하도록 작성한다
-- title/venue 길이 검사는 `validateRequired`(등록·수정 공유) 한 곳에서 처리하되,
-  SC-22(POST)와 SC-24(PUT) 둘 다 Red로 옮겨 공유가 실제로 되는지 강제한다
-- sections null 원소(SC-23)는 Controller의 `toSectionSpec` 변환이 원소를 그대로
-  통과시키고 Service의 F11 검증에서 null을 잡도록 — Service만 고치면 Controller
-  단계에서 먼저 NPE가 난다
+`wf-develop` 스킬로 Phase 3(attempt 3, Green)을 시작한다 — 최소 구현으로 SC-22/23/24를
+통과시킨다:
+1. `PerformanceService.validateRequired`(F10, 등록·수정 공유)에 title/venue 길이
+   검사(≤200자) 추가 — 이 한 곳만 고치면 SC-22(POST)·SC-24(PUT) 둘 다 해결돼야
+   한다(공유 여부를 Red 테스트 2건이 강제한다)
+2. `PerformanceController`의 `toSectionSpec` 변환이 원소를 그대로 Service에
+   통과시키도록 수정(Controller 단계에서 먼저 NPE 나지 않게), `PerformanceService.
+   validateSection`(F11)에서 null 원소를 잡도록 검사 추가
+3. 구현 후 `PerformanceRegistrationApiTest` 클래스 전체(`./gradlew test`)와 전체
+   스위트를 실행해 43개(기존 40 + 신규 3) 전부 Green인지, 린트 error 0인지 확인
 
 ## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
 

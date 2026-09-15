@@ -28,8 +28,9 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * TASK-004 시나리오 SC-01~SC-13, SC-15~SC-21 (SC-14는 Phase 2b에서 철회 — SCENARIO_TASK-004.md 참고).
- * SC-16~SC-21은 Phase 4 FAIL(VERIFY_TASK-004.json) 이후 attempt 2에서 추가됐다.
+ * TASK-004 시나리오 SC-01~SC-13, SC-15~SC-24 (SC-14는 Phase 2b에서 철회 — SCENARIO_TASK-004.md 참고).
+ * SC-16~SC-21은 Phase 4 1차 FAIL(VERIFY_TASK-004.json) 이후 attempt 2에서, SC-22~SC-24는 Phase 4
+ * 2차 FAIL 이후 attempt 3에서 추가됐다.
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-004.md
  */
@@ -515,6 +516,21 @@ class PerformanceRegistrationApiTest {
         .formatted(startAt, openAt, closeAt);
   }
 
+  private String registerJsonWithTitle(
+      String title, String startAt, String openAt, String closeAt, String sectionsJson) {
+    return """
+        {
+          "title": "%s",
+          "venue": "OO홀",
+          "startAt": "%s",
+          "openAt": "%s",
+          "closeAt": "%s",
+          "sections": %s
+        }
+        """
+        .formatted(title, startAt, openAt, closeAt, sectionsJson);
+  }
+
   @Test
   void test_sc16_필수_필드가_없으면_등록이_거부된다() throws Exception {
     // Given 등록 요청에 sections 필드 자체가 없다(JSON에 없음, null — 빈 배열 []이 아니다)
@@ -671,5 +687,89 @@ class PerformanceRegistrationApiTest {
     // And 응답 코드는 INVALID_SECTION 이다
     Map<String, Object> body = bodyAsMap(result);
     assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+  }
+
+  @Test
+  void test_sc22_title이_200자를_넘으면_등록이_거부된다() throws Exception {
+    // Given 등록 요청의 title이 201자이다
+    Instant now = clock.instant();
+    String longTitle = "가".repeat(201);
+    // And 나머지 필드는 유효하다
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJsonWithTitle(
+            longTitle,
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_REQUEST 이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
+  }
+
+  @Test
+  void test_sc23_sections_배열에_null_원소가_있으면_등록이_거부된다() throws Exception {
+    // Given 등록 요청의 sections 배열에 null 원소가 하나 있다 ([null])
+    Instant now = clock.instant();
+    // And 나머지 필드는 유효하다
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            "[null]");
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION 이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+  }
+
+  @Test
+  void test_sc24_수정_시_title이_200자를_넘으면_거부된다() throws Exception {
+    // Given now < openAt 인 공연이 등록되어 있다
+    Instant now = clock.instant();
+    Performance p =
+        performance(
+            "원래 제목",
+            now.plus(30, ChronoUnit.DAYS),
+            now.plus(5, ChronoUnit.DAYS),
+            now.plus(20, ChronoUnit.DAYS),
+            100,
+            100,
+            false);
+
+    // And 수정 요청의 title이 201자이다
+    String longTitle = "가".repeat(201);
+    String json =
+        updateJson(
+            longTitle,
+            "새 장소",
+            now.plus(31, ChronoUnit.DAYS).toString(),
+            now.plus(6, ChronoUnit.DAYS).toString(),
+            now.plus(21, ChronoUnit.DAYS).toString());
+
+    // When PUT /api/performances/{id} 를 호출한다
+    MvcResult result = putJson("/api/performances/" + p.getId(), json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_REQUEST 이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
   }
 }
