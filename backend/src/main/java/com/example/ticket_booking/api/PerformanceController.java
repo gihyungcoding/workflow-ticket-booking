@@ -46,7 +46,10 @@ public class PerformanceController {
   @PostMapping
   public ResponseEntity<PerformanceResponse> register(
       @RequestBody RegisterPerformanceRequest request) {
-    List<SectionSpec> sections = request.sections().stream().map(this::toSectionSpec).toList();
+    List<SectionSpec> sections =
+        request.sections() == null
+            ? null
+            : request.sections().stream().map(this::toSectionSpec).toList();
     PerformanceResponse response =
         performanceService.registerPerformance(
             request.title(),

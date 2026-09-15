@@ -1,8 +1,8 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "3"
-phase_name: "Phase 3 - Green (재시도, attempt 2)"
+phase: "4"
+phase_name: "Phase 4 - Verify (재검증, attempt 2)"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-2.6_retry1
+last_checkpoint: CP-3.4_retry1
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,18 +23,16 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 FAIL(code-reviewer가 좌석 상한 우회·DoS 가능성·입력검증 부재를 재현) 이후
-RETRY_SCENARIO로 Phase 2a를 재작업했다. 오류 시나리오 6건(SC-16~21: 필수 필드
-누락→INVALID_REQUEST/F10, 역방향 행 범위·seatsPerRow 범위·빈 rowStart·grade
-길이→INVALID_SECTION/F11, 정수 오버플로→SEAT_LIMIT_EXCEEDED/F3 boundary)을 추가해
-시나리오 총 20건, 독립검증 3회 후 PASS, HITL#1 재승인 받음. Plan에도 F10/F11 흐름과
-새 출력 2종을 반영했다.
+Phase 2a→2b→3 재시도를 모두 마쳤다. F10(필수 필드)/F11(구역 형식) 검증을
+구현하고, 좌석 합산을 long으로 바꿔 정수 오버플로 우회를 막았으며, `Seat`에
+`@ManyToOne` 관계를 추가해 FK 정합성을 맞췄다. 전체 40개 테스트 통과, 린트
+error 0.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 Phase 2b를 재개한다 — SC-16~SC-21 6개를 기존
-`PerformanceRegistrationApiTest.java`에 이어서 Red 테스트로 작성한다(기존 14개는
-그대로 둔다). 전체 실행 시 기존 14개는 계속 통과, 신규 6개만 실패해야 한다.
+`wf-verify` 스킬로 Phase 4 재검증을 시작한다 — 이전 FAIL의 근거(AC4 우회 재현,
+DoS 가능성, 입력검증 부재)가 실제로 해소됐는지 code-reviewer로 다시 확인하고,
+acceptance_criteria 9건을 다시 대조한다.
 
 ## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
 

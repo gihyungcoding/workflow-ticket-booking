@@ -28,7 +28,8 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * TASK-004 시나리오 SC-01~SC-13, SC-15 (SC-14는 Phase 2b에서 철회 — SCENARIO_TASK-004.md 참고).
+ * TASK-004 시나리오 SC-01~SC-13, SC-15~SC-21 (SC-14는 Phase 2b에서 철회 — SCENARIO_TASK-004.md 참고).
+ * SC-16~SC-21은 Phase 4 FAIL(VERIFY_TASK-004.json) 이후 attempt 2에서 추가됐다.
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-004.md
  */
@@ -539,7 +540,8 @@ class PerformanceRegistrationApiTest {
   void test_sc17_구역의_rowStart가_rowEnd보다_뒤_알파벳이면_등록이_거부된다() throws Exception {
     // Given 등록 요청에 구역 하나(rowStart="E", rowEnd="C")가 있다 (역방향 범위)
     Instant now = clock.instant();
-    String sections = """
+    String sections =
+        """
         [{"grade":"VIP","price":100,"rowStart":"E","rowEnd":"C","seatsPerRow":10}]
         """;
     String json =
@@ -566,7 +568,8 @@ class PerformanceRegistrationApiTest {
   void test_sc18_구역의_seatsPerRow가_0_이하이면_등록이_거부된다() throws Exception {
     // Given 등록 요청에 구역 하나(seatsPerRow=0)가 있다
     Instant now = clock.instant();
-    String sections = """
+    String sections =
+        """
         [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":0}]
         """;
     String json =
@@ -590,7 +593,8 @@ class PerformanceRegistrationApiTest {
   void test_sc19_구역의_rowStart가_빈_문자열이면_등록이_거부된다() throws Exception {
     // Given 등록 요청에 구역 하나(rowStart="")가 있다
     Instant now = clock.instant();
-    String sections = """
+    String sections =
+        """
         [{"grade":"VIP","price":100,"rowStart":"","rowEnd":"A","seatsPerRow":10}]
         """;
     String json =
@@ -651,7 +655,7 @@ class PerformanceRegistrationApiTest {
         """
         [{"grade":"%s","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
         """
-        .formatted(longGrade);
+            .formatted(longGrade);
     String json =
         registerJson(
             now.plus(30, ChronoUnit.DAYS).toString(),

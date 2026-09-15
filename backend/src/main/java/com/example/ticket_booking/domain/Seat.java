@@ -3,16 +3,19 @@ package com.example.ticket_booking.domain;
 import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
- * V2__create_seat.sql 의 NOT NULL/CHECK/UNIQUE 제약을 애노테이션으로도 표현한다 (ADR-0009). 등록 시 구역(등급)×행×열 조합마다
+ * V2__create_seat.sql 의 NOT NULL/CHECK/UNIQUE/FK 제약을 애노테이션으로도 표현한다 (ADR-0009). 등록 시 구역(등급)×행×열 조합마다
  * 하나씩 생성되며, seatLabel 은 Service 가 계산해 넘긴다 — 이 엔티티 자체는 계산하지 않는다.
  */
 @Entity
@@ -30,8 +33,9 @@ public class Seat {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "performance_id", nullable = false)
-  private Long performanceId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "performance_id", nullable = false)
+  private Performance performance;
 
   @Column(nullable = false, length = 50)
   private String grade;
@@ -55,13 +59,13 @@ public class Seat {
   protected Seat() {}
 
   public Seat(
-      Long performanceId,
+      Performance performance,
       String grade,
       String seatRow,
       Integer seatNumber,
       String seatLabel,
       Integer price) {
-    this.performanceId = performanceId;
+    this.performance = performance;
     this.grade = grade;
     this.seatRow = seatRow;
     this.seatNumber = seatNumber;
@@ -74,7 +78,7 @@ public class Seat {
   }
 
   public Long getPerformanceId() {
-    return performanceId;
+    return performance.getId();
   }
 
   public String getGrade() {

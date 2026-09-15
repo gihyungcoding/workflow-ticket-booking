@@ -1,6 +1,70 @@
 {
   "task_id": "TASK-004",
-  "changed_files": [
+  "attempt": 2,
+  "retry_note": "Phase 4 FAIL(VERIFY_TASK-004.json) → RETRY_SCENARIO → Phase 2b(SC-16~21 Red 6건) 이후 Green. attempt 1의 changed_files/reused는 아래에 그대로 보존한다.",
+  "changed_files_attempt2": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "F10(validateRequired)/F11(validateSection) 검증 메서드 추가, registerPerformance/updatePerformance 앞단에서 호출. 좌석 합산을 int→long(totalSeatsLong)으로 변경해 오버플로 방지, 5,000 이하 확인 후에만 int로 캐스팅. generateSeats가 Performance 객체를 받도록 변경(Long id 대신)",
+      "lines_changed": 48
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/Seat.java",
+      "change": "performanceId(Long) 필드를 @ManyToOne performance(Performance) 관계로 교체 — V2 마이그레이션의 FK를 애노테이션으로도 표현. getPerformanceId()는 performance.getId()로 위임해 기존 호출부(테스트 포함) 변경 없이 유지",
+      "lines_changed": 12
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "request.sections()가 null이면 SectionSpec 리스트 변환을 건너뛰고 null을 그대로 Service에 전달 (기존엔 null.stream()으로 NPE)",
+      "lines_changed": 4
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+      "change": "InvalidRequestException/InvalidSectionException → 400 핸들러 2건 추가",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidRequestException.java",
+      "change": "신규 — F10, 필수 필드 누락",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidSectionException.java",
+      "change": "신규 — F11, 구역 형식 오류",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/SeatLimitExceededException.java",
+      "change": "생성자 파라미터를 int→long으로 변경 (오버플로 방지로 커진 합산값을 그대로 메시지에 담기 위함)",
+      "lines_changed": 1
+    }
+  ],
+  "test_result_attempt2": {
+    "command": "cd backend && ./gradlew test",
+    "total": 40,
+    "passed": 40,
+    "failed": 0,
+    "target_tests_passed": 20
+  },
+  "lint_attempt2": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0,
+    "note": "spotlessApply 2회 적용(구현 변경 1회, 테스트 파일 주석 수정 1회) 후 재검증 통과"
+  },
+  "refactoring_attempt2": [
+    {
+      "what": "리팩토링 없음",
+      "why": "validateRequired/validateSection을 register/update가 공유하도록 이미 분리했고, 이름이 각자 역할을 명확히 드러내 추가로 다듬을 중복이 없다"
+    }
+  ],
+  "scope_deviations_attempt2": [
+    {
+      "what": "Seat.performanceId(Long) → performance(Performance) 관계 변경, generateSeats 시그니처를 Long에서 Performance로 변경",
+      "why": "Plan amendments(attempt 2)에 이미 예정된 변경 — V2 마이그레이션의 FK를 엔티티가 표현하지 못해 테스트/프로덕션 스키마가 갈리던 문제(code-reviewer 지적)를 고치려면 필요했다. getPerformanceId()를 유지해 테스트 코드는 변경하지 않았다"
+    }
+  ],
+  "changed_files_attempt1_kept_for_reference": [
     {
       "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
       "change": "registerPerformance/updatePerformance/cancelPerformance 실제 구현 — 검증 순서(EMPTY_SECTIONS → INVALID_TIME_ORDER → SEAT_LIMIT_EXCEEDED → DUPLICATE_SEAT_RANGE), 좌석 생성(generateSeats), 행 범위 겹침 판정(rowRangesOverlap). 생성자에 SeatRepository 주입 추가, MAX_SEATS=5000 상수 추가",
@@ -21,10 +85,11 @@
   "test_status": "green",
   "test_result": {
     "command": "cd backend && ./gradlew test",
-    "total": 34,
-    "passed": 34,
+    "total": 40,
+    "passed": 40,
     "failed": 0,
-    "target_tests_passed": 14
+    "target_tests_passed": 20,
+    "note": "이 필드는 현재(최종) 상태다 — attempt 1 시점 수치(34/34, target 14)는 changed_files_attempt1_kept_for_reference 옆의 위 test_result 대신 이 커밋 이전 git 이력 참고"
   },
   "lint": {
     "command": "cd backend && ./gradlew spotlessCheck",
