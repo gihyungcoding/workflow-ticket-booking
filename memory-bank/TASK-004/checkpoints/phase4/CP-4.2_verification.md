@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-15T01:00:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "code-reviewer가 재현 가능한 정확성/보안 결함을 확인 — status: FAIL. AC4(좌석 상한)가 역방향 행 범위/정수 오버플로로 우회되고, 인증 없는 등록 엔드포인트가 단일 요청으로 OOM을 유발할 수 있다. Plan이 명시한 입력 검증이 전혀 구현되지 않았다"
 

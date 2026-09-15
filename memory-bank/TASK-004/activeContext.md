@@ -2,7 +2,7 @@
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
 phase: "4"
-phase_name: "Phase 4 - Verify (재검증, attempt 2)"
+phase_name: "Phase 4 - Verify (재검증, attempt 2) — FAIL, Phase 2a(attempt 3) 롤백 대기"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-3.4_retry1
+last_checkpoint: CP-4.2_retry1
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,16 +23,27 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a→2b→3 재시도를 모두 마쳤다. F10(필수 필드)/F11(구역 형식) 검증을
-구현하고, 좌석 합산을 long으로 바꿔 정수 오버플로 우회를 막았으며, `Seat`에
-`@ManyToOne` 관계를 추가해 FK 정합성을 맞췄다. 전체 40개 테스트 통과, 린트
-error 0.
+Phase 4 재검증(attempt 2)을 마쳤다 — 결과는 FAIL. attempt 1 FAIL의 원인(좌석 상한
+우회, 정수 오버플로, 필수 필드 누락 500, grade 길이, FK 애노테이션)은 모두 해소를
+확인했지만, code-reviewer가 실행으로 잔여 결함 2건을 새로 재현했다: title/venue
+200자 초과(등록·수정 양쪽) 500, sections 배열의 null 원소 500(NPE). 상세는
+`workflow_design/07_verify/VERIFY_TASK-004.json`(attempt 2) 참고.
+
+**작업 트리에 attempt 3 초안이 이미 있었다** — `PLAN_TASK-004.json`/
+`SCENARIO_TASK-004.json`/`.md` 에 SC-22(title 길이)·SC-23(sections null 원소)가
+커밋되지 않은 채로 이미 작성돼 있었다(이전 세션이 미완료 상태로 남긴 것으로
+추정). code-reviewer 재확인 결과 이 초안의 진단이 정확했다. 단, `human_input.
+generate_red_trigger` 가 아직 `false` 라 HITL#1을 거치지 않은 상태다.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4 재검증을 시작한다 — 이전 FAIL의 근거(AC4 우회 재현,
-DoS 가능성, 입력검증 부재)가 실제로 해소됐는지 code-reviewer로 다시 확인하고,
-acceptance_criteria 9건을 다시 대조한다.
+사용자에게 Phase 2a(attempt 3) 롤백을 제안하고 확인받는다. 승인되면:
+1. SC-22에 PUT 경로(수정)도 대표로 포함되도록 보강 — code-reviewer가 PUT도 같은
+   title/venue 길이 결함을 공유한다고 확인했으나 초안은 POST만 다룸
+2. scenario-validator 독립검증 → HITL#1 (`generate_red_trigger`를 true로)
+3. Phase 2b(Red) — 테스트 클래스의 클래스 레벨 `@Transactional`이 PUT 경로 DB 제약
+   위반을 가린다는 것을 유의해 서비스 계층 400 단언으로 작성
+4. Phase 3(Green) → Phase 4 재검증(attempt 3)
 
 ## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
 

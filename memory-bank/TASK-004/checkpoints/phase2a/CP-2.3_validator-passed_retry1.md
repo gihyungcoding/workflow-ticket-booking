@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-15T02:10:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "attempt 2 — 독립검증 3회 라운드 끝에 overall.pass=true, warn 2건(경미, 1건은 SC-21로 즉시 해소)"
 

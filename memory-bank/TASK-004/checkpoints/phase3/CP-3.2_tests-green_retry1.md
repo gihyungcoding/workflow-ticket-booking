@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-15T04:00:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "F10/F11 검증, long 산술, Seat FK 관계를 구현해 전체 스위트 40/40 통과"
 

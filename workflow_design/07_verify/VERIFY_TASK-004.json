@@ -1,35 +1,49 @@
 {
   "task_id": "TASK-004",
+  "attempt": 2,
   "status": "FAIL",
-  "status_reason": "code-reviewer가 확인·재현한 정확성/보안 결함이 있다 — 좌석 상한(AC4)이 역방향 행 범위·정수 오버플로로 우회되고, 인증 없는 등록 엔드포인트가 단일 요청으로 OOM/무응답을 일으킬 수 있다(DoS). Plan이 명시한 입력 제약(design.inputs)이 하나도 구현되지 않아 필수 필드 누락 시 500이 난다.",
+  "status_reason": "code-reviewer가 실행으로 재현한 정확성 결함 2건 — title/venue가 200자를 넘으면(등록·수정 양쪽) DataIntegrityViolationException으로 500이 새고, sections 배열에 null 원소가 있으면 Controller 변환에서 NPE로 500이 샌다. attempt 1 FAIL의 원인(좌석 상한 우회, 정수 오버플로, 필수 필드 누락 500, 역방향 행 범위)은 모두 해소를 확인했다.",
+
+  "previous_attempt": {
+    "attempt": 1,
+    "status": "FAIL",
+    "reference": "git history — 이 파일의 attempt 1 버전은 커밋 ee1f10a 참고",
+    "resolved_in_this_attempt": [
+      "좌석 상한(AC4) 우회 — 역방향 행 범위/정수 오버플로 모두 long 산술 정정으로 해소 확인",
+      "인증 없는 등록 경로의 OOM/DoS — 위와 동일 원인, 해소 확인",
+      "필수 필드(null/blank) 누락 시 500 — validateRequired로 해소 확인",
+      "grade 과다 길이로 인한 seat_label 초과 500 — MAX_GRADE_LENGTH=20으로 해소, 경계값(20자+5000석) 실제 등록 성공 확인",
+      "Seat 엔티티 FK 애노테이션 누락 — @ManyToOne + @JoinColumn 반영 확인"
+    ]
+  },
 
   "evidence": {
     "tests": {
-      "command": "cd backend && ./gradlew test",
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --rerun-tasks",
       "exit_code": 0,
-      "summary": "34 tests, 0 failed (BUILD SUCCESSFUL) — 단, 아래 code_review 결함을 재현하는 테스트가 시나리오/테스트 세트에 없어 통과 상태로는 결함이 드러나지 않는다"
+      "summary": "40 tests, 0 failed, 0 skipped (test-results XML 집계 기준)"
     },
     "lint": {
-      "command": "cd backend && ./gradlew spotlessCheck",
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew spotlessCheck",
       "exit_code": 0,
       "summary": "BUILD SUCCESSFUL — error 0"
     },
     "diff": {
-      "command": "git diff --stat develop...HEAD",
-      "summary": "35 files changed, 2467 insertions(+), 5 deletions(-)"
+      "command": "git diff --stat develop...HEAD -- backend/",
+      "summary": "19 files changed, 1160 insertions(+), 1 deletion(-)"
     }
   },
 
   "acceptance_criteria": [
-    { "criterion": "구역 1개 이상으로 POST 시 201과 함께 seat 행 생성", "verdict": "PASS", "evidence": "test_sc01 통과" },
-    { "criterion": "performance.total_seats/available_seats == 생성된 좌석 총수", "verdict": "PASS", "evidence": "test_sc01, test_sc15 통과" },
-    { "criterion": "시각 순서 위반 시 400 INVALID_TIME_ORDER", "verdict": "PASS", "evidence": "test_sc02, test_sc03, test_sc08 통과" },
-    { "criterion": "좌석 총수 5,000 초과 시 400 SEAT_LIMIT_EXCEEDED", "verdict": "FAIL", "evidence": "code-reviewer가 재현: 구역 하나가 역방향 행 범위(rowStart>rowEnd)이면 rowCount가 음수가 되어 다른 구역의 좌석 수를 상쇄한다 — 합산이 5,000 이하로 보여 실제로는 25,000개 seat가 생성되는데도 201이 반환된다. 정수 오버플로(구역별 seatsPerRow를 극단적으로 크게 잡는 경우)로도 동일하게 우회된다. 이 경로를 검증하는 시나리오/테스트가 없어 기존 14개 테스트는 전부 통과하지만 AC4가 실질적으로 깨져 있다" },
-    { "criterion": "두 구역의 행 범위가 겹치면 409 DUPLICATE_SEAT_RANGE", "verdict": "PASS (정상 입력 범위 한정)", "evidence": "test_sc05 통과. 단, 위와 같은 역방향 구간에서는 겹침 판정식이 성립하지 않아(aStart<=bEnd && bStart<=aEnd) 이 경로도 함께 우회된다" },
-    { "criterion": "now < openAt 인 공연을 PUT으로 수정하면 200과 변경 필드 반영", "verdict": "PASS", "evidence": "test_sc06 통과" },
-    { "criterion": "now >= openAt 인 공연을 수정하려 하면 409 REGISTRATION_ALREADY_OPEN", "verdict": "PASS", "evidence": "test_sc07 통과" },
-    { "criterion": "존재하지 않는 id로 수정/취소 시 404 PERFORMANCE_NOT_FOUND", "verdict": "PASS", "evidence": "test_sc09, test_sc10 통과" },
-    { "criterion": "취소 시 status=CANCELLED, 재취소도 200(멱등)", "verdict": "PASS", "evidence": "test_sc11, test_sc12 통과" }
+    { "criterion": "구역 1개 이상으로 POST 시 201과 함께 seat 행 생성", "verdict": "PASS", "evidence": "기존 테스트 통과 (40/40)" },
+    { "criterion": "performance.total_seats/available_seats == 생성된 좌석 총수", "verdict": "PASS", "evidence": "기존 테스트 통과" },
+    { "criterion": "시각 순서 위반 시 400 INVALID_TIME_ORDER", "verdict": "PASS", "evidence": "기존 테스트 통과" },
+    { "criterion": "좌석 총수 5,000 초과 시 400 SEAT_LIMIT_EXCEEDED", "verdict": "PASS", "evidence": "SC-17~20 통과. code-reviewer가 long 캐스팅 순서(곱셈 전 캐스팅, 상한 판정 후 int 축소)와 rowStart>rowEnd 사전 차단을 실행으로 재확인 — attempt 1의 우회 경로 재현 안 됨" },
+    { "criterion": "두 구역의 행 범위가 겹치면 409 DUPLICATE_SEAT_RANGE", "verdict": "PASS", "evidence": "역방향 구간이 validateSection에서 좌석상한/겹침 검사보다 먼저 차단되므로 겹침 판정식이 항상 정상 범위에서만 평가됨" },
+    { "criterion": "now < openAt 인 공연을 PUT으로 수정하면 200과 변경 필드 반영", "verdict": "PASS", "evidence": "기존 테스트 통과" },
+    { "criterion": "now >= openAt 인 공연을 수정하려 하면 409 REGISTRATION_ALREADY_OPEN", "verdict": "PASS", "evidence": "기존 테스트 통과" },
+    { "criterion": "존재하지 않는 id로 수정/취소 시 404 PERFORMANCE_NOT_FOUND", "verdict": "PASS", "evidence": "기존 테스트 통과" },
+    { "criterion": "취소 시 status=CANCELLED, 재취소도 200(멱등)", "verdict": "PASS", "evidence": "기존 테스트 통과" }
   ],
 
   "screens": [],
@@ -39,28 +53,28 @@
     "error_count": 0,
     "warn_count": 3,
     "no_target": [],
-    "files_scanned": 52,
+    "files_scanned": 56,
     "violations": [
       { "id": "DESIGN-001", "severity": "warn", "detail": "frontend/src/main.tsx:9 createTheme() — 이 태스크 이전부터 있던 기존 부채, 무관" },
       { "id": "DESIGN-003", "severity": "warn", "detail": "PerformanceDetailPage.tsx:36, PerformanceListPage.tsx:45 — 이 태스크 이전부터 있던 기존 부채, 무관" }
     ],
     "prose_coverage": [
-      { "rule": "API: 비즈니스 로직을 갖지 않는다", "constraint": null, "state": "미인코딩", "note": "이번 diff에서 위반 없음 — Controller는 api.dto→SectionSpec 필드 매핑과 Service 위임만 함(직접 확인)" },
+      { "rule": "API: 비즈니스 로직을 갖지 않는다", "constraint": null, "state": "미인코딩", "note": "이번 diff에서 위반 없음 — Controller는 dto 매핑과 Service 위임만 함" },
       { "rule": "Service: HTTP 관심사를 갖지 않는다", "constraint": "ARCH-002", "state": "✓" },
       { "rule": "Service: SQL/영속성 프레임워크 타입을 직접 다루지 않는다", "constraint": "ARCH-003", "state": "✓" },
-      { "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어를 갖지 않는다", "constraint": null, "state": "미인코딩", "note": "이번 diff에서 위반 없음 — Seat/Performance는 순수 필드 보관·대입만 함(직접 확인)" },
-      { "rule": "Repository: 도메인 규칙을 판단하지 않는다", "constraint": null, "state": "미인코딩", "note": "SeatRepository는 JpaRepository 확장뿐, 커스텀 로직 없음(직접 확인)" }
+      { "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어를 갖지 않는다", "constraint": null, "state": "미인코딩", "note": "Seat의 @ManyToOne 추가는 JPA 매핑(영속성 애노테이션)일 뿐 접근 로직이 아님 — Performance.java 선례와 동일 판단" },
+      { "rule": "Repository: 도메인 규칙을 판단하지 않는다", "constraint": null, "state": "미인코딩", "note": "SeatRepository는 JpaRepository 확장뿐, 변경 없음" }
     ]
   },
 
   "regression": {
-    "full_suite": "34/34 passed",
+    "full_suite": "40/40 passed",
     "callers_checked": true,
-    "note": "PerformanceService 생성자 시그니처 변경(SeatRepository 추가)의 다른 호출처 없음 확인(grep). Performance/updateSchedule·cancel의 다른 호출처 없음"
+    "note": "PerformanceController.toSectionSpec/PerformanceService 생성자 변경의 다른 호출처 없음(grep). 단, code-reviewer가 테스트 하네스 결함을 발견 — 아래 code_review [test] 항목 참고"
   },
 
   "scope_deviations": [
-    { "what": "PerformanceService 생성자에 SeatRepository 파라미터 추가", "status": "수용 — Plan이 이미 SeatRepository 신규 생성을 예정했고 필수 의존성" }
+    { "what": "PerformanceService 생성자에 SeatRepository 파라미터 추가", "status": "수용 — attempt 1에서 이미 검토·수용됨" }
   ],
 
   "code_review": {
@@ -68,73 +82,49 @@
     "findings": [
       {
         "severity": "correctness",
-        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:70,122,126,134",
-        "summary": "역방향 행 범위(rowStart>rowEnd) 또는 음수 seatsPerRow가 음수로 합산돼 5,000석 상한이 무력화되고 total_seats가 실제 좌석 수와 어긋난다. 겹침 판정도 역방향 구간에서 성립하지 않는다",
-        "reproduction": "sections=[{VIP,A~Y,1000},{R,Z~E,1000}] → totalSeats=25000+(-20000)=5000(상한 통과), 겹침 미탐지, 실제로는 25,000개 seat 생성"
-      },
-      {
-        "severity": "security",
-        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:70",
-        "summary": "int 오버플로로 상한 검사를 우회한 뒤 수억~수십억 개 Seat 객체 생성을 시도해 OOM/무응답 유발 — 인증 없는 엔드포인트라 요청 1건으로 가능",
-        "reproduction": "sections=[{A,A~A,1200000000},{B,B~B,1200000000}] → 합계가 int 래핑으로 음수가 되어 상한 검사 통과, generateSeats가 12억 개 Seat 생성 시도"
+        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:126",
+        "summary": "validateRequired가 title/venue의 null/blank만 보고 길이를 검사하지 않아, 200자(VARCHAR(200)) 초과 시 등록·수정 양쪽 모두 DataIntegrityViolationException으로 500이 샌다",
+        "reproduction": "POST /api/performances, title=\"가\".repeat(201) → DataIntegrityViolationException: Value too long for column \"title CHARACTER VARYING(200)\". PUT 경로도 동일 원인으로 커밋 시점에 500(재현: 오픈 전 공연 생성 후 PUT title 201자)"
       },
       {
         "severity": "correctness",
-        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:122",
-        "summary": "단일 구역의 rowStart>rowEnd 오타는 400이 아니라 500이 된다 (totalSeats<=0으로 DB CHECK 위반, 매핑되지 않은 예외)"
-      },
-      {
-        "severity": "correctness",
-        "location": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java:49",
-        "summary": "필수 필드 누락(sections/startAt/openAt/closeAt/title/venue/price) 시 NPE 또는 DB NOT NULL 위반으로 500 — @RequestBody에 검증이 전혀 없음"
-      },
-      {
-        "severity": "design",
-        "location": "workflow_design/04_plan/PLAN_TASK-004.json design.inputs",
-        "summary": "Plan이 명시한 입력 제약(필수, 길이, 범위, A~Z 단일 대문자, rowStart<=rowEnd)이 전혀 구현되지 않음. spring-boot-starter-validation 의존성은 이미 있으나 jakarta.validation/@Valid 사용처 0건"
-      },
-      {
-        "severity": "correctness",
-        "location": "backend/src/main/java/com/example/ticket_booking/domain/Seat.java:45",
-        "summary": "seat_label VARCHAR(30)이 grade(최대 50자) + 행 + 번호 조합(최대 56자)을 담지 못해 긴 등급명에서 insert 시 500"
+        "location": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java:52",
+        "summary": "sections 리스트 자체의 null만 막고 원소의 null은 그대로 toSectionSpec에 전달돼 request.grade() 호출에서 NPE로 500이 샌다. Service의 F11 검증에 도달하기 전에 Controller에서 터지므로 Service만 고쳐선 막히지 않는다",
+        "reproduction": "POST /api/performances, sections=[null] 또는 [{정상 구역}, null] → NullPointerException: Cannot invoke \"SectionRequest.grade()\" because \"request\" is null"
       },
       {
         "severity": "test",
-        "location": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
-        "summary": "구역 필드 오입력(역방향 범위, 음수/0 seatsPerRow, 필수 필드 누락) 경로를 검증하는 테스트가 전혀 없다 — 시나리오 세트 자체에 이 경로가 없어 위 결함들이 그린으로 통과했다"
+        "location": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java:39",
+        "summary": "테스트 클래스의 클래스 레벨 @Transactional이 수정(PUT) 경로의 DB 제약 위반을 가린다 — 테스트 트랜잭션이 롤백되어 flush/commit이 일어나지 않으므로, 동일한 'PUT + 201자 title' 요청이 @Transactional 테스트 안에서는 200(예외 없이 통과)이지만 실제 커밋 환경에서는 500이 난다. 다음 attempt에서 PUT 경로 테스트를 추가할 때 이 사각지대를 고려해야 한다(서비스 계층 400 검증으로 막되, DB 제약 의존 검증이면 비트랜잭션 테스트나 flush가 필요)"
       },
       {
         "severity": "design",
-        "location": "backend/src/main/java/com/example/ticket_booking/domain/Seat.java:22",
-        "summary": "엔티티가 V2 마이그레이션의 FK(REFERENCES performance(id))를 애노테이션으로 표현하지 않아 테스트(H2, ddl-auto)와 프로덕션 스키마가 갈린다 — Performance.java의 선례(ADR-0006, 마이그레이션과 어긋나지 않게 유지)와 불일치"
-      },
-      {
-        "severity": "perf",
         "priority": "low",
-        "location": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java:87",
-        "summary": "Seat가 GenerationType.IDENTITY라 saveAll에서 JDBC 배치가 비활성화됨 — 5,000석 등록 시 5,000회 왕복"
-      },
-      {
-        "severity": "security",
-        "priority": "low",
-        "location": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java:46,61,73",
-        "summary": "쓰기 엔드포인트에 인증/인가 없음 — 이번 변경의 회귀는 아니고 performance-registration.md §7에서 이미 명시적으로 범위 밖으로 결정됨(무검증 등록). 별도 태스크로 추적 권고"
+        "location": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+        "summary": "역직렬화 실패(HttpMessageNotReadableException)는 400이지만 body가 비어 있어 Plan의 ErrorResponse{code,message} 계약이 깨진다 — 상태 코드는 맞으므로 이번 FAIL 사유에는 포함하지 않되 기록해둔다",
+        "reproduction": "price에 int 범위를 넘는 값, 깨진 JSON, 파싱 불가한 날짜 문자열 — 모두 400 + 빈 body"
       }
     ],
     "no_issues": [
-      "계층 규칙(ARCH-001/002/003) 위반 없음 — Service가 api.dto를 import하지 않음(TASK-001 재발 방지 확인됨)",
-      "트랜잭션 경계(@Transactional) 적절 — 검증이 모든 save보다 앞서 부분 저장 없음",
-      "정상 입력 범위에서 겹침 판정식·시각 순서 경계(등호 포함)·오픈 판정 경계·좌석 상한 경계·좌석 라벨 조립·취소 멱등성 모두 올바름",
-      "Plan의 reusable(PerformanceNotFoundException, PerformanceResponse, ErrorResponse, Clock, MutableClock) 재사용, ADR-0005(Clock 주입) 준수"
+      "정수 오버플로(AC4 우회) — long 캐스팅이 곱셈 전, int 축소가 상한 판정 후로 순서가 정확함을 실행으로 확인",
+      "역방향 행 범위(rowStart>rowEnd) — validateSection이 rowCount 계산 전에 차단, 좌석상한/겹침 검사보다 먼저 실행됨을 확인",
+      "빈 문자열 rowStart — isValidRow가 length==1을 charAt(0) 앞에서 확인, StringIndexOutOfBoundsException 경로 없음",
+      "필수 필드(null/blank) 누락 500 — validateRequired가 DB 접근 전에 400으로 차단",
+      "grade 20자 제한 — 경계값(20자+5000석) 실제 등록 성공 확인",
+      "검증 실행 순서(F10→F9→F11→F2→F3→F4) — Plan과 일치",
+      "Seat FK 애노테이션 — @ManyToOne(LAZY)+@JoinColumn(nullable=false) 반영",
+      "계층 규칙(ARCH-001/002/003) 위반 없음",
+      "좌석 상한 우회를 통한 대량 seat 생성 DoS — 재현 안 됨(겹침 검사 O(n²) 루프도 좌석상한 검사 뒤에 있어 도달 불가)",
+      "Plan의 reusable 항목 모두 재사용, 범위 밖 파일 대폭 수정 없음"
     ]
   },
 
   "security": {
-    "input_validation": "FAIL — @RequestBody에 Bean Validation이 전혀 적용되지 않아 필수 필드 누락·범위 밖 값이 NPE/DB 제약 위반(500)으로 새고, 좌석 상한 검사는 정수 오버플로로 완전히 우회 가능하다(위 code_review 참고)",
-    "authorization": "해당 없음 — 이번 기능은 인증 없음이 명시적 결정(performance-registration.md §7, ADR 없음). 등록/수정/취소 전부 무검증",
+    "input_validation": "FAIL — title/venue 길이, sections 배열 null 원소가 검증 없이 통과해 500으로 샌다(위 code_review 참고)",
+    "authorization": "해당 없음 — 인증 없음이 명시적 결정(performance-registration.md §7)",
     "secrets": "해당 없음",
     "logging": "해당 없음",
-    "dos_risk": "FAIL — 인증 없는 POST /api/performances 에 정수 오버플로를 유발하는 seatsPerRow 값을 보내면 프로세스가 OOM/무응답에 빠질 수 있다 (code-reviewer가 재현)"
+    "dos_risk": "PASS — attempt 1의 정수 오버플로/좌석 상한 우회로 인한 대량 객체 생성 경로는 해소 확인, 재현 안 됨"
   },
 
   "human_review": {
@@ -147,12 +137,17 @@
     "reason_code": "COVERAGE_INSUFFICIENT",
     "type": "RETRY_SCENARIO",
     "rollback_to": "Phase 2a",
-    "attempt": 1,
-    "decided_at": "2026-09-15T01:10:00Z",
-    "what": "역방향 행 범위(rowStart>rowEnd), seatsPerRow 범위(0 이하/정수 오버플로 방지), 필수 필드 누락에 대한 오류 시나리오가 없었다",
-    "excluded_from_scenario_rework": [
-      "Seat 엔티티의 FK 애노테이션 누락 — 관찰 가능한 API 계약을 바꾸지 않는 내부 스키마 정합성 문제라 Phase 3에서 시나리오 없이 직접 수정한다 (Performance.java 선례와 동일)"
+    "attempt": 2,
+    "decided_at": "2026-09-15T14:45:00Z",
+    "what": "title/venue 200자 초과(등록·수정 공통), sections 배열의 null 원소(등록)에 대한 오류 시나리오가 없었다 — 둘 다 관찰 가능한 새 400 응답 계약이라 이 프로젝트의 TDD 원칙상 시나리오·Red 없이 구현하면 안 된다",
+    "additional_notes": [
+      "PUT 경로도 title/venue 길이 결함의 영향을 받는다 — validateRequired 한 곳을 고치면 등록·수정이 함께 해결되지만, Red 테스트는 PUT 경로도 대표로 하나 포함해야 한다",
+      "sections null 원소는 Controller의 toSectionSpec 변환이 원소를 그대로 통과시키도록 고치고, Service의 F11 검증에서 null을 잡아야 한다 — Service만 고치면 Controller 단계에서 먼저 NPE가 난다",
+      "테스트 하네스: PerformanceRegistrationApiTest의 클래스 레벨 @Transactional이 PUT 경로의 DB 제약 위반을 가린다 — 새 Red 테스트가 이 사각지대에 빠지지 않도록 주의(서비스 계층 400 검증을 단언하면 이 문제를 피할 수 있다)"
     ],
-    "reference": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings"
+    "excluded_from_scenario_rework": [
+      "HttpMessageNotReadableException 시 빈 body 응답 — 상태 코드(400)는 맞고 새 결함도 아니라 이번 롤백 범위에서 제외. Phase 5 rule_proposals로 넘긴다"
+    ],
+    "reference": "이 파일의 code_review.findings (attempt 2)"
   }
 }

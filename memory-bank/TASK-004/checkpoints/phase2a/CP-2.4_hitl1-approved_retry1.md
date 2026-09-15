@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-15T02:20:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "attempt 2 — 시나리오 20건(기존 14 + 신규 6: SC-16~21)을 사람이 재승인. generate_red_trigger=true 로 전환"
 

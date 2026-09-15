@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-15T04:05:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "Phase 3(재시도) 완료 — 테스트 40/40 통과, 린트 error 0, 리팩토링 불필요 판단"
 

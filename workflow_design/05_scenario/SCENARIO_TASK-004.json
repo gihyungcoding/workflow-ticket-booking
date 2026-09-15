@@ -1,7 +1,7 @@
 {
   "task_id": "TASK-004",
-  "attempt": 2,
-  "retry_note": "Phase 4 검증 FAIL(VERIFY_TASK-004.json)에 따른 RETRY_SCENARIO. SC-16~SC-20 추가, 기존 SC-01~13/15는 변경 없음.",
+  "attempt": 3,
+  "retry_note": "attempt 3: Phase 4 2차 검증(재검증)에서 code-reviewer가 재현한 잔여 결함 2건(title/venue 길이, sections 원소 null) 수정을 위해 SC-22/23 추가. attempt 1(SC-01~15)·attempt 2(SC-16~21)는 변경 없음.",
   "scenarios": [
     {
       "id": "SC-01",
@@ -399,6 +399,44 @@
       "covers": [],
       "note": "acceptance_criteria 미대응 — Phase 4에서 code-reviewer가 재현: grade가 길면 seatLabel(grade+행+좌석번호)이 seat_label VARCHAR(30)을 넘어 insert 시 500이 나던 결함. grade를 20자로 제한해 방지한다.",
       "flow": "F11"
+    },
+    {
+      "id": "SC-22",
+      "type": "error",
+      "title": "title이 200자를 넘으면 등록이 거부된다",
+      "given": [
+        "등록 요청의 title이 201자이다",
+        "나머지 필드는 유효하다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_REQUEST 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: title/venue가 200자를 넘으면 500이 나던 결함. venue도 같은 코드 경로(validateRequired, F10)라 대표로 title 하나만 시나리오로 둔다.",
+      "flow": "F10"
+    },
+    {
+      "id": "SC-23",
+      "type": "error",
+      "title": "sections 배열에 null 원소가 있으면 등록이 거부된다",
+      "given": [
+        "등록 요청의 sections 배열에 null 원소가 하나 있다 (예: [null])",
+        "나머지 필드는 유효하다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_SECTION 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: sections 원소가 null이면 Controller 변환에서 NPE로 500이 나던 결함. 원소를 그대로 Service에 넘기고 validateSection의 null 검사(F11)가 잡도록 한다.",
+      "flow": "F11"
     }
   ],
   "coverage": {
@@ -442,6 +480,14 @@
       {
         "id": "SC-21",
         "reason": "Phase 4 FAIL 재현 결함 수정 — grade 과다 길이로 인한 seat_label 컬럼 초과(500) 방지 (attempt 2)"
+      },
+      {
+        "id": "SC-22",
+        "reason": "Phase 4 2차 검증 재현 결함 수정 — title/venue 200자 초과로 인한 500 방지 (attempt 3)"
+      },
+      {
+        "id": "SC-23",
+        "reason": "Phase 4 2차 검증 재현 결함 수정 — sections 배열 null 원소로 인한 500 방지 (attempt 3)"
       }
     ],
     "definitions_confirmed": [
@@ -458,6 +504,6 @@
     ]
   },
   "human_input": {
-    "generate_red_trigger": true
+    "generate_red_trigger": false
   }
 }

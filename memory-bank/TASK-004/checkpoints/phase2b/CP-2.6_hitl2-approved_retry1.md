@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-15T03:10:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "Red 테스트 6건(SC-16~21) 추가를 사람이 재승인. human_review.approved=true로 전환"
 

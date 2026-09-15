@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-15T03:00:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "SC-16~21 6건을 기존 PerformanceRegistrationApiTest.java에 추가. 신규 예외 2종(InvalidRequestException, InvalidSectionException)과 핸들러 추가(구조적 매핑, 스텁 아님). 전체 실행 40개 중 신규 6개만 실패, 기존 34개 통과"
 

@@ -9,13 +9,13 @@
         "name": "title",
         "type": "String",
         "source": "요청 바디 (POST/PUT)",
-        "constraints": ["필수 — null/blank이면 INVALID_REQUEST (F10)", "1~200자 — performance.title VARCHAR(200)"]
+        "constraints": ["필수 — null/blank이면 INVALID_REQUEST (F10)", "1~200자 — performance.title VARCHAR(200), 초과 시 INVALID_REQUEST (F10, attempt 3)"]
       },
       {
         "name": "venue",
         "type": "String",
         "source": "요청 바디 (POST/PUT)",
-        "constraints": ["필수 — null/blank이면 INVALID_REQUEST (F10)", "1~200자 — performance.venue VARCHAR(200)"]
+        "constraints": ["필수 — null/blank이면 INVALID_REQUEST (F10)", "1~200자 — performance.venue VARCHAR(200), 초과 시 INVALID_REQUEST (F10, attempt 3)"]
       },
       {
         "name": "startAt, openAt, closeAt",
@@ -30,6 +30,7 @@
         "constraints": [
           "필드 자체가 null이면 INVALID_REQUEST (F10) — sections가 빈 배열([])인 것과 다르다",
           "null이 아니고 1개 이상 (그렇지 않으면 EMPTY_SECTIONS, F9) — F10과 F9는 서로 다른 검사이며 F10이 먼저 실행된다",
+          "배열 원소 자체가 null이면 안 됨 — 위반 시 INVALID_SECTION (F11, attempt 3)",
           "section.grade 필수·1~20자(20자로 제한 — seat_label VARCHAR(30)이 grade+행+최대4자리 좌석번호를 담으려면 grade가 24자 이내여야 하므로 여유를 두고 20자로 제한), section.price 필수·0 이상, section.seatsPerRow 필수·1 이상, section.rowStart/rowEnd 는 null/빈문자열이 아닌 A~Z 단일 대문자이며 rowStart <= rowEnd — 위반 시 INVALID_SECTION (F11)",
           "전체 구역의 좌석 합 <= 5,000, long 산술로 계산해 int 오버플로로 우회되지 않아야 함 (SEAT_LIMIT_EXCEEDED, F3)",
           "임의의 두 구역의 [rowStart, rowEnd] 알파벳 구간이 겹치지 않음 (DUPLICATE_SEAT_RANGE, F4)"
@@ -91,12 +92,12 @@
       {
         "name": "400 INVALID_REQUEST",
         "type": "error",
-        "description": "필수 필드(title/venue/startAt/openAt/closeAt, 등록의 경우 sections)가 null/blank (등록/수정 공통). attempt 2 — Phase 4 FAIL(VERIFY_TASK-004.json)에서 필수 필드 누락 시 500이 새던 결함을 막는다"
+        "description": "필수 필드(title/venue/startAt/openAt/closeAt, 등록의 경우 sections)가 null/blank, 또는 title/venue가 200자 초과 (등록/수정 공통). attempt 2 — Phase 4 FAIL(VERIFY_TASK-004.json)에서 필수 필드 누락 시 500이 새던 결함을 막는다. attempt 3 — 재검증에서 title/venue 200자 초과 시에도 500이 새던 잔여 결함을 막는다"
       },
       {
         "name": "400 INVALID_SECTION",
         "type": "error",
-        "description": "구역 하나의 필드가 형식에 맞지 않음 — grade blank/20자 초과, price null/음수, rowStart·rowEnd가 A~Z 단일 대문자가 아니거나 rowStart > rowEnd, seatsPerRow null/1 미만 (등록). attempt 2 — Phase 4 FAIL에서 역방향 행 범위가 좌석 상한·겹침 검사를 모두 우회하던 결함을 막는다"
+        "description": "구역 원소 자체가 null이거나, 구역 하나의 필드가 형식에 맞지 않음 — grade blank/20자 초과, price null/음수, rowStart·rowEnd가 A~Z 단일 대문자가 아니거나 rowStart > rowEnd, seatsPerRow null/1 미만 (등록). attempt 2 — Phase 4 FAIL에서 역방향 행 범위가 좌석 상한·겹침 검사를 모두 우회하던 결함을 막는다. attempt 3 — 재검증에서 sections 배열의 null 원소가 Controller 변환 시 NPE로 500이 새던 잔여 결함을 막는다"
       }
     ],
     "flows": [
@@ -212,18 +213,20 @@
         "name": "필수 필드 누락 (등록/수정 공통)",
         "steps": [
           "요청 바디의 title/venue/startAt/openAt/closeAt 중 하나라도 null(문자열은 blank 포함)",
+          "또는 title/venue가 200자 초과 (performance.title/venue VARCHAR(200) 초과 방지)",
           "등록의 경우 sections 필드 자체가 null (sections가 빈 배열 []인 것과는 다른 경우 — 그건 F9)",
           "DB 접근·구역 검증 이전에 즉시 실패",
           "400과 INVALID_REQUEST 반환"
         ],
         "covers": [],
-        "note": "attempt 2 — Phase 4 FAIL에서 필수 필드 누락 시 NPE/DB NOT NULL 위반으로 500이 새던 결함을 code-reviewer가 재현. 등록·수정 두 메서드가 공유하는 하나의 검증 지점(private 헬퍼)에서 처리해, title/venue/시각/sections 중 무엇이 빠지든 같은 코드 경로를 탄다 — 그래서 시나리오는 sections null 하나만 대표로 둔다(SC-16). SC-13(EMPTY_SECTIONS, sections=[])과는 null이냐 빈 배열이냐로 구분되며 F10이 F9보다 먼저 실행된다."
+        "note": "attempt 2 — Phase 4 FAIL에서 필수 필드 누락 시 NPE/DB NOT NULL 위반으로 500이 새던 결함을 code-reviewer가 재현. 등록·수정 두 메서드가 공유하는 하나의 검증 지점(private 헬퍼)에서 처리해, title/venue/시각/sections 중 무엇이 빠지든 같은 코드 경로를 탄다 — 그래서 시나리오는 sections null 하나만 대표로 둔다(SC-16). SC-13(EMPTY_SECTIONS, sections=[])과는 null이냐 빈 배열이냐로 구분되며 F10이 F9보다 먼저 실행된다. attempt 3 — Phase 4 재검증(2차)에서 title/venue 200자 초과 시에도 500이 새는 것을 code-reviewer가 추가로 재현(SC-22)해 길이 검사를 이 지점에 포함시켰다."
       },
       {
         "id": "F11",
         "name": "구역 형식 오류 (등록)",
         "steps": [
-          "구역 하나의 grade가 blank이거나 20자 초과(seat_label VARCHAR(30) 초과 방지), 또는 price가 null이거나 음수",
+          "구역 원소 자체가 null (attempt 3 — 배열에 [null] 처럼 null 원소가 섞인 경우)",
+          "또는 grade가 blank이거나 20자 초과(seat_label VARCHAR(30) 초과 방지), 또는 price가 null이거나 음수",
           "또는 rowStart/rowEnd가 null/빈 문자열/A~Z 단일 대문자가 아님",
           "또는 rowStart > rowEnd (역방향 범위)",
           "또는 seatsPerRow가 null이거나 1 미만",
@@ -231,7 +234,7 @@
           "400과 INVALID_SECTION 반환"
         ],
         "covers": [],
-        "note": "attempt 2 — Phase 4 FAIL에서 역방향 행 범위(rowStart>rowEnd)가 rowCount를 음수로 만들어 SEAT_LIMIT_EXCEEDED(F3)·DUPLICATE_SEAT_RANGE(F4) 검사를 모두 우회하던 결함, 그리고 rowStart가 빈 문자열이면 charAt(0)에서 StringIndexOutOfBoundsException(500)이 나던 결함을 code-reviewer가 재현. 이 검사가 F3/F4보다 먼저 실행돼야 한다. SC-17(역방향 범위)·SC-18(seatsPerRow<=0)·SC-19(빈 rowStart)가 이 흐름을 검증한다."
+        "note": "attempt 2 — Phase 4 FAIL에서 역방향 행 범위(rowStart>rowEnd)가 rowCount를 음수로 만들어 SEAT_LIMIT_EXCEEDED(F3)·DUPLICATE_SEAT_RANGE(F4) 검사를 모두 우회하던 결함, 그리고 rowStart가 빈 문자열이면 charAt(0)에서 StringIndexOutOfBoundsException(500)이 나던 결함을 code-reviewer가 재현. 이 검사가 F3/F4보다 먼저 실행돼야 한다. SC-17(역방향 범위)·SC-18(seatsPerRow<=0)·SC-19(빈 rowStart)가 이 흐름을 검증한다. attempt 3 — Phase 4 재검증(2차)에서 sections 배열의 원소가 null이면(리스트 자체는 null이 아님) Controller의 DTO 변환에서 NPE로 500이 새는 것을 code-reviewer가 추가로 재현(SC-23)해, Controller는 원소를 그대로 통과시키고 이 지점에서 null 검사를 하도록 정정했다."
       }
     ]
   },
@@ -386,6 +389,12 @@
       "what": "F10(필수 필드 누락)·F11(구역 형식 오류) flow와 400 INVALID_REQUEST·400 INVALID_SECTION 출력을 추가. F1 steps에 F10/F9/F11의 실행 순서를 명시. F3 steps를 long 산술로 정정. design.inputs의 sections/grade/rowStart·rowEnd/seatsPerRow 제약을 구체화(grade 20자 제한 포함). target_files에 InvalidRequestException·InvalidSectionException 추가, Seat.java에 FK 애노테이션 보강 항목 추가",
       "why": "code-reviewer가 Phase 4에서 실제 실행으로 재현한 결함 — 역방향 행 범위·정수 오버플로로 좌석 상한(AC4)이 완전히 우회되고(25,000개 seat 생성, DoS 가능), 필수 필드 누락이 500으로 새고, 긴 grade가 seat_label 컬럼을 넘겨 500이 나던 문제. Plan이 이 검증들을 처음부터 누락했다",
       "reference": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings, workflow_design/05_scenario/validator/VALIDATION_TASK-004.json (attempt 2 round 1, V4 fail)"
+    },
+    {
+      "when": "Phase 4 재검증(2차)에서 잔여 결함 발견 이후 Phase 2a 재시도 (attempt 3)",
+      "what": "F10 steps에 'title/venue 200자 초과' 추가, design.inputs의 title/venue 제약에 '초과 시 INVALID_REQUEST' 명시. F11 steps에 '구역 원소 자체가 null' 추가",
+      "why": "attempt 2로 원래 결함 5건은 해소됐지만, code-reviewer가 재검증 중 실제 실행으로 잔여 결함 2건을 새로 재현했다 — title/venue가 200자를 넘으면 여전히 500(길이 검사 누락), sections 배열에 null 원소가 있으면 Controller 변환에서 NPE로 500. SC-22(title 길이)·SC-23(sections null 원소) 추가",
+      "reference": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings (2차 재검증)"
     }
   ]
 }

@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-15T02:00:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "Phase 4 FAIL(RETRY_SCENARIO)에 따라 SC-16~SC-21 6건을 추가(20건 총계)하고 PLAN_TASK-004.json에 F10/F11 흐름·INVALID_REQUEST/INVALID_SECTION 출력을 신설. 기존 SC-01~13/15는 변경 없음"
 

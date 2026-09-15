@@ -1,10 +1,14 @@
 # TASK-004 시나리오
 
-> **재시도 attempt 2** (2026-09-15) — Phase 4 검증에서 code-reviewer가 재현한 결함
-> (`workflow_design/07_verify/VERIFY_TASK-004.json` code_review.findings) 때문에
-> `RETRY_SCENARIO`로 Phase 2a에 되돌아왔다. 좌석 상한(AC4)이 역방향 행 범위·정수
-> 오버플로로 완전히 우회되고, 필수 필드 누락이 500으로 새는 문제였다. SC-16~SC-20을
-> 추가한다. 기존 SC-01~13/15는 그대로 두고 손대지 않는다(이미 검증·승인됨).
+> **재시도 이력**
+> - **attempt 2** (2026-09-15) — Phase 4 1차 검증 FAIL(`VERIFY_TASK-004.json`
+>   code_review.findings)에 따른 `RETRY_SCENARIO`. 좌석 상한(AC4)이 역방향 행
+>   범위·정수 오버플로로 완전히 우회되고 필수 필드 누락이 500으로 새는 결함을
+>   막기 위해 SC-16~SC-21을 추가했다.
+> - **attempt 3** (2026-09-15) — Phase 4 2차 검증(재검증)에서 code-reviewer가
+>   재현한 잔여 결함 2건(title/venue 200자 초과, sections 배열 null 원소)을 막기
+>   위해 SC-22~SC-23을 추가했다.
+> - 기존 SC-01~13/15(attempt 1)는 그대로 두고 손대지 않는다(이미 검증·승인됨).
 
 ## 확정한 정의 (Plan의 unresolved 해소)
 
@@ -243,4 +247,26 @@ note: 구역을 서로 다른 행(A~A, B~B)으로 둔 것은 의도적이다 —
 - **And** seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)
 
 covers: (acceptance_criteria 미대응 — Phase 4 검증에서 code-reviewer가 재현: grade가 길면 seatLabel(grade+행+좌석번호)이 seat_label VARCHAR(30)을 넘어 insert 시 500이 나던 결함. grade를 20자로 제한해 어떤 좌석 번호 조합에서도 라벨이 30자를 넘지 않게 한다)
+flow: F11
+
+## SC-22 (error) title이 200자를 넘으면 등록이 거부된다
+
+- **Given** 등록 요청의 title이 201자이다
+- **And** 나머지 필드는 유효하다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_REQUEST 이다
+
+covers: (acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: title/venue가 200자를 넘으면 performance.title VARCHAR(200) 제약 위반으로 500이 나던 결함. venue도 같은 코드 경로(validateRequired, F10)라 대표로 title 하나만 시나리오로 둔다 — coverage-policy §3)
+flow: F10
+
+## SC-23 (error) sections 배열에 null 원소가 있으면 등록이 거부된다
+
+- **Given** 등록 요청의 sections 배열에 null 원소가 하나 있다 (예: `[null]`)
+- **And** 나머지 필드는 유효하다
+- **When** POST /api/performances 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_SECTION 이다
+
+covers: (acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: sections 리스트 자체는 null이 아니지만 원소가 null이면 Controller의 SectionRequest→SectionSpec 변환에서 NPE로 500이 나던 결함. 원소를 그대로 Service에 넘기고 validateSection의 null 검사(F11)가 잡도록 한다)
 flow: F11
