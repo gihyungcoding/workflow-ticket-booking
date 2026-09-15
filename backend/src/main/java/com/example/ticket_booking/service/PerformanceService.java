@@ -43,6 +43,28 @@ public class PerformanceService {
     return toResponse(performance, clock.instant());
   }
 
+  /** TASK-004 — Phase 3(Green)에서 구현. Red 단계에서는 스켈레톤으로 컴파일만 통과시킨다. */
+  public PerformanceResponse registerPerformance(
+      String title,
+      String venue,
+      Instant startAt,
+      Instant openAt,
+      Instant closeAt,
+      List<SectionSpec> sections) {
+    throw new UnsupportedOperationException();
+  }
+
+  /** TASK-004 — Phase 3(Green)에서 구현. Red 단계에서는 스켈레톤으로 컴파일만 통과시킨다. */
+  public PerformanceResponse updatePerformance(
+      Long id, String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
+    throw new UnsupportedOperationException();
+  }
+
+  /** TASK-004 — Phase 3(Green)에서 구현. Red 단계에서는 스켈레톤으로 컴파일만 통과시킨다. */
+  public PerformanceResponse cancelPerformance(Long id) {
+    throw new UnsupportedOperationException();
+  }
+
   private PerformanceResponse toResponse(Performance performance, Instant now) {
     PerformanceStatus status =
         PerformanceStatusRules.of(

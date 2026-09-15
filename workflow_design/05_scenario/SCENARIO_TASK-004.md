@@ -7,6 +7,12 @@
 - **행 표기**: `rowStart`/`rowEnd` 는 A~Z 단일 대문자만 지원한다. 26행을 넘는 구역은
   이번 범위 밖이며, 5,000석 상한(SC-04)과 함께 실무상 26행 조합으로 충분하다고 본다.
 
+> **철회된 시나리오**: SC-14(regression, "기존 GET 조회 404 처리가 그대로 동작한다")를
+> HITL#1 승인 이후 Phase 2b에서 제거했다. 이 태스크가 건드리지 않는 기존 코드 경로를
+> 검증하는 시나리오라 지금 이미 통과해버려 "새 테스트는 반드시 실패한다"는 Red 요구사항과
+> 구조적으로 맞지 않는다. 이 회귀 방지는 기존 `PerformanceApiTest`/`PerformanceConstraintTest`
+> 전체 실행(Phase 3에서 반드시 확인)이 담당한다. 번호 14는 재사용하지 않는다.
+
 ## SC-01 (happy) 구역 2개로 등록하면 구역별 좌석이 생성되고 총수가 합산된다
 
 - **Given** 등록 요청에 구역 VIP(행 A~B, 행당 10석, 가격 120000)와 구역 R(행 C~E, 행당 20석, 가격 80000)가 있다
@@ -151,16 +157,6 @@ flow: F8
 
 covers: (acceptance_criteria 미대응 — performance-registration.md §3 API 명세에 명시된 오류 코드. PLAN_TASK-004.json F9)
 flow: F9
-
-## SC-14 (regression) 기존 조회 API의 404 처리가 그대로 동작한다
-
-- **Given** id 99999 에 해당하는 공연이 존재하지 않는다
-- **When** GET /api/performances/99999 를 호출한다 (TASK-001에서 만든 기존 조회 엔드포인트)
-- **Then** 404가 반환된다
-- **And** 응답 코드는 PERFORMANCE_NOT_FOUND 이다
-
-covers: (acceptance_criteria 미대응 — 회귀 확인. PerformanceExceptionHandler에 새 예외 핸들러 5종을 추가해도 기존 PerformanceNotFoundException 처리가 깨지지 않는지 확인한다.)
-flow: 없음 (PLAN 외부 — 기존 동작 회귀 확인)
 
 ## SC-15 (boundary) 정확히 5,000석이면 등록이 성공한다
 

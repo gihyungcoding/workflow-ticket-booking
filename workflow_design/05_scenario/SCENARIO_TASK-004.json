@@ -176,17 +176,6 @@
       "flow": "F9"
     },
     {
-      "id": "SC-14",
-      "type": "regression",
-      "title": "기존 조회 API의 404 처리가 그대로 동작한다",
-      "given": ["id 99999 에 해당하는 공연이 존재하지 않는다"],
-      "when": ["GET /api/performances/99999 를 호출한다 (TASK-001에서 만든 기존 조회 엔드포인트)"],
-      "then": ["404가 반환된다", "응답 코드는 PERFORMANCE_NOT_FOUND 이다"],
-      "covers": [],
-      "note": "acceptance_criteria 미대응 — 회귀 확인. PerformanceExceptionHandler에 새 예외 핸들러 5종을 추가해도 기존 PerformanceNotFoundException 처리가 깨지지 않는지 확인한다 (독립검증 V10 반영).",
-      "flow": null
-    },
-    {
       "id": "SC-15",
       "type": "boundary",
       "title": "정확히 5,000석이면 등록이 성공한다",
@@ -209,12 +198,19 @@
     "extra_scenarios_not_ac_mapped": [
       { "id": "SC-08", "reason": "PLAN F5 단계(수정 시 시각 순서 재검증)를 검증 — AC 텍스트엔 없으나 Plan에 명시된 동작" },
       { "id": "SC-13", "reason": "performance-registration.md §3 의 EMPTY_SECTIONS 오류 코드 — AC 텍스트엔 없으나 §3 스펙에 명시된 동작" },
-      { "id": "SC-14", "reason": "기존 GET 조회 API의 404 처리가 새 예외 핸들러 추가 후에도 유지되는지 확인하는 회귀 시나리오 (독립검증 V10 반영)" },
       { "id": "SC-15", "reason": "좌석 상한 5,000의 통과 경계 — SC-04(5,001 거부)와 짝을 이루는 boundary (독립검증 2차 라운드 부수 관찰 반영)" }
     ],
     "definitions_confirmed": [
       "행 범위 겹침 = [rowStart, rowEnd] 알파벳 구간의 교집합만으로 판정 (좌석 번호 조합은 보지 않음)",
       "rowStart/rowEnd 는 A~Z 단일 대문자만 지원"
+    ],
+    "withdrawn_scenarios": [
+      {
+        "id": "SC-14",
+        "type": "regression",
+        "withdrawn_at": "Phase 2b (Red 작성 중, HITL#1 승인 이후)",
+        "reason": "이 태스크가 건드리지 않는 기존 GET 404 경로를 검증하는 시나리오라 지금 이미 통과한다 — wf-red의 '새 테스트는 반드시 실패한다' 요구사항과 구조적으로 맞지 않는다. 회귀 방지는 기존 PerformanceApiTest/PerformanceConstraintTest 전체 실행(Phase 3)이 담당한다. 번호는 재사용하지 않는다."
+      }
     ]
   },
   "human_input": { "generate_red_trigger": true }

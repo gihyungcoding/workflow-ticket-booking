@@ -1,34 +1,36 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 created_at: 2026-09-11
-last_updated: 2026-09-14
+last_updated: 2026-09-15
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-2.4
+last_checkpoint: CP-2.6
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
+  test: "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a(Scenario)를 완료했다. 시나리오 15건(happy 3 / error 9 / boundary 2 /
-regression 1)이 acceptance_criteria 9/9을 전부 커버하고, 독립검증 3회 끝에
-overall.pass=true(경고 2건, 경미)로 수렴해 HITL#1 승인을 받았다.
+Phase 2b(Red)를 완료했다. 시나리오 14건(SC-14 회귀는 Red 요구사항과 구조적으로
+맞지 않아 Phase 2b 중 철회)을 테스트 14개로 옮겨 전체 실행 → 14/14 실패
+(UnsupportedOperationException, 로직 누출 없음), 기존 20개 테스트는 그대로 통과.
+HITL#2 승인 받음.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 Phase 2b를 시작한다 — SC-01~SC-15를 실패하는 테스트 코드로 옮긴다.
-PerformanceApiTest.java에 이어서 작성하고, MutableClock/ClockTestConfig 패턴을
-재사용한다.
+`wf-develop` 스킬로 Phase 3(Green)을 시작한다 — `PerformanceService`의
+`registerPerformance`/`updatePerformance`/`cancelPerformance`, `Performance`의
+`updateSchedule`/`cancel` 을 실제로 구현해 14개 테스트를 통과시킨다.
 
 ## 알아둬야 할 것
 

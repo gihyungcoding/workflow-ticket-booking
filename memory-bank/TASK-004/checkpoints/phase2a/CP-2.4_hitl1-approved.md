@@ -43,6 +43,15 @@ approval:
   approved_at: 2026-09-14T00:10:00Z
   decision: APPROVE
   comment: "시나리오 15건, AC 9/9 커버, 독립검증 3회 후 PASS(경고 2건, 경미)로 승인"
+
+amendment:
+  amended_at: 2026-09-14T00:20:00Z
+  what: "SC-14(regression)를 Phase 2b Red 작성 중 발견한 구조적 문제로 철회 — 14건(SC-01~13, SC-15)으로 축소"
+  why: "SC-14는 이 태스크가 건드리지 않는 기존 GET 404 경로를 검증해 지금 이미 통과한다. wf-red의 '새 테스트는 반드시 실패한다' 요구사항과 구조적으로 맞지 않는다"
+  reapproval:
+    approved_at: 2026-09-14T00:22:00Z
+    decision: APPROVE
+    comment: "SC-14 제거를 승인하고 Red 작성 계속 진행"
 ---
 
 ## 무엇을 했나
