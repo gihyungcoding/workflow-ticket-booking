@@ -1,8 +1,8 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "4"
-phase_name: "Phase 4 - Verify (재검증, attempt 2) — FAIL, Phase 2a(attempt 3) 롤백 대기"
+phase: "2b"
+phase_name: "Phase 2b - Red (attempt 3 진입 준비 완료, HITL#1 승인됨)"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-4.2_retry1
+last_checkpoint: CP-2.4_hitl1-approved_retry2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,27 +23,25 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 재검증(attempt 2)을 마쳤다 — 결과는 FAIL. attempt 1 FAIL의 원인(좌석 상한
-우회, 정수 오버플로, 필수 필드 누락 500, grade 길이, FK 애노테이션)은 모두 해소를
-확인했지만, code-reviewer가 실행으로 잔여 결함 2건을 새로 재현했다: title/venue
-200자 초과(등록·수정 양쪽) 500, sections 배열의 null 원소 500(NPE). 상세는
-`workflow_design/07_verify/VERIFY_TASK-004.json`(attempt 2) 참고.
-
-**작업 트리에 attempt 3 초안이 이미 있었다** — `PLAN_TASK-004.json`/
-`SCENARIO_TASK-004.json`/`.md` 에 SC-22(title 길이)·SC-23(sections null 원소)가
-커밋되지 않은 채로 이미 작성돼 있었다(이전 세션이 미완료 상태로 남긴 것으로
-추정). code-reviewer 재확인 결과 이 초안의 진단이 정확했다. 단, `human_input.
-generate_red_trigger` 가 아직 `false` 라 HITL#1을 거치지 않은 상태다.
+Phase 4 재검증(attempt 2) FAIL → Phase 2a(attempt 3) 롤백을 마쳤다. code-reviewer가
+재현한 잔여 결함 2건(title/venue 200자 초과, sections 배열 null 원소)에 대응하는
+시나리오 SC-22(title 길이, POST)·SC-23(sections null 원소)·SC-24(title 길이, PUT —
+PUT 경로도 같은 결함을 공유함을 code-reviewer가 확인해 신규 추가)를 확정했다.
+scenario-validator PASS(경고 3건, 모두 이번 범위 밖으로 판단·미수정), HITL#1 승인
+완료. `validate_phase2a_gate.py` 7/7 통과.
 
 ## 다음 한 걸음
 
-사용자에게 Phase 2a(attempt 3) 롤백을 제안하고 확인받는다. 승인되면:
-1. SC-22에 PUT 경로(수정)도 대표로 포함되도록 보강 — code-reviewer가 PUT도 같은
-   title/venue 길이 결함을 공유한다고 확인했으나 초안은 POST만 다룸
-2. scenario-validator 독립검증 → HITL#1 (`generate_red_trigger`를 true로)
-3. Phase 2b(Red) — 테스트 클래스의 클래스 레벨 `@Transactional`이 PUT 경로 DB 제약
-   위반을 가린다는 것을 유의해 서비스 계층 400 단언으로 작성
-4. Phase 3(Green) → Phase 4 재검증(attempt 3)
+`wf-red` 스킬로 Phase 2b(attempt 3)를 시작한다 — SC-22/23/24를 실패하는 테스트로
+옮긴다. 유의할 점:
+- SC-24(PUT)를 작성할 때 `PerformanceRegistrationApiTest` 클래스 레벨의
+  `@Transactional`이 PUT 경로의 DB 제약 위반(500)을 가린다는 것을 code-reviewer가
+  발견했다 — 서비스 계층에서 던지는 예외/400 응답을 직접 단언하도록 작성한다
+- title/venue 길이 검사는 `validateRequired`(등록·수정 공유) 한 곳에서 처리하되,
+  SC-22(POST)와 SC-24(PUT) 둘 다 Red로 옮겨 공유가 실제로 되는지 강제한다
+- sections null 원소(SC-23)는 Controller의 `toSectionSpec` 변환이 원소를 그대로
+  통과시키고 Service의 F11 검증에서 null을 잡도록 — Service만 고치면 Controller
+  단계에서 먼저 NPE가 난다
 
 ## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
 

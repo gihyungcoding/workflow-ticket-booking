@@ -1,7 +1,7 @@
 {
   "task_id": "TASK-004",
   "attempt": 3,
-  "retry_note": "attempt 3: Phase 4 2차 검증(재검증)에서 code-reviewer가 재현한 잔여 결함 2건(title/venue 길이, sections 원소 null) 수정을 위해 SC-22/23 추가. attempt 1(SC-01~15)·attempt 2(SC-16~21)는 변경 없음.",
+  "retry_note": "attempt 3: Phase 4 2차 검증(재검증)에서 code-reviewer가 재현한 잔여 결함 2건(title/venue 길이, sections 원소 null) 수정을 위해 SC-22/23 추가. code-reviewer가 title/venue 길이 결함이 PUT(수정) 경로도 공유한다고 확인해 SC-24를 추가로 확정. attempt 1(SC-01~15)·attempt 2(SC-16~21)는 변경 없음.",
   "scenarios": [
     {
       "id": "SC-01",
@@ -437,6 +437,25 @@
       "covers": [],
       "note": "acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: sections 원소가 null이면 Controller 변환에서 NPE로 500이 나던 결함. 원소를 그대로 Service에 넘기고 validateSection의 null 검사(F11)가 잡도록 한다.",
       "flow": "F11"
+    },
+    {
+      "id": "SC-24",
+      "type": "error",
+      "title": "수정 시 title이 200자를 넘으면 거부된다",
+      "given": [
+        "now < openAt 인 공연이 등록되어 있다",
+        "수정 요청의 title이 201자이다"
+      ],
+      "when": [
+        "PUT /api/performances/{id} 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_REQUEST 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — SC-22와 같은 검증 지점(validateRequired)을 공유하지만 별도 Controller 엔드포인트(PUT)라 길이 검사가 등록 경로에만 붙는 잘못된 수정이면 SC-22는 통과하고 이 경로만 500이 날 수 있다(coverage-policy §3). code-reviewer가 발견한 테스트 하네스 사각지대(@Transactional이 PUT 경로 DB 제약 위반을 가림)도 이 시나리오를 Red로 옮길 때 유의해야 한다.",
+      "flow": "F10"
     }
   ],
   "coverage": {
@@ -488,6 +507,10 @@
       {
         "id": "SC-23",
         "reason": "Phase 4 2차 검증 재현 결함 수정 — sections 배열 null 원소로 인한 500 방지 (attempt 3)"
+      },
+      {
+        "id": "SC-24",
+        "reason": "SC-22(title 길이)의 PUT 경로 대응 — 같은 검증 헬퍼를 공유하지만 별도 엔드포인트라 코드 리뷰 요청에 따라 별도 시나리오로 분리 (attempt 3)"
       }
     ],
     "definitions_confirmed": [
@@ -504,6 +527,6 @@
     ]
   },
   "human_input": {
-    "generate_red_trigger": false
+    "generate_red_trigger": true
   }
 }

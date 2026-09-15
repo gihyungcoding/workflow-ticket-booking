@@ -7,7 +7,8 @@
 >   막기 위해 SC-16~SC-21을 추가했다.
 > - **attempt 3** (2026-09-15) — Phase 4 2차 검증(재검증)에서 code-reviewer가
 >   재현한 잔여 결함 2건(title/venue 200자 초과, sections 배열 null 원소)을 막기
->   위해 SC-22~SC-23을 추가했다.
+>   위해 SC-22~SC-23을 추가했다. code-reviewer가 title/venue 길이 결함이 PUT(수정)
+>   경로도 공유한다고 확인해 SC-24를 추가로 확정했다.
 > - 기존 SC-01~13/15(attempt 1)는 그대로 두고 손대지 않는다(이미 검증·승인됨).
 
 ## 확정한 정의 (Plan의 unresolved 해소)
@@ -270,3 +271,14 @@ flow: F10
 
 covers: (acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: sections 리스트 자체는 null이 아니지만 원소가 null이면 Controller의 SectionRequest→SectionSpec 변환에서 NPE로 500이 나던 결함. 원소를 그대로 Service에 넘기고 validateSection의 null 검사(F11)가 잡도록 한다)
 flow: F11
+
+## SC-24 (error) 수정 시 title이 200자를 넘으면 거부된다
+
+- **Given** now < openAt 인 공연이 등록되어 있다
+- **And** 수정 요청의 title이 201자이다
+- **When** PUT /api/performances/{id} 를 호출한다
+- **Then** 400이 반환된다
+- **And** 응답 코드는 INVALID_REQUEST 이다
+
+covers: (acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: registerPerformance/updatePerformance가 validateRequired를 공유하지만 두 개의 별도 Controller 엔드포인트라, 길이 검사를 등록 경로에만 붙이는 잘못된 수정이 들어가면 SC-22는 통과하면서 이 경로만 500을 내는 결함이 가능하다 — coverage-policy §3. 또한 code-reviewer는 PerformanceRegistrationApiTest의 클래스 레벨 @Transactional이 테스트 트랜잭션을 롤백해 PUT 경로의 DB 제약 위반(500)을 가린다는 것도 발견했다 — Phase 2b에서 이 시나리오를 Red로 옮길 때 HTTP 응답의 status/code 단언만으로 충분하지만, 혹시 응답이 200으로 나온다면 이 트랜잭션 격리 사각지대가 원인일 수 있으니 서비스 계층에서 예외가 던져지는지도 함께 확인한다)
+flow: F10
