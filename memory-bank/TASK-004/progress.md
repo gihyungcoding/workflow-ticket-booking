@@ -7,8 +7,8 @@
 | 2b Red | ✅ 완료 | CP-2.6 | 테스트 14개, 14/14 실패(UnsupportedOperationException), 기존 20개 통과, HITL#2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 테스트 34/34 통과, 린트 error 0, 리팩토링 불필요 |
 | 2a Scenario (재시도) | ✅ 완료 | CP-2.4_retry1 | +6건(SC-16~21), 시나리오 20건, HITL#1 재승인 |
-| 2b Red (재시도) | 🔄 진행 중 | — | SC-16~21용 Red 테스트 6개 추가 예정 |
-| 3 Green (재시도 예정) | ⬜ 대기 | — | Bean Validation 대신 수동 예외 2종 + long 산술 + Seat FK |
+| 2b Red (재시도) | ✅ 완료 | CP-2.6_retry1 | 신규 6개 실패, 기존 34개 통과, HITL#2 재승인 |
+| 3 Green (재시도) | 🔄 진행 중 | — | F10/F11 검증, long 산술, Seat FK 구현 예정 |
 | 4 Verify (재검증 예정) | ⬜ 대기 | — | — |
 | 4 Verify (1차) | ⛔ FAIL | CP-4.2 | code-reviewer 재현 — AC4 우회(역방향 범위/정수 오버플로), DoS 가능, 입력검증 부재. RETRY_SCENARIO로 처리됨 |
 | 5 Reflect | ⬜ 대기 | — | |

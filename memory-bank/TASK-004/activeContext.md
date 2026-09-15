@@ -1,8 +1,8 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "2b"
-phase_name: "Phase 2b - Red (재시도, attempt 2)"
+phase: "3"
+phase_name: "Phase 3 - Green (재시도, attempt 2)"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-2.4_retry1
+last_checkpoint: CP-2.6_retry1
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"

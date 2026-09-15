@@ -1,8 +1,33 @@
 {
   "task_id": "TASK-004",
+  "attempt": 2,
+  "retry_note": "Phase 4 FAIL(VERIFY_TASK-004.json) → RETRY_SCENARIO 이후 SC-16~21 6건을 신규 Red로 추가. 기존 SC-01~13/15(attempt 1)는 이미 Green 상태이며 이 라운드에서 변경하지 않았다 — 아래 red_scenarios_attempt1은 그 기록을 그대로 보존한다.",
   "supersedes": "SCENARIO_TASK-004.json",
   "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
-  "red_scenarios": [
+  "red_scenarios_attempt2": [
+    { "scenario_id": "SC-16", "test_function": "test_sc16_필수_필드가_없으면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by java.lang.NullPointerException (request.sections()가 null인 채로 .stream() 호출 — F10 미구현)" },
+    { "scenario_id": "SC-17", "test_function": "test_sc17_구역의_rowStart가_rowEnd보다_뒤_알파벳이면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by DataIntegrityViolationException/ConstraintViolationException (음수 total_seats로 DB CHECK 위반 — F11 미구현, 역방향 범위 미검증)" },
+    { "scenario_id": "SC-18", "test_function": "test_sc18_구역의_seatsPerRow가_0_이하이면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by DataIntegrityViolationException/ConstraintViolationException (total_seats=0으로 DB CHECK 위반 — F11 미구현)" },
+    { "scenario_id": "SC-19", "test_function": "test_sc19_구역의_rowStart가_빈_문자열이면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by java.lang.StringIndexOutOfBoundsException (rowStart.charAt(0) — F11 미구현)" },
+    { "scenario_id": "SC-20", "test_function": "test_sc20_구역의_seatsPerRow가_매우_큰_값이면_좌석_상한_초과로_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by DataIntegrityViolationException/ConstraintViolationException (int 합산 오버플로로 음수 total_seats, DB CHECK 위반 — long 산술 미구현)" },
+    { "scenario_id": "SC-21", "test_function": "test_sc21_구역명이_20자를_넘으면_등록이_거부된다", "status": "red", "failure": "AssertionFailedError (400 기대, 201 실제 — grade 길이 제한 미구현으로 등록이 그냥 성공함)" }
+  ],
+  "red_result_attempt2": {
+    "command": "cd backend && ./gradlew test",
+    "total": 40,
+    "failed": 6,
+    "passed": 34,
+    "existing_tests_still_passing": true,
+    "note": "attempt 1의 14개(SC-01~13,15)와 기존 20개(TASK-001/002)를 합친 34개가 전부 통과, 신규 6개(SC-16~21)만 실패"
+  },
+  "inventory_check_attempt2": {
+    "scenarios": 20,
+    "test_functions": 20,
+    "match": true,
+    "new_this_round": 6
+  },
+  "purity_check_attempt2": "실패 6건의 원인이 각기 다르다(NPE, DB CHECK 위반 2건, StringIndexOutOfBoundsException, DB CHECK 위반, AssertionFailedError) — attempt 1과 달리 신규 메서드 스켈레톤(UnsupportedOperationException)이 아니라 '이미 구현된 메서드에 새 검증 분기가 없어서' 나는 실패이므로, 실패 원인이 균일하지 않은 것이 오히려 정상이다. 6건 모두 '기대한 400/코드'와 다른 실제 결과(500 계열 또는 예상 밖 성공)라는 공통점으로 Red를 판정했다 (memory:feedback-java-tdd-red-skeleton §5 '핵심 질문은 구현이 없었다면 이 실패가 났을까'를 그대로 적용).",
+  "red_scenarios_attempt1_kept_for_reference": [
     { "scenario_id": "SC-01", "test_function": "test_sc01_구역_2개로_등록하면_구역별_좌석이_생성되고_총수가_합산된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by java.lang.UnsupportedOperationException (registerPerformance 스켈레톤)" },
     { "scenario_id": "SC-02", "test_function": "test_sc02_openAt이_closeAt보다_늦으면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by java.lang.UnsupportedOperationException (registerPerformance 스켈레톤)" },
     { "scenario_id": "SC-03", "test_function": "test_sc03_closeAt이_startAt보다_늦으면_등록이_거부된다", "status": "red", "failure": "jakarta.servlet.ServletException caused by java.lang.UnsupportedOperationException (registerPerformance 스켈레톤)" },

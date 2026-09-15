@@ -3,6 +3,8 @@ package com.example.ticket_booking.api;
 import com.example.ticket_booking.api.dto.ErrorResponse;
 import com.example.ticket_booking.service.DuplicateSeatRangeException;
 import com.example.ticket_booking.service.EmptySectionsException;
+import com.example.ticket_booking.service.InvalidRequestException;
+import com.example.ticket_booking.service.InvalidSectionException;
 import com.example.ticket_booking.service.InvalidTimeOrderException;
 import com.example.ticket_booking.service.PerformanceNotFoundException;
 import com.example.ticket_booking.service.RegistrationAlreadyOpenException;
@@ -52,5 +54,17 @@ public class PerformanceExceptionHandler {
       RegistrationAlreadyOpenException exception) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(new ErrorResponse("REGISTRATION_ALREADY_OPEN", exception.getMessage()));
+  }
+
+  @ExceptionHandler(InvalidRequestException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new ErrorResponse("INVALID_REQUEST", exception.getMessage()));
+  }
+
+  @ExceptionHandler(InvalidSectionException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidSection(InvalidSectionException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new ErrorResponse("INVALID_SECTION", exception.getMessage()));
   }
 }
