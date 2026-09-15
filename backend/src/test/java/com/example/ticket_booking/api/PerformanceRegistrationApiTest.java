@@ -101,7 +101,8 @@ class PerformanceRegistrationApiTest {
         .formatted(startAt, openAt, closeAt, sectionsJson);
   }
 
-  private String updateJson(String title, String venue, String startAt, String openAt, String closeAt) {
+  private String updateJson(
+      String title, String venue, String startAt, String openAt, String closeAt) {
     return """
         {
           "title": "%s",
@@ -158,7 +159,8 @@ class PerformanceRegistrationApiTest {
   void test_sc02_openAt이_closeAt보다_늦으면_등록이_거부된다() throws Exception {
     // Given 등록 요청의 openAt이 closeAt보다 늦다
     Instant now = clock.instant();
-    String sections = """
+    String sections =
+        """
         [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
         """;
     String json =
@@ -185,7 +187,8 @@ class PerformanceRegistrationApiTest {
   void test_sc03_closeAt이_startAt보다_늦으면_등록이_거부된다() throws Exception {
     // Given 등록 요청의 openAt <= closeAt 이지만 closeAt이 startAt보다 늦다
     Instant now = clock.instant();
-    String sections = """
+    String sections =
+        """
         [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
         """;
     String json =
@@ -209,7 +212,8 @@ class PerformanceRegistrationApiTest {
   void test_sc04_구역_좌석_합이_5000을_넘으면_등록이_거부된다() throws Exception {
     // Given 등록 요청에 구역 1개(행 A 하나, 행당 5,001석)가 있어 합산 좌석 수가 정확히 5,001이다
     Instant now = clock.instant();
-    String sections = """
+    String sections =
+        """
         [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":5001}]
         """;
     String json =
@@ -475,7 +479,8 @@ class PerformanceRegistrationApiTest {
   void test_sc15_정확히_5000석이면_등록이_성공한다() throws Exception {
     // Given 등록 요청에 구역 1개(행 A 하나, 행당 5,000석)가 있어 합산 좌석 수가 정확히 5,000이다
     Instant now = clock.instant();
-    String sections = """
+    String sections =
+        """
         [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":5000}]
         """;
     String json =

@@ -12,8 +12,8 @@ import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
- * V2__create_seat.sql 의 NOT NULL/CHECK/UNIQUE 제약을 애노테이션으로도 표현한다 (ADR-0009). 등록 시 구역(등급)×행×열
- * 조합마다 하나씩 생성되며, seatLabel 은 Service 가 계산해 넘긴다 — 이 엔티티 자체는 계산하지 않는다.
+ * V2__create_seat.sql 의 NOT NULL/CHECK/UNIQUE 제약을 애노테이션으로도 표현한다 (ADR-0009). 등록 시 구역(등급)×행×열 조합마다
+ * 하나씩 생성되며, seatLabel 은 Service 가 계산해 넘긴다 — 이 엔티티 자체는 계산하지 않는다.
  */
 @Entity
 @Table(

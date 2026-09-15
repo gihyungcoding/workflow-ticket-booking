@@ -62,7 +62,12 @@ public class PerformanceController {
   public PerformanceResponse update(
       @PathVariable Long id, @RequestBody UpdatePerformanceRequest request) {
     return performanceService.updatePerformance(
-        id, request.title(), request.venue(), request.startAt(), request.openAt(), request.closeAt());
+        id,
+        request.title(),
+        request.venue(),
+        request.startAt(),
+        request.openAt(),
+        request.closeAt());
   }
 
   @PostMapping("/{id}/cancel")

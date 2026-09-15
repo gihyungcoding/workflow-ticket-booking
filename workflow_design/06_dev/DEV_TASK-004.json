@@ -1,0 +1,47 @@
+{
+  "task_id": "TASK-004",
+  "changed_files": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "registerPerformance/updatePerformance/cancelPerformance 실제 구현 — 검증 순서(EMPTY_SECTIONS → INVALID_TIME_ORDER → SEAT_LIMIT_EXCEEDED → DUPLICATE_SEAT_RANGE), 좌석 생성(generateSeats), 행 범위 겹침 판정(rowRangesOverlap). 생성자에 SeatRepository 주입 추가, MAX_SEATS=5000 상수 추가",
+      "lines_changed": 96
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+      "change": "updateSchedule()/cancel() 실제 구현 (필드 대입)",
+      "lines_changed": 10
+    }
+  ],
+  "reused": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java", "symbol": "PerformanceResponse" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceNotFoundException.java", "symbol": "PerformanceNotFoundException" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java", "symbol": "PerformanceStatusRules.of()" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java", "symbol": "Clock" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && ./gradlew test",
+    "total": 34,
+    "passed": 34,
+    "failed": 0,
+    "target_tests_passed": 14
+  },
+  "lint": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0,
+    "note": "spotlessApply로 자동 포맷 수정 1회 적용 후 재검증 통과 (PerformanceController/PerformanceExceptionHandler/Seat.java/SectionSpec.java/PerformanceService.java/PerformanceRegistrationApiTest.java 줄바꿈 정리)"
+  },
+  "refactoring": [
+    {
+      "what": "리팩토링 없음",
+      "why": "최소 구현이 이미 계층 규칙(검증→저장→좌석생성)과 이름(rowCount/rowRangesOverlap/generateSeats/validateTimeOrder)이 명확해 추가로 다듬을 중복·모호성이 없다고 판단했다"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "what": "PerformanceService 생성자에 SeatRepository 파라미터 추가",
+      "why": "Plan의 target_files에는 명시되지 않았지만 registerPerformance가 좌석을 저장하려면 필수적인 의존성이며, Plan의 codebase_analysis에서 SeatRepository를 신규 생성하기로 이미 정해뒀다 — 새 파일이 아니라 기존 생성자 시그니처 확장에 그친다"
+    }
+  ]
+}

@@ -28,7 +28,8 @@ public class PerformanceExceptionHandler {
   }
 
   @ExceptionHandler(SeatLimitExceededException.class)
-  public ResponseEntity<ErrorResponse> handleSeatLimitExceeded(SeatLimitExceededException exception) {
+  public ResponseEntity<ErrorResponse> handleSeatLimitExceeded(
+      SeatLimitExceededException exception) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(new ErrorResponse("SEAT_LIMIT_EXCEEDED", exception.getMessage()));
   }
@@ -40,7 +41,8 @@ public class PerformanceExceptionHandler {
   }
 
   @ExceptionHandler(DuplicateSeatRangeException.class)
-  public ResponseEntity<ErrorResponse> handleDuplicateSeatRange(DuplicateSeatRangeException exception) {
+  public ResponseEntity<ErrorResponse> handleDuplicateSeatRange(
+      DuplicateSeatRangeException exception) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(new ErrorResponse("DUPLICATE_SEAT_RANGE", exception.getMessage()));
   }

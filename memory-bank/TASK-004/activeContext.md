@@ -1,8 +1,8 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 created_at: 2026-09-11
 last_updated: 2026-09-15
@@ -12,25 +12,26 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-2.6
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
   test: "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java"
+  dev: "workflow_design/06_dev/DEV_TASK-004.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b(Red)를 완료했다. 시나리오 14건(SC-14 회귀는 Red 요구사항과 구조적으로
-맞지 않아 Phase 2b 중 철회)을 테스트 14개로 옮겨 전체 실행 → 14/14 실패
-(UnsupportedOperationException, 로직 누출 없음), 기존 20개 테스트는 그대로 통과.
-HITL#2 승인 받음.
+Phase 3(Green)을 완료했다. `PerformanceService.registerPerformance/updatePerformance/
+cancelPerformance` 와 `Performance.updateSchedule/cancel` 을 구현해 전체 테스트
+34/34 통과(신규 14 + 기존 20), 린트(spotlessCheck) error 0. 리팩토링은 필요 없다고
+판단했다.
 
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 Phase 3(Green)을 시작한다 — `PerformanceService`의
-`registerPerformance`/`updatePerformance`/`cancelPerformance`, `Performance`의
-`updateSchedule`/`cancel` 을 실제로 구현해 14개 테스트를 통과시킨다.
+`wf-verify` 스킬로 Phase 4를 시작한다 — acceptance_criteria 9건 충족 여부,
+아키텍처 제약(check_architecture.py), 범위 이탈(scope_deviations 1건: SeatRepository
+생성자 주입)을 확인하고 HITL#3 승인을 받는다.
 
 ## 알아둬야 할 것
 
