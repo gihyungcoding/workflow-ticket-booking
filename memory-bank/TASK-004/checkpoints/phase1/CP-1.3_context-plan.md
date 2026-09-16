@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-11T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "공연 등록/수정/취소 API의 route를 Backend로 확정하고 PLAN_TASK-004.json 작성"
 

@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (attempt 3)"
 saved_at: 2026-09-15T15:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "scenario-validator 독립검증 PASS(fail 0, warn 3). AC 9/9 커버, flow 11/11 대응 확인. 경고 3건 — (V7) SC-19/22/23/24 note에 구현 세부 누출, (V9) SC-02/03 F2 중복, (V10) regression 시나리오 부재(SC-14 철회 이력)."
 

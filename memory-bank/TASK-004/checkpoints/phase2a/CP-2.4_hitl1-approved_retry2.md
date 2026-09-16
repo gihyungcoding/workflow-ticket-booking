@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (attempt 3)"
 saved_at: 2026-09-15T15:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "attempt 3 시나리오(SC-22~24) HITL#1 승인 완료. human_input.generate_red_trigger를 true로 전환. Phase 2b(Red) 진입 가능."
 

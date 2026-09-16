@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2b"
 phase_name: "Phase 2b - Red (attempt 3)"
 saved_at: 2026-09-15T16:45:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "SC-22(title 길이/POST)·SC-23(sections null 원소)·SC-24(title 길이/PUT) 3건을 PerformanceRegistrationApiTest.java에 추가하고 실행해 전부 Red를 확인했다. 기존 20개 시나리오는 계속 통과. registerJsonWithTitle 헬퍼를 신규 추가했다."
 

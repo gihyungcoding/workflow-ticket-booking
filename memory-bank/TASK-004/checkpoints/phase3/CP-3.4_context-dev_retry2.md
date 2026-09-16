@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "3"
 phase_name: "Phase 3 - Green (attempt 3) — 완료"
 saved_at: 2026-09-15T17:05:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Phase 3(attempt 3) EXIT GATE 통과 — test_status: green, failed: 0, passed(43) >= red_scenarios.length(23), 린트 error 0. Phase 4 재검증(attempt 3) 진입 가능."
 

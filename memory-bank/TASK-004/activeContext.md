@@ -2,8 +2,8 @@
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
 phase: "5"
-phase_name: "Phase 5 - Reflect (진입 준비 완료, Phase 4 WARN/예외승인 완료)"
-status: ACTIVE
+phase_name: "Phase 5 - Reflect — 완료(DONE)"
+status: DONE
 created_at: 2026-09-11
 last_updated: 2026-09-16
 
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-4.3_hitl3-approved_retry2
+last_checkpoint: CP-5.3_hitl4-approved
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,21 +23,19 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 재검증(attempt 3) 완료 — status: WARN, human_review.decision: EXCEPTION_APPROVE.
-attempt 2 FAIL의 목표 결함 2건(title/venue 길이, sections null 원소)은 code-reviewer가
-@Transactional 없는 프로브로 실제 DB 커밋까지 확인해 해소를 검증했다. 리뷰 중 새 결함
-(price/seatsPerRow 소수 절삭으로 음수 가격 가드 우회)을 발견했으나, 크래시 없고 결제
-기능이 아직 없어 사용자와 상의해 WARN+예외승인으로 처리하고 별도 팔로우업 태스크로
-미뤘다. `verified_commit: 82d0c53` 기록됨.
+태스크 완료. Phase 4 attempt 3에서 WARN/예외승인(`verified_commit: 82d0c53`)을 받은 뒤
+Phase 5 회고(HITL#4)까지 승인받아 `DONE`으로 닫았다. 완료 리포트:
+https://claude.ai/artifact/TJRAKBVr9QryTLCLXJhJi8
 
-## 다음 한 걸음
+## 남은 후속 작업 (이 태스크 범위 밖)
 
-1. `wf-reflect` 스킬로 Phase 5(KPT 회고)를 시작한다 — 3라운드 연속 FAIL/WARN 패턴
-   (매번 code-reviewer 실제 실행 검증에서만 드러난 결함)을 회고 대상으로 특히 주목한다.
-   `docs/decisions/` ADR 제안 후보: spring-boot-starter-validation 도입,
-   DataIntegrityViolationException 폴백 핸들러
-2. Phase 5 이후 `price/seatsPerRow 소수 절삭` 팔로우업 태스크를 `task-authoring`으로
-   생성한다 — VERIFY_TASK-004.json의 `human_review.exceptions[0].follow_up` 참고
+1. **팔로우업 태스크 생성 필요** — price/seatsPerRow 소수 절삭으로 음수 가격 가드가
+   우회되는 결함(WARN 예외승인 항목). `VERIFY_TASK-004.json`의
+   `human_review.exceptions[0].follow_up` 참고 — ACCEPT_FLOAT_AS_INT 비활성화 또는
+   DTO 타입 변경
+2. **ADR 승격 후보 2건** — Bean Validation 도입 여부, 전역 예외 처리 폴백 정책.
+   `REFLECT_TASK-004.json`의 `adr_candidates` 참고, 필요 시 `/wf-adr`
+3. `/wf-ship`으로 머지 준비
 
 ## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
 

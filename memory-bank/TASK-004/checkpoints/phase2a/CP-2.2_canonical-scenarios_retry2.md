@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (attempt 3)"
 saved_at: 2026-09-15T15:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Phase 4 재검증(attempt 2) FAIL에 따라 SC-22(title 길이, POST)·SC-23(sections null 원소)·SC-24(title 길이, PUT — 신규 추가) 3건을 확정했다. SC-22/23은 이전 세션이 작업 트리에 초안으로 남긴 것을 code-reviewer로 재확인했고, SC-24는 이번 code-reviewer 리뷰에서 PUT 경로도 같은 결함을 공유한다는 사실이 드러나 추가했다."
 

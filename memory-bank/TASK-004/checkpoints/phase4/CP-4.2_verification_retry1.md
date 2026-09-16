@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "4"
 phase_name: "Phase 4 - Verify (재검증, attempt 2)"
 saved_at: 2026-09-15T14:45:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "attempt 1 FAIL의 원인(좌석 상한 우회, 정수 오버플로, 필수 필드 누락 500, grade 길이, FK 애노테이션)은 모두 해소를 확인했다. 그러나 code-reviewer가 실행으로 잔여 결함 2건을 새로 재현했다 — title/venue 200자 초과(등록·수정 양쪽) 500, sections 배열의 null 원소 500(NPE). status: FAIL, Phase 2a로 재롤백(attempt 3 예정)."
 

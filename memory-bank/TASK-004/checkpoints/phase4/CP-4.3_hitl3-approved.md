@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "4"
 phase_name: "Phase 4 - Verify (attempt 3) — 완료"
 saved_at: 2026-09-16T00:15:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Phase 4(attempt 3) 검증 결과를 WARN으로 확정하고 사용자로부터 예외 승인을 받았다. verified_commit 기록 완료. Phase 5(Reflect) 진입 가능."
 

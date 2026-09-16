@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "4"
 phase_name: "Phase 4 - Verify (재검증, attempt 3)"
 saved_at: 2026-09-16T00:05:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "attempt 2 FAIL의 목표 결함 2건(title/venue 길이, sections null 원소)은 code-reviewer가 @Transactional 없는 프로브로 실제 커밋까지 확인해 해소를 검증했다. 새 결함 1건(price/seatsPerRow 소수 절삭으로 음수 가격 가드 우회) 발견 — 사용자와 상의해 WARN으로 낮추고 예외 승인, 별도 팔로우업 태스크로 추적하기로 했다."
 
@@ -23,7 +23,7 @@ next_steps:
   - priority: 1
     task: "AskUserQuestion으로 HITL#3(최종 승인) 진행"
   - priority: 2
-    task: "승인되면 CP-4.3_hitl3-approved_retry2 저장, verified_commit 기록, Phase 5(Reflect)로 진행"
+    task: "승인되면 CP-4.3_hitl3-approved 저장, verified_commit 기록, Phase 5(Reflect)로 진행"
   - priority: 3
     task: "price/seatsPerRow 소수 절삭 팔로우업 태스크를 별도로 만든다(task-authoring)"
 
@@ -72,6 +72,6 @@ WARN으로 낮추고 예외 승인했다.
 ## 재개 방법
 
 1. `VERIFY_TASK-004.json` 을 읽는다
-2. `CP-4.3_hitl3-approved_retry2` 저장 — HITL#3 승인 기록(이미 실질적으로 받음)
+2. `CP-4.3_hitl3-approved` 저장 — HITL#3 승인 기록(이미 실질적으로 받음)
 3. `wf-reflect` 스킬로 Phase 5 진입
 4. price/seatsPerRow 소수 절삭 팔로우업 태스크 생성

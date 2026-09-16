@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "2b"
 phase_name: "Phase 2b - Red (attempt 3) — 승인 완료"
 saved_at: 2026-09-15T16:55:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "SC-22/23/24 Red 테스트 HITL#2 승인 완료. TEST_TASK-004.json human_review.approved = true. Phase 3(Green) 진입 가능."
 

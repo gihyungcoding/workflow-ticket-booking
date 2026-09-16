@@ -5,7 +5,7 @@ task_id: TASK-004
 phase: "3"
 phase_name: "Phase 3 - Green (attempt 3)"
 saved_at: 2026-09-15T17:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "SC-22/23/24를 통과시키는 최소 구현 완료. PerformanceService.validateRequired에 title/venue 길이 검사(등록·수정 공유), validateSection에 null 원소 검사를 추가하고 Controller의 toSectionSpec이 null을 그대로 통과시키도록 수정했다. 전체 43/43 통과, 린트 error 0."
 
