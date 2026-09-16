@@ -85,6 +85,9 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
 - 좌석은 구역(등급)×행×열 입력으로 서버가 개별 `seat` 행을 생성한다 (좌표 기반
   인터랙티브 배치는 하지 않음) →
   [ADR-0009](../decisions/ADR-0009-seat-individual-rows.md)
+- 요청 DTO의 필드 형태 검증은 Bean Validation, 도메인 규칙(시각 순서·좌석 상한 등)은
+  계속 Service 계층 수동 검증 →
+  [ADR-0010](../decisions/ADR-0010-bean-validation-for-request-dtos.md)
 
 ## 7. 알려진 부채
 
