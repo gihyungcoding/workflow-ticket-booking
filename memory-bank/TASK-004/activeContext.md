@@ -13,6 +13,11 @@ target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
 last_checkpoint: CP-5.3_hitl4-approved
+pull_request:
+  number: 5
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/5"
+  base: develop
+  opened_at: 2026-09-16
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
