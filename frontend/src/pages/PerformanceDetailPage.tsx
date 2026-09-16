@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { getPerformance, PerformanceNotFoundError } from '../api/performances'
 import type { Performance } from '../api/performances'
 import { StatusBadge } from '../components/StatusBadge'
+import { fontDisplay } from '../theme/tokens'
 
 type DetailState =
   | { status: 'loading' }
@@ -55,13 +56,21 @@ export function PerformanceDetailPage() {
   return (
     <Stack spacing={1}>
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">{performance.title}</Typography>
+        <Typography variant="h5" sx={{ fontFamily: fontDisplay }}>
+          {performance.title}
+        </Typography>
         <StatusBadge status={performance.status} />
       </Stack>
-      <Typography>{performance.venue}</Typography>
-      <Typography>공연 일시: {new Date(performance.startAt).toLocaleString()}</Typography>
-      <Typography>예매 오픈: {new Date(performance.openAt).toLocaleString()}</Typography>
-      <Typography>예매 마감: {new Date(performance.closeAt).toLocaleString()}</Typography>
+      <Typography color="textSecondary">{performance.venue}</Typography>
+      <Typography color="textSecondary">
+        공연 일시: {new Date(performance.startAt).toLocaleString()}
+      </Typography>
+      <Typography color="textSecondary">
+        예매 오픈: {new Date(performance.openAt).toLocaleString()}
+      </Typography>
+      <Typography color="textSecondary">
+        예매 마감: {new Date(performance.closeAt).toLocaleString()}
+      </Typography>
       <Typography>잔여 좌석: {performance.availableSeats}석</Typography>
     </Stack>
   )
