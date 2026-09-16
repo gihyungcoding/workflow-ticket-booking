@@ -1,18 +1,18 @@
 ---
 task_id: TASK-004
 title: "공연 등록/수정/취소 API"
-phase: "4"
-phase_name: "Phase 4 - Verify (재검증, attempt 3 진입 준비 완료)"
+phase: "5"
+phase_name: "Phase 5 - Reflect (진입 준비 완료, Phase 4 WARN/예외승인 완료)"
 status: ACTIVE
 created_at: 2026-09-11
-last_updated: 2026-09-15
+last_updated: 2026-09-16
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-004-performance-registration-api"
 
-last_checkpoint: CP-3.4_context-dev_retry2
+last_checkpoint: CP-4.3_hitl3-approved_retry2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-004.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-004.md"
@@ -23,18 +23,21 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 3(attempt 3) Green 구현을 마쳤다. `validateRequired`(F10)에 title/venue 200자
-초과 검사(등록·수정 공유)를, `validateSection`(F11)에 section null 검사를 추가했고,
-`PerformanceController.toSectionSpec`이 null 원소를 그대로 Service까지 통과시키도록
-고쳤다. 전체 43/43 테스트 통과, 린트 error 0.
+Phase 4 재검증(attempt 3) 완료 — status: WARN, human_review.decision: EXCEPTION_APPROVE.
+attempt 2 FAIL의 목표 결함 2건(title/venue 길이, sections null 원소)은 code-reviewer가
+@Transactional 없는 프로브로 실제 DB 커밋까지 확인해 해소를 검증했다. 리뷰 중 새 결함
+(price/seatsPerRow 소수 절삭으로 음수 가격 가드 우회)을 발견했으나, 크래시 없고 결제
+기능이 아직 없어 사용자와 상의해 WARN+예외승인으로 처리하고 별도 팔로우업 태스크로
+미뤘다. `verified_commit: 82d0c53` 기록됨.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4 재검증(attempt 3)을 시작한다 — attempt 2 FAIL의 근거
-(title/venue 길이 500, sections null 원소 500)가 실제로 해소됐는지 code-reviewer로
-다시 확인하고, acceptance_criteria 9건을 재대조한다. attempt 1/2에서 반복됐던 패턴
-(FAIL → 롤백 → 재구현)을 감안해 이번엔 특히 "또 다른 잔여 결함이 없는지"를
-중점적으로 본다.
+1. `wf-reflect` 스킬로 Phase 5(KPT 회고)를 시작한다 — 3라운드 연속 FAIL/WARN 패턴
+   (매번 code-reviewer 실제 실행 검증에서만 드러난 결함)을 회고 대상으로 특히 주목한다.
+   `docs/decisions/` ADR 제안 후보: spring-boot-starter-validation 도입,
+   DataIntegrityViolationException 폴백 핸들러
+2. Phase 5 이후 `price/seatsPerRow 소수 절삭` 팔로우업 태스크를 `task-authoring`으로
+   생성한다 — VERIFY_TASK-004.json의 `human_review.exceptions[0].follow_up` 참고
 
 ## 알아둬야 할 것 (Phase 3 구현 시 반영할 설계 결정)
 
