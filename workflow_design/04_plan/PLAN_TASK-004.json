@@ -1,0 +1,400 @@
+{
+  "task_id": "TASK-004",
+  "route": "Backend",
+  "route_reason": "seat 테이블 신설, 좌석 생성 알고리즘, 시각·좌석수·범위 검증이 모두 서버 범위이며 화면 요소나 클라이언트 상태 전이는 이 태스크에 없다",
+
+  "design": {
+    "inputs": [
+      {
+        "name": "title",
+        "type": "String",
+        "source": "요청 바디 (POST/PUT)",
+        "constraints": ["필수 — null/blank이면 INVALID_REQUEST (F10)", "1~200자 — performance.title VARCHAR(200), 초과 시 INVALID_REQUEST (F10, attempt 3)"]
+      },
+      {
+        "name": "venue",
+        "type": "String",
+        "source": "요청 바디 (POST/PUT)",
+        "constraints": ["필수 — null/blank이면 INVALID_REQUEST (F10)", "1~200자 — performance.venue VARCHAR(200), 초과 시 INVALID_REQUEST (F10, attempt 3)"]
+      },
+      {
+        "name": "startAt, openAt, closeAt",
+        "type": "Instant",
+        "source": "요청 바디 (POST/PUT)",
+        "constraints": ["필수 — null이면 INVALID_REQUEST (F10)", "openAt <= closeAt <= startAt (서비스 계층 검증, DB 제약 아님 — performance-registration.md §1-3)"]
+      },
+      {
+        "name": "sections",
+        "type": "List<SectionSpec>",
+        "source": "요청 바디 (POST 전용)",
+        "constraints": [
+          "필드 자체가 null이면 INVALID_REQUEST (F10) — sections가 빈 배열([])인 것과 다르다",
+          "null이 아니고 1개 이상 (그렇지 않으면 EMPTY_SECTIONS, F9) — F10과 F9는 서로 다른 검사이며 F10이 먼저 실행된다",
+          "배열 원소 자체가 null이면 안 됨 — 위반 시 INVALID_SECTION (F11, attempt 3)",
+          "section.grade 필수·1~20자(20자로 제한 — seat_label VARCHAR(30)이 grade+행+최대4자리 좌석번호를 담으려면 grade가 24자 이내여야 하므로 여유를 두고 20자로 제한), section.price 필수·0 이상, section.seatsPerRow 필수·1 이상, section.rowStart/rowEnd 는 null/빈문자열이 아닌 A~Z 단일 대문자이며 rowStart <= rowEnd — 위반 시 INVALID_SECTION (F11)",
+          "전체 구역의 좌석 합 <= 5,000, long 산술로 계산해 int 오버플로로 우회되지 않아야 함 (SEAT_LIMIT_EXCEEDED, F3)",
+          "임의의 두 구역의 [rowStart, rowEnd] 알파벳 구간이 겹치지 않음 (DUPLICATE_SEAT_RANGE, F4)"
+        ]
+      },
+      {
+        "name": "id",
+        "type": "Long",
+        "source": "경로 변수 (PUT /{id}, POST /{id}/cancel)",
+        "constraints": ["존재하는 performance.id 여야 함 (PERFORMANCE_NOT_FOUND)"]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "PerformanceResponse (201)",
+        "type": "PerformanceResponse",
+        "description": "등록 성공 — 기존 응답 DTO 재사용, totalSeats 는 생성된 좌석 총수"
+      },
+      {
+        "name": "PerformanceResponse (200, 수정)",
+        "type": "PerformanceResponse",
+        "description": "title/venue/startAt/openAt/closeAt 갱신 결과"
+      },
+      {
+        "name": "PerformanceResponse (200, 취소)",
+        "type": "PerformanceResponse",
+        "description": "도메인의 cancelled=true 로 갱신되고, 응답의 status 필드는 PerformanceStatusRules에 의해 CANCELLED 로 계산되어 노출된다 (PerformanceResponse에 별도 cancelled 필드는 없다). 이미 취소된 경우도 동일하게 200(멱등)"
+      },
+      {
+        "name": "400 INVALID_TIME_ORDER",
+        "type": "error",
+        "description": "openAt <= closeAt <= startAt 위반 (등록/수정 공통)"
+      },
+      {
+        "name": "400 SEAT_LIMIT_EXCEEDED",
+        "type": "error",
+        "description": "구역 좌석 합이 5,000 초과 (등록)"
+      },
+      {
+        "name": "400 EMPTY_SECTIONS",
+        "type": "error",
+        "description": "sections 가 비어 있음 (등록)"
+      },
+      {
+        "name": "409 DUPLICATE_SEAT_RANGE",
+        "type": "error",
+        "description": "두 구역의 행 범위가 겹침 (등록)"
+      },
+      {
+        "name": "409 REGISTRATION_ALREADY_OPEN",
+        "type": "error",
+        "description": "now >= openAt 인 공연을 수정하려 함"
+      },
+      {
+        "name": "404 PERFORMANCE_NOT_FOUND",
+        "type": "error",
+        "description": "존재하지 않는 id 로 수정/취소 요청 (기존 예외 재사용)"
+      },
+      {
+        "name": "400 INVALID_REQUEST",
+        "type": "error",
+        "description": "필수 필드(title/venue/startAt/openAt/closeAt, 등록의 경우 sections)가 null/blank, 또는 title/venue가 200자 초과 (등록/수정 공통). attempt 2 — Phase 4 FAIL(VERIFY_TASK-004.json)에서 필수 필드 누락 시 500이 새던 결함을 막는다. attempt 3 — 재검증에서 title/venue 200자 초과 시에도 500이 새던 잔여 결함을 막는다"
+      },
+      {
+        "name": "400 INVALID_SECTION",
+        "type": "error",
+        "description": "구역 원소 자체가 null이거나, 구역 하나의 필드가 형식에 맞지 않음 — grade blank/20자 초과, price null/음수, rowStart·rowEnd가 A~Z 단일 대문자가 아니거나 rowStart > rowEnd, seatsPerRow null/1 미만 (등록). attempt 2 — Phase 4 FAIL에서 역방향 행 범위가 좌석 상한·겹침 검사를 모두 우회하던 결함을 막는다. attempt 3 — 재검증에서 sections 배열의 null 원소가 Controller 변환 시 NPE로 500이 새던 잔여 결함을 막는다"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "정상 등록 — 구역별 좌석 생성",
+        "steps": [
+          "RegisterPerformanceRequest 파싱, Controller가 SectionSpec 리스트로 변환",
+          "필수 필드(title/venue/시각/sections) null 아님 확인 (F10)",
+          "sections 비어있지 않음 확인 (F9)",
+          "구역별 형식 검증(grade/price/rowStart·rowEnd/seatsPerRow, rowStart<=rowEnd) 통과 (F11)",
+          "openAt<=closeAt<=startAt 검증 (F2)",
+          "구역별 (rowEnd-rowStart+1)*seatsPerRow 를 long 으로 계산 후 합산, 5,000 이하 검증 (F3, int 오버플로 방지)",
+          "구역 간 행 범위 겹침 없음 검증 (F4)",
+          "Performance 저장 (totalSeats=availableSeats=합산값, cancelled=false)",
+          "구역×행×열 조합마다 Seat 생성(seatLabel={grade}-{row}{number}) 후 일괄 저장",
+          "201과 PerformanceResponse 반환"
+        ],
+        "covers": [
+          "구역 1개 이상으로 POST /api/performances 호출 시 201과 함께 각 구역의 rowStart~rowEnd × seatsPerRow 만큼 seat 행이 생성된다",
+          "생성된 performance.total_seats/available_seats 가 생성된 좌석 총수와 같다"
+        ],
+        "note": "검증 순서: F10(필수 필드) → F9(빈 sections) → F11(구역 형식) → F2(시각 순서) → F3(좌석 상한) → F4(행 범위 겹침). 이 순서는 이미 승인된 SC-02/03(시각 순서)·SC-04(상한)·SC-05(겹침)가 전부 유효한 단일 구역/형식을 전제로 하므로 그대로 통과하고, F10/F11이 새로 추가한 검사에만 걸린다."
+      },
+      {
+        "id": "F2",
+        "name": "시각 순서 위반 — 등록",
+        "steps": [
+          "openAt > closeAt 또는 closeAt > startAt 인 요청 수신",
+          "좌석 생성·저장 전에 검증에서 즉시 실패",
+          "400과 INVALID_TIME_ORDER 반환"
+        ],
+        "covers": ["openAt > closeAt 또는 closeAt > startAt 이면 400과 INVALID_TIME_ORDER 가 반환된다"]
+      },
+      {
+        "id": "F3",
+        "name": "좌석 총수 상한 초과",
+        "steps": [
+          "구역별 (rowEnd-rowStart+1)*seatsPerRow 를 long 타입으로 계산·누적 (int 오버플로로 우회되지 않도록)",
+          "합산이 5,000 초과",
+          "Performance/Seat 저장 전에 검증에서 실패",
+          "400과 SEAT_LIMIT_EXCEEDED 반환"
+        ],
+        "covers": ["좌석 총수가 5,000을 넘으면 400과 SEAT_LIMIT_EXCEEDED 가 반환된다"],
+        "note": "attempt 2 — Phase 4 FAIL에서 int 합산이 오버플로로 음수가 되어 이 검사를 우회하던 보안 결함(DoS)을 code-reviewer가 재현. long 산술로 고친다. SC-20이 이 경계를 검증한다."
+      },
+      {
+        "id": "F4",
+        "name": "구역 간 행 범위 겹침",
+        "steps": [
+          "두 구역의 [rowStart, rowEnd] 알파벳 구간이 교집합을 가짐",
+          "시각·좌석수 검증은 통과했으나 이 단계에서 실패",
+          "409와 DUPLICATE_SEAT_RANGE 반환"
+        ],
+        "covers": ["두 구역의 행 범위가 겹치면 409와 DUPLICATE_SEAT_RANGE 가 반환된다"]
+      },
+      {
+        "id": "F5",
+        "name": "오픈 전 수정 성공",
+        "steps": [
+          "PUT /api/performances/{id} 요청, clock.instant() < performance.openAt 확인",
+          "openAt<=closeAt<=startAt 재검증 (요청값 기준)",
+          "title/venue/startAt/openAt/closeAt 갱신, 저장",
+          "200과 갱신된 PerformanceResponse 반환"
+        ],
+        "covers": ["now < openAt 인 공연을 PUT /api/performances/{id} 로 수정하면 200과 변경된 필드가 반영된 상세가 반환된다"]
+      },
+      {
+        "id": "F6",
+        "name": "오픈 이후 수정 거부",
+        "steps": [
+          "PUT /api/performances/{id} 요청, clock.instant() >= performance.openAt",
+          "갱신하지 않고 즉시 실패",
+          "409와 REGISTRATION_ALREADY_OPEN 반환"
+        ],
+        "covers": ["now >= openAt 인 공연을 수정하려 하면 409와 REGISTRATION_ALREADY_OPEN 이 반환된다"]
+      },
+      {
+        "id": "F7",
+        "name": "존재하지 않는 공연 (수정/취소 공통)",
+        "steps": [
+          "PUT /api/performances/{id} 또는 POST /api/performances/{id}/cancel 요청",
+          "performanceRepository.findById(id) 가 비어있음",
+          "기존 PerformanceNotFoundException 재사용",
+          "404와 PERFORMANCE_NOT_FOUND 반환 (기존 핸들러 재사용)"
+        ],
+        "covers": ["존재하지 않는 id 로 수정/취소를 호출하면 404와 PERFORMANCE_NOT_FOUND 가 반환된다"]
+      },
+      {
+        "id": "F8",
+        "name": "취소 — 멱등",
+        "steps": [
+          "POST /api/performances/{id}/cancel 요청",
+          "performance.cancel() 호출 (이미 cancelled=true 여도 그대로 true 유지)",
+          "저장 후 200과 cancelled=true 인 PerformanceResponse 반환",
+          "동일 id 로 재호출해도 동일하게 200 반환"
+        ],
+        "covers": ["POST /api/performances/{id}/cancel 호출 시 cancelled 가 true 로 바뀌고, 이미 취소된 공연을 다시 호출해도 200이 반환된다(멱등)"]
+      },
+      {
+        "id": "F9",
+        "name": "빈 구역 목록으로 등록 시도",
+        "steps": [
+          "sections 가 빈 배열인 POST 요청",
+          "좌석수 계산 전에 검증에서 실패",
+          "400과 EMPTY_SECTIONS 반환"
+        ],
+        "covers": [],
+        "note": "acceptance_criteria 에는 없지만 performance-registration.md §3 API 명세에 명시된 오류 코드라 함께 구현한다. F1(구역 1개 이상 전제)의 반대 경로."
+      },
+      {
+        "id": "F10",
+        "name": "필수 필드 누락 (등록/수정 공통)",
+        "steps": [
+          "요청 바디의 title/venue/startAt/openAt/closeAt 중 하나라도 null(문자열은 blank 포함)",
+          "또는 title/venue가 200자 초과 (performance.title/venue VARCHAR(200) 초과 방지)",
+          "등록의 경우 sections 필드 자체가 null (sections가 빈 배열 []인 것과는 다른 경우 — 그건 F9)",
+          "DB 접근·구역 검증 이전에 즉시 실패",
+          "400과 INVALID_REQUEST 반환"
+        ],
+        "covers": [],
+        "note": "attempt 2 — Phase 4 FAIL에서 필수 필드 누락 시 NPE/DB NOT NULL 위반으로 500이 새던 결함을 code-reviewer가 재현. 등록·수정 두 메서드가 공유하는 하나의 검증 지점(private 헬퍼)에서 처리해, title/venue/시각/sections 중 무엇이 빠지든 같은 코드 경로를 탄다 — 그래서 시나리오는 sections null 하나만 대표로 둔다(SC-16). SC-13(EMPTY_SECTIONS, sections=[])과는 null이냐 빈 배열이냐로 구분되며 F10이 F9보다 먼저 실행된다. attempt 3 — Phase 4 재검증(2차)에서 title/venue 200자 초과 시에도 500이 새는 것을 code-reviewer가 추가로 재현(SC-22)해 길이 검사를 이 지점에 포함시켰다."
+      },
+      {
+        "id": "F11",
+        "name": "구역 형식 오류 (등록)",
+        "steps": [
+          "구역 원소 자체가 null (attempt 3 — 배열에 [null] 처럼 null 원소가 섞인 경우)",
+          "또는 grade가 blank이거나 20자 초과(seat_label VARCHAR(30) 초과 방지), 또는 price가 null이거나 음수",
+          "또는 rowStart/rowEnd가 null/빈 문자열/A~Z 단일 대문자가 아님",
+          "또는 rowStart > rowEnd (역방향 범위)",
+          "또는 seatsPerRow가 null이거나 1 미만",
+          "좌석수 합산·겹침 검사 이전에 구역별로 즉시 실패",
+          "400과 INVALID_SECTION 반환"
+        ],
+        "covers": [],
+        "note": "attempt 2 — Phase 4 FAIL에서 역방향 행 범위(rowStart>rowEnd)가 rowCount를 음수로 만들어 SEAT_LIMIT_EXCEEDED(F3)·DUPLICATE_SEAT_RANGE(F4) 검사를 모두 우회하던 결함, 그리고 rowStart가 빈 문자열이면 charAt(0)에서 StringIndexOutOfBoundsException(500)이 나던 결함을 code-reviewer가 재현. 이 검사가 F3/F4보다 먼저 실행돼야 한다. SC-17(역방향 범위)·SC-18(seatsPerRow<=0)·SC-19(빈 rowStart)가 이 흐름을 검증한다. attempt 3 — Phase 4 재검증(2차)에서 sections 배열의 원소가 null이면(리스트 자체는 null이 아님) Controller의 DTO 변환에서 NPE로 500이 새는 것을 code-reviewer가 추가로 재현(SC-23)해, Controller는 원소를 그대로 통과시키고 이 지점에서 null 검사를 하도록 정정했다."
+      }
+    ]
+  },
+
+  "architecture_refs": {
+    "layer": "API + Service + Repository + domain",
+    "note": "쓰기 경로도 읽기와 동일하게 API → Service → Repository → DB 만 허용 (architecture.md §3, §4 '쓰기 — 공연 등록/관리'). 좌석 생성 알고리즘·검증 순서·시각 순서 판정은 모두 Service(PerformanceService)에 둔다 — Controller는 요청 파싱과 api.dto→service 타입 변환만 한다. 신규 예외(InvalidTimeOrderException 등)는 기존 PerformanceNotFoundException과 같은 위치(service 패키지)에서 정의하고 PerformanceExceptionHandler(api 패키지)가 변환한다 — 이는 '응답 변환' 책임이라 API 계층 역할과 충돌하지 않는다.",
+    "constraints_applied": ["ARCH-001", "ARCH-002", "ARCH-003"],
+    "note_on_service_boundary": "TASK-001 이력(PLAN_TASK-001.json amendments)에서 Service가 api.dto를 import해 ARCH-002를 실제로 위반한 적이 있다 — 이번에도 RegisterPerformanceRequest/SectionRequest 같은 api.dto 타입을 PerformanceService 메서드 시그니처에 절대 쓰지 않는다. Controller가 api.dto를 service 전용 레코드(SectionSpec)로 변환해 넘긴다."
+  },
+  "adr_refs": ["ADR-0003", "ADR-0005", "ADR-0006", "ADR-0009"],
+
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "backend/src/main/resources/db/migration/V2__create_seat.sql",
+        "change": "신규 — seat 테이블 (performance_id FK, grade, seat_row, seat_number, seat_label, price, UNIQUE(performance_id, seat_row, seat_number))"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/Seat.java",
+        "change": "신규 — Performance.java 와 동일한 스타일(protected 기본 생성자 + public 생성자 + getter만)의 @Entity. (attempt 2) performance_id 에 FK 애노테이션 추가 — V2 마이그레이션의 REFERENCES performance(id) 가 엔티티에 없어 테스트(H2)와 프로덕션 스키마가 갈리던 것을 code-reviewer가 지적, 시나리오 없이 직접 수정(Performance.java의 ADR-0006 선례와 동일 처리)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+        "change": "변경 — updateSchedule(title, venue, startAt, openAt, closeAt) 와 cancel() 메서드 추가 (기존엔 getter만 있고 상태 변경 메서드가 없음)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/SeatRepository.java",
+        "change": "신규 — JpaRepository<Seat, Long> (커스텀 쿼리 불필요, 중복 검증은 애플리케이션 계층에서 사전 처리)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/SectionSpec.java",
+        "change": "신규 — Service 소유 요청 레코드(grade, price, rowStart, rowEnd, seatsPerRow). api.dto 타입을 Service 시그니처에 노출하지 않기 위함"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+        "change": "변경 — registerPerformance/updatePerformance/cancelPerformance 추가, 좌석 생성·시각순서·좌석수 상한·행범위 겹침 검증 포함. (attempt 2) F10(필수 필드)/F11(구역 형식) 검증 추가, 좌석수 합산을 long으로 변경(오버플로 방지), grade 길이를 seat_label(VARCHAR 30) 이내로 보장하도록 F11에서 제한"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidTimeOrderException.java",
+        "change": "신규 — PerformanceNotFoundException 과 동일 스타일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/SeatLimitExceededException.java",
+        "change": "신규"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/EmptySectionsException.java",
+        "change": "신규"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/DuplicateSeatRangeException.java",
+        "change": "신규"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/RegistrationAlreadyOpenException.java",
+        "change": "신규"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidRequestException.java",
+        "change": "신규 (attempt 2) — F10, 필수 필드 누락"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidSectionException.java",
+        "change": "신규 (attempt 2) — F11, 구역 형식 오류"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/RegisterPerformanceRequest.java",
+        "change": "신규 — title/venue/startAt/openAt/closeAt/List<SectionRequest> sections"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SectionRequest.java",
+        "change": "신규 — grade/price/rowStart/rowEnd/seatsPerRow"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/UpdatePerformanceRequest.java",
+        "change": "신규 — title/venue/startAt/openAt/closeAt"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+        "change": "변경 — POST /api/performances, PUT /api/performances/{id}, POST /api/performances/{id}/cancel 추가. api.dto → service.SectionSpec 변환은 여기서 한다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+        "change": "변경 — InvalidTimeOrderException/SeatLimitExceededException/EmptySectionsException(400), DuplicateSeatRangeException/RegistrationAlreadyOpenException(409) 핸들러 추가. (attempt 2) InvalidRequestException/InvalidSectionException(400) 핸들러 추가"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java",
+        "symbol": "Clock",
+        "note": "REGISTRATION_ALREADY_OPEN 판정(now>=openAt)에 그대로 재사용 — SQL now() 쓰지 않는다 (ADR-0005)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java",
+        "symbol": "ErrorResponse",
+        "note": "신규 에러 코드 5종 모두 이 레코드로 응답"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceNotFoundException.java",
+        "symbol": "PerformanceNotFoundException",
+        "note": "수정/취소의 404 처리에 그대로 재사용 — 새로 만들지 않는다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+        "symbol": "PerformanceResponse",
+        "note": "등록/수정/취소 응답 모두 이 기존 레코드 재사용 (totalSeats 필드가 이미 있음, 새 응답 타입 불필요)"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+        "symbol": "MutableClock + ClockTestConfig",
+        "note": "now>=openAt 경계값(F6) 테스트에 TASK-001과 동일한 패턴으로 재사용"
+      }
+    ],
+    "existing_tests": [
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/repository/PerformanceConstraintTest.java"
+    ],
+    "unresolved": [
+      "구역 간 '행 범위 겹침' 판정을 행 문자 구간의 교집합만으로 볼지(좌석 번호 조합은 보지 않음) — performance-registration.md §1-3 문구가 '행 범위가 겹치면'이라고만 되어 있어 이번 Plan은 문자 구간 교집합만으로 단순화했다. Phase 2a 시나리오에서 이 정의를 명시적으로 확정해야 한다.",
+      "rowStart/rowEnd 를 A~Z 단일 대문자로만 지원한다(26행 초과·AA 같은 복수 문자 행은 이번 범위 밖) — 문서가 명시하지 않아 5,000석 상한과 26행 조합이면 실무상 충분하다고 보고 임의로 좁혔다. 범위를 벗어나면 별도 코드 없이 일반 400으로 처리할지 사용자 확인이 필요할 수 있다."
+    ]
+  },
+
+  "acceptance_criteria": [
+    "구역 1개 이상으로 POST /api/performances 호출 시 201과 함께 각 구역의 rowStart~rowEnd × seatsPerRow 만큼 seat 행이 생성된다",
+    "생성된 performance.total_seats/available_seats 가 생성된 좌석 총수와 같다",
+    "openAt > closeAt 또는 closeAt > startAt 이면 400과 INVALID_TIME_ORDER 가 반환된다",
+    "좌석 총수가 5,000을 넘으면 400과 SEAT_LIMIT_EXCEEDED 가 반환된다",
+    "두 구역의 행 범위가 겹치면 409와 DUPLICATE_SEAT_RANGE 가 반환된다",
+    "now < openAt 인 공연을 PUT /api/performances/{id} 로 수정하면 200과 변경된 필드가 반영된 상세가 반환된다",
+    "now >= openAt 인 공연을 수정하려 하면 409와 REGISTRATION_ALREADY_OPEN 이 반환된다",
+    "존재하지 않는 id 로 수정/취소를 호출하면 404와 PERFORMANCE_NOT_FOUND 가 반환된다",
+    "POST /api/performances/{id}/cancel 호출 시 cancelled 가 true 로 바뀌고, 이미 취소된 공연을 다시 호출해도 200이 반환된다(멱등)"
+  ],
+
+  "test_hints": {
+    "framework": "JUnit5 + Spring Boot Test (H2, ADR-0006 — 좌석 선점 기능 착수 전까지는 유지, 이번 태스크는 등록 로직만 다루고 Postgres 전용 구문에 의존하지 않는다)",
+    "command": "./gradlew test",
+    "mock_strategy": "PerformanceServiceTest는 PerformanceRepository/SeatRepository를 스텁하고 Clock.fixed(...)로 openAt 경계(F5/F6)를 고정해 좌석 생성 계산·검증 순서(F1~F4, F9)를 단위 테스트한다. PerformanceApiTest(기존 파일에 이어서 작성)는 MockMvc + ClockTestConfig/MutableClock 패턴을 그대로 써서 POST/PUT/cancel 엔드포인트의 요청 파싱·상태코드·에러코드 매핑을 검증한다(F1~F8, F9). seat 테이블 저장 자체는 @DataJpaTest 또는 PerformanceApiTest 안에서 SeatRepository로 실제 생성된 행 수를 조회해 확인한다(F1 AC1)."
+  },
+
+  "amendments": [
+    {
+      "when": "Phase 2a (독립검증 1차 라운드)",
+      "what": "취소 응답(design.outputs)의 서술을 'cancelled=true 로 갱신된 결과'에서 '응답의 status 필드가 PerformanceStatusRules에 의해 CANCELLED 로 계산되어 노출된다'로 정정",
+      "why": "scenario-validator가 PerformanceResponse 레코드에 cancelled 필드가 없고 status만 있음을 지적 (V5/V8). SC-11/SC-12의 Then도 '응답의 cancelled는 true'에서 '응답의 status는 CANCELLED'로 함께 수정",
+      "reference": "workflow_design/05_scenario/validator/VALIDATION_TASK-004.json (round 1)"
+    },
+    {
+      "when": "Phase 4 FAIL 이후 Phase 2a 재시도 (attempt 2)",
+      "what": "F10(필수 필드 누락)·F11(구역 형식 오류) flow와 400 INVALID_REQUEST·400 INVALID_SECTION 출력을 추가. F1 steps에 F10/F9/F11의 실행 순서를 명시. F3 steps를 long 산술로 정정. design.inputs의 sections/grade/rowStart·rowEnd/seatsPerRow 제약을 구체화(grade 20자 제한 포함). target_files에 InvalidRequestException·InvalidSectionException 추가, Seat.java에 FK 애노테이션 보강 항목 추가",
+      "why": "code-reviewer가 Phase 4에서 실제 실행으로 재현한 결함 — 역방향 행 범위·정수 오버플로로 좌석 상한(AC4)이 완전히 우회되고(25,000개 seat 생성, DoS 가능), 필수 필드 누락이 500으로 새고, 긴 grade가 seat_label 컬럼을 넘겨 500이 나던 문제. Plan이 이 검증들을 처음부터 누락했다",
+      "reference": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings, workflow_design/05_scenario/validator/VALIDATION_TASK-004.json (attempt 2 round 1, V4 fail)"
+    },
+    {
+      "when": "Phase 4 재검증(2차)에서 잔여 결함 발견 이후 Phase 2a 재시도 (attempt 3)",
+      "what": "F10 steps에 'title/venue 200자 초과' 추가, design.inputs의 title/venue 제약에 '초과 시 INVALID_REQUEST' 명시. F11 steps에 '구역 원소 자체가 null' 추가",
+      "why": "attempt 2로 원래 결함 5건은 해소됐지만, code-reviewer가 재검증 중 실제 실행으로 잔여 결함 2건을 새로 재현했다 — title/venue가 200자를 넘으면 여전히 500(길이 검사 누락), sections 배열에 null 원소가 있으면 Controller 변환에서 NPE로 500. SC-22(title 길이)·SC-23(sections null 원소) 추가",
+      "reference": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings (2차 재검증)"
+    }
+  ]
+}

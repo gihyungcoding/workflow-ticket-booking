@@ -117,4 +117,17 @@ public class Performance {
   public Boolean getCancelled() {
     return cancelled;
   }
+
+  public void updateSchedule(
+      String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
+    this.title = title;
+    this.venue = venue;
+    this.startAt = startAt;
+    this.openAt = openAt;
+    this.closeAt = closeAt;
+  }
+
+  public void cancel() {
+    this.cancelled = true;
+  }
 }
