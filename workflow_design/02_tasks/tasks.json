@@ -310,5 +310,43 @@
         }
       ]
     }
+  },
+  {
+    "id": "TASK-006",
+    "title": "구역 price/seatsPerRow 정수 강제 검증",
+    "description": "공연 등록(POST /api/performances) 요청의 section.price/seatsPerRow는 Integer 타입이지만, Jackson의 기본 ACCEPT_FLOAT_AS_INT 설정 때문에 JSON에 소수를 보내면 0 방향으로 절삭되어 그대로 통과한다. price=-0.5는 0으로 절삭돼 PerformanceService.validateSection의 \"price는 0 이상\" 검사를 우회하고 무료 좌석이 생성되며, seatsPerRow=1.9는 1로 절삭돼 클라이언트가 보여주는 좌석수 미리보기와 서버가 실제로 생성하는 좌석수가 어긋난다. TASK-004 Phase 4 검증(attempt 3)에서 code-reviewer가 실제 실행으로 재현했고, 크래시·DoS가 없고 결제 기능이 아직 없어 WARN으로 낮춰 예외 승인하며 별도 태스크로 미룬 항목이다.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "DTO 역직렬화 설정과 서비스 계층 검증 로직만 바뀌는 서버 범위",
+    "priority": "Medium",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 6
+      },
+      "risk": "low",
+      "acceptance_criteria": [
+        "section.price가 정수가 아닌 값(예: -0.5)이면 400과 INVALID_SECTION이 반환되고 좌석이 생성되지 않는다",
+        "section.seatsPerRow가 정수가 아닌 값(예: 1.9)이면 400과 INVALID_SECTION이 반환되고 좌석이 생성되지 않는다",
+        "정수 price/seatsPerRow를 보내는 기존 등록 요청은 이전과 동일하게 201로 성공한다"
+      ],
+      "absorbed_steps": [
+        "원인 조사(Jackson ACCEPT_FLOAT_AS_INT) — TASK-004 Phase 4 attempt 3 code-reviewer 리뷰에서 이미 완료됨, 재조사 불필요"
+      ],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/java/com/example/ticket_booking/api/dto/SectionRequest.java",
+          "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 2,
+        "risk_score": 2,
+        "total_score": 32,
+        "level": "단순"
+      }
+    }
   }
 ]
