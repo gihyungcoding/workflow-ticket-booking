@@ -1,0 +1,61 @@
+{
+  "task_id": "TASK-003",
+  "attempt": 4,
+  "previous_attempts": [
+    { "attempt": 1, "outcome": "FAIL", "reason": "폰트 굵기 강제 치환, 배지 radius 미도달, 카드 구분선 소실, tsconfig 범위 밖 변경, text.secondary 테스트 갭" },
+    { "attempt": 2, "outcome": "재검증: 5건 해소 확인 + lineHeight 미배선 신규 발견, 테스트 회귀 방어력 지적" },
+    { "attempt": 3, "outcome": "재검증: line-height 해소 확인 + color=\"text.secondary\" 무효 표기로 ink-muted 토큰이 화면에 전혀 도달하지 않던 네 번째 결함 발견" }
+  ],
+  "changed_files": [
+    { "path": "frontend/src/theme/index.ts", "change": "createAppTheme()이 palette·typography(fontFamily + h5/h6/body1/body2 lineHeight)·shape·shadows를 tokens.ts 값으로 조립. components.MuiChip(배지 radius)·MuiCard+MuiPaper(구분선) 오버라이드 포함", "lines_changed": 70 },
+    { "path": "frontend/src/theme/index.test.tsx", "change": "SC-01: 테마 설정값 단언 + 렌더 기반 단언(Chip radius, Card 테두리색, textSecondary 색상을 실제 렌더해 getComputedStyle로 확인) 2개 테스트로 구성", "lines_changed": 62 },
+    { "path": "frontend/src/components/StatusBadge.tsx", "change": "STATUS_LABEL의 UPCOMING/CLOSED/CANCELLED 문구를 예매예정/예매마감/공연취소로 변경. STATUS_COLOR는 불변", "lines_changed": 6 },
+    { "path": "frontend/index.html", "change": "lang=ko, title=공연 예매, Google Fonts(Noto Serif KR wght@400;500 / IBM Plex Sans KR wght@400;500;600) preconnect+stylesheet link(display=swap) 추가", "lines_changed": 10 },
+    { "path": "frontend/src/pages/PerformanceListPage.tsx", "change": "공연명 Typography에 tokens.fontDisplay sx 적용. color=\"text.secondary\"(MUI v9 무효 표기) → color=\"textSecondary\" 수정", "lines_changed": 6 },
+    { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "change": "공연명 Typography에 tokens.fontDisplay sx 적용. 장소·공연 일시·예매 오픈·예매 마감에 color=\"textSecondary\" 추가(design-tokens.css의 --color-ink-muted 주석 '장소·일시'와 일치, 잔여 좌석은 본문색 유지)", "lines_changed": 12 },
+    { "path": "frontend/src/main.tsx", "change": "빈 createTheme() 제거, theme/index.ts의 theme을 import해 사용", "lines_changed": 5 },
+    { "path": "frontend/src/pages/PerformanceListPage.test.tsx", "change": "renderPage() 헬퍼가 ThemeProvider(theme)로 감싸도록 수정", "lines_changed": 10 },
+    { "path": "frontend/src/pages/PerformanceDetailPage.test.tsx", "change": "위와 동일 사유로 renderPage(id) 수정", "lines_changed": 14 },
+    { "path": "frontend/index.html.test.ts", "change": "Google Fonts <link> 검색 predicate 버그 수정(rel=\"stylesheet\" 조건 추가)", "lines_changed": 4 }
+  ],
+  "reused": [
+    { "path": "frontend/src/theme/tokens.ts", "symbol": "colorCanvas, colorInk, colorInkMuted, colorOpen, colorRule, colorSurface, fontText, fontDisplay, lineHeightDisplay, lineHeightText, radiusBadge, radiusSurface", "note": "Phase 2b(Red)에서 이미 완전히 작성된 데이터 상수. colorInkFaint·colorOpenWeak만 색 구조 재설계 대상으로 PLAN unresolved에 명시적으로 유예됨(그 외 전부 소비)" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "npm --prefix frontend test",
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "target_tests_passed": 6,
+    "existing_tests_still_passing": true,
+    "backend_regression_check": "cd backend && ./gradlew test → BUILD SUCCESSFUL"
+  },
+  "build": { "command": "npm --prefix frontend run build", "status": "success" },
+  "type_check": { "command": "npx tsc -p tsconfig.app.json --noEmit", "errors": 0 },
+  "architecture_check": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "no_target": [],
+    "files_scanned": 44,
+    "DESIGN-001": "0건 위반", "DESIGN-002": "0건 위반",
+    "DESIGN-003": "경고 2건(스켈레톤 매직 넘버) — 범위 밖, 변경 없음",
+    "ARCH-001~003": "전부 통과, 백엔드 무변경"
+  },
+  "lint": { "command": "npm run lint (oxlint)", "errors": 0, "warnings": 2, "warning_detail": "TASK-002부터 있던 기존 경고, 신규 아님" },
+  "browser_verification": {
+    "note": "실브라우저 최종 확인 — 목록/상세 모두 venue color=rgb(90,101,112)(#5A6570, ink-muted) 정확히 렌더. 상세의 '잔여 좌석'은 의도대로 본문색(#1A2027) 유지. line-height(1.35/1.6)·chipRadius(2px)·cardBorder(#D3D8DC)·Noto Serif KR 400/500 로드 전부 재확인. 결함 총 4건(attempt1 5건 + attempt2/3 각 1건, 일부 중복 성격) 전부 실측 해소"
+  },
+  "code_review_residuals": {
+    "note": "3차 리뷰가 이번 diff의 결함은 아니지만 후속 검토가 필요하다고 남긴 항목 — Phase 5로 이월",
+    "items": [
+      "palette.divider를 colorRule로 설정하지 않고 MuiPaper.styleOverrides.outlined로만 처리 — 향후 Divider/List/Table 도입 시 구분선 색이 두 값으로 갈릴 수 있음",
+      "shadows 전체 none이 MUI contained Button의 키보드 포커스 표시(boxShadow 기반)를 무력화함 — 현재 contained 버튼 없어 증상 없음, 향후 예매 CTA 추가 시 design.md §7 포커스 가시성 요구와 충돌 가능",
+      "design-tokens.css:40의 주석이 실제 값과 반대로 읽힘(문서 오타로 추정) — 코드는 값을 정확히 미러링했으므로 문제 없으나 문서 정정 필요",
+      "StatusBadge 색 매핑(STATUS_COLOR)이 design.md §2(유일한 채도=예매가능)와 여전히 불일치 — PLAN이 명시적으로 범위 밖으로 뺀 항목, 후속 태스크 필요"
+    ]
+  },
+  "refactoring": [],
+  "refactoring_note": "4차례에 걸친 수정 모두 theme/index.ts와 두 페이지 컴포넌트에 집중돼 다른 리팩토링 필요성이 드러나지 않음",
+  "scope_deviations": []
+}

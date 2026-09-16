@@ -1,0 +1,93 @@
+{
+  "task_id": "TASK-004",
+  "keep": [
+    {
+      "what": "code-reviewer에게 '표면적 코드 읽기 대신 실제로 실행해서 재현'을 명시적으로 요구했다",
+      "evidence": "attempt 2/3 검증에서 code-reviewer가 실제 테스트를 작성·실행해 title/venue 길이(500), sections null 원소(NPE), price/seatsPerRow 소수 절삭(가드 우회) 결함을 재현했다. 특히 attempt 3에서는 @Transactional 없는 프로브 테스트로 DB 커밋 여부까지 확인해 'PUT 경로가 테스트 하네스 때문에 우연히 통과한 것 아니냐'는 의심을 실제 증거로 해소했다"
+    },
+    {
+      "what": "등록/수정이 공유하는 검증 지점(validateRequired)에 대해 두 엔드포인트(POST/PUT) 모두의 Red 테스트를 강제했다",
+      "evidence": "SC-22(POST)·SC-24(PUT)를 둘 다 작성해, 구현이 실제로 공유 헬퍼에서 처리됐는지(한쪽만 고치는 실수가 없었는지)를 코드 리뷰가 아니라 테스트로 검증했다 — coverage-policy §3의 '병합하지 않는 근거'를 그대로 적용한 사례"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Phase 4가 세 번 연속(attempt 1 FAIL, attempt 2 FAIL, attempt 3 WARN) 새 결함을 발견했다 — 매번 '고쳤다고 생각했는데 실행하면 다른 결함이 있었다'는 같은 패턴이 반복됐다",
+      "evidence": "attempt 1: 좌석 상한 우회·DoS. attempt 2: title/venue 길이·sections null 원소. attempt 3: price/seatsPerRow 소수 절삭. 세 라운드 모두 '서비스 계층 수동 검증에 새 필드/새 경로가 누락'이라는 같은 근본 원인이었다",
+      "phase": 4
+    },
+    {
+      "what": "클래스 레벨 @Transactional 테스트 하네스가 PUT(수정) 경로의 DB 제약 위반을 가려, 검증 없이도 테스트가 통과할 뻔했다",
+      "evidence": "attempt 2 code-reviewer가 '동일한 PUT+201자 title 요청이 @Transactional 테스트 안에서는 200(통과), 실제 커밋 환경에서는 500'이라는 것을 발견 — SC-24를 서비스 계층 400 단언으로 신중하게 설계하지 않았다면 이 결함이 Green으로 위장했을 것",
+      "phase": 2
+    },
+    {
+      "what": "이전 세션이 Phase 4 2차 검증(재검증) 결과를 체크포인트·커밋 없이 작업 트리에만 남긴 채 중단해, 이번 세션 시작 시 activeContext.md(attempt 2 재검증 시작 예정)와 실제 작업 트리(attempt 3 시나리오 초안 존재)가 어긋나 있었다",
+      "evidence": "이번 세션 초반에 PLAN_TASK-004.json·SCENARIO_TASK-004.json이 커밋되지 않은 채 attempt 3(SC-22/23) 언급을 담고 있는 것을 발견 — VERIFY_TASK-004.json에는 그 2차 검증 결과 자체가 전혀 기록되지 않았다. 다시 Phase 4를 처음부터 돌려 이 불일치를 직접 확인해야 했다",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "wf-verify의 code-reviewer 호출 템플릿에 '테스트 클래스가 클래스 레벨 @Transactional을 쓰면, DB 제약에 의존할 수 있는 경로(특히 UPDATE·dirty checking)는 비트랜잭션 프로브나 flush로 실제 커밋 여부를 확인하라'는 지시를 기본 포함시킨다",
+      "target": ".claude/skills/wf-verify/SKILL.md Step 5"
+    },
+    {
+      "what": "Plan의 design.inputs에서 숫자 필드(Integer 타입)에 범위 제약(예: '0 이상')을 적을 때, JSON 소수 입력이 Jackson의 ACCEPT_FLOAT_AS_INT로 절삭될 수 있다는 것을 체크리스트 항목으로 명시한다 — Integer 필드는 정수 여부 자체도 검증 대상인지 판단하게 한다",
+      "target": ".claude/skills/wf-plan (design.inputs 작성 가이드)"
+    },
+    {
+      "what": "Phase 4 VERIFY 산출물을 저장한 직후(HITL#3 이전이라도) 즉시 커밋하도록 EXIT GATE 또는 절차 문구를 강화한다 — 현재도 '저장 즉시 커밋'이 원칙이지만 이번처럼 검증 중간 산출물이 통째로 누락된 사례가 재발하지 않도록 wf-verify Step 7 뒤에 '커밋 없이 세션이 끊기면 이 라운드의 검증 자체가 사라진다'는 경고를 추가한다",
+      "target": "docs/workflow/checkpoint-template.md 또는 .claude/skills/wf-verify/SKILL.md Step 7"
+    }
+  ],
+  "insights": [
+    "수동(예외-당-규칙) 입력 검증은 새 필드나 새 경로가 추가될 때마다 검증을 빠뜨리기 쉽다 — 이 태스크에서 세 라운드 모두 '검증 지점은 있었지만 새 케이스가 그 지점에 반영되지 않았다'는 동일한 실패 모드였다",
+    "코드 리뷰가 실제 실행(특히 DB 커밋까지)을 동반하지 않으면 트랜잭션 롤백 테스트 하네스가 결함을 가릴 수 있다 — '테스트가 통과한다'와 '결함이 없다'는 이 하네스 위에서 항상 같은 말이 아니다",
+    "Phase 4 중간 산출물(특히 재검증 FAIL 후 롤백 초안)을 즉시 커밋하지 않으면 세션이 끊겼을 때 그 검증 라운드가 통째로 유실된다 — memory-bank의 존재 이유가 무색해진다"
+  ],
+  "phase_analysis": {
+    "1": { "retries": 0, "note": "—" },
+    "2a": { "retries": 2, "note": "attempt 2: 좌석 상한 우회 등 5개 시나리오 추가(SC-16~21). attempt 3: title/venue 길이·sections null 원소 3개 추가(SC-22~24, PUT 대응 SC-24 신규)" },
+    "2b": { "retries": 2, "note": "attempt 2/3 모두 Red 확인 및 HITL#2 승인 정상 진행, 재시도는 시나리오 롤백에 연동된 것" },
+    "3": { "retries": 2, "note": "attempt 2: 검증 로직 구현 + Seat FK 애노테이션. attempt 3: title/venue 길이 검사, sections null 처리" },
+    "4": { "retries": 2, "note": "attempt 1 FAIL(좌석 상한 우회·DoS) → attempt 2 FAIL(title/venue 길이·sections null) → attempt 3 WARN(price 소수 절삭, 예외승인)" },
+    "5": { "retries": 0, "note": "—" }
+  },
+  "adr_candidates": [
+    {
+      "decision": "Bean Validation(jakarta.validation/@Valid)을 도입하지 않고 서비스 계층 수동 검증(예외-당-규칙)만 쓴다",
+      "why_broader": "이번 태스크에서 세 라운드 연속 FAIL/WARN의 근본 원인이 '수동 검증에 새 케이스가 누락되기 쉽다'는 것이었다. spring-boot-starter-validation 의존성은 이미 선언돼 있지만 프로젝트 전체에 사용처가 0건이다 — 이 결정이 이 태스크만의 문제가 아니라 앞으로 입력 검증이 필요한 모든 Backend 태스크에 반복될 근본 패턴이라 ADR로 명시적 결정을 남길 가치가 있다. ARCH-002(Service가 api.dto를 import 금지)와 Bean Validation을 DTO에 붙이는 방식이 어떻게 공존하는지도 정리가 필요하다",
+      "evidence": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings (attempt 3, severity: reuse)",
+      "suggested_title": "입력 검증 전략 — Bean Validation 도입 여부"
+    },
+    {
+      "decision": "PerformanceExceptionHandler가 도메인 예외만 처리하고 프레임워크 예외(HttpMessageNotReadableException, MethodArgumentTypeMismatchException, DataIntegrityViolationException)는 처리하지 않는다",
+      "why_broader": "이 정책이 이번 태스크에서 두 번(attempt 2, attempt 3) '검증을 빠뜨리면 500이 된다'는 동일한 사각지대를 만들었다. 이후 어떤 API를 추가하든 같은 공백이 반복된다 — 프로젝트 전역 예외 처리 정책으로 결정해둘 가치가 있다",
+      "evidence": "workflow_design/07_verify/VERIFY_TASK-004.json code_review.findings (attempt 2 design 항목, attempt 3 design 항목)",
+      "suggested_title": "전역 예외 처리 폴백 정책"
+    }
+  ],
+  "architecture_drift": [],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-verify/SKILL.md",
+      "section": "Step 5 — 코드 리뷰",
+      "change": "code-reviewer 호출 프롬프트 예시에 '테스트 클래스가 클래스 레벨 @Transactional을 쓰면 UPDATE 경로처럼 dirty checking으로 커밋이 지연되는 곳은 비트랜잭션 프로브나 flush로 실제 DB 반영 여부를 확인해달라'는 지시를 기본으로 포함한다",
+      "evidence": "TASK-004 attempt 2에서 이 지시 없이는 놓쳤을 결함(PUT 경로 500)을 attempt 3에서 명시적으로 요청해 검증했다"
+    },
+    {
+      "target": ".claude/skills/wf-plan",
+      "section": "design.inputs 작성 가이드",
+      "change": "숫자 필드(Integer/Long 등)에 범위 제약을 적을 때 'JSON 입력이 소수여도 되는가, 정수 강제를 검증하는가'를 체크리스트에 추가한다",
+      "evidence": "TASK-004 attempt 3에서 price(Integer)에 -0.5를 보내면 Jackson이 0으로 절삭해 '0 이상' 검사를 우회하는 결함을 code-reviewer가 발견 — Plan 작성 시점에 이 가능성이 고려되지 않았다"
+    },
+    {
+      "target": "docs/workflow/checkpoint-template.md",
+      "section": "4. 저장 절차",
+      "change": "Phase 4 VERIFY(FAIL/WARN 포함) 산출물은 HITL#3 이전이라도 저장 직후 즉시 커밋해야 한다는 경고를 추가한다 — '판정 결과만 임시로 남기고 다음 라운드 초안을 작업 트리에만 쓴 채 세션이 끊기면 그 검증 라운드가 통째로 사라진다'는 구체 사례를 근거로 든다",
+      "evidence": "이번 세션 시작 시 이전 세션이 Phase 4 2차 검증 결과와 Phase 2a attempt 3 초안을 커밋하지 않아 activeContext.md와 작업 트리가 불일치했다"
+    }
+  ],
+  "completion_report": { "approved_by_human": true, "report_url": "https://claude.ai/artifact/TJRAKBVr9QryTLCLXJhJi8" }
+}

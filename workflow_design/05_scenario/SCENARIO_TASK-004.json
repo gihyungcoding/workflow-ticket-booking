@@ -1,0 +1,532 @@
+{
+  "task_id": "TASK-004",
+  "attempt": 3,
+  "retry_note": "attempt 3: Phase 4 2차 검증(재검증)에서 code-reviewer가 재현한 잔여 결함 2건(title/venue 길이, sections 원소 null) 수정을 위해 SC-22/23 추가. code-reviewer가 title/venue 길이 결함이 PUT(수정) 경로도 공유한다고 확인해 SC-24를 추가로 확정. attempt 1(SC-01~15)·attempt 2(SC-16~21)는 변경 없음.",
+  "scenarios": [
+    {
+      "id": "SC-01",
+      "type": "happy",
+      "title": "구역 2개로 등록하면 구역별 좌석이 생성되고 총수가 합산된다",
+      "given": [
+        "등록 요청에 구역 VIP(행 A~B, 행당 10석, 가격 120000)와 구역 R(행 C~E, 행당 20석, 가격 80000)가 있다",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "201이 반환된다",
+        "응답의 totalSeats/availableSeats 는 80(=2행×10 + 3행×20)이다",
+        "performance_id 로 seat 를 조회하면 80건이 조회된다",
+        "조회된 seat 에 \"VIP-A1\", \"VIP-B10\", \"R-C1\", \"R-E20\" 라벨이 모두 존재한다"
+      ],
+      "covers": [
+        "구역 1개 이상으로 POST /api/performances 호출 시 201과 함께 각 구역의 rowStart~rowEnd × seatsPerRow 만큼 seat 행이 생성된다",
+        "생성된 performance.total_seats/available_seats 가 생성된 좌석 총수와 같다"
+      ],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-02",
+      "type": "error",
+      "title": "openAt이 closeAt보다 늦으면 등록이 거부된다",
+      "given": [
+        "등록 요청의 openAt이 closeAt보다 늦다",
+        "sections는 유효한 구역 1개를 포함한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_TIME_ORDER 이다",
+        "seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)"
+      ],
+      "covers": [
+        "openAt > closeAt 또는 closeAt > startAt 이면 400과 INVALID_TIME_ORDER 가 반환된다"
+      ],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-03",
+      "type": "error",
+      "title": "closeAt이 startAt보다 늦으면 등록이 거부된다",
+      "given": [
+        "등록 요청의 openAt <= closeAt 이지만 closeAt이 startAt보다 늦다",
+        "sections는 유효한 구역 1개를 포함한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_TIME_ORDER 이다"
+      ],
+      "covers": [
+        "openAt > closeAt 또는 closeAt > startAt 이면 400과 INVALID_TIME_ORDER 가 반환된다"
+      ],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-04",
+      "type": "error",
+      "title": "구역 좌석 합이 5,000을 넘으면 등록이 거부된다",
+      "given": [
+        "등록 요청에 구역 1개(행 A 하나, 행당 5,001석)가 있어 합산 좌석 수가 정확히 5,001이다",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 SEAT_LIMIT_EXCEEDED 이다",
+        "seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)"
+      ],
+      "covers": [
+        "좌석 총수가 5,000을 넘으면 400과 SEAT_LIMIT_EXCEEDED 가 반환된다"
+      ],
+      "flow": "F3"
+    },
+    {
+      "id": "SC-05",
+      "type": "error",
+      "title": "두 구역의 행 범위가 겹치면 등록이 거부된다",
+      "given": [
+        "등록 요청에 구역 VIP(행 A~E)와 구역 R(행 C~F)가 있다 (C~E 구간이 겹친다)",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "409가 반환된다",
+        "응답 코드는 DUPLICATE_SEAT_RANGE 이다",
+        "seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)"
+      ],
+      "covers": [
+        "두 구역의 행 범위가 겹치면 409와 DUPLICATE_SEAT_RANGE 가 반환된다"
+      ],
+      "flow": "F4"
+    },
+    {
+      "id": "SC-06",
+      "type": "happy",
+      "title": "오픈 전인 공연을 수정하면 필드가 반영된다",
+      "given": [
+        "공연 P가 등록되어 있고 now < P.openAt 이다"
+      ],
+      "when": [
+        "PUT /api/performances/{P.id} 로 title/venue/startAt/openAt/closeAt 변경을 요청한다"
+      ],
+      "then": [
+        "200이 반환된다",
+        "응답의 title/venue/startAt/openAt/closeAt 이 요청한 값으로 바뀌어 있다"
+      ],
+      "covers": [
+        "now < openAt 인 공연을 PUT /api/performances/{id} 로 수정하면 200과 변경된 필드가 반영된 상세가 반환된다"
+      ],
+      "flow": "F5"
+    },
+    {
+      "id": "SC-07",
+      "type": "error",
+      "title": "오픈 이후인 공연을 수정하려 하면 거부된다",
+      "given": [
+        "공연 P가 등록되어 있고 now >= P.openAt 이다"
+      ],
+      "when": [
+        "PUT /api/performances/{P.id} 로 수정을 요청한다"
+      ],
+      "then": [
+        "409가 반환된다",
+        "응답 코드는 REGISTRATION_ALREADY_OPEN 이다",
+        "P를 다시 조회하면 title/venue/startAt/openAt/closeAt 이 요청 이전 값과 동일하다"
+      ],
+      "covers": [
+        "now >= openAt 인 공연을 수정하려 하면 409와 REGISTRATION_ALREADY_OPEN 이 반환된다"
+      ],
+      "flow": "F6"
+    },
+    {
+      "id": "SC-08",
+      "type": "error",
+      "title": "수정 요청 자체가 시각 순서를 어기면 거부된다",
+      "given": [
+        "공연 P가 등록되어 있고 now < P.openAt 이다",
+        "수정 요청의 openAt이 closeAt보다 늦다"
+      ],
+      "when": [
+        "PUT /api/performances/{P.id} 로 수정을 요청한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_TIME_ORDER 이다",
+        "P를 다시 조회하면 title/venue/startAt/openAt/closeAt 이 요청 이전 값과 동일하다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — PLAN_TASK-004.json F5 단계 'openAt<=closeAt<=startAt 재검증'을 검증한다. now<openAt 이어도 시각 순서 자체가 깨진 수정은 통과시키지 않는다.",
+      "flow": "F5"
+    },
+    {
+      "id": "SC-09",
+      "type": "error",
+      "title": "존재하지 않는 공연을 수정하려 하면 404",
+      "given": [
+        "id 99999 에 해당하는 공연이 존재하지 않는다"
+      ],
+      "when": [
+        "PUT /api/performances/99999 로 수정을 요청한다"
+      ],
+      "then": [
+        "404가 반환된다",
+        "응답 코드는 PERFORMANCE_NOT_FOUND 이다"
+      ],
+      "covers": [
+        "존재하지 않는 id 로 수정/취소를 호출하면 404와 PERFORMANCE_NOT_FOUND 가 반환된다"
+      ],
+      "flow": "F7"
+    },
+    {
+      "id": "SC-10",
+      "type": "error",
+      "title": "존재하지 않는 공연을 취소하려 하면 404",
+      "given": [
+        "id 99999 에 해당하는 공연이 존재하지 않는다"
+      ],
+      "when": [
+        "POST /api/performances/99999/cancel 을 호출한다"
+      ],
+      "then": [
+        "404가 반환된다",
+        "응답 코드는 PERFORMANCE_NOT_FOUND 이다"
+      ],
+      "covers": [
+        "존재하지 않는 id 로 수정/취소를 호출하면 404와 PERFORMANCE_NOT_FOUND 가 반환된다"
+      ],
+      "flow": "F7"
+    },
+    {
+      "id": "SC-11",
+      "type": "happy",
+      "title": "공연을 취소하면 cancelled가 true로 바뀐다",
+      "given": [
+        "공연 P가 등록되어 있고 cancelled=false 이다"
+      ],
+      "when": [
+        "POST /api/performances/{P.id}/cancel 을 호출한다"
+      ],
+      "then": [
+        "200이 반환된다",
+        "응답의 status 는 CANCELLED 이다"
+      ],
+      "covers": [
+        "POST /api/performances/{id}/cancel 호출 시 cancelled 가 true 로 바뀌고, 이미 취소된 공연을 다시 호출해도 200이 반환된다(멱등)"
+      ],
+      "note": "PerformanceResponse에는 cancelled 필드가 없고 status로 노출된다 — PerformanceStatusRules는 cancelled=true를 시각·좌석 수와 무관하게 최우선으로 CANCELLED 처리한다 (도메인 근거이지 단언 대상이 아니다)",
+      "flow": "F8"
+    },
+    {
+      "id": "SC-12",
+      "type": "boundary",
+      "title": "이미 취소된 공연을 다시 취소해도 200이 반환된다",
+      "given": [
+        "공연 P가 등록되어 있고 cancelled=true 이다 (이미 취소됨)"
+      ],
+      "when": [
+        "POST /api/performances/{P.id}/cancel 을 다시 호출한다"
+      ],
+      "then": [
+        "200이 반환된다",
+        "응답의 status 는 CANCELLED 로 유지된다"
+      ],
+      "covers": [
+        "POST /api/performances/{id}/cancel 호출 시 cancelled 가 true 로 바뀌고, 이미 취소된 공연을 다시 호출해도 200이 반환된다(멱등)"
+      ],
+      "flow": "F8"
+    },
+    {
+      "id": "SC-13",
+      "type": "error",
+      "title": "구역이 하나도 없는 등록 요청은 거부된다",
+      "given": [
+        "등록 요청의 sections 가 빈 배열 []이다 (필드 자체가 없는 null 이 아니다 — null 이면 SC-16의 INVALID_REQUEST)",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 EMPTY_SECTIONS 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — performance-registration.md §3 API 명세에 명시된 오류 코드. PLAN_TASK-004.json F9.",
+      "flow": "F9"
+    },
+    {
+      "id": "SC-15",
+      "type": "boundary",
+      "title": "정확히 5,000석이면 등록이 성공한다",
+      "given": [
+        "등록 요청에 구역 1개(행 A 하나, 행당 5,000석)가 있어 합산 좌석 수가 정확히 5,000이다",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "201이 반환된다",
+        "응답의 totalSeats/availableSeats 는 5,000이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — SC-04의 반대쪽 경계. AC4 문구 '5,000을 넘으면'이 5,000 자체는 포함(통과)임을 확인한다 (독립검증 2차 라운드 부수 관찰 반영).",
+      "flow": "F1"
+    },
+    {
+      "id": "SC-16",
+      "type": "error",
+      "title": "필수 필드가 없으면 등록이 거부된다",
+      "given": [
+        "등록 요청에 sections 필드 자체가 없다(JSON에 없음, null — 빈 배열 []이 아니다)",
+        "나머지 필드(title/venue/시각)는 유효하다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_REQUEST 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — Phase 4에서 code-reviewer가 재현한 필수 필드 누락 시 500 결함. title/venue/시각 누락도 같은 코드 경로(INVALID_REQUEST, F10)라 대표 사례 하나만 시나리오로 둔다 (coverage-policy §3). 구역 내부 필드(price 등)의 누락/형식 오류는 F11/INVALID_SECTION 소관이라 여기 포함하지 않는다. sections=null(INVALID_REQUEST, F10)은 sections=[](EMPTY_SECTIONS, F9, SC-13)과 다른 코드 경로다 — F10이 F9보다 먼저 실행된다.",
+      "flow": "F10"
+    },
+    {
+      "id": "SC-17",
+      "type": "error",
+      "title": "구역의 rowStart가 rowEnd보다 뒤 알파벳이면 등록이 거부된다",
+      "given": [
+        "등록 요청에 구역 하나(rowStart=\"E\", rowEnd=\"C\")가 있다 (역방향 범위)",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_SECTION 이다",
+        "seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — 역방향 행 범위가 음수 좌석수로 계산돼 AC4/AC5 검사를 모두 우회하던 결함 재현·수정. 이 검사(F11)가 그 두 검사(F3/F4)보다 먼저 실행돼야 한다.",
+      "flow": "F11"
+    },
+    {
+      "id": "SC-18",
+      "type": "error",
+      "title": "구역의 seatsPerRow가 0 이하이면 등록이 거부된다",
+      "given": [
+        "등록 요청에 구역 하나(seatsPerRow=0)가 있다",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_SECTION 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — seatsPerRow가 1 미만(0 또는 음수)이면 좌석수가 0 이하이거나 음수가 되어 다른 구역의 좌석수를 상쇄하는 등 상한 검사를 무력화할 수 있던 결함. 0은 \"1 이상\" 규칙의 경계값이다.",
+      "flow": "F11"
+    },
+    {
+      "id": "SC-19",
+      "type": "error",
+      "title": "구역의 rowStart가 빈 문자열이면 등록이 거부된다",
+      "given": [
+        "등록 요청에 구역 하나(rowStart=\"\")가 있다",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_SECTION 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — rowStart 빈 문자열이 charAt(0)에서 StringIndexOutOfBoundsException(500)을 내던 결함.",
+      "flow": "F11"
+    },
+    {
+      "id": "SC-20",
+      "type": "boundary",
+      "title": "구역의 seatsPerRow가 매우 큰 값이면 좌석 상한 초과로 거부된다",
+      "given": [
+        "등록 요청에 서로 겹치지 않는 구역 2개 — 구역 A(행 A~A, seatsPerRow=1200000000)와 구역 B(행 B~B, seatsPerRow=1200000000) — 가 있다",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 SEAT_LIMIT_EXCEEDED 이다",
+        "seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — int 오버플로로 상한 검사를 우회해 OOM/무응답을 유발하던 보안 결함(DoS) 재현·수정. 구역을 서로 다른 행(A~A, B~B)으로 둔 것은 의도적이다 — 같은 행이면 DUPLICATE_SEAT_RANGE(409)가 먼저 발생해 SEAT_LIMIT_EXCEEDED 경로에 도달하지 못한다.",
+      "flow": "F3"
+    },
+    {
+      "id": "SC-21",
+      "type": "error",
+      "title": "구역명(grade)이 20자를 넘으면 등록이 거부된다",
+      "given": [
+        "등록 요청에 구역 하나(grade가 21자)가 있다",
+        "시각은 openAt <= closeAt <= startAt 을 만족한다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_SECTION 이다",
+        "seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — Phase 4에서 code-reviewer가 재현: grade가 길면 seatLabel(grade+행+좌석번호)이 seat_label VARCHAR(30)을 넘어 insert 시 500이 나던 결함. grade를 20자로 제한해 방지한다.",
+      "flow": "F11"
+    },
+    {
+      "id": "SC-22",
+      "type": "error",
+      "title": "title이 200자를 넘으면 등록이 거부된다",
+      "given": [
+        "등록 요청의 title이 201자이다",
+        "나머지 필드는 유효하다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_REQUEST 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: title/venue가 200자를 넘으면 500이 나던 결함. venue도 같은 코드 경로(validateRequired, F10)라 대표로 title 하나만 시나리오로 둔다.",
+      "flow": "F10"
+    },
+    {
+      "id": "SC-23",
+      "type": "error",
+      "title": "sections 배열에 null 원소가 있으면 등록이 거부된다",
+      "given": [
+        "등록 요청의 sections 배열에 null 원소가 하나 있다 (예: [null])",
+        "나머지 필드는 유효하다"
+      ],
+      "when": [
+        "POST /api/performances 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_SECTION 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — Phase 4 2차 검증에서 code-reviewer가 재현: sections 원소가 null이면 Controller 변환에서 NPE로 500이 나던 결함. 원소를 그대로 Service에 넘기고 validateSection의 null 검사(F11)가 잡도록 한다.",
+      "flow": "F11"
+    },
+    {
+      "id": "SC-24",
+      "type": "error",
+      "title": "수정 시 title이 200자를 넘으면 거부된다",
+      "given": [
+        "now < openAt 인 공연이 등록되어 있다",
+        "수정 요청의 title이 201자이다"
+      ],
+      "when": [
+        "PUT /api/performances/{id} 를 호출한다"
+      ],
+      "then": [
+        "400이 반환된다",
+        "응답 코드는 INVALID_REQUEST 이다"
+      ],
+      "covers": [],
+      "note": "acceptance_criteria 미대응 — SC-22와 같은 검증 지점(validateRequired)을 공유하지만 별도 Controller 엔드포인트(PUT)라 길이 검사가 등록 경로에만 붙는 잘못된 수정이면 SC-22는 통과하고 이 경로만 500이 날 수 있다(coverage-policy §3). code-reviewer가 발견한 테스트 하네스 사각지대(@Transactional이 PUT 경로 DB 제약 위반을 가림)도 이 시나리오를 Red로 옮길 때 유의해야 한다.",
+      "flow": "F10"
+    }
+  ],
+  "coverage": {
+    "acceptance_criteria_total": 9,
+    "acceptance_criteria_covered": 9,
+    "uncovered": [],
+    "merged": [],
+    "extra_scenarios_not_ac_mapped": [
+      {
+        "id": "SC-08",
+        "reason": "PLAN F5 단계(수정 시 시각 순서 재검증)를 검증 — AC 텍스트엔 없으나 Plan에 명시된 동작"
+      },
+      {
+        "id": "SC-13",
+        "reason": "performance-registration.md §3 의 EMPTY_SECTIONS 오류 코드 — AC 텍스트엔 없으나 §3 스펙에 명시된 동작"
+      },
+      {
+        "id": "SC-15",
+        "reason": "좌석 상한 5,000의 통과 경계 — SC-04(5,001 거부)와 짝을 이루는 boundary (독립검증 2차 라운드 부수 관찰 반영)"
+      },
+      {
+        "id": "SC-16",
+        "reason": "Phase 4 FAIL 재현 결함 수정 — 필수 필드 누락 시 500 방지 (attempt 2)"
+      },
+      {
+        "id": "SC-17",
+        "reason": "Phase 4 FAIL 재현 결함 수정 — 역방향 행 범위로 인한 AC4/AC5 우회 방지 (attempt 2)"
+      },
+      {
+        "id": "SC-18",
+        "reason": "Phase 4 FAIL 재현 결함 수정 — seatsPerRow<=0 방지 (attempt 2)"
+      },
+      {
+        "id": "SC-19",
+        "reason": "Phase 4 FAIL 재현 결함 수정 — rowStart 빈 문자열로 인한 500 방지 (attempt 2)"
+      },
+      {
+        "id": "SC-20",
+        "reason": "Phase 4 FAIL 재현 결함 수정 — 정수 오버플로로 인한 DoS 방지 (attempt 2, 보안)"
+      },
+      {
+        "id": "SC-21",
+        "reason": "Phase 4 FAIL 재현 결함 수정 — grade 과다 길이로 인한 seat_label 컬럼 초과(500) 방지 (attempt 2)"
+      },
+      {
+        "id": "SC-22",
+        "reason": "Phase 4 2차 검증 재현 결함 수정 — title/venue 200자 초과로 인한 500 방지 (attempt 3)"
+      },
+      {
+        "id": "SC-23",
+        "reason": "Phase 4 2차 검증 재현 결함 수정 — sections 배열 null 원소로 인한 500 방지 (attempt 3)"
+      },
+      {
+        "id": "SC-24",
+        "reason": "SC-22(title 길이)의 PUT 경로 대응 — 같은 검증 헬퍼를 공유하지만 별도 엔드포인트라 코드 리뷰 요청에 따라 별도 시나리오로 분리 (attempt 3)"
+      }
+    ],
+    "definitions_confirmed": [
+      "행 범위 겹침 = [rowStart, rowEnd] 알파벳 구간의 교집합만으로 판정 (좌석 번호 조합은 보지 않음)",
+      "rowStart/rowEnd 는 A~Z 단일 대문자만 지원"
+    ],
+    "withdrawn_scenarios": [
+      {
+        "id": "SC-14",
+        "type": "regression",
+        "withdrawn_at": "Phase 2b (Red 작성 중, HITL#1 승인 이후)",
+        "reason": "이 태스크가 건드리지 않는 기존 GET 404 경로를 검증하는 시나리오라 지금 이미 통과한다 — wf-red의 '새 테스트는 반드시 실패한다' 요구사항과 구조적으로 맞지 않는다. 회귀 방지는 기존 PerformanceApiTest/PerformanceConstraintTest 전체 실행(Phase 3)이 담당한다. 번호는 재사용하지 않는다."
+      }
+    ]
+  },
+  "human_input": {
+    "generate_red_trigger": true
+  }
+}

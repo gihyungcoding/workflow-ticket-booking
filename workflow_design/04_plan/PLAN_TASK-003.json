@@ -1,0 +1,149 @@
+{
+  "task_id": "TASK-003",
+  "route": "Frontend",
+  "route_reason": "MUI 테마 주입·서체 로드·컴포넌트 문구·index.html 메타 수정이 전부 프론트 범위이며 백엔드 변경이 없다",
+
+  "design": {
+    "inputs": [
+      {
+        "name": "designTokens",
+        "type": "색상/서체/치수 상수 (JS 미러)",
+        "source": "docs/product/design-tokens.css (정본) — frontend/src/theme/tokens.ts로 값 이관",
+        "constraints": ["값은 design-tokens.css와 바이트 단위로 동일해야 한다(사람이 대조)", "새 색상·치수를 여기서 만들지 않는다"]
+      },
+      {
+        "name": "semanticMapping",
+        "type": "상태→문구 매핑",
+        "source": "docs/product/design.md §5",
+        "constraints": ["UPCOMING=예매예정, OPEN=예매가능, SOLD_OUT=매진, CLOSED=예매마감, CANCELLED=공연취소"]
+      },
+      {
+        "name": "googleFonts",
+        "type": "웹폰트",
+        "source": "Google Fonts — Noto Serif KR, IBM Plex Sans KR",
+        "constraints": ["한글 음절 범위(U+AC00-D7A3) 포함 확인됨(design.md §4)", "font-display=swap"]
+      }
+    ],
+    "outputs": [
+      { "name": "MUI 테마 객체", "type": "code", "description": "frontend/src/theme/index.ts — palette(배경/텍스트/success)·typography(본문 서체)·shape(모서리 2px)·shadows(없음)가 토큰값으로 초기화됨. createTheme() 빈 호출 해소" },
+      { "name": "공연명 서체 적용", "type": "render", "description": "목록 카드·상세 화면의 공연명 Typography에 Noto Serif KR 적용, 그 외 텍스트는 기본 IBM Plex Sans KR" },
+      { "name": "상태 배지 문구", "type": "render", "description": "StatusBadge의 STATUS_LABEL이 design.md §5 문구로 갱신됨(색 매핑은 변경하지 않음)" },
+      { "name": "index.html 메타", "type": "html", "description": "lang=\"ko\", title이 템플릿 기본값이 아닌 실제 서비스명, Google Fonts 로드 link" }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "테마 토큰 주입",
+        "steps": [
+          "frontend/src/theme/tokens.ts에 design-tokens.css 값을 JS 상수로 미러링",
+          "frontend/src/theme/index.ts에서 createTheme()에 palette.background/text/success, typography.fontFamily, shape.borderRadius(2), shadows(전부 none)를 주입",
+          "main.tsx가 이 theme을 사용하도록 교체(기존 const theme = createTheme() 제거)"
+        ],
+        "covers": ["테마가 design-tokens.css 의 값으로 초기화된다 — python3 scripts/check_architecture.py --id DESIGN-001 이 위반 0건"]
+      },
+      {
+        "id": "F2",
+        "name": "서체 로드 및 적용",
+        "steps": [
+          "index.html에 Google Fonts <link>(Noto Serif KR, IBM Plex Sans KR) 추가",
+          "theme.typography.fontFamily를 IBM Plex Sans KR 기본으로 설정",
+          "PerformanceListPage/DetailPage의 공연명 Typography에 tokens.ts의 fontDisplay(Noto Serif KR)를 sx로 적용"
+        ],
+        "covers": ["공연명이 Noto Serif KR, 나머지 텍스트가 IBM Plex Sans KR 로 렌더링되고 두 서체가 실제로 로드된다"]
+      },
+      {
+        "id": "F3",
+        "name": "상태 문구 갱신",
+        "steps": [
+          "StatusBadge.tsx의 STATUS_LABEL을 UPCOMING=예매예정, CLOSED=예매마감, CANCELLED=공연취소로 변경(OPEN=예매가능, SOLD_OUT=매진은 변경 없음)",
+          "STATUS_COLOR(색 매핑)는 건드리지 않는다 — 색 구조 재설계는 이 태스크 범위 밖(tasks.json 설명)"
+        ],
+        "covers": ["상태 문구가 예매가능·예매예정·매진·예매마감·공연취소로 표시된다 (design.md §5 의미 매핑)"]
+      },
+      {
+        "id": "F4",
+        "name": "index.html 메타 수정",
+        "steps": [
+          "<html lang=\"en\"> → lang=\"ko\"",
+          "<title>frontend</title> → 실제 서비스명으로"
+        ],
+        "covers": ["index.html 이 lang=\"ko\" 이고 title 이 템플릿 기본값(frontend)이 아니다"]
+      },
+      {
+        "id": "F5",
+        "name": "서체 폴백 체인 확인",
+        "steps": [
+          "tokens.ts의 fontDisplay/fontText 값이 각각 'Noto Serif KR', serif / 'IBM Plex Sans KR', system-ui, sans-serif 폴백 체인을 그대로 유지하는지 확인",
+          "Phase 4에서 폰트 로드를 차단한 상태로 렌더링해 한글 텍스트가 깨지지 않고 시스템 폰트로 표시되는지 확인"
+        ],
+        "covers": ["오류: 서체 로드가 실패해도 한글이 시스템 폰트로 읽힌다 (font-family 폴백 체인)"]
+      },
+      {
+        "id": "F6",
+        "name": "목록 오류 상태 회귀 없음",
+        "steps": [
+          "PerformanceListPage.tsx의 오류 분기(Alert + 다시 시도)는 이 태스크에서 로직을 변경하지 않는다",
+          "테마 변경(색상 토큰 주입)이 Alert의 severity=\"error\" 렌더링에 영향을 주지 않는지 확인"
+        ],
+        "covers": ["오류: 목록 API 호출이 실패하면 기존과 동일하게 오류 안내와 다시 시도 버튼이 표시된다"]
+      },
+      {
+        "id": "F7",
+        "name": "기존 테스트 회귀 없음",
+        "steps": [
+          "PerformanceListPage.test.tsx(4건)·PerformanceDetailPage.test.tsx(2건)를 수정 없이 재실행",
+          "'예매가능'·'매진' 문구가 이번 변경(UPCOMING/CLOSED/CANCELLED만 변경)에 영향받지 않음을 사전 확인(grep 완료 — 기존 테스트는 이 두 문구만 단언)"
+        ],
+        "covers": ["기존 프론트 테스트 6건이 모두 통과한다 — npm test"]
+      }
+    ]
+  },
+
+  "architecture_refs": {
+    "layer": "Frontend",
+    "note": "docs/product/design.md·design-tokens.css가 이 태스크의 1차 근거(Foundation 디자인 정본). architecture.md §2 Frontend 행(화면 렌더링만, 도메인 규칙 없음)과 상충 없음. constraints.yaml의 DESIGN-001(빈 테마 금지)을 이 태스크가 해소 대상으로 삼는다 — 현재 severity: warn, 해소 후 error 승격은 Phase 5/사용자 판단",
+    "constraints_applied": ["DESIGN-001", "DESIGN-002"]
+  },
+  "adr_refs": ["ADR-0002"],
+
+  "codebase_analysis": {
+    "note": "frontend/src/theme/ 디렉터리가 아직 없음(신규). main.tsx:9의 createTheme()이 DESIGN-001 위반 지점(check_architecture.py로 확인). DESIGN-002는 frontend/src/theme/** 를 exclude_paths로 제외하므로 tokens.ts/index.ts에 색상 hex 리터럴을 두는 것이 정책상 허용된 유일한 위치",
+    "target_files": [
+      { "path": "frontend/src/theme/tokens.ts", "change": "신규 — design-tokens.css 값을 JS 상수로 미러링(색상/서체/치수 전체, DESIGN-002 exclude_paths 대상)" },
+      { "path": "frontend/src/theme/index.ts", "change": "신규 — createTheme()에 palette/typography/shape/shadows 주입" },
+      { "path": "frontend/src/main.tsx", "change": "const theme = createTheme() → import theme from './theme'" },
+      { "path": "frontend/src/components/StatusBadge.tsx", "change": "STATUS_LABEL의 UPCOMING/CLOSED/CANCELLED 문구 갱신(색 매핑 STATUS_COLOR는 불변)" },
+      { "path": "frontend/index.html", "change": "lang=\"ko\", 실제 title, Google Fonts <link> 추가" },
+      { "path": "frontend/src/pages/PerformanceListPage.tsx", "change": "공연명 Typography에 fontDisplay(Noto Serif KR) sx 적용 — implementation_spec.paths에는 없었으나 AC2(공연명 서체) 충족에 필수라 추가(unresolved 참고)" },
+      { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "change": "공연명 Typography에 fontDisplay(Noto Serif KR) sx 적용 — 위와 동일 사유" }
+    ],
+    "reusable": [
+      { "path": "frontend/src/api/performances.ts", "symbol": "PerformanceStatus", "note": "상태 5종 타입 — StatusBadge의 Record 키로 이미 강제됨, 재사용" }
+    ],
+    "existing_tests": [
+      "frontend/src/pages/PerformanceListPage.test.tsx",
+      "frontend/src/pages/PerformanceDetailPage.test.tsx"
+    ],
+    "unresolved": [
+      "tasks.json의 implementation_spec.paths에는 PerformanceListPage.tsx/PerformanceDetailPage.tsx가 없었으나, AC2('공연명이 Noto Serif KR로 렌더링된다')를 충족하려면 공연명을 렌더하는 이 두 파일을 건드릴 수밖에 없다 — target_files에 추가하고 사유를 기록함",
+      "design-tokens.css는 docs/product/에 있고 frontend/ 빌드에 직접 import되지 않는다 — theme/tokens.ts가 값을 수기로 미러링하는 방식을 택했다(두 파일의 값이 어긋나지 않는지는 자동 검증 수단이 없음, Phase 4에서 사람이 대조). 값 불일치를 자동으로 막는 장치는 이 태스크 범위 밖",
+      "STATUS_COLOR(배지 색 매핑)와 --color-ink-faint(물러난 상태 텍스트)는 design.md §5가 요구하는 최종 그림(색 구조 재설계)의 일부지만, tasks.json이 명시적으로 범위 밖으로 뺐다 — 이번 PLAN도 그대로 따른다. palette.success만 토큰화하는 것은 OPEN 상태가 우연히 MUI 'success' 시맨틱과 일치해서이지, 색 구조 자체를 재설계한 것은 아니다"
+    ]
+  },
+
+  "acceptance_criteria": [
+    "테마가 design-tokens.css 의 값으로 초기화된다 — python3 scripts/check_architecture.py --id DESIGN-001 이 위반 0건",
+    "공연명이 Noto Serif KR, 나머지 텍스트가 IBM Plex Sans KR 로 렌더링되고 두 서체가 실제로 로드된다",
+    "상태 문구가 예매가능·예매예정·매진·예매마감·공연취소로 표시된다 (design.md §5 의미 매핑)",
+    "index.html 이 lang=\"ko\" 이고 title 이 템플릿 기본값(frontend)이 아니다",
+    "오류: 서체 로드가 실패해도 한글이 시스템 폰트로 읽힌다 (font-family 폴백 체인)",
+    "오류: 목록 API 호출이 실패하면 기존과 동일하게 오류 안내와 다시 시도 버튼이 표시된다",
+    "기존 프론트 테스트 6건이 모두 통과한다 — npm test"
+  ],
+
+  "test_hints": {
+    "framework": "vitest + @testing-library/react",
+    "command": "npm --prefix frontend test",
+    "mock_strategy": "StatusBadge는 직접 렌더(신규 StatusBadge.test.tsx, 5개 상태 전부). 목록/상세 페이지는 기존 vi.mock 패턴 유지, 문구 변경 없는 부분은 기존 테스트 그대로 재사용"
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "task_id": "TASK-004",
+  "attempt": 3,
+  "retry_note": "Phase 4 2차 검증 FAIL(VERIFY_TASK-004.json attempt 2) → RETRY_SCENARIO → Phase 2b(SC-22~24 Red 3건) 이후 Green. attempt 1/2의 changed_files/reused는 아래에 그대로 보존한다.",
+  "changed_files_attempt3": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "MAX_TITLE_LENGTH/MAX_VENUE_LENGTH(200) 상수 추가, validateRequired에 title/venue 길이 검사 추가(F10, 등록·수정 공유). validateSection 최상단에 section null 검사 추가(F11)",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "toSectionSpec이 request==null이면 null을 그대로 반환하도록 변경 — sections 배열의 null 원소가 Controller 변환 단계에서 NPE로 새지 않고 Service의 validateSection(F11)까지 통과시킨다",
+      "lines_changed": 3
+    }
+  ],
+  "test_result_attempt3": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --rerun-tasks",
+    "total": 43,
+    "passed": 43,
+    "failed": 0,
+    "target_tests_passed": 23
+  },
+  "lint_attempt3": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0,
+    "note": "spotlessApply 1회 적용(PerformanceService.java 긴 throw 줄바꿈, 테스트 파일 주석 줄바꿈) 후 재검증 통과"
+  },
+  "refactoring_attempt3": [
+    {
+      "what": "리팩토링 없음",
+      "why": "추가한 검사가 각 2줄 내외로 기존 validateRequired/validateSection/toSectionSpec 구조에 자연스럽게 들어맞아 다듬을 중복이 없다"
+    }
+  ],
+  "scope_deviations_attempt3": [],
+  "changed_files_attempt2": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "F10(validateRequired)/F11(validateSection) 검증 메서드 추가, registerPerformance/updatePerformance 앞단에서 호출. 좌석 합산을 int→long(totalSeatsLong)으로 변경해 오버플로 방지, 5,000 이하 확인 후에만 int로 캐스팅. generateSeats가 Performance 객체를 받도록 변경(Long id 대신)",
+      "lines_changed": 48
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/Seat.java",
+      "change": "performanceId(Long) 필드를 @ManyToOne performance(Performance) 관계로 교체 — V2 마이그레이션의 FK를 애노테이션으로도 표현. getPerformanceId()는 performance.getId()로 위임해 기존 호출부(테스트 포함) 변경 없이 유지",
+      "lines_changed": 12
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "request.sections()가 null이면 SectionSpec 리스트 변환을 건너뛰고 null을 그대로 Service에 전달 (기존엔 null.stream()으로 NPE)",
+      "lines_changed": 4
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+      "change": "InvalidRequestException/InvalidSectionException → 400 핸들러 2건 추가",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidRequestException.java",
+      "change": "신규 — F10, 필수 필드 누락",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidSectionException.java",
+      "change": "신규 — F11, 구역 형식 오류",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/SeatLimitExceededException.java",
+      "change": "생성자 파라미터를 int→long으로 변경 (오버플로 방지로 커진 합산값을 그대로 메시지에 담기 위함)",
+      "lines_changed": 1
+    }
+  ],
+  "test_result_attempt2": {
+    "command": "cd backend && ./gradlew test",
+    "total": 40,
+    "passed": 40,
+    "failed": 0,
+    "target_tests_passed": 20
+  },
+  "lint_attempt2": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0,
+    "note": "spotlessApply 2회 적용(구현 변경 1회, 테스트 파일 주석 수정 1회) 후 재검증 통과"
+  },
+  "refactoring_attempt2": [
+    {
+      "what": "리팩토링 없음",
+      "why": "validateRequired/validateSection을 register/update가 공유하도록 이미 분리했고, 이름이 각자 역할을 명확히 드러내 추가로 다듬을 중복이 없다"
+    }
+  ],
+  "scope_deviations_attempt2": [
+    {
+      "what": "Seat.performanceId(Long) → performance(Performance) 관계 변경, generateSeats 시그니처를 Long에서 Performance로 변경",
+      "why": "Plan amendments(attempt 2)에 이미 예정된 변경 — V2 마이그레이션의 FK를 엔티티가 표현하지 못해 테스트/프로덕션 스키마가 갈리던 문제(code-reviewer 지적)를 고치려면 필요했다. getPerformanceId()를 유지해 테스트 코드는 변경하지 않았다"
+    }
+  ],
+  "changed_files_attempt1_kept_for_reference": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "registerPerformance/updatePerformance/cancelPerformance 실제 구현 — 검증 순서(EMPTY_SECTIONS → INVALID_TIME_ORDER → SEAT_LIMIT_EXCEEDED → DUPLICATE_SEAT_RANGE), 좌석 생성(generateSeats), 행 범위 겹침 판정(rowRangesOverlap). 생성자에 SeatRepository 주입 추가, MAX_SEATS=5000 상수 추가",
+      "lines_changed": 96
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+      "change": "updateSchedule()/cancel() 실제 구현 (필드 대입)",
+      "lines_changed": 10
+    }
+  ],
+  "reused": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java", "symbol": "PerformanceResponse" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceNotFoundException.java", "symbol": "PerformanceNotFoundException" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java", "symbol": "PerformanceStatusRules.of()" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java", "symbol": "Clock" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --rerun-tasks",
+    "total": 43,
+    "passed": 43,
+    "failed": 0,
+    "target_tests_passed": 23,
+    "note": "이 필드는 현재(최종) 상태다 — attempt 1(34/34, target 14)·attempt 2(40/40, target 20) 시점 수치는 각각 test_result_attempt2와 changed_files_attempt1_kept_for_reference 옆의 커밋 이전 git 이력 참고"
+  },
+  "lint": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0,
+    "note": "spotlessApply로 자동 포맷 수정 1회 적용 후 재검증 통과 (PerformanceService.java/PerformanceRegistrationApiTest.java 줄바꿈 정리)"
+  },
+  "refactoring": [
+    {
+      "what": "리팩토링 없음",
+      "why": "최소 구현이 이미 계층 규칙(검증→저장→좌석생성)과 이름(rowCount/rowRangesOverlap/generateSeats/validateTimeOrder)이 명확해 추가로 다듬을 중복·모호성이 없다고 판단했다"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "what": "PerformanceService 생성자에 SeatRepository 파라미터 추가",
+      "why": "Plan의 target_files에는 명시되지 않았지만 registerPerformance가 좌석을 저장하려면 필수적인 의존성이며, Plan의 codebase_analysis에서 SeatRepository를 신규 생성하기로 이미 정해뒀다 — 새 파일이 아니라 기존 생성자 시그니처 확장에 그친다"
+    }
+  ]
+}

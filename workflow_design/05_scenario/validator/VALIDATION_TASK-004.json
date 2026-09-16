@@ -1,0 +1,73 @@
+{
+  "task_id": "TASK-004",
+  "attempt": 3,
+  "round": 1,
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "MD 시나리오 23건(SC-01~13, SC-15~24, SC-14 결번)과 JSON scenarios 배열 23건의 ID·type 라벨·Given/When/Then 문장이 모두 일치한다(문자열 차이는 `[]` 백틱, 1,200,000,000↔1200000000 같은 표기뿐). 다만 서술 드리프트 2건: (1) MD 머리말 '재시도 이력' attempt 3 항목은 'SC-22~SC-23을 추가했다'라고만 적었는데 실제로는 SC-24도 attempt 3에서 추가됐다(JSON retry_note는 SC-24를 명시). (2) SC-15의 note가 JSON에만 '(독립검증 2차 라운드 부수 관찰 반영)'을 달고 있다. GWT·개수·ID는 어긋나지 않으므로 fail은 아니지만 MD가 SoT인 이상 머리말은 정정되어야 한다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 23건(≥2). happy 3건(SC-01, SC-06, SC-11 ≥1). error 17건(SC-02~05, 07~10, 13, 16~19, 21~24 ≥1). boundary 3건(SC-12, SC-15, SC-20)."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "Plan의 acceptance_criteria 9건을 직접 대조했고 9건 모두 최소 1개 시나리오의 covers에 원문 그대로 나타난다 — AC1(구역별 seat 행 생성)→SC-01, AC2(total_seats/available_seats 일치)→SC-01, AC3(INVALID_TIME_ORDER)→SC-02·SC-03, AC4(SEAT_LIMIT_EXCEEDED)→SC-04, AC5(DUPLICATE_SEAT_RANGE)→SC-05, AC6(오픈 전 수정 200)→SC-06, AC7(REGISTRATION_ALREADY_OPEN)→SC-07, AC8(PERFORMANCE_NOT_FOUND)→SC-09·SC-10, AC9(취소 멱등)→SC-11·SC-12. JSON coverage의 'acceptance_criteria_covered: 9, uncovered: []' 자기 신고는 실제와 일치한다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "시나리오가 참조하는 flow는 F1~F11 11종이고 Plan design.flows에 F1~F11이 모두 실재한다. 역방향도 성립 — Plan의 11개 flow 전부 최소 1개 시나리오가 붙어 있다(F9→SC-13, F10→SC-16·SC-22·SC-24, F11→SC-17·SC-18·SC-19·SC-21·SC-23)."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "pass",
+      "detail": "23건의 Then 문장을 전부 확인했다. 모두 HTTP 상태코드·응답 필드(code/status/totalSeats/title 등)·DB 행 수(seat 건수) 같은 외부 단언 가능 형태다. '내부적으로/올바르게/정상적으로' 류 표현은 없다. SC-20의 note가 'int 오버플로로 우회되지 않음은 Then 단언 대상이 아니다'라고 스스로 경계를 그어 둔 점도 확인했다. SC-12의 '응답의 status 는 CANCELLED 로 유지된다'는 '유지'라는 상태 서술이지만 status==CANCELLED 단언으로 그대로 옮겨진다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "pass",
+      "detail": "JSON 23건 모두 when 배열 원소가 정확히 1개이며 MD의 When 줄도 시나리오당 1줄이다. '그리고 ~하면' 형태의 복합 When은 없다. SC-12('다시 호출한다')는 '이미 취소됨' 상태를 Given으로 밀어냈고 When은 단일 호출이다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "warn",
+      "detail": "When/Then 문장 자체에는 함수명·클래스명·SQL이 없다(엔드포인트 경로·에러 코드는 API 계약이라 허용 범위). 다만 note/covers 근거문에 구현 세부가 다수 새어 있다 — SC-19 'charAt(0)에서 StringIndexOutOfBoundsException', SC-23 'Controller의 SectionRequest→SectionSpec 변환에서 NPE', SC-22/SC-24 'validateRequired'. 특히 SC-24의 covers 주석은 'Phase 2b에서 이 시나리오를 Red로 옮길 때 … 서비스 계층에서 예외가 던져지는지도 함께 확인한다', 'PerformanceRegistrationApiTest의 클래스 레벨 @Transactional이 …'처럼 테스트 구현·하네스 지시까지 담고 있다. 시나리오 문서가 Phase 2b의 구현 방식을 선점하는 형태라 다음 단계 작성자가 이를 요구사항으로 오인할 소지가 있다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "pass",
+      "detail": "모든 시나리오의 입력이 Plan design.inputs 범위 안이다 — title 201자↔title '1~200자'(SC-22/SC-24), grade 21자↔grade '1~20자'(SC-21), seatsPerRow=0↔'필수·1 이상'(SC-18), rowStart=\"\"·rowStart>rowEnd↔'A~Z 단일 대문자이며 rowStart<=rowEnd'(SC-19/SC-17), sections=[null]↔'배열 원소 자체가 null이면 안 됨'(SC-23), sections=null↔'필드 자체가 null'(SC-16), sections=[]↔'1개 이상'(SC-13), seatsPerRow=12억×2구역↔'long 산술, 5,000 이하'(SC-20). 출력도 전부 Plan outputs에 있다 — 201/200 PerformanceResponse, INVALID_TIME_ORDER, SEAT_LIMIT_EXCEEDED, EMPTY_SECTIONS, DUPLICATE_SEAT_RANGE, REGISTRATION_ALREADY_OPEN, PERFORMANCE_NOT_FOUND, INVALID_REQUEST, INVALID_SECTION. SC-11/SC-12가 cancelled 대신 status=CANCELLED를 단언하는 것도 Plan outputs의 취소 응답 서술(amendments 1차 정정)과 일치한다. SC-01의 라벨 'VIP-A1'은 F1의 seatLabel={grade}-{row}{number} 규칙과 일치한다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "warn",
+      "detail": "SC-02(openAt>closeAt)와 SC-03(closeAt>startAt)은 같은 flow F2, 같은 결과(400/INVALID_TIME_ORDER)이고 Plan F2 steps도 두 조건을 한 검증 단계로 묶어 놓았다 — 구현이 단일 조건식이면 동일 코드 경로를 두 번 타는 셈이다. 이 시나리오 세트는 다른 곳에서는 'coverage-policy §3 같은 코드 경로는 하나로 묶는다'를 근거로 title/venue를 SC-22 하나로, 최상위 필수 필드 누락을 SC-16 하나로 병합했으므로(SC-16·SC-22 note) 정책 적용이 일관되지 않다. 추가로 SC-02는 seat 0건 단언이 있고 SC-03에는 없어 두 시나리오의 강도도 비대칭이다. 반면 SC-09/SC-10(PUT vs cancel)과 SC-22/SC-24(POST vs PUT)는 엔드포인트가 달라 중복으로 보지 않았고, SC-24는 분리 이유가 명시돼 있다."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "warn",
+      "detail": "Plan target_files에 기존 파일 수정이 4건 있다 — Performance.java(변경), PerformanceService.java(변경), PerformanceController.java(변경), PerformanceExceptionHandler.java(변경). 즉 회귀 시나리오가 요구되는 태스크인데 현재 23건 중 type: regression 은 0건이다. 유일한 회귀 시나리오 SC-14는 MD 20~24행·JSON withdrawn_scenarios에 따라 HITL#1 승인 이후 Phase 2b에서 철회됐고, 회귀 방어를 '기존 PerformanceApiTest/PerformanceConstraintTest 전체 실행'으로 대체했다. 철회 사유(이미 통과하는 테스트는 Red 요구와 맞지 않음)는 합리적이고 변경이 대체로 가산적(새 메서드·새 핸들러 추가)이라는 완화 요인도 있으나, (1) 시나리오 세트 자체에는 회귀 방어가 남아 있지 않고, (2) 사람이 승인한 시나리오를 승인 이후 단계에서 제거한 이력이라 사람이 알고 넘어가야 한다. 특히 PerformanceExceptionHandler는 기존 404 매핑과 같은 파일을 건드리므로 기존 GET 404 동작의 회귀 확인을 Phase 3 전체 테스트 실행에 의존한다는 점을 명시적으로 확인할 것."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 3,
+    "summary": "V1~V4(구조·개수·AC 커버리지·flow 대응) 위반 없음 — AC 9건과 flow 11개를 직접 대조해 전부 대응을 확인했고 MD↔JSON GWT도 일치한다. 다음 Phase 진행은 가능하다. 경고 3건: (V7) SC-19/SC-22/SC-23/SC-24의 note에 charAt(0)·NPE·validateRequired·@Transactional 같은 구현/테스트 하네스 세부가 들어가 Phase 2b 작성을 선점한다. (V9) SC-02와 SC-03이 같은 F2 시각 순서 검증을 중복으로 타며, 이는 이 문서가 다른 곳에서 내세운 '같은 코드 경로는 하나로 묶는다' 정책과 어긋난다. (V10) 기존 파일 4건을 수정하는 태스크인데 regression 시나리오가 0건이다 — SC-14가 HITL#1 승인 이후 철회되어 회귀 방어가 Phase 3의 기존 테스트 전체 실행에만 의존한다. 부수 지적: MD 머리말의 attempt 3 이력이 SC-24 추가를 누락하고 있다."
+  }
+}
