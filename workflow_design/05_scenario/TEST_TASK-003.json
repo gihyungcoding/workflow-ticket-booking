@@ -1,0 +1,80 @@
+{
+  "task_id": "TASK-003",
+  "supersedes": "SCENARIO_TASK-003.json",
+  "test_files": [
+    "frontend/src/theme/index.test.ts",
+    "frontend/src/components/StatusBadge.test.tsx",
+    "frontend/index.html.test.ts",
+    "frontend/src/pages/PerformanceListPage.test.tsx",
+    "frontend/src/pages/PerformanceDetailPage.test.tsx"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "src/theme/index.test.ts > createAppTheme > SC-01 (happy) 테마가 토큰 값으로 초기화된다",
+      "status": "red",
+      "failure": "Error: Not implemented (frontend/src/theme/index.ts:4, createAppTheme() 직접 throw)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "src/pages/PerformanceListPage.test.tsx > PerformanceListPage > SC-02 (happy) 목록 카드의 공연명에 Noto Serif KR이 적용된다",
+      "status": "red",
+      "failure": "AssertionError: expected '\"Roboto\", \"Helvetica\", \"Arial\", sans-serif' to contain 'Noto Serif KR' — 아직 fontDisplay를 적용하지 않아 MUI 기본 서체가 그대로 적용됨"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "src/pages/PerformanceDetailPage.test.tsx > PerformanceDetailPage > SC-03 (happy) 상세 화면의 공연명에 Noto Serif KR이 적용된다",
+      "status": "red",
+      "failure": "AssertionError: expected '\"Roboto\", \"Helvetica\", \"Arial\", sans-serif' to contain 'Noto Serif KR' — 위와 동일 사유"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "src/components/StatusBadge.test.tsx > StatusBadge > SC-04 (happy) 상태 문구가 의미 매핑대로 표시된다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 예매예정 — StatusBadge.tsx의 STATUS_LABEL이 아직 UPCOMING='예정'/CLOSED='마감'/CANCELLED='취소' 그대로임"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "index.html.test.ts > index.html > SC-05 (happy) index.html이 한국어 lang·실제 title·웹폰트 로드 지시를 갖는다",
+      "status": "red",
+      "failure": "AssertionError: expected '...lang=\"en\"...' to contain 'lang=\"ko\"' — index.html이 아직 템플릿 기본값 그대로임(lang=en, title=frontend, Google Fonts link 없음)"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": null,
+      "status": "no_new_test",
+      "reason": "jsdom은 폰트 네트워크 요청을 재현하지 않아 '로드 실패' 조건 자체를 자동화 테스트로 만들 수 없다. Phase 4에서 실제 브라우저로 웹폰트 요청을 차단하고 한글이 시스템 폰트로 정상 표시되는지 확인한다 — SCENARIO_TASK-003.md 'Red 처리 방식에 대한 메모' 참고"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": null,
+      "status": "covered_by_existing_tests",
+      "reason": "순수 회귀 시나리오라 이 태스크만으로는 Red 상태를 만들 수 없다. 기존 6개 함수(PerformanceListPage.test.tsx의 SC-01/03/05/06, PerformanceDetailPage.test.tsx의 SC-02/04)를 그대로 재실행해 통과를 확인한다 — red_result.existing_tests_still_passing 참고"
+    }
+  ],
+  "red_result": {
+    "command": "npm --prefix frontend test",
+    "total": 11,
+    "failed": 5,
+    "passed": 6,
+    "existing_tests_still_passing": true,
+    "note": "실패 5건은 전부 SC-01~05(신규). 기존 6건(TASK-002)은 변경 없이 그대로 통과 — SC-07(회귀)이 Red 단계에서부터 이미 만족됨을 보여준다."
+  },
+  "compile_check": {
+    "command": "npx tsc -p tsconfig.app.json --noEmit",
+    "errors": 0,
+    "note": "tsconfig.app.json에 index.html.test.ts를 include에 추가하고 types에 'node'를 추가함(node:fs/path/url 임포트를 위해) — TASK-003 target_files에는 없었지만 tsc 설정 오류를 막기 위한 최소 보강"
+  },
+  "inventory_check": {
+    "new_red_scenarios": ["SC-01", "SC-02", "SC-03", "SC-04", "SC-05"],
+    "new_test_functions": 5,
+    "no_new_test_scenarios": ["SC-06", "SC-07"],
+    "match": true,
+    "note": "SC-01~05는 신규 테스트 함수 1:1 대응(5==5). SC-06/07은 SCENARIO_TASK-003.md에서 사전에 합의된 대로 새 테스트를 만들지 않음 — 승인된 시나리오 총 7건 중 5건이 이번 Red의 대상"
+  },
+  "testing_preferences": {
+    "framework": "vitest + @testing-library/react",
+    "mock_strategy": "PerformanceListPage/DetailPage는 기존 vi.mock 패턴 재사용. StatusBadge/theme/index.html은 목이 필요 없는 순수 단위 테스트"
+  },
+  "human_review": { "approved": true }
+}
