@@ -260,7 +260,8 @@
     "reason_primary": "폼 입력·검증 오류 표시·API 연동이 모두 화면 범위이며 서버 검증 규칙을 그대로 반영한다",
     "priority": "High",
     "depends_on": [
-      "TASK-004"
+      "TASK-004",
+      "TASK-008"
     ],
     "status": "todo",
     "meta": {
@@ -395,6 +396,59 @@
       "source_file": "docs/decisions/ADR-0010-bean-validation-for-request-dtos.md",
       "sections": [],
       "sections_with_ranges": []
+    }
+  },
+  {
+    "id": "TASK-008",
+    "title": "공연 상세 API에 구역별 좌석 구성 요약 추가",
+    "description": "GET /api/performances/{id} 응답에 구역별(grade·price) 좌석 수 집계를 담은 sections 필드를 추가한다. 좌석은 generateSeats()가 이미 grade/price를 담아 개별 행으로 생성해두었으므로, 새 마이그레이션 없이 seat 테이블을 (performance_id, grade, price)로 그룹핑해 집계하면 된다. TASK-005(공연 등록/수정 화면)의 수정 폼이 \"좌석 구성 요약(읽기 전용)\"을 렌더링하려면 이 데이터가 필요한데, TASK-004는 좌석 생성만 구현했고 조회 경로가 없다는 것이 TASK-005 Phase 2a 시나리오 검증 중 발견됐다.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "구역별 좌석 요약 집계와 응답 DTO 확장이 서버(Service/Repository) 계층 범위이며 도메인 규칙 판단이 없다",
+    "priority": "High",
+    "depends_on": [
+      "TASK-004"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 6
+      },
+      "risk": "low",
+      "acceptance_criteria": [
+        "구역 2개(등급·가격이 다른)로 등록된 공연을 GET /api/performances/{id} 로 조회하면 응답의 sections 필드에 구역별 grade·price·좌석수가 각각 포함된다",
+        "존재하지 않는 공연 id로 GET /api/performances/{id} 를 호출하면 404와 PERFORMANCE_NOT_FOUND 가 반환된다 (기존 동작 유지)",
+        "GET /api/performances (목록) 응답은 sections 필드를 포함하지 않는다 — 상세 조회에만 추가한다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+          "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/SeatRepository.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 3,
+        "risk_score": 2,
+        "total_score": 42,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/performance-registration.md",
+      "sections": [
+        "1-3",
+        "2-3",
+        "3"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "2-3",
+          "range": "수정 폼 §2 좌석 구성 요약"
+        }
+      ]
     }
   }
 ]
