@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-17T01:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "PerformanceResponse/PerformanceService/SeatRepository/Seat 엔티티와 기존 API 테스트 2건을 조사해 좌석 집계 쿼리와 응답 DTO 확장 지점을 확정"
 

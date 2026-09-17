@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-17T01:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "SCENARIO_TASK-008.md/.json 신규 작성 — 기존 시나리오 확장 아님"
 

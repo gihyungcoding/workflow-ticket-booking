@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-17T01:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "PLAN_TASK-008.json 작성 완료 — route Backend, inputs 2 / outputs 3 / flows 3, acceptance_criteria 3건 전부 flows.covers로 커버됨"
 

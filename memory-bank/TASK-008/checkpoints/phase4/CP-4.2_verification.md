@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-17T04:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "증거 수집·acceptance_criteria 대조·아키텍처 제약·회귀·code-reviewer·보안 점검 완료. code-reviewer가 발견한 정렬 비결정성 결함을 Phase 3으로 되돌려 수정 후 재검증 — status: PASS"
 

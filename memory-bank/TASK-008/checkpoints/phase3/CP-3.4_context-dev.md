@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-17T03:15:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "구현·리팩토링·린트 완료. DEV_TASK-008.json 저장, 게이트 통과"
 

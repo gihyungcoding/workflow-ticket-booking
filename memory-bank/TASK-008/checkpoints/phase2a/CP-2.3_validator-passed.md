@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-17T02:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "scenario-validator 독립검증 결과 overall.pass=true(경고 2건: V8/V10). 두 경고 모두 Phase 1에서 내가 임의로 넓힌 범위(등록/수정/취소 응답에도 sections 포함) 때문임을 확인하고, 시나리오를 늘리는 대신 PLAN_TASK-008.json을 원래 acceptance_criteria 범위(GET 상세/목록만)로 좁혀 해소했다"
 

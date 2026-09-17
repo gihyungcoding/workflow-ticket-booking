@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-17T03:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "최소 구현 완료 — 대상 테스트 4/4 통과, 전체 스위트 47/47 통과"
 

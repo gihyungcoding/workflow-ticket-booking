@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-17T02:40:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 Red 테스트 4건(진짜 Red 2 + already_passing 2)을 승인했다"
 

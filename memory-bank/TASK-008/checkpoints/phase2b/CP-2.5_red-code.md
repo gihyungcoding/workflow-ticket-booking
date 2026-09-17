@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-17T02:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "PerformanceSectionSummaryApiTest.java 신규 작성, 4개 시나리오 1:1 테스트 함수. SC-01/SC-04는 진짜 Red(sections null), SC-02/SC-03은 이 태스크가 바꾸지 않는 기존 동작을 검증하는 회귀 가드라 즉시 통과"
 

@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-17T02:15:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 시나리오 4건(SC-01~04)과 Plan 범위 축소를 승인했다"
 

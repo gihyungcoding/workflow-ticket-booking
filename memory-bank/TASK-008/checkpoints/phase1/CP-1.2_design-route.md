@@ -5,7 +5,7 @@ task_id: TASK-008
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-17T01:05:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "route = Backend 로 결정 — 응답 DTO 확장과 집계 쿼리만 있고 화면 변경 없음"
 
