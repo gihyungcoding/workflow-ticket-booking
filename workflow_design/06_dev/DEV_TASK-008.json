@@ -1,0 +1,61 @@
+{
+  "task_id": "TASK-008",
+  "changed_files": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/SectionSummaryResponse.java",
+      "change": "신규 — API 응답 DTO record(grade, price, seatCount)",
+      "lines_changed": 3
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/SeatSectionCount.java",
+      "change": "신규 — Spring Data 인터페이스 프로젝션(getGrade/getPrice/getSeatCount)",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/SeatRepository.java",
+      "change": "findSectionCounts(Long) 그룹핑 @Query 메서드 추가",
+      "lines_changed": 11
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+      "change": "sections 필드 추가(List<SectionSummaryResponse>, nullable), @JsonInclude(NON_NULL) 적용",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "getPerformance가 sectionsOf(id)로 집계를 조회해 채우도록 수정. toResponse를 2-arg(목록/등록/수정/취소, sections=null)와 3-arg(단일 상세, sections 전달) 오버로드로 분리",
+      "lines_changed": 20
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/ClockTestConfig.java",
+      "symbol": "ClockTestConfig"
+    },
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+      "symbol": "MutableClock"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "JAVA_HOME=.../ms-21.0.10 ./gradlew -p backend test",
+    "total": 47,
+    "passed": 47,
+    "failed": 0,
+    "target_tests_passed": 4
+  },
+  "lint": {
+    "command": "JAVA_HOME=.../ms-21.0.10 ./gradlew -p backend spotlessCheck",
+    "errors": 0,
+    "warnings": 0,
+    "note": "최초 spotlessCheck에서 포맷 위반 2건(PerformanceResponse.java 주석 줄바꿈, PerformanceService.java 메서드 체이닝, 테스트 파일 주석) 발견 — spotlessApply로 자동 수정 후 재검증 통과"
+  },
+  "refactoring": [
+    {
+      "what": "toResponse(Performance, Instant)를 2-arg/3-arg 오버로드로 분리 (3-arg가 sections를 받고, 2-arg는 sections=null로 위임)",
+      "why": "getPerformance에서 PerformanceResponse를 두 번 생성(한 번은 sections 없이, 다시 필드를 복사해 sections 채워 재생성)하는 대신, 처음부터 올바른 값으로 한 번만 생성하기 위해"
+    }
+  ],
+  "scope_deviations": []
+}

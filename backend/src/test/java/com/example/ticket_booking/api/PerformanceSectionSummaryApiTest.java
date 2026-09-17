@@ -29,10 +29,9 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * TASK-008 시나리오 SC-01~SC-04.
  *
- * <p>SC-02/SC-03은 이번 태스크가 손대지 않는 기존 동작(404, 목록 응답 형태)을 검증하는
- * 회귀 시나리오라 Red 단계에서도 즉시 통과한다 — SC-02는 PerformanceApiTest의 test_sc09와
- * 동일한 경로를 검증한다(TASK-001에서 이미 구현됨). SC-01/SC-04만 이번 태스크가 실제로
- * 구현해야 하는 부분(sections 필드)이라 Red다.
+ * <p>SC-02/SC-03은 이번 태스크가 손대지 않는 기존 동작(404, 목록 응답 형태)을 검증하는 회귀 시나리오라 Red 단계에서도 즉시 통과한다 — SC-02는
+ * PerformanceApiTest의 test_sc09와 동일한 경로를 검증한다(TASK-001에서 이미 구현됨). SC-01/SC-04만 이번 태스크가 실제로 구현해야 하는
+ * 부분(sections 필드)이라 Red다.
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-008.md
  */

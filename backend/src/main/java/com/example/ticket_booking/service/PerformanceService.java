@@ -52,7 +52,16 @@ public class PerformanceService {
   public PerformanceResponse getPerformance(Long id) {
     Performance performance =
         performanceRepository.findById(id).orElseThrow(() -> new PerformanceNotFoundException(id));
-    return toResponse(performance, clock.instant());
+    return toResponse(performance, clock.instant(), sectionsOf(id));
+  }
+
+  private List<SectionSummaryResponse> sectionsOf(Long performanceId) {
+    return seatRepository.findSectionCounts(performanceId).stream()
+        .map(
+            count ->
+                new SectionSummaryResponse(
+                    count.getGrade(), count.getPrice(), count.getSeatCount()))
+        .toList();
   }
 
   @Transactional
@@ -205,6 +214,11 @@ public class PerformanceService {
   }
 
   private PerformanceResponse toResponse(Performance performance, Instant now) {
+    return toResponse(performance, now, null);
+  }
+
+  private PerformanceResponse toResponse(
+      Performance performance, Instant now, List<SectionSummaryResponse> sections) {
     PerformanceStatus status =
         PerformanceStatusRules.of(
             Boolean.TRUE.equals(performance.getCancelled()),
@@ -221,6 +235,7 @@ public class PerformanceService {
         performance.getCloseAt(),
         performance.getTotalSeats(),
         performance.getAvailableSeats(),
-        status);
+        status,
+        sections);
   }
 }
