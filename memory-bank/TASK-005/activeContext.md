@@ -1,8 +1,8 @@
 ---
 task_id: TASK-005
 title: "공연 등록/수정 화면"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-17
@@ -12,21 +12,24 @@ sub_categories: ["organizer"]
 target_repo: "."
 branch: "feature/task-005-performance-register-edit-screen"
 
-last_checkpoint: CP-2.4
+last_checkpoint: CP-2.6
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-005.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-005.md"
+  test: "workflow_design/05_scenario/TEST_TASK-005.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a를 마쳤다. 시나리오 10건(happy 5/error 4/regression 1), AC 8/8 커버,
-독립검증 3회 전부 PASS, HITL#1 승인 완료(generate_red_trigger=true).
+Phase 2b를 마쳤다. Red 테스트 10건(SC-01~SC-10, 시나리오와 1:1), 전부
+'not implemented' 스켈레톤 하나로 실패(순수성 확인), 기존 12건 계속 통과.
+HITL#2 승인 완료.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 넘어가 SC-01~SC-10을 실패하는 Vitest+Testing Library
-테스트 코드로 옮긴다.
+`wf-develop` 스킬로 넘어가 스켈레톤을 실제 구현으로 채운다 — 대상:
+`frontend/src/api/performances.ts`(register/update/cancel 함수),
+`PerformanceRegisterPage.tsx`, `PerformanceEditPage.tsx`.
 
 ## 알아둬야 할 것
 
@@ -64,3 +67,17 @@ Phase 2a를 마쳤다. 시나리오 10건(happy 5/error 4/regression 1), AC 8/8 
   (/performances/:id)가 공존한다 — React Router v7은 정적 세그먼트를
   항상 우선 매칭하므로 선언 순서 무관하게 안전하지만, SC-10(regression)이
   이를 실제로 검증한다
+- Red 단계에서 확정한 UI 계약(Phase 3에서 그대로 구현) — TextField label:
+  "공연명"/"장소"/"공연일시"/"오픈"/"마감"(등록·수정 공통), 구역 필드:
+  "등급"/"가격"/"시작 행"/"종료 행"/"행당 좌석수". 버튼: "구역 추가"/"등록"
+  (등록 폼), "저장"/"공연 취소"(수정 폼), 다이얼로그 "확인". data-testid:
+  `seat-preview`(미리보기, "총 N" + 구역별 "{grade} N" 텍스트),
+  `time-fields-error`, `section-card-{index}`, `form-error`(+"다시 시도"
+  버튼), `section-summary`(수정 폼 읽기 전용 좌석 요약)
+- ApiError(code, message) 클래스로 register/update/cancel 실패를 code
+  기반 분기 — INVALID_TIME_ORDER/SEAT_LIMIT_EXCEEDED/
+  REGISTRATION_ALREADY_OPEN 외 나머지(그 외 code·일반 Error)는 전부
+  form-error 배너로 폴백
+- 로컬 개발 환경: node/npm이 기본 PATH에 없음 — 이 세션에서는
+  `export PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH"` 로 직접
+  잡아서 사용함(nvm 셸 함수 자체가 안 잡혀서 `nvm use`가 안 먹음)
