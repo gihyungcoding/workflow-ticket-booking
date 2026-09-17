@@ -1,0 +1,126 @@
+{
+  "task_id": "TASK-008",
+  "status": "PASS",
+  "status_reason": "acceptance_criteria 3건 전부 PASS, 회귀 없음, 아키텍처 제약 위반 0. code-reviewer가 찾은 정렬 비결정성 결함은 Phase 3으로 되돌려 수정(ORDER BY 추가) 후 재검증했다.",
+
+  "evidence": {
+    "tests": {
+      "command": "JAVA_HOME=/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home ./gradlew -p backend test",
+      "exit_code": 0,
+      "summary": "47 tests, 0 failed, 0 skipped (test-results XML 집계)"
+    },
+    "lint": {
+      "command": "JAVA_HOME=/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home ./gradlew -p backend spotlessCheck",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD -- backend/",
+      "summary": "6 files changed, 246 insertions(+), 4 deletions(-) (5 production + 1 test)"
+    }
+  },
+
+  "acceptance_criteria": [
+    {
+      "criterion": "구역 2개(등급·가격이 다른)로 등록된 공연을 GET /api/performances/{id} 로 조회하면 응답의 sections 필드에 구역별 grade·price·좌석수가 각각 포함된다",
+      "verdict": "PASS",
+      "evidence": "test_sc01_상세_조회_시_구역별_좌석_요약이_포함된다, test_sc04_서로_다른_구역이_같은_등급_가격이면_좌석_수가_합산된다 통과"
+    },
+    {
+      "criterion": "존재하지 않는 공연 id로 GET /api/performances/{id} 를 호출하면 404와 PERFORMANCE_NOT_FOUND 가 반환된다 (기존 동작 유지)",
+      "verdict": "PASS",
+      "evidence": "test_sc02_존재하지_않는_공연_조회_시_404가_반환된다 통과 (already_passing으로 시작해 Green 단계에서도 계속 통과 확인)"
+    },
+    {
+      "criterion": "GET /api/performances (목록) 응답은 sections 필드를 포함하지 않는다 — 상세 조회에만 추가한다",
+      "verdict": "PASS",
+      "evidence": "test_sc03_목록_조회_응답에는_sections_키가_없다 통과 — getPerformances는 toResponse 2-arg(sections=null) 경로를 그대로 사용, N+1 쿼리 없음(code-reviewer 확인)"
+    }
+  ],
+
+  "screens": [],
+
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 2,
+    "no_target": [],
+    "files_scanned": 65,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend/src/pages/PerformanceDetailPage.tsx:37, PerformanceListPage.tsx:46 — 이 태스크가 만들지 않은 기존 프론트 코드, TASK-008 변경 범위 밖"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직을 두지 않는다",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "이 태스크는 api/ 계층을 건드리지 않았다 — 위반 없음"
+      },
+      {
+        "rule": "Service: HTTP 관심사를 다루지 않는다",
+        "constraint": "ARCH-002",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입을 직접 다루지 않는다",
+        "constraint": "ARCH-003",
+        "state": "✓"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어를 하지 않는다",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "이 태스크는 domain/ 계층(Performance.java, Seat.java)을 건드리지 않았다 — 위반 없음"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단을 하지 않는다",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "SeatRepository.findSectionCounts는 순수 집계(GROUP BY/ORDER BY) 쿼리다 — 도메인 규칙(가격 계산, 상태 판정 등) 없음. code-reviewer도 동일하게 확인"
+      }
+    ]
+  },
+
+  "regression": {
+    "full_suite": "47/47 passed",
+    "callers_checked": true,
+    "note": "grep으로 new PerformanceResponse(...)/seatRepository. 호출처가 PerformanceService.java 한 파일뿐임을 확인 — 다른 소비자 없음"
+  },
+  "scope_deviations": [],
+
+  "code_review": {
+    "findings": [
+      {
+        "category": "correctness",
+        "file": "backend/src/main/java/com/example/ticket_booking/repository/SeatRepository.java",
+        "summary": "GROUP BY 결과에 ORDER BY가 없어 sections 배열 순서가 비결정적이다",
+        "outcome": "fixed",
+        "fix": "ORDER BY s.price DESC, s.grade ASC 추가 (커밋 460533b), 전체 테스트/린트 재검증 통과"
+      },
+      {
+        "category": "test-coverage",
+        "file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceSectionSummaryApiTest.java",
+        "summary": "SC-01/SC-04가 좌석을 SeatRepository로 직접 생성해 POST 등록 경로(generateSeats)와의 결합이 검증되지 않는다",
+        "outcome": "skipped",
+        "rationale": "리뷰어가 '차단 사유는 아니다'로 명시. 승인된 시나리오(SC-01/04)의 Given은 테스트 코드의 데이터 준비 방식까지 규정하지 않는다 — Phase 5 회고에서 후속 개선(POST→GET 연계 테스트 추가)으로 남긴다"
+      }
+    ]
+  },
+
+  "security": {
+    "input_validation": "이 태스크는 새 사용자 입력을 받지 않는다 — performanceId는 기존 GET 엔드포인트의 경로 변수(TASK-001부터 존재)를 그대로 쓴다",
+    "authorization": "해당 없음 — 이 프로젝트는 아직 인증/인가 시스템이 없다(product.md §7 열린 질문, TASK-004/005와 동일한 기존 결정)",
+    "secrets": "해당 없음 — 하드코딩된 자격증명 없음",
+    "logging": "해당 없음 — 새 로깅 추가 없음, 개인정보 노출 경로 없음"
+  },
+
+  "human_review": {
+    "decision": "APPROVE",
+    "verified_commit": "460533b40ba1cf305d8cedbb170a775b237be1b9",
+    "verified_at": "2026-09-17T04:15:00Z"
+  }
+}

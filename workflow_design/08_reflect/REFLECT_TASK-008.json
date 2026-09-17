@@ -1,0 +1,84 @@
+{
+  "task_id": "TASK-008",
+  "keep": [
+    {
+      "what": "Repository 프로젝션(SeatSectionCount)과 Service 응답 DTO(SectionSummaryResponse)를 분리해 architecture.md의 DTO 소유 원칙을 그대로 적용했다",
+      "evidence": "CP-1.1 decisions, code-reviewer가 '설계 준수: Repository는 자기 패키지의 프로젝션만 반환하고 Service 타입을 참조하지 않는다 — PLAN architecture_refs 대로다'로 확인"
+    },
+    {
+      "what": "scenario-validator가 V8/V10에서 지적한 범위 불일치를 시나리오 확장이 아니라 Plan 축소로 해결했다",
+      "evidence": "CP-2.3 decisions — 'register/update/cancel 응답도 sections 포함' 결정을 철회하고 acceptance_criteria 3건 범위로 되돌림. 이후 SCENARIO_TASK-008.md/json 은 고칠 필요가 없었다"
+    },
+    {
+      "what": "Phase 4 code-reviewer가 실제 correctness 결함(GROUP BY 결과 순서 비결정성)을 찾아냈고, 즉시 Phase 3으로 되돌려 고쳤다",
+      "evidence": "code-reviewer 리포트 — ORDER BY 없음 지적 → SeatRepository.java에 ORDER BY 추가(커밋 460533b) → 전체 테스트/린트 재검증 통과"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Phase 1(Plan)에서 acceptance_criteria(3건, GET 상세/목록/404)보다 넓게 설계했다 — 등록/수정/취소 응답에도 sections를 포함시키기로 결정했다가 Phase 2a 독립검증(V8/V10)에서야 지적받았다",
+      "evidence": "CP-1.1의 '등록/수정/취소 응답도 sections를 포함한다' 결정 → CP-2.3에서 철회",
+      "phase": 1
+    },
+    {
+      "what": "SC-02/SC-03이 '무엇을 하지 않아도 참'인 부정형 회귀 시나리오라 Red 단계에서 구조적으로 실패시킬 수 없었다 — wf-red 스킬 문서에는 이런 경우의 처리 방법이 명시돼 있지 않아 TASK-001의 파일 주석 선례를 직접 찾아 판단해야 했다",
+      "evidence": "TEST_TASK-008.json 의 SC-02/SC-03 status: already_passing, CP-2.5 decisions",
+      "phase": 2
+    },
+    {
+      "what": "이 태스크 자체가 TASK-005 Phase 2a 도중에야 발견된 백엔드 데이터 공백을 메우기 위해 급조됐다 — TASK-005의 Plan(Phase 1)이 feature 문서의 '좌석 구성 요약' 요구사항을 실제 API 응답 스키마 확인 없이 설계에 반영했었다",
+      "evidence": "TASK-005 activeContext.md의 blocked_reason, CP-2.3(TASK-005)",
+      "phase": 1
+    }
+  ],
+  "try": [
+    {
+      "what": "wf-plan 스킬의 MUST 목록에 'acceptance_criteria에 없는 output을 설계에 넣지 않는다'는 역방향 체크(현재는 '기준을 flows가 전부 덮는지'만 있음)를 추가한다",
+      "target": ".claude/skills/wf-plan/SKILL.md § MUST"
+    },
+    {
+      "what": "wf-red 스킬에 '승인된 시나리오가 이미 참인 부정형 회귀 조건이면 already_passing으로 명시하고 그대로 보고한다'는 절을 추가해 매번 선례를 찾아 판단하지 않게 한다",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "wf-plan의 Step 2(코드베이스 조사)에 'route가 Frontend이고 화면이 특정 API 응답 필드를 전제한다면, 그 필드가 실제 백엔드 응답 DTO에 존재하는지 코드로 확인한다'는 체크 항목을 추가한다",
+      "target": ".claude/skills/wf-plan/SKILL.md § Step 2"
+    }
+  ],
+  "insights": [
+    "설계(Plan)가 acceptance_criteria보다 넓어지는 것은 Phase 2a 독립검증에서야 드러난다 — Phase 1 자체에 '기준보다 넓게 설계하지 않았는가'라는 체크가 없으면 매번 한 Phase 늦게 발견된다",
+    "이미 참인 부정형 회귀 시나리오(예: '이 경로는 안 건드린다')는 본질적으로 Red 상태를 만들 수 없다 — 이것은 테스트나 구현의 결함이 아니라 시나리오 자체의 성격이므로, 억지로 실패시키려 하기보다 already_passing으로 명시하는 편이 정직하다",
+    "Phase 4의 code-reviewer 서브에이전트 호출이 형식적 절차가 아니라 실제로 결함(정렬 비결정성)을 잡아냈다 — 이번 태스크가 그 단계의 존재 가치를 증명한 사례다"
+  ],
+  "phase_analysis": {
+    "1": { "retries": 0, "note": "설계를 acceptance_criteria보다 넓게 잡았다가(등록/수정/취소도 sections 포함) Phase 2a에서 지적받고 CP-2.3에서 철회 — 공식 ROLLBACK_PLAN은 아니었음(Phase 1으로 되돌아가지 않고 Plan 파일만 직접 보정)" },
+    "2a": { "retries": 0, "note": "scenario-validator overall.pass=true(경고 2건: V8/V10) — Plan을 좁혀 해소, 시나리오 자체 재작성이나 재검증 호출은 없었음" },
+    "2b": { "retries": 0, "note": "SC-02/SC-03이 already_passing으로 나왔으나 사용자에게 투명하게 보고하고 그대로 HITL#2 승인받음 — 재시도 아님" },
+    "3": { "retries": 0, "note": "—" },
+    "4": { "retries": 0, "note": "code-reviewer가 correctness 결함 1건 발견 → HITL#3 이전에 자체적으로 Phase 3 재방문해 수정·재검증 — 공식 HITL reject 사이클은 발생하지 않음" },
+    "5": { "retries": 0, "note": "—" }
+  },
+  "adr_candidates": [],
+  "architecture_drift": [],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "MUST",
+      "change": "'acceptance_criteria를 전부 flows로 커버한다'는 기존 규칙에 더해, 'flows나 outputs가 acceptance_criteria에 없는 범위를 추가로 다루고 있지 않은지'도 확인하는 항목을 넣는다",
+      "evidence": "TASK-008 CP-1.1→CP-2.3 — 등록/수정/취소 응답 확장을 Phase 1에서 걸러내지 못했다"
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 3 — 실행해서 실패 확인",
+      "change": "승인된 시나리오가 '기존 동작이 바뀌지 않았다'를 검증하는 부정형 회귀 시나리오라면, Red 상태를 만들 수 없는 것이 정상이며 already_passing으로 명시하고 넘어간다는 절을 추가한다",
+      "evidence": "TASK-008 SC-02/SC-03 — TASK-001 파일 주석의 선례를 직접 찾아 유추해야 했다"
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 2 — 코드베이스 조사",
+      "change": "route가 Frontend이고 화면이 특정 API 응답 필드에 의존한다면, 그 필드가 실제 백엔드 응답 DTO에 존재하는지 코드로 확인하고 없으면 Phase 1에서 멈추는 절차를 추가한다",
+      "evidence": "TASK-005가 이 확인을 생략해 Phase 2a까지 가서야(scenario-validator V8 경유) 발견 — TASK-008 신설로 이어짐"
+    }
+  ],
+  "completion_report": { "approved_by_human": true }
+}

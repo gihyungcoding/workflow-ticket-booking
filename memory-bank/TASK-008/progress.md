@@ -1,0 +1,20 @@
+# TASK-008 진행
+
+| Phase | 상태 | 체크포인트 | 비고 |
+|---|---|---|---|
+| 1 Plan | ✅ 완료 | CP-1.3 | 설계 라우팅: Backend |
+| 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 4건, 독립검증 PASS, HITL#1 승인 |
+| 2b Red | ✅ 완료 | CP-2.6 | Red 2건(SC-01/04) + already_passing 2건(SC-02/03), HITL#2 승인 |
+| 3 Green | ✅ 완료 | CP-3.4 | 테스트 47/47, 린트 0, 아키텍처 위반 0 |
+| 4 Verify | ✅ 완료 | CP-4.3 | status: PASS, 정렬 결함 수정 후 HITL#3 승인 (verified_commit 460533b) |
+| 5 Reflect | ✅ 완료 | CP-5.3 | Keep 3 / Problem 3 / Try 3, 규칙 개선안 3건, HITL#4 승인 |
+| 2b Red | ⬜ 대기 | — | |
+| 3 Green | ⬜ 대기 | — | |
+| 4 Verify | ⬜ 대기 | — | |
+| 5 Reflect | ⬜ 대기 | — | |
+
+## 완료 조건
+
+- [ ] 구역 2개(등급·가격이 다른)로 등록된 공연을 GET /api/performances/{id} 로 조회하면 응답의 sections 필드에 구역별 grade·price·좌석수가 각각 포함된다
+- [ ] 존재하지 않는 공연 id로 GET /api/performances/{id} 를 호출하면 404와 PERFORMANCE_NOT_FOUND 가 반환된다 (기존 동작 유지)
+- [ ] GET /api/performances (목록) 응답은 sections 필드를 포함하지 않는다 — 상세 조회에만 추가한다
