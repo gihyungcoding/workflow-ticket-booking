@@ -1,8 +1,8 @@
 ---
 task_id: TASK-005
 title: "공연 등록/수정 화면"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-17
@@ -12,21 +12,21 @@ sub_categories: ["organizer"]
 target_repo: "."
 branch: "feature/task-005-performance-register-edit-screen"
 
-last_checkpoint: CP-1.3
+last_checkpoint: CP-2.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-005.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-005.md"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1(Plan)을 마쳤다. route=Frontend, inputs 5/outputs 7/flows 7, AC 8건
-전부 flows로 커버됨(EXIT GATE 통과). 백엔드 PerformanceResponse.java를 직접
-읽어 sections 필드가 GET 단일 상세 조회에서만 채워짐을 확인했다.
+Phase 2a를 마쳤다. 시나리오 10건(happy 5/error 4/regression 1), AC 8/8 커버,
+독립검증 3회 전부 PASS, HITL#1 승인 완료(generate_red_trigger=true).
 
 ## 다음 한 걸음
 
-`wf-scenario` 스킬로 넘어가 PLAN의 F1~F7 각각에 대응하는 Given/When/Then
-시나리오를 작성하고 scenario-validator 검증 → HITL#1 승인을 받는다.
+`wf-red` 스킬로 넘어가 SC-01~SC-10을 실패하는 Vitest+Testing Library
+테스트 코드로 옮긴다.
 
 ## 알아둬야 할 것
 
@@ -56,3 +56,11 @@ Phase 1(Plan)을 마쳤다. route=Frontend, inputs 5/outputs 7/flows 7, AC 8건
   패턴(L53-65), PerformanceDetailPage의 상태 유니온+useEffect 패턴
 - DESIGN-003(warn) 기존 위반 2건 있음(PerformanceDetailPage/ListPage의
   height={n}) — 새 코드에서 반복하지 않도록 유의
+- SC-03/SC-04 오류 문구("예매 오픈·마감·공연 일시 순서가 올바르지 않습니다",
+  "좌석 총수는 5,000석을 넘을 수 없습니다")는 백엔드 메시지를 그대로 쓰지
+  않고 Phase 2a에서 새로 정한 사용자 지향 문구 — 프론트가 code로 분기해서
+  표시해야 한다(PLAN design.outputs에 반영됨)
+- App.tsx에 정적 라우트(/performances/new)와 기존 동적 라우트
+  (/performances/:id)가 공존한다 — React Router v7은 정적 세그먼트를
+  항상 우선 매칭하므로 선언 순서 무관하게 안전하지만, SC-10(regression)이
+  이를 실제로 검증한다
