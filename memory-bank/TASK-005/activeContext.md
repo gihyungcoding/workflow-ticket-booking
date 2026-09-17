@@ -1,8 +1,8 @@
 ---
 task_id: TASK-005
 title: "공연 등록/수정 화면"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-17
@@ -12,24 +12,24 @@ sub_categories: ["organizer"]
 target_repo: "."
 branch: "feature/task-005-performance-register-edit-screen"
 
-last_checkpoint: CP-2.6
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-005.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-005.md"
   test: "workflow_design/05_scenario/TEST_TASK-005.json"
+  dev: "workflow_design/06_dev/DEV_TASK-005.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b를 마쳤다. Red 테스트 10건(SC-01~SC-10, 시나리오와 1:1), 전부
-'not implemented' 스켈레톤 하나로 실패(순수성 확인), 기존 12건 계속 통과.
-HITL#2 승인 완료.
+Phase 3을 마쳤다. 구현 완료, 테스트 22/22 Green(대상 10 + 기존 12),
+타입체크·린트 error 0, 아키텍처 제약 새 위반 0. scope_deviation
+1건(`frontend/src/utils/datetime.ts` 신규)을 DEV JSON에 기록함.
 
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 넘어가 스켈레톤을 실제 구현으로 채운다 — 대상:
-`frontend/src/api/performances.ts`(register/update/cancel 함수),
-`PerformanceRegisterPage.tsx`, `PerformanceEditPage.tsx`.
+`wf-verify` 스킬로 넘어가 acceptance_criteria 8건 충족·회귀·범위 이탈을
+확인하고 HITL#3 승인을 받는다.
 
 ## 알아둬야 할 것
 
@@ -81,3 +81,9 @@ HITL#2 승인 완료.
 - 로컬 개발 환경: node/npm이 기본 PATH에 없음 — 이 세션에서는
   `export PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH"` 로 직접
   잡아서 사용함(nvm 셸 함수 자체가 안 잡혀서 `nvm use`가 안 먹음)
+- Green 구현 완료: `performances.ts`(register/update/cancel + 공용
+  throwIfApiError), `PerformanceRegisterPage.tsx`, `PerformanceEditPage.tsx`
+  전체 구현. `frontend/src/utils/datetime.ts` 신규 추가(scope_deviation,
+  DEV_TASK-005.json에 근거 기록) — 두 폼이 공유하는 datetime-local↔ISO 변환
+- SEAT_LIMIT_EXCEEDED 오류는 항상 마지막 구역 카드에 표시하는 것으로 최소
+  구현(다중 구역 시 "어느 구역 탓인지"는 서버가 알려주지 않음 — CP-3.2 결정)

@@ -81,19 +81,47 @@ export async function getPerformance(id: string): Promise<Performance> {
   return response.json()
 }
 
+async function throwIfApiError(response: Response): Promise<never> {
+  const body = await response.json().catch(() => null)
+  if (body && typeof body.code === 'string') {
+    throw new ApiError(body.code, typeof body.message === 'string' ? body.message : '')
+  }
+  throw new Error(`요청 실패: ${response.status}`)
+}
+
 export async function registerPerformance(
-  _input: RegisterPerformanceInput,
+  input: RegisterPerformanceInput,
 ): Promise<Performance> {
-  throw new Error('not implemented')
+  const response = await fetch('/api/performances', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    await throwIfApiError(response)
+  }
+  return response.json()
 }
 
 export async function updatePerformance(
-  _id: string,
-  _input: UpdatePerformanceInput,
+  id: string,
+  input: UpdatePerformanceInput,
 ): Promise<Performance> {
-  throw new Error('not implemented')
+  const response = await fetch(`/api/performances/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    await throwIfApiError(response)
+  }
+  return response.json()
 }
 
-export async function cancelPerformance(_id: string): Promise<Performance> {
-  throw new Error('not implemented')
+export async function cancelPerformance(id: string): Promise<Performance> {
+  const response = await fetch(`/api/performances/${id}/cancel`, { method: 'POST' })
+  if (!response.ok) {
+    await throwIfApiError(response)
+  }
+  return response.json()
 }
