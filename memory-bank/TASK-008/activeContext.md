@@ -20,6 +20,12 @@ artifacts:
   dev: "workflow_design/06_dev/DEV_TASK-008.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-008.json"
   reflect: "workflow_design/08_reflect/REFLECT_TASK-008.json"
+
+pull_request:
+  number: 6
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/6"
+  base: develop
+  opened_at: 2026-09-17
 ---
 
 ## 지금 무엇을 하고 있나
