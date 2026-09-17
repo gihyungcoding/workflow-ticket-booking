@@ -1,8 +1,8 @@
 ---
 task_id: TASK-008
 title: "공연 상세 API에 구역별 좌석 구성 요약 추가"
-phase: "4"
-phase_name: "Phase 4 - Verify"
+phase: "5"
+phase_name: "Phase 5 - Reflect"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-17
@@ -12,34 +12,35 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-008-performance-section-summary-api"
 
-last_checkpoint: CP-3.4
+last_checkpoint: CP-4.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-008.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-008.md"
   test: "workflow_design/05_scenario/TEST_TASK-008.json"
   dev: "workflow_design/06_dev/DEV_TASK-008.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-008.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 3(Green)을 마쳤다. SectionSummaryResponse/SeatSectionCount 신규 작성,
-SeatRepository.findSectionCounts 추가, PerformanceResponse.sections 필드 추가,
-PerformanceService.getPerformance만 수정(목록/등록/수정/취소는 그대로). 전체
-테스트 47/47 통과, spotlessCheck error 0, 아키텍처 제약 위반 0. 이제 `wf-verify`
-스킬로 Phase 4를 시작한다.
+Phase 4(Verify)를 마쳤다 — status: PASS. code-reviewer가 GROUP BY 결과 순서
+비결정성 결함을 찾아 Phase 3으로 되돌려 즉시 수정(ORDER BY 추가, 커밋 460533b)
+했고, 재검증 후 HITL#3 승인을 받았다. verified_commit = 460533b. 이제
+`wf-reflect` 스킬로 Phase 5를 시작한다.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬을 호출해 acceptance_criteria 3건 + 회귀(SC-02/SC-03 여전히
-통과) + code-reviewer 소견을 근거로 완료를 판정하고 HITL#3을 받는다.
+`wf-reflect` 스킬을 호출해 KPT 회고를 하고 HITL#4 승인을 받아 태스크를 닫는다.
+Keep/Try 후보: (1) Repository 프로젝션/Service DTO 분리 패턴 — 재사용 가치 있음,
+(2) code-reviewer의 test-coverage 소견(POST→GET 연계 테스트 부재)을 Try로 남긴다,
+(3) Phase 2a에서 발견한 백엔드 데이터 공백(TASK-005 차단) 같은 Plan-Scenario
+교차검증 패턴을 규칙으로 승격할지 검토.
 
 ## 알아둬야 할 것
 
 - 이 태스크가 끝나면 TASK-005(BLOCKED)가 재개 가능해진다 — unblock_condition:
-  실제 확정된 sections 응답 스키마(grade/price/seatCount)를 TASK-005의 Plan/시나리오에
-  반영
-- SC-02/SC-03(already_passing)이 Phase 4에서도 계속 통과하는지 다시 확인 필요
-  (회귀 가드의 실효성 검증)
+  실제 확정된 sections 응답 스키마(grade/price/seatCount, ORDER BY로 정렬 보장됨)를
+  TASK-005의 Plan/시나리오에 반영
 
 ## 알아둬야 할 것
 
