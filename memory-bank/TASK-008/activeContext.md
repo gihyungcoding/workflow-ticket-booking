@@ -1,8 +1,8 @@
 ---
 task_id: TASK-008
 title: "공연 상세 API에 구역별 좌석 구성 요약 추가"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-17
@@ -12,24 +12,35 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-008-performance-section-summary-api"
 
-last_checkpoint: CP-2.4
+last_checkpoint: CP-2.6
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-008.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-008.md"
+  test: "workflow_design/05_scenario/TEST_TASK-008.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a를 마쳤다. 시나리오 4건(SC-01~04), 독립검증 PASS(경고 2건은 Plan 범위를
-좁혀 해소), HITL#1 승인 완료. Plan을 acceptance_criteria 3건 범위로 좁혀
-등록/수정/취소 응답은 건드리지 않기로 했다 — sections는 GET /api/performances/{id}
-(상세) 한 곳에서만 채운다. 이제 `wf-red` 스킬로 Phase 2b를 시작한다.
+Phase 2b를 마쳤다. `PerformanceSectionSummaryApiTest.java`에 시나리오 4건을
+1:1로 옮겼다 — SC-01/SC-04는 sections가 없어 진짜로 실패(Red), SC-02/SC-03은
+이 태스크가 건드리지 않는 기존 동작(404, 목록 응답 형태)의 회귀 가드라 구현
+전에도 이미 통과한다(already_passing, TASK-001 선례와 동일 패턴). HITL#2 승인
+완료. 이제 `wf-develop` 스킬로 Phase 3(Green)을 시작한다.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬을 호출해 SC-01~04를 실패하는 테스트로 옮긴다. 기존
-PerformanceApiTest.java/PerformanceRegistrationApiTest.java 의 SpringBootTest+
-MockMvc+H2 패턴을 따른다.
+`wf-develop` 스킬을 호출해 SC-01/SC-04를 통과시키는 최소 구현을 한다 —
+`SectionSummaryResponse`(service, 신규), `SeatSectionCount`(repository 프로젝션,
+신규), `SeatRepository.findSectionCounts`(신규 @Query), `PerformanceResponse.
+sections` 필드(+@JsonInclude NON_NULL), `PerformanceService.getPerformance`만
+수정(목록/등록/수정/취소는 건드리지 않는다 — CP-2.3 범위 축소 결정).
+
+## 알아둬야 할 것
+
+- SC-02/SC-03은 Green 단계에서도 계속 통과해야 하는 회귀 가드다 — 구현이
+  실수로 목록 경로에도 sections를 채우면 SC-03이 즉시 깨진다
+- PerformanceResponse를 직접 생성하는 곳은 PerformanceService.toResponse()
+  한 곳뿐이라 필드 추가 파급은 작지만, getPerformance만 별도 분기가 필요하다
 
 ## 알아둬야 할 것
 

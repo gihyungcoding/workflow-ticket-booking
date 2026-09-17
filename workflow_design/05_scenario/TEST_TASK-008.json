@@ -1,0 +1,56 @@
+{
+  "task_id": "TASK-008",
+  "supersedes": "SCENARIO_TASK-008.json",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceSectionSummaryApiTest.java",
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_sc01_상세_조회_시_구역별_좌석_요약이_포함된다",
+      "status": "red",
+      "failure": "AssertionError: Expecting actual not to be null (sections == null — PerformanceResponse에 필드가 없어 JSON에 sections 키 자체가 없다)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_sc02_존재하지_않는_공연_조회_시_404가_반환된다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "이 태스크가 바꾸지 않는 기존 동작(TASK-001에서 구현된 404 처리)을 검증하는 회귀 시나리오라 구현 전에도 통과한다. PerformanceApiTest.test_sc09_존재하지_않는_공연을_조회하면_404가_반환된다() 와 동일한 경로를 검증 — 중복이지만 TASK-008의 회귀 커버리지로 별도 유지한다."
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_sc03_목록_조회_응답에는_sections_키가_없다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "sections 필드가 어디에도 아직 없으므로 목록 응답에 당연히 없다 — 이 시나리오는 '무엇을 하지 않아도 참'인 불변식이라 Red 상태에서 실패시킬 방법이 없다. Phase 3에서 목록 경로가 실수로 sections를 채우기 시작하면 그때 이 테스트가 의미를 갖는다(회귀 가드)."
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "test_sc04_서로_다른_구역이_같은_등급_가격이면_좌석_수가_합산된다",
+      "status": "red",
+      "failure": "AssertionError: Expecting actual not to be null (SC-01과 동일한 이유)"
+    }
+  ],
+  "red_result": {
+    "command": "JAVA_HOME=.../ms-21.0.10 ./gradlew -p backend test --tests \"*PerformanceSectionSummaryApiTest*\"",
+    "total": 4,
+    "failed": 2,
+    "passed": 2,
+    "existing_tests_still_passing": true,
+    "note": "전체 스위트(47건) 실행 결과 실패 2건 — 모두 이번에 추가한 SC-01/SC-04. 기존 45건 + 새 SC-02/SC-03(2건, 애초에 통과) 포함 45건 통과"
+  },
+  "inventory_check": {
+    "scenarios": 4,
+    "test_functions": 4,
+    "match": true
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + Spring Boot Test (MockMvc, @SpringBootTest, H2)",
+    "mock_strategy": "실제 DB(H2) + MockMvc 풀스택, Repository/Service 목 없음"
+  },
+  "compile_skeleton": {
+    "files": [],
+    "contents": "없음 — 모든 테스트가 MockMvc + jsonPath/역직렬화된 Map 기반 블랙박스 검증이라 PerformanceResponse.sections 필드나 새 Repository 메서드에 Java 코드 차원에서 직접 의존하지 않는다. 컴파일이 이미 통과했고, SC-01/SC-04는 sections 키가 JSON에 없어서(런타임 null) 실패한다 — 컴파일 오류가 아니라 진짜 Red다.",
+    "purity_check": "해당 없음(스켈레톤 없음)"
+  },
+  "human_review": { "approved": true }
+}
