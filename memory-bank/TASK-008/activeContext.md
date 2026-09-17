@@ -1,8 +1,8 @@
 ---
 task_id: TASK-008
 title: "공연 상세 API에 구역별 좌석 구성 요약 추가"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-17
@@ -12,23 +12,20 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-008-performance-section-summary-api"
 
-last_checkpoint: null
-artifacts: {}
+last_checkpoint: CP-1.3
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-008.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-워크플로우를 막 시작했다. TASK-005(공연 등록/수정 화면) Phase 2a 시나리오 검증
-중 발견된 백엔드 데이터 공백(구역별 좌석 구성 조회 API 부재)을 메우는 선행
-태스크다. memory-bank 생성과 브랜치 분기까지 마쳤고, 이제 `wf-plan` 스킬로
-Phase 1을 시작한다.
+Phase 1(Plan)을 마쳤다. route=Backend, flows 3개(F1~F3)가 acceptance_criteria
+3건을 전부 커버한다. 이제 `wf-scenario` 스킬로 Phase 2a를 시작한다.
 
 ## 다음 한 걸음
 
-`wf-plan` 스킬을 호출해 `PerformanceResponse.java`, `PerformanceService.java`,
-`SeatRepository.java` 를 조사하고, GET /api/performances/{id} 응답에 추가할
-`sections` 필드(구역별 grade·price·좌석수)의 설계를 `PLAN_TASK-008.json` 으로
-정규화한다.
+`wf-scenario` 스킬을 호출해 PLAN_TASK-008.json의 F1~F3을 Given/When/Then
+시나리오로 전개하고, `scenario-validator` 서브에이전트 검증 후 HITL#1을 받는다.
 
 ## 알아둬야 할 것
 
