@@ -24,14 +24,21 @@ function emptySection(id: number): SectionForm {
   return { id, grade: '', price: '', rowStart: '', rowEnd: '', seatsPerRow: '' }
 }
 
+function isSingleUpperCaseLetter(value: string): boolean {
+  return /^[A-Za-z]$/.test(value.trim())
+}
+
 function seatCountOf(section: SectionForm): number {
-  const rowStart = section.rowStart.trim().toUpperCase().charCodeAt(0)
-  const rowEnd = section.rowEnd.trim().toUpperCase().charCodeAt(0)
-  const seatsPerRow = Number(section.seatsPerRow)
-  if (!Number.isFinite(rowStart) || !Number.isFinite(rowEnd) || !Number.isFinite(seatsPerRow)) {
+  const rowStartRaw = section.rowStart.trim().toUpperCase()
+  const rowEndRaw = section.rowEnd.trim().toUpperCase()
+  if (!isSingleUpperCaseLetter(rowStartRaw) || !isSingleUpperCaseLetter(rowEndRaw)) {
     return 0
   }
-  const rowCount = rowEnd - rowStart + 1
+  const seatsPerRow = Number(section.seatsPerRow)
+  if (!Number.isFinite(seatsPerRow)) {
+    return 0
+  }
+  const rowCount = rowEndRaw.charCodeAt(0) - rowStartRaw.charCodeAt(0) + 1
   if (rowCount <= 0 || seatsPerRow <= 0) {
     return 0
   }
@@ -89,7 +96,13 @@ export function PerformanceRegisterPage() {
       if (error instanceof ApiError && error.code === 'INVALID_TIME_ORDER') {
         setTimeFieldsError('예매 오픈·마감·공연 일시 순서가 올바르지 않습니다')
       } else if (error instanceof ApiError && error.code === 'SEAT_LIMIT_EXCEEDED') {
-        setSectionErrors({ [sections.length - 1]: '좌석 총수는 5,000석을 넘을 수 없습니다' })
+        // 서버는 좌석 총수(전체 구역 합산) 기준으로만 판정하고 원인 구역을 알려주지 않는다.
+        // 특정 구역 하나를 지목하면 틀릴 수 있어 전체 구역에 동일 안내를 붙인다.
+        const errors: Record<number, string> = {}
+        sections.forEach((_, index) => {
+          errors[index] = '좌석 총수는 5,000석을 넘을 수 없습니다'
+        })
+        setSectionErrors(errors)
       } else {
         setFormError('등록하지 못했습니다. 다시 시도해 주세요')
       }
@@ -121,14 +134,15 @@ export function PerformanceRegisterPage() {
         </Alert>
       )}
 
-      <TextField label="공연명" value={title} onChange={(e) => setTitle(e.target.value)} />
-      <TextField label="장소" value={venue} onChange={(e) => setVenue(e.target.value)} />
+      <TextField label="공연명" value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <TextField label="장소" value={venue} onChange={(e) => setVenue(e.target.value)} required />
       <TextField
         label="공연일시"
         type="datetime-local"
         value={startAt}
         onChange={(e) => setStartAt(e.target.value)}
         slotProps={{ inputLabel: { shrink: true } }}
+        required
       />
       <TextField
         label="오픈"
@@ -136,6 +150,7 @@ export function PerformanceRegisterPage() {
         value={openAt}
         onChange={(e) => setOpenAt(e.target.value)}
         slotProps={{ inputLabel: { shrink: true } }}
+        required
       />
       <TextField
         label="마감"
@@ -143,6 +158,7 @@ export function PerformanceRegisterPage() {
         value={closeAt}
         onChange={(e) => setCloseAt(e.target.value)}
         slotProps={{ inputLabel: { shrink: true } }}
+        required
       />
       {timeFieldsError && (
         <Alert severity="error" data-testid="time-fields-error">
@@ -159,28 +175,33 @@ export function PerformanceRegisterPage() {
                   label="등급"
                   value={section.grade}
                   onChange={(e) => updateSection(index, 'grade', e.target.value)}
+                  required
                 />
                 <TextField
                   label="가격"
                   type="number"
                   value={section.price}
                   onChange={(e) => updateSection(index, 'price', e.target.value)}
+                  required
                 />
                 <TextField
                   label="시작 행"
                   value={section.rowStart}
                   onChange={(e) => updateSection(index, 'rowStart', e.target.value)}
+                  required
                 />
                 <TextField
                   label="종료 행"
                   value={section.rowEnd}
                   onChange={(e) => updateSection(index, 'rowEnd', e.target.value)}
+                  required
                 />
                 <TextField
                   label="행당 좌석수"
                   type="number"
                   value={section.seatsPerRow}
                   onChange={(e) => updateSection(index, 'seatsPerRow', e.target.value)}
+                  required
                 />
                 {sectionErrors[index] && <Alert severity="error">{sectionErrors[index]}</Alert>}
               </Stack>

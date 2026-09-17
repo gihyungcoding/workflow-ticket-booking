@@ -4,21 +4,23 @@ checkpoint_name: "Phase 3 완료 — DEV 컨텍스트"
 task_id: TASK-005
 phase: "3"
 phase_name: "Phase 3 - Green"
-saved_at: 2026-09-17T03:10:00Z
+saved_at: 2026-09-18T01:10:00Z
 status: ACTIVE
 
-work_summary: "구현 완료, 테스트 22/22 Green, 린트 error 0, 리팩토링 1건 적용 후 재확인 완료"
+work_summary: "1차 Green(22/22) → Phase 4 FAIL → 재작업으로 결함 5건 수정 → 재Green(23/23) 완료"
 
 progress:
   completed:
-    - "최소 구현 → Green 확인 → 리팩토링(PerformanceEditPage 재시도 로직을 load() 함수로 통일) → 재확인 전부 완료"
-    - "DEV_TASK-005.json 저장"
+    - "1차: 최소 구현 → Green 확인 → 리팩토링(PerformanceEditPage 재시도 로직을 load() 함수로 통일) → 재확인 전부 완료"
+    - "Phase 4에서 FAIL 판정(code-reviewer 결함 5건, 차단 2건) → Phase 3 재작업"
+    - "재작업: CP-3.2 참고 — 5건 전부 수정, 23/23 재확인, 실물 재확인"
+    - "DEV_TASK-005.json 저장(phase4_rollback_fixes 절 포함)"
   in_progress: "-"
   blocked: []
 
 next_steps:
   - priority: 1
-    task: "wf-verify 스킬로 넘어가 acceptance_criteria 충족·회귀·보안·범위 이탈을 확인한다"
+    task: "wf-verify 스킬을 다시 호출해 acceptance_criteria 충족·회귀·보안·범위 이탈을 재확인한다"
 
 decisions: []
 

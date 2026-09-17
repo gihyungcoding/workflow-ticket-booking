@@ -5,8 +5,8 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | route: Frontend, inputs 5/outputs 7/flows 8(F8 추가) |
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 10건, AC 8/8, 독립검증 3회 PASS, HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | 테스트 10건 전부 Red(동일 사유), 기존 12건 통과, HITL#2 승인 |
-| 3 Green | ✅ 완료 | CP-3.4 | 22/22 통과, 린트/타입체크 error 0, 리팩토링 1건 |
-| 4 Verify | ⛔ FAIL | CP-4.2 | code-reviewer 결함 5건(차단 2건) — Phase 3 롤백 필요 |
+| 3 Green | ✅ 완료(재작업) | CP-3.4 | 1차 22/22 → FAIL → 결함 5건 수정 → 재검증 23/23 |
+| 4 Verify | 🔄 재검증 대기 | CP-4.2(1차) | 1차 FAIL, 재작업 완료 — wf-verify 재호출 필요 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

@@ -31,11 +31,11 @@ function renderPage() {
 
 async function fillBasicInfo() {
   const user = userEvent.setup()
-  await user.type(screen.getByLabelText('공연명'), '가을 재즈 콘서트')
-  await user.type(screen.getByLabelText('장소'), 'OO홀')
-  fireEvent.change(screen.getByLabelText('공연일시'), { target: { value: '2026-10-01T19:00' } })
-  fireEvent.change(screen.getByLabelText('오픈'), { target: { value: '2026-09-10T10:00' } })
-  fireEvent.change(screen.getByLabelText('마감'), { target: { value: '2026-09-30T23:59' } })
+  await user.type(screen.getByLabelText(/^공연명/), '가을 재즈 콘서트')
+  await user.type(screen.getByLabelText(/^장소/), 'OO홀')
+  fireEvent.change(screen.getByLabelText(/^공연일시/), { target: { value: '2026-10-01T19:00' } })
+  fireEvent.change(screen.getByLabelText(/^오픈/), { target: { value: '2026-09-10T10:00' } })
+  fireEvent.change(screen.getByLabelText(/^마감/), { target: { value: '2026-09-30T23:59' } })
 }
 
 async function fillSectionAt(index: number, section: {
@@ -46,11 +46,11 @@ async function fillSectionAt(index: number, section: {
   seatsPerRow: string
 }) {
   const user = userEvent.setup()
-  await user.type(screen.getAllByLabelText('등급')[index], section.grade)
-  await user.type(screen.getAllByLabelText('가격')[index], section.price)
-  await user.type(screen.getAllByLabelText('시작 행')[index], section.rowStart)
-  await user.type(screen.getAllByLabelText('종료 행')[index], section.rowEnd)
-  await user.type(screen.getAllByLabelText('행당 좌석수')[index], section.seatsPerRow)
+  await user.type(screen.getAllByLabelText(/^등급/)[index], section.grade)
+  await user.type(screen.getAllByLabelText(/^가격/)[index], section.price)
+  await user.type(screen.getAllByLabelText(/^시작 행/)[index], section.rowStart)
+  await user.type(screen.getAllByLabelText(/^종료 행/)[index], section.rowEnd)
+  await user.type(screen.getAllByLabelText(/^행당 좌석수/)[index], section.seatsPerRow)
 }
 
 describe('PerformanceRegisterPage', () => {

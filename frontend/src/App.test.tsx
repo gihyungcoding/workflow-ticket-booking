@@ -31,7 +31,7 @@ describe('App', () => {
 
     // Then
     // 공연명 입력란(라벨 "공연명")이 화면에 표시된다 — 등록 폼에만 있고 상세 화면에는 없는 요소다
-    expect(screen.getByLabelText('공연명')).toBeInTheDocument()
+    expect(screen.getByLabelText(/^공연명/)).toBeInTheDocument()
 
     // GET /api/performances/new 요청이 발생하지 않는다(상세 페이지로 오인되지 않았다는 증거)
     expect(getPerformance).not.toHaveBeenCalled()

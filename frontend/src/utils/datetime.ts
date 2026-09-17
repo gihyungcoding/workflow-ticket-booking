@@ -5,5 +5,12 @@ export function toDatetimeLocalInput(iso: string): string {
 }
 
 export function fromDatetimeLocalInput(value: string): string {
-  return new Date(value).toISOString()
+  if (!value) {
+    return value
+  }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  return date.toISOString()
 }

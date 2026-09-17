@@ -2,7 +2,7 @@
 task_id: TASK-005
 title: "공연 등록/수정 화면"
 phase: "4"
-phase_name: "Phase 4 - Verify (FAIL, 롤백 대기)"
+phase_name: "Phase 4 - Verify (재검증 대기)"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-18
@@ -12,35 +12,25 @@ sub_categories: ["organizer"]
 target_repo: "."
 branch: "feature/task-005-performance-register-edit-screen"
 
-last_checkpoint: CP-4.2
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-005.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-005.md"
   test: "workflow_design/05_scenario/TEST_TASK-005.json"
   dev: "workflow_design/06_dev/DEV_TASK-005.json"
-  verify: "workflow_design/07_verify/VERIFY_TASK-005.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4(Verify)에서 FAIL 판정. Docker postgres + backend + frontend를
-실제로 띄워 8개 화면 상태를 실물 확인하던 중 결함을 발견했고,
-code-reviewer가 correctness 결함 5건(차단 2건)을 추가로 찾아냈다.
-Phase 3으로 롤백해야 한다.
+Phase 4 FAIL(code-reviewer 결함 5건, 차단 2건) → Phase 3 재작업으로 전부
+수정 완료. 테스트 23/23, 타입체크/린트/빌드 통과, 실물(브라우저)로도
+재확인했다. 다시 Phase 4로 진입해 재검증해야 한다.
 
 ## 다음 한 걸음
 
-`wf-develop`(Phase 3)으로 돌아가 `VERIFY_TASK-005.json`의
-`code_review.findings`에 있는 결함을 수정한다. 우선순위:
-1. (blocking) `PerformanceEditPage.tsx` 저장/취소 성공 시 `setPerformance(updated)`가
-   서버 응답의 sections 없음을 그대로 덮어써 좌석 구성 요약이 사라짐 — 기존 sections를
-   보존하도록 병합 필요(61행, 79행 둘 다)
-2. (blocking) `utils/datetime.ts`의 `fromDatetimeLocalInput('')`이 RangeError —
-   빈 값 처리 또는 필수 필드 검증 추가
-3. `confirmCancel`에 try/catch 추가
-4. `SEAT_LIMIT_EXCEEDED` 오류를 마지막 구역이 아닌 합리적인 위치에 표시
-5. `PerformanceEditPage.test.tsx`의 cancelPerformance mock에서 sections 제거,
-   updatePerformance 성공/cancelPerformance 실패 테스트 추가
+`wf-verify`를 다시 호출해 `VERIFY_TASK-005.json`을 재작성한다.
+`DEV_TASK-005.json`의 `phase4_rollback_fixes`에 무엇을 어떻게 고쳤는지
+기록되어 있으니 그 근거로 acceptance_criteria와 code_review를 재판정한다.
 
 ## 알아둬야 할 것
 

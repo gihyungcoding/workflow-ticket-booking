@@ -116,7 +116,11 @@ describe('PerformanceEditPage', () => {
     // Given
     // 수정 화면에서 [공연 취소] 버튼을 클릭해 확인 다이얼로그가 열려 있다
     vi.mocked(getPerformance).mockResolvedValue(basePerformance())
-    vi.mocked(cancelPerformance).mockResolvedValue({ ...basePerformance(), status: 'CANCELLED' })
+    // POST cancel 응답에는 sections가 없다(PerformanceResponse — 상세 GET에서만 채워짐).
+    // 실제 API 계약과 다르게 sections를 포함시키면 화면이 응답을 그대로 신뢰해도 되는 것처럼
+    // 착시를 일으켜 sections 소실 결함을 가린다(Phase 4 code-reviewer 지적).
+    const { sections: _sections, ...cancelledWithoutSections } = basePerformance()
+    vi.mocked(cancelPerformance).mockResolvedValue({ ...cancelledWithoutSections, status: 'CANCELLED' })
     renderPage('5')
     await screen.findByDisplayValue('가을 재즈 콘서트')
     const user = userEvent.setup()
@@ -133,5 +137,35 @@ describe('PerformanceEditPage', () => {
 
     // 화면의 상태 표시 영역에 "공연취소" 텍스트가 표시된다
     expect(await screen.findByText('공연취소')).toBeInTheDocument()
+
+    // 취소 응답에 sections가 없어도 기존에 표시되던 좌석 구성 요약은 사라지지 않는다
+    // (Phase 4 검증에서 실물로 발견된 결함 — 회귀 방지)
+    const summary = screen.getByTestId('section-summary')
+    expect(within(summary).getByText('VIP · 120,000원 · 20석')).toBeInTheDocument()
+  })
+
+  test('REGRESSION 저장 성공 후에도 좌석 구성 요약이 유지된다', async () => {
+    // Given
+    // 수정 화면에 기존 값이 채워져 있고 PUT 이 200과 sections 없는 응답을 반환한다
+    // (PerformanceResponse — PUT 응답에는 sections가 채워지지 않는다)
+    vi.mocked(getPerformance).mockResolvedValue(basePerformance())
+    const { sections: _sections, ...updatedWithoutSections } = basePerformance()
+    vi.mocked(updatePerformance).mockResolvedValue({
+      ...updatedWithoutSections,
+      title: '가을 재즈 콘서트(수정)',
+    })
+    renderPage('5')
+    await screen.findByDisplayValue('가을 재즈 콘서트')
+
+    // When
+    // [저장] 버튼을 클릭한다
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '저장' }))
+
+    // Then
+    // 저장 응답에 sections가 없어도 좌석 구성 요약은 사라지지 않는다
+    await vi.waitFor(() => expect(updatePerformance).toHaveBeenCalled())
+    const summary = screen.getByTestId('section-summary')
+    expect(within(summary).getByText('VIP · 120,000원 · 20석')).toBeInTheDocument()
   })
 })
