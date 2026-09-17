@@ -13,8 +13,8 @@
     },
     {
       "path": "backend/src/main/java/com/example/ticket_booking/repository/SeatRepository.java",
-      "change": "findSectionCounts(Long) 그룹핑 @Query 메서드 추가",
-      "lines_changed": 11
+      "change": "findSectionCounts(Long) 그룹핑 @Query 메서드 추가. Phase 4 code-reviewer 지적(GROUP BY 결과 순서 비결정적)에 따라 ORDER BY s.price DESC, s.grade ASC 추가",
+      "lines_changed": 12
     },
     {
       "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
