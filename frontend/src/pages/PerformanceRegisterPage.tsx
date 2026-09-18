@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
@@ -47,6 +47,7 @@ function seatCountOf(section: SectionForm): number {
 
 export function PerformanceRegisterPage() {
   const navigate = useNavigate()
+  const formRef = useRef<HTMLFormElement>(null)
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
   const [startAt, setStartAt] = useState('')
@@ -86,8 +87,11 @@ export function PerformanceRegisterPage() {
         sections: sections.map((section) => ({
           grade: section.grade,
           price: Number(section.price),
-          rowStart: section.rowStart,
-          rowEnd: section.rowEnd,
+          // 미리보기 계산(seatCountOf)과 동일하게 정규화한다 — 소문자·공백 입력이
+          // 미리보기에서는 정상 계산되면서 서버에는 원본 그대로 가 400으로 거부되는
+          // 불일치를 막는다.
+          rowStart: section.rowStart.trim().toUpperCase(),
+          rowEnd: section.rowEnd.trim().toUpperCase(),
           seatsPerRow: Number(section.seatsPerRow),
         })),
       })
@@ -117,7 +121,7 @@ export function PerformanceRegisterPage() {
   }
 
   return (
-    <Stack component="form" spacing={2} onSubmit={handleSubmit}>
+    <Stack component="form" ref={formRef} spacing={2} onSubmit={handleSubmit}>
       <Typography variant="h5">공연 등록</Typography>
 
       {formError && (
@@ -125,7 +129,10 @@ export function PerformanceRegisterPage() {
           severity="error"
           data-testid="form-error"
           action={
-            <Button color="inherit" size="small" onClick={() => void submit()}>
+            // requestSubmit()으로 다시 제출해 브라우저 네이티브 필수 입력 검증을
+            // 다시 거치게 한다 — submit()을 직접 호출하면 그 사이 필드를 비워도
+            // 검증 없이 빈 값이 그대로 전송된다.
+            <Button color="inherit" size="small" onClick={() => formRef.current?.requestSubmit()}>
               다시 시도
             </Button>
           }

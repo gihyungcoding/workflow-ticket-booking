@@ -74,18 +74,65 @@
         "finding": "test-coverage: PerformanceEditPage.test.tsx의 cancelPerformance mock이 실제로는 없는 sections 필드를 포함해 결함을 가림",
         "fix": "SC-09 mock에서 sections 제거해 실제 API 계약(PerformanceResponse — POST cancel 응답에는 sections 없음)과 일치시킴. updatePerformance 성공 경로 회귀 테스트 신규 추가",
         "files": ["frontend/src/pages/PerformanceEditPage.test.tsx"]
-      }
-    ],
-    "not_applied": [
+      },
       {
         "finding": "minor: seatCountOf가 rowStart/rowEnd 유효성(A~Z 단일 문자)을 검증하지 않아 잘못된 입력에도 그럴듯한 미리보기 숫자를 냄",
-        "reason": "적용함 — isSingleUpperCaseLetter 검증 추가(minor였지만 간단해서 함께 고침)",
-        "status": "실제로는 적용됨, 목록 정리용 메모"
+        "fix": "isSingleUpperCaseLetter 검증 추가",
+        "files": ["frontend/src/pages/PerformanceRegisterPage.tsx"]
+      }
+    ],
+    "not_applied": [],
+    "regression_after_fix": {
+      "command": "cd frontend && npm test && npx tsc -b --noEmit && npm run lint && npm run build",
+      "result": "23/23 테스트 통과, 타입체크/빌드 오류 0, 린트 error 0(warning 3, 기존과 동일)"
+    }
+  },
+  "phase4_rollback_fixes_2": {
+    "source": "code-reviewer 재검토(2차) — 1차 수정 커밋을 검증하던 중 새로 발견된 소견 및 1차에서 남은 갭",
+    "verification_method": "2차 리뷰는 수정 전 커밋(6c8a6a2)에 별도 git worktree를 만들고 수정된 테스트 파일만 얹어 실행 — SC-09와 REGRESSION 2건이 실제로 실패(false-green 아님)함을 확인. 워크트리는 제거함",
+    "applied": [
+      {
+        "finding": "medium correctness (이번 수정 커밋에서 새로 생김): confirmCancel 성공 분기가 setSaveError(null)을 하지 않아, 저장 실패 배너가 떠 있는 상태에서 취소에 성공하면 실패 배너가 그대로 남아 사용자가 취소도 실패했다고 오인함",
+        "fix": "confirmCancel 성공 분기에 setSaveError(null) 추가",
+        "files": ["frontend/src/pages/PerformanceEditPage.tsx"],
+        "verified": "REGRESSION 테스트 신규 추가(취소 성공 시 이전 저장 실패 배너가 남지 않는다)"
+      },
+      {
+        "finding": "low correctness: 미리보기(seatCountOf)는 rowStart/rowEnd를 trim+대문자화해서 계산하지만, 실제 전송 body는 원본 문자열을 그대로 보냄 — 소문자/공백 입력 시 미리보기는 정상인데 서버는 INVALID_SECTION으로 거부해 원인을 알 수 없는 일반 실패 배너만 뜸",
+        "fix": "전송 시에도 rowStart/rowEnd를 trim().toUpperCase()로 정규화",
+        "files": ["frontend/src/pages/PerformanceRegisterPage.tsx"],
+        "verified": "REGRESSION 테스트 신규 추가(행 입력에 소문자/공백이 있어도 제출 시 정규화되어 전송된다)"
+      },
+      {
+        "finding": "low correctness: '다시 시도' 버튼이 submit()을 직접 호출해 브라우저 네이티브 필수 입력 검증을 우회함 — 제출 실패 후 사용자가 날짜 필드를 지우고 [다시 시도]를 누르면 빈 값이 그대로 서버로 전송됨(RangeError는 아니지만 의미 없는 요청)",
+        "fix": "formRef를 추가하고 '다시 시도' onClick을 formRef.current?.requestSubmit()으로 변경 — 네이티브 검증을 다시 거치게 함",
+        "files": ["frontend/src/pages/PerformanceRegisterPage.tsx"]
+      },
+      {
+        "finding": "design: PLAN design.outputs/F3의 SEAT_LIMIT_EXCEEDED 문구가 '해당 구역'(단수)으로 되어 있어 1차 수정(전체 구역 표시)과 문서가 어긋남",
+        "fix": "PLAN_TASK-005.json의 해당 output과 F3 steps를 구현과 일치하도록 갱신(시나리오 SCENARIO_TASK-005.md는 구역 1개 케이스만 다뤄 변경 불필요 — SC-04 자체는 그대로 유효)",
+        "files": ["workflow_design/04_plan/PLAN_TASK-005.json"]
+      },
+      {
+        "finding": "test-coverage: 차단 결함 #2(빈 datetime)를 방어하는 유틸 함수 단위 테스트가 없어 회귀해도 아무 테스트도 실패하지 않음, 취소 실패 경로(결함 #3)를 실행하는 테스트가 없음, 다중 구역 SEAT_LIMIT 동작(결함 #4)을 검증하는 테스트가 SC-04(구역 1개)뿐이라 마스트 구역 하드코딩으로 되돌려도 통과함",
+        "fix": "frontend/src/utils/datetime.test.ts 신규(fromDatetimeLocalInput 빈값/유효하지않은값 방어 단위 테스트), PerformanceEditPage.test.tsx에 취소 실패 REGRESSION 테스트, PerformanceRegisterPage.test.tsx에 다중구역 SEAT_LIMIT REGRESSION 테스트 추가",
+        "files": [
+          "frontend/src/utils/datetime.test.ts",
+          "frontend/src/pages/PerformanceEditPage.test.tsx",
+          "frontend/src/pages/PerformanceRegisterPage.test.tsx"
+        ]
+      }
+    ],
+    "not_applied": [],
+    "data_corrections": [
+      {
+        "what": "1차 phase4_rollback_fixes.not_applied 배열에 실제로는 적용된 항목(seatCountOf 검증)이 reason에 '적용함'이라고 적힌 채 not_applied에 잘못 들어가 있던 데이터 오류",
+        "fix": "applied 배열로 이동, not_applied는 빈 배열로 정정. 기능 영향 없음(문서 정합성 문제였음)"
       }
     ],
     "regression_after_fix": {
       "command": "cd frontend && npm test && npx tsc -b --noEmit && npm run lint && npm run build",
-      "result": "23/23 테스트 통과, 타입체크/빌드 오류 0, 린트 error 0(warning 3, 기존과 동일)"
+      "result": "31/31 테스트 통과(23 → 31, 신규 8건: datetime 3 + EditPage REGRESSION 2 + RegisterPage REGRESSION 2 + 기존 1건 명칭 유지), 타입체크/빌드 오류 0, 린트 error 0(warning 3, 기존과 동일)"
     }
   }
 }

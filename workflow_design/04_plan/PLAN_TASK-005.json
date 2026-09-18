@@ -14,7 +14,7 @@
     "outputs": [
       { "name": "등록 성공", "type": "navigation", "description": "201 응답 후 /performances/{id} 상세 화면으로 이동 (AC1)" },
       { "name": "좌석 수 미리보기", "type": "client-derived", "description": "구역별 (rowEnd - rowStart + 1) * seatsPerRow 합산, 구역별·총합 표시. API 호출 없이 입력값 변경 즉시 재계산 (AC2)" },
-      { "name": "인라인 검증 오류 (등록)", "type": "form-error", "description": "400 INVALID_TIME_ORDER → 시각 필드 아래에 \"예매 오픈·마감·공연 일시 순서가 올바르지 않습니다\", 400 SEAT_LIMIT_EXCEEDED → 해당 구역 아래에 \"좌석 총수는 5,000석을 넘을 수 없습니다\" (AC3, AC4). 두 문구는 feature 문서·백엔드 예외 메시지에 없어 Phase 2a에서 새로 정했다 — 백엔드 메시지(예: \"openAt <= closeAt <= startAt 를 만족해야 합니다\")는 개발자 지향이라 그대로 노출하지 않는다" },
+      { "name": "인라인 검증 오류 (등록)", "type": "form-error", "description": "400 INVALID_TIME_ORDER → 시각 필드 아래에 \"예매 오픈·마감·공연 일시 순서가 올바르지 않습니다\", 400 SEAT_LIMIT_EXCEEDED → 구역 카드마다 \"좌석 총수는 5,000석을 넘을 수 없습니다\" (AC3, AC4). 두 문구는 feature 문서·백엔드 예외 메시지에 없어 Phase 2a에서 새로 정했다 — 백엔드 메시지(예: \"openAt <= closeAt <= startAt 를 만족해야 합니다\")는 개발자 지향이라 그대로 노출하지 않는다. SEAT_LIMIT_EXCEEDED는 Phase 4 재검증에서 '특정 구역 하나만 지목'에서 '전체 구역에 동일 표시'로 바뀌었다 — 서버가 총합 기준으로만 판정하고 원인 구역을 알려주지 않아, 구역이 여러 개일 때 하나만 지목하면 실제 원인과 다를 수 있다는 code-reviewer 지적을 반영함(Phase 3 CP-3.2 decisions 참고). 구역 1개인 SC-04는 동작 변화 없음" },
       { "name": "제출 실패 배너", "type": "form-error", "description": "5xx/네트워크 및 그 외 모든 비-2xx(EMPTY_SECTIONS/INVALID_SECTION/INVALID_REQUEST/DUPLICATE_SEAT_RANGE 포함)는 폼 상단 오류 + [다시 시도] 로 폴백 (AC5) — 개별 UI를 늘리지 않고 acceptance_criteria 범위 안에서 처리한다(§unresolved 참고)" },
       { "name": "수정 폼 초기값 + 좌석 구성 요약", "type": "render", "description": "GET /api/performances/{id} 로 채워짐. sections 는 이 엔드포인트에서만 채워지므로(SectionSummaryResponse) 반드시 상세 조회로 가져온다 — 목록/등록/수정/취소 응답에는 없음 (AC6). 좌석 구성 요약 표기 형식은 \"{grade} · {price 천단위 콤마}원 · {seatCount}석\"(예: \"VIP · 120,000원 · 20석\") — feature 문서 §2-4 와이어프레임(\"VIP · 120,000원 · 100석\")을 그대로 따른다" },
       { "name": "오픈 이후 수정 차단 안내", "type": "form-error", "description": "409 REGISTRATION_ALREADY_OPEN → '이미 오픈된 공연은 기본 정보를 수정할 수 없습니다' (AC7)" },
@@ -33,7 +33,7 @@
       },
       {
         "id": "F3", "name": "좌석 총수 초과",
-        "steps": ["구역 입력으로 총 좌석 수가 5,000 초과", "제출", "POST 400 { code: SEAT_LIMIT_EXCEEDED }", "해당 구역 카드 아래 오류 메시지 표시"],
+        "steps": ["구역 입력으로 총 좌석 수가 5,000 초과", "제출", "POST 400 { code: SEAT_LIMIT_EXCEEDED }", "구역 카드마다 오류 메시지 표시(서버가 원인 구역을 알려주지 않아 전체 표시로 변경, Phase 4 재검증)"],
         "covers": ["좌석 총수 초과(400) 응답을 받으면 해당 구역 아래 오류 메시지가 표시된다"]
       },
       {

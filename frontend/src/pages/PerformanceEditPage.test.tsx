@@ -144,6 +144,55 @@ describe('PerformanceEditPage', () => {
     expect(within(summary).getByText('VIP · 120,000원 · 20석')).toBeInTheDocument()
   })
 
+  test('REGRESSION 취소 API 실패 시 다이얼로그가 닫히고 오류가 표시된다', async () => {
+    // Given
+    // 수정 화면에서 [공연 취소] 버튼을 클릭해 확인 다이얼로그가 열려 있고
+    // POST cancel 이 네트워크 오류로 거부된다
+    vi.mocked(getPerformance).mockResolvedValue(basePerformance())
+    vi.mocked(cancelPerformance).mockRejectedValue(new Error('network error'))
+    renderPage('5')
+    await screen.findByDisplayValue('가을 재즈 콘서트')
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '공연 취소' }))
+    await screen.findByText('이 공연을 취소하시겠습니까?')
+
+    // When
+    // 다이얼로그의 확인 버튼을 클릭한다
+    await user.click(screen.getByRole('button', { name: '확인' }))
+
+    // Then
+    // 실패가 조용히 삼켜지지 않고 오류 메시지가 표시되며 다이얼로그는 닫힌다
+    expect(await screen.findByText('취소하지 못했습니다. 다시 시도해 주세요')).toBeInTheDocument()
+    await vi.waitFor(() =>
+      expect(screen.queryByText('이 공연을 취소하시겠습니까?')).not.toBeInTheDocument(),
+    )
+  })
+
+  test('REGRESSION 취소 성공 시 이전 저장 실패 배너가 남지 않는다', async () => {
+    // Given
+    // 저장이 실패해 오류 배너가 표시된 상태에서
+    vi.mocked(getPerformance).mockResolvedValue(basePerformance())
+    vi.mocked(updatePerformance).mockRejectedValue(new Error('network error'))
+    const { sections: _sections, ...cancelledWithoutSections } = basePerformance()
+    vi.mocked(cancelPerformance).mockResolvedValue({ ...cancelledWithoutSections, status: 'CANCELLED' })
+    renderPage('5')
+    await screen.findByDisplayValue('가을 재즈 콘서트')
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '저장' }))
+    expect(await screen.findByText('저장하지 못했습니다. 다시 시도해 주세요')).toBeInTheDocument()
+
+    // When
+    // 취소를 확인한다
+    await user.click(screen.getByRole('button', { name: '공연 취소' }))
+    await screen.findByText('이 공연을 취소하시겠습니까?')
+    await user.click(screen.getByRole('button', { name: '확인' }))
+
+    // Then
+    // 취소가 성공하면 남아 있던 저장 실패 배너가 사라진다(사용자가 취소 실패로 오인하지 않도록)
+    await screen.findByText('공연취소')
+    expect(screen.queryByText('저장하지 못했습니다. 다시 시도해 주세요')).not.toBeInTheDocument()
+  })
+
   test('REGRESSION 저장 성공 후에도 좌석 구성 요약이 유지된다', async () => {
     // Given
     // 수정 화면에 기존 값이 채워져 있고 PUT 이 200과 sections 없는 응답을 반환한다

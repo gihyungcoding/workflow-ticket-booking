@@ -209,6 +209,83 @@ describe('PerformanceRegisterPage', () => {
     ).toBeInTheDocument()
   })
 
+  test('REGRESSION 구역이 여러 개일 때 좌석 총수 초과 오류가 모든 구역에 표시된다', async () => {
+    // Given
+    // 구역 2개(VIP, R)가 입력되어 있고 POST 가 SEAT_LIMIT_EXCEEDED 400을 반환한다
+    vi.mocked(registerPerformance).mockRejectedValue(
+      new ApiError('SEAT_LIMIT_EXCEEDED', '좌석 총수는 5,000을 넘을 수 없습니다: 5200'),
+    )
+    renderPage()
+    await fillBasicInfo()
+    await fillSectionAt(0, {
+      grade: 'VIP',
+      price: '120000',
+      rowStart: 'A',
+      rowEnd: 'Z',
+      seatsPerRow: '100',
+    })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '구역 추가' }))
+    await fillSectionAt(1, {
+      grade: 'R',
+      price: '80000',
+      rowStart: 'A',
+      rowEnd: 'Z',
+      seatsPerRow: '100',
+    })
+
+    // When
+    // [등록] 버튼을 클릭한다
+    await user.click(screen.getByRole('button', { name: '등록' }))
+
+    // Then
+    // 원인 구역을 특정할 수 없으므로(서버가 총합만 판정) 두 구역 카드 모두에 오류가 표시된다
+    const firstCard = await screen.findByTestId('section-card-0')
+    const secondCard = screen.getByTestId('section-card-1')
+    expect(within(firstCard).getByText('좌석 총수는 5,000석을 넘을 수 없습니다')).toBeInTheDocument()
+    expect(within(secondCard).getByText('좌석 총수는 5,000석을 넘을 수 없습니다')).toBeInTheDocument()
+  })
+
+  test('REGRESSION 행 입력에 소문자/공백이 있어도 제출 시 정규화되어 전송된다', async () => {
+    // Given
+    // 구역의 시작/종료 행을 소문자와 공백을 섞어 입력한다(미리보기는 이미 정규화해 계산한다)
+    vi.mocked(registerPerformance).mockResolvedValue({
+      id: 2,
+      title: '가을 재즈 콘서트',
+      venue: 'OO홀',
+      startAt: '2026-10-01T19:00:00+09:00',
+      openAt: '2026-09-10T10:00:00+09:00',
+      closeAt: '2026-09-30T23:59:59+09:00',
+      totalSeats: 20,
+      availableSeats: 20,
+      status: 'UPCOMING',
+    })
+    renderPage()
+    await fillBasicInfo()
+    await fillSectionAt(0, {
+      grade: 'VIP',
+      price: '120000',
+      rowStart: ' a ',
+      rowEnd: ' b ',
+      seatsPerRow: '10',
+    })
+
+    // When
+    // [등록] 버튼을 클릭한다
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '등록' }))
+
+    // Then
+    // 서버에는 정규화된(trim + 대문자) 값이 전송된다 — 미리보기와 실제 전송값이 불일치해
+    // 미리보기는 정상인데 서버가 소문자를 거부하는 일이 없어야 한다
+    await waitFor(() => expect(registerPerformance).toHaveBeenCalledTimes(1))
+    expect(registerPerformance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sections: [expect.objectContaining({ rowStart: 'A', rowEnd: 'B' })],
+      }),
+    )
+  })
+
   test('SC-05 (error) 등록 API 호출이 실패하면 폼 상단에 오류와 다시 시도가 표시된다', async () => {
     // Given
     // 등록 화면에 기본 정보 + 구역 1개가 입력되어 있고 POST 요청이 네트워크 오류로 거부된다

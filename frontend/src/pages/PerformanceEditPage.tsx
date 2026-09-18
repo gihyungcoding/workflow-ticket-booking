@@ -81,6 +81,7 @@ export function PerformanceEditPage() {
       const updated = await cancelPerformance(id)
       // POST cancel 응답에도 sections가 없다 — 저장과 동일한 이유로 기존 값을 보존한다.
       setPerformance((prev) => (prev ? { ...updated, sections: prev.sections } : updated))
+      setSaveError(null)
       setCancelDialogOpen(false)
     } catch {
       setCancelDialogOpen(false)

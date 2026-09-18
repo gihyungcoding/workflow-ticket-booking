@@ -2,7 +2,7 @@
 task_id: TASK-005
 title: "공연 등록/수정 화면"
 phase: "4"
-phase_name: "Phase 4 - Verify (재검증 대기)"
+phase_name: "Phase 4 - Verify (PASS, HITL#3 대기)"
 status: ACTIVE
 created_at: 2026-09-17
 last_updated: 2026-09-18
@@ -12,25 +12,25 @@ sub_categories: ["organizer"]
 target_repo: "."
 branch: "feature/task-005-performance-register-edit-screen"
 
-last_checkpoint: CP-3.4
+last_checkpoint: CP-4.2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-005.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-005.md"
   test: "workflow_design/05_scenario/TEST_TASK-005.json"
   dev: "workflow_design/06_dev/DEV_TASK-005.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-005.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 FAIL(code-reviewer 결함 5건, 차단 2건) → Phase 3 재작업으로 전부
-수정 완료. 테스트 23/23, 타입체크/린트/빌드 통과, 실물(브라우저)로도
-재확인했다. 다시 Phase 4로 진입해 재검증해야 한다.
+Phase 4를 2라운드로 진행해 status: PASS. 1차 FAIL(결함 5건, 차단 2건) →
+Phase 3 롤백·수정 → 2차 code-reviewer 재검토(새 소견 3건 + 문서 불일치 +
+테스트 갭 4건) → 즉시 수정·보강 → 테스트 31/31, 실물 재확인 완료.
 
 ## 다음 한 걸음
 
-`wf-verify`를 다시 호출해 `VERIFY_TASK-005.json`을 재작성한다.
-`DEV_TASK-005.json`의 `phase4_rollback_fixes`에 무엇을 어떻게 고쳤는지
-기록되어 있으니 그 근거로 acceptance_criteria와 code_review를 재판정한다.
+HITL#3 승인을 받는다. 승인되면 `verified_commit`을 기록하고 Phase 5(Reflect)로
+넘어간다.
 
 ## 알아둬야 할 것
 
