@@ -1,0 +1,98 @@
+{
+  "task_id": "TASK-005",
+  "keep": [
+    {
+      "what": "Phase 1에서 백엔드 응답 DTO(PerformanceResponse.java)를 코드로 직접 열어 sections 필드가 어느 엔드포인트에서 채워지는지 확인했다",
+      "evidence": "CP-1.3 codebase_analysis.backend_response_verification — 과거 TASK-005 시도가 이 확인을 생략해 Phase 2a까지 가서야 백엔드 데이터 공백을 발견해 blocked됐던 선례(TASK-008 회고)가 있었는데, 이번엔 Phase 1에서 미리 확인해 같은 문제를 반복하지 않았다"
+    },
+    {
+      "what": "Frontend 태스크에서 컴포넌트 테스트(mock)로 그치지 않고 Docker postgres + backend + frontend를 실제로 띄워 화면을 확인했다",
+      "evidence": "VERIFY_TASK-005.json screens — 이 과정에서 '취소 확인 직후 좌석 구성 요약이 사라지는' 결함을 실물로 직접 목격했다. 이 결함은 mock 기반 컴포넌트 테스트만으로는 드러나지 않았을 것(SC-09의 cancelPerformance mock이 실제로는 없는 sections를 포함하고 있었다)"
+    },
+    {
+      "what": "Phase 4에서 code-reviewer가 결함을 찾아 수정한 뒤, 그 수정 자체를 다시 code-reviewer에게 검토시켰다(2차 리뷰)",
+      "evidence": "2차 리뷰가 1차 수정 커밋이 만든 새 결함(confirmCancel 성공 시 saveError 미초기화)과 남은 갭(전송값 미정규화, 다시 시도의 네이티브 검증 우회, 테스트 커버리지 4건)을 찾아냈다. 2차 리뷰는 git worktree로 수정 전 상태를 재현해 신규 테스트가 실제로 결함을 잡는지까지 실증했다(3 passed / 2 failed 확인) — false-green을 배제한 근거가 남았다"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Red 단계(Phase 2b)에서 작성한 cancelPerformance mock이 실제 API 계약(POST cancel 응답에는 sections 없음)과 다르게 sections를 포함해, 이후 Green 단계의 sections 소실 결함을 테스트가 잡지 못했다",
+      "evidence": "TEST_TASK-005.json 작성 당시 PLAN.codebase_analysis.backend_response_verification에 이미 'sections는 GET 단일 상세 조회에서만 채워진다'는 사실이 명시돼 있었는데도, SC-09 테스트의 mock은 cancelPerformance 응답에 basePerformance()의 sections를 그대로 포함시켰다(...basePerformance() spread). Phase 4 code-reviewer가 이를 근본 원인으로 지목했다",
+      "phase": 2
+    },
+    {
+      "what": "SEAT_LIMIT_EXCEEDED 오류를 '마지막 구역에 표시'로 결정한 것이 Phase 3(Green)까지 그대로 남았다가 Phase 4에서야 다중 구역 문제로 드러났다",
+      "evidence": "CP-3.2 1차 decisions — '시나리오는 구역 1개인 케이스만 다뤄 최소 구현으로 마지막 구역에 표시'라고 명시적으로 기록해뒀지만, 이 결정 자체가 다중 구역에서 틀릴 수 있다는 점을 Phase 2a 시나리오 작성 시점에는 아무도 지적하지 않았다 — SC-04가 구역 1개만 다뤄 검증자도 놓쳤다",
+      "phase": 4
+    },
+    {
+      "what": "Phase 3 1차 수정에서 confirmCancel에 saveError를 표시하는 새 분기를 추가하면서, 성공 분기의 saveError 초기화를 빠뜨려 새 결함을 만들었다",
+      "evidence": "VERIFY_TASK-005.json code_review.round_2 — '저장 실패 → 취소 성공' 순서로 조작하면 취소가 성공했는데도 이전 저장 실패 배너가 남아 사용자가 취소도 실패했다고 오인하는 결함. 결함을 고치는 패치 자체가 인접 상태(saveError)와의 상호작용을 놓쳤다",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "wf-red 스킬 Step 2(테스트 작성)에 'API 함수를 mock할 때 응답 객체가 PLAN의 backend_response_verification(또는 동등 필드)에 기록된 필드 유무와 일치하는지 확인한다'는 체크 항목을 추가한다 — 특히 spread(...) 로 성공 응답을 만들 때 원본에 없는 필드가 섞여 들어가지 않는지",
+      "target": ".claude/skills/wf-red/SKILL.md § Step 2"
+    },
+    {
+      "what": "wf-verify 스킬에 'Phase 3 롤백 후 재작업이 끝나면, 그 수정 커밋을 code-reviewer로 다시 검토한다(최소 1회)'는 절차를 명시한다 — 현재는 'Phase 3으로 되돌린다'까지만 있고 되돌아온 뒤의 재검증 방식이 없어 이번 태스크에서 판단에 의존해야 했다",
+      "target": ".claude/skills/wf-verify/SKILL.md § Step 5"
+    },
+    {
+      "what": "wf-scenario 스킬 references/gwt-canonical.md 또는 coverage-policy.md에 '서버가 여러 항목 중 하나에 대해서만 판정 결과를 주는 경우(예: 구역 여러 개 중 총합 초과), 그 결과를 UI의 어느 항목에 매핑할지를 시나리오 작성 시점에 명시적으로 묻는다'는 체크를 추가한다",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    }
+  ],
+  "insights": [
+    "Red 단계의 mock은 테스트 코드가 아니라 API 계약의 진술이다 — mock이 실제 응답과 다르면 테스트는 통과해도 프로덕션은 깨진다. Plan에 이미 기록된 응답 계약을 mock 작성 시점에 대조하는 절차가 없으면 이런 결함은 구조적으로 반복된다",
+      "Frontend 태스크에서 '화면을 실제로 띄워 확인하라'는 요구는 장식이 아니다 — 이번에 mock 기반 컴포넌트 테스트가 놓친 결함(sections 소실)을 실물 확인이 직접 잡아냈다",
+      "결함을 고치는 패치는 그 자체로 새 결함의 원천이 될 수 있다 — 특히 여러 코드 경로가 상태 변수를 공유할 때(saveError를 save()와 confirmCancel()이 함께 쓰는 경우) 한쪽만 고치면 다른 쪽과의 상호작용을 놓치기 쉽다. '고치고 끝'이 아니라 '고친 것을 다시 검토'하는 루프가 필요하다"
+  ],
+  "phase_analysis": {
+    "1": { "retries": 0, "note": "TASK-008 완료로 sections 응답이 이미 존재 — 과거 blocked 사례와 달리 순조롭게 진행" },
+    "2a": { "retries": 0, "note": "scenario-validator 독립검증 3회(자발적 보완, warn 반영) — fail 없이 매회 pass, HITL#1 1회 승인" },
+    "2b": { "retries": 0, "note": "TypeScript 컴파일 스켈레톤 순수성 확인 후 10건 전부 동일 사유로 Red, HITL#2 1회 승인" },
+    "3": { "retries": 1, "note": "1차 Green(22/22) → Phase 4 FAIL로 롤백 → 결함 5건 수정 → 2차 재검토 소견 반영 → 재Green(31/31)" },
+    "4": { "retries": 1, "note": "1차 FAIL(code-reviewer 결함 5건, 차단 2건) → Phase 3 롤백 → 2차 검증 PASS(code-reviewer 재검토 소견 3건 즉시 반영)" },
+    "5": { "retries": 0, "note": "—" }
+  },
+  "adr_candidates": [
+    {
+      "decision": "필수 입력 검증은 HTML5 required 속성과 클라이언트 유틸 함수 방어를 이중으로 적용한다(브라우저 네이티브 검증이 1차, 코드 방어가 2차 안전망)",
+      "why_broader": "이 프로젝트의 모든 등록/수정 폼(향후 좌석 선점, 다른 CRUD 화면 등)에 반복 적용될 패턴이다 — 한쪽만 쓰면 놓치는 경로가 있다는 것을 이번 태스크에서 실제로 겪었다(required만 쓰면 프로그래밍적 재제출 우회, 유틸 방어만 쓰면 브라우저 네이티브 UX 이점을 잃음)",
+      "evidence": "VERIFY_TASK-005.json code_review.round_2, CP-3.2 재작업 decisions",
+      "suggested_title": "프론트엔드 폼 필수 입력 검증 이중화(required + 유틸 방어)"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "architecture.md §2 Frontend 행의 '하지 않는 것'(도메인 규칙을 직접 판단하지 않는다)이 아직 constraints.yaml에 기계 검사로 옮겨지지 않았다",
+      "where": "docs/architecture/constraints.yaml — Frontend 관련 제약이 DESIGN-001~003(디자인)뿐이고 '도메인 규칙 미판단'을 검사하는 항목이 없음",
+      "found_how": "wf-verify Step 3.5 prose_coverage 대조 중 '미인코딩'으로 표시(VERIFY_TASK-005.json)",
+      "suggestion": "이번 태스크는 위반하지 않았지만(서버 응답 code에만 의존), 향후 프론트 태스크가 늘어나면 이 규칙을 기계로 검사할 방법(예: 특정 도메인 상수/임계값 리터럴이 frontend/src에 있는지 검사하는 forbidden_pattern)을 검토할 만하다"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 2 — 테스트 작성",
+      "change": "'mock 응답 객체를 만들 때 PLAN의 backend_response_verification(또는 동등 필드)에 기록된 실제 API 계약과 필드 단위로 대조한다 — 특히 스프레드(...)로 성공 응답을 구성할 때 원본 객체에 없는 필드가 섞여 들어가지 않는지 확인한다'는 항목을 추가한다",
+      "evidence": "TASK-005 SC-09 mock이 cancelPerformance 응답에 실제로는 없는 sections를 포함시켜 sections 소실 결함을 Red/Green 양쪽에서 놓쳤다(Phase 4 code-reviewer가 근본 원인으로 지목)"
+    },
+    {
+      "target": ".claude/skills/wf-verify/SKILL.md",
+      "section": "Step 5 — 코드 리뷰",
+      "change": "'Phase 3 롤백 후 재작업이 끝나면, 그 수정 커밋을 code-reviewer로 최소 1회 다시 검토한다 — 결함을 고치는 패치 자체가 새 결함을 만들 수 있다'는 절차를 추가한다",
+      "evidence": "TASK-005에서 1차 수정(confirmCancel에 오류 표시 추가)이 saveError 초기화 누락이라는 새 결함을 만들었고, 이를 2차 code-reviewer 재검토가 잡았다. 이 재검토는 현재 스킬 문서에 명문화돼 있지 않아 진행 여부가 그때그때 판단에 맡겨져 있었다"
+    },
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§3 상한 — 언제 그만 쓰는가",
+      "change": "'서버가 여러 항목 중 하나에 대해서만 판정 결과를 주고 개별 항목을 특정하지 않는 경우(예: 구역 여러 개의 총합 초과), 그 결과를 UI의 어느 항목에 매핑할지를 시나리오 작성 시점에 명시적으로 묻는다'는 체크를 추가한다",
+      "evidence": "TASK-005의 SC-04가 구역 1개 케이스만 다뤄, '해당 구역 아래 표시'라는 AC 문구가 다중 구역에서 실제로 어떻게 동작해야 하는지가 Phase 2a에서 검토되지 않고 Phase 4에서야 드러났다"
+    }
+  ],
+  "completion_report": { "approved_by_human": true }
+}

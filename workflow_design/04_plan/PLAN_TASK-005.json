@@ -1,0 +1,119 @@
+{
+  "task_id": "TASK-005",
+  "route": "Frontend",
+  "route_reason": "폼 렌더링·클라이언트 상태·API 연동·검증 오류 표시가 전부 화면 범위다. 도메인 규칙(시각 순서, 좌석 상한, 오픈 이후 수정 불가)은 서버가 이미 판정하며(TASK-004), 화면은 응답 코드를 문구로 옮기기만 한다",
+
+  "design": {
+    "inputs": [
+      { "name": "title", "type": "string", "source": "등록/수정 폼 입력", "constraints": ["필수", "1~200자 (서버 검증, PerformanceService.MAX_TITLE_LENGTH)"] },
+      { "name": "venue", "type": "string", "source": "등록/수정 폼 입력", "constraints": ["필수", "1~200자"] },
+      { "name": "startAt / openAt / closeAt", "type": "string(ISO datetime)", "source": "등록/수정 폼 입력", "constraints": ["필수", "openAt <= closeAt <= startAt (서버 검증)"] },
+      { "name": "sections[]", "type": "{ grade: string, price: number, rowStart: string, rowEnd: string, seatsPerRow: number }[]", "source": "등록 폼 구역 반복 입력 (수정 폼에는 없음)", "constraints": ["등록 시 1개 이상", "grade 1~20자", "price >= 0", "rowStart/rowEnd A~Z 단일 대문자, rowStart <= rowEnd", "seatsPerRow >= 1"] },
+      { "name": "performanceId", "type": "string(URL path param)", "source": "라우트 파라미터 (/performances/:id/edit)", "constraints": ["필수"] }
+    ],
+    "outputs": [
+      { "name": "등록 성공", "type": "navigation", "description": "201 응답 후 /performances/{id} 상세 화면으로 이동 (AC1)" },
+      { "name": "좌석 수 미리보기", "type": "client-derived", "description": "구역별 (rowEnd - rowStart + 1) * seatsPerRow 합산, 구역별·총합 표시. API 호출 없이 입력값 변경 즉시 재계산 (AC2)" },
+      { "name": "인라인 검증 오류 (등록)", "type": "form-error", "description": "400 INVALID_TIME_ORDER → 시각 필드 아래에 \"예매 오픈·마감·공연 일시 순서가 올바르지 않습니다\", 400 SEAT_LIMIT_EXCEEDED → 구역 카드마다 \"좌석 총수는 5,000석을 넘을 수 없습니다\" (AC3, AC4). 두 문구는 feature 문서·백엔드 예외 메시지에 없어 Phase 2a에서 새로 정했다 — 백엔드 메시지(예: \"openAt <= closeAt <= startAt 를 만족해야 합니다\")는 개발자 지향이라 그대로 노출하지 않는다. SEAT_LIMIT_EXCEEDED는 Phase 4 재검증에서 '특정 구역 하나만 지목'에서 '전체 구역에 동일 표시'로 바뀌었다 — 서버가 총합 기준으로만 판정하고 원인 구역을 알려주지 않아, 구역이 여러 개일 때 하나만 지목하면 실제 원인과 다를 수 있다는 code-reviewer 지적을 반영함(Phase 3 CP-3.2 decisions 참고). 구역 1개인 SC-04는 동작 변화 없음" },
+      { "name": "제출 실패 배너", "type": "form-error", "description": "5xx/네트워크 및 그 외 모든 비-2xx(EMPTY_SECTIONS/INVALID_SECTION/INVALID_REQUEST/DUPLICATE_SEAT_RANGE 포함)는 폼 상단 오류 + [다시 시도] 로 폴백 (AC5) — 개별 UI를 늘리지 않고 acceptance_criteria 범위 안에서 처리한다(§unresolved 참고)" },
+      { "name": "수정 폼 초기값 + 좌석 구성 요약", "type": "render", "description": "GET /api/performances/{id} 로 채워짐. sections 는 이 엔드포인트에서만 채워지므로(SectionSummaryResponse) 반드시 상세 조회로 가져온다 — 목록/등록/수정/취소 응답에는 없음 (AC6). 좌석 구성 요약 표기 형식은 \"{grade} · {price 천단위 콤마}원 · {seatCount}석\"(예: \"VIP · 120,000원 · 20석\") — feature 문서 §2-4 와이어프레임(\"VIP · 120,000원 · 100석\")을 그대로 따른다" },
+      { "name": "오픈 이후 수정 차단 안내", "type": "form-error", "description": "409 REGISTRATION_ALREADY_OPEN → '이미 오픈된 공연은 기본 정보를 수정할 수 없습니다' (AC7)" },
+      { "name": "취소 확인 및 반영", "type": "dialog+navigation", "description": "확인 다이얼로그 → POST /api/performances/{id}/cancel → cancelled 상태 반영 (AC8)" }
+    ],
+    "flows": [
+      {
+        "id": "F1", "name": "공연 등록 성공",
+        "steps": ["기본 정보 입력", "구역 1개 이상 입력(기본 1개 행 제공)", "미리보기가 즉시 갱신됨을 확인", "제출", "POST /api/performances 201", "상세 화면(/performances/{id})으로 이동"],
+        "covers": ["등록 폼에서 기본 정보 + 구역 1개 이상을 입력하고 제출하면 공연이 생성되고 상세 화면으로 이동한다", "구역을 추가하면 \"생성될 좌석 수\" 미리보기가 즉시 갱신된다"]
+      },
+      {
+        "id": "F2", "name": "시각 순서 위반",
+        "steps": ["폼 입력 후 제출", "POST 400 { code: INVALID_TIME_ORDER }", "openAt/closeAt/startAt 필드 아래 인라인 오류 표시"],
+        "covers": ["시각 순서 위반(400) 응답을 받으면 관련 필드 아래 인라인 오류가 표시된다"]
+      },
+      {
+        "id": "F3", "name": "좌석 총수 초과",
+        "steps": ["구역 입력으로 총 좌석 수가 5,000 초과", "제출", "POST 400 { code: SEAT_LIMIT_EXCEEDED }", "구역 카드마다 오류 메시지 표시(서버가 원인 구역을 알려주지 않아 전체 표시로 변경, Phase 4 재검증)"],
+        "covers": ["좌석 총수 초과(400) 응답을 받으면 해당 구역 아래 오류 메시지가 표시된다"]
+      },
+      {
+        "id": "F4", "name": "등록 API 실패",
+        "steps": ["제출", "네트워크 오류 또는 5xx (혹은 그 외 처리되지 않은 4xx)", "폼 상단에 오류 문구 + [다시 시도] 버튼 표시", "[다시 시도] 클릭 시 동일 폼 상태로 재제출"],
+        "covers": ["등록 API 호출이 실패(5xx/네트워크)하면 폼 상단에 오류와 [다시 시도] 가 표시된다"]
+      },
+      {
+        "id": "F5", "name": "수정 화면 진입",
+        "steps": ["/performances/{id}/edit 진입", "로딩 스켈레톤", "GET /api/performances/{id} 200", "title/venue/startAt/openAt/closeAt 로 폼 채움", "sections 로 좌석 구성 요약(읽기 전용) 렌더"],
+        "covers": ["수정 화면 진입 시 기존 값이 폼에 채워지고 좌석 구성 요약이 읽기 전용으로 표시된다"]
+      },
+      {
+        "id": "F6", "name": "오픈 이후 수정 거부",
+        "steps": ["수정 폼 저장", "PUT 409 { code: REGISTRATION_ALREADY_OPEN }", "\"이미 오픈된 공연은 기본 정보를 수정할 수 없습니다\" 안내 표시"],
+        "covers": ["오픈 이후 공연을 수정하려 하면(409) \"이미 오픈된 공연은 기본 정보를 수정할 수 없습니다\" 안내가 표시된다"]
+      },
+      {
+        "id": "F7", "name": "공연 취소",
+        "steps": ["[공연 취소] 버튼 클릭", "확인 다이얼로그 표시", "확인 클릭", "POST /api/performances/{id}/cancel 200", "화면에 취소 상태 반영"],
+        "covers": ["취소 버튼 클릭 시 확인 다이얼로그가 뜨고, 확인하면 상태가 취소로 반영된다"]
+      },
+      {
+        "id": "F8", "name": "기존 상세 라우트 보존 (회귀)",
+        "steps": ["App.tsx에 정적 라우트 /performances/new 를 동적 라우트 /performances/:id 와 함께 등록", "/performances/new 진입", "정적 세그먼트가 동적 파라미터보다 우선 매칭되어 PerformanceRegisterPage가 렌더됨(PerformanceDetailPage 아님)"],
+        "covers": [],
+        "note": "acceptance_criteria에는 없는 회귀 검증 — Phase 2a scenario-validator V10 지적(App.tsx가 기존 파일이고 새 정적 라우트가 기존 동적 라우트와 공존하게 됨)을 사용자 승인(HITL) 하에 추가함. Plan 단계에서 발견되지 않아 acceptance_criteria에는 반영하지 않고 flow로만 추가"
+      }
+    ]
+  },
+
+  "architecture_refs": {
+    "layer": "Frontend (React)",
+    "note": "화면은 렌더링·입력·API 호출만 한다. 도메인 규칙(시각 순서, 좌석 상한, 오픈 이후 수정 불가) 판단은 서버가 최종 소유 — architecture.md §2 Frontend 행 '하지 않는 것'. 클라이언트에서 좌석 5,000 상한을 선제 차단하지 않는 이유도 동일(서버 400을 기다려 AC4로 처리)",
+    "constraints_applied": ["DESIGN-001", "DESIGN-002", "DESIGN-003(warn)"]
+  },
+  "adr_refs": ["ADR-0002", "ADR-0007", "ADR-0008", "ADR-0009"],
+
+  "codebase_analysis": {
+    "target_files": [
+      { "path": "frontend/src/api/performances.ts", "change": "registerPerformance/updatePerformance/cancelPerformance 함수, Performance.sections?(SectionSummary[]) 필드, 코드 기반 ApiError 클래스 추가 (기존 확장)" },
+      { "path": "frontend/src/pages/PerformanceRegisterPage.tsx", "change": "등록 폼 신규 — 기본 정보 + 구역 반복 입력 + 좌석 수 미리보기 + 제출" },
+      { "path": "frontend/src/pages/PerformanceEditPage.tsx", "change": "수정 폼 신규 — 기본 정보 편집 + 좌석 구성 요약(읽기 전용) + 취소 액션" },
+      { "path": "frontend/src/App.tsx", "change": "라우트 2건 추가: /performances/new → PerformanceRegisterPage, /performances/:id/edit → PerformanceEditPage (요구사항 문서 §6에는 없으나 라우팅 등록 없이는 화면에 도달할 수 없어 코드베이스 조사로 발견)" }
+    ],
+    "reusable": [
+      { "path": "frontend/src/theme/tokens.ts", "symbol": "fontDisplay 등", "note": "새 색상 리터럴을 만들지 않고 토큰만 참조 (DESIGN-002)" },
+      { "path": "frontend/src/pages/PerformanceListPage.tsx", "symbol": "load 실패 시 Alert + [다시 시도] 패턴(L53-65)", "note": "AC5 제출 실패 배너에 동일 패턴 재사용" },
+      { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "symbol": "상태 유니온(loading/error/success) + useEffect fetch 패턴", "note": "수정 폼의 초기 로딩에 동일 구조 재사용" },
+      { "path": "frontend/src/api/performances.ts", "symbol": "PerformanceNotFoundError", "note": "기존 404 전용 에러 클래스 — 새 ApiError(code, message) 는 이를 대체하지 않고 register/update/cancel 경로에만 추가" }
+    ],
+    "existing_tests": [
+      "frontend/src/pages/PerformanceListPage.test.tsx",
+      "frontend/src/pages/PerformanceDetailPage.test.tsx",
+      "frontend/src/theme/index.test.tsx"
+    ],
+    "backend_response_verification": {
+      "checked_file": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+      "finding": "sections 필드는 GET /api/performances/{id}(단일 상세) 에서만 채워진다. 목록/등록(POST)/수정(PUT)/취소 응답은 sections=null 이라 JSON에 키가 아예 없다(@JsonInclude(NON_NULL), TASK-008 acceptance_criteria 3). 수정 화면의 좌석 구성 요약은 등록/수정 응답이 아니라 별도 GET 호출로만 얻을 수 있다 — 이 사실이 F5/F6 설계에 반영됨"
+    },
+    "unresolved": [
+      "EMPTY_SECTIONS/INVALID_SECTION/INVALID_REQUEST/DUPLICATE_SEAT_RANGE 4개 에러 코드는 태스크의 acceptance_criteria에 개별 UI가 명시되지 않았다. F4(AC5)의 일반 실패 배너로 폴백 처리하기로 정했다 — 코드별 문구를 세분화하고 싶다면 acceptance_criteria를 먼저 넓혀야 한다",
+      "수정 화면에서 GET이 404(PERFORMANCE_NOT_FOUND)를 반환하는 경우는 acceptance_criteria에 없다. 새 상태를 만들지 않고 F5의 '초기 로딩 실패'로 뭉뚱그려(AC5와 동일한 실패 배너) 처리한다 — PerformanceDetailPage처럼 전용 not-found 문구를 만들지 않는다"
+    ]
+  },
+
+  "acceptance_criteria": [
+    "등록 폼에서 기본 정보 + 구역 1개 이상을 입력하고 제출하면 공연이 생성되고 상세 화면으로 이동한다",
+    "구역을 추가하면 \"생성될 좌석 수\" 미리보기가 즉시 갱신된다",
+    "시각 순서 위반(400) 응답을 받으면 관련 필드 아래 인라인 오류가 표시된다",
+    "좌석 총수 초과(400) 응답을 받으면 해당 구역 아래 오류 메시지가 표시된다",
+    "등록 API 호출이 실패(5xx/네트워크)하면 폼 상단에 오류와 [다시 시도] 가 표시된다",
+    "수정 화면 진입 시 기존 값이 폼에 채워지고 좌석 구성 요약이 읽기 전용으로 표시된다",
+    "오픈 이후 공연을 수정하려 하면(409) \"이미 오픈된 공연은 기본 정보를 수정할 수 없습니다\" 안내가 표시된다",
+    "취소 버튼 클릭 시 확인 다이얼로그가 뜨고, 확인하면 상태가 취소로 반영된다"
+  ],
+
+  "test_hints": {
+    "framework": "Vitest + Testing Library (ADR-0007)",
+    "command": "cd frontend && npm test",
+    "mock_strategy": "vi.mock('../api/performances') 로 register/update/cancel/getPerformance 를 스텁 — 기존 PerformanceDetailPage.test.tsx/PerformanceListPage.test.tsx 패턴을 따른다. MemoryRouter + ThemeProvider 로 감싼다"
+  }
+}
