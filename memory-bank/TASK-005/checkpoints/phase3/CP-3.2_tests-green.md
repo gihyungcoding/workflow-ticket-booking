@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-18T01:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "1차 구현 후 Phase 4 FAIL(code-reviewer 결함 5건, 차단 2건) → Phase 3 재작업으로 전부 수정, 23/23 재확인"
 

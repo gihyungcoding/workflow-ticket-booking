@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-17T02:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Red 테스트 10건을 사용자가 승인, TEST_TASK-005.json human_review.approved = true 로 전환"
 

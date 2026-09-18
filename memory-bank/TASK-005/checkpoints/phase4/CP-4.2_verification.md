@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-18T02:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "1차 FAIL(blocking 2건 포함 5건) → Phase 3 재작업 → 2차 code-reviewer 재검토(medium/low 3건 추가 발견) → 즉시 수정 → 테스트 31/31, 실물 재확인 → status: PASS"
 

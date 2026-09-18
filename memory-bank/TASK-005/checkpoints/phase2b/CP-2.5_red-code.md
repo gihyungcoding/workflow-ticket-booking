@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-17T02:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "SC-01~SC-10 을 Vitest 테스트 10건으로 옮기고, TypeScript 컴파일 스켈레톤(신규 컴포넌트 2개 + API 함수 3개)을 먼저 세워 실제로 실패하는 것을 확인했다"
 

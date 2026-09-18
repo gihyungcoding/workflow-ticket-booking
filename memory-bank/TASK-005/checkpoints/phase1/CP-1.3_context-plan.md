@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-17T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "공연 등록/수정 화면(TASK-005)의 입력·출력·흐름을 정규화하고 PLAN_TASK-005.json 을 작성했다"
 

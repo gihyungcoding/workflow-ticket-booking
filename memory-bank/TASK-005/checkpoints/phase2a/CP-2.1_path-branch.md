@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-17T00:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-005 시나리오를 새로 작성한다 — 기존 SCENARIO_TASK-005.md 없음(이전 시도는 Phase 1 단계에서 blocked)"
 

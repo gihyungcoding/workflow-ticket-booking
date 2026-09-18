@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-18T02:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "검증 결과(PASS)를 사용자가 승인, verified_commit 기록"
 

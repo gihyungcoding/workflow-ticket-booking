@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-17T00:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-005 시나리오 9건(happy 5 / error 4) 작성, PLAN F1~F7 전부와 acceptance_criteria 8/8 매핑"
 

@@ -5,7 +5,7 @@ task_id: TASK-005
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-17T01:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "scenario-validator 3회 호출 — 매회 overall.pass=true, 경고를 반영해 시나리오/PLAN을 보완했다"
 

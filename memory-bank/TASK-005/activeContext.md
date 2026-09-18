@@ -3,7 +3,7 @@ task_id: TASK-005
 title: "공연 등록/수정 화면"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: ACTIVE
+status: DONE
 created_at: 2026-09-17
 last_updated: 2026-09-18
 
@@ -12,26 +12,27 @@ sub_categories: ["organizer"]
 target_repo: "."
 branch: "feature/task-005-performance-register-edit-screen"
 
-last_checkpoint: CP-4.3
+last_checkpoint: CP-5.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-005.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-005.md"
   test: "workflow_design/05_scenario/TEST_TASK-005.json"
   dev: "workflow_design/06_dev/DEV_TASK-005.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-005.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-005.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 완료. HITL#3 승인(verified_commit: 4fdd53b). 2라운드 검증
-(1차 FAIL → 결함 5건 수정 → 2차 재검토 소견 반영) 끝에 PASS.
+완료됐다. Phase 1~5를 모두 거쳤고 HITL 4건 전부 승인받았다. Phase 4는
+2라운드(1차 FAIL → Phase 3 롤백·수정 → 2차 PASS)를 거쳤다.
+verified_commit = 4fdd53b. 회고 승인, ADR 승격 후보 1건과 규칙 개선안
+3건은 사용자 승인에 따라 "승인하고 종료"로 처리 — 별도 후속 작업 없이
+제안으로만 기록됨.
 
 ## 다음 한 걸음
 
-`wf-reflect` 스킬로 넘어가 KPT 회고를 하고 HITL#4 승인을 받아 태스크를
-닫는다. 이번 태스크의 회고 포인트: Red 단계 mock이 실제 API 계약과
-달라 1차 결함을 가렸던 것, Phase 4에서 화면을 실제로 띄운 것이 결함
-발견에 결정적이었던 것.
+`/wf-ship` 으로 머지를 준비한다.
 
 ## 알아둬야 할 것
 
