@@ -114,8 +114,8 @@
   },
 
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "APPROVE",
+    "verified_commit": "4fdd53bfc78e002b7fb9d69056d891326eb3eade",
+    "verified_at": "2026-09-18T02:30:00Z"
   }
 }
