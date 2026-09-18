@@ -1,8 +1,8 @@
 ---
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
-phase: "0"
-phase_name: "시작 - Phase 1 진입 대기"
+phase: "1"
+phase_name: "Phase 1 - Plan (완료)"
 status: ACTIVE
 created_at: 2026-09-18
 last_updated: 2026-09-18
@@ -12,18 +12,19 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-006-section-numeric-validation"
 
-last_checkpoint: null
-artifacts: {}
+last_checkpoint: CP-1.3
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-006.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-태스크를 시작했다. memory-bank 구조와 브랜치(`develop`에서 분기)를 만들었다.
-아직 Phase 1(Plan)을 시작하지 않았다.
+Phase 1(Plan) 완료. route=Backend, target_files 3건(SectionRequest.java,
+SectionSpec.java, PerformanceService.java) 확정. 다음은 Phase 2a(시나리오 설계)다.
 
 ## 다음 한 걸음
 
-`wf-plan` 스킬로 넘겨 Phase 1을 진행한다.
+`wf-scenario` 스킬로 넘겨 Phase 2a를 진행한다.
 
 ## 알아둬야 할 것
 
@@ -40,3 +41,13 @@ artifacts: {}
 - 위험도 low, 규모 6h(정상 WRU 범위)
 - 결제 기능이 아직 없어 크래시·DoS는 아니라는 이유로 TASK-004에서는 WARN 예외 승인하고
   이 태스크로 분리됨 — 이번 태스크에서는 예외 없이 정식으로 막아야 함
+- ADR-0010(2026-09-16 채택)이 이 태스크와 직결됨 — DTO shape 검증은 궁극적으로 Bean
+  Validation으로 가지만 마이그레이션은 TASK-007(별도 태스크)이 담당하기로 명시적으로
+  미뤄져 있다. 그래서 이 태스크는 Bean Validation을 선점 도입하지 않고, 기존 수동
+  검증(Service 계층) 관례를 따르되 SectionRequest/SectionSpec의 price/seatsPerRow
+  타입을 Integer → BigDecimal로 바꿔 Jackson 절삭 문제 자체를 없앤다 (CP-1.3 결정)
+- target_files는 SectionRequest.java + PerformanceService.java뿐 아니라
+  SectionSpec.java도 포함 — task의 implementation_spec.paths에는 없었지만 타입을
+  맞추려면 필요함을 Phase 1 조사에서 확인함
+- PerformanceController.java(toSectionSpec)는 타입만 맞으면 로직 변경 없이
+  그대로 컴파일될 것으로 예상 — Phase 3에서 실제 컴파일로 확인 필요
