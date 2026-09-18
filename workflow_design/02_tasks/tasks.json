@@ -321,7 +321,7 @@
     "reason_primary": "DTO 역직렬화 설정과 서비스 계층 검증 로직만 바뀌는 서버 범위",
     "priority": "Medium",
     "depends_on": [],
-    "status": "todo",
+    "status": "in_progress",
     "meta": {
       "estimate": {
         "unit": "hour",
