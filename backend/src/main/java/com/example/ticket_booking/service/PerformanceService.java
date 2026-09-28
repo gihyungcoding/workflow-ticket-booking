@@ -87,7 +87,7 @@ public class PerformanceService {
 
     long totalSeatsLong = 0;
     for (SectionSpec section : sections) {
-      totalSeatsLong += (long) rowCount(section) * section.seatsPerRow().intValue();
+      totalSeatsLong += (long) rowCount(section) * section.seatsPerRow().intValueExact();
     }
     if (totalSeatsLong > MAX_SEATS) {
       throw new SeatLimitExceededException(totalSeatsLong);
@@ -152,7 +152,13 @@ public class PerformanceService {
     if (isBlank(section.grade()) || section.grade().length() > MAX_GRADE_LENGTH) {
       throw new InvalidSectionException("grade는 1~" + MAX_GRADE_LENGTH + "자여야 합니다");
     }
-    if (section.price() == null || section.price().signum() < 0) {
+    if (section.price() == null) {
+      throw new InvalidSectionException("price는 0 이상이어야 합니다");
+    }
+    if (!isIntegral(section.price())) {
+      throw new InvalidSectionException("price는 정수여야 합니다");
+    }
+    if (section.price().signum() < 0) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
     }
     if (!isValidRow(section.rowStart()) || !isValidRow(section.rowEnd())) {
@@ -161,13 +167,23 @@ public class PerformanceService {
     if (section.rowStart().charAt(0) > section.rowEnd().charAt(0)) {
       throw new InvalidSectionException("rowStart가 rowEnd보다 뒤일 수 없습니다");
     }
-    if (section.seatsPerRow() == null || section.seatsPerRow().compareTo(BigDecimal.ONE) < 0) {
+    if (section.seatsPerRow() == null) {
+      throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
+    }
+    if (!isIntegral(section.seatsPerRow())) {
+      throw new InvalidSectionException("seatsPerRow는 정수여야 합니다");
+    }
+    if (section.seatsPerRow().compareTo(BigDecimal.ONE) < 0) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
     }
   }
 
   private static boolean isBlank(String value) {
     return value == null || value.isBlank();
+  }
+
+  private static boolean isIntegral(BigDecimal value) {
+    return value.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0;
   }
 
   private static boolean isValidRow(String row) {
@@ -197,7 +213,7 @@ public class PerformanceService {
     for (SectionSpec section : sections) {
       char rowStart = section.rowStart().charAt(0);
       char rowEnd = section.rowEnd().charAt(0);
-      int seatsPerRow = section.seatsPerRow().intValue();
+      int seatsPerRow = section.seatsPerRow().intValueExact();
       for (char row = rowStart; row <= rowEnd; row++) {
         for (int number = 1; number <= seatsPerRow; number++) {
           String seatLabel = section.grade() + "-" + row + number;
@@ -208,7 +224,7 @@ public class PerformanceService {
                   String.valueOf(row),
                   number,
                   seatLabel,
-                  section.price().intValue()));
+                  section.price().intValueExact()));
         }
       }
     }

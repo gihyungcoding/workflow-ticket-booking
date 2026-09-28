@@ -5,7 +5,7 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | route: Backend, target_files 3건 |
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 3건, 독립검증 PASS(warn 3), HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | SC-01/02 Red, SC-03 already_passing, HITL#2 승인 |
-| 3 Green | ⬜ 대기 | — | |
+| 3 Green | ✅ 완료 | CP-3.4 | 전체 50/50 통과, lint error 0 |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 

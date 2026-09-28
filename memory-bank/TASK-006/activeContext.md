@@ -1,8 +1,8 @@
 ---
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
-phase: "2b"
-phase_name: "Phase 2b - Red (완료, HITL#2 승인)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: ACTIVE
 created_at: 2026-09-18
 last_updated: 2026-09-28
@@ -12,23 +12,24 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-006-section-numeric-validation"
 
-last_checkpoint: CP-2.6
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-006.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-006.md"
   test: "workflow_design/05_scenario/TEST_TASK-006.json"
+  dev: "workflow_design/06_dev/DEV_TASK-006.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b 완료. 테스트 3건 작성(test_task006_sc01/02/03), SC-01/SC-02는 Red
-("expected 400 but was 201" — 컴파일 오류 아닌 assertion mismatch), SC-03은
-already_passing. 기존 테스트 23건 계속 통과(총 26 실행, 2 실패, 24 통과).
-HITL#2 승인 받음. 다음은 Phase 3(Green 구현)이다.
+Phase 3 완료. PerformanceService.validateSection에 isIntegral() 정수 확인 추가
+(F1/F2 구현), 검증 통과 후 변환은 intValueExact()로 교체. 전체 테스트 50/50
+통과(대상 3건 포함), spotlessCheck error 0, 리팩토링 불필요 판단. 다음은
+Phase 4(Verify)다.
 
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 넘겨 Phase 3을 진행한다 — F1/F2 정수 검증 로직 추가.
+`wf-verify` 스킬로 넘겨 Phase 4를 진행한다.
 
 ## 알아둬야 할 것
 

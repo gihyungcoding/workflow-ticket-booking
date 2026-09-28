@@ -1,0 +1,41 @@
+{
+  "task_id": "TASK-006",
+  "changed_files": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SectionRequest.java",
+      "change": "price/seatsPerRow 타입 Integer→BigDecimal (Phase 2b 스켈레톤에서 이미 반영, Phase 3에서 추가 변경 없음)",
+      "lines_changed": 2
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/SectionSpec.java",
+      "change": "price/seatsPerRow 타입 Integer→BigDecimal (Phase 2b 스켈레톤에서 이미 반영, Phase 3에서 추가 변경 없음)",
+      "lines_changed": 2
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "validateSection에 isIntegral() 정수 확인을 price/seatsPerRow의 null·범위 확인 사이에 추가 (F1/F2 구현). 검증 통과 후의 BigDecimal→int 변환을 intValue()에서 intValueExact()로 교체(검증 이후라 안전하며 의도를 더 명확히 드러냄)",
+      "lines_changed": 18
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidSectionException.java",
+      "symbol": "InvalidSectionException"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "./gradlew test",
+    "total": 50,
+    "passed": 50,
+    "failed": 0,
+    "target_tests_passed": 3
+  },
+  "lint": {
+    "command": "./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0
+  },
+  "refactoring": [],
+  "scope_deviations": []
+}

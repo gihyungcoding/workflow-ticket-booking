@@ -8,7 +8,7 @@
 
 | Task ID | 제목 | Phase | 갱신 |
 |---|---|---|---|
-| TASK-006 | 구역 price/seatsPerRow 정수 강제 검증 | 2b Red | 2026-09-28 |
+| TASK-006 | 구역 price/seatsPerRow 정수 강제 검증 | 3 Green | 2026-09-28 |
 
 ## 차단 (0)
 
