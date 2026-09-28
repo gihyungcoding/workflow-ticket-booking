@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-28T00:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "SC-01/SC-02 테스트 작성 → Red 확인(400 기대, 201 실제). SC-03은 컴파일 스켈레톤만으로 already_passing"
 

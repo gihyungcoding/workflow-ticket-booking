@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-18T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "구역 price/seatsPerRow 정수 강제 검증 설계 정규화 — Jackson 절삭 문제를 BigDecimal 타입 변경 + Service 정수 검증으로 해결"
 

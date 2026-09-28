@@ -1,9 +1,9 @@
 ---
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
-phase: "4"
-phase_name: "Phase 4 - Verify (완료, HITL#3 예외 승인)"
-status: ACTIVE
+phase: "5"
+phase_name: "Phase 5 - Reflect (완료)"
+status: DONE
 created_at: 2026-09-18
 last_updated: 2026-09-28
 
@@ -12,26 +12,27 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-006-section-numeric-validation"
 
-last_checkpoint: CP-4.3
+last_checkpoint: CP-5.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-006.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-006.md"
   test: "workflow_design/05_scenario/TEST_TASK-006.json"
   dev: "workflow_design/06_dev/DEV_TASK-006.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-006.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-006.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 완료(attempt 3, WARN → EXCEPTION_APPROVE). 1·2차 FAIL 결함 모두 해소
-확인(3차 code-reviewer가 40만 건 퍼징+실제 요청 실행으로 재검증, PASS 권고).
-verified_commit = 161fc953d0758df144ac202f57d5700185b0ce01. 예외 3건 기록:
-(1) PLAN 문서가 실제 구현 순서와 어긋남, (2) seatsPerRow 상한 초과 에러코드
-비일관, (3) 경계값/제로 케이스 테스트 공백. 다음은 Phase 5(Reflect)다.
+완료됐다. Phase 1~5를 모두 거쳤고 HITL 4건 전부 승인받았다. Phase 4는 3라운드
+(1차 FAIL → Phase 3 롤백·수정 → 2차 FAIL(잔존 결함) → Phase 3 재롤백·수정 → 3차
+WARN → EXCEPTION_APPROVE)를 거쳤다. verified_commit = 161fc953d0758df144ac202f57d5700185b0ce01.
+회고 승인, ADR 승격 후보 1건과 규칙 개선안 2건은 사용자 승인에 따라 "승인하고
+종료"로 처리 — 별도 후속 작업 없이 제안으로만 기록됨.
 
 ## 다음 한 걸음
 
-`wf-reflect` 스킬로 넘겨 Phase 5를 진행한다 — 예외 3건을 회고 입력으로 다룬다.
+`/wf-ship` 으로 머지를 준비한다.
 
 ## 알아둬야 할 것
 

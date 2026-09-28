@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-18T00:15:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "시나리오 3건 작성 (error 2 / happy 1), AC 3/3 커버 — 1차 독립검증 FAIL(V2: happy 0건) 반영해 보완 완료"
 

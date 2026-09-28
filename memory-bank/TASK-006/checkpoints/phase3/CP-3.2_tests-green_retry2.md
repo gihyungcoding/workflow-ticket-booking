@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "3"
 phase_name: "Phase 3 - Green (retry 2)"
 saved_at: 2026-09-28T01:40:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Phase 4 2차 FAIL의 잔존 결함(isIntegral 자체가 scale 언더플로로 예외) 수정 — 범위 확인을 isIntegral()보다 먼저 실행하도록 순서 변경. 전체 55/55 통과"
 

@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-18T00:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "PLAN_TASK-006.json의 flows 3건(F1/F2/F3)을 시나리오로 옮기는 작업 시작 — 신규 작성, 기존 시나리오 확장 아님"
 

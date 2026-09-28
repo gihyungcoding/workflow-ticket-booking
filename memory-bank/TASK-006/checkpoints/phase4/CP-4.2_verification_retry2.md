@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "4"
 phase_name: "Phase 4 - Verify (attempt 3)"
 saved_at: 2026-09-28T02:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "1·2차 FAIL을 만든 correctness 결함이 모두 해소됨을 3차 code-reviewer가 40만 건 퍼징+실제 요청 실행으로 재확인(PASS 권고). low severity 관찰 3건만 남아 status: WARN"
 

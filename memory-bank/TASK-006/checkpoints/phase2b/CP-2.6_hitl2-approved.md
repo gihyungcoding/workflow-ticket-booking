@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-28T00:25:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 Red 테스트 3건(SC-01/02 red, SC-03 already_passing)과 컴파일 스켈레톤 근거를 승인"
 

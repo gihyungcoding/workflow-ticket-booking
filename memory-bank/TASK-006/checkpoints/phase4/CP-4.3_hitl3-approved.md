@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "4"
 phase_name: "Phase 4 - Verify (완료, attempt 3)"
 saved_at: 2026-09-28T05:10:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 WARN 상태를 예외 승인(EXCEPTION_APPROVE) — low severity 관찰 3건을 예외로 기록하고 Phase 5로 진행"
 

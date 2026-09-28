@@ -7,7 +7,7 @@
 | 2b Red | ✅ 완료 | CP-2.6 | SC-01/02 Red, SC-03 already_passing, HITL#2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 전체 50/50 통과, lint error 0 |
 | 4 Verify | ✅ 완료 | CP-4.3 | 1·2차 FAIL(결함 3건 수정) → 3차 WARN, EXCEPTION_APPROVE |
-| 5 Reflect | ⬜ 대기 | — | |
+| 5 Reflect | ✅ 완료 | CP-5.3 | Keep 3/Problem 3/Try 3, ADR 후보 1, 규칙 개선안 2 |
 
 ## 완료 조건
 

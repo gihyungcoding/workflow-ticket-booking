@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-18T00:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "scenario-validator 2차 검증 PASS (fail 0 / warn 3) — 1차 FAIL(V2 happy 0건) 해소 확인"
 

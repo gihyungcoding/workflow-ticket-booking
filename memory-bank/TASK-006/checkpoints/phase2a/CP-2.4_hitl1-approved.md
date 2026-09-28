@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-28T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "사용자가 시나리오 3건(happy 1/error 2)을 승인. warn 3건(V7/V9/V10)은 알고 넘어가는 것으로 확인, 보완 없이 Phase 2b로 진행"
 

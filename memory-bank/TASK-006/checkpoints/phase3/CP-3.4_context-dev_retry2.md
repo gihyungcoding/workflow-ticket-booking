@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "3"
 phase_name: "Phase 3 - Green (retry 2)"
 saved_at: 2026-09-28T01:45:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "리팩토링 불필요 판단, DEV_TASK-006.json(attempt 3) 저장. 게이트 조건 전부 재충족"
 
