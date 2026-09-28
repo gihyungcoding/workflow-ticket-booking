@@ -1,30 +1,33 @@
 ---
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
-phase: "1"
-phase_name: "Phase 1 - Plan (완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design (완료, HITL#1 승인)"
 status: ACTIVE
 created_at: 2026-09-18
-last_updated: 2026-09-18
+last_updated: 2026-09-28
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-006-section-numeric-validation"
 
-last_checkpoint: CP-1.3
+last_checkpoint: CP-2.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-006.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-006.md"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1(Plan) 완료. route=Backend, target_files 3건(SectionRequest.java,
-SectionSpec.java, PerformanceService.java) 확정. 다음은 Phase 2a(시나리오 설계)다.
+Phase 2a 완료. 시나리오 3건(happy 1 SC-03 / error 2 SC-01·SC-02), 독립검증
+2차 PASS(warn 3건 — V7 seat 표현, V9 SC-03 기존 테스트와 중복, V10 regression
+타입 0건), HITL#1 승인 받음(warn 3건 인지 상태로 보완 없이 승인). Phase 2a
+게이트 7/7 통과. 다음은 Phase 2b(Red 테스트 작성)다.
 
 ## 다음 한 걸음
 
-`wf-scenario` 스킬로 넘겨 Phase 2a를 진행한다.
+`wf-red` 스킬로 넘겨 Phase 2b를 진행한다.
 
 ## 알아둬야 할 것
 

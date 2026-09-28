@@ -16,6 +16,12 @@
         "type": "BigDecimal (기존 Integer에서 변경)",
         "source": "POST /api/performances 요청 본문의 sections[].seatsPerRow (JSON)",
         "constraints": ["필수", "정수(소수부 0)", "1 이상"]
+      },
+      {
+        "name": "section.rowStart / section.rowEnd",
+        "type": "String (변경 없음)",
+        "source": "POST /api/performances 요청 본문의 sections[].rowStart/rowEnd (JSON)",
+        "constraints": ["이 태스크에서 바뀌지 않음 — 시나리오가 좌석 수를 계산할 때 필요한 컨텍스트 값이라 참고용으로 기록"]
       }
     ],
     "outputs": [

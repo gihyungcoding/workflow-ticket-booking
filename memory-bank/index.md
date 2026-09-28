@@ -1,6 +1,6 @@
 # Memory Bank
 
-마지막 재생성: 2026-09-18 · 활성 1 · 차단 0 · 완료 5
+마지막 재생성: 2026-09-28 · 활성 1 · 차단 0 · 완료 5
 
 > 이 파일은 `scripts/rebuild_memory_bank_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -8,7 +8,7 @@
 
 | Task ID | 제목 | Phase | 갱신 |
 |---|---|---|---|
-| TASK-006 | 구역 price/seatsPerRow 정수 강제 검증 | 1 Plan | 2026-09-18 |
+| TASK-006 | 구역 price/seatsPerRow 정수 강제 검증 | 2a Scenario | 2026-09-28 |
 
 ## 차단 (0)
 
