@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 3건, 독립검증 PASS(warn 3), HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | SC-01/02 Red, SC-03 already_passing, HITL#2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 전체 50/50 통과, lint error 0 |
-| 4 Verify | 🔄 진행 중 | CP-4.2 | 1·2차 FAIL(결함 3건 수정) → Phase 3 retry 2 완료, 3차 검증 대기 |
+| 4 Verify | ✅ 완료 | CP-4.3 | 1·2차 FAIL(결함 3건 수정) → 3차 WARN, EXCEPTION_APPROVE |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

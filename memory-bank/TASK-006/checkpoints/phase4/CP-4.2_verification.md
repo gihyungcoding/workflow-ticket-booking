@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-09-28T01:00:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "테스트/린트/아키텍처 제약은 모두 통과했으나 code-reviewer가 correctness 결함 2건(int 범위 초과 시 500, isIntegral 자체의 예외) 발견 → status: FAIL"
 

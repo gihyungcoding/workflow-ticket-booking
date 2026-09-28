@@ -1,8 +1,8 @@
 ---
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
-phase: "3"
-phase_name: "Phase 3 - Green (retry 2 완료)"
+phase: "4"
+phase_name: "Phase 4 - Verify (완료, HITL#3 예외 승인)"
 status: ACTIVE
 created_at: 2026-09-18
 last_updated: 2026-09-28
@@ -12,7 +12,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-006-section-numeric-validation"
 
-last_checkpoint: CP-3.4
+last_checkpoint: CP-4.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-006.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-006.md"
@@ -23,16 +23,15 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 2차 FAIL 수정 완료(retry 2). 2차 code-reviewer가 isIntegral() 자체가
-특정 극단적 지수 표기(가수에 후행 0, 예: 100E+2147483647)에서 여전히
-ArithmeticException을 던지는 잔존 결함을 발견 — 범위 확인(signum/compareTo)을
-isIntegral()보다 먼저 실행하도록 순서 변경으로 해결(위험한 값은 정의상 범위를
-벗어나므로 isIntegral에 도달하지 않음). 회귀 테스트 2건(sc07/08) 추가. 전체
-55/55 통과, lint error 0. 다음은 Phase 4 3차 검증이다.
+Phase 4 완료(attempt 3, WARN → EXCEPTION_APPROVE). 1·2차 FAIL 결함 모두 해소
+확인(3차 code-reviewer가 40만 건 퍼징+실제 요청 실행으로 재검증, PASS 권고).
+verified_commit = 161fc953d0758df144ac202f57d5700185b0ce01. 예외 3건 기록:
+(1) PLAN 문서가 실제 구현 순서와 어긋남, (2) seatsPerRow 상한 초과 에러코드
+비일관, (3) 경계값/제로 케이스 테스트 공백. 다음은 Phase 5(Reflect)다.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 넘겨 Phase 4 3차 검증을 진행한다.
+`wf-reflect` 스킬로 넘겨 Phase 5를 진행한다 — 예외 3건을 회고 입력으로 다룬다.
 
 ## 알아둬야 할 것
 
