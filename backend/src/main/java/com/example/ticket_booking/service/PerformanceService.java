@@ -6,6 +6,7 @@ import com.example.ticket_booking.domain.PerformanceStatusRules;
 import com.example.ticket_booking.domain.Seat;
 import com.example.ticket_booking.repository.PerformanceRepository;
 import com.example.ticket_booking.repository.SeatRepository;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -86,7 +87,7 @@ public class PerformanceService {
 
     long totalSeatsLong = 0;
     for (SectionSpec section : sections) {
-      totalSeatsLong += (long) rowCount(section) * section.seatsPerRow();
+      totalSeatsLong += (long) rowCount(section) * section.seatsPerRow().intValue();
     }
     if (totalSeatsLong > MAX_SEATS) {
       throw new SeatLimitExceededException(totalSeatsLong);
@@ -151,7 +152,7 @@ public class PerformanceService {
     if (isBlank(section.grade()) || section.grade().length() > MAX_GRADE_LENGTH) {
       throw new InvalidSectionException("grade는 1~" + MAX_GRADE_LENGTH + "자여야 합니다");
     }
-    if (section.price() == null || section.price() < 0) {
+    if (section.price() == null || section.price().signum() < 0) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
     }
     if (!isValidRow(section.rowStart()) || !isValidRow(section.rowEnd())) {
@@ -160,7 +161,7 @@ public class PerformanceService {
     if (section.rowStart().charAt(0) > section.rowEnd().charAt(0)) {
       throw new InvalidSectionException("rowStart가 rowEnd보다 뒤일 수 없습니다");
     }
-    if (section.seatsPerRow() == null || section.seatsPerRow() < 1) {
+    if (section.seatsPerRow() == null || section.seatsPerRow().compareTo(BigDecimal.ONE) < 0) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
     }
   }
@@ -196,8 +197,9 @@ public class PerformanceService {
     for (SectionSpec section : sections) {
       char rowStart = section.rowStart().charAt(0);
       char rowEnd = section.rowEnd().charAt(0);
+      int seatsPerRow = section.seatsPerRow().intValue();
       for (char row = rowStart; row <= rowEnd; row++) {
-        for (int number = 1; number <= section.seatsPerRow(); number++) {
+        for (int number = 1; number <= seatsPerRow; number++) {
           String seatLabel = section.grade() + "-" + row + number;
           seats.add(
               new Seat(
@@ -206,7 +208,7 @@ public class PerformanceService {
                   String.valueOf(row),
                   number,
                   seatLabel,
-                  section.price()));
+                  section.price().intValue()));
         }
       }
     }

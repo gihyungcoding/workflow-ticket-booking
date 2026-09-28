@@ -1,8 +1,8 @@
 ---
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design (완료, HITL#1 승인)"
+phase: "2b"
+phase_name: "Phase 2b - Red (완료, HITL#2 승인)"
 status: ACTIVE
 created_at: 2026-09-18
 last_updated: 2026-09-28
@@ -12,22 +12,23 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-006-section-numeric-validation"
 
-last_checkpoint: CP-2.4
+last_checkpoint: CP-2.6
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-006.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-006.md"
+  test: "workflow_design/05_scenario/TEST_TASK-006.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a 완료. 시나리오 3건(happy 1 SC-03 / error 2 SC-01·SC-02), 독립검증
-2차 PASS(warn 3건 — V7 seat 표현, V9 SC-03 기존 테스트와 중복, V10 regression
-타입 0건), HITL#1 승인 받음(warn 3건 인지 상태로 보완 없이 승인). Phase 2a
-게이트 7/7 통과. 다음은 Phase 2b(Red 테스트 작성)다.
+Phase 2b 완료. 테스트 3건 작성(test_task006_sc01/02/03), SC-01/SC-02는 Red
+("expected 400 but was 201" — 컴파일 오류 아닌 assertion mismatch), SC-03은
+already_passing. 기존 테스트 23건 계속 통과(총 26 실행, 2 실패, 24 통과).
+HITL#2 승인 받음. 다음은 Phase 3(Green 구현)이다.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 넘겨 Phase 2b를 진행한다.
+`wf-develop` 스킬로 넘겨 Phase 3을 진행한다 — F1/F2 정수 검증 로직 추가.
 
 ## 알아둬야 할 것
 
@@ -54,3 +55,10 @@ Phase 2a 완료. 시나리오 3건(happy 1 SC-03 / error 2 SC-01·SC-02), 독립
   맞추려면 필요함을 Phase 1 조사에서 확인함
 - PerformanceController.java(toSectionSpec)는 타입만 맞으면 로직 변경 없이
   그대로 컴파일될 것으로 예상 — Phase 3에서 실제 컴파일로 확인 필요
+- Phase 2b에서 실제로 확인: PerformanceController.java는 컴파일 시점에 변경 불필요했음(예상 적중)
+- Phase 3에서 할 일: PerformanceService.validateSection에 "정수인지" 확인을
+  null/범위 확인보다 먼저 추가(stripTrailingZeros 후 scale>0이면 InvalidSectionException).
+  price는 F1(SC-01), seatsPerRow는 F2(SC-02)가 검증. 기존 .intValue() 절삭 코드는
+  검증 통과 후의 안전한 변환으로 남겨도 되고, intValueExact()로 바꿔도 됨(검증 후라
+  동일한 결과) — Phase 3 판단
+- SC-03(already_passing)이 Phase 3 이후에도 계속 통과하는지가 회귀 확인 기준

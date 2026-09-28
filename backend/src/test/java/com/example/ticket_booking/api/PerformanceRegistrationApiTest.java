@@ -772,4 +772,92 @@ class PerformanceRegistrationApiTest {
     Map<String, Object> body = bodyAsMap(result);
     assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
   }
+
+  // TASK-006 시나리오 SC-01~SC-03. SoT: workflow_design/05_scenario/SCENARIO_TASK-006.md
+
+  @Test
+  void test_task006_sc01_price에_소수를_보내면_등록이_거부된다() throws Exception {
+    // Given 등록 요청에 구역 하나(price=100.5, 나머지 필드는 유효)가 있다
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":100.5,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+    long seatCountBefore = seatRepository.count();
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 응답 상태는 400이다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+    // And seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)
+    assertThat(seatRepository.count()).isEqualTo(seatCountBefore);
+  }
+
+  @Test
+  void test_task006_sc02_seatsPerRow에_소수를_보내면_등록이_거부된다() throws Exception {
+    // Given 등록 요청에 구역 하나(seatsPerRow=1.9, 나머지 필드는 유효)가 있다
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":1.9}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+    long seatCountBefore = seatRepository.count();
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 응답 상태는 400이다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+    // And seat 테이블에 새로 생성된 행이 없다 (요청 전후 전체 seat 개수가 그대로다)
+    assertThat(seatRepository.count()).isEqualTo(seatCountBefore);
+  }
+
+  @Test
+  void test_task006_sc03_정수_price_seatsPerRow는_이전과_동일하게_성공한다() throws Exception {
+    // Given 등록 요청에 구역 하나(price=120000, rowStart=A, rowEnd=A, seatsPerRow=10)가 있다
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":120000,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 응답 상태는 201이다
+    assertThat(result.getResponse().getStatus()).isEqualTo(201);
+    // And 생성된 좌석 수는 10건이다 (rowStart~rowEnd 1개 행 × seatsPerRow 10)
+    Map<String, Object> body = bodyAsMap(result);
+    Long performanceId = ((Number) body.get("id")).longValue();
+    long seatCount =
+        seatRepository.findAll().stream()
+            .filter(s -> s.getPerformanceId().equals(performanceId))
+            .count();
+    assertThat(seatCount).isEqualTo(10);
+  }
 }
