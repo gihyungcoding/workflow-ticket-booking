@@ -2,7 +2,7 @@
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
 phase: "3"
-phase_name: "Phase 3 - Green (완료)"
+phase_name: "Phase 4 FAIL → Phase 3 롤백 (재작업 필요)"
 status: ACTIVE
 created_at: 2026-09-18
 last_updated: 2026-09-28
@@ -12,24 +12,30 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-006-section-numeric-validation"
 
-last_checkpoint: CP-3.4
+last_checkpoint: CP-4.2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-006.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-006.md"
   test: "workflow_design/05_scenario/TEST_TASK-006.json"
   dev: "workflow_design/06_dev/DEV_TASK-006.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-006.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 완료. PerformanceService.validateSection에 isIntegral() 정수 확인 추가
-(F1/F2 구현), 검증 통과 후 변환은 intValueExact()로 교체. 전체 테스트 50/50
-통과(대상 3건 포함), spotlessCheck error 0, 리팩토링 불필요 판단. 다음은
-Phase 4(Verify)다.
+Phase 4 1차 검증 FAIL. code-reviewer가 correctness 결함 2건 발견:
+(1) price/seatsPerRow가 int 범위(Integer.MAX_VALUE)를 넘으면 intValueExact()가
+ArithmeticException을 던지고 핸들러가 없어 500 반환 (이전엔 Jackson이 400으로
+거부 — 회귀), (2) isIntegral()이 remainder() 방식이라 극단적 지수 표기 입력에서
+그 자체가 예외를 던짐 (PLAN이 명시한 stripTrailingZeros 방식이었다면 안전했음).
+Phase 3으로 롤백해 수정한다.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 넘겨 Phase 4를 진행한다.
+Phase 3 재진입: (1) validateSection에 int 범위 상한 검증 추가 (price/seatsPerRow가
+Integer.MAX_VALUE를 넘으면 InvalidSectionException), (2) isIntegral()을
+stripTrailingZeros().scale()<=0 방식으로 교체, (3) 새로 열린 입력 경계에 대한
+테스트 보강.
 
 ## 알아둬야 할 것
 
