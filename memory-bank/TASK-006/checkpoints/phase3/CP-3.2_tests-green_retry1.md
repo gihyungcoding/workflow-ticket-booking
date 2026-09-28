@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "3"
 phase_name: "Phase 3 - Green (retry 1)"
 saved_at: 2026-09-28T01:15:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "Phase 4 1차 FAIL의 code_review 지적 2건 수정 — int 상한 검증 추가, isIntegral() 구현 교체. 전체 53/53 통과"
 

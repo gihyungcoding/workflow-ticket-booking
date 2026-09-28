@@ -2,7 +2,7 @@
 task_id: TASK-006
 title: "구역 price/seatsPerRow 정수 강제 검증"
 phase: "3"
-phase_name: "Phase 3 - Green (retry 1 완료)"
+phase_name: "Phase 3 - Green (retry 2 완료)"
 status: ACTIVE
 created_at: 2026-09-18
 last_updated: 2026-09-28
@@ -23,13 +23,16 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 1차 FAIL 수정 완료(retry 1). int 상한 검증 추가, isIntegral()을
-stripTrailingZeros().scale()<=0 방식으로 교체, 회귀 테스트 3건(sc04/05/06) 추가.
-전체 53/53 통과, lint error 0. 다음은 Phase 4 2차 검증이다.
+Phase 4 2차 FAIL 수정 완료(retry 2). 2차 code-reviewer가 isIntegral() 자체가
+특정 극단적 지수 표기(가수에 후행 0, 예: 100E+2147483647)에서 여전히
+ArithmeticException을 던지는 잔존 결함을 발견 — 범위 확인(signum/compareTo)을
+isIntegral()보다 먼저 실행하도록 순서 변경으로 해결(위험한 값은 정의상 범위를
+벗어나므로 isIntegral에 도달하지 않음). 회귀 테스트 2건(sc07/08) 추가. 전체
+55/55 통과, lint error 0. 다음은 Phase 4 3차 검증이다.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 넘겨 Phase 4 2차 검증을 진행한다.
+`wf-verify` 스킬로 넘겨 Phase 4 3차 검증을 진행한다.
 
 ## 알아둬야 할 것
 

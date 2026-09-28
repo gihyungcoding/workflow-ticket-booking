@@ -947,4 +947,65 @@ class PerformanceRegistrationApiTest {
     // And seat 테이블에 새로 생성된 행이 없다
     assertThat(seatRepository.count()).isEqualTo(seatCountBefore);
   }
+
+  // Phase 4 2차 검증(VERIFY_TASK-006.json attempt 2) code-reviewer 지적 반영 — isIntegral()의
+  // stripTrailingZeros()가 scale 언더플로로 예외를 던지는 특정 형태(지수가 크고 가수에 후행
+  // 0이 있는 경우)가 500 대신 400/INVALID_SECTION으로 거부되는지 확인하는 회귀 테스트.
+
+  @Test
+  void test_task006_sc07_후행0이_있는_극단적_지수_표기_price는_등록이_거부된다() throws Exception {
+    // Given 등록 요청에 구역 하나(price가 100E+2147483647 — stripTrailingZeros에서 scale
+    // 언더플로를 일으키는 형태)가 있다
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":100E+2147483647,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+    long seatCountBefore = seatRepository.count();
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 응답 상태는 400이다 (500이 아니다)
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+    // And seat 테이블에 새로 생성된 행이 없다
+    assertThat(seatRepository.count()).isEqualTo(seatCountBefore);
+  }
+
+  @Test
+  void test_task006_sc08_후행0이_있는_극단적_지수_표기_seatsPerRow는_등록이_거부된다() throws Exception {
+    // Given 등록 요청에 구역 하나(seatsPerRow가 100E+2147483647)가 있다
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":100E+2147483647}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+    long seatCountBefore = seatRepository.count();
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 응답 상태는 400이다 (500이 아니다)
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+    // And seat 테이블에 새로 생성된 행이 없다
+    assertThat(seatRepository.count()).isEqualTo(seatCountBefore);
+  }
 }

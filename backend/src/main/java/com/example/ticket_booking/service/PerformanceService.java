@@ -153,17 +153,21 @@ public class PerformanceService {
     if (isBlank(section.grade()) || section.grade().length() > MAX_GRADE_LENGTH) {
       throw new InvalidSectionException("grade는 1~" + MAX_GRADE_LENGTH + "자여야 합니다");
     }
+    // price/seatsPerRow: 범위 확인(signum·compareTo)이 isIntegral()보다 먼저다 — isIntegral()의
+    // stripTrailingZeros()는 scale이 Integer.MIN_VALUE 아래로 내려가면 ArithmeticException을
+    // 던진다(극단적 지수 표기, 예: 100E+2147483647). 그런 값은 반드시 MAX_INT_VALUE를 넘으므로
+    // compareTo를 먼저 통과시키면 isIntegral()에 위험한 값이 도달하지 않는다.
     if (section.price() == null) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
-    }
-    if (!isIntegral(section.price())) {
-      throw new InvalidSectionException("price는 정수여야 합니다");
     }
     if (section.price().signum() < 0) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
     }
     if (section.price().compareTo(MAX_INT_VALUE) > 0) {
       throw new InvalidSectionException("price는 " + Integer.MAX_VALUE + " 이하여야 합니다");
+    }
+    if (!isIntegral(section.price())) {
+      throw new InvalidSectionException("price는 정수여야 합니다");
     }
     if (!isValidRow(section.rowStart()) || !isValidRow(section.rowEnd())) {
       throw new InvalidSectionException("rowStart/rowEnd는 A~Z 단일 대문자여야 합니다");
@@ -174,14 +178,14 @@ public class PerformanceService {
     if (section.seatsPerRow() == null) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
     }
-    if (!isIntegral(section.seatsPerRow())) {
-      throw new InvalidSectionException("seatsPerRow는 정수여야 합니다");
-    }
     if (section.seatsPerRow().compareTo(BigDecimal.ONE) < 0) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
     }
     if (section.seatsPerRow().compareTo(MAX_INT_VALUE) > 0) {
       throw new InvalidSectionException("seatsPerRow는 " + Integer.MAX_VALUE + " 이하여야 합니다");
+    }
+    if (!isIntegral(section.seatsPerRow())) {
+      throw new InvalidSectionException("seatsPerRow는 정수여야 합니다");
     }
   }
 
