@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-28T00:35:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "validateSection에 정수 확인(F1/F2) 추가, intValue()→intValueExact() 교체. 대상 테스트 3/3 + 전체 스위트 50/50 통과, spotlessCheck error 0"
 

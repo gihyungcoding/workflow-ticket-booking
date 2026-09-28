@@ -5,7 +5,7 @@ task_id: TASK-006
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-09-28T00:40:00Z
-status: ACTIVE
+status: SUPERSEDED
 
 work_summary: "리팩토링 불필요 판단, DEV_TASK-006.json 저장. 게이트 조건 전부 충족"
 

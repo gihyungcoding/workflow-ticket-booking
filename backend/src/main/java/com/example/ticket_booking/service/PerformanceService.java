@@ -24,6 +24,7 @@ public class PerformanceService {
   private static final int MAX_GRADE_LENGTH = 20;
   private static final int MAX_TITLE_LENGTH = 200;
   private static final int MAX_VENUE_LENGTH = 200;
+  private static final BigDecimal MAX_INT_VALUE = BigDecimal.valueOf(Integer.MAX_VALUE);
 
   private final PerformanceRepository performanceRepository;
   private final SeatRepository seatRepository;
@@ -161,6 +162,9 @@ public class PerformanceService {
     if (section.price().signum() < 0) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
     }
+    if (section.price().compareTo(MAX_INT_VALUE) > 0) {
+      throw new InvalidSectionException("price는 " + Integer.MAX_VALUE + " 이하여야 합니다");
+    }
     if (!isValidRow(section.rowStart()) || !isValidRow(section.rowEnd())) {
       throw new InvalidSectionException("rowStart/rowEnd는 A~Z 단일 대문자여야 합니다");
     }
@@ -176,6 +180,9 @@ public class PerformanceService {
     if (section.seatsPerRow().compareTo(BigDecimal.ONE) < 0) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
     }
+    if (section.seatsPerRow().compareTo(MAX_INT_VALUE) > 0) {
+      throw new InvalidSectionException("seatsPerRow는 " + Integer.MAX_VALUE + " 이하여야 합니다");
+    }
   }
 
   private static boolean isBlank(String value) {
@@ -183,7 +190,7 @@ public class PerformanceService {
   }
 
   private static boolean isIntegral(BigDecimal value) {
-    return value.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0;
+    return value.stripTrailingZeros().scale() <= 0;
   }
 
   private static boolean isValidRow(String row) {
