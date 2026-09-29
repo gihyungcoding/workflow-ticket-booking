@@ -1,0 +1,138 @@
+{
+  "task_id": "TASK-005",
+  "changed_files": [
+    { "path": "frontend/src/api/performances.ts", "change": "registerPerformance/updatePerformance/cancelPerformance 구현 — fetch 호출, 실패 시 응답 body의 code로 ApiError 던짐(공용 throwIfApiError)", "lines_changed": 41 },
+    { "path": "frontend/src/pages/PerformanceRegisterPage.tsx", "change": "등록 폼 구현 — 기본 정보 + 구역 반복 입력 + 클라이언트 좌석 수 미리보기 + 제출/에러 처리(신규)", "lines_changed": 195 },
+    { "path": "frontend/src/pages/PerformanceEditPage.tsx", "change": "수정 폼 구현 — GET 초기 로드, 좌석 구성 요약(읽기 전용), 저장/409 안내, 취소 확인 다이얼로그(신규)", "lines_changed": 158 },
+    { "path": "frontend/src/App.tsx", "change": "라우트 2건 추가(/performances/new, /performances/:id/edit) — Red 단계에서 이미 반영, 변경 없음" },
+    { "path": "frontend/src/utils/datetime.ts", "change": "toDatetimeLocalInput/fromDatetimeLocalInput 헬퍼(신규) — 두 폼 페이지가 공유", "lines_changed": 9 }
+  ],
+  "reused": [
+    { "path": "frontend/src/pages/PerformanceListPage.tsx", "symbol": "load 실패 시 Alert + [다시 시도] 패턴", "note": "PerformanceRegisterPage 폼 상단 배너, PerformanceEditPage 초기 로딩 실패 배너 둘 다 동일 패턴" },
+    { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "symbol": "상태 유니온 + useEffect fetch 패턴, Skeleton height=240", "note": "PerformanceEditPage 초기 로딩에 재사용" },
+    { "path": "frontend/src/components/StatusBadge.tsx", "symbol": "StatusBadge", "note": "PerformanceEditPage에서 취소 반영 후 '공연취소' 표시에 그대로 재사용 — 새 상태 표시 컴포넌트를 만들지 않음" },
+    { "path": "frontend/src/api/performances.ts", "symbol": "PerformanceNotFoundError", "note": "그대로 유지, register/update/cancel 경로에는 관여하지 않음" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && npm test",
+    "total": 23,
+    "passed": 23,
+    "failed": 0,
+    "target_tests_passed": 11,
+    "note": "1건은 Phase 4 롤백 이후 추가한 회귀 테스트(REGRESSION: 저장 성공 후에도 좌석 구성 요약이 유지된다) — 시나리오에 없지만 code-reviewer가 발견한 결함을 재현하는 방어 테스트"
+  },
+  "typecheck": { "command": "cd frontend && npx tsc -b --noEmit", "errors": 0 },
+  "lint": {
+    "command": "cd frontend && npm run lint",
+    "errors": 0,
+    "warnings": 3,
+    "note": "PerformanceEditPage.tsx:34(useEffect 내 setState)와 :84(Skeleton height={240} 매직넘버) 경고 2건이 신규 — 둘 다 PerformanceDetailPage/PerformanceListPage의 기존 관례를 그대로 재사용한 결과라 이 태스크 범위에서 고치지 않음(고치려면 기존 페이지도 함께 손대야 함, 별도 태스크)"
+  },
+  "architecture_check": {
+    "command": "python3 scripts/check_architecture.py",
+    "result": "경고 3건(DESIGN-003, 기존 2건 + PerformanceEditPage.tsx:84 신규 1건) — severity warn, error 0"
+  },
+  "refactoring": [
+    {
+      "what": "PerformanceEditPage의 초기 GET 호출을 useEffect 콜백에서 명명된 load() 함수로 분리하고, '다시 시도' 버튼과 useEffect 둘 다 이를 재사용",
+      "why": "처음 구현은 '다시 시도'가 window.location.reload()를 쓰는 최소 구현이었는데, 이건 PerformanceListPage의 기존 재시도 패턴(load 함수 재호출, 전체 새로고침 없음)과 달라 일관성이 깨졌다"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "frontend/src/utils/datetime.ts",
+      "reason": "PLAN target_files에 없던 신규 파일. datetime-local input ↔ ISO 문자열 변환 로직이 PerformanceRegisterPage와 PerformanceEditPage 양쪽에서 동일하게 필요해, 각 파일에 중복 작성하는 대신 작은 공유 유틸로 분리했다. 두 페이지 모두 PLAN target_files에 있던 파일이라 이 유틸은 그 구현의 자연스러운 부산물"
+    }
+  ],
+  "phase4_rollback_fixes": {
+    "source": "VERIFY_TASK-005.json (status: FAIL, 1차 검증) — code_review.findings 5건",
+    "applied": [
+      {
+        "finding": "blocking: PerformanceEditPage 저장/취소 성공 시 서버 응답(sections 없음)으로 state를 통째로 교체해 좌석 구성 요약이 사라짐",
+        "fix": "PerformanceEditPage.tsx save()/confirmCancel() 모두 setPerformance((prev) => prev ? {...updated, sections: prev.sections} : updated) 로 기존 sections를 보존하도록 병합",
+        "files": ["frontend/src/pages/PerformanceEditPage.tsx"],
+        "verified": "실물 확인(id=4 등록→저장→취소 전 과정에서 '좌석 구성: S · 50,000원 · 45석' 유지 확인) + 신규 회귀 테스트(REGRESSION, updatePerformance 성공) + SC-09 테스트에 좌석요약 유지 assertion 추가"
+      },
+      {
+        "finding": "blocking: datetime 필드가 비어 있으면 fromDatetimeLocalInput이 RangeError를 던져 '등록/저장하지 못했습니다' 배너로 오분류되고 요청 자체가 전송되지 않음",
+        "fix": "fromDatetimeLocalInput이 빈 값/유효하지 않은 값이면 원본 문자열을 그대로 반환하도록 방어(1차). 등록·수정 폼의 모든 필수 TextField에 required 추가해 브라우저 네이티브 검증으로 빈 제출 자체를 막음(2차, 정공법)",
+        "files": ["frontend/src/utils/datetime.ts", "frontend/src/pages/PerformanceRegisterPage.tsx", "frontend/src/pages/PerformanceEditPage.tsx"],
+        "verified": "실물 확인 — 빈 폼으로 [등록] 클릭 시 네트워크 요청이 전혀 발생하지 않음(read_network_requests로 확인)"
+      },
+      {
+        "finding": "normal: confirmCancel에 try/catch가 없어 취소 API 실패가 unhandled rejection으로 사라지고 다이얼로그가 열린 채 남음",
+        "fix": "confirmCancel에 try/catch 추가 — 실패 시 다이얼로그를 닫고 '취소하지 못했습니다. 다시 시도해 주세요' 표시",
+        "files": ["frontend/src/pages/PerformanceEditPage.tsx"]
+      },
+      {
+        "finding": "normal: SEAT_LIMIT_EXCEEDED 오류가 항상 마지막 구역에 하드코딩되어 실제 원인 구역과 다를 수 있음(AC4 부분 위반)",
+        "fix": "서버가 원인 구역을 알려주지 않으므로 정확한 구역을 특정할 수 없다는 전제 하에, 하나를 잘못 지목하는 대신 모든 구역 카드에 동일 안내를 표시하도록 변경. SC-04(구역 1개)는 그대로 통과, 다중 구역에서도 더 이상 엉뚱한 구역만 지목하지 않음",
+        "files": ["frontend/src/pages/PerformanceRegisterPage.tsx"]
+      },
+      {
+        "finding": "test-coverage: PerformanceEditPage.test.tsx의 cancelPerformance mock이 실제로는 없는 sections 필드를 포함해 결함을 가림",
+        "fix": "SC-09 mock에서 sections 제거해 실제 API 계약(PerformanceResponse — POST cancel 응답에는 sections 없음)과 일치시킴. updatePerformance 성공 경로 회귀 테스트 신규 추가",
+        "files": ["frontend/src/pages/PerformanceEditPage.test.tsx"]
+      },
+      {
+        "finding": "minor: seatCountOf가 rowStart/rowEnd 유효성(A~Z 단일 문자)을 검증하지 않아 잘못된 입력에도 그럴듯한 미리보기 숫자를 냄",
+        "fix": "isSingleUpperCaseLetter 검증 추가",
+        "files": ["frontend/src/pages/PerformanceRegisterPage.tsx"]
+      }
+    ],
+    "not_applied": [],
+    "regression_after_fix": {
+      "command": "cd frontend && npm test && npx tsc -b --noEmit && npm run lint && npm run build",
+      "result": "23/23 테스트 통과, 타입체크/빌드 오류 0, 린트 error 0(warning 3, 기존과 동일)"
+    }
+  },
+  "phase4_rollback_fixes_2": {
+    "source": "code-reviewer 재검토(2차) — 1차 수정 커밋을 검증하던 중 새로 발견된 소견 및 1차에서 남은 갭",
+    "verification_method": "2차 리뷰는 수정 전 커밋(6c8a6a2)에 별도 git worktree를 만들고 수정된 테스트 파일만 얹어 실행 — SC-09와 REGRESSION 2건이 실제로 실패(false-green 아님)함을 확인. 워크트리는 제거함",
+    "applied": [
+      {
+        "finding": "medium correctness (이번 수정 커밋에서 새로 생김): confirmCancel 성공 분기가 setSaveError(null)을 하지 않아, 저장 실패 배너가 떠 있는 상태에서 취소에 성공하면 실패 배너가 그대로 남아 사용자가 취소도 실패했다고 오인함",
+        "fix": "confirmCancel 성공 분기에 setSaveError(null) 추가",
+        "files": ["frontend/src/pages/PerformanceEditPage.tsx"],
+        "verified": "REGRESSION 테스트 신규 추가(취소 성공 시 이전 저장 실패 배너가 남지 않는다)"
+      },
+      {
+        "finding": "low correctness: 미리보기(seatCountOf)는 rowStart/rowEnd를 trim+대문자화해서 계산하지만, 실제 전송 body는 원본 문자열을 그대로 보냄 — 소문자/공백 입력 시 미리보기는 정상인데 서버는 INVALID_SECTION으로 거부해 원인을 알 수 없는 일반 실패 배너만 뜸",
+        "fix": "전송 시에도 rowStart/rowEnd를 trim().toUpperCase()로 정규화",
+        "files": ["frontend/src/pages/PerformanceRegisterPage.tsx"],
+        "verified": "REGRESSION 테스트 신규 추가(행 입력에 소문자/공백이 있어도 제출 시 정규화되어 전송된다)"
+      },
+      {
+        "finding": "low correctness: '다시 시도' 버튼이 submit()을 직접 호출해 브라우저 네이티브 필수 입력 검증을 우회함 — 제출 실패 후 사용자가 날짜 필드를 지우고 [다시 시도]를 누르면 빈 값이 그대로 서버로 전송됨(RangeError는 아니지만 의미 없는 요청)",
+        "fix": "formRef를 추가하고 '다시 시도' onClick을 formRef.current?.requestSubmit()으로 변경 — 네이티브 검증을 다시 거치게 함",
+        "files": ["frontend/src/pages/PerformanceRegisterPage.tsx"]
+      },
+      {
+        "finding": "design: PLAN design.outputs/F3의 SEAT_LIMIT_EXCEEDED 문구가 '해당 구역'(단수)으로 되어 있어 1차 수정(전체 구역 표시)과 문서가 어긋남",
+        "fix": "PLAN_TASK-005.json의 해당 output과 F3 steps를 구현과 일치하도록 갱신(시나리오 SCENARIO_TASK-005.md는 구역 1개 케이스만 다뤄 변경 불필요 — SC-04 자체는 그대로 유효)",
+        "files": ["workflow_design/04_plan/PLAN_TASK-005.json"]
+      },
+      {
+        "finding": "test-coverage: 차단 결함 #2(빈 datetime)를 방어하는 유틸 함수 단위 테스트가 없어 회귀해도 아무 테스트도 실패하지 않음, 취소 실패 경로(결함 #3)를 실행하는 테스트가 없음, 다중 구역 SEAT_LIMIT 동작(결함 #4)을 검증하는 테스트가 SC-04(구역 1개)뿐이라 마스트 구역 하드코딩으로 되돌려도 통과함",
+        "fix": "frontend/src/utils/datetime.test.ts 신규(fromDatetimeLocalInput 빈값/유효하지않은값 방어 단위 테스트), PerformanceEditPage.test.tsx에 취소 실패 REGRESSION 테스트, PerformanceRegisterPage.test.tsx에 다중구역 SEAT_LIMIT REGRESSION 테스트 추가",
+        "files": [
+          "frontend/src/utils/datetime.test.ts",
+          "frontend/src/pages/PerformanceEditPage.test.tsx",
+          "frontend/src/pages/PerformanceRegisterPage.test.tsx"
+        ]
+      }
+    ],
+    "not_applied": [],
+    "data_corrections": [
+      {
+        "what": "1차 phase4_rollback_fixes.not_applied 배열에 실제로는 적용된 항목(seatCountOf 검증)이 reason에 '적용함'이라고 적힌 채 not_applied에 잘못 들어가 있던 데이터 오류",
+        "fix": "applied 배열로 이동, not_applied는 빈 배열로 정정. 기능 영향 없음(문서 정합성 문제였음)"
+      }
+    ],
+    "regression_after_fix": {
+      "command": "cd frontend && npm test && npx tsc -b --noEmit && npm run lint && npm run build",
+      "result": "31/31 테스트 통과(23 → 31, 신규 8건: datetime 3 + EditPage REGRESSION 2 + RegisterPage REGRESSION 2 + 기존 1건 명칭 유지), 타입체크/빌드 오류 0, 린트 error 0(warning 3, 기존과 동일)"
+    }
+  }
+}

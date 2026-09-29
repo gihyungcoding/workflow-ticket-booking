@@ -1,0 +1,79 @@
+{
+  "task_id": "TASK-005",
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "SCENARIO_TASK-005.md 10건(SC-01~SC-10) ↔ SCENARIO_TASK-005.json scenarios 10건. ID·type·title·Given/When/Then 문장을 1:1 대조했고 전건 일치한다(SC-01 G4/W1/T2, SC-02 G4/W1/T2, SC-03 G2/W1/T2, SC-04 G2/W1/T1, SC-05 G2/W1/T2, SC-06 G1/W1/T3, SC-07 G2/W1/T1, SC-08 G1/W1/T1, SC-09 G2/W1/T2, SC-10 G1/W1/T2). covers·flow 값도 동일. 2차 검증에서 지적된 문구 불일치는 해소됐다. 다만 MD 본문에 SoT로서 스스로와 모순되는 문장이 남아 있다 — 이 건은 V10 항목에 적었다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 10건 ≥ 2. happy 5건(SC-01, SC-02, SC-06, SC-08, SC-09) ≥ 1. error 4건(SC-03, SC-04, SC-05, SC-07) ≥ 1. regression 1건(SC-10)."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "PLAN acceptance_criteria 8건을 원문 문자열로 직접 대조했다. AC1(등록→상세 이동)→SC-01, AC2(미리보기 즉시 갱신)→SC-02, AC3(INVALID_TIME_ORDER 인라인)→SC-03, AC4(SEAT_LIMIT_EXCEEDED 구역 아래)→SC-04, AC5(5xx/네트워크 배너+다시 시도)→SC-05, AC6(수정 폼 초기값+좌석 요약 읽기 전용)→SC-06, AC7(409 안내)→SC-07, AC8(취소 다이얼로그→반영)→SC-08+SC-09. covers 문자열이 AC 원문과 글자 단위로 같다. 미커버 0건 — JSON coverage 의 자기 신고(8/8, uncovered: [])와 실제가 일치한다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "PLAN design.flows = F1~F8. 시나리오가 참조하는 flow = F1(SC-01, SC-02), F2, F3, F4, F5, F6, F7(SC-08, SC-09), F8(SC-10) — 전부 실재한다. 역방향으로도 F1~F8 모두 최소 1건의 시나리오를 갖는다(고아 flow 없음). 신설된 F8은 PLAN_TASK-005.json L59-64 에 실제로 존재하며 covers: [] 와 추가 경위 note 가 붙어 있다."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "warn",
+      "detail": "대부분 개선됐다 — SC-06 Then3 '그 영역에는 값을 고칠 수 있는 입력 요소(input/textarea 등)가 없다'는 queryAllByRole('textbox') 로 단언 가능하고, SC-09 Then2 '상태 표시 영역에 \"공연취소\" 텍스트가 표시된다'는 frontend/src/components/StatusBadge.test.tsx L26 의 기존 라벨('공연취소')과 일치해 getByText 로 단언 가능하다. 남은 문제는 SC-10 Then1 '등록 폼(PerformanceRegisterPage) 요소가 렌더된다' — 어떤 텍스트/role 을 찾아야 하는지가 없어 그대로 단언으로 옮길 수 없다. 나머지 9건의 구체적 Then(문구·URL·요청 본문)과 대비해 이 한 줄만 추상적이다. 부차적으로 SC-07 Then 은 표시 '위치'를 말하지 않는다 — PLAN outputs 는 409 를 form-error 로 분류하지만 인라인인지 상단 배너인지 미정이라 구현이 어느 쪽을 택해도 통과한다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "pass",
+      "detail": "10건 모두 when 배열 길이 1이고 '그리고 ~하면' 형태가 없다. SC-02 When '새 구역 카드에 등급 R, 행 C~E, 행당 좌석수 20을 입력한다'는 필드 4개 입력이지만 '새 구역 값 입력'이라는 하나의 논리적 행위이며, 직전 검증에서 지적된 '구역 추가+입력' 결합은 [+ 구역 추가]를 Given(L24-25)으로 내려 해소했다. SC-08/SC-09 도 AC8 의 두 단계 행위를 다이얼로그 열기/확인 클릭으로 분리해 단일성을 지켰다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "warn",
+      "detail": "SC-10 Then1 이 컴포넌트 클래스명 'PerformanceRegisterPage'를 Then 에 담고 있다(MD L122, JSON L144). Given 의 App/라우트 언급은 허용 범위지만 Then 은 관찰 가능한 화면 산출물로 써야 한다. 같은 SC-10 의 Then2('GET /api/performances/new 요청이 발생하지 않는다')는 네트워크 경계 관찰이므로 문제없다. SC-01 Then1 의 요청 본문 필드명(rowStart/rowEnd/seatsPerRow)은 PLAN design.inputs 에 정의된 API 계약이라 누출로 보지 않는다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "warn",
+      "detail": "입력(title/venue/시각 3종/sections[]/performanceId)은 전부 PLAN design.inputs 범위 안이다. 출력 쪽에 PLAN 미정의 사항이 4건 있다. (1) SC-03 '예매 오픈·마감·공연 일시 순서가 올바르지 않습니다', SC-04 '좌석 총수는 5,000석을 넘을 수 없습니다' — docs/product/features/performance-registration.md L183-184 는 '필드 아래 인라인 메시지로 표시한다'까지만 정하고 문구를 주지 않으며, PLAN outputs 도 코드→위치 매핑만 있고 문구는 409(AC7)에만 있다. 즉 이 두 한국어 문구는 시나리오가 새로 정한 값이다(MD L154-159 가 이를 인정하고 Phase 3 구현 의무로 넘긴다 — Phase 3/4 에서 문구가 달라지면 테스트가 깨진다). (2) SC-06 좌석 요약 표시 형식 'VIP · 120,000원 · 20석' — PLAN 은 '구역별 등급·가격·좌석 수'까지만 정하고 구분자·천단위 콤마·단위 표기는 정의하지 않는다. (3) SC-10 이 단언하는 라우트 매칭 결과는 PLAN design.outputs 어디에도 대응 항목이 없다(F8 flow 로만 존재). 대조로 검증된 것도 있다 — SC-05 문구는 feature 문서 L185 와, SC-08 문구는 L188 과, SC-09 '공연취소'는 기존 StatusBadge 라벨과 축자 일치한다. PLAN 이 시나리오보다 덜 구체적이라는 뜻이며, 시나리오가 범위를 넘었다기보다 PLAN outputs 가 불완전하다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "pass",
+      "detail": "같은 flow 를 공유하는 쌍을 개별 확인했다. SC-01/SC-02(F1)는 제출-POST 경로 vs 입력 변경 시 클라이언트 파생 계산 경로로 서로 다르다(SC-02 Then 은 'API 호출 없이'를 명시). SC-08/SC-09(F7)는 다이얼로그 오픈 경로 vs 확인 후 POST/상태 반영 경로로 다르다. SC-03/SC-04/SC-05 는 각각 다른 응답 코드 분기를 탄다. SC-01 과 SC-10 은 둘 다 /performances/new 를 다루지만 SC-01 은 폼이 열린 상태를 Given 으로 전제하고 SC-10 만 라우트 매칭 자체를 단언한다."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "warn",
+      "detail": "회귀 시나리오 자체는 충족됐다 — target_files 4건 중 기존 파일 수정은 App.tsx 와 performances.ts 이고, App.tsx 의 정적/동적 라우트 공존 리스크를 SC-10(regression, F8)이 덮는다. performances.ts 에 회귀 시나리오를 두지 않은 근거(옵셔널 필드 추가·기존 시그니처 불변)도 MD L148-150 에 명시돼 있어 수용 가능하다. 경고 사유는 문서 모순이다 — MD L162 가 '**V10 (회귀 누락, warn) 반영 안 함, 사람 판단 요청**' 이라고 적혀 있는데 같은 문서 L117-127 에 SC-10 이 실재하고 L142-147 은 '사용자 승인 하에 PLAN 에 F8 을 추가하고 SC-10 으로 검증한다'고 적는다. MD 는 SoT 인데 자기 안에서 반영 여부가 엇갈린다. '독립검증 반영' 절(L152-162)이 2차 검증 시점 그대로 남아 이번 반영분(SC-06/SC-09 Then 구체화, MD/JSON 문구 정합)도 기록되지 않았다. 또한 L146 의 'HITL#1 사전 확인' 은 SCENARIO_TASK-005.json 에 대응 승인 필드가 없어(human_input 은 generate_red_trigger: false 뿐) 산출물만으로는 확인되지 않는다 — HITL#1 을 받을 때 사람이 이 기재를 확인해야 한다."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 4,
+    "summary": "fail 없음 — V1~V4(MD/JSON 일치, 개수, AC 8/8 커버리지, flow F1~F8 대응)를 직접 대조해 전부 통과했고 2차 검증의 V1 불일치·V10 회귀 누락은 실제로 해소됐다. 남은 경고 4건: (V5/V7) SC-10 Then1 '등록 폼(PerformanceRegisterPage) 요소가 렌더된다'가 컴포넌트명을 담은 채 어떤 요소를 찾을지 명시하지 않아 그대로 단언으로 옮길 수 없다. (V8) SC-03/SC-04 의 오류 문구와 SC-06 의 좌석 요약 표기 형식이 PLAN·feature 문서 어디에도 없는 신규 결정이라 Phase 3 구현이 문구를 달리하면 테스트가 깨진다 — PLAN design.outputs 를 먼저 채우는 편이 안전하다. (V10) MD L162 가 'V10 반영 안 함'이라고 적힌 채 남아 있어 같은 문서의 SC-10/커버리지 메모와 정면으로 모순되며, L146 의 HITL 승인 주장은 산출물에 대응 필드가 없다. 다음 Phase 진행은 가능하나 HITL#1 제시 전에 MD '독립검증 반영' 절을 현재 상태에 맞게 갱신할 것을 권고한다."
+  },
+  "post_validation_fixes": {
+    "note": "이 파일은 3차 검증 원문 그대로다(가공 없이 저장). 아래는 이 검증 이후 실제로 적용한 수정 — SCENARIO_TASK-005.md '독립검증 반영 이력' 섹션 및 CP-2.3에 동일 내용 기록.",
+    "applied": [
+      "V5/V7 — SC-10 Then1을 '공연명 입력란(라벨 \"공연명\")이 화면에 표시된다 — 등록 폼에만 있고 상세 화면에는 없는 요소다'로 재작성, 컴포넌트명 제거",
+      "V8 — PLAN_TASK-005.json design.outputs에 SC-03/SC-04 오류 문구와 SC-06 좌석 요약 표기 형식을 명시",
+      "V10 — SCENARIO_TASK-005.md '독립검증 반영' 절을 1~3차 이력 전체로 재작성"
+    ]
+  }
+}

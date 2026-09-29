@@ -21,4 +21,5 @@ _없음_
 | TASK-003 | 디자인 토큰·서체 적용 | 5 Reflect | 2026-09-10 |
 | TASK-004 | 공연 등록/수정/취소 API | 5 Reflect | 2026-09-16 |
 | TASK-006 | 구역 price/seatsPerRow 정수 강제 검증 | 5 Reflect | 2026-09-28 |
+| TASK-005 | 공연 등록/수정 화면 | 5 Reflect | 2026-09-18 |
 | TASK-008 | 공연 상세 API에 구역별 좌석 구성 요약 추가 | 5 Reflect | 2026-09-17 |

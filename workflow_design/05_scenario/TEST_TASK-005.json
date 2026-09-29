@@ -1,0 +1,66 @@
+{
+  "task_id": "TASK-005",
+  "supersedes": "SCENARIO_TASK-005.json",
+  "test_files": [
+    "frontend/src/pages/PerformanceRegisterPage.test.tsx",
+    "frontend/src/pages/PerformanceEditPage.test.tsx",
+    "frontend/src/App.test.tsx"
+  ],
+  "red_scenarios": [
+    { "scenario_id": "SC-01", "test_function": "SC-01 (happy) 등록 폼 제출 시 공연이 생성되고 상세 화면으로 이동한다", "test_file": "frontend/src/pages/PerformanceRegisterPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceRegisterPage.tsx:2)" },
+    { "scenario_id": "SC-02", "test_function": "SC-02 (happy) 구역을 추가하면 생성될 좌석 수 미리보기가 즉시 갱신된다", "test_file": "frontend/src/pages/PerformanceRegisterPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceRegisterPage.tsx:2)" },
+    { "scenario_id": "SC-03", "test_function": "SC-03 (error) 시각 순서 위반 응답을 받으면 필드 아래 인라인 오류가 표시된다", "test_file": "frontend/src/pages/PerformanceRegisterPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceRegisterPage.tsx:2)" },
+    { "scenario_id": "SC-04", "test_function": "SC-04 (error) 좌석 총수 초과 응답을 받으면 해당 구역 아래 오류가 표시된다", "test_file": "frontend/src/pages/PerformanceRegisterPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceRegisterPage.tsx:2)" },
+    { "scenario_id": "SC-05", "test_function": "SC-05 (error) 등록 API 호출이 실패하면 폼 상단에 오류와 다시 시도가 표시된다", "test_file": "frontend/src/pages/PerformanceRegisterPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceRegisterPage.tsx:2)" },
+    { "scenario_id": "SC-06", "test_function": "SC-06 (happy) 수정 화면 진입 시 기존 값과 좌석 구성 요약이 표시된다", "test_file": "frontend/src/pages/PerformanceEditPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceEditPage.tsx:2)" },
+    { "scenario_id": "SC-07", "test_function": "SC-07 (error) 오픈 이후 수정하려 하면 전용 안내가 표시된다", "test_file": "frontend/src/pages/PerformanceEditPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceEditPage.tsx:2)" },
+    { "scenario_id": "SC-08", "test_function": "SC-08 (happy) 취소 버튼을 클릭하면 확인 다이얼로그가 뜬다", "test_file": "frontend/src/pages/PerformanceEditPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceEditPage.tsx:2)" },
+    { "scenario_id": "SC-09", "test_function": "SC-09 (happy) 확인 다이얼로그에서 확인하면 취소 상태가 반영된다", "test_file": "frontend/src/pages/PerformanceEditPage.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceEditPage.tsx:2)" },
+    { "scenario_id": "SC-10", "test_function": "SC-10 (regression) 새 등록 라우트가 기존 상세 라우트를 가리지 않는다", "test_file": "frontend/src/App.test.tsx", "status": "red", "failure": "Error: not implemented (PerformanceRegisterPage.tsx:2, App 이 그 컴포넌트를 렌더하며 전파됨)" }
+  ],
+  "red_result": {
+    "command": "cd frontend && npm test",
+    "total": 22,
+    "failed": 10,
+    "passed": 12,
+    "existing_tests_still_passing": true,
+    "purity_check": "10건 전부 실패 사유가 'not implemented' 하나로 동일함을 --reporter=verbose 로 확인. 로직(조건 분기·계산·실제 반환값)이 전혀 없다는 뜻"
+  },
+  "inventory_check": {
+    "scenarios": 10,
+    "test_functions": 10,
+    "match": true,
+    "by_file": {
+      "frontend/src/pages/PerformanceRegisterPage.test.tsx": 5,
+      "frontend/src/pages/PerformanceEditPage.test.tsx": 4,
+      "frontend/src/App.test.tsx": 1
+    }
+  },
+  "testing_preferences": {
+    "framework": "Vitest + Testing Library (ADR-0007)",
+    "mock_strategy": "vi.mock('../api/performances' 또는 './api/performances') 로 register/update/cancel/getPerformance 만 vi.fn() 으로 교체, 나머지는 importOriginal 그대로 — 기존 PerformanceDetailPage.test.tsx/PerformanceListPage.test.tsx 패턴을 따름. MemoryRouter + ThemeProvider 로 감쌈"
+  },
+  "compile_skeleton": {
+    "note": "TypeScript는 컴파일 언어로 취급 — 클래스/함수 시그니처와 구조적 선언만 두고 본문 로직은 없음. npx tsc -b --noEmit 통과 확인함",
+    "files": [
+      {
+        "path": "frontend/src/api/performances.ts",
+        "content": "SectionSummary/SectionInput/RegisterPerformanceInput/UpdatePerformanceInput 타입 선언(구조 선언), ApiError 클래스(필드 대입만), registerPerformance/updatePerformance/cancelPerformance 함수 시그니처 — 본문은 `throw new Error('not implemented')` 한 줄. Performance 타입에 sections? 필드 추가(구조 선언)"
+      },
+      {
+        "path": "frontend/src/pages/PerformanceRegisterPage.tsx",
+        "content": "신규 파일. `export function PerformanceRegisterPage(): never { throw new Error('not implemented') }` 한 줄만"
+      },
+      {
+        "path": "frontend/src/pages/PerformanceEditPage.tsx",
+        "content": "신규 파일. `export function PerformanceEditPage(): never { throw new Error('not implemented') }` 한 줄만"
+      },
+      {
+        "path": "frontend/src/App.tsx",
+        "content": "라우트 2건 추가(구조 선언, 조건 분기 없음): /performances/new → PerformanceRegisterPage, /performances/:id/edit → PerformanceEditPage"
+      }
+    ],
+    "purity_check": "npx tsc -b --noEmit 및 npm run lint 통과 — 새 코드에서 신규 오류/경고 없음(기존 warn 2건 그대로). vitest 실패 10건 전부 위 스켈레톤의 throw 한 줄에서만 발생"
+  },
+  "human_review": { "approved": true }
+}
