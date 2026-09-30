@@ -6,6 +6,7 @@ import com.example.ticket_booking.domain.PerformanceStatusRules;
 import com.example.ticket_booking.domain.Seat;
 import com.example.ticket_booking.repository.PerformanceRepository;
 import com.example.ticket_booking.repository.SeatRepository;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class PerformanceService {
   private static final int MAX_GRADE_LENGTH = 20;
   private static final int MAX_TITLE_LENGTH = 200;
   private static final int MAX_VENUE_LENGTH = 200;
+  private static final BigDecimal MAX_INT_VALUE = BigDecimal.valueOf(Integer.MAX_VALUE);
 
   private final PerformanceRepository performanceRepository;
   private final SeatRepository seatRepository;
@@ -86,7 +88,7 @@ public class PerformanceService {
 
     long totalSeatsLong = 0;
     for (SectionSpec section : sections) {
-      totalSeatsLong += (long) rowCount(section) * section.seatsPerRow();
+      totalSeatsLong += (long) rowCount(section) * section.seatsPerRow().intValueExact();
     }
     if (totalSeatsLong > MAX_SEATS) {
       throw new SeatLimitExceededException(totalSeatsLong);
@@ -151,8 +153,21 @@ public class PerformanceService {
     if (isBlank(section.grade()) || section.grade().length() > MAX_GRADE_LENGTH) {
       throw new InvalidSectionException("grade는 1~" + MAX_GRADE_LENGTH + "자여야 합니다");
     }
-    if (section.price() == null || section.price() < 0) {
+    // price/seatsPerRow: 범위 확인(signum·compareTo)이 isIntegral()보다 먼저다 — isIntegral()의
+    // stripTrailingZeros()는 scale이 Integer.MIN_VALUE 아래로 내려가면 ArithmeticException을
+    // 던진다(극단적 지수 표기, 예: 100E+2147483647). 그런 값은 반드시 MAX_INT_VALUE를 넘으므로
+    // compareTo를 먼저 통과시키면 isIntegral()에 위험한 값이 도달하지 않는다.
+    if (section.price() == null) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
+    }
+    if (section.price().signum() < 0) {
+      throw new InvalidSectionException("price는 0 이상이어야 합니다");
+    }
+    if (section.price().compareTo(MAX_INT_VALUE) > 0) {
+      throw new InvalidSectionException("price는 " + Integer.MAX_VALUE + " 이하여야 합니다");
+    }
+    if (!isIntegral(section.price())) {
+      throw new InvalidSectionException("price는 정수여야 합니다");
     }
     if (!isValidRow(section.rowStart()) || !isValidRow(section.rowEnd())) {
       throw new InvalidSectionException("rowStart/rowEnd는 A~Z 단일 대문자여야 합니다");
@@ -160,13 +175,26 @@ public class PerformanceService {
     if (section.rowStart().charAt(0) > section.rowEnd().charAt(0)) {
       throw new InvalidSectionException("rowStart가 rowEnd보다 뒤일 수 없습니다");
     }
-    if (section.seatsPerRow() == null || section.seatsPerRow() < 1) {
+    if (section.seatsPerRow() == null) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
+    }
+    if (section.seatsPerRow().compareTo(BigDecimal.ONE) < 0) {
+      throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
+    }
+    if (section.seatsPerRow().compareTo(MAX_INT_VALUE) > 0) {
+      throw new InvalidSectionException("seatsPerRow는 " + Integer.MAX_VALUE + " 이하여야 합니다");
+    }
+    if (!isIntegral(section.seatsPerRow())) {
+      throw new InvalidSectionException("seatsPerRow는 정수여야 합니다");
     }
   }
 
   private static boolean isBlank(String value) {
     return value == null || value.isBlank();
+  }
+
+  private static boolean isIntegral(BigDecimal value) {
+    return value.stripTrailingZeros().scale() <= 0;
   }
 
   private static boolean isValidRow(String row) {
@@ -196,8 +224,9 @@ public class PerformanceService {
     for (SectionSpec section : sections) {
       char rowStart = section.rowStart().charAt(0);
       char rowEnd = section.rowEnd().charAt(0);
+      int seatsPerRow = section.seatsPerRow().intValueExact();
       for (char row = rowStart; row <= rowEnd; row++) {
-        for (int number = 1; number <= section.seatsPerRow(); number++) {
+        for (int number = 1; number <= seatsPerRow; number++) {
           String seatLabel = section.grade() + "-" + row + number;
           seats.add(
               new Seat(
@@ -206,7 +235,7 @@ public class PerformanceService {
                   String.valueOf(row),
                   number,
                   seatLabel,
-                  section.price()));
+                  section.price().intValueExact()));
         }
       }
     }
