@@ -3,7 +3,7 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | route: Backend, inputs 8/outputs 3/flows 4 |
-| 2a Scenario | ⬜ 대기 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 11건(happy1/error1/regression9), 검증 3회 pass, HITL#1 승인 |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |

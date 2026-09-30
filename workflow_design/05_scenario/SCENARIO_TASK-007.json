@@ -1,0 +1,117 @@
+{
+  "task_id": "TASK-007",
+  "scenarios": [
+    {
+      "id": "SC-01", "type": "happy", "title": "유효한 등록 요청은 여전히 201로 성공한다",
+      "given": [
+        "title/venue/startAt/openAt/closeAt가 모두 유효하다",
+        "sections에 구역 하나(grade=\"VIP\", price=100, rowStart=\"A\", rowEnd=\"A\", seatsPerRow=10)가 있다"
+      ],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["201이 반환된다", "응답의 totalSeats는 10이다"],
+      "covers": ["유효한 등록/수정 요청은 마이그레이션 이전과 동일하게 201/200으로 성공한다 (기존 23개 시나리오 회귀 없음)"],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-02", "type": "regression", "title": "title이 비어 있으면 400 INVALID_REQUEST가 반환된다",
+      "given": ["등록 요청의 title이 빈 문자열이다", "나머지 필드(venue/시각/sections)는 유효하다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_REQUEST이다"],
+      "covers": ["title/venue가 없거나 200자를 넘으면 400과 INVALID_REQUEST가 반환된다 (Bean Validation 경로)"],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-03", "type": "regression", "title": "title이 200자를 넘으면 400 INVALID_REQUEST가 반환된다",
+      "given": ["등록 요청의 title이 201자이다", "나머지 필드(venue/시각/sections)는 유효하다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_REQUEST이다"],
+      "covers": ["title/venue가 없거나 200자를 넘으면 400과 INVALID_REQUEST가 반환된다 (Bean Validation 경로)"],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-04", "type": "regression", "title": "구역의 grade가 20자를 넘으면 400 INVALID_SECTION이 반환된다",
+      "given": ["등록 요청의 sections에 구역 하나가 있고 grade가 21자이다", "나머지 필드는 유효하다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_SECTION이다 (INVALID_REQUEST가 아니다)"],
+      "covers": ["section의 grade/rowStart/rowEnd/seatsPerRow가 없거나 형식에 맞지 않으면 400과 INVALID_SECTION이 반환된다 (Bean Validation 경로)"],
+      "flow": "F3"
+    },
+    {
+      "id": "SC-05", "type": "regression", "title": "구역의 rowStart가 형식에 맞지 않으면 400 INVALID_SECTION이 반환된다",
+      "given": ["등록 요청의 sections에 구역 하나가 있고 rowStart가 빈 문자열이다", "나머지 필드는 유효하다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_SECTION이다"],
+      "covers": ["section의 grade/rowStart/rowEnd/seatsPerRow가 없거나 형식에 맞지 않으면 400과 INVALID_SECTION이 반환된다 (Bean Validation 경로)"],
+      "flow": "F3"
+    },
+    {
+      "id": "SC-06", "type": "regression", "title": "구역의 seatsPerRow 필드 자체가 없으면 400 INVALID_SECTION이 반환된다",
+      "given": ["등록 요청의 sections에 구역 하나가 있고 seatsPerRow 필드가 JSON에 없다(null)", "나머지 필드는 유효하다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_SECTION이다"],
+      "covers": ["section의 grade/rowStart/rowEnd/seatsPerRow가 없거나 형식에 맞지 않으면 400과 INVALID_SECTION이 반환된다 (Bean Validation 경로)"],
+      "flow": "F3"
+    },
+    {
+      "id": "SC-07", "type": "error", "title": "요청 본문이 파싱 불가능한 JSON이면 400 INVALID_REQUEST가 반환된다",
+      "given": ["요청 본문이 올바른 JSON 구문이 아니다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_REQUEST이다", "응답 본문에 code와 message 필드가 있다"],
+      "covers": ["요청 본문이 파싱 불가능한 JSON이거나 필드 타입이 맞지 않으면(HttpMessageNotReadableException) 빈 body가 아니라 400과 INVALID_REQUEST(ErrorResponse{code,message})가 반환된다"],
+      "flow": "F4"
+    },
+    {
+      "id": "SC-08", "type": "regression", "title": "구역의 seatsPerRow가 0이면 이관 이후에도 여전히 400 INVALID_SECTION으로 거부된다",
+      "given": ["등록 요청의 sections에 구역 하나가 있고 seatsPerRow가 0이다(필드는 존재하지만 1 미만)", "나머지 필드는 유효하다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_SECTION이다"],
+      "covers": ["유효한 등록/수정 요청은 마이그레이션 이전과 동일하게 201/200으로 성공한다 (기존 23개 시나리오 회귀 없음)"],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-09", "type": "regression", "title": "수정 요청의 title이 200자를 넘으면 400 INVALID_REQUEST가 반환된다",
+      "given": ["now보다 openAt이 늦은(수정 가능한) 공연이 등록되어 있다", "수정 요청의 title이 201자이다"],
+      "when": ["PUT /api/performances/{id} 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_REQUEST이다"],
+      "covers": ["title/venue가 없거나 200자를 넘으면 400과 INVALID_REQUEST가 반환된다 (Bean Validation 경로)"],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-10", "type": "regression", "title": "구역 배열에 null 원소가 있으면 이관 이후에도 여전히 400 INVALID_SECTION으로 거부된다",
+      "given": ["등록 요청의 sections 배열에 null 원소가 하나 있다([null])", "나머지 필드는 유효하다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_SECTION이다"],
+      "covers": ["유효한 등록/수정 요청은 마이그레이션 이전과 동일하게 201/200으로 성공한다 (기존 23개 시나리오 회귀 없음)"],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-11", "type": "regression", "title": "최상위 필드와 section 필드를 동시에 위반하면 INVALID_REQUEST가 우선한다",
+      "given": ["등록 요청의 title이 빈 문자열이다", "동시에 sections의 구역 하나가 grade 21자로 형식도 어긴다"],
+      "when": ["POST /api/performances 를 호출한다"],
+      "then": ["400이 반환된다", "응답 코드는 INVALID_REQUEST이다 (INVALID_SECTION이 아니다)"],
+      "covers": ["title/venue가 없거나 200자를 넘으면 400과 INVALID_REQUEST가 반환된다 (Bean Validation 경로)"],
+      "flow": "F2"
+    }
+  ],
+  "coverage": {
+    "acceptance_criteria_total": 4,
+    "acceptance_criteria_covered": 4,
+    "uncovered": [],
+    "merged": [
+      { "scenarios": ["price 필드 존재 여부(@NotNull)", "seatsPerRow 필드 존재 여부(@NotNull, SC-06)"],
+        "into": "SC-06",
+        "reason": "동일한 애노테이션 종류(@NotNull)·동일한 FieldError 라우팅 코드 경로 — 독립적으로 실패할 수 있는 결함이 없다" },
+      { "scenarios": ["rowStart 형식 오류(SC-05)", "rowEnd 형식 오류"],
+        "into": "SC-05",
+        "reason": "rowStart/rowEnd에 동일한 @Pattern 애노테이션을 적용 — 같은 코드 경로" },
+      { "scenarios": ["title 검증(SC-02/03)", "venue 검증"],
+        "into": "SC-02, SC-03",
+        "reason": "venue는 title과 동일한 @NotBlank+@Size(max=200) 코드 경로 — 독립적으로 실패할 결함 개연성이 낮다고 판단, 별도 시나리오 미추가(caveat으로 기록)" },
+      { "scenarios": ["기존 PerformanceRegistrationApiTest.java 의 23개 시나리오 중 이 태스크가 건드리지 않는 코드 경로(좌석 생성, 시각 순서, 좌석 상한, 행 범위 겹침, rowStart>rowEnd 역방향 등)"],
+        "into": "회귀는 기존 테스트 파일을 코드 변경 없이 재실행하는 것으로 검증",
+        "reason": "SC-02~06/08/09/10은 Plan이 확정한 이관/잔존 경계선을 각각 정확히 겨냥해 의도적으로 포함했다(자세한 근거는 MD 결정 노트). 그 외 무관한 항목만 재실행에 위임한다" }
+    ]
+  },
+  "type_reclassification_note": "1차 검증 이후 SC-02/03/04/05/06/08/09를 'error'에서 'regression'으로 재분류했다 — 이 시나리오들이 검증하는 입력은 모두 현재(마이그레이션 전) 코드에서도 이미 같은 응답을 내므로 Phase 2b에서 '새로 실패하는' Red 테스트로 쓸 수 없다. 이 태스크에서 현재 실제로 실패하는 시나리오는 SC-07 하나뿐이다. SC-10은 2차 검증(V10)에서 Plan이 스스로 최대 위험으로 지목한 sections=[null] cascade 회귀가 누락됐다는 지적을 받고 추가했다. SC-11은 3차 검증(V10)이 발견한 '최상위 필드+section 필드 동시 위반 시 에러 코드 뒤집힘' 위험을 사람 확인(HITL, 최상위 필드 우선으로 결정) 후 추가했고, 이 결정을 PLAN_TASK-007.json의 F2/F3 steps에도 반영했다.",
+  "human_input": { "generate_red_trigger": true }
+}

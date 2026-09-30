@@ -1,8 +1,8 @@
 ---
 task_id: TASK-007
 title: "공연 등록 API DTO를 Bean Validation으로 마이그레이션"
-phase: "1"
-phase_name: "Phase 1 - Plan (완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design (완료)"
 status: ACTIVE
 created_at: 2026-09-29
 last_updated: 2026-09-30
@@ -12,20 +12,21 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-007-bean-validation-migration"
 
-last_checkpoint: CP-1.3
+last_checkpoint: CP-2.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-007.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-007.md"
+  test: null
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1을 마쳤다. route=Backend, inputs 8/outputs 3/flows 4, AC 4건 전부
-flows.covers 로 커버(역방향 확인 통과). 대상 파일 6개(DTO 3개, Controller,
-ExceptionHandler, Service) 확정.
+Phase 2a를 마쳤다. 시나리오 11건(happy 1 / error 1 / regression 9), 독립검증
+3회 모두 pass, HITL#1 승인 완료. generate_red_trigger=true.
 
 ## 다음 한 걸음
 
-`wf-scenario` 스킬로 Phase 2a(시나리오 설계)를 시작한다.
+`wf-red` 스킬로 Phase 2b(Red 테스트 작성)를 시작한다.
 
 ## 알아둬야 할 것
 
@@ -41,7 +42,22 @@ ExceptionHandler, Service) 확정.
 - **MethodArgumentNotValidException 분기가 이 태스크의 핵심 설계다**: 태스크
   설명은 "INVALID_REQUEST로 통일"이라 썼지만 AC3는 section 필드 오류를
   INVALID_SECTION으로 요구 — FieldError 경로가 `sections`로 시작하면
-  INVALID_SECTION, 아니면 INVALID_REQUEST로 판정하기로 Phase 1에서 확정
+  INVALID_SECTION, 아니면 INVALID_REQUEST로 판정하기로 Phase 1에서 확정.
+  **단, 최상위 필드와 section 필드를 동시에 위반하면 최상위(INVALID_REQUEST)가
+  우선한다** — Phase 2a HITL에서 확정(SC-11), 'sections'로 시작하지 않는
+  FieldError가 하나라도 있으면 INVALID_REQUEST, 전부 'sections'일 때만
+  INVALID_SECTION
+- **이 태스크는 사실상 순수 리팩토링이다** — AC1~3이 검증하는 입력은 전부
+  현재(마이그레이션 전) 코드에서도 이미 같은 응답을 낸다. Phase 2b에서 실제로
+  새로 실패하는 시나리오는 SC-07(HttpMessageNotReadableException 핸들러 부재)
+  하나뿐이다. 나머지 regression 시나리오(SC-02~06/08/09/10/11)는 "현재도 통과 +
+  Phase 3 이후에도 계속 통과해야 하는" 캐릭터라이제이션 테스트로 Phase 2b가
+  다뤄야 한다
+- **SC-03/04/05/08/09/10은 기존 PerformanceRegistrationApiTest.java의
+  sc22/21/19/18/24/23과 입력·단언이 완전히 동일하다(3차 독립검증 V9에서 파일
+  대조로 확인)** — Phase 2b가 이 6건을 신규 테스트 메서드로 쓸지, 기존 테스트
+  재실행 참조로 대체할지 명시해야 한다(미해결, VALIDATION_TASK-007.json
+  post_validation_fixes.V9 참고)
 - `MethodArgumentNotValidException`과 기존 `HttpMessageNotReadableException`을
   모두 `INVALID_REQUEST(ErrorResponse{code,message})`로 통일하는 핸들러를
   `PerformanceExceptionHandler`에 추가해야 한다
