@@ -2,28 +2,30 @@
 task_id: TASK-007
 title: "공연 등록 API DTO를 Bean Validation으로 마이그레이션"
 phase: "1"
-phase_name: "Phase 1 - Plan"
+phase_name: "Phase 1 - Plan (완료)"
 status: ACTIVE
 created_at: 2026-09-29
-last_updated: 2026-09-29
+last_updated: 2026-09-30
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-007-bean-validation-migration"
 
-last_checkpoint: "없음"
-artifacts: {}
+last_checkpoint: CP-1.3
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-007.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-태스크를 막 시작했다. `develop` 최신 커밋(`a5a7f2f`, TASK-005 머지 반영)에서
-브랜치를 분기했고 `wf-plan` 스킬로 넘어갈 준비가 끝났다.
+Phase 1을 마쳤다. route=Backend, inputs 8/outputs 3/flows 4, AC 4건 전부
+flows.covers 로 커버(역방향 확인 통과). 대상 파일 6개(DTO 3개, Controller,
+ExceptionHandler, Service) 확정.
 
 ## 다음 한 걸음
 
-`wf-plan` 스킬로 Phase 1을 시작한다.
+`wf-scenario` 스킬로 Phase 2a(시나리오 설계)를 시작한다.
 
 ## 알아둬야 할 것
 
@@ -32,6 +34,14 @@ artifacts: {}
   도메인 규칙(시각 순서, 좌석 상한, 행 범위 겹침)은 Service 계층 수동 검증으로
   남긴다 — 두 갈래 판단 기준은 "이 필드 하나만 보고 판단 가능한가"(Bean
   Validation) vs "다른 필드나 DB 상태를 함께 봐야 하는가"(수동)
+- **Phase 1 핵심 결정 (CP-1.3 참고)**: price/seatsPerRow는 "존재 여부"(@NotNull)만
+  이관하고 하한값 검사(>=0, >=1)는 Service에 남긴다. rowStart<=rowEnd 역방향
+  판정과 sections 리스트 자체의 null/empty 검사도 이관 범위 밖 — 코드 변경 없이
+  그대로 유지해야 sc17/sc18/sc23이 회귀 없이 통과한다
+- **MethodArgumentNotValidException 분기가 이 태스크의 핵심 설계다**: 태스크
+  설명은 "INVALID_REQUEST로 통일"이라 썼지만 AC3는 section 필드 오류를
+  INVALID_SECTION으로 요구 — FieldError 경로가 `sections`로 시작하면
+  INVALID_SECTION, 아니면 INVALID_REQUEST로 판정하기로 Phase 1에서 확정
 - `MethodArgumentNotValidException`과 기존 `HttpMessageNotReadableException`을
   모두 `INVALID_REQUEST(ErrorResponse{code,message})`로 통일하는 핸들러를
   `PerformanceExceptionHandler`에 추가해야 한다
