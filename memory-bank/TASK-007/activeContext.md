@@ -1,8 +1,8 @@
 ---
 task_id: TASK-007
 title: "공연 등록 API DTO를 Bean Validation으로 마이그레이션"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design (완료)"
+phase: "2b"
+phase_name: "Phase 2b - Red (완료)"
 status: ACTIVE
 created_at: 2026-09-29
 last_updated: 2026-09-30
@@ -12,21 +12,21 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-007-bean-validation-migration"
 
-last_checkpoint: CP-2.4
+last_checkpoint: CP-2.6
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-007.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-007.md"
-  test: null
+  test: "workflow_design/05_scenario/TEST_TASK-007.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a를 마쳤다. 시나리오 11건(happy 1 / error 1 / regression 9), 독립검증
-3회 모두 pass, HITL#1 승인 완료. generate_red_trigger=true.
+Phase 2b를 마쳤다. 테스트 34개(기존 23 + 신규 11) 중 SC-07(test_t7_sc07)만
+Red, 나머지 33개 통과. HITL#2 승인 완료.
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 Phase 2b(Red 테스트 작성)를 시작한다.
+`wf-develop` 스킬로 Phase 3(Green 구현)을 시작한다.
 
 ## 알아둬야 할 것
 

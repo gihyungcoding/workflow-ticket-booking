@@ -772,4 +772,296 @@ class PerformanceRegistrationApiTest {
     Map<String, Object> body = bodyAsMap(result);
     assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
   }
+
+  // === TASK-007: Bean Validation 마이그레이션 시나리오 (SCENARIO_TASK-007.md) ===
+
+  @Test
+  void test_t7_sc01_유효한_등록_요청은_여전히_201로_성공한다() throws Exception {
+    // Given title/venue/startAt/openAt/closeAt가 모두 유효하다
+    Instant now = clock.instant();
+    // And sections에 구역 하나(grade="VIP", price=100, rowStart="A", rowEnd="A", seatsPerRow=10)가 있다
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 201이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(201);
+    // And 응답의 totalSeats는 10이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(((Number) body.get("totalSeats")).intValue()).isEqualTo(10);
+  }
+
+  @Test
+  void test_t7_sc02_title이_비어있으면_400_INVALID_REQUEST가_반환된다() throws Exception {
+    // Given 등록 요청의 title이 빈 문자열이다
+    Instant now = clock.instant();
+    // And 나머지 필드(venue/시각/sections)는 유효하다
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJsonWithTitle(
+            "",
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_REQUEST이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
+  }
+
+  @Test
+  void test_t7_sc03_title이_200자를_넘으면_400_INVALID_REQUEST가_반환된다() throws Exception {
+    // Given 등록 요청의 title이 201자이다 (기존 test_sc22와 동일 입력 — Bean Validation 이관 후에도
+    // 동일 결과를 내는지 재확인)
+    Instant now = clock.instant();
+    String longTitle = "가".repeat(201);
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJsonWithTitle(
+            longTitle,
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_REQUEST이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
+  }
+
+  @Test
+  void test_t7_sc04_구역의_grade가_20자를_넘으면_400_INVALID_SECTION이_반환된다() throws Exception {
+    // Given 등록 요청의 sections에 구역 하나가 있고 grade가 21자이다 (기존 test_sc21과 동일 입력)
+    Instant now = clock.instant();
+    String longGrade = "가".repeat(21);
+    String sections =
+        """
+        [{"grade":"%s","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """
+            .formatted(longGrade);
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다 (INVALID_REQUEST가 아니다)
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+  }
+
+  @Test
+  void test_t7_sc05_구역의_rowStart가_형식에_맞지_않으면_400_INVALID_SECTION이_반환된다() throws Exception {
+    // Given 등록 요청의 sections에 구역 하나가 있고 rowStart가 빈 문자열이다 (기존 test_sc19와 동일 입력)
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"","rowEnd":"A","seatsPerRow":10}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+  }
+
+  @Test
+  void test_t7_sc06_구역의_seatsPerRow_필드_자체가_없으면_400_INVALID_SECTION이_반환된다() throws Exception {
+    // Given 등록 요청의 sections에 구역 하나가 있고 seatsPerRow 필드가 JSON에 없다(null)
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A"}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+  }
+
+  @Test
+  void test_t7_sc07_파싱_불가능한_JSON이면_400_INVALID_REQUEST가_반환된다() throws Exception {
+    // Given 요청 본문이 올바른 JSON 구문이 아니다
+    String malformedJson = "{ 이것은 올바른 JSON이 아니다";
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", malformedJson);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_REQUEST이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
+    // And 응답 본문에 code와 message 필드가 있다
+    assertThat(body).containsKeys("code", "message");
+  }
+
+  @Test
+  void test_t7_sc08_구역의_seatsPerRow가_0이면_이관_이후에도_여전히_400_INVALID_SECTION으로_거부된다()
+      throws Exception {
+    // Given 등록 요청의 sections에 구역 하나가 있고 seatsPerRow가 0이다(필드는 존재하지만 1 미만)
+    // (기존 test_sc18과 동일 입력 — price/seatsPerRow '존재 여부'만 Bean Validation으로 옮기고
+    // 하한값은 Service에 남기는 split 경계를 검증)
+    Instant now = clock.instant();
+    String sections =
+        """
+        [{"grade":"VIP","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":0}]
+        """;
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+  }
+
+  @Test
+  void test_t7_sc09_수정_요청의_title이_200자를_넘으면_400_INVALID_REQUEST가_반환된다() throws Exception {
+    // Given now보다 openAt이 늦은(수정 가능한) 공연이 등록되어 있다 (기존 test_sc24와 동일 입력)
+    Instant now = clock.instant();
+    Performance p =
+        performance(
+            "원래 제목",
+            now.plus(30, ChronoUnit.DAYS),
+            now.plus(5, ChronoUnit.DAYS),
+            now.plus(20, ChronoUnit.DAYS),
+            100,
+            100,
+            false);
+    // And 수정 요청의 title이 201자이다
+    String longTitle = "가".repeat(201);
+    String json =
+        updateJson(
+            longTitle,
+            "새 장소",
+            now.plus(31, ChronoUnit.DAYS).toString(),
+            now.plus(6, ChronoUnit.DAYS).toString(),
+            now.plus(21, ChronoUnit.DAYS).toString());
+
+    // When PUT /api/performances/{id} 를 호출한다
+    MvcResult result = putJson("/api/performances/" + p.getId(), json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_REQUEST이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
+  }
+
+  @Test
+  void test_t7_sc10_구역_배열에_null_원소가_있으면_이관_이후에도_여전히_400_INVALID_SECTION으로_거부된다()
+      throws Exception {
+    // Given 등록 요청의 sections 배열에 null 원소가 하나 있다([null]) (기존 test_sc23과 동일 입력 —
+    // List<@Valid SectionRequest> cascade는 null 원소를 검증하지 않으므로 Service의 section==null
+    // 체크가 계속 방어해야 함)
+    Instant now = clock.instant();
+    String json =
+        registerJson(
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            "[null]");
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_SECTION이다
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_SECTION");
+  }
+
+  @Test
+  void test_t7_sc11_최상위_필드와_section_필드를_동시에_위반하면_INVALID_REQUEST가_우선한다()
+      throws Exception {
+    // Given 등록 요청의 title이 빈 문자열이다
+    // And 동시에 sections의 구역 하나가 grade 21자로 형식도 어긴다
+    Instant now = clock.instant();
+    String longGrade = "가".repeat(21);
+    String sections =
+        """
+        [{"grade":"%s","price":100,"rowStart":"A","rowEnd":"A","seatsPerRow":10}]
+        """
+            .formatted(longGrade);
+    String json =
+        registerJsonWithTitle(
+            "",
+            now.plus(30, ChronoUnit.DAYS).toString(),
+            now.minus(1, ChronoUnit.DAYS).toString(),
+            now.plus(20, ChronoUnit.DAYS).toString(),
+            sections);
+
+    // When POST /api/performances 를 호출한다
+    MvcResult result = postJson("/api/performances", json);
+
+    // Then 400이 반환된다
+    assertThat(result.getResponse().getStatus()).isEqualTo(400);
+    // And 응답 코드는 INVALID_REQUEST이다 (INVALID_SECTION이 아니다)
+    Map<String, Object> body = bodyAsMap(result);
+    assertThat(body.get("code")).isEqualTo("INVALID_REQUEST");
+  }
 }
