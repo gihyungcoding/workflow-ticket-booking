@@ -1,32 +1,34 @@
 ---
 task_id: TASK-007
 title: "공연 등록 API DTO를 Bean Validation으로 마이그레이션"
-phase: "2b"
-phase_name: "Phase 2b - Red (완료)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: ACTIVE
 created_at: 2026-09-29
-last_updated: 2026-09-30
+last_updated: 2026-10-01
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-007-bean-validation-migration"
 
-last_checkpoint: CP-2.6
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-007.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-007.md"
   test: "workflow_design/05_scenario/TEST_TASK-007.json"
+  dev: "workflow_design/06_dev/DEV_TASK-007.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b를 마쳤다. 테스트 34개(기존 23 + 신규 11) 중 SC-07(test_t7_sc07)만
-Red, 나머지 33개 통과. HITL#2 승인 완료.
+Phase 3을 마쳤다. 전체 58개 테스트 통과(실패 0), 린트 error 0, 아키텍처 제약
+error 0, 범위 이탈 없음. SC-07이 Green으로 전환됐고 나머지 10건과 기존 47건은
+통과 유지.
 
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 Phase 3(Green 구현)을 시작한다.
+`wf-verify` 스킬로 Phase 4(검증)를 시작한다.
 
 ## 알아둬야 할 것
 
@@ -55,9 +57,19 @@ Red, 나머지 33개 통과. HITL#2 승인 완료.
   다뤄야 한다
 - **SC-03/04/05/08/09/10은 기존 PerformanceRegistrationApiTest.java의
   sc22/21/19/18/24/23과 입력·단언이 완전히 동일하다(3차 독립검증 V9에서 파일
-  대조로 확인)** — Phase 2b가 이 6건을 신규 테스트 메서드로 쓸지, 기존 테스트
-  재실행 참조로 대체할지 명시해야 한다(미해결, VALIDATION_TASK-007.json
-  post_validation_fixes.V9 참고)
+  대조로 확인)** — Phase 2b에서 사용자 확인을 거쳐 "그칙 원칙대로 신규 테스트
+  메서드 작성"으로 처리했다(기존 헬퍼 재사용으로 코드 중복 최소화). 해결됨
+- **Phase 3에서 확인된 사실**: `List<@Valid SectionRequest>` cascade는 배열의
+  null 원소를 검증하지 않고 건너뛴다(Plan unresolved 2번째 항목의 답). 그래서
+  `sections=[null]`은 Bean Validation을 통과하고 `PerformanceService`의
+  `section == null` 체크가 잡는다 — 이 체크를 지우면 sc23/SC-10이 깨진다
+- **`RegisterPerformanceRequest.sections`에는 `@NotNull`을 붙이지 않았다** —
+  붙이면 "필드 누락"(sc16: INVALID_REQUEST)과 "빈 배열"(sc13: EMPTY_SECTIONS)의
+  구분이 사라진다. 두 판정은 Service에 남아 있다
+- **`validateRequired`는 메서드째 삭제됐다** — Controller 경계(`@Valid`)가 유일한
+  필드 형태 검증 지점이다. 그래서 `validateSection`이 `price()<0`,
+  `rowStart().charAt(0)` 처럼 null 체크 없이 바로 접근하는 것은 `@NotNull`·
+  `@Pattern`의 보장에 의존한 의도적 선택이다(ADR-0010이 명시한 트레이드오프)
 - `MethodArgumentNotValidException`과 기존 `HttpMessageNotReadableException`을
   모두 `INVALID_REQUEST(ErrorResponse{code,message})`로 통일하는 핸들러를
   `PerformanceExceptionHandler`에 추가해야 한다

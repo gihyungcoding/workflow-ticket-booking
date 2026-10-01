@@ -5,7 +5,7 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | route: Backend, inputs 8/outputs 3/flows 4 |
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 11건(happy1/error1/regression9), 검증 3회 pass, HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | 테스트 11개(SC-07만 Red, 10개 already_passing), HITL#2 승인 |
-| 3 Green | ⬜ 대기 | — | |
+| 3 Green | ✅ 완료 | CP-3.4 | 58/58 통과, 린트 error 0, 범위 이탈 0 |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 

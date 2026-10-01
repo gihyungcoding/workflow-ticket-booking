@@ -20,9 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PerformanceService {
 
   private static final int MAX_SEATS = 5000;
-  private static final int MAX_GRADE_LENGTH = 20;
-  private static final int MAX_TITLE_LENGTH = 200;
-  private static final int MAX_VENUE_LENGTH = 200;
 
   private final PerformanceRepository performanceRepository;
   private final SeatRepository seatRepository;
@@ -72,7 +69,6 @@ public class PerformanceService {
       Instant openAt,
       Instant closeAt,
       List<SectionSpec> sections) {
-    validateRequired(title, venue, startAt, openAt, closeAt);
     if (sections == null) {
       throw new InvalidRequestException("sections가 필요합니다");
     }
@@ -111,7 +107,6 @@ public class PerformanceService {
   @Transactional
   public PerformanceResponse updatePerformance(
       Long id, String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
-    validateRequired(title, venue, startAt, openAt, closeAt);
     Performance performance =
         performanceRepository.findById(id).orElseThrow(() -> new PerformanceNotFoundException(id));
     Instant now = clock.instant();
@@ -134,43 +129,23 @@ public class PerformanceService {
     return toResponse(performance, clock.instant());
   }
 
-  private void validateRequired(
-      String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
-    if (isBlank(title) || isBlank(venue) || startAt == null || openAt == null || closeAt == null) {
-      throw new InvalidRequestException("title/venue/startAt/openAt/closeAt는 필수입니다");
-    }
-    if (title.length() > MAX_TITLE_LENGTH || venue.length() > MAX_VENUE_LENGTH) {
-      throw new InvalidRequestException("title/venue는 " + MAX_TITLE_LENGTH + "자를 넘을 수 없습니다");
-    }
-  }
-
+  /**
+   * 필드 형태(필수·길이·형식)는 api.dto 의 Bean Validation 이 Controller 경계에서 걸러낸다 (ADR-0010). 여기 남은 것은 값의 범위와 두
+   * 필드의 관계 — 애노테이션으로 표현할 수 없는 규칙뿐이다. null 원소는 @Valid cascade 대상이 아니라 여기까지 내려온다.
+   */
   private void validateSection(SectionSpec section) {
     if (section == null) {
       throw new InvalidSectionException("구역 정보는 비어 있을 수 없습니다");
     }
-    if (isBlank(section.grade()) || section.grade().length() > MAX_GRADE_LENGTH) {
-      throw new InvalidSectionException("grade는 1~" + MAX_GRADE_LENGTH + "자여야 합니다");
-    }
-    if (section.price() == null || section.price() < 0) {
+    if (section.price() < 0) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
-    }
-    if (!isValidRow(section.rowStart()) || !isValidRow(section.rowEnd())) {
-      throw new InvalidSectionException("rowStart/rowEnd는 A~Z 단일 대문자여야 합니다");
     }
     if (section.rowStart().charAt(0) > section.rowEnd().charAt(0)) {
       throw new InvalidSectionException("rowStart가 rowEnd보다 뒤일 수 없습니다");
     }
-    if (section.seatsPerRow() == null || section.seatsPerRow() < 1) {
+    if (section.seatsPerRow() < 1) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
     }
-  }
-
-  private static boolean isBlank(String value) {
-    return value == null || value.isBlank();
-  }
-
-  private static boolean isValidRow(String row) {
-    return row != null && row.length() == 1 && row.charAt(0) >= 'A' && row.charAt(0) <= 'Z';
   }
 
   private void validateTimeOrder(Instant openAt, Instant closeAt, Instant startAt) {

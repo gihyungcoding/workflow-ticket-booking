@@ -951,8 +951,7 @@ class PerformanceRegistrationApiTest {
   }
 
   @Test
-  void test_t7_sc08_구역의_seatsPerRow가_0이면_이관_이후에도_여전히_400_INVALID_SECTION으로_거부된다()
-      throws Exception {
+  void test_t7_sc08_구역의_seatsPerRow가_0이면_이관_이후에도_여전히_400_INVALID_SECTION으로_거부된다() throws Exception {
     // Given 등록 요청의 sections에 구역 하나가 있고 seatsPerRow가 0이다(필드는 존재하지만 1 미만)
     // (기존 test_sc18과 동일 입력 — price/seatsPerRow '존재 여부'만 Bean Validation으로 옮기고
     // 하한값은 Service에 남기는 split 경계를 검증)
@@ -1012,8 +1011,7 @@ class PerformanceRegistrationApiTest {
   }
 
   @Test
-  void test_t7_sc10_구역_배열에_null_원소가_있으면_이관_이후에도_여전히_400_INVALID_SECTION으로_거부된다()
-      throws Exception {
+  void test_t7_sc10_구역_배열에_null_원소가_있으면_이관_이후에도_여전히_400_INVALID_SECTION으로_거부된다() throws Exception {
     // Given 등록 요청의 sections 배열에 null 원소가 하나 있다([null]) (기존 test_sc23과 동일 입력 —
     // List<@Valid SectionRequest> cascade는 null 원소를 검증하지 않으므로 Service의 section==null
     // 체크가 계속 방어해야 함)
@@ -1036,8 +1034,7 @@ class PerformanceRegistrationApiTest {
   }
 
   @Test
-  void test_t7_sc11_최상위_필드와_section_필드를_동시에_위반하면_INVALID_REQUEST가_우선한다()
-      throws Exception {
+  void test_t7_sc11_최상위_필드와_section_필드를_동시에_위반하면_INVALID_REQUEST가_우선한다() throws Exception {
     // Given 등록 요청의 title이 빈 문자열이다
     // And 동시에 sections의 구역 하나가 grade 21자로 형식도 어긴다
     Instant now = clock.instant();

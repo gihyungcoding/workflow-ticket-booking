@@ -8,6 +8,7 @@ import com.example.ticket_booking.service.PerformanceListResponse;
 import com.example.ticket_booking.service.PerformanceResponse;
 import com.example.ticket_booking.service.PerformanceService;
 import com.example.ticket_booking.service.SectionSpec;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +46,7 @@ public class PerformanceController {
 
   @PostMapping
   public ResponseEntity<PerformanceResponse> register(
-      @RequestBody RegisterPerformanceRequest request) {
+      @Valid @RequestBody RegisterPerformanceRequest request) {
     List<SectionSpec> sections =
         request.sections() == null
             ? null
@@ -63,7 +64,7 @@ public class PerformanceController {
 
   @PutMapping("/{id}")
   public PerformanceResponse update(
-      @PathVariable Long id, @RequestBody UpdatePerformanceRequest request) {
+      @PathVariable Long id, @Valid @RequestBody UpdatePerformanceRequest request) {
     return performanceService.updatePerformance(
         id,
         request.title(),
