@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-10-01T00:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Bean Validation 마이그레이션 구현 완료 — 전체 58개 테스트 통과(실패 0)"
 

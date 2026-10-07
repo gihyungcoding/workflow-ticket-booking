@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-30T00:20:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-007의 GWT 시나리오 8건(happy 1 / error 6 / regression 1) 작성, AC 4/4 커버"
 

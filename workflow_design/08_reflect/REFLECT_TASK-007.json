@@ -1,0 +1,89 @@
+{
+  "task_id": "TASK-007",
+  "keep": [
+    {
+      "what": "구현 순서를 'DTO → Controller → ExceptionHandler → Service 정리'로 잡고, Service를 비우기 직전에 한 번 더 전체 테스트를 돌려 이중 검증 상태에서 회귀가 없는지 확인했다",
+      "evidence": "CP-3.1(전략 수립)·CP-3.2(실행 기록) — 34/34 중간 확인 후 validateRequired 삭제, 최종 58/58까지 회귀 0건. Service를 먼저 비웠다면 어느 단계가 원인인지 특정하기 어려웠을 것"
+    },
+    {
+      "what": "Phase 2a에서 '이 태스크는 외부 동작을 바꾸지 않는 순수 리팩토링'이라는 사실을 일찍 발견해 시나리오 타입을 error에서 regression으로 재분류했다",
+      "evidence": "VALIDATION_TASK-007.json 2차 검증(V9) — SC-02~06/08/09가 현재 코드에서도 이미 통과한다는 것을 발견. 이 발견이 없었다면 Phase 2b에서 '테스트를 왜 못 Red로 만드나'로 혼란이 생겼을 것"
+    },
+    {
+      "what": "Phase 4에서 code-reviewer의 '결함 가능성' 소견 2건을 코드 수정 없이 probe 테스트로 직접 재현해 사실관계를 확인했다",
+      "evidence": "CP-4.2 decisions — @Pattern·@NotNull 미검증 소견을 재현한 결과 현재 코드는 정상 동작(400 반환, 500 아님)임을 확인해 FAIL이 아니라 WARN(커버리지 공백)으로 정확히 재분류했다. 재현 없이 그대로 적었다면 status 판정이 부정확했을 것"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Phase 2a의 시나리오 병합 기준('동일 애노테이션이면 묶는다')이 애노테이션 종류는 보되 위반 조건의 종류까지는 안 봤다 — rowStart의 @NotBlank 위반(빈 문자열)만 테스트하고 @Pattern 고유 위반(소문자·2자 이상)은 어느 시나리오도 다루지 않았다",
+      "evidence": "3차 독립검증(V9)·code-reviewer 소견 1 — SC-05가 rowStart=\"\"로만 @NotBlank를 때리고, @Pattern만 단독으로 위반하는 입력(rowStart=\"a\")은 58개 테스트 어디에도 없다. Phase 4에서 재현해 현재 코드는 맞다고 확인했지만, 이건 결과가 맞았을 뿐이고 발견 경로가 늦었다",
+      "phase": "2a"
+    },
+    {
+      "what": "Phase 1(Plan)이 ADR-0010 §검사 가능한 제약이 '이 마이그레이션 태스크 안에서 constraints.yaml에 추가하라'고 명시적으로 지목한 것을 놓쳤다 — PLAN_TASK-007.json의 target_files에 docs/가 없었고, Phase 4에서 code-reviewer가 지적할 때까지 아무도 알아채지 못했다",
+      "evidence": "CP-4.2 decisions, VERIFY_TASK-007.json code_review.findings[2] — wf-plan Step 1.5가 '관련 ADR을 읽는다'고는 하지만 'ADR의 검사 가능한 제약 절이 이 태스크를 지목하는지'를 구체적으로 확인하라는 지침은 없다",
+      "phase": "1"
+    }
+  ],
+  "try": [
+    {
+      "what": "coverage-policy.md §3(같은 코드 경로는 하나로 묶는다)의 병합 기준에 '애노테이션 종류가 같아도 위반 조건(빈 문자열 vs 형식 오류)이 다르면 별도 시나리오가 필요하다'는 예시를 추가한다",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md §3"
+    },
+    {
+      "what": "wf-plan 스킬 Step 1.5('관련 ADR을 읽는다')에 'ADR의 §검사 가능한 제약을 확인하고, 이 태스크를 지목하는 항목이 있으면 target_files에 반영한다'는 체크리스트 항목을 추가한다",
+      "target": ".claude/skills/wf-plan/SKILL.md Step 1.5"
+    }
+  ],
+  "insights": [
+    "코드 리뷰가 '결함 가능성'을 지적하면 그 자리에서 재현해 사실을 확인하는 것이 WARN/FAIL 오판을 막는다 — 가설과 결함을 구분하지 않으면 멀쩡한 코드가 롤백되거나, 반대로 실제 결함이 WARN으로 축소될 수 있다",
+    "ADR이 특정 후속 태스크를 명시적으로 지목하는 경우(이번엔 '마이그레이션 태스크가 생기면...'), Plan 단계가 이를 체크리스트 형태로 재확인하지 않으면 Phase 4까지 묻혀 있다가 늦게 발견된다",
+    "시나리오 병합 결정은 '같은 애노테이션'이 아니라 '같은 입력이 같은 코드 경로를 타는가'를 기준으로 해야 한다 — @NotBlank와 @Pattern은 같은 필드에 붙어도 서로 다른 입력(빈 문자열 vs 형식 오류)에서 독립적으로 실패할 수 있다"
+  ],
+  "phase_analysis": {
+    "1": { "retries": 0, "note": "한 번에 완료. 다만 ADR-0010의 명시적 지목을 놓친 것이 Phase 4에서 드러남(problem[1])" },
+    "2a": { "retries": 3, "note": "scenario-validator 3회 호출 — 매회 pass, 경고를 반영하며 점진 보완(fail로 인한 재시도는 아님). 2차에서 시나리오 타입을 error→regression으로 재분류, 3차에서 SC-11(동시 위반 우선순위) 추가 — HITL#1 전 V10을 사용자에게 직접 확인" },
+    "2b": { "retries": 0, "note": "HITL#2 전 V9(기존 테스트 중복 처리 방식)를 사용자에게 확인 후 '신규 테스트 작성' 결정, 재작업 없이 바로 구현" },
+    "3": { "retries": 0, "note": "DTO→Controller→ExceptionHandler→Service 순서로 한 번에 58/58 green" },
+    "4": { "retries": 0, "note": "status: WARN(FAIL 없음). code-reviewer 소견 4건 중 2건은 재현으로 결함 아님 확인, 1건(ADR-0010 제약 누락)은 그 자리에서 architecture-doc 스킬로 반영(ARCH-004), 1건은 WARN으로 승인" },
+    "5": { "retries": 0, "note": "—" }
+  },
+  "adr_candidates": [
+    {
+      "decision": "여러 필드에 걸친 검증 실패(최상위 DTO 필드 + 중첩 리스트 원소 필드가 동시에 Bean Validation을 위반)가 발생했을 때, 최상위 필드 위반을 항상 우선해 에러 코드를 결정한다",
+      "why_broader": "지금은 PerformanceExceptionHandler 하나에만 'sections[' 문자열 매칭으로 국소 구현돼 있다. 하지만 이 프로젝트에 컨트롤러가 둘 이상 생기면(예: 예매 API) 같은 패턴(최상위 필드 vs 중첩 리스트 원소 필드의 우선순위)이 다시 필요해진다 — 그때마다 각 핸들러가 독자적으로 판단하면 프로젝트 전체의 에러 코드 의미가 일관되지 않을 위험이 있다",
+      "evidence": "CP-2.3(3차 검증 V10)·HITL#1 사용자 확인(최상위 필드 우선 채택)·CP-4.2 code_review.findings[3](ExceptionHandler가 전역인데 도메인 전용 문자열로 분기)",
+      "suggested_title": "중첩 리스트 필드 검증 실패 시 에러 코드 우선순위와 ExceptionHandler 구조화 방침"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "PerformanceExceptionHandler는 범위 제한 없는 전역 @RestControllerAdvice인데, 'sections[' 라는 공연 도메인 전용 문자열로 분기한다. architecture.md §2는 API 계층의 책임을 'HTTP 요청 파싱, 응답 변환'이라고만 적어 도메인 지식이 전역 핸들러에 들어가는 것을 금지하지도, 허용하지도 않는다",
+      "where": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java (handleValidationFailure, SECTION_ELEMENT_FIELD_PREFIX)",
+      "found_how": "code-reviewer 서브에이전트가 Phase 4에서 지적(VERIFY_TASK-007.json code_review.findings[3])",
+      "suggestion": "컨트롤러가 둘 이상이 되는 다음 태스크에서 @RestControllerAdvice(assignableTypes=...)로 좁히거나, 위 ADR 후보에서 공식 방침을 정한다. 지금은 컨트롤러가 하나뿐이라 실제 결함은 아니다"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§3 상한 — 언제 그만 쓰는가",
+      "change": "병합 판단 기준에 '애노테이션 종류가 같아도 입력(위반 조건)이 다르면 독립적으로 실패할 수 있는 결함이 존재한다'는 예시를 추가한다 — 이번 태스크에서 rowStart의 @NotBlank(빈 문자열)와 @Pattern(형식 오류, 예: 소문자) 위반이 서로 다른 입력인데 하나로 묶여 @Pattern 쪽이 테스트 안전망 없이 넘어갔다",
+      "evidence": "TASK-007 3차 독립검증 V9, code-reviewer 소견 1(VERIFY_TASK-007.json code_review.findings[0])"
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 1.5 — 아키텍처·결정 참조",
+      "change": "'제목만 보고 관련 있어 보이는 ADR은 본문을 읽는다' 다음에 'ADR의 §검사 가능한 제약을 확인하고, 이 태스크를 지목하는 항목이 있으면(예: \"마이그레이션 태스크가 생기면 그 안에서 추가한다\") codebase_analysis.target_files에 반영한다'를 추가한다",
+      "evidence": "TASK-007 — ADR-0010이 명시적으로 이 태스크를 지목했으나 PLAN_TASK-007.json의 target_files에 반영되지 않았고 Phase 4에서야 code-reviewer가 발견함(VERIFY_TASK-007.json code_review.findings[2])"
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": true,
+    "approved_at": "2026-10-07T02:00:00Z",
+    "report_url": "https://claude.ai/artifact/FLHQUMAuNjQB6wySR3Rsuf",
+    "decision": "APPROVE",
+    "comment": "회고 내용 그대로 인정, ADR 후보와 규칙 개선안은 제안으로만 남긴다 — 별도 작성하지 않음"
+  }
+}

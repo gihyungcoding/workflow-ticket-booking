@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-10-01T19:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "VERIFY_TASK-007.json 작성 완료 — status: WARN (FAIL 사유 0건, WARN 4건)"
 

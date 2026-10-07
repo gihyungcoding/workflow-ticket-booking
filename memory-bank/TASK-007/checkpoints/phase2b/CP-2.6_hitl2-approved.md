@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "2b"
 phase_name: "Phase 2b - Red (완료)"
 saved_at: 2026-09-30T02:15:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-007 Red 테스트 11건(SC-01~11)을 HITL#2로 승인받았다"
 

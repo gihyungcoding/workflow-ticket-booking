@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "4"
 phase_name: "Phase 4 - Verify (완료)"
 saved_at: 2026-10-07T00:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-007 검증(status: WARN, FAIL 사유 0건)을 HITL#3로 승인받았다"
 

@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "3"
 phase_name: "Phase 3 - Green (완료)"
 saved_at: 2026-10-01T01:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "DEV_TASK-007.json 을 저장하고 Phase 3 EXIT GATE 를 충족했다 — 58/58 green, 린트 error 0, 범위 이탈 0"
 

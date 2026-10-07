@@ -1,9 +1,9 @@
 ---
 task_id: TASK-007
 title: "공연 등록 API DTO를 Bean Validation으로 마이그레이션"
-phase: "4"
-phase_name: "Phase 4 - Verify (완료)"
-status: ACTIVE
+phase: "5"
+phase_name: "Phase 5 - Reflect (완료)"
+status: DONE
 created_at: 2026-09-29
 last_updated: 2026-10-07
 
@@ -12,23 +12,36 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-007-bean-validation-migration"
 
-last_checkpoint: CP-4.3
+last_checkpoint: CP-5.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-007.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-007.md"
   test: "workflow_design/05_scenario/TEST_TASK-007.json"
   dev: "workflow_design/06_dev/DEV_TASK-007.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-007.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-007.json"
+
+pull_request:
+  number: null
+  url: null
+  base: develop
+  opened_at: null
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4를 마쳤다. status: WARN(FAIL 0건), AC 4/4 PASS, HITL#3 승인 완료.
-ADR-0010이 명시한 ARCH-004 제약을 architecture-doc 스킬로 추가·검증했다.
+완료됐다. Phase 1~5를 모두 거쳤고 HITL 4건 전부 승인받았다. Phase 2a는
+독립검증 3회(매회 pass, 경고를 반영해 점진 보완), Phase 4는 WARN(FAIL
+없음) — code-reviewer 소견 4건 중 2건은 재현으로 결함 아님 확인, 1건은
+ADR-0010이 지목한 ARCH-004를 그 자리에서 추가해 해결, 1건은 예외로 승인.
+회고에서 ADR 승격 후보 1건과 규칙 개선안 2건이 나왔으나 사용자가 "승인하고
+종료"로 처리 — 별도 후속 작업 없이 제안으로만 기록됨.
 
 ## 다음 한 걸음
 
-`wf-reflect` 스킬로 Phase 5(회고)를 시작한다.
+`/wf-ship`으로 머지를 준비한다. 단, TASK-006(PR #8)이 이 브랜치 분기 시점
+이후 develop에 머지됐는지 먼저 확인할 것 — 겹치는 파일(SectionRequest.java,
+PerformanceService.java)이 있어 충돌 가능성이 있다(아래 TASK-006 메모 참고).
 
 ## 알아둬야 할 것
 

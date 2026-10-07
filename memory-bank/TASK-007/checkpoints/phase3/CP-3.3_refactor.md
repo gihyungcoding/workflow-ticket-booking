@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-10-01T00:45:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "새로 추가한 검증 실패 핸들러를 단일 경로로 정리하고, 필드 경로 판정을 더 정확한 접두어로 바꿨다"
 

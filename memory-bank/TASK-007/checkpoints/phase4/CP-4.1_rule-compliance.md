@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "4"
 phase_name: "Phase 4 - Verify"
 saved_at: 2026-10-01T19:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "check_architecture.py 실행(error 0, no_target 없음) + architecture.md §2 산문 규칙 7개를 constraints.yaml과 1:1 대조 + ADR-0010이 명시한 ARCH-004 신규 추가"
 

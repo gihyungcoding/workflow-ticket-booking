@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "2b"
 phase_name: "Phase 2b - Red"
 saved_at: 2026-09-30T02:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-007 시나리오 11건을 PerformanceRegistrationApiTest.java에 테스트 함수 11개로 옮겼다 — SC-07만 Red, 나머지 10건은 already_passing"
 

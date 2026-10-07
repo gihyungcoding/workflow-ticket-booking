@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "1"
 phase_name: "Phase 1 - Plan"
 saved_at: 2026-09-30T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "공연 등록 API DTO의 Bean Validation 마이그레이션(TASK-007)의 입력·출력·흐름을 정규화하고 PLAN_TASK-007.json 을 작성했다"
 

@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design"
 saved_at: 2026-09-30T00:05:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-007 시나리오를 새로 작성한다 — 기존 SCENARIO_TASK-007.md 없음"
 

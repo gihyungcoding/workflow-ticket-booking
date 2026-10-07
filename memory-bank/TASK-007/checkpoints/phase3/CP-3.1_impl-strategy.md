@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "3"
 phase_name: "Phase 3 - Green"
 saved_at: 2026-10-01T00:00:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "Bean Validation 마이그레이션 구현 순서와 재사용 대상을 확정했다"
 

@@ -5,7 +5,7 @@ task_id: TASK-007
 phase: "2a"
 phase_name: "Phase 2a - Scenario Design (완료)"
 saved_at: 2026-09-30T01:30:00Z
-status: ACTIVE
+status: ARCHIVED
 
 work_summary: "TASK-007 시나리오 11건(happy 1 / error 1 / regression 9)을 HITL#1로 승인받았다"
 
