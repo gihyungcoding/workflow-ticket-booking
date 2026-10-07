@@ -1,0 +1,84 @@
+{
+  "task_id": "TASK-006",
+  "keep": [
+    {
+      "what": "독립 scenario-validator가 자기평가로는 못 잡을 결함(happy 시나리오 0건)을 HITL#1 이전에 잡아 잘못된 승인을 막았다",
+      "evidence": "VALIDATION_TASK-006.json 1차: overall.pass=false, V2 FAIL. 2차 보완 후 pass=true로 HITL#1 진행"
+    },
+    {
+      "what": "독립 code-reviewer가 self-review로는 발견하지 못했을 correctness 결함 2건(int 범위 초과 500, isIntegral 자체의 scale 언더플로 예외)을 실제 요청 실행과 대규모 퍼징(40만 건)까지 동원해 재현·확정했고, Phase 4의 반복 재시도(attempt/reject 추적)가 각 라운드의 원인과 조치를 DEV/VERIFY JSON에 그대로 남겨 이력이 끊기지 않았다",
+      "evidence": "VERIFY_TASK-006.json attempt1/2/3의 code_review 블록, DEV_TASK-006.json의 reject.fixed 누적 기록"
+    },
+    {
+      "what": "기존 InvalidSectionException·에러 응답 포맷·테스트 파일 관례(Given/When/Then 주석, MockMvc 패턴)를 3라운드 내내 그대로 재사용해 새 추상화를 만들지 않았다",
+      "evidence": "PLAN_TASK-006.json의 reusable 항목이 attempt 1~3 전체에서 그대로 유지됨"
+    }
+  ],
+  "problem": [
+    {
+      "what": "PLAN_TASK-006.json은 '정수 확인이 범위 확인보다 먼저'라고 명시했으나, Phase 3 3차 시도에서 안전을 위해 순서가 뒤집혔다. PLAN 문서 자체는 갱신되지 않아 나중에 이 파일만 보는 사람은 실제 코드와 다른 순서를 사실로 믿게 된다",
+      "evidence": "PLAN_TASK-006.json design.flows F1/F2, 3차 code-reviewer 소견 1",
+      "phase": 4
+    },
+    {
+      "what": "Phase 1에서는 Jackson 절삭 문제(TASK-004에서 이미 알려짐)만 보고 BigDecimal로 타입을 넓히는 결정을 내렸는데, 타입을 넓히면 이전에는 도달할 수 없었던 입력 공간(Integer 범위 밖의 정수, 극단적 지수 표기)이 새로 열린다는 점은 설계 단계에서 따지지 않았다. 그 결과 Phase 4에서 2라운드에 걸쳐서야(각각 500 회귀) 이 위험이 드러났다",
+      "evidence": "VERIFY_TASK-006.json attempt1·attempt2 status_reason, PLAN_TASK-006.json에 '새로 열리는 입력 공간'에 대한 언급 없음",
+      "phase": 1
+    },
+    {
+      "what": "seatsPerRow 상한 초과 시 에러코드가 값 크기에 따라 SEAT_LIMIT_EXCEEDED/INVALID_SECTION으로 갈리는 비일관이 남았다 — int 변환을 위한 구현상 방어(int 상한)와 도메인 규칙(5,000석 좌석 상한)이 다른 층에서 각자 검사되면서 생긴 부작용",
+      "evidence": "VERIFY_TASK-006.json attempt3 code_review [design] 소견 2",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "타입을 넓히는 수정(예: Integer→BigDecimal, int→long)이 포함된 태스크는 Phase 1의 design.unresolved에 '이 변경으로 새로 도달 가능해지는 입력 범위'를 명시적으로 적게 한다 — Phase 4가 그 범위를 콕 집어 검증하도록",
+      "target": ".claude/skills/wf-plan/SKILL.md (Step 4 구조 정규화 절)"
+    },
+    {
+      "what": "Phase 3 재시도에서 구현 방식이 PLAN의 flows 서술과 달라지면(예: 검증 순서 변경), PLAN 파일 자체를 재작성하지는 않되 짧은 추신(예: 'implementation_note' 필드)을 남겨 PLAN만 읽는 사람이 실제 구현과 다른 서술을 사실로 오해하지 않게 한다",
+      "target": "docs/workflow/reject-state-machine.md §5 (거절 후 재시도할 때)"
+    },
+    {
+      "what": "이번 3차 리뷰가 지적한 경계값(price=2147483647 수락)과 unscaled==0 극단 scale 케이스(예: 0E+2147483647)를 고정하는 회귀 테스트 2건을 후속으로 추가한다 — 현재는 code-reviewer의 실측에만 안전성이 의존한다",
+      "target": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java (새 태스크 또는 TASK-007 범위에 포함 검토)"
+    }
+  ],
+  "insights": [
+    "정보 손실(절삭)을 막기 위해 타입을 넓히는 수정은 그 자체로 이전에 도달 불가능했던 새 입력 표면을 여는 것이다 — '버그를 막는 수정'이 '새 버그의 영역'이 될 수 있다는 것을 Phase 1 설계 단계에서 능동적으로 따져야, Phase 4에서 여러 라운드에 걸쳐서야 드러나는 비용을 줄인다.",
+      "독립 코드 리뷰가 실제 요청 실행·대규모 퍼징까지 동원해 실측으로 검증한 것이 이 태스크의 진짜 결함을 잡아냈다 — 'PLAN이 안전하다고 서술했다'와 '실행해서 안전함을 확인했다'는 다르다는 것을 3라운드에 걸쳐 재확인했다."
+  ],
+  "phase_analysis": {
+    "1": { "retries": 0, "note": "ADR-0010과의 충돌 여부를 사전에 확인해 재작업 없이 진행" },
+    "2a": { "retries": 1, "note": "1차 독립검증 FAIL(happy 시나리오 0건) → SC-03 재분류로 2차 PASS" },
+    "2b": { "retries": 0, "note": "컴파일 언어 특성상 표준 스켈레톤 관례 대신 기계적 타입 어댑테이션으로 Red 확보 — 문제 없이 1회 통과" },
+    "3": { "retries": 2, "note": "Phase 4의 1차·2차 FAIL로 각각 롤백됨 — int 범위 검증 추가(retry1), 검증 순서 재배치(retry2)" },
+    "4": { "retries": 2, "note": "attempt1 FAIL(결함 2건), attempt2 FAIL(잔존 결함 1건), attempt3 WARN → EXCEPTION_APPROVE" },
+    "5": { "retries": 0, "note": "—" }
+  },
+  "adr_candidates": [
+    {
+      "decision": "BigDecimal 기반 숫자 필드를 수동 검증할 때는 범위 확인(compareTo)을 정수/형태 확인(stripTrailingZeros 등 scale에 의존하는 연산)보다 먼저 실행한다",
+      "why_broader": "이 코드베이스의 다른 숫자 필드도 같은 Jackson ACCEPT_FLOAT_AS_INT 절삭 문제를 잠재적으로 가지고 있고(ADR-0010이 예고한 TASK-007 Bean Validation 마이그레이션 포함), BigDecimal로 타입을 바꿔 이 문제를 고치려는 모든 후속 작업이 이번에 실측으로 확립한 안전 순서 원칙을 재사용할 수 있다",
+      "evidence": "workflow_design/06_dev/DEV_TASK-006.json의 reject 이력, workflow_design/07_verify/VERIFY_TASK-006.json attempt2·attempt3의 code_review",
+      "suggested_title": "BigDecimal 숫자 필드 수동 검증 순서 원칙"
+    }
+  ],
+  "architecture_drift": [],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 4 구조 정규화",
+      "change": "타입을 넓히는 변경(narrower→wider)이 포함된 태스크는 design.unresolved에 '이 변경으로 새로 도달 가능해지는 입력 범위'를 명시하도록 안내 추가",
+      "evidence": "TASK-006 Phase 4가 2라운드에 걸쳐서야 발견한 결함 모두 'BigDecimal이 새로 연 입력 공간'에서 나왔다"
+    },
+    {
+      "target": "docs/workflow/reject-state-machine.md",
+      "section": "§5 거절 후 재시도할 때",
+      "change": "구현 방식이 PLAN의 flows 서술과 달라지는 재시도의 경우, PLAN을 재작성하지 않되 실제 구현과의 차이를 가리키는 짧은 추신을 남기도록 안내 추가",
+      "evidence": "PLAN_TASK-006.json이 실제 검증 순서(범위 확인 먼저)와 반대로 서술된 채 남아 있음 (3차 code-reviewer 소견)"
+    }
+  ],
+  "completion_report": { "approved_by_human": true, "report_url": "https://claude.ai/artifact/PsEtV8oFMyBU8NpNxq52kJ" }
+}

@@ -1,0 +1,52 @@
+{
+  "task_id": "TASK-006",
+  "supersedes": "SCENARIO_TASK-006.json",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_task006_sc01_price에_소수를_보내면_등록이_거부된다",
+      "status": "red",
+      "failure": "org.opentest4j.AssertionFailedError: expected: 400 but was: 201 (PerformanceRegistrationApiTest.java:798)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_task006_sc02_seatsPerRow에_소수를_보내면_등록이_거부된다",
+      "status": "red",
+      "failure": "org.opentest4j.AssertionFailedError: expected: 400 but was: 201 (PerformanceRegistrationApiTest.java:826)"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_task006_sc03_정수_price_seatsPerRow는_이전과_동일하게_성공한다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "이 태스크의 컴파일 스켈레톤(SectionRequest/SectionSpec의 price·seatsPerRow를 Integer→BigDecimal로 바꾸고, 기존 호출부는 .intValue()/.signum()/.compareTo()로 기계적 어댑테이션만 함, 새 정수 검증 로직은 아직 추가하지 않음)이 정수 JSON 입력에 대해서는 기존과 동일하게 동작하므로 구현 전에도 이미 통과한다. 이 시나리오가 검증하려는 것은 '타입을 BigDecimal로 바꿔도 정수 요청은 여전히 성공한다'는 회귀이고, 그 회귀가 깨지지 않았음을 구조적 변경 시점에 이미 확인한 것 — Phase 3에서 새 정수 검증(F1/F2)을 추가해도 이 시나리오는 계속 통과해야 한다."
+    }
+  ],
+  "red_result": {
+    "command": "./gradlew test --tests \"*PerformanceRegistrationApiTest*\"",
+    "total": 26,
+    "failed": 2,
+    "passed": 24,
+    "existing_tests_still_passing": true
+  },
+  "inventory_check": {
+    "scenarios": 3,
+    "test_functions": 3,
+    "match": true
+  },
+  "testing_preferences": {
+    "framework": "JUnit5 + Spring Boot Test (MockMvc, @SpringBootTest + @AutoConfigureMockMvc + @Transactional)",
+    "mock_strategy": "MockMvc로 실제 컨텍스트 호출, H2 DB까지 실제로 태움. 기존 파일 관례 그대로 재사용"
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/src/main/java/com/example/ticket_booking/api/dto/SectionRequest.java",
+      "backend/src/main/java/com/example/ticket_booking/service/SectionSpec.java",
+      "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java"
+    ],
+    "contents": "SectionRequest·SectionSpec의 price/seatsPerRow 필드 타입을 Integer → BigDecimal로 변경(구조 선언). PerformanceService의 기존 호출부를 새 타입으로 컴파일되게 기계적으로만 어댑테이션: price null/범위 체크는 `< 0` → `.signum() < 0`, seatsPerRow null/범위 체크는 `< 1` → `.compareTo(BigDecimal.ONE) < 0`, 좌석 수 합산·반복문·Seat 생성자 호출은 `.intValue()`로 변환. 이 변환은 기존 Jackson ACCEPT_FLOAT_AS_INT와 동일하게 소수부를 버림(0 방향 절삭)만 하고, '정수여야 한다'는 새 검증 자체는 추가하지 않았다 — 그래서 SC-01/SC-02는 여전히 200대(201)로 성공해 Red가 되고, SC-03(정수 입력)은 절삭이 무손실이라 already_passing이 된다.",
+    "purity_check": "이 태스크는 새 클래스를 스캐폴딩하는 것이 아니라 20건 넘는 기존 통과 테스트가 의존하는 기존 메서드(validateSection 등)의 필드 타입을 바꾸는 작업이라, UnsupportedOperationException으로 몸체를 비우는 일반 스켈레톤 관례를 적용할 수 없다 — 그러면 기존 테스트 전부가 깨진다(EXIT GATE의 '기존 테스트는 계속 통과'를 위반). 대신 '이 실패가 아무것도 구현하지 않았을 때 일어나는가'(memory: feedback_java_tdd_red_skeleton.md 원칙 5)를 기준으로 판단했다 — .intValue() 절삭은 새 기능(F1/F2가 요구하는 '정수 아니면 거부')을 전혀 구현하지 않은 상태 그 자체이므로 real logic 유입이 아니다. 검증: SC-01/SC-02는 실제로 실패했고(assertion mismatch, 컴파일 오류 아님), 기존 23건 + SC-03 1건 = 24건은 그대로 통과했다(26 실행, 2 실패)."
+  },
+  "human_review": { "approved": true }
+}
