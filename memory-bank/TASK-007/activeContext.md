@@ -22,10 +22,10 @@ artifacts:
   reflect: "workflow_design/08_reflect/REFLECT_TASK-007.json"
 
 pull_request:
-  number: null
-  url: null
+  number: 9
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/9"
   base: develop
-  opened_at: null
+  opened_at: 2026-10-07
 ---
 
 ## 지금 무엇을 하고 있나
