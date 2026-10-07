@@ -117,7 +117,7 @@
 
   "human_review": {
     "decision": "APPROVE",
-    "verified_commit": "PENDING_COMMIT",
+    "verified_commit": "a116c882e7bde1f1ff807a5893f655b34088ceb7",
     "verified_at": "2026-10-07T15:40:00Z"
   }
 }
