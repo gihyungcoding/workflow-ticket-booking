@@ -5,7 +5,7 @@ phase: "5"
 phase_name: "Phase 5 - Reflect (완료)"
 status: DONE
 created_at: 2026-09-29
-last_updated: 2026-10-07
+last_updated: 2026-10-07T15:45:00Z
 
 primary_category: Backend
 sub_categories: []
@@ -37,11 +37,18 @@ ADR-0010이 지목한 ARCH-004를 그 자리에서 추가해 해결, 1건은 예
 회고에서 ADR 승격 후보 1건과 규칙 개선안 2건이 나왔으나 사용자가 "승인하고
 종료"로 처리 — 별도 후속 작업 없이 제안으로만 기록됨.
 
+**Ship 중 발생한 2차 Phase 4 재검증**: `/wf-ship` 진행 중 ship_preflight.py가
+신선도 FAIL을 보고했다 — TASK-006(PR #8)이 develop에 먼저 머지되면서 같은
+파일(SectionRequest.java, PerformanceService.java)에 충돌이 발생했다.
+`git merge develop`으로 단일 커밋에서 충돌을 해결(TASK-006의 BigDecimal
+타입·범위·정수성 검사 보존 + TASK-007의 Bean Validation 이관 적용)했고,
+Phase 4를 재수행해 HITL#3 재승인(status: WARN, 5건)을 받았다. 신규 발견
+WARN 2건 중 주석 부정확 1건은 그 자리에서 정정, price=null 테스트 공백
+1건은 WARN으로 유지.
+
 ## 다음 한 걸음
 
-`/wf-ship`으로 머지를 준비한다. 단, TASK-006(PR #8)이 이 브랜치 분기 시점
-이후 develop에 머지됐는지 먼저 확인할 것 — 겹치는 파일(SectionRequest.java,
-PerformanceService.java)이 있어 충돌 가능성이 있다(아래 TASK-006 메모 참고).
+커밋 후 `/wf-ship`을 재시도한다 — `ship_preflight.py` 7항목 재확인.
 
 ## 알아둬야 할 것
 

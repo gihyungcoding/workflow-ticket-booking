@@ -132,18 +132,20 @@ public class PerformanceService {
   }
 
   /**
-   * 필드 형태(필수·길이·형식)는 api.dto 의 Bean Validation 이 Controller 경계에서 걸러낸다 (ADR-0010). 여기 남은 것은 값의 범위·
-   * 정수 여부와 두 필드의 관계 — BigDecimal 정수성 검사처럼 애노테이션으로 표현할 수 없는 규칙뿐이다. null 원소는 @Valid cascade 대상이 아니라
-   * 여기까지 내려온다.
+   * 필드 형태(필수·길이·형식)는 api.dto 의 Bean Validation 이 Controller 경계에서 걸러낸다 (ADR-0010). price/seatsPerRow
+   * 의 범위·정수성은 @DecimalMax·@Digits 로도 표현할 수 있지만, @Digits 구현의 precision()-scale() 계산이 극단적 지수 표기에서 int
+   * 오버플로로 무력화될 수 있어 여기서 signum·compareTo 를 isIntegral() 보다 먼저 거치는 순서로 직접 판정한다. rowStart>rowEnd 는 두
+   * 필드를 함께 봐야 하는 도메인 규칙이라 애노테이션으로 표현할 수 없다. null 원소는 @Valid cascade 대상이 아니라 여기까지 내려온다.
    */
   private void validateSection(SectionSpec section) {
     if (section == null) {
       throw new InvalidSectionException("구역 정보는 비어 있을 수 없습니다");
     }
     // price/seatsPerRow: 범위 확인(signum·compareTo)이 isIntegral()보다 먼저다 — isIntegral()의
-    // stripTrailingZeros()는 scale이 Integer.MIN_VALUE 아래로 내려가면 ArithmeticException을
-    // 던진다(극단적 지수 표기, 예: 100E+2147483647). 그런 값은 반드시 MAX_INT_VALUE를 넘으므로
-    // compareTo를 먼저 통과시키면 isIntegral()에 위험한 값이 도달하지 않는다.
+    // stripTrailingZeros()는 scale이 Integer.MIN_VALUE 아래로 내려가면 ArithmeticException을 던진다
+    // (극단적 지수 표기, 예: 100E+2147483647). signum<0/compareTo(ONE)<0 을 통과한 0이 아닌 값은
+    // scale 이 그렇게까지 내려갈 수 없고, 0인 값은 stripTrailingZeros() 가 항상 scale 0으로 정규화하는
+    // fast path를 타 안전하다(예: 0E+2147483647 도 isIntegral() 에서 true 로 판정됨).
     if (section.price().signum() < 0) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
     }

@@ -1,30 +1,37 @@
 {
   "task_id": "TASK-007",
   "status": "WARN",
-  "status_reason": "정확성 결함은 없음(FAIL 사유 0건). WARN 3건 — 테스트 커버리지 공백 2건(재현 결과 현재 코드는 정상 동작), PerformanceExceptionHandler의 전역 범위와 도메인 전용 분기 로직의 결합 1건. ADR-0010이 명시한 constraints.yaml 추가(ARCH-004)는 HITL#3 전 사용자 확인을 거쳐 architecture-doc 스킬로 이미 반영·검증 완료함(아래 architecture 필드)",
+  "status_reason": "2차 검증(병합 재검증). 정확성 결함 없음(FAIL 0건). WARN 5건 — (1)(2) 1차에서 이미 승인된 테스트 커버리지 공백 2건 유지, (3) ExceptionHandler 전역 범위 1건 유지, (4) price=null 회귀 테스트 공백(신규, 미해결 — WARN으로 승인), (5) validateSection/SectionRequest 주석 부정확(신규, HITL#3에서 '지금 정정' 선택 후 해결함 — outcome: fixed)",
+
+  "reverification_reason": "ship_preflight.py 신선도 검사 FAIL — Phase 4 1차 승인(verified_commit 8a8d597) 이후 TASK-006(PR #8, develop에 선행 머지)과의 병합 충돌을 해결하며 소스 파일 4개가 바뀜. wf-ship 스킬 지시에 따라 신선도 실패를 우회하지 않고 Phase 4를 재수행한다",
+  "merge_context": {
+    "what_happened": "TASK-007 브랜치 분기 이후 TASK-006이 develop에 먼저 머지됐다. TASK-006은 SectionRequest.price/seatsPerRow를 Integer→BigDecimal로 바꾸고 PerformanceService에 범위(Integer.MAX_VALUE)·정수성(isIntegral) 검사를 추가했다 — JSON 소수점이 Jackson에 의해 정수로 절삭되는 버그 수정. TASK-007은 같은 두 필드가 Integer라고 가정하고 @NotNull만 부여했었다",
+    "resolution": "git merge develop 으로 단일 머지 커밋에서 충돌 해결(SectionRequest.java, PerformanceService.java, SectionSpec.java, PerformanceRegistrationApiTest.java). 설계 원칙: TASK-006의 BigDecimal 타입·범위·정수성 검사(Bean Validation으로 표현 불가/위험하므로 Service에 유지) 보존 + TASK-007의 Bean Validation 이관(grade @NotBlank+@Size, rowStart/rowEnd @NotBlank+@Pattern, price/seatsPerRow @NotNull) 적용. grade 길이 체크·rowStart/rowEnd 형식 체크·price/seatsPerRow null 체크는 Service에서 제거(Bean Validation으로 이관)",
+    "merge_commit": "25b3fae"
+  },
 
   "evidence": {
     "tests": { "command": "cd backend && ./gradlew cleanTest test", "exit_code": 0,
-               "summary": "58 tests, 0 failed, 0 errors (6개 클래스: TicketBookingApplicationTests 1, PerformanceApiTest 12, PerformanceRegistrationApiTest 34, PerformanceSectionSummaryApiTest 4, PerformanceStatusRulesTest 1, PerformanceConstraintTest 6)" },
+               "summary": "66 tests, 0 failed, 0 errors (6개 클래스: TicketBookingApplicationTests 1, PerformanceApiTest 12, PerformanceRegistrationApiTest 42[기존23+TASK-006의8+TASK-007의11], PerformanceSectionSummaryApiTest 4, PerformanceStatusRulesTest 1, PerformanceConstraintTest 6)" },
     "lint": { "command": "cd backend && ./gradlew spotlessCheck", "exit_code": 0,
-              "summary": "BUILD SUCCESSFUL — UP-TO-DATE (Phase 3에서 spotlessApply 적용 완료)" },
-    "diff": { "command": "git diff --stat develop...HEAD",
-              "summary": "28 files changed, 1993 insertions(+), 45 deletions(-) — main 소스 6개, 테스트 1개, workflow 산출물 21개" }
+              "summary": "BUILD SUCCESSFUL" },
+    "diff": { "command": "git diff --stat 8a8d597 HEAD -- backend/src/main backend/src/test",
+              "summary": "4 files changed, 275 insertions(+), 12 deletions(-) — SectionRequest.java, PerformanceService.java, SectionSpec.java, PerformanceRegistrationApiTest.java(순수 추가, 기존 TASK-006 테스트 본문 무수정)" }
   },
 
   "acceptance_criteria": [
     { "criterion": "유효한 등록/수정 요청은 마이그레이션 이전과 동일하게 201/200으로 성공한다 (기존 23개 시나리오 회귀 없음)",
       "verdict": "PASS",
-      "evidence": "기존 23개 테스트(sc01~sc24, sc14 결번) 전부 통과. test_t7_sc01(POST 201)·test_t7_sc08(seatsPerRow=0 split 경계)·test_t7_sc10(sections=[null] cascade 경계) 통과로 가장 위험한 split 지점도 확인됨" },
+      "evidence": "기존 23개 + TASK-006의 8개 테스트 전부 통과(merge 후에도 유지). test_t7_sc01·08·10 통과" },
     { "criterion": "title/venue가 없거나 200자를 넘으면 400과 INVALID_REQUEST가 반환된다 (Bean Validation 경로)",
       "verdict": "PASS",
-      "evidence": "test_t7_sc02(title 빈 문자열)·test_t7_sc03(title 201자)·test_t7_sc09(PUT title 201자) 통과. venue는 title과 동일한 @NotBlank+@Size(max=200) 애노테이션·동일 FieldError 라우팅 코드 경로이나 직접 테스트가 없어(Phase 2a에서 이미 확인된 caveat) code-reviewer 재현으로 별도 확인(evidence.code_review_probes 참고) — venue=null 요청이 400 INVALID_REQUEST/'venue: must not be blank'를 반환함을 실행으로 검증" },
+      "evidence": "test_t7_sc02·03·09 통과. venue=null 재현 확인(1차 검증에서 실행 증거 확보)" },
     { "criterion": "section의 grade/rowStart/rowEnd/seatsPerRow가 없거나 형식에 맞지 않으면 400과 INVALID_SECTION이 반환된다 (Bean Validation 경로)",
       "verdict": "PASS",
-      "evidence": "test_t7_sc04(grade 21자)·test_t7_sc05(rowStart 빈 문자열)·test_t7_sc06(seatsPerRow 필드 누락) 통과. rowStart의 @Pattern(^[A-Z]$) 고유 위반(소문자·2자 이상)은 테스트로 고정돼 있지 않아 code-reviewer 재현으로 별도 확인 — rowStart='a'/rowEnd='z' 요청이 400 INVALID_SECTION/'sections[0].rowStart: must match \"^[A-Z]$\"'를 반환함을 실행으로 검증. price의 @NotNull 역시 테스트로 고정돼 있지 않아 같은 방식으로 price 누락 요청이 400 INVALID_SECTION을 반환함을 확인" },
+      "evidence": "test_t7_sc04·05·06 통과(merge 후에도 BigDecimal 타입으로 동일하게 동작). code-reviewer가 2차 검증에서 grade/rowStart/rowEnd 이관 등가성을 Hibernate Validator 구현(PatternValidator.matcher.matches(), NotBlankValidator)까지 확인함" },
     { "criterion": "요청 본문이 파싱 불가능한 JSON이거나 필드 타입이 맞지 않으면(HttpMessageNotReadableException) 빈 body가 아니라 400과 INVALID_REQUEST(ErrorResponse{code,message})가 반환된다",
       "verdict": "PASS",
-      "evidence": "test_t7_sc07 통과 — malformed JSON 요청에 400 + {code:'INVALID_REQUEST', message:...} 반환, containsKeys(code,message)로 빈 body가 아님을 직접 단언" }
+      "evidence": "test_t7_sc07 통과 — merge로 영향받지 않는 경로" }
   ],
 
   "architecture": {
@@ -32,84 +39,85 @@
     "error_count": 0,
     "warn_count": 3,
     "no_target": [],
-    "files_scanned": 84,
+    "files_scanned": 90,
     "violations": [
       { "id": "DESIGN-003", "severity": "warn",
-        "detail": "frontend/src/pages/PerformanceDetailPage.tsx:37, PerformanceEditPage.tsx:93, PerformanceListPage.tsx:46 — 이 태스크가 변경하지 않은 기존 frontend 파일. TASK-007과 무관" }
+        "detail": "frontend 기존 파일 3곳 — 이 태스크와 무관" }
     ],
-    "arch004_added_this_phase": {
-      "note": "HITL#3 전 code-reviewer 소견(ADR-0010이 명시한 constraints.yaml 추가 누락)을 사용자에게 확인 — '지금 추가' 선택. architecture-doc 스킬로 ARCH-004('@RequestBody 파라미터에는 @Valid가 있어야 한다', adr: ADR-0010, severity: error)를 constraints.yaml에 추가하고 ADR-0010 §검사 가능한 제약을 갱신했다",
-      "verification": "패턴 ^(?!.*@Valid).*@RequestBody 을 (1) 현재 코드에 적용해 위반 0건 확인 (2) 일부러 @Valid를 제거한 사본에 적용해 위반 1건이 정확히 잡히는지 확인 후 원복(git status --short로 원복 확인) — 두 검증 모두 통과",
-      "result": "severity: error로 바로 추가 — 위반 0건이라 단계적 warn 승격 없이 즉시 error 적용 가능(ADR-0010이 명시한 조건)"
-    },
-    "prose_coverage": [
-      { "rule": "API: 비즈니스 로직을 갖지 않는다", "constraint": null, "state": "검사 불가",
-        "note": "기계 패턴으로 포착 불가. 이번 변경(PerformanceExceptionHandler의 FieldError 우선순위 판정)이 이 규칙과 긴장 관계인지 code-reviewer에게 별도로 물어 확인함 — 'Bean Validation 결과를 HTTP 에러 코드로 매핑'은 §2 표의 'HTTP 요청 파싱, 응답 변환'에 해당하고 MethodArgumentNotValidException은 Service에 없는 타입이라 위반 아니라는 판정. 이 변경 코드에 실제 위반 없음(Step 3.5 예외 조항 미해당)" },
-      { "rule": "API: DB 접근을 하지 않는다", "constraint": "ARCH-001", "state": "✓" },
-      { "rule": "Service: HTTP 관심사를 갖지 않는다", "constraint": "ARCH-002", "state": "✓" },
-      { "rule": "Service: SQL/영속성 프레임워크 타입을 직접 사용하지 않는다", "constraint": "ARCH-003", "state": "✓" },
-      { "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어를 하지 않는다", "constraint": null, "state": "미인코딩",
-        "note": "이번 변경이 domain 패키지를 건드리지 않음 — 이 태스크와 무관한 기존 갭" },
-      { "rule": "Repository: 도메인 규칙을 판단하지 않는다", "constraint": null, "state": "미인코딩",
-        "note": "이번 변경이 Repository 패키지를 건드리지 않음 — 이 태스크와 무관한 기존 갭" },
-      { "rule": "Frontend: 도메인 규칙을 갖지 않는다", "constraint": null, "state": "미인코딩",
-        "note": "이번 변경이 frontend 를 건드리지 않음 — 이 태스크와 무관한 기존 갭" }
-    ]
+    "note": "ARCH-004(1차 검증에서 추가)도 merge 후 재확인 — error 0, files_scanned=6"
   },
 
   "regression": {
-    "full_suite": "58/58 passed (0 failed, 0 errors)",
+    "full_suite": "66/66 passed (0 failed, 0 errors) — merge 전 58개(TASK-007 1차 승인 시점) + TASK-006의 8개",
     "callers_checked": true,
-    "callers_check_detail": "PerformanceService.registerPerformance/updatePerformance 의 호출자는 PerformanceController 뿐임을 grep으로 확인(main+test 전체 0건 추가 호출). validateRequired 삭제 후 잔존 참조는 주석 1건뿐, 실제 메서드 호출 없음을 확인"
+    "callers_check_detail": "2차 검증에서 code-reviewer가 독립 재확인: registerPerformance/SectionSpec 생성 호출자는 PerformanceController 뿐(grep, main+test 전체)"
   },
 
-  "scope_deviations": [],
+  "scope_deviations": [
+    { "what": "SectionSpec.java (service 패키지) — Plan의 target_files 6개에 없던 파일",
+      "why": "TASK-006이 develop에서 이미 BigDecimal로 바꿔뒀고, 이 브랜치가 develop을 merge하며 자동으로 그 상태를 받았다(git merge-tree가 충돌 없이 자동 머지). TASK-007 자체가 이 파일을 의도적으로 수정한 것은 아니다",
+      "verdict": "변경 없음으로 확인 — develop의 내용이 그대로 들어왔을 뿐, 이 Phase에서 추가 수정 안 함" }
+  ],
 
   "code_review": {
     "subagent": "code-reviewer",
+    "round": "2차 — 병합 충돌 해결 재검토",
     "findings": [
       {
         "category": "test-coverage", "severity": "warn",
-        "summary": "SectionRequest.rowStart/rowEnd의 @Pattern(^[A-Z]$) 고유 위반(소문자, 2자 이상)을 때리는 테스트가 없다",
-        "detail": "정규식을 약화시켜도(앵커 제거 등) 기존 58개 테스트 전부 통과한다는 점에서 회귀 안전망이 없다는 지적. Phase 4 재현 결과 **현재 코드는 정상 동작**(rowStart='a',rowEnd='z' → 400 INVALID_SECTION, 'sections[0].rowStart: must match \"^[A-Z]$\"') — 결함 아님, 커버리지 공백",
-        "verification": "직접 재현(probe 테스트 추가 후 실행·확인·제거) — PASS, 커버리지 공백만 확인됨"
+        "summary": "SectionRequest.rowStart/rowEnd의 @Pattern(^[A-Z]$) 고유 위반(소문자, 2자 이상)을 때리는 테스트가 여전히 없다",
+        "detail": "1차 검증에서 이미 확인·승인된 공백. 재현 결과 현재 코드는 정상 동작(rowStart='a' → 400 INVALID_SECTION) — 결함 아님",
+        "verification": "1차 검증에서 probe 테스트로 직접 재현 완료, 2차에서 코드 변경 없음을 재확인"
       },
       {
         "category": "test-coverage", "severity": "warn",
-        "summary": "venue·startAt/openAt/closeAt·price의 @NotNull 6종이 테스트로 보호되지 않는다",
-        "detail": "이관 전에는 validateRequired 한 곳이 5개 필드를 모두 막았는데 지금은 애노테이션 12개로 흩어졌고 title 외에는 직접 테스트가 없다는 지적. 필드 하나가 실수로 누락되면 NPE→500이 될 수 있다는 가설. Phase 4 재현 결과 **현재 코드는 전부 정상 동작**(venue=null→400 INVALID_REQUEST, startAt=null→400 INVALID_REQUEST, price 누락→400 INVALID_SECTION, 전부 500 아님) — 결함 아님, 커버리지 공백",
-        "verification": "직접 재현(probe 테스트 추가 후 실행·확인·제거) — PASS, 커버리지 공백만 확인됨"
-      },
-      {
-        "category": "scope", "severity": "warn", "outcome": "fixed",
-        "summary": "ADR-0010이 '마이그레이션 태스크에서 추가하라'고 명시한 constraints.yaml 제약(@RequestBody에는 @Valid가 있어야 한다)이 이번 변경에 포함되지 않았다",
-        "detail": "ADR-0010 §검사 가능한 제약: '마이그레이션 태스크가 생기면 그 안에서 architecture-doc 스킬로 추가하고 이 ADR에 제약 ID를 채운다'. TASK-007이 그 마이그레이션 태스크이나 docs/ 변경이 0건이었다. HITL#3 전 사용자에게 확인 — '지금 추가'를 선택해 architecture-doc 스킬로 ARCH-004를 constraints.yaml에 추가하고 ADR-0010을 갱신했다(위 architecture.arch004_added_this_phase 참고)",
-        "verification": "제약 추가 전후 모두 grep·check_architecture.py --id ARCH-004로 확인. 가짜 위반 생성→검출→원복까지 실행해 제약이 실제로 동작함을 증명"
+        "summary": "venue/startAt/openAt/closeAt의 @NotNull이 여전히 title 외에는 테스트로 보호되지 않는다",
+        "detail": "1차 검증에서 이미 확인·승인된 공백. 결함 아님",
+        "verification": "1차 검증에서 probe 테스트로 직접 재현 완료"
       },
       {
         "category": "design", "severity": "warn",
-        "summary": "PerformanceExceptionHandler가 범위 제한 없는 전역 @RestControllerAdvice인데 'sections[' 라는 공연 도메인 전용 문자열로 분기한다",
-        "detail": "지금은 PerformanceController 하나뿐이라 결함은 아니나, 다른 컨트롤러가 추가되면 그 DTO의 형태 오류가 전부 일반 INVALID_REQUEST로 뭉개지거나, 그 DTO에 'sections'라는 이름의 리스트가 있으면 공연 도메인 코드 INVALID_SECTION을 잘못 받는다. @RestControllerAdvice(assignableTypes = PerformanceController.class)로 좁히면 해소됨",
-        "verification": "grep으로 PerformanceExceptionHandler의 @RestControllerAdvice에 assignableTypes/basePackages 없음 확인, backend/src/main 전체에 Controller가 PerformanceController 하나뿐임을 확인"
+        "summary": "PerformanceExceptionHandler가 전역 @RestControllerAdvice인데 'sections[' 도메인 전용 문자열로 분기한다",
+        "detail": "1차 검증에서 이미 확인·승인된 설계 drift. 컨트롤러가 하나뿐인 지금은 결함 아님",
+        "verification": "1차 검증에서 확인 완료"
+      },
+      {
+        "category": "test-coverage", "severity": "warn",
+        "summary": "price=null(필드 자체 누락)에 대한 회귀 테스트가 없다 — seatsPerRow 쪽만 있다(test_t7_sc06)",
+        "detail": "2차 검증에서 신규 발견. Service에서 제거한 null 체크 2개(price==null, seatsPerRow==null) 중 seatsPerRow만 실제 테스트(test_t7_sc06)가 있고 price는 없다. 현재는 @NotNull이 안전하게 막지만, 누군가 SectionRequest.price의 @NotNull을 지우면 section.price().signum()에서 NPE(500)가 나고 42개 테스트 중 아무것도 깨지지 않는다",
+        "verification": "code-reviewer가 grep·테스트 메서드 목록 대조로 확인. 재현 테스트는 작성하지 않음(Phase 4는 코드/테스트 수정 금지) — WARN으로만 기록"
+      },
+      {
+        "category": "design", "severity": "warn", "outcome": "fixed",
+        "summary": "validateSection의 javadoc과 SectionRequest의 javadoc이 Service에 남은 price/seatsPerRow 범위·정수성 검사를 '애노테이션으로 표현할 수 없는 규칙'이라고 설명하는데, 이는 부정확하다",
+        "detail": "code-reviewer가 2차 검증에서 지적: price>=0은 @PositiveOrZero, price<=Integer.MAX_VALUE는 @DecimalMax, 정수성은 @Digits로 표현 가능하다 — '표현할 수 없다'가 아니라 '@Digits 구현이 precision()-scale()을 int로 계산해 극단적 지수 표기에서 오버플로로 안전장치가 무력화될 수 있어, Service에 커스텀 순서(signum/compareTo 먼저, isIntegral 나중)로 두는 것이 더 안전하다'가 정확한 이유다. HITL#3에서 사용자 확인 후 두 파일의 javadoc과 isIntegral() 위 인라인 주석(0E+2147483647 반례를 포함하도록)을 정정했다 — 순수 문서 정정, 로직 변경 없음",
+        "verification": "code-reviewer가 Hibernate Validator 제약 애노테이션 스펙과 대조해 확인. isIntegral() 자체의 안전성도 20개 적대적 입력(극단적 지수 표기 포함)으로 재현해 현재 호출 순서가 예외를 던지지 않음을 확인 — 다만 주석의 논리적 근거(\"MAX_INT_VALUE를 넘으므로 안전\")에는 구멍이 있었다(0E+2147483647 같은 반례가 존재하나 결과는 우연히 안전함, 근거는 JDK stripTrailingZeros의 zero fast-path). 정정 후 cleanTest test(66/66)·spotlessCheck 재실행으로 동작 불변 확인"
       }
     ],
     "no_defect_confirmed": [
-      "FieldError 경로 분기 로직(최상위 우선) 정확 — cascade 경로가 'sections[0].grade' 형태임을 test_t7_sc04/05/06으로 실증, 빈 fieldErrors 안전 처리 확인",
-      "Service의 null 체크 제거(price()/seatsPerRow()/charAt(0)) 안전 — PerformanceService는 PerformanceController에서만 호출되고 다른 호출 경로 0건",
-      "RegisterPerformanceRequest.sections에 @NotNull 미부여 설계가 의도대로 동작 — 필드 누락(INVALID_REQUEST)·빈 배열(EMPTY_SECTIONS)·null 원소(INVALID_SECTION) 세 갈래 모두 테스트로 확인됨"
+      "병합 해결의 설계 원칙(TASK-006 타입·범위 보존 + TASK-007 형태 검증 이관)이 정확히 반영됨 — code-reviewer가 develop의 검증 11종을 전수 대조해 누락 0·중복 0 확인",
+      "Service의 null 체크 제거가 안전함을 4가지 전제(Controller가 유일한 호출자, @Valid 실제 적용, cascade 동작, sections=[null] 경로)로 독립 재확인",
+      "isIntegral() 호출 순서가 실제로 ArithmeticException을 던지지 않음을 20개 적대적 입력(극단적 지수 표기 포함)으로 직접 재현해 확인",
+      "테스트 파일 병합이 손실 없음 — 메서드 이름 집합이 develop(31)과 TASK-007(34)의 정확한 합집합, diff가 순수 추가(기존 테스트 본문 무수정)",
+      "에러 코드 우선순위(최상위 필드 우선)가 merge 후에도 보존됨 — test_t7_sc11 통과"
     ]
   },
 
   "security": {
-    "input_validation": "이 태스크의 핵심 — jakarta.validation 애노테이션으로 모든 요청 DTO 필드 형태 검증, Controller 경계(@Valid)에서 일괄 적용",
-    "authorization": "해당 없음 — 이 태스크는 인증/권한 로직을 변경하지 않음",
-    "secrets": "git diff develop...HEAD -- backend/src/main 에서 하드코딩된 토큰/키/비밀번호 패턴 grep 결과 없음",
-    "logging": "이 태스크 변경분에 로깅 코드 없음(Log./System.out/System.err 패턴 grep 결과 없음)"
+    "input_validation": "jakarta.validation 애노테이션 + Service의 BigDecimal 범위/정수성 검사로 이중 방어(이관 vs 잔존 분리 유지)",
+    "authorization": "해당 없음",
+    "secrets": "git diff 8a8d597 HEAD -- backend/src/main 에서 하드코딩된 토큰/키/비밀번호 패턴 grep 결과 없음",
+    "logging": "이 재검증 범위 변경분에 로깅 코드 없음"
+  },
+
+  "round1_summary": {
+    "status": "WARN", "decision": "APPROVE", "verified_commit": "8a8d5975a73fa3e71e361017d3b3556a6c2f26e1",
+    "note": "1차 검증 전문은 git log의 이 파일 이전 버전(커밋 8a8d597, 947b651)에 보존됨. ARCH-004 추가(ADR-0010 지목)가 1차에서 완료됨"
   },
 
   "human_review": {
     "decision": "APPROVE",
-    "verified_commit": "8a8d5975a73fa3e71e361017d3b3556a6c2f26e1",
-    "verified_at": "2026-10-07T00:30:00Z"
+    "verified_commit": "PENDING_COMMIT",
+    "verified_at": "2026-10-07T15:40:00Z"
   }
 }
