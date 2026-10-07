@@ -1,0 +1,123 @@
+{
+  "task_id": "TASK-007",
+  "status": "WARN",
+  "status_reason": "2차 검증(병합 재검증). 정확성 결함 없음(FAIL 0건). WARN 5건 — (1)(2) 1차에서 이미 승인된 테스트 커버리지 공백 2건 유지, (3) ExceptionHandler 전역 범위 1건 유지, (4) price=null 회귀 테스트 공백(신규, 미해결 — WARN으로 승인), (5) validateSection/SectionRequest 주석 부정확(신규, HITL#3에서 '지금 정정' 선택 후 해결함 — outcome: fixed)",
+
+  "reverification_reason": "ship_preflight.py 신선도 검사 FAIL — Phase 4 1차 승인(verified_commit 8a8d597) 이후 TASK-006(PR #8, develop에 선행 머지)과의 병합 충돌을 해결하며 소스 파일 4개가 바뀜. wf-ship 스킬 지시에 따라 신선도 실패를 우회하지 않고 Phase 4를 재수행한다",
+  "merge_context": {
+    "what_happened": "TASK-007 브랜치 분기 이후 TASK-006이 develop에 먼저 머지됐다. TASK-006은 SectionRequest.price/seatsPerRow를 Integer→BigDecimal로 바꾸고 PerformanceService에 범위(Integer.MAX_VALUE)·정수성(isIntegral) 검사를 추가했다 — JSON 소수점이 Jackson에 의해 정수로 절삭되는 버그 수정. TASK-007은 같은 두 필드가 Integer라고 가정하고 @NotNull만 부여했었다",
+    "resolution": "git merge develop 으로 단일 머지 커밋에서 충돌 해결(SectionRequest.java, PerformanceService.java, SectionSpec.java, PerformanceRegistrationApiTest.java). 설계 원칙: TASK-006의 BigDecimal 타입·범위·정수성 검사(Bean Validation으로 표현 불가/위험하므로 Service에 유지) 보존 + TASK-007의 Bean Validation 이관(grade @NotBlank+@Size, rowStart/rowEnd @NotBlank+@Pattern, price/seatsPerRow @NotNull) 적용. grade 길이 체크·rowStart/rowEnd 형식 체크·price/seatsPerRow null 체크는 Service에서 제거(Bean Validation으로 이관)",
+    "merge_commit": "25b3fae"
+  },
+
+  "evidence": {
+    "tests": { "command": "cd backend && ./gradlew cleanTest test", "exit_code": 0,
+               "summary": "66 tests, 0 failed, 0 errors (6개 클래스: TicketBookingApplicationTests 1, PerformanceApiTest 12, PerformanceRegistrationApiTest 42[기존23+TASK-006의8+TASK-007의11], PerformanceSectionSummaryApiTest 4, PerformanceStatusRulesTest 1, PerformanceConstraintTest 6)" },
+    "lint": { "command": "cd backend && ./gradlew spotlessCheck", "exit_code": 0,
+              "summary": "BUILD SUCCESSFUL" },
+    "diff": { "command": "git diff --stat 8a8d597 HEAD -- backend/src/main backend/src/test",
+              "summary": "4 files changed, 275 insertions(+), 12 deletions(-) — SectionRequest.java, PerformanceService.java, SectionSpec.java, PerformanceRegistrationApiTest.java(순수 추가, 기존 TASK-006 테스트 본문 무수정)" }
+  },
+
+  "acceptance_criteria": [
+    { "criterion": "유효한 등록/수정 요청은 마이그레이션 이전과 동일하게 201/200으로 성공한다 (기존 23개 시나리오 회귀 없음)",
+      "verdict": "PASS",
+      "evidence": "기존 23개 + TASK-006의 8개 테스트 전부 통과(merge 후에도 유지). test_t7_sc01·08·10 통과" },
+    { "criterion": "title/venue가 없거나 200자를 넘으면 400과 INVALID_REQUEST가 반환된다 (Bean Validation 경로)",
+      "verdict": "PASS",
+      "evidence": "test_t7_sc02·03·09 통과. venue=null 재현 확인(1차 검증에서 실행 증거 확보)" },
+    { "criterion": "section의 grade/rowStart/rowEnd/seatsPerRow가 없거나 형식에 맞지 않으면 400과 INVALID_SECTION이 반환된다 (Bean Validation 경로)",
+      "verdict": "PASS",
+      "evidence": "test_t7_sc04·05·06 통과(merge 후에도 BigDecimal 타입으로 동일하게 동작). code-reviewer가 2차 검증에서 grade/rowStart/rowEnd 이관 등가성을 Hibernate Validator 구현(PatternValidator.matcher.matches(), NotBlankValidator)까지 확인함" },
+    { "criterion": "요청 본문이 파싱 불가능한 JSON이거나 필드 타입이 맞지 않으면(HttpMessageNotReadableException) 빈 body가 아니라 400과 INVALID_REQUEST(ErrorResponse{code,message})가 반환된다",
+      "verdict": "PASS",
+      "evidence": "test_t7_sc07 통과 — merge로 영향받지 않는 경로" }
+  ],
+
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 90,
+    "violations": [
+      { "id": "DESIGN-003", "severity": "warn",
+        "detail": "frontend 기존 파일 3곳 — 이 태스크와 무관" }
+    ],
+    "note": "ARCH-004(1차 검증에서 추가)도 merge 후 재확인 — error 0, files_scanned=6"
+  },
+
+  "regression": {
+    "full_suite": "66/66 passed (0 failed, 0 errors) — merge 전 58개(TASK-007 1차 승인 시점) + TASK-006의 8개",
+    "callers_checked": true,
+    "callers_check_detail": "2차 검증에서 code-reviewer가 독립 재확인: registerPerformance/SectionSpec 생성 호출자는 PerformanceController 뿐(grep, main+test 전체)"
+  },
+
+  "scope_deviations": [
+    { "what": "SectionSpec.java (service 패키지) — Plan의 target_files 6개에 없던 파일",
+      "why": "TASK-006이 develop에서 이미 BigDecimal로 바꿔뒀고, 이 브랜치가 develop을 merge하며 자동으로 그 상태를 받았다(git merge-tree가 충돌 없이 자동 머지). TASK-007 자체가 이 파일을 의도적으로 수정한 것은 아니다",
+      "verdict": "변경 없음으로 확인 — develop의 내용이 그대로 들어왔을 뿐, 이 Phase에서 추가 수정 안 함" }
+  ],
+
+  "code_review": {
+    "subagent": "code-reviewer",
+    "round": "2차 — 병합 충돌 해결 재검토",
+    "findings": [
+      {
+        "category": "test-coverage", "severity": "warn",
+        "summary": "SectionRequest.rowStart/rowEnd의 @Pattern(^[A-Z]$) 고유 위반(소문자, 2자 이상)을 때리는 테스트가 여전히 없다",
+        "detail": "1차 검증에서 이미 확인·승인된 공백. 재현 결과 현재 코드는 정상 동작(rowStart='a' → 400 INVALID_SECTION) — 결함 아님",
+        "verification": "1차 검증에서 probe 테스트로 직접 재현 완료, 2차에서 코드 변경 없음을 재확인"
+      },
+      {
+        "category": "test-coverage", "severity": "warn",
+        "summary": "venue/startAt/openAt/closeAt의 @NotNull이 여전히 title 외에는 테스트로 보호되지 않는다",
+        "detail": "1차 검증에서 이미 확인·승인된 공백. 결함 아님",
+        "verification": "1차 검증에서 probe 테스트로 직접 재현 완료"
+      },
+      {
+        "category": "design", "severity": "warn",
+        "summary": "PerformanceExceptionHandler가 전역 @RestControllerAdvice인데 'sections[' 도메인 전용 문자열로 분기한다",
+        "detail": "1차 검증에서 이미 확인·승인된 설계 drift. 컨트롤러가 하나뿐인 지금은 결함 아님",
+        "verification": "1차 검증에서 확인 완료"
+      },
+      {
+        "category": "test-coverage", "severity": "warn",
+        "summary": "price=null(필드 자체 누락)에 대한 회귀 테스트가 없다 — seatsPerRow 쪽만 있다(test_t7_sc06)",
+        "detail": "2차 검증에서 신규 발견. Service에서 제거한 null 체크 2개(price==null, seatsPerRow==null) 중 seatsPerRow만 실제 테스트(test_t7_sc06)가 있고 price는 없다. 현재는 @NotNull이 안전하게 막지만, 누군가 SectionRequest.price의 @NotNull을 지우면 section.price().signum()에서 NPE(500)가 나고 42개 테스트 중 아무것도 깨지지 않는다",
+        "verification": "code-reviewer가 grep·테스트 메서드 목록 대조로 확인. 재현 테스트는 작성하지 않음(Phase 4는 코드/테스트 수정 금지) — WARN으로만 기록"
+      },
+      {
+        "category": "design", "severity": "warn", "outcome": "fixed",
+        "summary": "validateSection의 javadoc과 SectionRequest의 javadoc이 Service에 남은 price/seatsPerRow 범위·정수성 검사를 '애노테이션으로 표현할 수 없는 규칙'이라고 설명하는데, 이는 부정확하다",
+        "detail": "code-reviewer가 2차 검증에서 지적: price>=0은 @PositiveOrZero, price<=Integer.MAX_VALUE는 @DecimalMax, 정수성은 @Digits로 표현 가능하다 — '표현할 수 없다'가 아니라 '@Digits 구현이 precision()-scale()을 int로 계산해 극단적 지수 표기에서 오버플로로 안전장치가 무력화될 수 있어, Service에 커스텀 순서(signum/compareTo 먼저, isIntegral 나중)로 두는 것이 더 안전하다'가 정확한 이유다. HITL#3에서 사용자 확인 후 두 파일의 javadoc과 isIntegral() 위 인라인 주석(0E+2147483647 반례를 포함하도록)을 정정했다 — 순수 문서 정정, 로직 변경 없음",
+        "verification": "code-reviewer가 Hibernate Validator 제약 애노테이션 스펙과 대조해 확인. isIntegral() 자체의 안전성도 20개 적대적 입력(극단적 지수 표기 포함)으로 재현해 현재 호출 순서가 예외를 던지지 않음을 확인 — 다만 주석의 논리적 근거(\"MAX_INT_VALUE를 넘으므로 안전\")에는 구멍이 있었다(0E+2147483647 같은 반례가 존재하나 결과는 우연히 안전함, 근거는 JDK stripTrailingZeros의 zero fast-path). 정정 후 cleanTest test(66/66)·spotlessCheck 재실행으로 동작 불변 확인"
+      }
+    ],
+    "no_defect_confirmed": [
+      "병합 해결의 설계 원칙(TASK-006 타입·범위 보존 + TASK-007 형태 검증 이관)이 정확히 반영됨 — code-reviewer가 develop의 검증 11종을 전수 대조해 누락 0·중복 0 확인",
+      "Service의 null 체크 제거가 안전함을 4가지 전제(Controller가 유일한 호출자, @Valid 실제 적용, cascade 동작, sections=[null] 경로)로 독립 재확인",
+      "isIntegral() 호출 순서가 실제로 ArithmeticException을 던지지 않음을 20개 적대적 입력(극단적 지수 표기 포함)으로 직접 재현해 확인",
+      "테스트 파일 병합이 손실 없음 — 메서드 이름 집합이 develop(31)과 TASK-007(34)의 정확한 합집합, diff가 순수 추가(기존 테스트 본문 무수정)",
+      "에러 코드 우선순위(최상위 필드 우선)가 merge 후에도 보존됨 — test_t7_sc11 통과"
+    ]
+  },
+
+  "security": {
+    "input_validation": "jakarta.validation 애노테이션 + Service의 BigDecimal 범위/정수성 검사로 이중 방어(이관 vs 잔존 분리 유지)",
+    "authorization": "해당 없음",
+    "secrets": "git diff 8a8d597 HEAD -- backend/src/main 에서 하드코딩된 토큰/키/비밀번호 패턴 grep 결과 없음",
+    "logging": "이 재검증 범위 변경분에 로깅 코드 없음"
+  },
+
+  "round1_summary": {
+    "status": "WARN", "decision": "APPROVE", "verified_commit": "8a8d5975a73fa3e71e361017d3b3556a6c2f26e1",
+    "note": "1차 검증 전문은 git log의 이 파일 이전 버전(커밋 8a8d597, 947b651)에 보존됨. ARCH-004 추가(ADR-0010 지목)가 1차에서 완료됨"
+  },
+
+  "human_review": {
+    "decision": "APPROVE",
+    "verified_commit": "a116c882e7bde1f1ff807a5893f655b34088ceb7",
+    "verified_at": "2026-10-07T15:40:00Z"
+  }
+}
