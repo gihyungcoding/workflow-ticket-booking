@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.4 | 시나리오 11건(happy1/error1/regression9), 검증 3회 pass, HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.6 | 테스트 11개(SC-07만 Red, 10개 already_passing), HITL#2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 58/58 통과, 린트 error 0, 범위 이탈 0 |
-| 4 Verify | ⬜ 대기 | — | |
+| 4 Verify | ✅ 완료 | CP-4.3 | status: WARN(FAIL 0), AC 4/4 PASS, ARCH-004 추가, HITL#3 승인 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

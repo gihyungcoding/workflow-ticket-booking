@@ -56,6 +56,18 @@ constraints:
       pattern: "^\\s*import org\\.springframework\\.data\\.jpa\\..*;|^\\s*import jakarta\\.persistence\\.criteria\\..*;"
     severity: error
 
+  - id: ARCH-004
+    rule: "@RequestBody 파라미터에는 @Valid 가 있어야 한다"
+    rationale: "Bean Validation 애노테이션을 DTO 에 붙여도 Controller 가 @Valid 로 검증을
+                트리거하지 않으면 전부 무시된다 — 애노테이션은 리뷰에서 '있으니 검증되는
+                줄' 알게 하지만 실제로는 조용히 건너뛰어진다 (ADR-0010)"
+    adr: ADR-0010
+    detect:
+      type: forbidden_pattern
+      paths: ["backend/src/main/java/**/api/**/*.java"]
+      pattern: "^(?!.*@Valid).*@RequestBody"
+    severity: error
+
   # --- 디자인 (docs/product/design.md) ------------------------------------
   # severity 가 warn 인 이유: 지금 develop 이 DESIGN-001 을 위반한다.
   # error 로 켜면 그 사이 모든 태스크의 Phase 4 가 막힌다. TASK-003 에서

@@ -1,34 +1,34 @@
 ---
 task_id: TASK-007
 title: "공연 등록 API DTO를 Bean Validation으로 마이그레이션"
-phase: "3"
-phase_name: "Phase 3 - Green (완료)"
+phase: "4"
+phase_name: "Phase 4 - Verify (완료)"
 status: ACTIVE
 created_at: 2026-09-29
-last_updated: 2026-10-01
+last_updated: 2026-10-07
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-007-bean-validation-migration"
 
-last_checkpoint: CP-3.4
+last_checkpoint: CP-4.3
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-007.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-007.md"
   test: "workflow_design/05_scenario/TEST_TASK-007.json"
   dev: "workflow_design/06_dev/DEV_TASK-007.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-007.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 3을 마쳤다. 전체 58개 테스트 통과(실패 0), 린트 error 0, 아키텍처 제약
-error 0, 범위 이탈 없음. SC-07이 Green으로 전환됐고 나머지 10건과 기존 47건은
-통과 유지.
+Phase 4를 마쳤다. status: WARN(FAIL 0건), AC 4/4 PASS, HITL#3 승인 완료.
+ADR-0010이 명시한 ARCH-004 제약을 architecture-doc 스킬로 추가·검증했다.
 
 ## 다음 한 걸음
 
-`wf-verify` 스킬로 Phase 4(검증)를 시작한다.
+`wf-reflect` 스킬로 Phase 5(회고)를 시작한다.
 
 ## 알아둬야 할 것
 
@@ -63,6 +63,18 @@ error 0, 범위 이탈 없음. SC-07이 Green으로 전환됐고 나머지 10건
   null 원소를 검증하지 않고 건너뛴다(Plan unresolved 2번째 항목의 답). 그래서
   `sections=[null]`은 Bean Validation을 통과하고 `PerformanceService`의
   `section == null` 체크가 잡는다 — 이 체크를 지우면 sc23/SC-10이 깨진다
+- **Phase 4에서 code-reviewer가 지적한 WARN 3건(결함 아님, 재현으로 확인)**:
+  (1) `@Pattern(^[A-Z]$)` 고유 위반(소문자·2자 이상)을 때리는 회귀 테스트가
+  없다 — 정규식이 깨져도 58개 테스트가 못 잡는다(현재 코드는 정상),
+  (2) venue/시각3개/price의 `@NotNull`도 title 외엔 테스트가 없다(현재 코드는
+  500 아니라 400을 정상 반환), (3) `PerformanceExceptionHandler`가 전역
+  `@RestControllerAdvice`인데 `"sections["` 라는 공연 도메인 전용 문자열로
+  분기한다 — 컨트롤러가 하나뿐인 지금은 문제없지만 다음 컨트롤러가 생기면
+  `assignableTypes = PerformanceController.class`로 좁혀야 함. 셋 다 Phase 5
+  회고 제안으로 넘김
+- **ARCH-004 신규 추가(Phase 4)**: ADR-0010이 이 태스크 안에서 추가하라고
+  명시했던 제약 — `@RequestBody` 파라미터에는 `@Valid`가 있어야 한다
+  (`constraints.yaml`, severity: error, 패턴 `^(?!.*@Valid).*@RequestBody`)
 - **`RegisterPerformanceRequest.sections`에는 `@NotNull`을 붙이지 않았다** —
   붙이면 "필드 누락"(sc16: INVALID_REQUEST)과 "빈 배열"(sc13: EMPTY_SECTIONS)의
   구분이 사라진다. 두 판정은 Service에 남아 있다
