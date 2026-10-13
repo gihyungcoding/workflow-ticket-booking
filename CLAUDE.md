@@ -13,6 +13,11 @@
 - **테스트**: backend `./gradlew test` · frontend `npm test` (vitest)
 - **린트**: backend `./gradlew spotlessCheck` (`spotlessApply` 로 자동 수정) · frontend `npm run lint` (oxlint)
 - **빌드**: backend `./gradlew build` · frontend `npm run build`
+- **리뷰 지시 (JPA)**: Phase 4 에서 `code-reviewer` 를 호출할 때, 테스트 클래스가 클래스 레벨
+  `@Transactional` 이면 프롬프트에 **"UPDATE 경로처럼 dirty checking 으로 커밋이 지연되는
+  곳은 비트랜잭션 프로브나 `flush` 로 실제 DB 반영 여부를 확인해달라"** 를 포함한다.
+  (TASK-004 에서 이 지시 없이는 놓쳤을 PUT 경로 500 을 명시 요청으로 잡았다. 스택에
+  특화된 지시라 스타터가 아니라 이 프로젝트에 둔다.)
 
 Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객), `organizer`(주최자), `admin`(운영자)
 
