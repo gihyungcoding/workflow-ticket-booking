@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-09-16 · 총 10건
+마지막 재생성: 2026-10-13 · 총 11건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -18,3 +18,4 @@
 | [ADR-0008](ADR-0008-client-routing-react-router-dom.md) | 클라이언트 라우팅으로 react-router-dom을 쓴다 | 채택됨 | 2026-09-08 |
 | [ADR-0009](ADR-0009-seat-individual-rows.md) | 좌석은 구역(등급)×행×열 입력으로 서버가 개별 `seat` 행을 생성한다 | 채택됨 | 2026-09-11 |
 | [ADR-0010](ADR-0010-bean-validation-for-request-dtos.md) | 요청 DTO의 필드 형태 검증에 Bean Validation을 쓴다 | 채택됨 | 2026-09-16 |
+| [ADR-0011](ADR-0011-promote-design-constraints.md) | 디자인 제약 DESIGN-001·002 를 error 로 승격한다 | 채택됨 | 2026-10-13 |
