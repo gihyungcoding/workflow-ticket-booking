@@ -80,19 +80,26 @@
       "target": ".claude/skills/wf-scenario/references/gwt-canonical.md",
       "section": "Then 작성 규칙",
       "change": "테마/스타일 값을 다루는 시나리오의 Then은 설정 객체 대조가 아니라 렌더 결과(getComputedStyle) 대조를 원칙으로 한다는 규칙 추가",
-      "evidence": "TASK-003 SC-01이 theme.palette.* 대조만으로 3라운드 동안 배지 radius·카드 구분선·text.secondary 결함을 놓침. 렌더 기반으로 바꾸자(retry2/3) 이후 회귀를 자동으로 잡을 수 있게 됨"
+      "evidence": "TASK-003 SC-01이 theme.palette.* 대조만으로 3라운드 동안 배지 radius·카드 구분선·text.secondary 결함을 놓침. 렌더 기반으로 바꾸자(retry2/3) 이후 회귀를 자동으로 잡을 수 있게 됨",
+      "status": "applied",
+      "applied_in": "c4e63e9"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 2 — 코드베이스 조사",
       "change": "외부 리소스(웹폰트 등)나 라이브러리 프리셋 값을 지정할 때는 실제 사용처의 현재 값을 먼저 코드베이스에서 확인한 뒤 요청 파라미터를 정하도록 명시",
-      "evidence": "TASK-003이 실사용 굵기(h5=400/h6=500)를 확인하지 않고 Google Fonts URL에 임의로 600;700을 요청해 Phase 4 attempt 1 FAIL의 원인이 됨"
+      "evidence": "TASK-003이 실사용 굵기(h5=400/h6=500)를 확인하지 않고 Google Fonts URL에 임의로 600;700을 요청해 Phase 4 attempt 1 FAIL의 원인이 됨",
+      "status": "applied",
+      "applied_in": "c4e63e9",
+      "note": "웹폰트 한 가지 사례를 '지정하기 전에 사용처 확인'으로 일반화"
     },
     {
       "target": ".claude/skills/wf-verify/SKILL.md",
       "section": "Step 5 — 코드 리뷰",
       "change": "code-reviewer 재호출 시 '이전 라운드에서 지적한 것과 같은 카테고리의 잔여 사례를 전수 확인해달라'는 요청을 프롬프트 표준 문구에 포함",
-      "evidence": "TASK-003에서 2차·3차 재검증마다 매번 '같은 부류'의 새 결함이 하나씩 발견됨 — 처음부터 패턴을 지목한 전수 조사를 요청했다면 재시도 라운드를 줄일 수 있었을 것"
+      "evidence": "TASK-003에서 2차·3차 재검증마다 매번 '같은 부류'의 새 결함이 하나씩 발견됨 — 처음부터 패턴을 지목한 전수 조사를 요청했다면 재시도 라운드를 줄일 수 있었을 것",
+      "status": "applied",
+      "applied_in": "c4e63e9"
     }
   ],
 

@@ -98,19 +98,25 @@
       "target": ".claude/skills/wf-verify/SKILL.md",
       "section": "Step 2.5 — 화면 확인",
       "change": "'앱을 띄울 수 없으면 ... WARN으로 둔다' 문단 앞에, 실제 백엔드/의존 서비스를 못 띄우는 경우 API 계약과 동일한 스키마의 임시 모의 서버로 대체 검증할 수 있다는 옵션을 추가한다(WARN보다 우선 시도)",
-      "evidence": "TASK-002 Phase 4 — 로컬 PostgreSQL/Docker 부재 + 8080 포트 충돌로 실제 백엔드를 띄울 수 없었으나, 모의 서버로 6개 상태를 전부 실제 브라우저에서 PASS 확인함"
+      "evidence": "TASK-002 Phase 4 — 로컬 PostgreSQL/Docker 부재 + 8080 포트 충돌로 실제 백엔드를 띄울 수 없었으나, 모의 서버로 6개 상태를 전부 실제 브라우저에서 PASS 확인함",
+      "status": "applied",
+      "applied_in": "c4e63e9"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 4 — 구조 정규화",
       "change": "route가 Frontend인 태스크는 화면(outputs)만이 아니라 화면 간 이동(navigation) 흐름도 최소 1개 flow로 명시하도록 체크 항목을 추가한다",
-      "evidence": "TASK-002 PLAN의 F1~F7에 카드→상세 네비게이션이 없어 Phase 4에서야 scope_deviations로 사후 발견됨"
+      "evidence": "TASK-002 PLAN의 F1~F7에 카드→상세 네비게이션이 없어 Phase 4에서야 scope_deviations로 사후 발견됨",
+      "status": "applied",
+      "applied_in": "c4e63e9"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",
       "section": "Step 2 — 테스트 작성",
       "change": "스켈레톤(구조만 채우고 throw로 막은 코드)을 먼저 저장·커밋 대상으로 명시한 뒤 테스트를 작성하는 순서를 권장 문구로 추가한다",
-      "evidence": "TASK-002에서 스켈레톤 대신 완전한 구현을 먼저 썼다가 FORBIDDEN 위반을 뒤늦게 발견하고 되돌린 사고(CP-2.5)"
+      "evidence": "TASK-002에서 스켈레톤 대신 완전한 구현을 먼저 썼다가 FORBIDDEN 위반을 뒤늦게 발견하고 되돌린 사고(CP-2.5)",
+      "status": "rejected",
+      "note": "이미 FORBIDDEN 1번과 컴파일 언어 절이 같은 규칙을 다룬다"
     }
   ],
 
