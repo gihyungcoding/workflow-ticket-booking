@@ -21,9 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PerformanceService {
 
   private static final int MAX_SEATS = 5000;
-  private static final int MAX_GRADE_LENGTH = 20;
-  private static final int MAX_TITLE_LENGTH = 200;
-  private static final int MAX_VENUE_LENGTH = 200;
   private static final BigDecimal MAX_INT_VALUE = BigDecimal.valueOf(Integer.MAX_VALUE);
 
   private final PerformanceRepository performanceRepository;
@@ -74,7 +71,6 @@ public class PerformanceService {
       Instant openAt,
       Instant closeAt,
       List<SectionSpec> sections) {
-    validateRequired(title, venue, startAt, openAt, closeAt);
     if (sections == null) {
       throw new InvalidRequestException("sections가 필요합니다");
     }
@@ -113,7 +109,6 @@ public class PerformanceService {
   @Transactional
   public PerformanceResponse updatePerformance(
       Long id, String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
-    validateRequired(title, venue, startAt, openAt, closeAt);
     Performance performance =
         performanceRepository.findById(id).orElseThrow(() -> new PerformanceNotFoundException(id));
     Instant now = clock.instant();
@@ -136,30 +131,21 @@ public class PerformanceService {
     return toResponse(performance, clock.instant());
   }
 
-  private void validateRequired(
-      String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
-    if (isBlank(title) || isBlank(venue) || startAt == null || openAt == null || closeAt == null) {
-      throw new InvalidRequestException("title/venue/startAt/openAt/closeAt는 필수입니다");
-    }
-    if (title.length() > MAX_TITLE_LENGTH || venue.length() > MAX_VENUE_LENGTH) {
-      throw new InvalidRequestException("title/venue는 " + MAX_TITLE_LENGTH + "자를 넘을 수 없습니다");
-    }
-  }
-
+  /**
+   * 필드 형태(필수·길이·형식)는 api.dto 의 Bean Validation 이 Controller 경계에서 걸러낸다 (ADR-0010). price/seatsPerRow
+   * 의 범위·정수성은 @DecimalMax·@Digits 로도 표현할 수 있지만, @Digits 구현의 precision()-scale() 계산이 극단적 지수 표기에서 int
+   * 오버플로로 무력화될 수 있어 여기서 signum·compareTo 를 isIntegral() 보다 먼저 거치는 순서로 직접 판정한다. rowStart>rowEnd 는 두
+   * 필드를 함께 봐야 하는 도메인 규칙이라 애노테이션으로 표현할 수 없다. null 원소는 @Valid cascade 대상이 아니라 여기까지 내려온다.
+   */
   private void validateSection(SectionSpec section) {
     if (section == null) {
       throw new InvalidSectionException("구역 정보는 비어 있을 수 없습니다");
     }
-    if (isBlank(section.grade()) || section.grade().length() > MAX_GRADE_LENGTH) {
-      throw new InvalidSectionException("grade는 1~" + MAX_GRADE_LENGTH + "자여야 합니다");
-    }
     // price/seatsPerRow: 범위 확인(signum·compareTo)이 isIntegral()보다 먼저다 — isIntegral()의
-    // stripTrailingZeros()는 scale이 Integer.MIN_VALUE 아래로 내려가면 ArithmeticException을
-    // 던진다(극단적 지수 표기, 예: 100E+2147483647). 그런 값은 반드시 MAX_INT_VALUE를 넘으므로
-    // compareTo를 먼저 통과시키면 isIntegral()에 위험한 값이 도달하지 않는다.
-    if (section.price() == null) {
-      throw new InvalidSectionException("price는 0 이상이어야 합니다");
-    }
+    // stripTrailingZeros()는 scale이 Integer.MIN_VALUE 아래로 내려가면 ArithmeticException을 던진다
+    // (극단적 지수 표기, 예: 100E+2147483647). signum<0/compareTo(ONE)<0 을 통과한 0이 아닌 값은
+    // scale 이 그렇게까지 내려갈 수 없고, 0인 값은 stripTrailingZeros() 가 항상 scale 0으로 정규화하는
+    // fast path를 타 안전하다(예: 0E+2147483647 도 isIntegral() 에서 true 로 판정됨).
     if (section.price().signum() < 0) {
       throw new InvalidSectionException("price는 0 이상이어야 합니다");
     }
@@ -169,14 +155,8 @@ public class PerformanceService {
     if (!isIntegral(section.price())) {
       throw new InvalidSectionException("price는 정수여야 합니다");
     }
-    if (!isValidRow(section.rowStart()) || !isValidRow(section.rowEnd())) {
-      throw new InvalidSectionException("rowStart/rowEnd는 A~Z 단일 대문자여야 합니다");
-    }
     if (section.rowStart().charAt(0) > section.rowEnd().charAt(0)) {
       throw new InvalidSectionException("rowStart가 rowEnd보다 뒤일 수 없습니다");
-    }
-    if (section.seatsPerRow() == null) {
-      throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
     }
     if (section.seatsPerRow().compareTo(BigDecimal.ONE) < 0) {
       throw new InvalidSectionException("seatsPerRow는 1 이상이어야 합니다");
@@ -189,16 +169,8 @@ public class PerformanceService {
     }
   }
 
-  private static boolean isBlank(String value) {
-    return value == null || value.isBlank();
-  }
-
   private static boolean isIntegral(BigDecimal value) {
     return value.stripTrailingZeros().scale() <= 0;
-  }
-
-  private static boolean isValidRow(String row) {
-    return row != null && row.length() == 1 && row.charAt(0) >= 'A' && row.charAt(0) <= 'Z';
   }
 
   private void validateTimeOrder(Instant openAt, Instant closeAt, Instant startAt) {
