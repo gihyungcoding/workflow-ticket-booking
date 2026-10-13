@@ -88,7 +88,9 @@
       "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
       "section": "§4 태스크 복잡도별 기준선 부근에 신설 절",
       "change": "필터/카테고리 파라미터가 유한한 enum 값을 받는 경우, '값 개수만큼 최소 1개씩의 필터 시나리오'를 커버리지 하한에 명시적으로 추가한다",
-      "evidence": "TASK-001 attempt 1 — status 5개 값 중 2개만 필터 시나리오가 있어 CLOSED 결함을 놓침"
+      "evidence": "TASK-001 attempt 1 — status 5개 값 중 2개만 필터 시나리오가 있어 CLOSED 결함을 놓침",
+      "status": "applied",
+      "applied_in": "056f9c5"
     },
     {
       "target": "scenario-validator 정의 (V8 체크 항목)",
@@ -100,7 +102,9 @@
       "target": "docs/workflow/task-schema.md 또는 coverage-policy.md",
       "section": "경계값 시나리오 관련 절",
       "change": "같은 시간 비교 규칙이 여러 코드 경로(단건 조회 vs 목록 필터 등)에 중복 구현되는 경우, 경로마다 독립적으로 경계값(now==X) 시나리오를 요구한다",
-      "evidence": "TASK-001 attempt 2 — SC-07/08(단건 조회)만 정확한 경계를 다루고 목록 필터 경로는 경계에서 하루 떨어진 값만 사용, code-reviewer가 지적"
+      "evidence": "TASK-001 attempt 2 — SC-07/08(단건 조회)만 정확한 경계를 다루고 목록 필터 경로는 경계에서 하루 떨어진 값만 사용, code-reviewer가 지적",
+      "status": "applied",
+      "applied_in": "056f9c5"
     }
   ],
 

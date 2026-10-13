@@ -91,7 +91,9 @@
       "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
       "section": "§3 상한 — 언제 그만 쓰는가",
       "change": "'서버가 여러 항목 중 하나에 대해서만 판정 결과를 주고 개별 항목을 특정하지 않는 경우(예: 구역 여러 개의 총합 초과), 그 결과를 UI의 어느 항목에 매핑할지를 시나리오 작성 시점에 명시적으로 묻는다'는 체크를 추가한다",
-      "evidence": "TASK-005의 SC-04가 구역 1개 케이스만 다뤄, '해당 구역 아래 표시'라는 AC 문구가 다중 구역에서 실제로 어떻게 동작해야 하는지가 Phase 2a에서 검토되지 않고 Phase 4에서야 드러났다"
+      "evidence": "TASK-005의 SC-04가 구역 1개 케이스만 다뤄, '해당 구역 아래 표시'라는 AC 문구가 다중 구역에서 실제로 어떻게 동작해야 하는지가 Phase 2a에서 검토되지 않고 Phase 4에서야 드러났다",
+      "status": "applied",
+      "applied_in": "056f9c5"
     }
   ],
   "completion_report": { "approved_by_human": true }

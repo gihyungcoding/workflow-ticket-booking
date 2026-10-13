@@ -65,19 +65,25 @@
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "MUST",
       "change": "'acceptance_criteria를 전부 flows로 커버한다'는 기존 규칙에 더해, 'flows나 outputs가 acceptance_criteria에 없는 범위를 추가로 다루고 있지 않은지'도 확인하는 항목을 넣는다",
-      "evidence": "TASK-008 CP-1.1→CP-2.3 — 등록/수정/취소 응답 확장을 Phase 1에서 걸러내지 못했다"
+      "evidence": "TASK-008 CP-1.1→CP-2.3 — 등록/수정/취소 응답 확장을 Phase 1에서 걸러내지 못했다",
+      "status": "applied",
+      "applied_in": "c200816"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",
       "section": "Step 3 — 실행해서 실패 확인",
       "change": "승인된 시나리오가 '기존 동작이 바뀌지 않았다'를 검증하는 부정형 회귀 시나리오라면, Red 상태를 만들 수 없는 것이 정상이며 already_passing으로 명시하고 넘어간다는 절을 추가한다",
-      "evidence": "TASK-008 SC-02/SC-03 — TASK-001 파일 주석의 선례를 직접 찾아 유추해야 했다"
+      "evidence": "TASK-008 SC-02/SC-03 — TASK-001 파일 주석의 선례를 직접 찾아 유추해야 했다",
+      "status": "applied",
+      "applied_in": "c200816"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 2 — 코드베이스 조사",
       "change": "route가 Frontend이고 화면이 특정 API 응답 필드에 의존한다면, 그 필드가 실제 백엔드 응답 DTO에 존재하는지 코드로 확인하고 없으면 Phase 1에서 멈추는 절차를 추가한다",
-      "evidence": "TASK-005가 이 확인을 생략해 Phase 2a까지 가서야(scenario-validator V8 경유) 발견 — TASK-008 신설로 이어짐"
+      "evidence": "TASK-005가 이 확인을 생략해 Phase 2a까지 가서야(scenario-validator V8 경유) 발견 — TASK-008 신설로 이어짐",
+      "status": "applied",
+      "applied_in": "c200816"
     }
   ],
   "completion_report": { "approved_by_human": true }
