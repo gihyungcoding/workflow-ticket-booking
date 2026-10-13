@@ -98,8 +98,8 @@ B를 선택한 결정적 이유는 "검증 누락"의 성격이 달라진다는 
 
 ## 검사 가능한 제약
 
-- 후보 있음, 지금은 추가하지 않음 — "`@RequestBody` 파라미터에는 `@Valid`가
-  있어야 한다"는 규칙을 `constraints.yaml`에 넣을 수 있지만, 아직 어떤 DTO도
-  마이그레이션되지 않아 지금 추가하면(error) 기존 컨트롤러 전부가 즉시 위반으로
-  잡힌다. 마이그레이션 태스크가 생기면 그 안에서 `architecture-doc` 스킬로
-  추가하고 이 ADR에 제약 ID를 채운다.
+- **ARCH-004** (`constraints.yaml`) — "`@RequestBody` 파라미터에는 `@Valid`가
+  있어야 한다". TASK-007(마이그레이션 태스크)이 `PerformanceController`의
+  두 `@RequestBody` 파라미터(`register`/`update`)에 `@Valid`를 붙인 뒤
+  `architecture-doc` 스킬로 추가했다 — 위반 0건으로 시작해 `severity: error`로
+  바로 넣었다.

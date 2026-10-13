@@ -12,7 +12,7 @@ _없음_
 
 _없음_
 
-## 완료 (7)
+## 완료 (8)
 
 | Task ID | 제목 | Phase | 갱신 |
 |---|---|---|---|
@@ -22,4 +22,5 @@ _없음_
 | TASK-004 | 공연 등록/수정/취소 API | 5 Reflect | 2026-09-16 |
 | TASK-005 | 공연 등록/수정 화면 | 5 Reflect | 2026-09-18 |
 | TASK-006 | 구역 price/seatsPerRow 정수 강제 검증 | 5 Reflect | 2026-09-28 |
+| TASK-007 | 공연 등록 API DTO를 Bean Validation으로 마이그레이션 | 5 Reflect | 2026-10-07 
 | TASK-008 | 공연 상세 API에 구역별 좌석 구성 요약 추가 | 5 Reflect | 2026-09-17 |

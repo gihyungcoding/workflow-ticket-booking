@@ -1,0 +1,74 @@
+{
+  "task_id": "TASK-007",
+  "changed_files": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SectionRequest.java",
+      "change": "grade @NotBlank+@Size(max=20), price @NotNull, rowStart/rowEnd @NotBlank+@Pattern(^[A-Z]$), seatsPerRow @NotNull 부여. 잔존 도메인 규칙이 무엇인지 클래스 주석에 명시",
+      "lines_changed": 15 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/dto/RegisterPerformanceRequest.java",
+      "change": "title/venue @NotBlank+@Size(max=200), startAt/openAt/closeAt @NotNull, sections @Valid cascade 부여. sections 에 @NotNull 을 붙이지 않은 이유를 주석에 명시",
+      "lines_changed": 21 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/dto/UpdatePerformanceRequest.java",
+      "change": "title/venue @NotBlank+@Size(max=200), startAt/openAt/closeAt @NotNull 부여",
+      "lines_changed": 9 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "register/update 의 @RequestBody 파라미터에 @Valid 부여 (jakarta.validation.Valid import 추가)",
+      "lines_changed": 5 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+      "change": "MethodArgumentNotValidException 핸들러 추가(FieldError 경로로 INVALID_REQUEST/INVALID_SECTION 분기, 최상위 필드 우선) + HttpMessageNotReadableException 핸들러 추가(INVALID_REQUEST)",
+      "lines_changed": 44 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "validateRequired 메서드 삭제 + 호출부 2곳 제거, validateSection 을 도메인 규칙 4가지(section==null, price<0, rowStart>rowEnd, seatsPerRow<1)로 축소, 미사용 상수 3개(MAX_GRADE_LENGTH/MAX_TITLE_LENGTH/MAX_VENUE_LENGTH)·헬퍼 2개(isBlank/isValidRow) 제거",
+      "lines_changed": 37 }
+  ],
+  "reused": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java", "symbol": "ErrorResponse",
+      "note": "새 에러 응답 타입을 만들지 않고 기존 record 를 두 핸들러에서 그대로 사용" },
+    { "path": "backend/build.gradle", "symbol": "spring-boot-starter-validation",
+      "note": "이미 선언돼 있어 의존성 추가 없음 (ADR-0010 이 지적한 '수단은 있었는데 쓰이지 않던' 상태를 해소)" },
+    { "path": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
+      "symbol": "registerJson / registerJsonWithTitle / updateJson / postJson / putJson / performance / bodyAsMap",
+      "note": "Phase 2b 신규 테스트 11건이 기존 헬퍼를 전부 재사용 — 새 헬퍼를 만들지 않았다" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && ./gradlew cleanTest test",
+    "total": 58, "passed": 58, "failed": 0,
+    "target_tests_passed": 11,
+    "per_class": {
+      "TicketBookingApplicationTests": 1,
+      "api.PerformanceApiTest": 12,
+      "api.PerformanceRegistrationApiTest": 34,
+      "api.PerformanceSectionSummaryApiTest": 4,
+      "domain.PerformanceStatusRulesTest": 1,
+      "repository.PerformanceConstraintTest": 6
+    },
+    "note": "Phase 2b 에서 유일한 Red 였던 test_t7_sc07 이 HttpMessageNotReadableException 핸들러 추가로 Green 전환. already_passing 10건과 기존 23건 모두 통과 유지 — 회귀 0건"
+  },
+  "lint": { "command": "cd backend && ./gradlew spotlessCheck", "errors": 0, "warnings": 0,
+    "note": "1차 실행에서 주석 줄바꿈 포맷 위반이 나와 spotlessApply 로 수정한 뒤 재검사 통과" },
+  "architecture_check": {
+    "command": "python3 scripts/check_architecture.py",
+    "errors": 0, "warnings": 3,
+    "note": "ARCH-001/002/003 전부 통과 — Bean Validation 애노테이션이 api.dto 에만 선언되고 Service 는 여전히 api 를 import 하지 않아 ARCH-002 위반 없음(ADR-0010 이 예측한 대로). 경고 3건은 모두 기존 frontend DESIGN-003(이 태스크와 무관, 변경하지 않은 파일)"
+  },
+  "refactoring": [
+    { "what": "handleValidationFailure 의 리스트 2회 순회(allMatch + filter)를 '최상위 위반을 먼저 찾는' 단일 판정으로 정리",
+      "why": "HITL#1 에서 확정한 우선순위 규칙이 코드에서 위에서 아래로 읽히지 않았다" },
+    { "what": "구역 필드 판정 접두어를 \"sections\" → \"sections[\" 로 좁힘",
+      "why": "cascade FieldError 경로는 항상 인덱스를 포함하므로 동작은 같지만, sections 자체에 대한 위반(최상위 문제)과 구역 원소의 위반을 구분할 수 있다" },
+    { "what": "isSectionElementField 를 static 으로 통일",
+      "why": "같은 파일의 describe 와 일관성 — 둘 다 인스턴스 상태를 쓰지 않는다" },
+    { "what": "PerformanceService 의 미사용 상수 3개·헬퍼 2개 제거",
+      "why": "이관으로 참조가 사라졌다. 남겨두면 '어디선가 쓰이는 제약' 으로 오해된다" }
+  ],
+  "deliberately_not_refactored": [
+    { "what": "기존 8개 예외 핸들러에 반복되는 ResponseEntity.status(BAD_REQUEST).body(new ErrorResponse(...)) 중복",
+      "why": "badRequest(code, message) 헬퍼를 뽑으면 8개 메서드를 전부 고쳐야 해 이 태스크의 변경 범위를 크게 벗어난다. 이 중복은 TASK-007 이 만든 것이 아니다" }
+  ],
+  "scope_deviations": [],
+  "notable_implementation_notes": [
+    "RegisterPerformanceRequest.sections 에 @NotNull 을 붙이지 않았다 — 붙이면 '필드 누락'(기존 sc16: INVALID_REQUEST)과 '빈 배열'(기존 sc13: EMPTY_SECTIONS)의 구분이 Bean Validation 단계에서 뭉개진다. 두 판정은 PerformanceService 에 남겼다",
+    "Plan 의 unresolved 2번째 항목(List<@Valid SectionRequest> cascade 가 null 원소를 건너뛰는지)을 실행으로 확인 완료 — 건너뛴다. 그래서 sections=[null] 은 Bean Validation 을 통과해 Service 의 section==null 체크가 잡으며, 기존 sc23 과 신규 SC-10 이 모두 통과한다",
+    "validateSection 에서 null 체크를 뺀 price/seatsPerRow 는 @NotNull 이 보장하므로 언박싱 NPE 가 발생하지 않는다. rowStart/rowEnd 의 charAt(0) 도 @Pattern(^[A-Z]$) 이 단일 대문자를 보장한다 — Controller 경계가 유일한 검증 지점이 된다는 ADR-0010 의 결정을 그대로 따른 것이다"
+  ]
+}
