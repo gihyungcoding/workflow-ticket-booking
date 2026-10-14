@@ -1,8 +1,8 @@
 ---
 task_id: TASK-014
 title: "배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 track: light
 created_at: 2026-10-14
@@ -28,7 +28,7 @@ artifacts:
 
 ## 다음 한 걸음
 
-`wf-red` 스킬로 시나리오 23건을 실패하는 테스트 코드로 옮긴다.
+`wf-develop` 스킬로 Red 테스트 19건을 통과시키는 최소 구현을 한다 (필터 와이어링·properties·Dockerfile).
 
 ## 알아둬야 할 것
 

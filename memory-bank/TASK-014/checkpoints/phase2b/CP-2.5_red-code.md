@@ -1,11 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-14T04:00:00Z
-summary: "시나리오 23건 전부 테스트 함수로 옮김 — 19건 Red(실제 실행 확인), 4건 already_passing(SC-03/04/08/11). 기존 테스트 66건 전부 통과. HITL#2 대기."
+summary: "시나리오 23건 전부 테스트 함수로 옮김 — 19건 Red(실제 실행 확인), 4건 already_passing(SC-03/04/08/11). 기존 테스트 66건 전부 통과. HITL#2 승인됨."
 
 next_steps:
-  - "HITL#2 — Red 코드 23건(19 red + 4 already_passing) 승인 받기"
-  - "승인되면 Phase 3(Green)으로"
+  - "HITL#2 승인 완료 (23건: 19 red + 4 already_passing)"
+  - "Phase 3(Green) — wf-develop 로 구현"
 
 decisions:
   - decision: "CorsFilter/WriteGuardFilter 를 Spring 빈으로 등록하지 않고 순수 자바 클래스로만 둠(Red 단계)"
