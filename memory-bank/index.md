@@ -1,18 +1,18 @@
 # Memory Bank
 
-마지막 재생성: 2026-10-14 · 활성 1 · 차단 0 · 완료 8
+마지막 재생성: 2026-10-14 · 활성 0 · 차단 1 · 완료 8
 
 > 이 파일은 `scripts/rebuild_memory_bank_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
-## 활성 (1)
-
-| Task ID | 제목 | Phase | 갱신 |
-|---|---|---|---|
-| TASK-014 | 배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정 | 2a Scenario | 2026-10-14 |
-
-## 차단 (0)
+## 활성 (0)
 
 _없음_
+
+## 차단 (1)
+
+| Task ID | 제목 | Phase | 갱신  사유 |
+|---|---|---|------|
+| TASK-014 | 배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정 | 2a Scenario | 2026-10-14  scenario-validator 3회 시도(RETRY_SCENARIO 상한) 모두 FAIL — 입력 경계값 누락이 반복됨. reject-state-machine.md §3 에 따라 ROLLBACK_PLAN 을 사용자에게 제안해야 하는 상태 |
 
 ## 완료 (8)
 
