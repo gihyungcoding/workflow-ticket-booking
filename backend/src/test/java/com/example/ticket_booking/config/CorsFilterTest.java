@@ -11,10 +11,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 /**
  * TASK-014 시나리오 SC-01, SC-02, SC-13, SC-14, SC-15, SC-19, SC-20, SC-23.
  *
- * <p>CorsFilter 는 아직 Spring 컨텍스트에 등록되지 않고(Green 단계에서 CorsConfig 가 wiring 한다),
- * 여기서는 필터 인스턴스를 직접 호출해 핵심 분기를 검증한다(test_hints 참고). doFilter()/
- * fromCommaSeparated() 본문이 전부 UnsupportedOperationException 을 던지므로, 아래 테스트는 전부
- * 그 예외로 실패한다 — 로직이 한 줄도 없다는 뜻이다(TEST_TASK-014.json 의 purity_check 참고).
+ * <p>CorsFilter 는 아직 Spring 컨텍스트에 등록되지 않고(Green 단계에서 CorsConfig 가 wiring 한다), 여기서는 필터 인스턴스를 직접 호출해
+ * 핵심 분기를 검증한다(test_hints 참고). doFilter()/ fromCommaSeparated() 본문이 전부 UnsupportedOperationException
+ * 을 던지므로, 아래 테스트는 전부 그 예외로 실패한다 — 로직이 한 줄도 없다는 뜻이다(TEST_TASK-014.json 의 purity_check 참고).
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-014.md
  */
@@ -155,7 +154,8 @@ class CorsFilterTest {
     CorsFilter filter = new CorsFilter(List.of("https://app.example.com"));
 
     // When Origin: (빈 문자열) 으로 요청한다
-    MockHttpServletRequest emptyOriginRequest = new MockHttpServletRequest("GET", "/api/performances");
+    MockHttpServletRequest emptyOriginRequest =
+        new MockHttpServletRequest("GET", "/api/performances");
     emptyOriginRequest.addHeader("Origin", "");
     MockHttpServletResponse emptyOriginResponse = new MockHttpServletResponse();
     filter.doFilter(emptyOriginRequest, emptyOriginResponse, chain);
@@ -163,7 +163,8 @@ class CorsFilterTest {
     assertThat(emptyOriginResponse.getHeader("Access-Control-Allow-Origin")).isNull();
 
     // When Origin: (공백만) 으로 요청한다
-    MockHttpServletRequest blankOriginRequest = new MockHttpServletRequest("GET", "/api/performances");
+    MockHttpServletRequest blankOriginRequest =
+        new MockHttpServletRequest("GET", "/api/performances");
     blankOriginRequest.addHeader("Origin", "   ");
     MockHttpServletResponse blankOriginResponse = new MockHttpServletResponse();
     filter.doFilter(blankOriginRequest, blankOriginResponse, chain);

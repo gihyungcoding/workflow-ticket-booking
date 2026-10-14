@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-014-backend-deploy-cors-guard"
 
-last_checkpoint: CP-2.5
+last_checkpoint: CP-3.4
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-014.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-014.md"
@@ -28,7 +28,7 @@ artifacts:
 
 ## 다음 한 걸음
 
-`wf-develop` 스킬로 Red 테스트 19건을 통과시키는 최소 구현을 한다 (필터 와이어링·properties·Dockerfile).
+Phase 3 완료(89/89 green). `wf-verify` 로 Phase 4 검증을 시작한다.
 
 ## 알아둬야 할 것
 

@@ -28,9 +28,8 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * TASK-014 시나리오 SC-04, SC-08.
  *
- * <p>WriteGuardFilter 가 아직 Spring 컨텍스트에 등록되지 않은 상태(Phase 2b)라, 이 두 시나리오는
- * 가드 유무와 무관하게 기존 쓰기 경로가 정상 동작하는지를 검증한다 — 구현 전에도 이미 참이라
- * already_passing 으로 분류된다(TEST_TASK-014.json 참고).
+ * <p>WriteGuardFilter 가 아직 Spring 컨텍스트에 등록되지 않은 상태(Phase 2b)라, 이 두 시나리오는 가드 유무와 무관하게 기존 쓰기 경로가 정상
+ * 동작하는지를 검증한다 — 구현 전에도 이미 참이라 already_passing 으로 분류된다(TEST_TASK-014.json 참고).
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-014.md
  */
@@ -145,7 +144,10 @@ class WriteGuardIntegrationTest {
     // 스위트 전체가 통과한다"는 회귀 보증을 대표하는 단일 요청으로 축약한 것이다)
     MvcResult result =
         mockMvc
-            .perform(post("/api/performances").contentType(MediaType.APPLICATION_JSON).content(registerJson))
+            .perform(
+                post("/api/performances")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(registerJson))
             .andReturn();
 
     // Then 모든 기존 테스트가 통과한다 — 이 대표 요청이 가드 없이 그대로 성공한다

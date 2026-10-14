@@ -8,9 +8,8 @@ import org.junit.jupiter.api.Test;
 /**
  * TASK-014 시나리오 SC-03.
  *
- * <p>CorsFilter 구현이 Spring 의 CORS 설정 메서드(allowedOrigins 등)에 와일드카드를 쓰지 않으므로
- * check_architecture.py 는 구현 전인 지금도 위반 0건을 보고한다 — already_passing
- * (TEST_TASK-014.json 참고).
+ * <p>CorsFilter 구현이 Spring 의 CORS 설정 메서드(allowedOrigins 등)에 와일드카드를 쓰지 않으므로 check_architecture.py 는
+ * 구현 전인 지금도 위반 0건을 보고한다 — already_passing (TEST_TASK-014.json 참고).
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-014.md
  */

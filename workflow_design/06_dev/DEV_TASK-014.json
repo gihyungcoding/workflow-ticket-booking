@@ -1,0 +1,67 @@
+{
+  "task_id": "TASK-014",
+  "changed_files": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/CorsFilter.java",
+      "change": "스켈레톤 → 완전 일치 Origin 비교·사전요청 응답 구현",
+      "lines_changed": 55
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java",
+      "change": "스켈레톤 → 쓰기 메서드 키 검사·401 ErrorResponse·기동 실패 구현",
+      "lines_changed": 65
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/CorsConfig.java",
+      "change": "신규 — CorsFilter 빈(HIGHEST_PRECEDENCE)",
+      "lines_changed": 18
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardConfig.java",
+      "change": "신규 — WriteGuardFilter 빈(HIGHEST_PRECEDENCE+1)",
+      "lines_changed": 20
+    },
+    {
+      "path": "backend/src/main/resources/config/application.properties",
+      "change": "신규 — server.port=${PORT:8080}",
+      "lines_changed": 6
+    },
+    {
+      "path": "backend/Dockerfile",
+      "change": "신규 — 멀티스테이지 bootJar 빌드, -Xmx384m 로 실행",
+      "lines_changed": 12
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java",
+      "symbol": "ErrorResponse"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && ./gradlew test --rerun",
+    "total": 89,
+    "passed": 89,
+    "failed": 0,
+    "skipped": 0,
+    "target_tests_passed": 23
+  },
+  "lint": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0
+  },
+  "refactoring": [],
+  "refactoring_note": "리팩토링 없음 — 필터 두 개와 설정 빈 두 개로 중복·책임 혼재가 없다",
+  "scope_deviations": [
+    {
+      "path": "backend/src/main/resources/config/application.properties",
+      "why": "Plan 은 application.properties 에 server.port 를 추가하라고 했으나, src/test/resources/application.properties 가 같은 이름으로 main 파일을 가려 테스트(SC-09/10)에서 값이 null 이 된다. 테스트를 고치지 않고 classpath:/config/ 위치(Spring Boot 가 추가로 로딩)에 둬 해결했다."
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardConfig.java",
+      "why": "Plan target_files 에 없음 — fromEnv 팩토리를 @Bean 으로 와이어링하는 설정 클래스. CorsConfig 와 대칭."
+    }
+  ]
+}

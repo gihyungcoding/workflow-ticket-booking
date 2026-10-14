@@ -11,9 +11,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 /**
  * TASK-014 시나리오 SC-05, SC-06, SC-07, SC-16, SC-18, SC-21, SC-24.
  *
- * <p>WriteGuardFilter 역시 아직 Spring 컨텍스트에 등록되지 않았다. 필터 인스턴스를 직접 호출해 핵심
- * 분기를 검증한다. chain 호출 여부를 "다음 단계(컨트롤러·DB)로 넘어갔는가"의 대리 지표로 쓴다 — 가드가
- * 거부하면 chain.doFilter() 가 호출되지 않아야 하고, 그래야 DB 변경도 일어나지 않는다.
+ * <p>WriteGuardFilter 역시 아직 Spring 컨텍스트에 등록되지 않았다. 필터 인스턴스를 직접 호출해 핵심 분기를 검증한다. chain 호출 여부를 "다음
+ * 단계(컨트롤러·DB)로 넘어갔는가"의 대리 지표로 쓴다 — 가드가 거부하면 chain.doFilter() 가 호출되지 않아야 하고, 그래야 DB 변경도 일어나지 않는다.
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-014.md
  */
