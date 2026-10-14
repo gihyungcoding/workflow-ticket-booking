@@ -774,7 +774,7 @@
     "reason_primary": "CORS·필터·서버 설정·컨테이너 빌드 모두 서버 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "blocked",
+    "status": "in_progress",
     "meta": {
       "estimate": {
         "unit": "hour",

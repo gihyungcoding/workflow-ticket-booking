@@ -214,6 +214,26 @@
       "flow": "F6"
     },
     {
+      "id": "SC-23",
+      "type": "boundary",
+      "title": "Origin 헤더가 빈 값이거나 공백만이면 허용 목록과 일치하지 않는다",
+      "given": ["CORS_ALLOWED_ORIGINS 가 https://app.example.com 으로 설정되어 있다"],
+      "when": ["Origin: (빈 문자열) 또는 Origin: (공백만)으로 요청한다 — 헤더 자체가 없는 SC-13과 달리 헤더는 있고 값만 빈 경우"],
+      "then": ["두 경우 모두 응답에 Access-Control-Allow-Origin 헤더가 없다"],
+      "covers": ["오류: 허용 목록에 없는 출처의 요청에는 Access-Control-Allow-Origin 헤더가 붙지 않는다"],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-24",
+      "type": "boundary",
+      "title": "WRITE_GUARD_ENABLED 는 대소문자와 무관하게 \"true\"면 가드가 켜진다",
+      "given": ["WRITE_GUARD_ENABLED=TRUE (대문자), WRITE_API_KEY=secret123 로 기동했다"],
+      "when": ["X-Write-Key 헤더 없이 POST /api/performances 를 호출한다"],
+      "then": ["401이 반환된다 (대문자 TRUE도 가드를 정상적으로 활성화시킨다)"],
+      "covers": ["오류: 가드가 켜진 상태에서 X-Write-Key 가 없거나 틀리면 POST·PUT·DELETE 가 401 로 거부되고 DB 가 변경되지 않는다"],
+      "flow": "F3"
+    },
+    {
       "id": "SC-22",
       "type": "happy",
       "title": "Dockerfile로 이미지가 빌드된다",
@@ -247,5 +267,5 @@
       }
     ]
   },
-  "human_input": { "generate_red_trigger": false }
+  "human_input": { "generate_red_trigger": true }
 }

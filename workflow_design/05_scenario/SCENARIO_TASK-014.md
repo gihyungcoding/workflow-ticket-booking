@@ -205,6 +205,24 @@ flow: F1
 covers: WRITE_GUARD_ENABLED 가 없으면 가드는 꺼져 있고 기존 백엔드 테스트가 모두 통과한다 — ./gradlew test
 flow: F6
 
+## SC-23 (boundary) Origin 헤더가 빈 값이거나 공백만이면 허용 목록과 일치하지 않는다
+
+- **Given** `CORS_ALLOWED_ORIGINS` 가 `https://app.example.com` 으로 설정되어 있다
+- **When** `Origin: ` (빈 문자열) 또는 `Origin:    ` (공백만)으로 요청한다 (헤더 자체가 없는 SC-13과 달리, 헤더는 있고 값만 빈 경우 — `contains("")` 식 구현이면 목록의 빈 원소와 그대로 "일치"해버릴 수 있다)
+- **Then** 두 경우 모두 응답에 `Access-Control-Allow-Origin` 헤더가 없다
+
+covers: 오류: 허용 목록에 없는 출처의 요청에는 Access-Control-Allow-Origin 헤더가 붙지 않는다
+flow: F2
+
+## SC-24 (boundary) WRITE_GUARD_ENABLED 는 대소문자와 무관하게 "true"면 가드가 켜진다
+
+- **Given** `WRITE_GUARD_ENABLED=TRUE` (대문자), `WRITE_API_KEY=secret123` 로 기동했다
+- **When** `X-Write-Key` 헤더 없이 `POST /api/performances` 를 호출한다
+- **Then** 401이 반환된다 (대문자 "TRUE"도 가드를 정상적으로 활성화시킨다 — `"true".equals(v)` 처럼 대소문자를 구분하는 커스텀 비교였다면 이 경우 가드가 조용히 꺼진 채 통과했을 것이다)
+
+covers: 오류: 가드가 켜진 상태에서 X-Write-Key 가 없거나 틀리면 POST·PUT·DELETE 가 401 로 거부되고 DB 가 변경되지 않는다
+flow: F3
+
 ## SC-22 (happy) Dockerfile로 이미지가 빌드된다
 
 - **Given** `backend/Dockerfile` 이 작성되어 있다 (SC-12 에서 내용 확인됨)

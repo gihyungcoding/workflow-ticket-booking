@@ -1,11 +1,10 @@
 ---
-status: BLOCKED
-saved_at: 2026-10-14T02:00:00Z
-summary: "attempt 3(최대) 도 FAIL — Origin 빈값/공백, WRITE_GUARD_ENABLED 대소문자 변형 미검증. RETRY_SCENARIO 상한 초과로 ROLLBACK_PLAN 제안 필요(reject-state-machine.md §3)."
+status: ACTIVE
+saved_at: 2026-10-14T03:00:00Z
+summary: "attempt 4 독립검증 PASS(fail 0, warn 3) — SC-23·SC-24 보강이 attempt 3 FAIL 사유를 해소함. HITL#1 승인 완료, EXIT GATE 통과. Phase 2b 로 전환."
 
 next_steps:
-  - "사용자에게 ROLLBACK_PLAN(태스크 분할) vs 시나리오 2건 보강 후 수동 승인 중 선택받기"
-  - "선택에 따라 Phase 1 재설계 또는 Phase 2a 마무리"
+  - "wf-red 스킬로 시나리오 23건을 실패하는 테스트 코드로 전환"
 
 decisions:
   - decision: "표(coverage-policy §2-1 방식)로 메서드×키상태(SC-06), WRITE_API_KEY null/공백(SC-07)을 한 시나리오씩에 묶음"
@@ -27,4 +26,7 @@ attempts:
   - n: 3
     outcome: "FAIL(최대 시도 도달) — V11 입력 경계값(Origin 빈값/공백 헤더 미검증 → CORS 빈 원소 제거 요구사항이 사실상 비검증, WRITE_GUARD_ENABLED 대소문자 'TRUE' 미검증). warn 3건(V5 비관찰 Then, V7 구현누출, V9 SC-08/SC-21 중복 소지 + 시나리오 21건이 coverage-policy §4 상한을 크게 초과했는데 사용자 고지 없음)"
     back_to: "2a"
+  - n: 4
+    outcome: "RETRY_SCENARIO 상한(3회) 소진 후 사용자 선택('시나리오 2건 보강 후 직접 승인')으로 SC-23·SC-24 추가(23건), 이후 Phase 2a EXIT GATE 스크립트가 VALIDATION 파일의 overall.pass 를 요구해 4번째(사실상 공식 attempt 4) 독립검증을 추가로 호출 — PASS(fail 0, warn 3). attempt 3 FAIL 사유(Origin 빈값/공백, WRITE_GUARD_ENABLED 대소문자) 해소 확인됨"
+    back_to: null
 ---
