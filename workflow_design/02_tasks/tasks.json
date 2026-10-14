@@ -450,5 +450,319 @@
         }
       ]
     }
+  },
+  {
+    "id": "TASK-009",
+    "title": "이메일 인증 + Spring Security 기반 구축",
+    "description": "관객/주최자 식별을 위한 이메일 회원가입/로그인 기반을 만든다. users 테이블, BCrypt 해싱, Spring Security 필터 체인(기존 공연 API는 permitAll 유지), JWT 발급·검증을 구현하고 POST /api/auth/signup, POST /api/auth/login, GET /api/auth/me 를 제공한다. 소셜 로그인과 소유권 검사는 포함하지 않는다.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "users 테이블, 비밀번호 해싱, Security 설정, JWT 발급/검증이 모두 서버 범위",
+    "priority": "High",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 14
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다",
+        "이미 존재하는 이메일로 가입 시도 시 409를 반환한다",
+        "저장된 비밀번호가 평문이 아니라 BCrypt 해시임을 DB 조회로 확인한다",
+        "올바른 이메일/비밀번호로 POST /auth/login 호출 시 200과 유효한 accessToken을 반환한다",
+        "틀린 비밀번호 또는 존재하지 않는 이메일로 로그인 시 401을 반환하며, 두 경우 응답 메시지가 동일하다",
+        "유효한 토큰으로 GET /auth/me 호출 시 200과 해당 사용자 정보를 반환한다",
+        "토큰 없이 또는 만료/위조된 토큰으로 GET /auth/me 호출 시 401을 반환한다",
+        "기존 /api/performances/** 엔드포인트가 Security 도입 이후에도 인증 없이 그대로 동작한다(회귀 없음)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/resources/db/migration/V3__create_users.sql",
+          "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+          "backend/src/main/java/com/example/ticket_booking/domain/UserRole.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+          "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+          "backend/src/main/java/com/example/ticket_booking/service/EmailAlreadyExistsException.java",
+          "backend/src/main/java/com/example/ticket_booking/service/InvalidCredentialsException.java",
+          "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+          "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+          "backend/src/main/java/com/example/ticket_booking/config/JwtAuthenticationFilter.java",
+          "backend/src/main/java/com/example/ticket_booking/api/AuthController.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 5,
+        "risk_score": 3,
+        "total_score": 72,
+        "level": "복잡"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/user-authentication.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task A"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-010",
+    "title": "이메일 회원가입/로그인 화면",
+    "description": "이메일 회원가입/로그인 화면을 만든다. 폼 검증, 인증 상태 전역 관리(AuthContext), 헤더의 로그인/로그아웃 전환을 포함한다. 소셜 로그인 버튼과 보호 라우트 가드는 포함하지 않는다.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience",
+      "organizer"
+    ],
+    "reason_primary": "회원가입/로그인 폼과 인증 상태 관리가 프론트 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-009"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 10
+      },
+      "risk": "low",
+      "acceptance_criteria": [
+        "회원가입 폼에서 비밀번호와 비밀번호 확인이 다르면 제출 전 인라인 오류를 표시한다",
+        "회원가입 성공 시 로그인 화면으로 이동한다",
+        "이메일 중복(409) 응답 시 전용 오류 메시지와 로그인 링크를 표시한다",
+        "로그인 성공 시 토큰을 저장하고 이전 화면(또는 홈)으로 이동한다",
+        "로그인 실패(401) 시 \"이메일 또는 비밀번호가 올바르지 않습니다\"를 표시한다",
+        "로그인 상태에서 헤더에 사용자 이름과 로그아웃 버튼이 보이고, 클릭 시 토큰이 삭제되고 비로그인 상태로 전환된다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/api/auth.ts",
+          "frontend/src/auth/AuthContext.tsx",
+          "frontend/src/pages/SignUpPage.tsx",
+          "frontend/src/pages/LoginPage.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 2,
+        "total_score": 56,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/user-authentication.md",
+      "sections": [
+        "1-2",
+        "2",
+        "4",
+        "5",
+        "6"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task B"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-011",
+    "title": "소셜 로그인 연동(카카오/네이버/구글)",
+    "description": "카카오/네이버/구글 소셜 로그인을 연동한다. social_accounts 테이블, 제공자별 사용자 정보 정규화(CustomOAuth2UserService), 이메일이 일치하고 email_verified가 true인 경우에만 자동 계정 연결, 신규 가입자는 pendingToken 발급 후 역할 선택 대기, POST /api/auth/social/complete 를 구현한다. 애플 로그인과 프론트 화면은 포함하지 않는다.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "OAuth2 제공자 연동, 계정 자동 연결, pendingToken 발급이 서버 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-009"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 16
+      },
+      "risk": "high",
+      "acceptance_criteria": [
+        "처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다",
+        "이미 이메일 회원가입된 계정과 같은 이메일로, email_verified가 true인 소셜 로그인을 하면 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)",
+        "email_verified가 false(또는 미제공)인 경우에는 이메일이 같아도 자동 연결하지 않고 신규 가입과 동일하게 pendingToken을 발급한다",
+        "같은 제공자 계정으로 재로그인해도 social_accounts의 유니크 제약(provider, provider_user_id)에 의해 중복 행이 생기지 않는다",
+        "카카오/네이버(중첩 응답 구조)와 구글(평면 구조) 각각에서 이메일과 이름을 정상적으로 추출한다(제공자별 매핑 단위 테스트)",
+        "만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다",
+        "pendingToken으로 /api/auth/social/complete 외의 인증 필요 엔드포인트를 호출하면 거부된다(typ 클레임 검증)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/resources/db/migration/V4__create_social_accounts.sql",
+          "backend/src/main/java/com/example/ticket_booking/domain/SocialAccount.java",
+          "backend/src/main/java/com/example/ticket_booking/domain/SocialProvider.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/SocialAccountRepository.java",
+          "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+          "backend/src/main/java/com/example/ticket_booking/service/PendingSignupExpiredException.java",
+          "backend/src/main/java/com/example/ticket_booking/config/CustomOAuth2UserService.java",
+          "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginSuccessHandler.java",
+          "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginFailureHandler.java",
+          "backend/src/main/java/com/example/ticket_booking/api/AuthController.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 5,
+        "risk_score": 3,
+        "total_score": 74,
+        "level": "복잡"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/user-authentication.md",
+      "sections": [
+        "1-2",
+        "1-3",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task C"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-012",
+    "title": "애플 로그인 연동",
+    "description": "애플 로그인을 연동한다. ES256 서명 Client Secret 생성(AppleClientSecretGenerator), form_post 콜백 처리, 최초 1회만 전달되는 이름 정보 캡처를 구현하고 Task C(TASK-011)의 자동 연결/역할 선택 흐름을 그대로 따르게 한다. 프론트 화면은 포함하지 않는다.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "Client Secret 서명과 form_post 콜백 처리가 서버 범위",
+    "priority": "Medium",
+    "depends_on": [
+      "TASK-011"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 12
+      },
+      "risk": "high",
+      "acceptance_criteria": [
+        "애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다",
+        "애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다",
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/java/com/example/ticket_booking/config/AppleClientSecretGenerator.java",
+          "backend/src/main/java/com/example/ticket_booking/config/CustomOAuth2UserService.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60,
+        "level": "복잡"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/user-authentication.md",
+      "sections": [
+        "1-2",
+        "1-3",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task D"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-013",
+    "title": "소셜 로그인 버튼·역할 선택·콜백 처리",
+    "description": "4개 제공자(카카오/네이버/구글/애플) 로그인 버튼, /oauth2/redirect 콜백 라우트(토큰/pendingToken 분기 처리), 소셜 최초 가입자를 위한 역할 선택 화면을 만든다.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience",
+      "organizer"
+    ],
+    "reason_primary": "소셜 버튼, 콜백 라우트, 역할 선택 화면이 프론트 범위",
+    "priority": "Medium",
+    "depends_on": [
+      "TASK-011",
+      "TASK-012"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 12
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "로그인/회원가입 화면에 카카오/네이버/구글/애플 버튼이 보이고 각각 /oauth2/authorization/{provider}로 이동한다",
+        "콜백 리다이렉트(/oauth2/redirect)에서 token 쿼리가 오면 즉시 로그인 처리 후 홈으로 이동한다",
+        "콜백 리다이렉트에서 pendingToken 쿼리가 오면 역할 선택 화면으로 이동하고, 역할 제출 후 로그인 처리된다",
+        "pendingToken 만료 오류 응답을 받으면 안내 메시지와 함께 로그인 화면으로 이동할 수 있다",
+        "제공자 인증을 사용자가 취소하거나 실패하면 로그인 화면으로 돌아와 오류 메시지를 보여준다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/api/auth.ts",
+          "frontend/src/components/SocialLoginButtons.tsx",
+          "frontend/src/pages/OAuthRedirectPage.tsx",
+          "frontend/src/pages/RoleSelectionPage.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 2,
+        "total_score": 56,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/user-authentication.md",
+      "sections": [
+        "1-2",
+        "2",
+        "4",
+        "5",
+        "6"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task E"
+        }
+      ]
+    }
   }
 ]

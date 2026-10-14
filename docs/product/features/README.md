@@ -10,10 +10,4 @@
 |---|---|---|---|---|
 | [performance-availability.md](performance-availability.md) | [관객] 공연 목록과 예매 상태 | 확정 | TASK-001, TASK-002 | 2026-09-02 |
 | [performance-registration.md](performance-registration.md) | [주최자] 공연 등록 | 초안 | TASK-004, TASK-005 | 2026-09-11 |
-| [user-authentication.md](user-authentication.md) | [관객/주최자] 회원가입과 로그인 | 초안 | 5건 (미생성) | 2026-10-14 |
-
-## 태스크 미생성
-
-아래 문서는 태스크 분리 표가 있지만 아직 태스크가 만들어지지 않았습니다.
-
-- `user-authentication.md` — `/wf-tasks-from-doc docs/product/features/user-authentication.md`
+| [user-authentication.md](user-authentication.md) | [관객/주최자] 회원가입과 로그인 | 초안 | TASK-009, TASK-010, TASK-011, TASK-012, TASK-013 | 2026-10-14 |

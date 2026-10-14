@@ -34,11 +34,13 @@ Spring Security의 OAuth2 Client가 표준으로 처리하게 한다(§8).
 
 | Task | 범위 | 산출물 | 포함하지 않음 | 선행 | 추정 | 태스크 ID |
 |---|---|---|---|---|---|---|
-| A. 백엔드 — 이메일 인증 + Spring Security 기반 | `users` 테이블, BCrypt 해싱, `SecurityFilterChain`(기존 공연 API는 `permitAll` 유지), JWT 발급·검증 필터, `AuthController`(signup/login/me) | `users` 마이그레이션, `User`/`UserRole` 도메인, `UserRepository`, `AuthService`, `JwtTokenProvider`, `SecurityConfig` | 소셜 로그인, 소유권 검사, 역할 변경 | — | 14h | |
-| B. 프론트 — 이메일 회원가입/로그인 화면 | 회원가입/로그인 폼, 인증 상태 전역 관리, 헤더 로그인/로그아웃 전환 | `SignUpPage`, `LoginPage`, `AuthContext`, `api/auth.ts` | 소셜 버튼, 보호 라우트 가드 | A | 10h | |
-| C. 백엔드 — 소셜 로그인(카카오/네이버/구글) | `social_accounts` 테이블, 제공자별 사용자 정보 정규화, 이메일 일치 시 자동 계정 연결, 신규 가입자는 `pendingToken` 발급 후 역할 선택 대기 | `SocialAccount` 도메인, `CustomOAuth2UserService`, `OAuth2LoginSuccessHandler`, `POST /api/auth/social/complete` | 애플 로그인, 프론트 화면 | A | 16h | |
-| D. 백엔드 — 애플 로그인 | ES256 서명 Client Secret 생성, `form_post` 콜백 처리, 최초 1회만 내려오는 이름 캡처 | `AppleClientSecretGenerator`, `CustomOAuth2UserService`의 애플 분기 | 프론트 화면 | C | 12h | |
-| E. 프론트 — 소셜 로그인 버튼·역할 선택·콜백 처리 | 4개 제공자 버튼, `/oauth2/redirect` 라우트(토큰/pendingToken 처리), 역할 선택 화면 | `SocialLoginButtons`, `OAuthRedirectPage`, `RoleSelectionPage` | — | C, D | 12h | |
+| A. 백엔드 — 이메일 인증 + Spring Security 기반 | `users` 테이블, BCrypt 해싱, `SecurityFilterChain`(기존 공연 API는 `permitAll` 유지), JWT 발급·검증 필터, `AuthController`(signup/login/me) | `users` 마이그레이션, `User`/`UserRole` 도메인, `UserRepository`, `AuthService`, `JwtTokenProvider`, `SecurityConfig` | 소셜 로그인, 소유권 검사, 역할 변경 | — | 14h | TASK-009 |
+| B. 프론트 — 이메일 회원가입/로그인 화면 | 회원가입/로그인 폼, 인증 상태 전역 관리, 헤더 로그인/로그아웃 전환 | `SignUpPage`, `LoginPage`, `AuthContext`, `api/auth.ts` | 소셜 버튼, 보호 라우트 가드 | A | 10h | TASK-010 |
+| C. 백엔드 — 소셜 로그인(카카오/네이버/구글) | `social_accounts` 테이블, 제공자별 사용자 정보 정규화, 이메일 일치 시 자동 계정 연결, 신규 가입자는 `pendingToken` 발급 후 역할 선택 대기 | `SocialAccount` 도메인, `CustomOAuth2UserService`, `OAuth2LoginSuccessHandler`, `POST /api/auth/social/complete` | 애플 로그인, 프론트 화면 | A | 16h | TASK-011 |
+| D. 백엔드 — 애플 로그인 | ES256 서명 Client Secret 생성, `form_post` 콜백 처리, 최초 1회만 내려오는 이름 캡처 | `AppleClientSecretGenerator`, `CustomOAuth2UserService`의 애플 분기 | 프론트 화면 | C | 12h | TASK-012 |
+| E. 프론트 — 소셜 로그인 버튼·역할 선택·콜백 처리 | 4개 제공자 버튼, `/oauth2/redirect` 라우트(토큰/pendingToken 처리), 역할 선택 화면 | `SocialLoginButtons`, `OAuthRedirectPage`, `RoleSelectionPage` | — | C, D | 12h | TASK-013 |
+
+[태스크 생성 2026-10-14]
 
 **분리 이유**: 이메일 인증(A/B)이 전체 인증 체계(Security, JWT)의 토대이므로 먼저
 세운다. 표준 OAuth2 제공자(카카오/네이버/구글)는 Spring Security의 OAuth2 Client로
@@ -183,6 +185,8 @@ Spring Security의 OAuth2 Client가 표준으로 처리하게 한다(§8).
 
 **Task A — 이메일 인증**
 
+`backend/src/main/resources/db/migration/V3__create_users.sql` (신규)
+
 ```sql
 CREATE TABLE users (
     id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -220,6 +224,8 @@ public record LoginResponse(
 ```
 
 **Task C — 소셜 로그인(카카오/네이버/구글)**
+
+`backend/src/main/resources/db/migration/V4__create_social_accounts.sql` (신규)
 
 ```sql
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL; -- 소셜 전용 계정은 비밀번호 없음
@@ -399,39 +405,41 @@ public record CompleteSocialSignUpRequest(@NotBlank String pendingToken, @NotNul
 
 ## 6. 구현 참고
 
-- `backend/.../domain/User.java` — 신규. 엔티티(id, email, passwordHash(nullable),
+- `backend/src/main/resources/db/migration/V3__create_users.sql` — 신규(Task A). `users` 테이블
+- `backend/src/main/resources/db/migration/V4__create_social_accounts.sql` — 신규(Task C). `social_accounts` 테이블 + `users.password_hash` nullable 전환
+- `backend/src/main/java/com/example/ticket_booking/domain/User.java` — 신규. 엔티티(id, email, passwordHash(nullable),
   name, role, createdAt)
-- `backend/.../domain/UserRole.java` — 신규. enum `AUDIENCE`, `ORGANIZER`
-- `backend/.../domain/SocialAccount.java` — 신규(Task C). 엔티티(id, userId,
+- `backend/src/main/java/com/example/ticket_booking/domain/UserRole.java` — 신규. enum `AUDIENCE`, `ORGANIZER`
+- `backend/src/main/java/com/example/ticket_booking/domain/SocialAccount.java` — 신규(Task C). 엔티티(id, userId,
   provider, providerUserId, createdAt)
-- `backend/.../domain/SocialProvider.java` — 신규(Task C). enum `KAKAO`, `NAVER`,
+- `backend/src/main/java/com/example/ticket_booking/domain/SocialProvider.java` — 신규(Task C). enum `KAKAO`, `NAVER`,
   `GOOGLE`, `APPLE`
-- `backend/.../repository/UserRepository.java` — 신규. `findByEmail`,
+- `backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java` — 신규. `findByEmail`,
   `existsByEmail`
-- `backend/.../repository/SocialAccountRepository.java` — 신규(Task C).
+- `backend/src/main/java/com/example/ticket_booking/repository/SocialAccountRepository.java` — 신규(Task C).
   `findByProviderAndProviderUserId`
-- `backend/.../service/AuthService.java` — 신규. `signUp()`, `login()`,
+- `backend/src/main/java/com/example/ticket_booking/service/AuthService.java` — 신규. `signUp()`, `login()`,
   `completeSocialSignUp()`(Task C)
-- `backend/.../service/EmailAlreadyExistsException.java` — 신규
-- `backend/.../service/InvalidCredentialsException.java` — 신규
-- `backend/.../service/PendingSignupExpiredException.java` — 신규(Task C)
-- `backend/.../config/SecurityConfig.java` — 신규. `SecurityFilterChain`,
+- `backend/src/main/java/com/example/ticket_booking/service/EmailAlreadyExistsException.java` — 신규
+- `backend/src/main/java/com/example/ticket_booking/service/InvalidCredentialsException.java` — 신규
+- `backend/src/main/java/com/example/ticket_booking/service/PendingSignupExpiredException.java` — 신규(Task C)
+- `backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java` — 신규. `SecurityFilterChain`,
   `/api/performances/**` 등 기존 엔드포인트 `permitAll` 명시
-- `backend/.../config/JwtTokenProvider.java` — 신규. `issueAccessToken()`,
+- `backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java` — 신규. `issueAccessToken()`,
   `issuePendingToken()`, 검증
-- `backend/.../config/JwtAuthenticationFilter.java` — 신규. `Authorization` 헤더
+- `backend/src/main/java/com/example/ticket_booking/config/JwtAuthenticationFilter.java` — 신규. `Authorization` 헤더
   파싱 후 `SecurityContext`에 인증 정보 주입
-- `backend/.../config/CustomOAuth2UserService.java` — 신규(Task C/D). 제공자별
+- `backend/src/main/java/com/example/ticket_booking/config/CustomOAuth2UserService.java` — 신규(Task C/D). 제공자별
   attribute 정규화(카카오/네이버 중첩 구조, 구글 평면 구조, 애플 `id_token` 클레임)
-- `backend/.../config/OAuth2LoginSuccessHandler.java` — 신규(Task C). 자동 연결
+- `backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginSuccessHandler.java` — 신규(Task C). 자동 연결
   또는 `pendingToken` 발급 분기
-- `backend/.../config/OAuth2LoginFailureHandler.java` — 신규(Task C)
-- `backend/.../config/AppleClientSecretGenerator.java` — 신규(Task D). ES256
+- `backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginFailureHandler.java` — 신규(Task C)
+- `backend/src/main/java/com/example/ticket_booking/config/AppleClientSecretGenerator.java` — 신규(Task D). ES256
   서명 Client Secret 생성
-- `backend/.../api/AuthController.java` — 신규. `POST /api/auth/signup`,
+- `backend/src/main/java/com/example/ticket_booking/api/AuthController.java` — 신규. `POST /api/auth/signup`,
   `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/social/complete`
   (Task C)
-- `backend/.../api/PerformanceExceptionHandler.java` — 참고 패턴. 인증 관련
+- `backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java` — 참고 패턴. 인증 관련
   예외는 별도 `AuthExceptionHandler`로 신설
 - `frontend/src/api/auth.ts` — 신규. `signUp()`, `login()`, `fetchMe()`,
   `completeSocialSignUp()`(Task E)
