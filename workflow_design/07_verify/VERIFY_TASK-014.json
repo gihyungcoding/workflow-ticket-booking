@@ -1,0 +1,211 @@
+{
+  "task_id": "TASK-014",
+  "attempt": 1,
+  "status": "FAIL",
+  "status_reason": "SC-04/SC-08 통합 테스트가 가드를 켜지 않고 클래스 레벨 @Transactional 로 실행되어, '401 이면 DB 변경 없음'·'키 일치 시 DB 반영' 기준을 실제로 증명하지 못한다(가짜 통과). 코드 리뷰 correctness 결함.",
+  "evidence": {
+    "tests": {
+      "command": "cd backend && ./gradlew test --rerun",
+      "exit_code": 0,
+      "summary": "89 tests, 0 failed, 0 skipped"
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "28 files changed, 2165 insertions(+), 4 deletions(-)"
+    },
+    "probe": {
+      "command": "임시 @SpringBootTest(WRITE_GUARD_ENABLED=true, WRITE_API_KEY, CORS_ALLOWED_ORIGINS) 프로브, 실행 후 삭제",
+      "summary": "POST(허용 Origin, 키 없음) → status=401, Access-Control-Allow-Origin=https://app.example.com, body={code:WRITE_KEY_INVALID}. 가드 ON 컨텍스트에서 CORS 헤더가 401 에도 붙는 것을 확인(순서 정상 동작)"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "허용 출처 요청에 ACAO, PUT·DELETE OPTIONS 가 헤더 허용 + 2xx",
+      "verdict": "PASS",
+      "evidence": "CorsFilterTest SC-01/SC-20 통과"
+    },
+    {
+      "criterion": "허용 목록에 없는 출처에는 ACAO 가 붙지 않는다",
+      "verdict": "PASS",
+      "evidence": "CorsFilterTest SC-02/13/14/15/19/23 통과"
+    },
+    {
+      "criterion": "check_architecture --id DEPLOY-002 위반 0건",
+      "verdict": "PASS",
+      "evidence": "34개 파일 검사, 위반 0"
+    },
+    {
+      "criterion": "가드 ON + 키 일치 시 쓰기가 기존대로 처리, GET·사전요청은 키 없이 통과",
+      "verdict": "WARN",
+      "evidence": "필터 단위(WriteGuardFilterTest SC-05/16/18)는 통과. 통합(SC-04)은 가드 OFF + @Transactional 이라 증명 못 함 — 프로브로 401 경로만 확인"
+    },
+    {
+      "criterion": "가드 ON 에서 키 없음/틀림이면 POST·PUT·DELETE 401 + DB 변경 없음",
+      "verdict": "FAIL",
+      "evidence": "401 은 SC-06(필터 단위, chainCalled=false)·프로브로 확인. 'DB 변경 없음' 을 검증하는 통합 테스트 없음 — WriteGuardIntegrationTest 는 가드 설정이 없고 @Transactional"
+    },
+    {
+      "criterion": "가드 ON + 키 비어 있으면 기동 실패",
+      "verdict": "PASS",
+      "evidence": "SC-07 통과 (fromEnv). 단 컨텍스트 레벨 기동 실패는 테스트하지 않음"
+    },
+    {
+      "criterion": "WRITE_GUARD_ENABLED 미설정 시 기존 테스트 통과",
+      "verdict": "PASS",
+      "evidence": "기존 66건 통과"
+    },
+    {
+      "criterion": "PORT → server.port 반영, 설정 파일에 DB 접속정보 없음",
+      "verdict": "PASS",
+      "evidence": "SC-09/10/11 통과 (config/application.properties 는 SC-11 이 검사하지 않음 — 육안 확인상 datasource 리터럴 없음)"
+    },
+    {
+      "criterion": "Dockerfile 이 bootJar 를 -Xmx 와 함께 실행, 이미지 빌드",
+      "verdict": "PASS",
+      "evidence": "SC-12, SC-22 통과(Docker 데몬 가용, 스킵 0). -Xmx384m 적정성은 WARN"
+    }
+  ],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 144,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend 기존 경고 3건 — 이 태스크 변경과 무관"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직, DB 접근",
+        "constraint": "ARCH-001",
+        "state": "✓ (DB 접근만)"
+      },
+      {
+        "rule": "API: 비즈니스 로직",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "Service: HTTP 관심사/영속성 타입",
+        "constraint": "ARCH-002, ARCH-003",
+        "state": "✓"
+      },
+      {
+        "rule": "domain: 영속성·HTTP·트랜잭션",
+        "constraint": "ARCH-004",
+        "state": "✓"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "Frontend: 도메인 규칙",
+        "constraint": null,
+        "state": "검사 불가"
+      }
+    ],
+    "note": "config 계층은 architecture.md §2 표에 없다. WriteGuardFilter(config) 가 api.dto.ErrorResponse 를 import 한다 — 금지 규칙은 없으나 Phase 5 에서 config 계층·DTO 위치 규칙 명문화를 제안할 만하다"
+  },
+  "regression": {
+    "full_suite": "89/89 passed",
+    "callers_checked": true
+  },
+  "scope_deviations": [
+    {
+      "path": "backend/src/main/resources/config/application.properties",
+      "verdict": "타당",
+      "reason": "test resources 의 application.properties 가 main 것을 가림. 설정이 두 곳에 나뉘는 비용 있음"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardConfig.java",
+      "verdict": "타당",
+      "reason": "CorsConfig 와 대칭 와이어링"
+    }
+  ],
+  "code_review": {
+    "findings": [
+      {
+        "id": "R1",
+        "category": "correctness",
+        "severity": "FAIL",
+        "where": "backend/src/test/java/com/example/ticket_booking/api/WriteGuardIntegrationTest.java:62-165",
+        "detail": "가드 OFF(설정 없음)인데 'ON·키 일치'로 명명, 클래스 레벨 @Transactional 로 PUT 후 GET 이 1차 캐시를 읽어 DB 반영을 증명 못 함(롤백, dirty checking 미flush), 401 → DB 불변 통합 검증 없음. 주석 '아직 컨텍스트에 등록되지 않아' 도 낡음. 직접 확인: test/main resources 에 WRITE_GUARD_* 없음.",
+        "resolution": "비트랜잭션 + @SpringBootTest(properties=가드 ON) 로 재작성, flush/clear 또는 별도 조회로 반영 확인"
+      },
+      {
+        "id": "R2",
+        "category": "correctness",
+        "severity": "WARN",
+        "where": "CorsConfig.java:15, WriteGuardConfig.java:14",
+        "detail": "@Bean 메서드 @Order 가 서블릿 필터 체인 순서에 반영되는지 리뷰어는 불확실. 프로브에서는 의도한 순서로 동작(401 에 ACAO 부착)했으나 이를 고정하는 테스트가 없다.",
+        "resolution": "가드 ON + 허용 Origin POST(키 없음) → 401 + ACAO 단언 통합 테스트로 순서를 고정(R1 재작성에 포함 가능). 필요 시 FilterRegistrationBean.setOrder"
+      },
+      {
+        "id": "R3",
+        "category": "correctness",
+        "severity": "WARN",
+        "where": "WriteGuardFilter.java:37-45",
+        "detail": "WRITE_GUARD_ENABLED 가 '1'/'yes'/'ture' 이면 조용히 비활성(fail-open). ADR-0016/Plan 이 명시적으로 정한 동작이며 SC-21 이 고정한다.",
+        "resolution": "정책 결정 필요 — 현행 유지(최소 기동 시 WARN 로그) 또는 true/false 이외 값은 기동 실패"
+      },
+      {
+        "id": "R4",
+        "category": "correctness",
+        "severity": "WARN",
+        "where": "backend/Dockerfile:12",
+        "detail": "-Xmx384m 은 Render 무료 인스턴스(512MB)에서 메타스페이스·스레드·네이티브 합산 시 OOM 위험. USER 지시자 없어 root 실행.",
+        "resolution": "-Xmx256m~300m 또는 -XX:MaxRAMPercentage, 비루트 USER"
+      },
+      {
+        "id": "R5",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "CorsFilter.java:44-47",
+        "detail": "Vary: Origin 이 허용 Origin 에만 붙음, Max-Age 없음"
+      },
+      {
+        "id": "R6",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "WriteGuardFilter.java",
+        "detail": "WRITE_API_KEY 를 strip 하지 않아 개행 섞이면 영구 불일치"
+      },
+      {
+        "id": "R7",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "ApplicationPropertiesFileTest.java:20",
+        "detail": "config/application.properties 는 검사 대상이 아님"
+      },
+      {
+        "id": "R8",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "backend/Dockerfile",
+        "detail": "의존성 레이어 캐시·.dockerignore 없음"
+      }
+    ]
+  },
+  "security": {
+    "input_validation": "Origin 완전 일치 비교, 와일드카드 없음, 빈/공백 Origin 불일치",
+    "authorization": "쓰기 메서드 4종에 X-Write-Key 검사, MessageDigest.isEqual. 메서드 오버라이드 우회 경로 없음(리뷰어 확인). R3 fail-open 은 정책 사항",
+    "secrets": "설정 파일에 키·DB 접속정보 하드코딩 없음",
+    "logging": "해당 없음 — 키 값을 로그에 남기지 않음"
+  },
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}

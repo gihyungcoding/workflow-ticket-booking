@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-014-backend-deploy-cors-guard"
 
-last_checkpoint: CP-3.4
+last_checkpoint: CP-4.2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-014.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-014.md"
