@@ -3,13 +3,12 @@ package com.example.ticket_booking.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 /**
- * TASK-014 시나리오 SC-05, SC-06, SC-07, SC-16, SC-18, SC-21, SC-24.
+ * TASK-014 시나리오 SC-05, SC-07, SC-16, SC-18, SC-21, SC-24. (SC-06 은 WriteGuardIntegrationTest 로 옮겼다)
  *
  * <p>WriteGuardFilter 역시 아직 Spring 컨텍스트에 등록되지 않았다. 필터 인스턴스를 직접 호출해 핵심 분기를 검증한다. chain 호출 여부를 "다음
  * 단계(컨트롤러·DB)로 넘어갔는가"의 대리 지표로 쓴다 — 가드가 거부하면 chain.doFilter() 가 호출되지 않아야 하고, 그래야 DB 변경도 일어나지 않는다.
@@ -17,8 +16,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-014.md
  */
 class WriteGuardFilterTest {
-
-  private static final List<String> WRITE_METHODS = List.of("POST", "PUT", "PATCH", "DELETE");
 
   @Test
   void test_sc05_GET_조회는_가드가_켜져_있어도_키_없이_통과한다() throws Exception {
@@ -34,31 +31,6 @@ class WriteGuardFilterTest {
 
     // Then 200이 반환된다 (= 다음 체인으로 통과했다)
     assertThat(chainCalled[0]).isTrue();
-  }
-
-  @Test
-  void test_sc06_쓰기_메서드는_키가_없거나_틀리면_401로_거부된다() throws Exception {
-    // Given WRITE_GUARD_ENABLED=true, WRITE_API_KEY=secret123 로 기동했다
-    WriteGuardFilter filter = new WriteGuardFilter(true, "secret123");
-
-    // When 메서드(POST/PUT/PATCH/DELETE) × 키상태(헤더없음/틀림) 8개 조합으로 요청한다
-    for (String method : WRITE_METHODS) {
-      for (String keyValue : new String[] {null, "wrong"}) {
-        MockHttpServletRequest request = new MockHttpServletRequest(method, "/api/performances/1");
-        if (keyValue != null) {
-          request.addHeader("X-Write-Key", keyValue);
-        }
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        boolean[] chainCalled = {false};
-
-        filter.doFilter(request, response, (req, resp) -> chainCalled[0] = true);
-
-        // Then 표의 모든 조합에서 401이 반환된다
-        assertThat(response.getStatus()).as("%s key=%s", method, keyValue).isEqualTo(401);
-        // Then 각 요청 모두 DB에 어떤 변경도 생기지 않는다(= chain 으로 넘어가지 않았다)
-        assertThat(chainCalled[0]).as("%s key=%s chain", method, keyValue).isFalse();
-      }
-    }
   }
 
   @Test

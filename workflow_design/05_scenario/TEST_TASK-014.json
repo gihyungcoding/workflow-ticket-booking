@@ -1,6 +1,6 @@
 {
   "task_id": "TASK-014",
-  "attempt": 1,
+  "attempt": 2,
   "supersedes": "SCENARIO_TASK-014.json",
   "test_files": [
     "backend/src/test/java/com/example/ticket_booking/config/CorsFilterTest.java",
@@ -10,7 +10,8 @@
     "backend/src/test/java/com/example/ticket_booking/config/ApplicationDefaultPortPropertyTest.java",
     "backend/src/test/java/com/example/ticket_booking/config/ApplicationPropertiesFileTest.java",
     "backend/src/test/java/com/example/ticket_booking/config/ArchitectureCheckTest.java",
-    "backend/src/test/java/com/example/ticket_booking/config/DockerfileTest.java"
+    "backend/src/test/java/com/example/ticket_booking/config/DockerfileTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/WriteGuardOffIntegrationTest.java"
   ],
   "red_scenarios": [
     {
@@ -37,7 +38,7 @@
       "test_function": "test_sc04_가드ON_키일치_쓰기_요청이_정상처리되고_변경이_반영된다",
       "status": "already_passing",
       "failure": null,
-      "note": "WriteGuardFilter 가 아직 Spring 컨텍스트에 등록되지 않아(Green 단계 작업) 기존 PUT 경로가 그대로 성공한다 — 유효한 키로 쓰기가 성공해야 한다는 happy path 가 가드 부재 상태에서 이미 참이다"
+      "note": "Phase 4 롤백 후 재작성(가드 ON·비트랜잭션, 리포지토리 재조회). 구현이 이미 있어 통과한다. happy path 라 가드 무력화(M1)에도 통과하는 것이 맞고, 가드 차단은 SC-06 이 증명한다"
     },
     {
       "scenario_id": "SC-05",
@@ -47,9 +48,10 @@
     },
     {
       "scenario_id": "SC-06",
-      "test_function": "test_sc06_쓰기_메서드는_키가_없거나_틀리면_401로_거부된다",
-      "status": "red",
-      "failure": "java.lang.UnsupportedOperationException (WriteGuardFilter.doFilter 스켈레톤, 메서드×키상태 8조합 전수)"
+      "test_function": "test_sc06_쓰기_메서드는_키가_없거나_틀리면_401로_거부되고_DB가_변경되지_않는다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "WriteGuardFilterTest → WriteGuardIntegrationTest 로 이전(통합: 8조합 401 + ACAO + DB count·venue 불변). 구현이 이미 있어 통과하나, 변이 M1(가드 무력화)·M3(필터 순서 역전)에서 실패함을 확인했다 — 가짜 통과 아님"
     },
     {
       "scenario_id": "SC-07",
@@ -62,7 +64,7 @@
       "test_function": "test_sc08_가드_OFF_기본값_에서_기존_쓰기_요청이_정상_처리된다",
       "status": "already_passing",
       "failure": null,
-      "note": "이 태스크가 바꾸지 않는 기존 동작(가드 미설정 시 쓰기 요청이 그대로 성공)이 계속된다는 회귀 시나리오 — 아직 아무것도 구현하지 않은 시점에도 이미 참이다"
+      "note": "이 태스크가 바꾸지 않는 기존 동작(가드 미설정 시 쓰기 요청이 그대로 성공)이 계속된다는 회귀 시나리오 — 아직 아무것도 구현하지 않은 시점에도 이미 참이다 (WriteGuardOffIntegrationTest 로 분리 — 가드 ON 클래스와 properties 가 달라 별도 클래스)"
     },
     {
       "scenario_id": "SC-09",
@@ -157,29 +159,12 @@
     }
   ],
   "red_result": {
-    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --rerun",
+    "command": "cd backend && ./gradlew test --rerun",
     "total": 89,
-    "failed": 19,
-    "passed": 70,
+    "failed": 0,
+    "passed": 89,
     "existing_tests_still_passing": true,
-    "existing_test_breakdown": {
-      "TicketBookingApplicationTests": "1/1 passed",
-      "PerformanceApiTest": "12/12 passed",
-      "PerformanceRegistrationApiTest": "42/42 passed",
-      "PerformanceSectionSummaryApiTest": "4/4 passed",
-      "PerformanceStatusRulesTest": "1/1 passed",
-      "PerformanceConstraintTest": "6/6 passed"
-    },
-    "new_test_breakdown": {
-      "CorsFilterTest": "0/8 passed (8 red)",
-      "WriteGuardFilterTest": "0/7 passed (7 red)",
-      "WriteGuardIntegrationTest": "2/2 passed (0 red, 2 already_passing)",
-      "ApplicationPortPropertyTest": "0/1 passed (1 red)",
-      "ApplicationDefaultPortPropertyTest": "0/1 passed (1 red)",
-      "ApplicationPropertiesFileTest": "1/1 passed (0 red, 1 already_passing)",
-      "ArchitectureCheckTest": "1/1 passed (0 red, 1 already_passing)",
-      "DockerfileTest": "0/2 passed (2 red)"
-    }
+    "note": "새 통합 테스트는 구현이 있어 통과. 변이 M1/M3 에서 SC-06 실패 확인"
   },
   "inventory_check": {
     "scenarios": 23,
@@ -219,5 +204,34 @@
     "from_phase": "4",
     "detail": "WriteGuardIntegrationTest(SC-04/08)가 가드 OFF + 클래스 레벨 @Transactional 로 실행되어 DB 반영·불변을 증명하지 못함. 가드 ON 비트랜잭션 통합 테스트로 재작성하고 401+ACAO(필터 순서) 단언 추가. 시나리오는 변경 없음.",
     "verify_ref": "workflow_design/07_verify/VERIFY_TASK-014.json#R1,R2"
+  },
+  "red_retry": {
+    "type": "RETRY_RED_CODE",
+    "attempt": 1,
+    "trigger": "VERIFY_TASK-014.json R1/R2",
+    "changes": [
+      "WriteGuardIntegrationTest: 가드 ON(properties)·클래스 레벨 @Transactional 제거, SC-04 는 리포지토리 재조회, SC-06 을 통합으로 이전(8조합 401+ACAO+DB 불변)",
+      "WriteGuardOffIntegrationTest 신규: SC-08 분리",
+      "WriteGuardFilterTest: SC-06 제거(통합으로 이동)"
+    ],
+    "mutation_check": [
+      {
+        "id": "M1",
+        "change": "WriteGuardFilter 가드 무력화(if (true || ...))",
+        "result": "SC-06 FAIL (WriteGuardIntegrationTest:168) — SC-04 는 happy path 라 통과"
+      },
+      {
+        "id": "M2",
+        "change": "CorsConfig @Order 를 LOWEST_PRECEDENCE 로",
+        "result": "통과 — @Bean 메서드의 @Order 가 필터 체인 순서에 반영되지 않음을 확인"
+      },
+      {
+        "id": "M3",
+        "change": "CorsConfig → ZCorsConfig 이름 변경(@Order 유지)",
+        "result": "SC-06 FAIL — 필터 순서가 설정 클래스 이름순(우연)에 의존한다"
+      }
+    ],
+    "finding_for_phase3": "@Order 가 효과 없음 → 필터 순서가 우연히 맞다. Phase 3 에서 FilterRegistrationBean.setOrder 로 명시해야 한다. 테스트(SC-06 의 ACAO 단언)가 이를 고정한다.",
+    "note": "구현이 이미 존재하는 롤백이라 새 테스트는 실행 시 통과한다 — Red 대신 변이 검증으로 가짜 통과가 아님을 증명했다. 변이는 모두 원복했다(git status 로 main 소스 변경 없음 확인)."
   }
 }
