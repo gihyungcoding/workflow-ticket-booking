@@ -195,7 +195,7 @@
     "reason": "이 넷은 필터가 아직 Spring 컨텍스트에 등록되지 않았거나(SC-04/08 — 쓰기 가드 부재 시 기존 성공 경로가 유지됨), 구현 전 상태가 요구사항을 구조적으로 이미 만족하고 있다(SC-03 — 와일드카드를 쓰지 않는 코드가 아직 없음, SC-11 — DB 접속 정보가 아직 properties 에 없음)."
   },
   "human_review": {
-    "approved": false
+    "approved": true
   },
   "reject": {
     "type": "RETRY_RED_CODE",
