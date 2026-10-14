@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-14T13:00:00Z
 summary: "회고 초안 — Keep 3 / Problem 5 / Try 5, ADR 후보 2, drift 3, 규칙 제안 3. HITL#4 대기."
 

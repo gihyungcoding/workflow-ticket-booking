@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-14T11:00:00Z
 summary: "Green 재진입 — 89/89, spotlessCheck 0. @Order 무효 → FilterRegistrationBean.setOrder, R3 WARN 로그 반영. 변이로 순서 고정 확인. Phase 4 재검증 대기."
 

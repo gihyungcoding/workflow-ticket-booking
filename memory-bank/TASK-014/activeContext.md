@@ -3,7 +3,7 @@ task_id: TASK-014
 title: "배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: ACTIVE
+status: DONE
 track: light
 created_at: 2026-10-14
 last_updated: 2026-10-14
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-014-backend-deploy-cors-guard"
 
-last_checkpoint: CP-4.2
+last_checkpoint: CP-5.2
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-014.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-014.md"

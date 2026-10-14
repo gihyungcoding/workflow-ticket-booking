@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-14T12:00:00Z
 summary: "Phase 4 2차 — WARN. 89/89·lint·제약 통과, 리뷰 correctness 결함 없음(R1·R2 해소). HITL#3 예외 승인 완료."
 

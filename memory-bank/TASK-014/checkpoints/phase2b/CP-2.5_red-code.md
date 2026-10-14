@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-14T10:00:00Z
 summary: "RETRY_RED_CODE #1 — SC-04/06/08 통합 테스트 재작성(가드 ON·비트랜잭션), 23건 인벤토리 일치, 89/89. 변이 M1/M3 에서 SC-06 실패 확인. HITL#2 재승인 완료."
 

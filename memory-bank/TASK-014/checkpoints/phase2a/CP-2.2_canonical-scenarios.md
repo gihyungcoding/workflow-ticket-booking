@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-14T03:00:00Z
 summary: "attempt 4 독립검증 PASS(fail 0, warn 3) — SC-23·SC-24 보강이 attempt 3 FAIL 사유를 해소함. HITL#1 승인 완료, EXIT GATE 통과. Phase 2b 로 전환."
 
