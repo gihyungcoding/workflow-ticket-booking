@@ -13,12 +13,12 @@
     },
     {
       "path": "backend/src/main/java/com/example/ticket_booking/config/CorsConfig.java",
-      "change": "신규 — CorsFilter 빈(HIGHEST_PRECEDENCE)",
+      "change": "신규 — FilterRegistrationBean<CorsFilter>, order=HIGHEST_PRECEDENCE",
       "lines_changed": 18
     },
     {
       "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardConfig.java",
-      "change": "신규 — WriteGuardFilter 빈(HIGHEST_PRECEDENCE+1)",
+      "change": "신규 — FilterRegistrationBean<WriteGuardFilter>, order=HIGHEST_PRECEDENCE+1",
       "lines_changed": 20
     },
     {
@@ -62,6 +62,26 @@
     {
       "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardConfig.java",
       "why": "Plan target_files 에 없음 — fromEnv 팩토리를 @Bean 으로 와이어링하는 설정 클래스. CorsConfig 와 대칭."
+    }
+  ],
+  "attempt": 2,
+  "rework": {
+    "trigger": "VERIFY_TASK-014 R2·R3 (Phase 4 FAIL → 2b → 3)",
+    "changes": [
+      "CorsConfig/WriteGuardConfig: @Bean+@Order → FilterRegistrationBean.setOrder (@Order 가 필터 체인 순서에 무효임을 변이 M2 로 확인)",
+      "WriteGuardFilter.fromEnv: true/false 가 아닌 비어있지 않은 값이면 기동 시 WARN 로그 (동작은 SC-21 대로 비활성 유지)"
+    ]
+  },
+  "mutation_check": [
+    {
+      "id": "M3",
+      "change": "CorsConfig 클래스명 역전",
+      "result": "통과 — 순서가 클래스명에 더 이상 의존하지 않음"
+    },
+    {
+      "id": "M2",
+      "change": "CORS order 를 LOWEST_PRECEDENCE",
+      "result": "SC-06 FAIL — 순서가 실제로 고정됨"
     }
   ]
 }

@@ -12,11 +12,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 public class WriteGuardFilter implements Filter {
 
+  private static final Logger log = LoggerFactory.getLogger(WriteGuardFilter.class);
   private static final Set<String> WRITE_METHODS = Set.of("POST", "PUT", "PATCH", "DELETE");
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
@@ -33,7 +36,11 @@ public class WriteGuardFilter implements Filter {
    * 값은 비활성으로 취급한다(ADR-0016). enabled 가 true 인데 apiKey 가 비어 있으면(null 또는 공백만) 예외를 던져 기동을 실패시킨다.
    */
   public static WriteGuardFilter fromEnv(String enabledRaw, String apiKey) {
-    boolean enabled = enabledRaw != null && "true".equalsIgnoreCase(enabledRaw.trim());
+    String normalized = enabledRaw == null ? "" : enabledRaw.trim();
+    boolean enabled = "true".equalsIgnoreCase(normalized);
+    if (!enabled && !normalized.isEmpty() && !"false".equalsIgnoreCase(normalized)) {
+      log.warn("WRITE_GUARD_ENABLED 값 '{}' 은 true/false 가 아니어서 쓰기 가드가 비활성으로 기동된다", normalized);
+    }
     if (enabled && (apiKey == null || apiKey.isBlank())) {
       throw new IllegalStateException(
           "WRITE_GUARD_ENABLED=true 이면 WRITE_API_KEY 가 필요하다 (비어 있으면 가드가 열린 채 기동된다)");

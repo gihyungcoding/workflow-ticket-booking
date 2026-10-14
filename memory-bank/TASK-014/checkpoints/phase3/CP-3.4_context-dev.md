@@ -1,20 +1,18 @@
 ---
 status: ACTIVE
-saved_at: 2026-10-14T08:00:00Z
-summary: "Green — 전체 89/89 통과(대상 23 + 기존 66), spotlessCheck 0, 범위 이탈 2건 기록. Phase 4 대기."
+saved_at: 2026-10-14T11:00:00Z
+summary: "Green 재진입 — 89/89, spotlessCheck 0. @Order 무효 → FilterRegistrationBean.setOrder, R3 WARN 로그 반영. 변이로 순서 고정 확인. Phase 4 재검증 대기."
 
 next_steps:
-  - "Phase 4 — wf-verify (check_architecture DEPLOY-002, code-reviewer, JPA 지시 포함)"
+  - "Phase 4 재검증 — code-reviewer 재호출(수정 커밋 포함, 같은 부류 @Order·테스트 가짜통과 전수 확인)"
 
 decisions:
-  - decision: "필터 와이어링은 FilterRegistrationBean 대신 @Bean + @Order 로 한다"
-    rationale: "Boot 가 Filter 빈을 자동 등록하고 @Order 를 따른다 — 패키지 이동 위험 없이 순서를 보장"
-  - decision: "server.port 를 classpath:/config/application.properties 에 둔다"
-    rationale: "test resources 의 application.properties 가 main 것을 가려 SC-09/10 이 null. 테스트를 고치지 않기 위해 위치를 옮겼다 (scope_deviations 참고)"
-  - decision: "401 코드는 WRITE_KEY_INVALID, 키 비교는 MessageDigest.isEqual"
-    rationale: "기존 ErrorResponse 코드 관례(대문자 스네이크)를 따르고 타이밍 차이를 줄인다"
-  - decision: "리팩토링 하지 않음"
-    rationale: "중복·책임 혼재 없음"
+  - decision: "@Bean+@Order 대신 FilterRegistrationBean.setOrder"
+    rationale: "@Bean 메서드의 @Order 는 필터 체인 순서에 반영되지 않는다(변이 M2 로 실측). 기존엔 설정 클래스 이름순이라는 우연으로 맞았다"
+  - decision: "R3 는 WARN 로그만, 동작(fail-open)은 유지"
+    rationale: "Plan·ADR-0016·SC-21 이 명시한 동작이고 사용자가 'WARN 로그 추가' 를 선택"
+  - decision: "R4(Xmx384m·root) 미반영"
+    rationale: "사용자가 선택하지 않음 — Phase 5 회고·첫 배포 확인으로"
 
 attempts: []
 ---
