@@ -1,13 +1,13 @@
 {
   "task_id": "TASK-014",
-  "attempt": 1,
-  "status": "FAIL",
-  "status_reason": "SC-04/SC-08 통합 테스트가 가드를 켜지 않고 클래스 레벨 @Transactional 로 실행되어, '401 이면 DB 변경 없음'·'키 일치 시 DB 반영' 기준을 실제로 증명하지 못한다(가짜 통과). 코드 리뷰 correctness 결함.",
+  "attempt": 2,
+  "status": "WARN",
+  "status_reason": "R1(가짜 통과)·R2(@Order 무효) 해소, 2차 리뷰 correctness 결함 없음. 남은 WARN: R3 fail-open 은 정책대로 WARN 로그만, R4(-Xmx384m·root) 현행 유지, 구조 테스트 3종의 느슨한 단언·낡은 주석 등 quality.",
   "evidence": {
     "tests": {
       "command": "cd backend && ./gradlew test --rerun",
       "exit_code": 0,
-      "summary": "89 tests, 0 failed, 0 skipped"
+      "summary": "89 tests, 0 failed, 0 skipped (HEAD b4b24ce)"
     },
     "lint": {
       "command": "cd backend && ./gradlew spotlessCheck",
@@ -16,12 +16,29 @@
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "28 files changed, 2165 insertions(+), 4 deletions(-)"
+      "summary": "33 files changed, 2527 insertions(+), 6 deletions(-)"
     },
     "probe": {
       "command": "임시 @SpringBootTest(WRITE_GUARD_ENABLED=true, WRITE_API_KEY, CORS_ALLOWED_ORIGINS) 프로브, 실행 후 삭제",
       "summary": "POST(허용 Origin, 키 없음) → status=401, Access-Control-Allow-Origin=https://app.example.com, body={code:WRITE_KEY_INVALID}. 가드 ON 컨텍스트에서 CORS 헤더가 401 에도 붙는 것을 확인(순서 정상 동작)"
-    }
+    },
+    "mutation": [
+      {
+        "id": "M1",
+        "change": "가드 무력화",
+        "result": "SC-06 FAIL"
+      },
+      {
+        "id": "M2",
+        "change": "CorsFilter order LOWEST (FilterRegistrationBean.setOrder)",
+        "result": "SC-06 FAIL — 순서 고정"
+      },
+      {
+        "id": "M3",
+        "change": "설정 클래스명 역전",
+        "result": "수정 후 통과 — 순서가 클래스명에 비의존"
+      }
+    ]
   },
   "acceptance_criteria": [
     {
@@ -41,18 +58,18 @@
     },
     {
       "criterion": "가드 ON + 키 일치 시 쓰기가 기존대로 처리, GET·사전요청은 키 없이 통과",
-      "verdict": "WARN",
-      "evidence": "필터 단위(WriteGuardFilterTest SC-05/16/18)는 통과. 통합(SC-04)은 가드 OFF + @Transactional 이라 증명 못 함 — 프로브로 401 경로만 확인"
+      "verdict": "PASS",
+      "evidence": "WriteGuardIntegrationTest SC-04(가드 ON, 비트랜잭션, 리포지토리 재조회) 통과, 필터 단위 SC-05/16/18 통과. GET·사전요청 키 없이 통과"
     },
     {
       "criterion": "가드 ON 에서 키 없음/틀림이면 POST·PUT·DELETE 401 + DB 변경 없음",
-      "verdict": "FAIL",
-      "evidence": "401 은 SC-06(필터 단위, chainCalled=false)·프로브로 확인. 'DB 변경 없음' 을 검증하는 통합 테스트 없음 — WriteGuardIntegrationTest 는 가드 설정이 없고 @Transactional"
+      "verdict": "PASS",
+      "evidence": "WriteGuardIntegrationTest SC-06: 4메서드×2키상태 전부 401 + ACAO, count·venue 불변(트랜잭션 밖 재조회). 변이 M1/M3 에서 실패 확인"
     },
     {
       "criterion": "가드 ON + 키 비어 있으면 기동 실패",
       "verdict": "PASS",
-      "evidence": "SC-07 통과 (fromEnv). 단 컨텍스트 레벨 기동 실패는 테스트하지 않음"
+      "evidence": "SC-07 통과 (fromEnv 직접 호출). 컨텍스트 레벨 기동 실패·Config 배선은 미검증(quality)"
     },
     {
       "criterion": "WRITE_GUARD_ENABLED 미설정 시 기존 테스트 통과",
@@ -66,8 +83,8 @@
     },
     {
       "criterion": "Dockerfile 이 bootJar 를 -Xmx 와 함께 실행, 이미지 빌드",
-      "verdict": "PASS",
-      "evidence": "SC-12, SC-22 통과(Docker 데몬 가용, 스킵 0). -Xmx384m 적정성은 WARN"
+      "verdict": "WARN",
+      "evidence": "SC-12/22 통과(docker build 실제 실행). -Xmx384m·root 실행은 Render 512MB 에서 OOM 위험 — 사용자가 현행 유지 선택, 첫 배포에서 확인"
     }
   ],
   "architecture": {
@@ -119,7 +136,8 @@
   },
   "regression": {
     "full_suite": "89/89 passed",
-    "callers_checked": true
+    "callers_checked": true,
+    "note": "FilterRegistrationBean 전환 — 빈 타입 직접 주입 사용처 없음, URL 패턴 /* 동일(리뷰어 확인)"
   },
   "scope_deviations": [
     {
@@ -141,7 +159,9 @@
         "severity": "FAIL",
         "where": "backend/src/test/java/com/example/ticket_booking/api/WriteGuardIntegrationTest.java:62-165",
         "detail": "가드 OFF(설정 없음)인데 'ON·키 일치'로 명명, 클래스 레벨 @Transactional 로 PUT 후 GET 이 1차 캐시를 읽어 DB 반영을 증명 못 함(롤백, dirty checking 미flush), 401 → DB 불변 통합 검증 없음. 주석 '아직 컨텍스트에 등록되지 않아' 도 낡음. 직접 확인: test/main resources 에 WRITE_GUARD_* 없음.",
-        "resolution": "비트랜잭션 + @SpringBootTest(properties=가드 ON) 로 재작성, flush/clear 또는 별도 조회로 반영 확인"
+        "resolution": "비트랜잭션 + @SpringBootTest(properties=가드 ON) 로 재작성, flush/clear 또는 별도 조회로 반영 확인",
+        "status": "resolved",
+        "resolved_in": "87fa48e"
       },
       {
         "id": "R2",
@@ -149,7 +169,10 @@
         "severity": "WARN",
         "where": "CorsConfig.java:15, WriteGuardConfig.java:14",
         "detail": "@Bean 메서드 @Order 가 서블릿 필터 체인 순서에 반영되는지 리뷰어는 불확실. 프로브에서는 의도한 순서로 동작(401 에 ACAO 부착)했으나 이를 고정하는 테스트가 없다.",
-        "resolution": "가드 ON + 허용 Origin POST(키 없음) → 401 + ACAO 단언 통합 테스트로 순서를 고정(R1 재작성에 포함 가능). 필요 시 FilterRegistrationBean.setOrder"
+        "resolution": "가드 ON + 허용 Origin POST(키 없음) → 401 + ACAO 단언 통합 테스트로 순서를 고정(R1 재작성에 포함 가능). 필요 시 FilterRegistrationBean.setOrder",
+        "status": "resolved",
+        "resolved_in": "b4b24ce",
+        "note": "@Bean @Order 무효 확인 → FilterRegistrationBean.setOrder, 변이로 고정"
       },
       {
         "id": "R3",
@@ -157,7 +180,10 @@
         "severity": "WARN",
         "where": "WriteGuardFilter.java:37-45",
         "detail": "WRITE_GUARD_ENABLED 가 '1'/'yes'/'ture' 이면 조용히 비활성(fail-open). ADR-0016/Plan 이 명시적으로 정한 동작이며 SC-21 이 고정한다.",
-        "resolution": "정책 결정 필요 — 현행 유지(최소 기동 시 WARN 로그) 또는 true/false 이외 값은 기동 실패"
+        "resolution": "정책 결정 필요 — 현행 유지(최소 기동 시 WARN 로그) 또는 true/false 이외 값은 기동 실패",
+        "status": "mitigated",
+        "resolved_in": "b4b24ce",
+        "note": "WARN 로그 추가(동작은 SC-21 대로 유지). WARN 로그 자체는 테스트로 검증되지 않음"
       },
       {
         "id": "R4",
@@ -165,7 +191,9 @@
         "severity": "WARN",
         "where": "backend/Dockerfile:12",
         "detail": "-Xmx384m 은 Render 무료 인스턴스(512MB)에서 메타스페이스·스레드·네이티브 합산 시 OOM 위험. USER 지시자 없어 root 실행.",
-        "resolution": "-Xmx256m~300m 또는 -XX:MaxRAMPercentage, 비루트 USER"
+        "resolution": "-Xmx256m~300m 또는 -XX:MaxRAMPercentage, 비루트 USER",
+        "status": "accepted",
+        "note": "사용자가 현행 유지 선택 — Phase 5 회고/첫 배포 확인"
       },
       {
         "id": "R5",
@@ -194,6 +222,55 @@
         "severity": "INFO",
         "where": "backend/Dockerfile",
         "detail": "의존성 레이어 캐시·.dockerignore 없음"
+      },
+      {
+        "id": "R9",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "ArchitectureCheckTest.java:27-34",
+        "detail": "exit code 0 만 단언 — CorsFilter 구현을 바꿔도 통과, DEPLOY-002 정규식은 new CorsFilter(List.of(\"*\")) 를 못 잡음. 위험은 낮음(Origin 이 문자 그대로 '*' 일 때만 매칭)"
+      },
+      {
+        "id": "R10",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "WriteGuardFilterTest SC-21 / SC-07",
+        "detail": "R3 WARN 로그 미검증, 기동 실패를 Config 배선까지 검증하지 않음(ApplicationContextRunner 권장)"
+      },
+      {
+        "id": "R11",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "ApplicationPropertiesFileTest.java:20-26, DockerfileTest SC-12",
+        "detail": "루트 application.properties 만 검사(config/ 미검사, 'key = value' 표기 못 잡음), Dockerfile 단언이 파일 전체 매치(주석·build 단계 통과)"
+      },
+      {
+        "id": "R12",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "WriteGuardFilterTest.java:12-18, CorsFilterTest.java:14-22",
+        "detail": "Green 이후 사실과 다른 주석('아직 컨텍스트에 등록되지 않았다', 'UnsupportedOperationException 으로 실패')"
+      },
+      {
+        "id": "R13",
+        "category": "quality",
+        "severity": "INFO",
+        "where": "WriteGuardOffIntegrationTest, ApplicationDefaultPortPropertyTest",
+        "detail": "쉘에 WRITE_GUARD_ENABLED=true / PORT 환경변수가 있으면 환경에 따라 깨질 수 있음"
+      }
+    ],
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체 develop...8d87592",
+        "findings": 8,
+        "correctness": 4
+      },
+      {
+        "n": 2,
+        "scope": "수정분 8d87592...HEAD · 가짜 통과·무효 어노테이션 카테고리 전수",
+        "findings": 5,
+        "correctness": 0
       }
     ]
   },

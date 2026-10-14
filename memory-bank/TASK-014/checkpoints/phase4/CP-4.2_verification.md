@@ -1,17 +1,21 @@
 ---
 status: ACTIVE
-saved_at: 2026-10-14T09:00:00Z
-summary: "Phase 4 1차 — FAIL. 테스트 89/89·린트·제약 통과, 그러나 SC-04/08 통합 테스트가 가드 OFF + @Transactional 로 가짜 통과(R1). 롤백 선택 대기."
+saved_at: 2026-10-14T12:00:00Z
+summary: "Phase 4 2차 — WARN. 89/89·lint·제약 통과, 리뷰 correctness 결함 없음(R1·R2 해소). HITL#3 대기."
 
 next_steps:
-  - "사용자 롤백 결정: Phase 2b(테스트 재작성, RETRY_RED_CODE) 후 Phase 3 재검증"
-  - "R3(fail-open 정책)·R4(Xmx/USER) 는 사용자 결정 후 Phase 3 에 반영"
+  - "HITL#3 승인 시 verified_commit 기록 후 Phase 5"
+  - "Phase 5 try: R4 Xmx/root, R9~R13 테스트 단언 보강, DEPLOY-002 정규식 보강"
 
 decisions:
-  - decision: "R1 을 FAIL 로 판정"
-    rationale: "AC '401 이면 DB 변경 없음' 을 증명하는 통합 테스트가 없고 현 테스트는 가드를 켜지 않는다. 리뷰어 주장 중 가드 설정 부재는 직접 확인했다"
-  - decision: "R2(필터 순서)는 WARN"
-    rationale: "리뷰어는 추정이었으나 프로브에서 401 에 ACAO 가 붙는 것을 실측. 다만 테스트로 고정되어 있지 않다"
+  - decision: "상태를 WARN 으로 판정"
+    rationale: "correctness 결함은 없으나 R4 를 사용자가 현행 유지로 선택했고 첫 배포 확인이 필요한 항목이 남았다"
 
-attempts: []
+attempts:
+  - type: VERIFY
+    attempt: 1
+    result: FAIL
+  - type: VERIFY
+    attempt: 2
+    result: WARN
 ---
