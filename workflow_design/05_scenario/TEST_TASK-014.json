@@ -1,0 +1,89 @@
+{
+  "task_id": "TASK-014",
+  "attempt": 1,
+  "supersedes": "SCENARIO_TASK-014.json",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/config/CorsFilterTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/WriteGuardFilterTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/WriteGuardIntegrationTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/ApplicationPortPropertyTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/ApplicationDefaultPortPropertyTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/ApplicationPropertiesFileTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/ArchitectureCheckTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/DockerfileTest.java"
+  ],
+  "red_scenarios": [
+    { "scenario_id": "SC-01", "test_function": "test_sc01_허용된_출처의_OPTIONS_사전요청이_헤더와_함께_통과한다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-02", "test_function": "test_sc02_허용되지_않은_출처는_CORS_헤더를_받지_못한다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-03", "test_function": "test_sc03_CORS_구현에_와일드카드_패턴이_없다", "status": "already_passing", "failure": null, "note": "CorsFilter 구현이 Spring 의 CORS 설정 메서드(allowedOrigins 등)를 쓰지 않아 check_architecture.py --id DEPLOY-002 가 구현 전인 지금도 위반 0건을 보고한다 — 이 태스크가 안 바꾸는(와일드카드를 쓰지 않는) 특성이 이미 참이라 구조적으로 Red 불가" },
+    { "scenario_id": "SC-04", "test_function": "test_sc04_가드ON_키일치_쓰기_요청이_정상처리되고_변경이_반영된다", "status": "already_passing", "failure": null, "note": "WriteGuardFilter 가 아직 Spring 컨텍스트에 등록되지 않아(Green 단계 작업) 기존 PUT 경로가 그대로 성공한다 — 유효한 키로 쓰기가 성공해야 한다는 happy path 가 가드 부재 상태에서 이미 참이다" },
+    { "scenario_id": "SC-05", "test_function": "test_sc05_GET_조회는_가드가_켜져_있어도_키_없이_통과한다", "status": "red", "failure": "java.lang.UnsupportedOperationException (WriteGuardFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-06", "test_function": "test_sc06_쓰기_메서드는_키가_없거나_틀리면_401로_거부된다", "status": "red", "failure": "java.lang.UnsupportedOperationException (WriteGuardFilter.doFilter 스켈레톤, 메서드×키상태 8조합 전수)" },
+    { "scenario_id": "SC-07", "test_function": "test_sc07_키가_비어_있으면_애플리케이션이_기동에_실패한다", "status": "red", "failure": "org.opentest4j.AssertionFailedError (IllegalStateException 기대, 실제 UnsupportedOperationException — WriteGuardFilter.fromEnv 스켈레톤)" },
+    { "scenario_id": "SC-08", "test_function": "test_sc08_가드_OFF_기본값_에서_기존_쓰기_요청이_정상_처리된다", "status": "already_passing", "failure": null, "note": "이 태스크가 바꾸지 않는 기존 동작(가드 미설정 시 쓰기 요청이 그대로 성공)이 계속된다는 회귀 시나리오 — 아직 아무것도 구현하지 않은 시점에도 이미 참이다" },
+    { "scenario_id": "SC-09", "test_function": "test_sc09_PORT_환경변수가_server_port_로_반영된다", "status": "red", "failure": "org.opentest4j.AssertionFailedError (expected: \"10000\" but was: null — application.properties 에 server.port 선언이 아직 없다)" },
+    { "scenario_id": "SC-10", "test_function": "test_sc10_PORT_가_없으면_기본_포트_8080_을_쓴다", "status": "red", "failure": "org.opentest4j.AssertionFailedError (expected: \"8080\" but was: null — application.properties 에 server.port 선언이 아직 없다)" },
+    { "scenario_id": "SC-11", "test_function": "test_sc11_설정_파일에_DB_접속_정보가_하드코딩돼_있지_않다", "status": "already_passing", "failure": null, "note": "application.properties 에는 현재 spring.application.name 한 줄뿐이라 DB 접속 정보 하드코딩 부재가 구현 전부터 이미 참이다" },
+    { "scenario_id": "SC-12", "test_function": "test_sc12_Dockerfile이_bootJar_산출물을_JVM_힙_상한과_함께_실행하도록_작성되어_있다", "status": "red", "failure": "org.opentest4j.AssertionFailedError (Dockerfile 이 존재해야 한다 — 파일이 아직 없다)" },
+    { "scenario_id": "SC-13", "test_function": "test_sc13_Origin_헤더가_없는_요청은_CORS_로직_없이_그대로_처리된다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-14", "test_function": "test_sc14_CORS_ALLOWED_ORIGINS_가_비어있으면_모든_출처가_거부된다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.fromCommaSeparated 스켈레톤)" },
+    { "scenario_id": "SC-15", "test_function": "test_sc15_허용_출처를_부분_문자열로_포함하는_다른_출처는_거부된다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-16", "test_function": "test_sc16_OPTIONS_사전요청은_가드가_켜져_있어도_키_없이_통과한다", "status": "red", "failure": "java.lang.UnsupportedOperationException (WriteGuardFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-18", "test_function": "test_sc18_HEAD_요청은_가드가_켜져_있어도_키_없이_통과한다", "status": "red", "failure": "java.lang.UnsupportedOperationException (WriteGuardFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-19", "test_function": "test_sc19_쉼표_목록의_빈_원소가_모든_출처를_허용하는_결함을_만들지_않는다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.fromCommaSeparated 스켈레톤)" },
+    { "scenario_id": "SC-20", "test_function": "test_sc20_쉼표_뒤_공백이_있어도_출처가_올바르게_매칭된다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.fromCommaSeparated 스켈레톤)" },
+    { "scenario_id": "SC-21", "test_function": "test_sc21_true가_아닌_값은_가드_비활성으로_처리된다", "status": "red", "failure": "java.lang.UnsupportedOperationException (WriteGuardFilter.fromEnv 스켈레톤)" },
+    { "scenario_id": "SC-22", "test_function": "test_sc22_Dockerfile로_이미지가_빌드된다", "status": "red", "failure": "org.opentest4j.AssertionFailedError (docker build 종료코드 0 기대, 실제 비0 — Dockerfile 이 아직 없어 빌드가 실패한다. Docker 데몬은 이 환경에서 사용 가능해 assumeTrue 로 스킵되지 않고 실제로 실행·실패했다)" },
+    { "scenario_id": "SC-23", "test_function": "test_sc23_Origin_헤더가_빈_값이거나_공백만이면_허용_목록과_일치하지_않는다", "status": "red", "failure": "java.lang.UnsupportedOperationException (CorsFilter.doFilter 스켈레톤)" },
+    { "scenario_id": "SC-24", "test_function": "test_sc24_WRITE_GUARD_ENABLED_는_대소문자와_무관하게_true면_가드가_켜진다", "status": "red", "failure": "java.lang.UnsupportedOperationException (WriteGuardFilter.fromEnv 스켈레톤)" }
+  ],
+  "red_result": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --rerun",
+    "total": 89,
+    "failed": 19,
+    "passed": 70,
+    "existing_tests_still_passing": true,
+    "existing_test_breakdown": {
+      "TicketBookingApplicationTests": "1/1 passed",
+      "PerformanceApiTest": "12/12 passed",
+      "PerformanceRegistrationApiTest": "42/42 passed",
+      "PerformanceSectionSummaryApiTest": "4/4 passed",
+      "PerformanceStatusRulesTest": "1/1 passed",
+      "PerformanceConstraintTest": "6/6 passed"
+    },
+    "new_test_breakdown": {
+      "CorsFilterTest": "0/8 passed (8 red)",
+      "WriteGuardFilterTest": "0/7 passed (7 red)",
+      "WriteGuardIntegrationTest": "2/2 passed (0 red, 2 already_passing)",
+      "ApplicationPortPropertyTest": "0/1 passed (1 red)",
+      "ApplicationDefaultPortPropertyTest": "0/1 passed (1 red)",
+      "ApplicationPropertiesFileTest": "1/1 passed (0 red, 1 already_passing)",
+      "ArchitectureCheckTest": "1/1 passed (0 red, 1 already_passing)",
+      "DockerfileTest": "0/2 passed (2 red)"
+    }
+  },
+  "inventory_check": {
+    "scenarios": 23,
+    "test_functions": 23,
+    "match": true
+  },
+  "purity_check": "CorsFilterTest(8건)·WriteGuardFilterTest 중 SC-05/06/16/18/21/24(6건) 의 실패가 전부 UnsupportedOperationException — 두 필터 클래스에 로직이 한 줄도 없다는 뜻이다. WriteGuardFilterTest.SC-07 은 예외 타입(IllegalStateException)을 기대하는 단언이라 AssertionFailedError 로 실패하는 것이 맞다(실제로는 같은 스켈레톤의 UnsupportedOperationException 이 발생). ApplicationPort*PropertyTest·DockerfileTest 는 파일/설정이 아직 없어 나는 AssertionFailedError — 스켈레톤 예외가 아니라 '파일 부재·설정 부재'가 원인이라 이 유형은 다른 것이 정상이다.",
+  "testing_preferences": {
+    "framework": "JUnit 5 + AssertJ + Spring Boot Test (MockMvc, Environment)",
+    "mock_strategy": "CorsFilter/WriteGuardFilter 는 org.springframework.mock.web.MockHttpServletRequest/Response 로 필터 인스턴스를 직접 호출하는 단위 테스트. SC-04/SC-08 은 @SpringBootTest+MockMvc 로 실제 PUT/POST 왕복을 확인. SC-09/10 은 @SpringBootTest+Environment, SC-11/12 는 파일 내용 직접 읽기, SC-03 은 check_architecture.py 프로세스 실행, SC-22 는 docker build 프로세스 실행(데몬 가용 시 실행, 불가 시 assumeTrue 로 WARN 상당 처리)."
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/src/main/java/com/example/ticket_booking/config/CorsFilter.java",
+      "backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java"
+    ],
+    "contents": "CorsFilter: 생성자(allowedOrigins 필드 대입만), 정적 팩토리 fromCommaSeparated(String), doFilter — 전부 UnsupportedOperationException 던짐. WriteGuardFilter: 생성자(enabled/writeApiKey 필드 대입만), 정적 팩토리 fromEnv(String,String), doFilter — 전부 UnsupportedOperationException 던짐. 어느 쪽도 Spring 빈으로 등록되지 않음(FilterRegistrationBean/CorsConfig 와이어링은 Phase 3).",
+    "purity_check": "CorsFilterTest 8건 전부 UnsupportedOperationException, WriteGuardFilterTest 7건 중 6건(SC-05,06,16,18,21,24) UnsupportedOperationException + 1건(SC-07) 은 예외 타입 불일치로 인한 AssertionFailedError — 합쳐서 두 스켈레톤 클래스에서 나온 실패(14 UnsupportedOperationException + 1 AssertionFailedError)가 각 메서드 본문이 throw 한 줄뿐임을 보여준다."
+  },
+  "already_passing_summary": {
+    "count": 4,
+    "scenarios": ["SC-03", "SC-04", "SC-08", "SC-11"],
+    "reason": "이 넷은 필터가 아직 Spring 컨텍스트에 등록되지 않았거나(SC-04/08 — 쓰기 가드 부재 시 기존 성공 경로가 유지됨), 구현 전 상태가 요구사항을 구조적으로 이미 만족하고 있다(SC-03 — 와일드카드를 쓰지 않는 코드가 아직 없음, SC-11 — DB 접속 정보가 아직 properties 에 없음)."
+  },
+  "human_review": { "approved": false }
+}
