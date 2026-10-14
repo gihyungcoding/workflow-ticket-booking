@@ -88,6 +88,14 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
 - 요청 DTO의 필드 형태 검증은 Bean Validation, 도메인 규칙(시각 순서·좌석 상한 등)은
   계속 Service 계층 수동 검증 →
   [ADR-0010](../decisions/ADR-0010-bean-validation-for-request-dtos.md)
+- 인증 방식으로 세션이 아닌 JWT(Bearer 토큰) 채택 →
+  [ADR-0012](../decisions/ADR-0012-jwt-based-authentication.md)
+- Spring Security 전체 도입(OAuth2 Client + 커스텀 JWT 인증 필터) →
+  [ADR-0013](../decisions/ADR-0013-spring-security-adoption.md)
+- 소셜 계정 자동 연결 정책(이메일 일치 + 검증된 경우에만) →
+  [ADR-0014](../decisions/ADR-0014-social-account-auto-link-policy.md)
+- accessToken 저장 위치로 프론트 localStorage 채택 →
+  [ADR-0015](../decisions/ADR-0015-access-token-localstorage.md)
 
 ## 7. 알려진 부채
 

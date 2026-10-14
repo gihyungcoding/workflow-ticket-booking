@@ -61,9 +61,12 @@ Spring Security의 OAuth2 Client가 표준으로 처리하게 한다(§8).
 - **역할 불변성**: 가입 시 선택한 역할(관객/주최자)은 로그인 토큰의 클레임으로
   그대로 쓰인다. 가입 이후 역할을 바꾸는 API는 이번 범위에 없다(§7).
 - **이메일 불변성**: 이메일은 가입 후 변경할 수 없다(변경 API 없음, §7).
-- **계정 연결 정책**: 소셜 로그인의 이메일이 기존 `users.email`과 같으면 새 계정을
-  만들지 않고 `social_accounts`에 연결 행만 추가한다. 역할은 최초 가입 당시 값을
-  그대로 쓴다(소셜 로그인 쪽에서 역할을 다시 묻지 않는다).
+- **계정 연결 정책**: 소셜 로그인의 이메일이 기존 `users.email`과 같고 제공자의
+  이메일 검증 플래그(`email_verified` 또는 동등 필드)가 true이면 새 계정을
+  만들지 않고 `social_accounts`에 연결 행만 추가한다. 검증되지 않은 이메일은
+  신뢰할 수 없으므로(타인의 이메일로 계정을 가로채는 경로가 될 수 있음) 자동
+  연결하지 않고 신규 가입과 동일하게 취급한다(ADR-0014). 자동 연결 시 역할은
+  최초 가입 당시 값을 그대로 쓴다(소셜 로그인 쪽에서 역할을 다시 묻지 않는다).
 - **역할 없는 반쪽 계정 방지**: 소셜 로그인으로 처음 들어온(이메일이 일치하는
   기존 계정이 없는) 사용자는 `users` 행을 바로 만들지 않는다. 이메일/이름/제공자
   정보를 담은 5분 만료 `pendingToken`을 발급해 역할 선택 화면으로 보내고, 역할을
@@ -286,7 +289,7 @@ public record CompleteSocialSignUpRequest(@NotBlank String pendingToken, @NotNul
                                                         (email, name, providerUserId 추출)
                                                                     │
                                                         OAuth2LoginSuccessHandler
-                                                        users.email 매치? ──► Yes
+                                                        users.email 매치 AND email_verified=true? ──► Yes
                                                                     │
                                                         social_accounts 행 추가(없으면)
                                                                     │
@@ -299,7 +302,7 @@ public record CompleteSocialSignUpRequest(@NotBlank String pendingToken, @NotNul
 
 ```
 ...CustomOAuth2UserService... ──► OAuth2LoginSuccessHandler
-                                      users.email 매치? ──► No
+                                      users.email 매치 AND email_verified=true? ──► No
                                            │
                                  JwtTokenProvider.issuePendingToken(email, name, provider)
                                            ▼
@@ -354,9 +357,13 @@ public record CompleteSocialSignUpRequest(@NotBlank String pendingToken, @NotNul
 
 - [ ] 처음 로그인(기존 이메일과 매칭되지 않음)하면 `users` 행을 생성하지 않고
       `pendingToken`을 발급해 역할 선택 화면으로 보낸다
-- [ ] 이미 이메일 회원가입된 계정과 같은 이메일로 소셜 로그인하면 `users` 행을
-      새로 만들지 않고 기존 계정에 `social_accounts` 행을 추가한 뒤 바로
-      `accessToken`을 발급한다(역할은 기존 값 유지)
+- [ ] 이미 이메일 회원가입된 계정과 같은 이메일로, **제공자의 이메일 검증
+      플래그(`email_verified` 또는 동등 필드)가 true인** 소셜 로그인을 하면
+      `users` 행을 새로 만들지 않고 기존 계정에 `social_accounts` 행을 추가한
+      뒤 바로 `accessToken`을 발급한다(역할은 기존 값 유지)
+- [ ] 이메일 검증 플래그가 false(또는 제공자가 제공하지 않음)인 경우에는 이메일이
+      기존 계정과 같아도 자동 연결하지 않고, 신규 가입과 동일하게 `pendingToken`을
+      발급해 역할 선택 화면으로 보낸다(계정 탈취 방지, ADR-0014)
 - [ ] 같은 제공자 계정으로 재로그인해도 `social_accounts`의 유니크 제약
       (`provider`, `provider_user_id`)에 의해 중복 행이 생기지 않는다
 - [ ] 카카오/네이버(중첩 응답 구조)와 구글(평면 구조) 각각에서 이메일과 이름을
@@ -461,13 +468,13 @@ public record CompleteSocialSignUpRequest(@NotBlank String pendingToken, @NotNul
 
 | 결정 | 이유 | 범위 | ADR |
 |---|---|---|---|
-| 인증 방식으로 세션이 아닌 JWT(Bearer 토큰)를 쓴다 | SPA·백엔드 분리 배포에서 쿠키 도메인/CORS 이슈 없이 단순하게 식별 가능 | **전체** | ADR 후보 |
-| Spring Security를 전체 도입한다(OAuth2 Client + 커스텀 JWT 인증 필터) | 소셜 로그인 4종을 자체 구현하면 각 제공자의 authorization code flow·state 검증을 직접 관리해야 해 리스크가 크다. Spring Security의 OAuth2Login이 표준으로 처리한다 | **전체** | ADR 후보 |
+| 인증 방식으로 세션이 아닌 JWT(Bearer 토큰)를 쓴다 | SPA·백엔드 분리 배포에서 쿠키 도메인/CORS 이슈 없이 단순하게 식별 가능 | **전체** | ADR-0012 |
+| Spring Security를 전체 도입한다(OAuth2 Client + 커스텀 JWT 인증 필터) | 소셜 로그인 4종을 자체 구현하면 각 제공자의 authorization code flow·state 검증을 직접 관리해야 해 리스크가 크다. Spring Security의 OAuth2Login이 표준으로 처리한다 | **전체** | ADR-0013 |
 | 기존 공연 API(`/api/performances/**`)는 이번 Security 도입에서도 `permitAll`로 유지한다 | 소유권 검사는 별도 문서로 분리돼 있어(§7), 지금 막으면 기존 기능이 깨진다 | **전체** | — |
-| 이메일이 같으면 기존 계정에 소셜 연결을 자동으로 추가한다(계정 연결 정책) | 같은 이메일로 여러 경로에 가입했다고 사용자가 혼란스러워하는 것을 막는다. 제공자가 이메일 인증을 전제로 로그인을 제공하므로 수용 가능한 리스크로 판단 | **전체** | ADR 후보 |
+| 이메일이 같고 `email_verified`가 true이면 기존 계정에 소셜 연결을 자동으로 추가한다(계정 연결 정책) | 같은 이메일로 여러 경로에 가입했다고 사용자가 혼란스러워하는 것을 막는다. 검증되지 않은 이메일은 신뢰하지 않아 계정 탈취 경로를 막는다 | **전체** | ADR-0014 |
 | 소셜 최초 가입자는 `users` 행을 바로 만들지 않고 `pendingToken`(5분)으로 역할 선택을 받은 뒤 생성한다 | 역할 없는 "반쪽 계정"이 DB에 남는 것을 막는다 | 이 기능만 | — |
-| `accessToken` 저장 위치로 localStorage를 쓴다 | 새로고침 후에도 로그인 유지가 필요. 이 단계에서 XSS 방어(CSP 등)는 범위 밖으로 수용 | **전체** | ADR 후보 |
+| `accessToken` 저장 위치로 localStorage를 쓴다 | 새로고침 후에도 로그인 유지가 필요. 이 단계에서 XSS 방어(CSP 등)는 범위 밖으로 수용 | **전체** | ADR-0015 |
 | `accessToken` 만료는 24시간, 리프레시 토큰은 두지 않는다 | 재로그인 빈도가 낮은 서비스 특성상 리프레시 로직의 복잡도가 이득보다 크다 | 이 기능만 | — |
 
-(ADR 승격 후보 4건 — JWT 인증 방식, Spring Security 전체 도입, 계정 자동 연결
-정책, localStorage 토큰 저장 — 은 `/wf-adr`로 확정을 제안한다)
+ADR-0012(JWT 인증 방식), ADR-0013(Spring Security 전체 도입),
+ADR-0014(계정 자동 연결 정책), ADR-0015(localStorage 토큰 저장)로 기록했다.
