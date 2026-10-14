@@ -1,0 +1,234 @@
+{
+  "task_id": "TASK-014",
+  "route": "Backend",
+  "route_reason": "CORS 필터, 쓰기 가드 필터, 서버/DB 설정 외부화가 모두 서버 범위이며 화면 변경이 없다",
+
+  "design": {
+    "inputs": [
+      {
+        "name": "Origin 헤더",
+        "type": "str",
+        "source": "HTTP 요청 헤더(브라우저가 자동 설정)",
+        "constraints": ["CORS_ALLOWED_ORIGINS 환경변수 목록의 값 중 하나와 정확히 일치해야 허용"]
+      },
+      {
+        "name": "CORS_ALLOWED_ORIGINS",
+        "type": "str (env)",
+        "source": "환경변수, 쉼표로 구분한 출처 목록",
+        "constraints": ["와일드카드(*) 금지 — DEPLOY-002"]
+      },
+      {
+        "name": "X-Write-Key 헤더",
+        "type": "str",
+        "source": "쓰기 요청(POST/PUT/PATCH/DELETE)의 HTTP 헤더",
+        "constraints": ["WRITE_GUARD_ENABLED=true 일 때만 검사", "WRITE_API_KEY 와 일치해야 함"]
+      },
+      {
+        "name": "WRITE_GUARD_ENABLED",
+        "type": "bool (env)",
+        "source": "환경변수",
+        "constraints": ["기본값 false", "true 이면 WRITE_API_KEY 필수"]
+      },
+      {
+        "name": "WRITE_API_KEY",
+        "type": "str (env)",
+        "source": "환경변수",
+        "constraints": ["WRITE_GUARD_ENABLED=true 일 때 비어 있으면 기동 실패"]
+      },
+      {
+        "name": "PORT",
+        "type": "int (env)",
+        "source": "환경변수 (Render 가 주입)",
+        "constraints": ["server.port 로 매핑, 기본값 8080"]
+      },
+      {
+        "name": "SPRING_DATASOURCE_URL / USERNAME / PASSWORD",
+        "type": "str (env)",
+        "source": "Spring 표준 환경변수 (relaxed binding)",
+        "constraints": ["설정 파일에 접속 정보를 하드코딩하지 않는다"]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Access-Control-Allow-Origin / Allow-Headers",
+        "type": "http_header",
+        "description": "허용된 출처에만 그 출처 값으로 응답하고, OPTIONS 사전 요청에 Content-Type·Authorization·X-Write-Key 를 허용 헤더로 포함한다"
+      },
+      {
+        "name": "401 (쓰기 가드 거부)",
+        "type": "error",
+        "description": "WRITE_GUARD_ENABLED=true 인데 X-Write-Key 가 없거나 틀리면 쓰기 요청을 디스패처 이전에 차단한다"
+      },
+      {
+        "name": "애플리케이션 기동 실패",
+        "type": "error",
+        "description": "WRITE_GUARD_ENABLED=true 인데 WRITE_API_KEY 가 비어 있으면 컨텍스트 로딩을 실패시킨다"
+      },
+      {
+        "name": "backend/Dockerfile",
+        "type": "artifact",
+        "description": "bootJar 산출물을 JVM 힙 상한과 함께 실행하는 컨테이너 이미지 정의"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "CORS 허용 출처 통과",
+        "steps": [
+          "브라우저가 Origin 헤더를 실어 요청(또는 PUT/DELETE 앞의 OPTIONS 사전 요청)을 보낸다",
+          "CorsFilter 가 Origin 을 CORS_ALLOWED_ORIGINS 목록과 비교한다",
+          "일치하면 Access-Control-Allow-Origin 을 그 출처로, Access-Control-Allow-Headers 에 Content-Type/Authorization/X-Write-Key 를 실어 응답한다",
+          "OPTIONS 사전 요청은 2xx 로 즉시 응답한다"
+        ],
+        "covers": [
+          "CORS_ALLOWED_ORIGINS 에 있는 출처의 요청에는 Access-Control-Allow-Origin 이 그 출처로 응답되고, PUT·DELETE 의 OPTIONS 사전 요청이 Content-Type·Authorization·X-Write-Key 헤더를 허용하며 2xx 로 통과한다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "CORS 비허용 출처 차단 + 와일드카드 미사용",
+        "steps": [
+          "Origin 이 CORS_ALLOWED_ORIGINS 목록에 없다",
+          "CorsFilter 가 Access-Control-Allow-Origin 헤더를 붙이지 않은 채 응답한다",
+          "필터 구현이 CORS_ALLOWED_ORIGINS 를 명시적 목록으로만 비교하고 와일드카드(*) 패턴을 쓰지 않는다 — check_architecture.py --id DEPLOY-002 로 정적 확인"
+        ],
+        "covers": [
+          "오류: 허용 목록에 없는 출처의 요청에는 Access-Control-Allow-Origin 헤더가 붙지 않는다",
+          "python3 scripts/check_architecture.py --id DEPLOY-002 가 위반 0건이다 (CORS 와일드카드 없음)"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "쓰기 가드 통과",
+        "steps": [
+          "WRITE_GUARD_ENABLED=true 로 기동한다",
+          "GET/HEAD/OPTIONS 요청(조회, CORS 사전 요청)은 WriteGuardFilter 가 키 검사 없이 통과시킨다",
+          "POST/PUT/PATCH/DELETE 요청에 X-Write-Key 가 WRITE_API_KEY 와 일치하면 다음 필터(디스패처)로 통과시킨다"
+        ],
+        "covers": [
+          "WRITE_GUARD_ENABLED=true 이고 X-Write-Key 가 맞으면 쓰기 요청이 기존 동작 그대로 처리된다. 가드가 켜져 있어도 GET 조회와 CORS 사전 요청은 키 없이 통과한다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "쓰기 가드 거부",
+        "steps": [
+          "WRITE_GUARD_ENABLED=true 상태에서 쓰기 요청에 X-Write-Key 가 없거나 WRITE_API_KEY 와 다르다",
+          "WriteGuardFilter 가 디스패처로 넘기지 않고 401 과 ErrorResponse(code, message) 를 직접 응답한다",
+          "요청이 컨트롤러/서비스/DB 에 도달하지 않아 데이터 변경이 없다"
+        ],
+        "covers": [
+          "오류: 가드가 켜진 상태에서 X-Write-Key 가 없거나 틀리면 POST·PUT·DELETE 가 401 로 거부되고 DB 가 변경되지 않는다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "설정 검증 실패로 기동 중단",
+        "steps": [
+          "기동 시 WRITE_GUARD_ENABLED=true 인데 WRITE_API_KEY 가 비어 있다",
+          "WriteGuardFilter(또는 그 설정 빈)가 초기화 시점에 이를 확인한다",
+          "예외를 던져 애플리케이션 컨텍스트 로딩을 실패시킨다 — 열린 채로 기동되지 않는다"
+        ],
+        "covers": [
+          "오류: WRITE_GUARD_ENABLED=true 인데 WRITE_API_KEY 가 비어 있으면 애플리케이션이 기동에 실패한다"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "쓰기 가드 비활성 시 회귀 없음",
+        "steps": [
+          "WRITE_GUARD_ENABLED 를 설정하지 않는다(기본값 false)",
+          "WriteGuardFilter 가 모든 요청을 검사 없이 통과시킨다",
+          "기존 공연 API 테스트(PerformanceApiTest 등)가 필터 도입과 무관하게 그대로 통과한다"
+        ],
+        "covers": [
+          "WRITE_GUARD_ENABLED 가 없으면 가드는 꺼져 있고 기존 백엔드 테스트가 모두 통과한다 — ./gradlew test"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "서버/DB 설정 외부화",
+        "steps": [
+          "application.properties 에 server.port=${PORT:8080} 을 추가한다",
+          "spring.datasource.* 는 Spring 표준 환경변수 relaxed binding 에 맡기고 파일에 접속 정보를 쓰지 않는다",
+          "설정 로딩 테스트로 PORT 환경변수를 주입했을 때 server.port 에 반영됨을 확인한다"
+        ],
+        "covers": [
+          "PORT 환경변수 값이 server.port 로 반영된다 (설정 로딩 테스트). 설정 파일에 DB 접속 정보가 하드코딩되어 있지 않다"
+        ]
+      },
+      {
+        "id": "F8",
+        "name": "컨테이너 이미지 빌드",
+        "steps": [
+          "backend/Dockerfile 을 작성한다 — JDK 21 베이스 이미지에서 bootJar 산출물을 COPY",
+          "ENTRYPOINT/CMD 에 -Xmx 등 JVM 힙 상한 옵션을 지정해 java -jar 로 실행한다",
+          "docker build 로 이미지가 성공적으로 빌드되는지 확인한다 — Docker 데몬이 없으면 WARN 으로 남기고 첫 배포에서 확인한다"
+        ],
+        "covers": [
+          "backend/Dockerfile 이 bootJar 산출물을 실행하고 JVM 힙 상한(-Xmx)을 지정한다. docker build 로 이미지가 빌드된다 — Docker 데몬이 꺼져 있으면 검증하지 못한 것으로 WARN 에 기록하고 첫 배포에서 확인한다"
+        ]
+      }
+    ]
+  },
+
+  "architecture_refs": {
+    "layer": "config (서블릿 필터) — architecture.md §2 의 API/Service/Repository 요청 흐름보다 앞단에 위치하는 횡단 관심사. ADR-0016 이 '서블릿 필터 수준, 최우선 순서' 로 명시",
+    "note": "CORS 를 WebMvcConfigurer 가 아니라 서블릿 필터(CorsFilter 빈)로 두는 이유는 추후 TASK-009(Spring Security)가 들어와도 사전 요청이 보안 필터에서 거부되지 않게 하기 위함(ADR-0016 결정 근거)",
+    "constraints_applied": ["DEPLOY-001", "DEPLOY-002"]
+  },
+  "adr_refs": ["ADR-0016", "ADR-0013", "ADR-0015"],
+
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/CorsConfig.java",
+        "change": "신규. CorsFilter 빈을 최우선 순서(Ordered.HIGHEST_PRECEDENCE)로 등록, CORS_ALLOWED_ORIGINS 환경변수를 목록으로 바인딩"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java",
+        "change": "신규. 쓰기 메서드(POST/PUT/PATCH/DELETE)에 X-Write-Key 검사, WRITE_GUARD_ENABLED=true + WRITE_API_KEY 미설정 시 초기화 단계에서 예외로 기동 실패"
+      },
+      {
+        "path": "backend/src/main/resources/application.properties",
+        "change": "기존 확장. server.port=${PORT:8080} 추가 (spring.datasource.* 는 Spring 표준 환경변수 바인딩에 맡기고 파일에 추가하지 않음)"
+      },
+      {
+        "path": "backend/Dockerfile",
+        "change": "신규. JDK 21 기반으로 bootJar 를 빌드/실행, JVM 힙 상한(-Xmx) 지정"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java",
+        "symbol": "ErrorResponse",
+        "note": "쓰기 가드 거부(401) 응답 바디의 code/message 형식을 그대로 재사용 — 새 DTO를 만들지 않는다"
+      }
+    ],
+    "existing_tests": [
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceApiTest.java"
+    ],
+    "unresolved": [
+      "WRITE_GUARD_ENABLED=true + WRITE_API_KEY 비어있음 → 기동 실패를 검증하는 구체적 테스트 방식(전체 @SpringBootTest 컨텍스트 로딩 실패 vs ApplicationContextRunner 슬라이스 테스트)은 Phase 2a 에서 결정한다",
+      "Docker 데몬이 로컬에 없을 경우 docker build 검증을 못 한다 — AC9에 이미 WARN 처리가 명시돼 있으므로 Phase 4 증거 수집 시 반영한다"
+    ]
+  },
+
+  "acceptance_criteria": [
+    "CORS_ALLOWED_ORIGINS 에 있는 출처의 요청에는 Access-Control-Allow-Origin 이 그 출처로 응답되고, PUT·DELETE 의 OPTIONS 사전 요청이 Content-Type·Authorization·X-Write-Key 헤더를 허용하며 2xx 로 통과한다",
+    "오류: 허용 목록에 없는 출처의 요청에는 Access-Control-Allow-Origin 헤더가 붙지 않는다",
+    "WRITE_GUARD_ENABLED=true 이고 X-Write-Key 가 맞으면 쓰기 요청이 기존 동작 그대로 처리된다. 가드가 켜져 있어도 GET 조회와 CORS 사전 요청은 키 없이 통과한다",
+    "오류: 가드가 켜진 상태에서 X-Write-Key 가 없거나 틀리면 POST·PUT·DELETE 가 401 로 거부되고 DB 가 변경되지 않는다",
+    "오류: WRITE_GUARD_ENABLED=true 인데 WRITE_API_KEY 가 비어 있으면 애플리케이션이 기동에 실패한다",
+    "WRITE_GUARD_ENABLED 가 없으면 가드는 꺼져 있고 기존 백엔드 테스트가 모두 통과한다 — ./gradlew test",
+    "PORT 환경변수 값이 server.port 로 반영된다 (설정 로딩 테스트). 설정 파일에 DB 접속 정보가 하드코딩되어 있지 않다",
+    "python3 scripts/check_architecture.py --id DEPLOY-002 가 위반 0건이다 (CORS 와일드카드 없음)",
+    "backend/Dockerfile 이 bootJar 산출물을 실행하고 JVM 힙 상한(-Xmx)을 지정한다. docker build 로 이미지가 빌드된다 — Docker 데몬이 꺼져 있으면 검증하지 못한 것으로 WARN 에 기록하고 첫 배포에서 확인한다"
+  ],
+
+  "test_hints": {
+    "framework": "JUnit 5 + Spring Boot Test (MockMvc)",
+    "command": "./gradlew test",
+    "mock_strategy": "CorsFilter/WriteGuardFilter 의 핵심 분기는 서블릿 필터 단위 테스트(모의 HttpServletRequest/Response)로 빠르게 검증하고, 헤더·상태코드의 엔드투엔드 동작은 @SpringBootTest + MockMvc 로 확인한다. 기동 실패(F5)는 WRITE_GUARD_ENABLED=true/WRITE_API_KEY 미설정 프로퍼티로 컨텍스트 로딩 자체가 실패하는지를 별도 테스트 클래스(또는 ApplicationContextRunner)로 검증한다."
+  }
+}

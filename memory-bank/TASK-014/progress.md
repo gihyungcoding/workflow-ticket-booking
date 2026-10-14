@@ -2,8 +2,8 @@
 
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
-| 1 Plan | 🔄 진행 중 | — | 막 시작 |
-| 2a Scenario | ⬜ 대기 | — | |
+| 1 Plan | ✅ 완료 | CP-1.3 | route: Backend, flows 8건 |
+| 2a Scenario | 🔄 진행 중 | — | |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |

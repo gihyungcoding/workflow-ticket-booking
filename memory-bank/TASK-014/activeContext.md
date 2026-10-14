@@ -1,8 +1,8 @@
 ---
 task_id: TASK-014
 title: "배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design"
 status: ACTIVE
 track: light
 created_at: 2026-10-14
@@ -13,20 +13,20 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-014-backend-deploy-cors-guard"
 
-last_checkpoint: null
-artifacts: {}
+last_checkpoint: CP-1.3
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-014.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-TASK-014를 막 시작했다. ADR-0016(프론트 분리 배포 + CORS + 임시 쓰기 가드)에 따라
-Phase 1(Plan)에 들어갈 준비를 마쳤다.
+Phase 1(Plan) 완료. route=Backend, flows 8건이 acceptance_criteria 9건을 모두
+덮는다. 새 컴포넌트(CorsConfig, WriteGuardFilter)는 architecture.md 의 계층표에는
+없지만 ADR-0016이 "서블릿 필터 수준"으로 이미 배치를 정해뒀다.
 
 ## 다음 한 걸음
 
-`wf-plan` 스킬로 코드베이스를 조사해 PLAN_TASK-014.json 을 만든다. ADR-0016의
-"세부" 표(CORS 허용 헤더, 쓰기 가드 활성화 조건, 서버 포트/DB 접속 환경변수)를
-구조 정보로 그대로 옮긴다.
+`wf-scenario` 스킬로 Given/When/Then 시나리오를 설계한다.
 
 ## 알아둬야 할 것
 
