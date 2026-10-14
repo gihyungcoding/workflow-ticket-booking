@@ -1,8 +1,8 @@
 ---
 task_id: TASK-014
 title: "배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "2b"
+phase_name: "Phase 2b - Red (RETRY_RED_CODE #1)"
 status: ACTIVE
 track: light
 created_at: 2026-10-14
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-014-backend-deploy-cors-guard"
 
-last_checkpoint: CP-4.2
+last_checkpoint: CP-2.5
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-014.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-014.md"
@@ -28,7 +28,7 @@ artifacts:
 
 ## 다음 한 걸음
 
-Phase 3 완료(89/89 green). `wf-verify` 로 Phase 4 검증을 시작한다.
+Phase 4 FAIL(R1) → Phase 2b 롤백. WriteGuardIntegrationTest 를 가드 ON·비트랜잭션으로 재작성(401+ACAO 순서 단언 포함), HITL#2 재승인 후 Phase 3 에서 R3(WARN 로그) 반영, 이어 Phase 4 재검증. R4(Xmx/USER)는 현행 유지 — Phase 5 로.
 
 ## 알아둬야 할 것
 

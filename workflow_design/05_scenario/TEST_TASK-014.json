@@ -210,6 +210,14 @@
     "reason": "이 넷은 필터가 아직 Spring 컨텍스트에 등록되지 않았거나(SC-04/08 — 쓰기 가드 부재 시 기존 성공 경로가 유지됨), 구현 전 상태가 요구사항을 구조적으로 이미 만족하고 있다(SC-03 — 와일드카드를 쓰지 않는 코드가 아직 없음, SC-11 — DB 접속 정보가 아직 properties 에 없음)."
   },
   "human_review": {
-    "approved": true
+    "approved": false
+  },
+  "reject": {
+    "type": "RETRY_RED_CODE",
+    "reason_code": "WRONG_ASSERTION",
+    "attempt": 1,
+    "from_phase": "4",
+    "detail": "WriteGuardIntegrationTest(SC-04/08)가 가드 OFF + 클래스 레벨 @Transactional 로 실행되어 DB 반영·불변을 증명하지 못함. 가드 ON 비트랜잭션 통합 테스트로 재작성하고 401+ACAO(필터 순서) 단언 추가. 시나리오는 변경 없음.",
+    "verify_ref": "workflow_design/07_verify/VERIFY_TASK-014.json#R1,R2"
   }
 }
