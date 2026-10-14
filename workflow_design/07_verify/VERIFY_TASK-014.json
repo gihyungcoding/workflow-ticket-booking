@@ -281,8 +281,25 @@
     "logging": "해당 없음 — 키 값을 로그에 남기지 않음"
   },
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "e95f83c8f213fe5968c34278510a596e2adf439e",
+    "verified_at": "2026-10-14T08:24:17Z",
+    "exceptions": [
+      {
+        "id": "R4",
+        "what": "Dockerfile -Xmx384m·root 실행 유지",
+        "follow_up": "첫 배포에서 OOM 확인, Phase 5 try"
+      },
+      {
+        "id": "R3",
+        "what": "WRITE_GUARD_ENABLED 오값 fail-open 유지(WARN 로그만, 로그 미검증)",
+        "follow_up": "정책 결정 시 ADR-0016 개정"
+      },
+      {
+        "id": "R9-R13",
+        "what": "구조 테스트 단언 완화·낡은 주석·환경변수 의존 등 quality",
+        "follow_up": "Phase 5 try / 별도 태스크"
+      }
+    ]
   }
 }

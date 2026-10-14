@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-14T12:00:00Z
-summary: "Phase 4 2차 — WARN. 89/89·lint·제약 통과, 리뷰 correctness 결함 없음(R1·R2 해소). HITL#3 대기."
+summary: "Phase 4 2차 — WARN. 89/89·lint·제약 통과, 리뷰 correctness 결함 없음(R1·R2 해소). HITL#3 예외 승인 완료."
 
 next_steps:
-  - "HITL#3 승인 시 verified_commit 기록 후 Phase 5"
+  - "Phase 5 — wf-reflect (light 트랙: Artifact 생략)"
   - "Phase 5 try: R4 Xmx/root, R9~R13 테스트 단언 보강, DEPLOY-002 정규식 보강"
 
 decisions:

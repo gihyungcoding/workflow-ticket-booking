@@ -1,8 +1,8 @@
 ---
 task_id: TASK-014
 title: "배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정"
-phase: "3"
-phase_name: "Phase 3 - Green (재진입)"
+phase: "5"
+phase_name: "Phase 5 - Reflect"
 status: ACTIVE
 track: light
 created_at: 2026-10-14
