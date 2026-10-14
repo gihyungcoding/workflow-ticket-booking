@@ -764,5 +764,107 @@
         }
       ]
     }
+  },
+  {
+    "id": "TASK-014",
+    "title": "배포용 백엔드 준비 — CORS·쓰기 가드·운영 설정",
+    "description": "ADR-0016 에 따라 프론트와 따로 배포되는 백엔드를 준비한다. (1) 허용 출처만 통과시키는 CORS 를 서블릿 필터 수준에 둔다 — 이후 Spring Security(TASK-009)가 들어와도 사전 요청이 보안 필터에서 거부되지 않게 하기 위함이다. (2) 인증 전까지의 임시 방어로 쓰기 요청(POST·PUT·PATCH·DELETE)에 X-Write-Key 를 요구하는 가드를 둔다. WRITE_GUARD_ENABLED=true 일 때만 켜지고, 켜졌는데 키가 비어 있으면 기동에 실패한다. (3) PORT 환경변수를 server.port 로 받고 DB 접속을 표준 환경변수로 설정한다. (4) Render 에서 빌드할 Dockerfile 을 둔다. 포함하지 않음: 실제 배포와 Neon 연결 확인(첫 배포 체크리스트에서 한다), 인증, 프론트 변경.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "CORS·필터·서버 설정·컨테이너 빌드 모두 서버 범위",
+    "priority": "High",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 6
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "CORS_ALLOWED_ORIGINS 에 있는 출처의 요청에는 Access-Control-Allow-Origin 이 그 출처로 응답되고, PUT·DELETE 의 OPTIONS 사전 요청이 Content-Type·Authorization·X-Write-Key 헤더를 허용하며 2xx 로 통과한다",
+        "오류: 허용 목록에 없는 출처의 요청에는 Access-Control-Allow-Origin 헤더가 붙지 않는다",
+        "WRITE_GUARD_ENABLED=true 이고 X-Write-Key 가 맞으면 쓰기 요청이 기존 동작 그대로 처리된다. 가드가 켜져 있어도 GET 조회와 CORS 사전 요청은 키 없이 통과한다",
+        "오류: 가드가 켜진 상태에서 X-Write-Key 가 없거나 틀리면 POST·PUT·DELETE 가 401 로 거부되고 DB 가 변경되지 않는다",
+        "오류: WRITE_GUARD_ENABLED=true 인데 WRITE_API_KEY 가 비어 있으면 애플리케이션이 기동에 실패한다",
+        "WRITE_GUARD_ENABLED 가 없으면 가드는 꺼져 있고 기존 백엔드 테스트가 모두 통과한다 — ./gradlew test",
+        "PORT 환경변수 값이 server.port 로 반영된다 (설정 로딩 테스트). 설정 파일에 DB 접속 정보가 하드코딩되어 있지 않다",
+        "python3 scripts/check_architecture.py --id DEPLOY-002 가 위반 0건이다 (CORS 와일드카드 없음)",
+        "backend/Dockerfile 이 bootJar 산출물을 실행하고 JVM 힙 상한(-Xmx)을 지정한다. docker build 로 이미지가 빌드된다 — Docker 데몬이 꺼져 있으면 검증하지 못한 것으로 WARN 에 기록하고 첫 배포에서 확인한다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/java/com/example/ticket_booking/config/CorsConfig.java",
+          "backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java",
+          "backend/src/main/resources/application.properties",
+          "backend/Dockerfile"
+        ]
+      },
+      "complexity": {
+        "size_score": 3,
+        "risk_score": 3,
+        "total_score": 45.0,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/decisions/ADR-0016-split-deploy-with-cors-and-write-guard.md",
+      "sections": [],
+      "sections_with_ranges": []
+    }
+  },
+  {
+    "id": "TASK-015",
+    "title": "배포용 프론트 준비 — API 주소·쓰기 키 환경변수화",
+    "description": "ADR-0016 에 따라 백엔드와 따로 배포되는 프론트를 준비한다. API 호출이 VITE_API_BASE_URL 을 앞에 붙여 나가게 하되, 설정이 없으면 지금처럼 상대 경로(/api)로 나가 개발용 Vite 프록시를 그대로 쓴다. VITE_WRITE_KEY 가 있으면 쓰기 요청에만 X-Write-Key 헤더를 붙인다. 쓰기가 401 로 거부되면 일반 오류와 구분되는 안내를 보여준다. 정적 호스트(Cloudflare Pages)에서 하위 경로 새로고침이 되도록 빌드 산출물의 SPA 조건을 확인한다. 포함하지 않음: 실제 배포, 콜드스타트 대응(깨우기 요청·재시도 — 첫 배포에서 필요성이 확인된 뒤 별도 태스크), 인증 화면.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience",
+      "organizer"
+    ],
+    "reason_primary": "API 클라이언트·빌드 설정·오류 안내는 프론트 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-014"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 4
+      },
+      "risk": "low",
+      "acceptance_criteria": [
+        "VITE_API_BASE_URL 이 설정되면 모든 API 호출이 그 주소를 앞에 붙여 나가고, 설정이 없으면 기존처럼 상대 경로(/api/...)로 나간다",
+        "오류: VITE_API_BASE_URL 끝에 슬래시가 있어도 요청 주소에 // 가 생기지 않는다",
+        "VITE_WRITE_KEY 가 설정되면 쓰기 요청(POST·PUT·DELETE)에 X-Write-Key 헤더가 붙고 조회(GET)에는 붙지 않는다",
+        "오류: VITE_WRITE_KEY 가 없으면 X-Write-Key 헤더를 아예 보내지 않는다 (빈 값을 보내지 않는다)",
+        "오류: 쓰기 요청이 401 로 거부되면 일반 오류와 구분되는 안내가 화면에 표시된다",
+        "npm run build 산출물에 index.html 이 있고 404.html 은 없다 (Cloudflare Pages 가 SPA 모드로 동작하는 조건)",
+        "python3 scripts/check_architecture.py --id DEPLOY-001 이 위반 0건이다 (소스에 배포 주소 하드코딩 없음)",
+        "기존 프론트 테스트가 모두 통과한다 — npm test, npm run lint"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/api/http.ts",
+          "frontend/src/api/performances.ts",
+          "frontend/src/vite-env.d.ts",
+          "frontend/.env.example"
+        ]
+      },
+      "complexity": {
+        "size_score": 2,
+        "risk_score": 2,
+        "total_score": 32.0,
+        "level": "단순"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/decisions/ADR-0016-split-deploy-with-cors-and-write-guard.md",
+      "sections": [],
+      "sections_with_ranges": []
+    }
   }
 ]
