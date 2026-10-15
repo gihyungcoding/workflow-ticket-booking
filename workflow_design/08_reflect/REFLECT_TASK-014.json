@@ -1,0 +1,160 @@
+{
+  "task_id": "TASK-014",
+  "keep": [
+    {
+      "what": "프로젝트 CLAUDE.md 의 JPA 리뷰 지시(클래스 레벨 @Transactional 이면 flush/비트랜잭션 프로브 요청)를 code-reviewer 프롬프트에 그대로 넣었다",
+      "evidence": "Phase 4 1차 리뷰가 WriteGuardIntegrationTest 의 가짜 통과(가드 OFF + @Transactional, R1)를 잡았다 — 테스트 89/89 초록이었는데도 AC 미증명을 발견"
+    },
+    {
+      "what": "리뷰어의 '추정'을 그대로 믿지 않고 임시 프로브·변이로 실측한 뒤 판정했다",
+      "evidence": "리뷰어는 @Order 무효를 '기억상 추정'이라 했다. 프로브(401+ACAO)와 변이 M2/M3 로 '무효이며 클래스명 순서에 우연히 의존'을 확정 → FilterRegistrationBean 으로 고침"
+    },
+    {
+      "what": "Red 불가능한 롤백(구현이 이미 있음)에서 변이 검증으로 '가짜 통과가 아님'을 증명했다",
+      "evidence": "TEST_TASK-014.json red_retry.mutation_check — M1(가드 무력화)·M3(순서 역전)에서 SC-06 FAIL, 변이는 모두 원복"
+    }
+  ],
+  "problem": [
+    {
+      "what": "통합 테스트의 Given 이 선언한 설정(WRITE_GUARD_ENABLED=true)을 실제로 적용하지 않았는데 Phase 2b 와 HITL#2 가 이를 걸러내지 못했다",
+      "evidence": "WriteGuardIntegrationTest 주석에 '이 속성은 지금은 아무 영향이 없다'고 적혀 있었고, already_passing 으로 분류돼 승인됨. Phase 4 에서야 발견 → 2b·3 재진입 2회분 비용",
+      "phase": "2b"
+    },
+    {
+      "what": "시나리오의 'DB 변경 없음' Then 을 필터 단위 테스트의 chain 호출 여부로 대리 검증했다",
+      "evidence": "SC-06 이 WriteGuardFilterTest 에서 chainCalled==false 만 확인 → Phase 4 R1 후 통합 테스트로 이전",
+      "phase": "2b"
+    },
+    {
+      "what": "@Bean 메서드의 @Order 가 서블릿 필터 체인 순서에 반영되지 않는데 Phase 1 설계·Phase 3 구현·ADR-0016 이 '최우선 순서'를 @Order 로 가정했다",
+      "evidence": "변이 M2(@Order LOWEST 로 바꿔도 통과), M3(클래스명 역전 시 SC-06 FAIL) — 필터 순서가 우연히 맞고 있었음",
+      "phase": "3"
+    },
+    {
+      "what": "테스트 리소스 application.properties 가 main 의 같은 이름 파일을 가려 server.port 를 main 에 두면 SC-09/10 이 null 이었다",
+      "evidence": "DEV_TASK-014.json scope_deviations — classpath:/config/application.properties 로 우회, 설정이 두 곳으로 나뉘고 SC-11 은 config/ 를 검사하지 않음",
+      "phase": 3
+    },
+    {
+      "what": "Phase 2a 독립검증이 3회 연속 FAIL(모두 V11 입력 경계값)해 BLOCKED 가 되고 마지막은 사람이 보강 후 직접 승인했다",
+      "evidence": "CP-2.2 attempts n=1,2,… — Origin 부재/빈 목록/접두사/공백, 메서드 열거·trim, 환경변수 비표준값이 라운드마다 하나씩 새로 지적됨",
+      "phase": "2a"
+    }
+  ],
+  "try": [
+    {
+      "what": "통합 테스트가 필요한 설정(properties)을 실제로 적용했는지 Red 단계에서 확인한다 — Given 에 '기동했다'가 있으면 @SpringBootTest(properties=…)·@TestPropertySource 중 무엇이 적용했는지 TEST JSON 에 적게 한다",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "구현이 이미 있는 상태의 Red 재작성(Phase 4 롤백)은 변이 검증을 필수 절로 둔다 — 무엇을 바꿔 어떤 테스트가 실패했는지 기록",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "환경변수·헤더 입력의 경계값 체크리스트(미설정/빈/공백/대소문자/표기 변형/연속 구분자/접두사 일치)를 1차 시나리오 작성 때 한 번에 채우게 한다",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    },
+    {
+      "what": "R4: Render 무료(512MB)에서 첫 배포 시 -Xmx384m·root 실행의 OOM 을 확인하고 -Xmx 하향·비루트 USER 로 조정한다",
+      "target": "backend/Dockerfile"
+    },
+    {
+      "what": "R9~R13 quality: ArchitectureCheckTest·ApplicationPropertiesFileTest·DockerfileTest 단언 강화, R3 WARN 로그·fromEnv 배선 검증, 낡은 주석 정리, DEPLOY-002 정규식에 new CorsFilter(List.of(\"*\")) 형태 추가",
+      "target": "backend/src/test/java/com/example/ticket_booking/config/"
+    }
+  ],
+  "insights": [
+    "초록불 89/89 가 AC 를 증명한다는 뜻은 아니다 — 이 태스크의 가장 큰 결함(R1)은 통과하는 테스트 안에 있었고, 설정을 켜지 않은 채 이름만 'ON' 인 테스트였다",
+    "프레임워크 동작에 대한 '기억' 기반 가정(@Bean @Order 가 필터 순서에 적용된다)은 설계 단계에서도 리뷰어도 확정하지 못했다 — 변이 한 번이 가장 싼 확인 수단이다",
+    "인증이 없는 임시 방어(쓰기 가드)는 fail-open/fail-closed 정책 결정을 Plan 에서 명시적 사용자 결정으로 올려야 한다 — 이번엔 Phase 4 에서야 정책 질문이 됐다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "—"
+    },
+    "2a": {
+      "retries": 3,
+      "note": "독립검증 3회 FAIL(V11 경계값) → RETRY_SCENARIO 상한 소진, BLOCKED → 직접 보강 후 사용자 승인"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "Phase 4 R1 로 RETRY_RED_CODE 1회 — 가드 ON·비트랜잭션 통합 테스트 재작성, HITL#2 2회"
+    },
+    "3": {
+      "retries": 1,
+      "note": "롤백 후 재진입 — FilterRegistrationBean 전환, R3 WARN 로그. scope_deviations 2건"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1차 FAIL(R1) → 2차 WARN, 예외 승인(R3·R4·quality)"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "서블릿 필터 순서는 FilterRegistrationBean.setOrder 로 명시하고 @Bean 메서드 @Order 에 의존하지 않는다",
+      "why_broader": "TASK-009(Spring Security) 도입 시 SecurityFilterChain 과의 순서가 CORS·가드의 전제 — ADR-0016 이 '최우선 순서'라 적은 문구가 이 방식을 전제하지 않았다",
+      "evidence": "CP-3.4 decisions, VERIFY R2, 변이 M2/M3",
+      "suggested_title": "서블릿 필터 순서는 FilterRegistrationBean 으로 명시한다"
+    },
+    {
+      "decision": "배포 설정은 classpath:/config/application.properties 에 두고 테스트 리소스의 application.properties 와 분리한다",
+      "why_broader": "TASK-015 등 이후 배포 설정(DB, 프로파일)이 같은 충돌을 겪는다",
+      "evidence": "DEV scope_deviations 1, CP-3.4 decisions",
+      "suggested_title": "배포 설정 파일 위치와 테스트 설정 분리"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "architecture.md §2 계층 표에 config(서블릿 필터·설정) 계층이 없고, WriteGuardFilter(config)가 api.dto.ErrorResponse 를 import 한다 — 금지 규칙은 없으나 DTO 위치 규칙('Service 가 api 를 import 해선 안 된다')과 같은 계열",
+      "where": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java, docs/architecture/architecture.md §2",
+      "found_how": "Phase 4 Step 3.5 prose_coverage 대조",
+      "suggestion": "config 계층 행 추가(책임·하지 않는 것), 필터가 쓰는 오류 응답 DTO 위치 결정"
+    },
+    {
+      "what": "ADR-0016 의 'CorsFilter 빈, 최우선 순서' 문구가 실제 구현(FilterRegistrationBean + setOrder)과 다르다 — @Bean+@Order 로 읽힌다",
+      "where": "docs/decisions/ADR-0016-split-deploy-with-cors-and-write-guard.md:65",
+      "found_how": "변이 M2",
+      "suggestion": "ADR 구현 메모에 FilterRegistrationBean.setOrder 명시"
+    },
+    {
+      "what": "DEPLOY-002 정규식이 new CorsFilter(List.of(\"*\")) 형태를 검출하지 못한다",
+      "where": "docs/architecture/constraints.yaml DEPLOY-002",
+      "found_how": "2차 코드 리뷰 R9",
+      "suggestion": "패턴에 CorsFilter 생성자 인자 형태 추가"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 3 — 실행해서 실패 확인",
+      "change": "통합 테스트(@SpringBootTest)는 Given 의 설정이 어떤 어노테이션 속성으로 적용되는지 TEST JSON 에 기록하고, 구현이 이미 있는 Red 재작성(Phase 4 롤백)은 변이 검증 결과(무엇을 바꿔 어떤 테스트가 실패했는지)를 red_retry 에 남기게 한다",
+      "evidence": "TASK-014 VERIFY R1 — 가드 OFF 인 채 'ON' 이름 테스트가 HITL#2 를 통과, 변이로만 가짜 통과 여부 확인 가능",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§2-1 경계값",
+      "change": "환경변수·헤더 입력 체크리스트(미설정/빈 문자열/공백/대소문자/표기 변형/연속 구분자/접두사 일치)를 추가해 V11 반복 FAIL 을 줄인다",
+      "evidence": "TASK-014 Phase 2a 독립검증 3회 연속 FAIL 모두 V11",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": "CLAUDE.md",
+      "section": "리뷰 지시 (JPA)",
+      "change": "JPA 지시를 '클래스 레벨 @Transactional 이면 UPDATE 반영'에서 '반영뿐 아니라 거부 경로의 DB 불변 단언도 비트랜잭션으로 확인하고, 통합 테스트의 Given 설정(properties)이 실제 적용됐는지 확인'까지 확장한다",
+      "evidence": "TASK-014 R1 — 이 지시가 가짜 통과를 잡았으나 가드 설정 미적용은 지시에 없어 리뷰어가 별도로 발견",
+      "status": "pending",
+      "recurring": 0
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": true
+  }
+}

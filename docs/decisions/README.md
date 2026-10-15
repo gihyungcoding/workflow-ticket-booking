@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-10-13 · 총 11건
+마지막 재생성: 2026-10-14 · 총 16건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -19,3 +19,8 @@
 | [ADR-0009](ADR-0009-seat-individual-rows.md) | 좌석은 구역(등급)×행×열 입력으로 서버가 개별 `seat` 행을 생성한다 | 채택됨 | 2026-09-11 |
 | [ADR-0010](ADR-0010-bean-validation-for-request-dtos.md) | 요청 DTO의 필드 형태 검증에 Bean Validation을 쓴다 | 채택됨 | 2026-09-16 |
 | [ADR-0011](ADR-0011-promote-design-constraints.md) | 디자인 제약 DESIGN-001·002 를 error 로 승격한다 | 채택됨 | 2026-10-13 |
+| [ADR-0012](ADR-0012-jwt-based-authentication.md) | 세션이 아닌 JWT(Bearer 토큰)로 인증한다 | 채택됨 | 2026-10-14 |
+| [ADR-0013](ADR-0013-spring-security-adoption.md) | Spring Security를 전체 도입한다 (OAuth2 Client + 커스텀 JWT 인증 필터) | 채택됨 | 2026-10-14 |
+| [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 채택됨 | 2026-10-14 |
+| [ADR-0015](ADR-0015-access-token-localstorage.md) | accessToken을 프론트 localStorage에 저장한다 | 채택됨 | 2026-10-14 |
+| [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 | 2026-10-14 |

@@ -96,7 +96,10 @@
       "target": "scenario-validator 정의 (V8 체크 항목)",
       "section": "V8: 입출력 대응",
       "change": "순수 함수로 분리된 로직이 단위 테스트되는 경우, 그 함수의 실제 프로덕션 호출자가 있는지, 원래 검증 대상(예: 실제 쿼리 로직)과 같은 것을 표현하는지를 확인하는 체크를 추가한다",
-      "evidence": "TASK-001 attempt 2 — PerformanceStatusRules.matches()가 프로덕션에서 호출되지 않는데도 1~2차 검증에서는 발견되지 못하고 Phase 4 code-reviewer가 처음 지적함"
+      "evidence": "TASK-001 attempt 2 — PerformanceStatusRules.matches()가 프로덕션에서 호출되지 않는데도 1~2차 검증에서는 발견되지 못하고 Phase 4 code-reviewer가 처음 지적함",
+      "status": "applied",
+      "applied_in": "c4e63e9",
+      "note": "대상을 scenario-validator 에서 code-reviewer 로 옮겨 반영 — 2a 시점엔 코드가 없어 호출자를 볼 수 없다"
     },
     {
       "target": "docs/workflow/task-schema.md 또는 coverage-policy.md",

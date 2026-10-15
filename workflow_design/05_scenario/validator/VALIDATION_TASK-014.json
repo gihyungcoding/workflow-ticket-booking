@@ -1,0 +1,78 @@
+{
+  "task_id": "TASK-014",
+  "attempt": 4,
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "MD 23건 / JSON 23건, ID 집합과 순서가 동일(SC-01~SC-16, SC-18, SC-19, SC-20, SC-21, SC-23, SC-24, SC-22). type·covers·flow 전 필드 일치. 차이는 (a) SC-06/SC-07 의 MD 표가 JSON 에서 한 문장으로 압축된 것, (b) SC-08/SC-22 의 MD 괄호 주석이 JSON note 필드로 이동한 것, (c) SC-23/SC-24 의 MD 괄호 설명이 JSON 에서 축약된 것뿐으로 단언 내용은 보존됐다. 참고: SC-17 번호가 양쪽 모두에 없다(결번) — 불일치는 아니나 ID 연속성이 깨져 있다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 23건(≥2). happy 4건(SC-01, SC-04, SC-09, SC-22 ≥1). error 6건(SC-02, SC-06, SC-07, SC-14, SC-15, SC-19 ≥1). boundary 12건, regression 1건(SC-08)."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "Plan 의 기준 9건을 문자열 단위로 직접 대조했고 9건 모두 최소 1개 시나리오의 covers 에 원문 그대로 나타난다. AC1→SC-01·SC-20 / AC2→SC-02·SC-13·SC-14·SC-15·SC-19·SC-23 / AC3→SC-04·SC-05·SC-16·SC-18 / AC4→SC-06·SC-24 / AC5→SC-07 / AC6→SC-08·SC-21 / AC7→SC-09·SC-10·SC-11 / AC8→SC-03 / AC9→SC-12·SC-22. JSON 의 자기 보고(9/9, uncovered: [])는 직접 대조 결과와 일치한다. SC-21 의 Given 과 covers(AC6) 사이 표현 차이는 있으나 AC6 자체는 SC-08 이 정확히 덮어 커버리지에는 영향 없다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "사용된 flow 는 F1(SC-01, SC-20), F2(SC-02, SC-03, SC-13, SC-14, SC-15, SC-19, SC-23), F3(SC-04, SC-05, SC-16, SC-18, SC-24), F4(SC-06), F5(SC-07), F6(SC-08, SC-21), F7(SC-09, SC-10, SC-11), F8(SC-12, SC-22) — 전부 Plan design.flows F1~F8 에 실재하고 미사용 flow 없음. 참고: SC-24 는 flow 를 F3 로 적었으나 의미상 F4(거부)에 더 가깝다 — ID 실재 요건은 충족해 fail 아님."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "warn",
+      "detail": "SC-21 의 Then '가드가 꺼진 것과 동일하게 요청이 정상 처리된다(401 로 거부되지 않는다)' — '정상 처리된다'는 모호 표현이고 기대 상태코드가 특정되지 않는다. 그 외 Then 은 단언 가능."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "pass",
+      "detail": "복합 When 없음. SC-06/SC-07/SC-23 는 coverage-policy §2-1 표 묶음 방식으로 허용되는 입력 다중화."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "warn",
+      "detail": "SC-24 MD Then 에 Java 코드 수준 표현(\"true\".equals(v))이 남아 있음. SC-11·SC-12 는 파일 내용에 대한 정적 단언, SC-03 When 은 스크립트 실행 — Plan AC 원문이 그 형태를 요구해 수용하되 Phase 2b 에서 테스트 종류를 구분해야 함."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "pass",
+      "detail": "입력 7건·출력 8건 모두 Plan 범위 안에서 다뤄지며 범위를 넘는 입출력 없음."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "warn",
+      "detail": "완전 중복은 없음(각 분리가 §3 기준 통과). 다만 SC-05/SC-16/SC-18, SC-09/SC-10 의 분리 근거가 약하고, 전체 23건이 coverage-policy §4 상한(12건)을 두 배 가까이 넘어 '태스크 분할 검토 및 사용자 통지' 대상."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "pass",
+      "detail": "SC-08(regression)이 기존 테스트 전체 통과를 덮고, SC-21 이 비표준값에서의 비활성도 추가 확인."
+    },
+    {
+      "id": "V11",
+      "name": "입력 경계값",
+      "verdict": "pass",
+      "detail": "Plan design.inputs 7개를 §2-1 표에 전수 대조 — 해당하면서 시나리오가 없는 행 없음. Origin 빈값/공백(SC-23), WRITE_GUARD_ENABLED 대소문자(SC-24)가 attempt 3 FAIL 사유를 해소함. PORT 정수 경계는 Plan 이 범위 밖으로 명시 제외."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 3,
+    "summary": "fail 0 — V1~V4 와 V11 을 모두 충족한다. attempt 3 의 FAIL 사유였던 두 경계(Origin 헤더 빈 값/공백 → SC-23, WRITE_GUARD_ENABLED 대소문자 TRUE → SC-24)는 MD·JSON 양쪽에 실제로 반영됐고, AC 9건은 직접 대조 결과 전부 1개 이상 시나리오에 매핑된다. 남은 경고 3건: (1) V5 — SC-21 의 Then 이 기대 상태코드 없이 모호함. (2) V7 — SC-24 MD 에 코드 수준 표현 잔존, SC-11·SC-12 는 정적 단언. (3) V9 — 완전 중복은 없으나 전체 23건이 coverage-policy §4 상한(12건)을 두 배 가까이 넘어 태스크 분할 검토 대상. 이 세 경고는 다음 Phase 진행을 막지 않는다."
+  }
+}

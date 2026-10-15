@@ -79,13 +79,17 @@
       "target": ".claude/skills/wf-red/SKILL.md",
       "section": "Step 2 — 테스트 작성",
       "change": "'mock 응답 객체를 만들 때 PLAN의 backend_response_verification(또는 동등 필드)에 기록된 실제 API 계약과 필드 단위로 대조한다 — 특히 스프레드(...)로 성공 응답을 구성할 때 원본 객체에 없는 필드가 섞여 들어가지 않는지 확인한다'는 항목을 추가한다",
-      "evidence": "TASK-005 SC-09 mock이 cancelPerformance 응답에 실제로는 없는 sections를 포함시켜 sections 소실 결함을 Red/Green 양쪽에서 놓쳤다(Phase 4 code-reviewer가 근본 원인으로 지목)"
+      "evidence": "TASK-005 SC-09 mock이 cancelPerformance 응답에 실제로는 없는 sections를 포함시켜 sections 소실 결함을 Red/Green 양쪽에서 놓쳤다(Phase 4 code-reviewer가 근본 원인으로 지목)",
+      "status": "applied",
+      "applied_in": "c4e63e9"
     },
     {
       "target": ".claude/skills/wf-verify/SKILL.md",
       "section": "Step 5 — 코드 리뷰",
       "change": "'Phase 3 롤백 후 재작업이 끝나면, 그 수정 커밋을 code-reviewer로 최소 1회 다시 검토한다 — 결함을 고치는 패치 자체가 새 결함을 만들 수 있다'는 절차를 추가한다",
-      "evidence": "TASK-005에서 1차 수정(confirmCancel에 오류 표시 추가)이 saveError 초기화 누락이라는 새 결함을 만들었고, 이를 2차 code-reviewer 재검토가 잡았다. 이 재검토는 현재 스킬 문서에 명문화돼 있지 않아 진행 여부가 그때그때 판단에 맡겨져 있었다"
+      "evidence": "TASK-005에서 1차 수정(confirmCancel에 오류 표시 추가)이 saveError 초기화 누락이라는 새 결함을 만들었고, 이를 2차 code-reviewer 재검토가 잡았다. 이 재검토는 현재 스킬 문서에 명문화돼 있지 않아 진행 여부가 그때그때 판단에 맡겨져 있었다",
+      "status": "applied",
+      "applied_in": "c4e63e9"
     },
     {
       "target": ".claude/skills/wf-scenario/references/coverage-policy.md",

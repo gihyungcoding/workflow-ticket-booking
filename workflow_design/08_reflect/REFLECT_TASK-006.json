@@ -71,13 +71,17 @@
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 4 구조 정규화",
       "change": "타입을 넓히는 변경(narrower→wider)이 포함된 태스크는 design.unresolved에 '이 변경으로 새로 도달 가능해지는 입력 범위'를 명시하도록 안내 추가",
-      "evidence": "TASK-006 Phase 4가 2라운드에 걸쳐서야 발견한 결함 모두 'BigDecimal이 새로 연 입력 공간'에서 나왔다"
+      "evidence": "TASK-006 Phase 4가 2라운드에 걸쳐서야 발견한 결함 모두 'BigDecimal이 새로 연 입력 공간'에서 나왔다",
+      "status": "applied",
+      "applied_in": "c4e63e9"
     },
     {
       "target": "docs/workflow/reject-state-machine.md",
       "section": "§5 거절 후 재시도할 때",
       "change": "구현 방식이 PLAN의 flows 서술과 달라지는 재시도의 경우, PLAN을 재작성하지 않되 실제 구현과의 차이를 가리키는 짧은 추신을 남기도록 안내 추가",
-      "evidence": "PLAN_TASK-006.json이 실제 검증 순서(범위 확인 먼저)와 반대로 서술된 채 남아 있음 (3차 code-reviewer 소견)"
+      "evidence": "PLAN_TASK-006.json이 실제 검증 순서(범위 확인 먼저)와 반대로 서술된 채 남아 있음 (3차 code-reviewer 소견)",
+      "status": "rejected",
+      "note": "산출물 감량 방향과 맞지 않고 영향이 문서 불일치 지적 수준으로 작다"
     }
   ],
   "completion_report": { "approved_by_human": true, "report_url": "https://claude.ai/artifact/PsEtV8oFMyBU8NpNxq52kJ" }
