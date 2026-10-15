@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-015-frontend-deploy-env"
 
-last_checkpoint: null
+last_checkpoint: "CP-1.3"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-015.json"
 ---
@@ -24,6 +24,8 @@ TASK-015 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 4h �
 기준: develop `1090c2a` (TASK-014 머지 포함). 프론트 테스트 31/31, lint error 0 확인.
 
 ## 다음 한 걸음
+
+Phase 1 완료(CP-1.3). `wf-scenario` 로 Phase 2a 시나리오를 설계한다. (아래는 시작 시점 메모)
 
 `wf-plan` 스킬로 Phase 1 설계를 한다. 출발점은 `frontend/src/api/performances.ts`
 (fetch 호출 5곳, 공통 http 모듈 없음), `frontend/vite.config.ts` 의 dev 프록시,
