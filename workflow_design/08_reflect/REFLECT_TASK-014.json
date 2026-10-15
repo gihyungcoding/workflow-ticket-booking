@@ -134,24 +134,27 @@
       "section": "Step 3 — 실행해서 실패 확인",
       "change": "통합 테스트(@SpringBootTest)는 Given 의 설정이 어떤 어노테이션 속성으로 적용되는지 TEST JSON 에 기록하고, 구현이 이미 있는 Red 재작성(Phase 4 롤백)은 변이 검증 결과(무엇을 바꿔 어떤 테스트가 실패했는지)를 red_retry 에 남기게 한다",
       "evidence": "TASK-014 VERIFY R1 — 가드 OFF 인 채 'ON' 이름 테스트가 HITL#2 를 통과, 변이로만 가짜 통과 여부 확인 가능",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "bc0819a"
     },
     {
       "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
       "section": "§2-1 경계값",
       "change": "환경변수·헤더 입력 체크리스트(미설정/빈 문자열/공백/대소문자/표기 변형/연속 구분자/접두사 일치)를 추가해 V11 반복 FAIL 을 줄인다",
       "evidence": "TASK-014 Phase 2a 독립검증 3회 연속 FAIL 모두 V11",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "bc0819a"
     },
     {
       "target": "CLAUDE.md",
       "section": "리뷰 지시 (JPA)",
       "change": "JPA 지시를 '클래스 레벨 @Transactional 이면 UPDATE 반영'에서 '반영뿐 아니라 거부 경로의 DB 불변 단언도 비트랜잭션으로 확인하고, 통합 테스트의 Given 설정(properties)이 실제 적용됐는지 확인'까지 확장한다",
       "evidence": "TASK-014 R1 — 이 지시가 가짜 통과를 잡았으나 가드 설정 미적용은 지시에 없어 리뷰어가 별도로 발견",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "bc0819a"
     }
   ],
   "completion_report": {
