@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-15T00:00:00Z
-summary: "시나리오 12건 작성, 독립검증 2회차 PASS(경고 5건). HITL#1 승인 대기."
+summary: "시나리오 12건 작성, 독립검증 2회차 PASS(경고 5건). HITL#1 승인됨."
 
 next_steps:
   - "HITL#1 승인 후 Phase 2b — wf-red"

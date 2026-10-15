@@ -281,6 +281,6 @@
     ]
   },
   "human_input": {
-    "generate_red_trigger": false
+    "generate_red_trigger": true
   }
 }

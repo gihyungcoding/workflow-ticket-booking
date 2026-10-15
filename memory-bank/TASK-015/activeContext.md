@@ -1,8 +1,8 @@
 ---
 task_id: TASK-015
 title: "배포용 프론트 준비 — API 주소·쓰기 키 환경변수화"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 track: light
 created_at: 2026-10-15
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-015-frontend-deploy-env"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-015.json"
 ---
@@ -25,7 +25,7 @@ TASK-015 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 4h �
 
 ## 다음 한 걸음
 
-Phase 1 완료(CP-1.3). `wf-scenario` 로 Phase 2a 시나리오를 설계한다. (아래는 시작 시점 메모)
+Phase 2a 승인 완료(CP-2.2). `wf-red` 로 Phase 2b Red 테스트를 작성한다. (아래는 시작 시점 메모)
 
 `wf-plan` 스킬로 Phase 1 설계를 한다. 출발점은 `frontend/src/api/performances.ts`
 (fetch 호출 5곳, 공통 http 모듈 없음), `frontend/vite.config.ts` 의 dev 프록시,
