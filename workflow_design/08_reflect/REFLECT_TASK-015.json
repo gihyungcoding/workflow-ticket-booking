@@ -1,0 +1,102 @@
+{
+  "task_id": "TASK-015",
+  "keep": [
+    {
+      "what": "Phase 2b 화면 테스트를 performances 모듈 mock 이 아니라 fetch stub 으로 작성해, 상태·본문 → ApiError 변환까지 실제 코드로 통과시킨 것",
+      "evidence": "SC-12(401 이지만 다른 코드·빈 바디·비JSON)가 Phase 3 변이 2건('instanceof ApiError', 'instanceof Error')을 각각 잡았다 — DEV_TASK-015.json mutation_checks"
+    },
+    {
+      "what": "Phase 4 화면 확인을 모의 서버가 아니라 실제 백엔드(가드 ON)+Postgres 컨테이너+wrong/good 키 빌드 2개로 한 것",
+      "evidence": "CORS·X-Write-Key·401 안내가 실제로 맞물리는 것과 거부된 쓰기가 DB 를 바꾸지 않는 것을 확인(VERIFY_TASK-015.json screens)"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Phase 2a 1차 독립검증 V11 FAIL — 401 이지만 code 가 WRITE_KEY_INVALID 가 아닌 경우가 시나리오에 없어, '401 이면 무조건 거부 문구' 구현이 모든 시나리오를 통과할 수 있었다. 환경변수 입력(base URL 공백만)도 같은 부류로 빠졌다",
+      "evidence": "VALIDATION 1차(overwritten → CP-2.2 attempts) · TASK-014 #1 '환경변수·헤더 입력 체크리스트'가 이미 제안돼 있으나 PR #11 미머지라 이번 태스크에 적용되지 않음",
+      "phase": "2a"
+    },
+    {
+      "what": "Phase 4 코드 리뷰가 테스트 약점 4건을 지적 — 특히 '거부 후 재제출 시 안내 초기화'를 지우면 모든 테스트가 통과한다. 에러 상태를 켜는 시나리오는 있으나 끄는(재제출) 시나리오는 쓰지 않았다",
+      "evidence": "VERIFY_TASK-015.json code_review.findings[0] — PerformanceRegisterPage.tsx submit() 의 setWriteRejected(false)",
+      "phase": "4"
+    },
+    {
+      "what": "Phase 3 변이 확인의 첫 시도가 macOS sed 오류('bad flag in substitute command')로 변이가 적용되지 않은 채 '5 passed' 가 나왔다. 변이가 실제로 적용됐는지 확인하지 않으면 통과 결과를 변이 사망 실패로 오독할 수 있었다",
+      "evidence": "DEV_TASK-015.json mutation_checks 는 python 으로 재실행한 값 — 첫 실행 로그에서 sed 오류와 5 passed 가 동시에 출력됨",
+      "phase": 3
+    }
+  ],
+  "insights": [
+    "HTTP 상태가 아니라 서버가 준 code 로 분기하는 로직은 '다른 code·빈 바디·비JSON' 입력이 유일한 안전망이다 — 이 경계가 없으면 구현을 단순화해도 모든 시나리오가 통과한다",
+    "환경변수를 호출 시점에 읽도록 설계하면 vi.stubEnv 로 모든 설정 조합을 단위 테스트할 수 있어 별도 빌드 없이 AC 를 검증한다",
+    "배포 구조 태스크는 모의 서버보다 실제 백엔드(Docker Postgres + bootRun)로 화면을 확인하는 편이 CORS·헤더 오류를 직접 잡는다 — 30초 안에 띄워졌다",
+    "자동 보안 리뷰가 지적한 '키가 번들에 노출됨'처럼 ADR 이 이미 수용한 위험은 ADR 번호와 함께 VERIFY security 항목에 남기면 근거로 닫을 수 있다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "—"
+    },
+    "2a": {
+      "retries": 1,
+      "note": "독립검증 1회 FAIL(V11: 401 다른 코드·base 공백) → SC-12 추가·Plan 보강 후 2차 PASS"
+    },
+    "2b": {
+      "retries": 0,
+      "note": "Red 7 + already_passing 5, 변이로 SC-10·11 확인"
+    },
+    "3": {
+      "retries": 0,
+      "note": "변이 확인 첫 시도 sed 미적용 → python 재실행"
+    },
+    "4": {
+      "retries": 0,
+      "note": "WARN — 테스트 약점 4건, 결함 0, 예외 승인"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [],
+  "architecture_drift": [
+    {
+      "what": "vite.config.ts 의 dev 프록시 주석이 '배포 환경의 CORS/리버스 프록시 전략은 별도로 정한다'로 남아 있다 — ADR-0016 이 직접 호출(CORS) 방식으로 결정했다",
+      "where": "frontend/vite.config.ts:9-10",
+      "found_how": "Phase 1 코드베이스 조사(주석이 ADR-0016 맥락에서 낡음)",
+      "suggestion": "주석을 'ADR-0016: 배포는 VITE_API_BASE_URL 로 직접 호출, 이 프록시는 개발 전용' 으로 갱신 (별도 소형 커밋)"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§2-1 입력 경계값 표",
+      "change": "'서버 응답의 code·본문으로 분기하는 로직' 행(다른 code·빈 바디·비JSON)과 '에러 상태를 켜는 시나리오는 재제출 시 꺼짐을 같은 표에 묶는다' 를 추가한다. TASK-014 #1 의 환경변수·헤더 체크리스트와 함께 반영한다",
+      "evidence": "TASK-015 2a V11 FAIL + Phase 4 리뷰 지적 1건(재제출 초기화 미검증)",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "구현이 이미 있는 Red 재작성 — 변이 검증",
+      "change": "변이 검증은 변이 적용 후 git diff 로 변경을 확인하고 나서 테스트를 실행한다(셸 치환 실패로 미적용된 변이의 통과를 변이 생존으로 오독하지 않게). TASK-014 #0 과 같은 절을 고친다",
+      "evidence": "TASK-015 Phase 3 변이 첫 시도 sed 오류 + '5 passed'",
+      "status": "pending",
+      "recurring": 1
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  },
+  "try": [
+    {
+      "what": "상태를 켜는 에러 시나리오에는 '다시 시도/재제출하면 그 상태가 꺼진다' 확인을 같은 시나리오 표에 묶어 쓴다 (화면 상태 초기화 행)",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    },
+    {
+      "what": "변이 검증은 변이 적용 직후 diff 로 실제 변경됐음을 단언한 뒤 테스트를 돌린다(미적용 변이의 통과를 변이 생존으로 오독하지 않게)",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    }
+  ]
+}
