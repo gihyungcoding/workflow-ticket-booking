@@ -1,0 +1,176 @@
+{
+  "task_id": "TASK-015",
+  "status": "WARN",
+  "status_reason": "결함은 없으나 코드 리뷰가 테스트 약점 3건을 지적했다(재제출 시 거부 안내 초기화 미검증, 환경변수 미설정 케이스의 격리, 헤더 병합 형태 미검증). 쓰기 거부 안내의 일반 오류 분기는 실제 브라우저가 아닌 jsdom 으로만 확인했다",
+  "evidence": {
+    "tests": {
+      "command": "cd frontend && npm test",
+      "exit_code": 0,
+      "summary": "12 files, 43 passed (기존 31 + 신규 12)"
+    },
+    "lint": {
+      "command": "cd frontend && npm run lint",
+      "exit_code": 0,
+      "summary": "error 0, 기존 set-state-in-effect 경고 3건(변경과 무관)"
+    },
+    "build": {
+      "command": "cd frontend && npm run build",
+      "exit_code": 0,
+      "summary": "tsc -b 통과, dist/index.html 있음, dist/404.html 없음"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD -- frontend",
+      "summary": "9 files changed, 526 insertions(+), 11 deletions(-)"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "VITE_API_BASE_URL 이 설정되면 모든 API 호출이 그 주소를 앞에 붙여 나가고, 설정이 없으면 기존처럼 상대 경로(/api/...)로 나간다",
+      "verdict": "PASS",
+      "evidence": "SC-01(5개 호출 URL)·SC-02(미설정·빈·공백) 통과. 실제 화면: base=http://localhost:8080/ 빌드에서 상세 GET·등록 POST 가 백엔드로 도달"
+    },
+    {
+      "criterion": "오류: VITE_API_BASE_URL 끝에 슬래시가 있어도 요청 주소에 // 가 생기지 않는다",
+      "verdict": "PASS",
+      "evidence": "SC-03(슬래시 1·2개) 통과. 실제 화면: 끝 슬래시 있는 base(5180)로 등록이 201 성공"
+    },
+    {
+      "criterion": "VITE_WRITE_KEY 가 설정되면 쓰기 요청(POST·PUT·DELETE)에 X-Write-Key 헤더가 붙고 조회(GET)에는 붙지 않는다",
+      "verdict": "PASS",
+      "evidence": "SC-04(POST·PUT·PATCH·DELETE 붙음, GET·HEAD 안 붙음). 실제 화면: good-key 빌드의 등록이 가드 ON 백엔드에서 성공, wrong-key 빌드는 401"
+    },
+    {
+      "criterion": "오류: VITE_WRITE_KEY 가 없으면 X-Write-Key 헤더를 아예 보내지 않는다 (빈 값을 보내지 않는다)",
+      "verdict": "PASS",
+      "evidence": "SC-05(미설정·빈·공백 모두 has('X-Write-Key') == false)"
+    },
+    {
+      "criterion": "오류: 쓰기 요청이 401 로 거부되면 일반 오류와 구분되는 안내가 화면에 표시된다",
+      "verdict": "PASS",
+      "evidence": "SC-06~08(등록·저장·취소)·SC-09·SC-12(구분의 반대편, 변이 2건 사망). 실제 화면: 가드 ON 백엔드+wrong-key 빌드에서 등록·저장·취소 모두 안내 표시, 재시도 버튼 없음, DB 변화 없음(공연 1 UPCOMING 유지, 거부된 등록 행 없음)"
+    },
+    {
+      "criterion": "npm run build 산출물에 index.html 이 있고 404.html 은 없다 (Cloudflare Pages 가 SPA 모드로 동작하는 조건)",
+      "verdict": "PASS",
+      "evidence": "npm run build exit 0 → dist/{index.html, assets, favicon.svg, icons.svg}, 404.html 없음. SC-10 통과"
+    },
+    {
+      "criterion": "python3 scripts/check_architecture.py --id DEPLOY-001 이 위반 0건이다 (소스에 배포 주소 하드코딩 없음)",
+      "verdict": "PASS",
+      "evidence": "DEPLOY-001 통과, 파일 25개 검사. 전체 실행도 error 0. SC-11 통과"
+    },
+    {
+      "criterion": "기존 프론트 테스트가 모두 통과한다 — npm test, npm run lint",
+      "verdict": "PASS",
+      "evidence": "npm test exit 0 — 43 passed(기존 31 + 신규 12), npm run lint exit 0 — error 0, 기존 경고 3건"
+    }
+  ],
+  "screens": [
+    {
+      "name": "공연 등록",
+      "state": "쓰기 거부(401)",
+      "verdict": "PASS",
+      "evidence": "실제 백엔드(WRITE_GUARD_ENABLED=true) + wrong-key 빌드: '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요' Alert, 다시 시도 버튼 없음, 입력값 유지, 등록 화면에 머묾"
+    },
+    {
+      "name": "공연 수정",
+      "state": "저장 쓰기 거부(401)",
+      "verdict": "PASS",
+      "evidence": "실제 백엔드 + wrong-key 빌드: 폼 상단에 동일 안내, 일반 '저장하지 못했습니다' 문구 없음"
+    },
+    {
+      "name": "공연 수정",
+      "state": "취소 쓰기 거부(401)",
+      "verdict": "PASS",
+      "evidence": "확인 대화상자 닫힘 + 동일 안내, 상태 배지는 예매예정 유지, API 로 확인한 공연 1 status 는 UPCOMING"
+    },
+    {
+      "name": "공연 등록→상세",
+      "state": "정상(쓰기 키 일치)",
+      "verdict": "PASS",
+      "evidence": "good-key 빌드(base 끝 슬래시 포함): 등록 성공 후 /performances/2 상세 표시, 잔여 5석, 교차 출처 GET 정상"
+    },
+    {
+      "name": "전 화면",
+      "state": "품질 하한선",
+      "verdict": "PASS",
+      "evidence": "html lang=ko, title '공연 예매'(템플릿 기본값 아님) 화면에서 확인. 변경이 문구·Alert 뿐이라 서체·포커스·모션 변경 없음"
+    },
+    {
+      "name": "공연 등록/수정",
+      "state": "일반 오류(500 등)·401 다른 코드",
+      "verdict": "PASS",
+      "evidence": "실제 화면이 아닌 jsdom 테스트(SC-09·SC-12)로 확인 — fetch stub, 변이 2건 사망. 실제 브라우저 확인은 하지 않음"
+    }
+  ],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 160,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "기존 Skeleton height 매직 넘버 3건 — 이번 변경과 무관(PerformanceDetailPage/EditPage/ListPage)"
+      }
+    ],
+    "overdue_promotions": 0,
+    "prose_coverage": [
+      {
+        "rule": "Frontend: 도메인 규칙(선점 유효성 등은 서버가 최종 판단)",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "이번 변경은 헤더 부착과 거부 안내뿐 — 서버가 판단하는 규칙을 프론트에 두지 않음을 코드 리뷰로 확인"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "43/43 passed",
+    "callers_checked": true,
+    "note": "소스에 직접 fetch( 호출이 남아 있지 않음(리뷰어 확인)"
+  },
+  "scope_deviations": [],
+  "code_review": {
+    "findings": [
+      {
+        "severity": "quality",
+        "file": "frontend/src/pages/WriteKeyRejected.test.tsx",
+        "summary": "거부 후 재제출 시 writeRejected 초기화(PerformanceRegisterPage submit 의 setWriteRejected(false))를 검증하는 테스트가 없다 — 그 줄을 지워도 모두 통과"
+      },
+      {
+        "severity": "quality",
+        "file": "frontend/src/api/http.test.ts",
+        "summary": "SC-02·05 의 '미설정'은 vi.unstubAllEnvs 후 환경 값에 의존한다 — .env 에 값이 있으면 거짓 실패(거짓 통과 아님)"
+      },
+      {
+        "severity": "quality",
+        "file": "frontend/src/api/http.test.ts",
+        "summary": "request() 에 Headers 인스턴스·배열 헤더를 넘길 때 Content-Type 유지가 테스트되지 않는다(구현은 올바름)"
+      },
+      {
+        "severity": "low",
+        "file": "frontend/src/api/http.ts",
+        "summary": "method 소문자 'patch' 는 fetch 가 정규화하지 않아 키 헤더는 붙지만 서버에는 소문자로 도달 — 현재 호출처는 모두 대문자라 영향 없음"
+      }
+    ],
+    "correctness_defects": 0,
+    "note": "프로덕션 코드에서 입력으로 재현되는 결함은 없음. 위 4건은 모두 Phase 5 try 후보"
+  },
+  "security": {
+    "input_validation": "해당 없음 — 사용자 입력을 쿼리·명령에 쓰지 않고 env 값은 trim 후 URL 접두·헤더로만 사용",
+    "authorization": "서버 쓰기 가드(TASK-014)가 최종 판단. 프론트는 헤더 부착과 거부 안내만 하며 실제 백엔드로 401 거부·성공 모두 확인",
+    "secrets": "VITE_WRITE_KEY 는 번들에 노출된다 — ADR-0016 이 수용한 위험(인증 TASK-009 전까지의 오남용 완화용). 소스·.env.example 에 실제 키·주소 없음. 자동 보안 리뷰도 같은 지점을 지적했으나 의도된 설계. 키가 노출된 번들을 배포했다면 백엔드 WRITE_API_KEY 교체",
+    "logging": "해당 없음 — 키를 로그·화면에 출력하지 않음"
+  },
+  "verification_notes": [
+    "검증용 임시 환경: Docker postgres:16-alpine(t015-pg) + 로컬 bootRun(가드 ON, CORS 5180·5181) + vite 2개(5180 good-key, 5181 wrong-key). 검증 후 모두 종료·삭제했고 작업 트리는 깨끗함",
+    "범위 밖(미검증): 콜드스타트 중 CORS 오류 가설(ADR-0016 가설 1), Render 메모리, Cloudflare Pages 실제 SPA 폴백 동작 — 첫 배포에서 확인"
+  ],
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}
