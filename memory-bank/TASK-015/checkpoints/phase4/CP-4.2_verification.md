@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-16T00:00:00Z
 summary: "Phase 4 WARN — AC 8/8 PASS, 제약 error 0, 화면 6건 확인(실제 백엔드+가드 ON), 코드 리뷰 결함 0·테스트 약점 4건. HITL#3 예외 승인됨."
 

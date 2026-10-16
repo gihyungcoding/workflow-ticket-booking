@@ -3,7 +3,7 @@ task_id: TASK-015
 title: "배포용 프론트 준비 — API 주소·쓰기 키 환경변수화"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: ACTIVE
+status: DONE
 track: light
 created_at: 2026-10-15
 last_updated: 2026-10-15
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-015-frontend-deploy-env"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-015.json"
 ---

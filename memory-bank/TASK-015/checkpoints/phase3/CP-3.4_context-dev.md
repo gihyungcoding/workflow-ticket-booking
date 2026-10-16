@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-16T00:00:00Z
 summary: "Green — npm test 43/43(대상 12), lint error 0, build 통과(dist/index.html 있음·404.html 없음), DEPLOY-001 위반 0. 변이 2건 모두 사망."
 
