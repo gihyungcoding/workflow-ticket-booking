@@ -11,7 +11,7 @@
       "scenario_id": "SC-01",
       "test_function": "test_sc01_주소가_설정되면_모든_호출이_그_주소를_앞에_붙여_나간다",
       "status": "red",
-      "failure": "AssertionError: expected '/api/performances' to be 'https://api.example.com/api/performances'",
+      "failure": "AssertionError: expected [ '/api/performances', …(4) ] to deeply equal [ 'https://api.example.com/api/performances', …(4) ]",
       "file": "frontend/src/api/http.test.ts"
     },
     {
@@ -26,7 +26,7 @@
       "scenario_id": "SC-03",
       "test_function": "test_sc03_주소_끝에_슬래시가_있어도_이중_슬래시가_생기지_않는다",
       "status": "red",
-      "failure": "AssertionError: 접두 없이 /api/performances 로 나감 (slash 처리 미구현)",
+      "failure": "AssertionError: expected '/api/performances' to be 'https://api.example.com/api/performances'",
       "file": "frontend/src/api/http.test.ts"
     },
     {
