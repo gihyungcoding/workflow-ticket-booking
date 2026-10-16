@@ -169,8 +169,12 @@
     "범위 밖(미검증): 콜드스타트 중 CORS 오류 가설(ADR-0016 가설 1), Render 메모리, Cloudflare Pages 실제 SPA 폴백 동작 — 첫 배포에서 확인"
   ],
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "cb7a64d20f54f143b45ffd12558db95e1d9f120f",
+    "verified_at": "2026-10-16T07:36:03Z",
+    "exceptions": [
+      "코드 리뷰의 테스트 약점 4건(재제출 시 거부 안내 초기화 미검증, env 미설정 케이스 격리, Headers·배열 헤더 병합 미검증, 소문자 patch)은 Phase 5 개선 후보로 남김 — 결함 아님",
+      "일반 오류·401 다른 코드 분기는 jsdom 테스트로만 확인(실제 브라우저 미확인)"
+    ]
   }
 }
