@@ -8,7 +8,7 @@ import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { ApiError, registerPerformance } from '../api/performances'
+import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected, registerPerformance } from '../api/performances'
 import { fromDatetimeLocalInput } from '../utils/datetime'
 
 interface SectionForm {
@@ -58,6 +58,7 @@ export function PerformanceRegisterPage() {
   const [timeFieldsError, setTimeFieldsError] = useState<string | null>(null)
   const [sectionErrors, setSectionErrors] = useState<Record<number, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
+  const [writeRejected, setWriteRejected] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const seatCounts = sections.map(seatCountOf)
@@ -76,6 +77,7 @@ export function PerformanceRegisterPage() {
     setTimeFieldsError(null)
     setSectionErrors({})
     setFormError(null)
+    setWriteRejected(false)
     setSubmitting(true)
     try {
       const performance = await registerPerformance({
@@ -97,7 +99,9 @@ export function PerformanceRegisterPage() {
       })
       navigate(`/performances/${performance.id}`)
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'INVALID_TIME_ORDER') {
+      if (isWriteKeyRejected(error)) {
+        setWriteRejected(true)
+      } else if (error instanceof ApiError && error.code === 'INVALID_TIME_ORDER') {
         setTimeFieldsError('예매 오픈·마감·공연 일시 순서가 올바르지 않습니다')
       } else if (error instanceof ApiError && error.code === 'SEAT_LIMIT_EXCEEDED') {
         // 서버는 좌석 총수(전체 구역 합산) 기준으로만 판정하고 원인 구역을 알려주지 않는다.
@@ -123,6 +127,13 @@ export function PerformanceRegisterPage() {
   return (
     <Stack component="form" ref={formRef} spacing={2} onSubmit={handleSubmit}>
       <Typography variant="h5">공연 등록</Typography>
+
+      {writeRejected && (
+        // 키가 틀린 상태에서는 다시 시도해도 같은 결과라 재시도 버튼을 두지 않는다.
+        <Alert severity="error" data-testid="write-rejected">
+          {WRITE_REJECTED_MESSAGE}
+        </Alert>
+      )}
 
       {formError && (
         <Alert

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-015
 title: "배포용 프론트 준비 — API 주소·쓰기 키 환경변수화"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 track: light
 created_at: 2026-10-15
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-015-frontend-deploy-env"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-015.json"
 ---
@@ -25,7 +25,7 @@ TASK-015 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 4h �
 
 ## 다음 한 걸음
 
-Phase 2b 승인 완료(CP-2.5). `wf-develop` 으로 Phase 3 구현. Green 후 변이 확인: 401 이면 무조건 거부 문구 → SC-09·SC-12 가 깨져야 한다. (아래는 시작 시점 메모)
+Phase 3 완료(CP-3.4). `wf-verify` 로 Phase 4 검증. Frontend 라 화면 확인(Step 2.5) 필수. (아래는 시작 시점 메모)
 
 `wf-plan` 스킬로 Phase 1 설계를 한다. 출발점은 `frontend/src/api/performances.ts`
 (fetch 호출 5곳, 공통 http 모듈 없음), `frontend/vite.config.ts` 의 dev 프록시,

@@ -1,3 +1,5 @@
+import { request } from './http'
+
 export type PerformanceStatus = 'UPCOMING' | 'OPEN' | 'SOLD_OUT' | 'CLOSED' | 'CANCELLED'
 
 export interface SectionSummary {
@@ -62,8 +64,16 @@ export class ApiError extends Error {
   }
 }
 
+export const WRITE_KEY_INVALID = 'WRITE_KEY_INVALID'
+export const WRITE_REJECTED_MESSAGE = '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요'
+
+// 상태(401)가 아니라 서버가 준 코드로 판별한다 — 향후 인증의 401 과 섞이지 않게.
+export function isWriteKeyRejected(error: unknown): boolean {
+  return error instanceof ApiError && error.code === WRITE_KEY_INVALID
+}
+
 export async function getPerformances(): Promise<PerformanceListResponse> {
-  const response = await fetch('/api/performances')
+  const response = await request('/api/performances')
   if (!response.ok) {
     throw new Error(`공연 목록 조회 실패: ${response.status}`)
   }
@@ -71,7 +81,7 @@ export async function getPerformances(): Promise<PerformanceListResponse> {
 }
 
 export async function getPerformance(id: string): Promise<Performance> {
-  const response = await fetch(`/api/performances/${id}`)
+  const response = await request(`/api/performances/${id}`)
   if (response.status === 404) {
     throw new PerformanceNotFoundError(`공연을 찾을 수 없습니다: ${id}`)
   }
@@ -92,7 +102,7 @@ async function throwIfApiError(response: Response): Promise<never> {
 export async function registerPerformance(
   input: RegisterPerformanceInput,
 ): Promise<Performance> {
-  const response = await fetch('/api/performances', {
+  const response = await request('/api/performances', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -107,7 +117,7 @@ export async function updatePerformance(
   id: string,
   input: UpdatePerformanceInput,
 ): Promise<Performance> {
-  const response = await fetch(`/api/performances/${id}`, {
+  const response = await request(`/api/performances/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -119,7 +129,7 @@ export async function updatePerformance(
 }
 
 export async function cancelPerformance(id: string): Promise<Performance> {
-  const response = await fetch(`/api/performances/${id}/cancel`, { method: 'POST' })
+  const response = await request(`/api/performances/${id}/cancel`, { method: 'POST' })
   if (!response.ok) {
     await throwIfApiError(response)
   }
