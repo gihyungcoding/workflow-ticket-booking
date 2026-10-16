@@ -125,6 +125,7 @@
     "purity_check": "skeleton 호출로 인한 실패 2건(SC-04, SC-05) 모두 'not implemented'. 나머지 5건은 skeleton 을 호출하지 않는 미구현 단언 실패"
   },
   "human_review": {
-    "approved": false
+    "approved": true,
+    "decision": "APPROVE"
   }
 }
