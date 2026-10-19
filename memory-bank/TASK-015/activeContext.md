@@ -6,12 +6,17 @@ phase_name: "Phase 5 - Reflect"
 status: DONE
 track: light
 created_at: 2026-10-15
-last_updated: 2026-10-15
+last_updated: 2026-10-19
 
 primary_category: Frontend
 sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-015-frontend-deploy-env"
+pull_request:
+  number: 12
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/12"
+  base: develop
+  opened_at: 2026-10-19
 
 last_checkpoint: "CP-5.2"
 artifacts:
