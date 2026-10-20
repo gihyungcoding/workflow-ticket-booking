@@ -10,7 +10,14 @@ import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { ApiError, cancelPerformance, getPerformance, updatePerformance } from '../api/performances'
+import {
+  ApiError,
+  WRITE_REJECTED_MESSAGE,
+  cancelPerformance,
+  getPerformance,
+  isWriteKeyRejected,
+  updatePerformance,
+} from '../api/performances'
 import type { Performance } from '../api/performances'
 import { StatusBadge } from '../components/StatusBadge'
 import { fromDatetimeLocalInput, toDatetimeLocalInput } from '../utils/datetime'
@@ -62,7 +69,9 @@ export function PerformanceEditPage() {
       // 응답으로 통째로 교체하면 화면에서 좌석 구성 요약이 사라지므로 기존 값을 보존한다.
       setPerformance((prev) => (prev ? { ...updated, sections: prev.sections } : updated))
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'REGISTRATION_ALREADY_OPEN') {
+      if (isWriteKeyRejected(error)) {
+        setSaveError(WRITE_REJECTED_MESSAGE)
+      } else if (error instanceof ApiError && error.code === 'REGISTRATION_ALREADY_OPEN') {
         setSaveError('이미 오픈된 공연은 기본 정보를 수정할 수 없습니다')
       } else {
         setSaveError('저장하지 못했습니다. 다시 시도해 주세요')
@@ -83,9 +92,11 @@ export function PerformanceEditPage() {
       setPerformance((prev) => (prev ? { ...updated, sections: prev.sections } : updated))
       setSaveError(null)
       setCancelDialogOpen(false)
-    } catch {
+    } catch (error) {
       setCancelDialogOpen(false)
-      setSaveError('취소하지 못했습니다. 다시 시도해 주세요')
+      setSaveError(
+        isWriteKeyRejected(error) ? WRITE_REJECTED_MESSAGE : '취소하지 못했습니다. 다시 시도해 주세요',
+      )
     }
   }
 

@@ -1,0 +1,131 @@
+{
+  "task_id": "TASK-015",
+  "supersedes": "SCENARIO_TASK-015.json",
+  "test_files": [
+    "frontend/src/api/http.test.ts",
+    "frontend/src/deploy.test.ts",
+    "frontend/src/pages/WriteKeyRejected.test.tsx"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_sc01_주소가_설정되면_모든_호출이_그_주소를_앞에_붙여_나간다",
+      "status": "red",
+      "failure": "AssertionError: expected [ '/api/performances', …(4) ] to deeply equal [ 'https://api.example.com/api/performances', …(4) ]",
+      "file": "frontend/src/api/http.test.ts"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_sc02_주소_설정이_없으면_기존처럼_상대_경로로_나간다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "이 태스크가 바꾸지 않는 기존 동작(상대 경로·메서드·헤더·본문) — 구현 전에도 참, 구조적으로 Red 불가. Phase 3 에서 request() 로 교체한 뒤에도 통과해야 하는 회귀 가드",
+      "file": "frontend/src/api/http.test.ts"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_sc03_주소_끝에_슬래시가_있어도_이중_슬래시가_생기지_않는다",
+      "status": "red",
+      "failure": "AssertionError: expected '/api/performances' to be 'https://api.example.com/api/performances'",
+      "file": "frontend/src/api/http.test.ts"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "test_sc04_쓰기_키가_있으면_쓰기_요청에만_X-Write-Key_가_붙는다",
+      "status": "red",
+      "failure": "Error: not implemented (http.request 스켈레톤)",
+      "file": "frontend/src/api/http.test.ts"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "test_sc05_쓰기_키가_없으면_헤더를_아예_보내지_않는다",
+      "status": "red",
+      "failure": "Error: not implemented (http.request 스켈레톤)",
+      "file": "frontend/src/api/http.test.ts"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "test_sc06_등록이_쓰기_거부되면_구분된_안내가_보인다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: 쓰기 권한 확인에 실패했습니다… 를 찾을 수 없음",
+      "file": "frontend/src/pages/WriteKeyRejected.test.tsx"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "test_sc07_수정_저장이_쓰기_거부되면_구분된_안내가_보인다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: 쓰기 권한 확인에 실패했습니다… 를 찾을 수 없음",
+      "file": "frontend/src/pages/WriteKeyRejected.test.tsx"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "test_sc08_취소가_쓰기_거부되면_구분된_안내가_보인다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: 쓰기 권한 확인에 실패했습니다… 를 찾을 수 없음",
+      "file": "frontend/src/pages/WriteKeyRejected.test.tsx"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "test_sc09_401_이_아닌_일반_실패는_기존_문구를_유지한다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "부정형 회귀 — 현재 코드는 모든 실패에 기존 문구를 쓰므로 구현 전에도 참. Phase 3 에서 '401 이면 무조건 거부 문구' 변이를 넣어 이 테스트가 깨지는지 확인한다",
+      "file": "frontend/src/pages/WriteKeyRejected.test.tsx"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "test_sc10_빌드_입력에_index_html_이_있고_404_html_은_없다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "이미 참인 환경 조건. 변이 확인: public/404.html 을 만들면 실패(Phase 2b 에서 실행·원복)",
+      "file": "frontend/src/deploy.test.ts"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "test_sc11_소스에_배포_주소가_하드코딩돼_있지_않다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "이미 참인 환경 조건. 변이 확인: src 에 onrender 주소를 넣으면 실패(Phase 2b 에서 실행·원복)",
+      "file": "frontend/src/deploy.test.ts"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "test_sc12_401_이어도_쓰기_가드_코드가_아니면_일반_오류로_처리한다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "부정형 회귀 — 현재는 거부 문구 자체가 없어 참. Phase 3 에서 '401 이면 무조건 거부 문구' 변이를 넣어 이 테스트가 깨지는지 확인한다(핵심 판별 로직의 안전망)",
+      "file": "frontend/src/pages/WriteKeyRejected.test.tsx"
+    }
+  ],
+  "red_result": {
+    "command": "cd frontend && npm test",
+    "total": 12,
+    "failed": 7,
+    "passed": 5,
+    "total_suite": 43,
+    "suite_failed": 7,
+    "existing_tests_still_passing": true,
+    "existing_tests_passed": 31,
+    "note": "새 테스트 12건 중 7건 red, 5건 already_passing. 기존 31건 통과 유지. 실패 사유: URL 접두 미구현 3건(SC-01/03), 스켈레톤 not implemented 2건(SC-04/05), 안내 문구 미구현 3건 — 합계 7"
+  },
+  "inventory_check": {
+    "scenarios": 12,
+    "test_functions": 12,
+    "match": true
+  },
+  "testing_preferences": {
+    "framework": "vitest + @testing-library/react (jsdom)",
+    "mock_strategy": "http/화면: globalThis.fetch 만 stub(상태·본문→ApiError 변환까지 실제 코드 통과) + vi.stubEnv. 배포 조건: import.meta.glob ?raw (앱 tsconfig 에 node 타입 없음)"
+  },
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/api/http.ts"
+    ],
+    "contents": "apiUrl·request 시그니처, 본문은 throw new Error('not implemented') 한 줄",
+    "purity_check": "skeleton 호출로 인한 실패 2건(SC-04, SC-05) 모두 'not implemented'. 나머지 5건은 skeleton 을 호출하지 않는 미구현 단언 실패"
+  },
+  "human_review": {
+    "approved": true,
+    "decision": "APPROVE"
+  }
+}

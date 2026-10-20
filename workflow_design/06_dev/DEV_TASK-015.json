@@ -1,0 +1,88 @@
+{
+  "task_id": "TASK-015",
+  "changed_files": [
+    {
+      "path": "frontend/src/api/http.ts",
+      "change": "apiUrl(base 트림·끝 슬래시 제거)·request(쓰기 메서드+키 있을 때만 X-Write-Key) 구현",
+      "lines_changed": 21
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "change": "fetch 5곳을 request 로 교체, WRITE_KEY_INVALID·WRITE_REJECTED_MESSAGE·isWriteKeyRejected 추가",
+      "lines_changed": 20
+    },
+    {
+      "path": "frontend/src/pages/PerformanceRegisterPage.tsx",
+      "change": "쓰기 거부 시 재시도 버튼 없는 Alert",
+      "lines_changed": 15
+    },
+    {
+      "path": "frontend/src/pages/PerformanceEditPage.tsx",
+      "change": "저장·취소 catch 에서 쓰기 거부 안내 분기",
+      "lines_changed": 19
+    },
+    {
+      "path": "frontend/src/vite-env.d.ts",
+      "change": "ImportMetaEnv 에 VITE_API_BASE_URL·VITE_WRITE_KEY 선언 (신규)",
+      "lines_changed": 9
+    },
+    {
+      "path": "frontend/.env.example",
+      "change": "두 변수 빈 예시와 설명 (신규)",
+      "lines_changed": 7
+    }
+  ],
+  "reused": [
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "ApiError / throwIfApiError"
+    },
+    {
+      "path": "frontend/src/pages/PerformanceEditPage.tsx",
+      "symbol": "saveError Alert"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && npm test",
+    "total": 43,
+    "passed": 43,
+    "failed": 0,
+    "target_tests_passed": 12
+  },
+  "lint": {
+    "command": "cd frontend && npm run lint",
+    "errors": 0,
+    "warnings": 3,
+    "note": "기존 set-state-in-effect 경고 3건, 변경 파일의 신규 경고 없음"
+  },
+  "build": {
+    "command": "cd frontend && npm run build (tsc -b 포함)",
+    "exit_code": 0,
+    "dist_index_html": true,
+    "dist_404_html": false
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --id DEPLOY-001",
+    "violations": 0,
+    "files_scanned": 25
+  },
+  "mutation_checks": [
+    {
+      "mutation": "isWriteKeyRejected 를 'instanceof ApiError' 로 (코드 무시)",
+      "killed_by": [
+        "SC-12"
+      ]
+    },
+    {
+      "mutation": "isWriteKeyRejected 를 'instanceof Error' 로 (아무 오류나)",
+      "killed_by": [
+        "SC-09",
+        "SC-12"
+      ]
+    }
+  ],
+  "refactoring": [],
+  "refactoring_note": "하지 않음 — 변경이 작고 http.ts 한 곳에 모였다. 화면의 쓰기 거부 분기는 등록(전용 Alert, 재시도 버튼 없음)과 수정(기존 saveError 재사용)의 표시 방식이 달라 공통화하지 않았다",
+  "scope_deviations": []
+}
