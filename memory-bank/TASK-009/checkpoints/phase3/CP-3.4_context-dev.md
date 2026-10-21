@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-21T00:00:00Z
 summary: "[4차 재수정] LoginRequest.password 에 NoLoneSurrogate @Pattern 한 줄 추가 — SC-23 Red 2행 Green, 전체 112/112, spotlessCheck 통과. 리팩토링 없음(name 정규식은 정책이 달라 유지). [이전 요약] [3차 재수정] SC-21 Green — email·password·로그인 email 에 짝 없는 서로게이트 거부(@Pattern, NoLoneSurrogate 상수). 전체 111/111, spotlessCheck·아키텍처 통과. [이전] [2차 재진입] 수정 Green — 전체 109/109(SC-20 포함), 변이 3건 사망, spotlessCheck·아키텍처 error 0. name 의 제어 문자·서로게이트 거부(@Pattern), catch 를 UNIQUE(SQLState 23505)로 한정. 테스트 결함 하나 수정(서로게이트 행의 입력이 UTF-8 인코딩에서 '?' 로 바뀌어 서버에 닿지 않음). [이전 재진입 요약] 수정 Green — 전체 108/108(테스트 19 + 기존 89), spotlessCheck·아키텍처 error 0. SC-13 정각·SC-17·SC-18 Red → Green, 변이 3건 사망(exp 없는 토큰 허용 변이는 시나리오가 없어 생존 — 알려진 갭)."
 

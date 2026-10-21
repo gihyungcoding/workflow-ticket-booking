@@ -2,8 +2,8 @@
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
 phase: "5"
-phase_name: "Phase 5 - Reflect (Phase 4 HITL#3 APPROVE, WARN)"
-status: ACTIVE
+phase_name: "Phase 5 - Reflect 완료"
+status: DONE
 track: standard
 created_at: 2026-10-21
 last_updated: 2026-10-22

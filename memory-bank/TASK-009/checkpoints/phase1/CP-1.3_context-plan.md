@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-21T00:00:00Z
 summary: "PLAN_TASK-009.json 작성 완료 — route Backend, flows 9건이 AC 8건을 전부 덮음(F9 는 입력 경계). EXIT GATE 통과."
 
