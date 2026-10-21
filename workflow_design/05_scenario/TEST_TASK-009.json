@@ -1,6 +1,6 @@
 {
   "task_id": "TASK-009",
-  "supersedes": "SCENARIO_TASK-009.json (Phase 4 3차 FAIL 롤백으로 재작성 — 22건)",
+  "supersedes": "SCENARIO_TASK-009.json (Phase 4 4차 FAIL 롤백으로 재작성 — 23건)",
   "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
   "test_files": [
     "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
@@ -169,7 +169,7 @@
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
       "status": "red",
       "failure": "7건: email 짝 없는 상위·하위 서로게이트 가입이 400 이 아니라 201 (+행 생성), password 짝 없는 서로게이트 가입 201, 로그인 email 서로게이트 200. 통과 행: email U+0085·한글 로컬 파트 201, password NUL 201 및 로그인 200",
-      "note": "Phase 4 3차 FAIL 의 재현된 결함(이메일 서로게이트)과 같은 부류. H2 기준 Red — H2 는 서로게이트를 그대로 저장하므로 PostgreSQL 의 '?' 치환 자체는 Phase 4 에서 확인한다. 값은 JSON 리터럴로 직접 전송(서로게이트가 UTF-8 인코딩에서 '?' 로 바뀌지 않게)"
+      "note": "Phase 4 3차 FAIL 의 재현된 결함(이메일 서로게이트)과 같은 부류. H2 기준 Red — H2 는 서로게이트를 그대로 저장하므로 PostgreSQL 의 '?' 치환 자체는 Phase 4 에서 확인한다. 값은 JSON 리터럴로 직접 전송(서로게이트가 UTF-8 인코딩에서 '?' 로 바뀌지 않게) / 4차 보강: passwordConfirm 서로게이트 행 2건 추가 — 이미 통과(AuthService 의 password.equals 불일치 → 400). 변이(확인값 비교를 UTF-8 왕복 후 비교로 변경) 시 '물음표 password + 서로게이트 confirm' 행이 실패해 사망, '정상 password + 서로게이트 confirm' 행은 어떤 비교 방식이든 불일치라 생존(보호 가치 낮음 — 시나리오 표의 독립 행으로 유지)"
     },
     {
       "scenario_id": "SC-22",
@@ -179,41 +179,43 @@
       "failure": null,
       "note": "2차 Green 에서 isUniqueViolation 로 이미 구현됨 — 그 구현에 테스트가 없다는 것이 Phase 4 3차 리뷰의 공백 지적. 변이 검증으로 가짜 통과가 아님을 확인",
       "test_level": "서비스 단위 테스트(Mockito 저장소·인코더, SQLException 의 SQLState 지정)"
+    },
+    {
+      "scenario_id": "SC-23",
+      "test_function": "test_sc23_로그인_입력의_짝_없는_서로게이트와_NUL은_저장된_계정과_매칭되지_않는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "비밀번호 짝 없는 상위·하위 서로게이트 2행: 400 이어야 하는데 200 + accessToken 발급(abcdefg?h1 로 가입한 계정에 서로게이트 비밀번호로 로그인 — Phase 4 4차에서 HTTP 로 재현된 결함과 동일). 나머지 6행(email 서로게이트·NUL 400, 실제 물음표 비밀번호·이메일 200, NUL 뒤 추가값 401)은 이미 통과",
+      "note": "행 단위 SoftAssertions 라 이미 통과하는 행도 지켜진다. 변이: LoginRequest.email 의 NoLoneSurrogate @Pattern 제거 → email 서로게이트 상·하 2행 사망(NUL 행은 @Email 이 거부해 생존 — 의도된 이중 방어, 실제 보호 대상은 @Email). 값은 JSON 리터럴로 직접 전송."
     }
   ],
   "red_result": {
     "command": "cd backend && ./gradlew test",
-    "total": 111,
+    "total": 112,
     "failed": 1,
-    "passed": 110,
+    "passed": 111,
     "new_or_changed": {
       "scenarios": [
-        "SC-12(행)",
-        "SC-18(행)",
-        "SC-20(행)",
-        "SC-21",
-        "SC-22"
+        "SC-21(passwordConfirm 행 2건)",
+        "SC-23"
       ],
       "failed": [
-        "SC-21"
+        "SC-23(비밀번호 서로게이트 2행)"
       ],
       "already_passing": [
-        "SC-12 sub 행",
-        "SC-18 공백 행",
-        "SC-20 경계 행 5개",
-        "SC-22"
+        "SC-21 passwordConfirm 행 2건",
+        "SC-23 의 email·실제 물음표·NUL 행"
       ]
     },
     "existing_tests_still_passing": true,
-    "note": "구현이 이미 있는 Red 재작성(3차) — SC-21 의 7행이 현재 구현에서 실제로 실패(리뷰어·verifier 가 재현한 결함과 일치). 이전 109건은 계속 통과"
+    "note": "구현이 이미 있는 Red 재작성(4차) — SC-23 의 비밀번호 서로게이트 2행이 현재 구현에서 실제로 실패(200). 이전 111건 중 110건 계속 통과(SC-21 은 이번에 행만 추가돼 여전히 통과)"
   },
   "inventory_check": {
-    "scenarios": 22,
-    "test_functions": 22,
+    "scenarios": 23,
+    "test_functions": 23,
     "match": true,
     "id_match": true,
-    "command": "grep -rhoE 'void test_sc[0-9]+' (AuthApiTest·AuthRegressionApiTest·PerformanceErrorResponseRegressionTest·WriteGuardAuthApiTest·JwtSecretConfigTest·AuthServiceSignUpFailureTest) | sort -u | wc -l  /  jq '.scenarios|length'",
-    "note": "CorsFilterTest·WriteGuardFilterTest·PerformanceRegistrationApiTest 의 test_sc23·24 는 다른 태스크 시나리오라 제외"
+    "command": "grep -rhoE 'void test_sc[0-9]+' (AuthApiTest·AuthRegressionApiTest·PerformanceErrorResponseRegressionTest·WriteGuardAuthApiTest·JwtSecretConfigTest·AuthServiceSignUpFailureTest) | sort -u | wc -l / jq '.scenarios|length'"
   },
   "testing_preferences": {
     "framework": "JUnit 5 + @SpringBootTest + @AutoConfigureMockMvc, H2(PostgreSQL 모드)",
@@ -231,7 +233,8 @@
     ],
     "contents": "enum 상수, 엔티티 필드와 구조 애노테이션(@Entity/@Id/@GeneratedValue/@Column(name=)/@Enumerated), 접근자 6개와 fromEnv 의 본문은 전부 UnsupportedOperationException 한 줄. UserRepository 는 커스텀 쿼리 메서드 없이 extends JpaRepository 뿐. 제약 애노테이션(@Column nullable·length·unique)은 넣지 않았다 — Phase 3",
     "purity_check": "신규 실패 15건의 원인: 엔드포인트 404 14건(구현·컨트롤러 없음) + fromEnv UnsupportedOperationException(JwtSecretConfigTest 의 11개 단언 실패, 예외 11건). HTTP 경계 테스트는 Spring 이 404 로 렌더링하므로 예외 타입이 아니라 상태 불일치로 실패한다 — 로직이 새어 들어와 우연히 통과한 테스트 없음",
-    "why_no_starter_security": "spring-boot-starter-security 를 넣으면 자동 구성이 전 엔드포인트를 막아 기존 공연 API 테스트 89건이 Red 단계에서 깨진다. 컴파일에 필요한 BCrypt(crypto)와 Nimbus(oauth2-jose)만 추가했고 Security 설정은 Phase 3 에서 starter 와 함께 도입한다. 두 라이브러리가 Spring Boot 4.1.1 BOM 에서 버전 없이 해석되고 컴파일됨을 확인했다"
+    "why_no_starter_security": "spring-boot-starter-security 를 넣으면 자동 구성이 전 엔드포인트를 막아 기존 공연 API 테스트 89건이 Red 단계에서 깨진다. 컴파일에 필요한 BCrypt(crypto)와 Nimbus(oauth2-jose)만 추가했고 Security 설정은 Phase 3 에서 starter 와 함께 도입한다. 두 라이브러리가 Spring Boot 4.1.1 BOM 에서 버전 없이 해석되고 컴파일됨을 확인했다",
+    "round4": "스켈레톤 추가 없음 — 테스트 파일(AuthApiTest)만 변경"
   },
   "risks_for_green": [
     "SC-04 의 role 숫자 1: Jackson 기본 설정이 enum 서수를 허용하면 ORGANIZER 로 파싱돼 201 이 된다 — 400 이어야 하므로 Green 에서 FAIL_ON_NUMBERS_FOR_ENUMS 설정 여부를 확인한다",
@@ -241,7 +244,7 @@
     "테스트 DB 가 H2 이고 Flyway 가 꺼져 있어 V3 SQL 은 테스트에서 실행되지 않는다 — Phase 4 에서 postgres 로 확인"
   ],
   "human_review": {
-    "approved": true
+    "approved": false
   },
   "red_retry": {
     "reason": "Phase 4 FAIL — 공연 API 프레임워크 오류 응답 회귀, 이메일 정규화 후 길이 오보 (RETRY_SCENARIO 1/3 → 시나리오 SC-17·18·19 추가, SC-08·09·13 행 추가 → 테스트 재작성)",
@@ -312,6 +315,29 @@
         "all_killed": true
       },
       "known_gap": "H2 가 서로게이트를 그대로 저장해 PostgreSQL 의 '?' 치환 자체는 테스트가 못 본다 — 입력을 400 으로 막는 것으로 지킨다. SC-21 의 password NUL·U+0085·한글 로컬 파트 행과 SC-22 는 이미 통과하는 허용·분류 행"
+    },
+    "round4": {
+      "reason": "Phase 4 4차 FAIL — 로그인 비밀번호 짝 없는 서로게이트가 '?' 로 치환돼 저장된 '?' 비밀번호와 BCrypt 매칭(200) (RETRY_SCENARIO → SC-23 추가, SC-21 passwordConfirm 행 추가)",
+      "mutation_check": {
+        "method": "구현을 일시 변경해 이미 통과하는 행이 실제로 지켜지는지 확인 후 git checkout 으로 원복(운영 코드 작업 트리 깨끗함 확인)",
+        "results": [
+          {
+            "mutation": "LoginRequest.email 의 NoLoneSurrogate @Pattern 제거",
+            "killed_by": "SC-23 email 서로게이트 상·하 행, SC-21 로그인 email 행",
+            "survived": false
+          },
+          {
+            "mutation": "AuthService.signUp 의 확인값 비교를 UTF-8 왕복 후 비교로 변경",
+            "killed_by": "SC-21 passwordConfirm(password 는 물음표) 행",
+            "survived": false
+          }
+        ],
+        "survivors": [
+          "SC-21 passwordConfirm(정상 password) 행 — 값이 어떻게 비교돼도 불일치라 구조적으로 생존",
+          "SC-23 email NUL 행 — @Email 이 거부(이중 방어)"
+        ],
+        "all_killed": false
+      }
     }
   }
 }

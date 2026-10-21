@@ -827,6 +827,7 @@ class AuthApiTest {
         String path,
         String emailLiteral,
         String passwordLiteral,
+        String confirmLiteral,
         int expected,
         String expectedEmail) {}
     List<Row> rows =
@@ -836,6 +837,7 @@ class AuthApiTest {
                 "/api/auth/signup",
                 "a\\ud800b@example.com",
                 "password123",
+                null,
                 400,
                 null),
             new Row(
@@ -843,6 +845,7 @@ class AuthApiTest {
                 "/api/auth/signup",
                 "a\\udc00b@example.com",
                 "password123",
+                null,
                 400,
                 null),
             new Row(
@@ -850,6 +853,7 @@ class AuthApiTest {
                 "/api/auth/signup",
                 "a\\u0085b@example.com",
                 "password123",
+                null,
                 201,
                 "a\u0085b@example.com"),
             new Row(
@@ -857,6 +861,7 @@ class AuthApiTest {
                 "/api/auth/signup",
                 "홍길동@example.com",
                 "password123",
+                null,
                 201,
                 "홍길동@example.com"),
             new Row(
@@ -864,6 +869,7 @@ class AuthApiTest {
                 "/api/auth/signup",
                 "pw-sur@example.com",
                 "pass\\ud800word1",
+                null,
                 400,
                 null),
             new Row(
@@ -871,6 +877,7 @@ class AuthApiTest {
                 "/api/auth/signup",
                 "pw-nul@example.com",
                 "pass\\u0000word1",
+                null,
                 201,
                 "pw-nul@example.com"),
             new Row(
@@ -878,6 +885,23 @@ class AuthApiTest {
                 "/api/auth/login",
                 "a\\ud800b@example.com",
                 "password123",
+                null,
+                400,
+                null),
+            new Row(
+                "passwordConfirm 만 짝 없는 서로게이트(password 는 정상)",
+                "/api/auth/signup",
+                "pc-sur@example.com",
+                "password123",
+                "passwor\\ud800123",
+                400,
+                null),
+            new Row(
+                "passwordConfirm 짝 없는 서로게이트(password 는 물음표)",
+                "/api/auth/signup",
+                "pc-q@example.com",
+                "pass?word1",
+                "pass\\ud800word1",
                 400,
                 null));
     SoftAssertions soft = new SoftAssertions();
@@ -889,7 +913,10 @@ class AuthApiTest {
           signUp
               ? """
                 {"email":"%s","password":"%s","passwordConfirm":"%s","name":"홍길동","role":"AUDIENCE"}"""
-                  .formatted(row.emailLiteral(), row.passwordLiteral(), row.passwordLiteral())
+                  .formatted(
+                      row.emailLiteral(),
+                      row.passwordLiteral(),
+                      row.confirmLiteral() != null ? row.confirmLiteral() : row.passwordLiteral())
               : """
                 {"email":"%s","password":"%s"}"""
                   .formatted(row.emailLiteral(), row.passwordLiteral());
@@ -929,6 +956,53 @@ class AuthApiTest {
             """
             {"email":"pw-nul@example.com","password":"pass\\u0000word1"}""");
     soft.assertThat(loggedIn.getResponse().getStatus()).as("password NUL 로그인").isEqualTo(200);
+    soft.assertAll();
+  }
+
+  // ---- SC-23 ----
+
+  @Test
+  void test_sc23_로그인_입력의_짝_없는_서로게이트와_NUL은_저장된_계정과_매칭되지_않는다() throws Exception {
+    // Given user@example.com 이 비밀번호 abcdefg?h1(물음표)로, a?b@example.com 이 password123 으로 가입돼 있다
+    givenSignedUp(EMAIL, "abcdefg?h1", NAME, "AUDIENCE");
+    givenSignedUp("a?b@example.com", PASSWORD, NAME, "AUDIENCE");
+    // 값은 JSON 문자열 리터럴로 직접 보낸다 — Java 문자열의 짝 없는 서로게이트는 UTF-8 로 인코딩될 때 '?' 로 바뀌어 서버에 닿지 못한다
+    record Row(String label, String emailLiteral, String passwordLiteral, int expected) {}
+    List<Row> rows =
+        List.of(
+            new Row("비밀번호 짝 없는 상위 서로게이트", "user@example.com", "abcdefg\\ud800h1", 400),
+            new Row("비밀번호 짝 없는 하위 서로게이트", "user@example.com", "abcdefg\\udc00h1", 400),
+            new Row("실제 물음표 비밀번호", "user@example.com", "abcdefg?h1", 200),
+            new Row("email 짝 없는 상위 서로게이트", "a\\ud800b@example.com", "password123", 400),
+            new Row("email 짝 없는 하위 서로게이트", "a\\udc00b@example.com", "password123", 400),
+            new Row("email NUL 문자", "a\\u0000b@example.com", "password123", 400),
+            new Row("실제 물음표 email", "a?b@example.com", "password123", 200),
+            new Row("비밀번호 중간 NUL 뒤 추가값", "a?b@example.com", "password123\\u0000x", 401));
+    SoftAssertions soft = new SoftAssertions();
+
+    for (Row row : rows) {
+      // When 각 행으로 POST /api/auth/login 을 호출한다
+      MvcResult result =
+          postJson(
+              mockMvc,
+              "/api/auth/login",
+              """
+              {"email":"%s","password":"%s"}"""
+                  .formatted(row.emailLiteral(), row.passwordLiteral()));
+      int status = result.getResponse().getStatus();
+      String body = result.getResponse().getContentAsString();
+
+      // Then 각 행의 상태가 기대와 같다
+      soft.assertThat(status).as(row.label() + " 상태").isEqualTo(row.expected());
+      if (row.expected() != 200) {
+        // And 400·401 행에서는 응답 본문에 accessToken 이 없다
+        soft.assertThat(body).as(row.label() + " accessToken 없음").doesNotContain("accessToken");
+      }
+      if (row.expected() == 400 && status == 400) {
+        // And 400 행에서는 code 가 INVALID_REQUEST 이고 500 이 아니다
+        soft.assertThat(code(result)).as(row.label() + " code").isEqualTo("INVALID_REQUEST");
+      }
+    }
     soft.assertAll();
   }
 }
