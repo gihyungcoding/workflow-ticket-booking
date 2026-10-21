@@ -120,8 +120,9 @@
       "section": "§2-1 입력 경계값 표",
       "change": "'문자열 입력 필드 전수' 행 추가 — 필드마다 길이·NUL·짝 없는 서로게이트·DB 저장/비교 변환을 같은 표에 묶고, 한 필드에서 결함이 나오면 같은 타입 전 필드를 한 시나리오로 덮게 한다. TASK-015 #0 과 같은 파일이므로 함께 반영한다",
       "evidence": "TASK-009 Phase 4 FAIL 4회, 변종 17건",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "644381d"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
