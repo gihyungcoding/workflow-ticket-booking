@@ -5,7 +5,9 @@ import com.example.ticket_booking.domain.User;
 import com.example.ticket_booking.domain.UserRole;
 import com.example.ticket_booking.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.Locale;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -55,8 +57,11 @@ public class AuthService {
               new User(normalizedEmail, passwordEncoder.encode(password), name, role));
       return toResponse(saved);
     } catch (DataIntegrityViolationException exception) {
-      // existsByEmail 확인과 INSERT 사이에 같은 이메일이 먼저 들어온 경우(UNIQUE 제약). 길이·NOT NULL 위반은 위에서 이미 걸러져 여기로
-      // 오지 않는다
+      // existsByEmail 확인과 INSERT 사이에 같은 이메일이 먼저 들어온 경우(UNIQUE 제약, SQLState 23505).
+      // 그 외 무결성 위반은 이메일 중복이 아니므로 409 로 오보하지 않고 그대로 던진다
+      if (!isUniqueViolation(exception)) {
+        throw exception;
+      }
       throw new EmailAlreadyExistsException();
     }
   }
@@ -84,6 +89,12 @@ public class AuthService {
         .findById(userId)
         .map(AuthService::toResponse)
         .orElseThrow(UnauthenticatedException::new);
+  }
+
+  /** 예외의 근본 원인이 UNIQUE 위반(SQLState 23505 — PostgreSQL·H2 공통)인지 본다. */
+  private static boolean isUniqueViolation(Throwable exception) {
+    return NestedExceptionUtils.getMostSpecificCause(exception) instanceof SQLException sql
+        && "23505".equals(sql.getSQLState());
   }
 
   private static String normalize(String email) {

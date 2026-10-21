@@ -762,24 +762,29 @@ class AuthApiTest {
   @Test
   void test_sc20_name에_제어_문자나_짝_없는_서로게이트가_있으면_400이다() throws Exception {
     // Given users 가 비어 있다
-    record Row(String label, String name, int expected) {}
+    // name 은 JSON 문자열 리터럴로 직접 보낸다 — Java 문자열의 짝 없는 서로게이트는 UTF-8 로 인코딩될 때 '?' 로 바뀌어 서버에 닿지 못한다
+    record Row(String label, String nameLiteral, int expected, String expectedName) {}
     List<Row> rows =
         List.of(
-            new Row("NUL 문자", "a\u0000b", 400),
-            new Row("탭", "a\tb", 400),
-            new Row("줄바꿈", "a\nb", 400),
-            new Row("DEL", "a\u007fb", 400),
-            new Row("짝 없는 서로게이트", "a\ud800b", 400),
-            new Row("한글과 이모지(짝이 맞는 서로게이트 쌍)", "홍길동😀", 201));
+            new Row("NUL 문자", "a\\u0000b", 400, null),
+            new Row("탭", "a\\tb", 400, null),
+            new Row("줄바꿈", "a\\nb", 400, null),
+            new Row("DEL", "a\\u007fb", 400, null),
+            new Row("짝 없는 서로게이트", "a\\ud800b", 400, null),
+            new Row("한글과 이모지(짝이 맞는 서로게이트 쌍)", "홍길동😀", 201, "홍길동😀"));
     SoftAssertions soft = new SoftAssertions();
     int index = 0;
 
     for (Row row : rows) {
       long before = userRepository.count();
-      String email = "name" + (index++) + "@example.com";
+      String body =
+          """
+          {"email":"name%d@example.com","password":"password123","passwordConfirm":"password123",\
+          "name":"%s","role":"AUDIENCE"}"""
+              .formatted(index++, row.nameLiteral());
 
       // When 각 name 으로 가입을 요청한다 (이메일은 행마다 새 이메일이다)
-      MvcResult result = signUp(mockMvc, email, PASSWORD, row.name(), "AUDIENCE");
+      MvcResult result = postJson(mockMvc, "/api/auth/signup", body);
 
       // Then 각 행의 상태가 기대와 같다
       soft.assertThat(result.getResponse().getStatus())
@@ -796,7 +801,7 @@ class AuthApiTest {
         // And 201 행에서는 응답의 name 이 요청한 값과 정확히 같다
         soft.assertThat(bodyAsMap(result).get("name"))
             .as(row.label() + " name")
-            .isEqualTo(row.name());
+            .isEqualTo(row.expectedName());
       }
     }
     soft.assertAll();
