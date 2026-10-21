@@ -2,7 +2,7 @@
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
 phase: "2a"
-phase_name: "Phase 2a - Scenario (Phase 4 FAIL 로 롤백, RETRY_SCENARIO 1/3)"
+phase_name: "Phase 2a - Scenario (HITL#1 재승인, RETRY_SCENARIO 1/3)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -30,10 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 4 가 FAIL(CP-4.2)이라 **Phase 2a 로 롤백**했다(RETRY_SCENARIO 1/3). 지목된 부분만 고친다:
-- SC-15 에 공연 API 의 프레임워크 오류 응답 행 추가 — develop 기준값: 타입 불일치 400, 미지원 메서드 405, text/plain 본문 415 (프로브 결과는 VERIFY 의 regression_probe)
-- SC-05(또는 SC-01/03)에 이메일 정규화 후 길이 행 추가 — 'İ' 처럼 소문자화로 길이가 늘어나는 입력이 409 로 오보되지 않고 400 이어야 한다
-- 시나리오 번호는 재사용하지 않는다. 독립검증 → HITL#1 → Phase 2b 테스트 수정(변이 검증) → Phase 3 → Phase 4 를 다시 거친다
+HITL#1 재승인 완료(시나리오 19건). `wf-red` 로 Phase 2b — **구현이 이미 있는 Red 재작성**이다. 테스트 수정: SC-08/09/13 행 추가, SC-17·18·19 신규. 새 행은 지금 구현에서 실제로 실패해야 하고(SC-17: 401, SC-18: 409, SC-13 정각: 200) 그것이 Red 의 증거다. SC-19 는 already_passing 예상. 만료 정각은 RFC 7519 기준(정각부터 만료) — Phase 3 에서 만료 검증을 직접 구현한다.
 
 ## 알아둬야 할 것
 

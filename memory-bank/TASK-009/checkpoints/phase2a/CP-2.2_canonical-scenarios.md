@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "[Phase 4 FAIL 롤백으로 재진입] 시나리오 19건(happy 4 / error 7 / boundary 5 / regression 3), AC 8/8. 이번 라운드: SC-17(프레임워크 오류 응답 회귀)·SC-18(정규화 후 이메일 길이)·SC-19(쓰기 가드 ON 회귀) 추가, SC-13 정각 경계 확정, SC-08/09 로그인 입력 경계 추가. 독립검증 3차 FAIL(V11) → 4차 PASS(경고 4). HITL#1 재승인 대기."
+summary: "[Phase 4 FAIL 롤백으로 재진입] 시나리오 19건(happy 4 / error 7 / boundary 5 / regression 3), AC 8/8. 이번 라운드: SC-17(프레임워크 오류 응답 회귀)·SC-18(정규화 후 이메일 길이)·SC-19(쓰기 가드 ON 회귀) 추가, SC-13 정각 경계 확정, SC-08/09 로그인 입력 경계 추가. 독립검증 3차 FAIL(V11) → 4차 PASS(경고 4). HITL#1 재승인됨(2026-10-21)."
 
 next_steps:
-  - "HITL#1 재승인 후 Phase 2b — 테스트 수정: SC-08/09/13 행 추가, SC-17·18·19 신규. 구현이 이미 있어 새 행은 지금 구현에서 실제 실패해야 한다(SC-17: 401, SC-18: 409, SC-13 정각: 200) — 그것이 Red 의 증거. SC-19 는 already_passing 예상"
+  - "Phase 2b — 테스트 수정: SC-08/09/13 행 추가, SC-17·18·19 신규. 구현이 이미 있어 새 행은 지금 구현에서 실제 실패해야 한다(SC-17: 401, SC-18: 409, SC-13 정각: 200) — 그것이 Red 의 증거. SC-19 는 already_passing 예상"
   - "(이전) Phase 2b — wf-red 로 Red 테스트 작성 (@SpringBootTest 통합 테스트, 컴파일용 스켈레톤은 UnsupportedOperationException 한 줄만)"
 
 decisions:
