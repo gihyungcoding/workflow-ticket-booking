@@ -105,6 +105,11 @@
       "path": "backend/src/main/java/com/example/ticket_booking/api/dto/LoginRequest.java",
       "change": "email 에 @Pattern(NoLoneSurrogate) 추가",
       "lines_changed": 9
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/LoginRequest.java",
+      "change": "password 에 NoLoneSurrogate @Pattern 추가(4차 롤백 수정)",
+      "lines_changed": 3
     }
   ],
   "reused": [
@@ -142,12 +147,12 @@
   "test_status": "green",
   "test_result": {
     "command": "cd backend && ./gradlew clean test spotlessCheck",
-    "total": 111,
-    "passed": 111,
+    "total": 112,
+    "passed": 112,
     "failed": 0,
     "skipped": 0,
-    "target_tests_passed": "SC-21 포함 신규·보강 22건 시나리오 전부",
-    "note": "SC-21 의 7개 실패 행이 모두 통과. 기존 109건 계속 통과"
+    "target_tests_passed": "SC-23 포함 시나리오 23건 전부",
+    "note": "SC-23 비밀번호 서로게이트 2행이 400 으로 통과. 기존 111건 계속 통과"
   },
   "lint": {
     "command": "cd backend && ./gradlew spotlessCheck",
@@ -329,6 +334,20 @@
         "UNIQUE 한정 catch — AuthServiceSignUpFailureTest.test_sc22"
       ],
       "note": "3차는 코드 변경이 DTO 검증 한 곳. name 은 제어 문자 정책이 있어 별도 @Pattern 유지, email·password·로그인 email 은 서로게이트만 거부(C1 U+0085·한글은 허용 — SC-21)"
+    },
+    {
+      "round": 4,
+      "root_cause": "RC-1 입력 검증이 'DB 가 무손실로 저장하지 못하거나 비교 단계에서 치환되는 문자열'을 막지 않음",
+      "variants": [
+        "로그인 password 짝 없는 서로게이트가 '?' 로 치환돼 저장된 '?' 비밀번호와 BCrypt 매칭(200)",
+        "passwordConfirm 서로게이트(이미 통과)",
+        "로그인 email NUL·서로게이트(이미 통과)"
+      ],
+      "tests": [
+        "AuthApiTest.test_sc23_로그인_입력의_짝_없는_서로게이트와_NUL은_저장된_계정과_매칭되지_않는다",
+        "AuthApiTest.test_sc21_DB가_무손실로_저장하지_못하는_문자열은_모든_문자열_입력에서_400이다"
+      ],
+      "note": "코드 변경은 LoginRequest.password 한 곳. 모든 문자열 입력(가입 email·password·passwordConfirm·name, 로그인 email·password)이 이제 서로게이트 정책 아래에 있다. 리뷰어 제안(name 의 별도 정규식 중복)은 name 이 제어 문자까지 거부하는 다른 정책이라 유지"
     }
   ]
 }
