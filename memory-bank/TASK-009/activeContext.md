@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (Phase 4 3차 FAIL 롤백)"
+phase: "2b"
+phase_name: "Phase 2a 승인 완료 — Phase 2b 진입 대기"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-009-email-auth-security"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-009.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-009.md"
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 4 3차 FAIL(6c59d6d) → 시나리오로 롤백(Phase 2a, RETRY_SCENARIO 3/3 소진). 이메일 짝 없는 서로게이트(PG \'?\' 치환·409 충돌)와 isUniqueViolation 두 경로 테스트 공백을 시나리오에 추가하고, 문자열 입력 전체의 DB 무손실 저장 변종을 한 번에 덮는다. 다음 Phase 4 FAIL 이면 Phase 1 로 상승.
+Phase 2a 시나리오 22건 HITL#1 승인(2026-10-22). Phase 2b(wf-red) 에서 SC-21·22 신규와 SC-12·18·20 새 행의 Red 테스트를 쓴다 — SC-21 이메일 서로게이트·SC-12 sub 비숫자는 현재 구현에서 실패해야 하고, SC-22 는 서비스 단위 테스트(저장소 stub). Phase 4 재진입 시 RETRY_SCENARIO 3/3 소진이라 다음 FAIL 은 Phase 1 로 상승.
 
 ## 새 세션 메모
 
