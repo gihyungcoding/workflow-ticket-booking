@@ -133,14 +133,17 @@ flow: F4
 
 - **Given** `user@example.com` / `password123` 으로 가입돼 있다
 - **When** 아래 표의 각 행으로 로그인을 요청한다
-- **Then** 두 행 모두 401 이고 `code` 는 `INVALID_CREDENTIALS` 다
-- **And** 두 행의 응답 본문 전체(`code` 와 `message`)가 글자 단위로 같다
+- **Then** 모든 행이 401 이고 `code` 는 `INVALID_CREDENTIALS` 다 (500 이 아니다)
+- **And** 모든 행의 응답 본문 전체(`code` 와 `message`)가 글자 단위로 서로 같다
 - **And** 응답 본문에 `accessToken` 이 없다
 
 | email | password | 설명 |
 |---|---|---|
 | `user@example.com` | `wrong-password` | 틀린 비밀번호 |
 | `nobody@example.com` | `password123` | 존재하지 않는 이메일 |
+| `user@example.com` | ASCII 73자 | 72바이트를 넘는 비밀번호 — 가입 쪽은 400 으로 막지만 로그인은 같은 401 이다 |
+| `user@example.com` | 한글 25자 (75바이트) | 글자 수는 72 이하지만 바이트가 한도 초과 |
+| 총 256자의 이메일 (형식은 유효) | `password123` | 길이를 넘는 이메일은 없는 이메일과 같다 |
 
 covers: 틀린 비밀번호 또는 존재하지 않는 이메일로 로그인 시 401을 반환하며, 두 경우 응답 메시지가 동일하다
 flow: F5
@@ -156,7 +159,7 @@ flow: F5
 |---|---|
 | `email` | 누락 / `null` / `""` / `"   "` |
 | `email` 형식 | `plainaddress` |
-| `password` | 누락 / `null` / `""` |
+| `password` | 누락 / `null` / `""` / `"   "` (공백만) |
 | 본문 | 본문 없음 / 깨진 JSON |
 
 covers: 틀린 비밀번호 또는 존재하지 않는 이메일로 로그인 시 401을 반환하며, 두 경우 응답 메시지가 동일하다
@@ -183,7 +186,7 @@ flow: F6
 - **Given** 가입된 사용자가 있다
 - **When** 아래 표의 각 요청을 보낸다
 - **Then** 모든 행이 401 이고 `code` 는 `UNAUTHORIZED` 다
-- **And** 응답은 `Content-Type: application/json` 이고 본문은 `{code, message}` 형태이며 사용자 정보가 없다
+- **And** 응답은 `Content-Type: application/json` 이고 본문의 키는 `code`, `message` 두 개뿐이며 사용자 이메일이 없다
 
 | 요청 | 설명 |
 |---|---|
@@ -226,9 +229,10 @@ flow: F7
 | 현재 시각 | 기대 |
 |---|---|
 | T + 24시간 − 1초 | 200 |
+| T + 24시간 (정각) | 401 |
 | T + 24시간 + 1초 | 401 |
 
-정확히 T + 24시간인 순간은 단정하지 않는다 — 같은 순간을 유효로 보는지는 JWT 라이브러리의 기본 비교에 달려 있고 요구사항에 정의가 없다. 경계 양쪽 1초로 "24시간 뒤에 만료" 만 확인한다.
+만료 시각과 같은 순간부터 만료로 본다 — 현재 시각이 만료 시각보다 **이전**일 때만 유효하다 (RFC 7519 §4.1.4).
 
 covers: 토큰 없이 또는 만료/위조된 토큰으로 GET /auth/me 호출 시 401을 반환한다
 flow: F7
@@ -291,11 +295,11 @@ flow: F10
 
 ## SC-17 (regression) 공연 API 의 프레임워크 오류 응답은 Security 도입 뒤에도 그대로다
 
-Phase 4 에서 develop 과 이 브랜치를 같은 요청으로 비교해 확인한 값이다 — 컨트롤러의 `@ExceptionHandler` 가 아니라 컨테이너(`sendError`)가 만드는 오류가 대상이다.
+Phase 4 에서 Security 도입 이전(develop)과 같은 요청으로 비교해 확인한 값이다 — 컨트롤러가 직접 만드는 오류 응답이 아니라 프레임워크가 요청을 해석하는 단계에서 만드는 오류가 대상이다.
 
 - **Given** 공연이 하나 등록돼 있다 (id 는 P)
 - **When** 아래 표의 각 요청을 `Authorization` 없이 보낸다
-- **Then** 모든 행의 상태가 "기대(develop 과 같다)" 와 같다 (인증을 요구하는 401 이 아니다)
+- **Then** 모든 행의 상태가 표의 "기대" 숫자와 같다 (Security 도입 이전과 같은 값이며, 인증을 요구하는 401 이 아니다)
 
 | 요청 | 기대 | 설명 |
 |---|---|---|
@@ -327,6 +331,28 @@ flow: F8
 | `İ` 1개 + ASCII 로컬 + `@` + 도메인 | 254 | 255 | 201 |
 | `İ` 1개 + ASCII 로컬 + `@` + 도메인 | 255 | 256 | 400 |
 
-covers: 올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다; 이미 존재하는 이메일로 가입 시도 시 409를 반환한다
+covers: 올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다
 flow: F9
+
+## SC-19 (regression) 쓰기 가드가 켜진 환경에서는 인증 API 의 쓰기도 기존 가드 규칙을 따른다
+
+ADR-0017 의 결정(쓰기 가드는 건드리지 않고 인증 API 도 면제하지 않는다)을 확인한다. 이 시나리오만 가드를 켜고(`WRITE_GUARD_ENABLED=true`, 키 `secret123`) 기동한다.
+
+- **Given** 쓰기 가드가 켜져 있고 키는 `secret123` 이다
+- **And** `user@example.com` 이 가입돼 있어 유효한 `accessToken` 이 있다
+- **When** 아래 표의 각 요청을 보낸다
+- **Then** 모든 행의 상태가 "기대" 와 같다
+- **And** 401 행의 `code` 는 `WRITE_KEY_INVALID` 이다 (`UNAUTHORIZED` 가 아니다)
+
+| 요청 | `X-Write-Key` | 기대 |
+|---|---|---|
+| `POST /api/auth/signup` (유효한 본문, 새 이메일) | 없음 | 401 |
+| `POST /api/auth/signup` (유효한 본문, 새 이메일) | `secret123` | 201 |
+| `POST /api/auth/login` (올바른 자격증명) | 없음 | 401 |
+| `POST /api/auth/login` (올바른 자격증명) | `secret123` | 200 |
+| `POST /api/performances` (유효한 본문) | 없음 | 401 |
+| `GET /api/auth/me` (`Authorization: Bearer <accessToken>`) | 없음 | 200 (조회는 키 없이 통과한다) |
+
+covers: 기존 /api/performances/** 엔드포인트가 Security 도입 이후에도 인증 없이 그대로 동작한다(회귀 없음)
+flow: F8
 

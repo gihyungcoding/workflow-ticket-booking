@@ -1,12 +1,19 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "시나리오 16건(happy 4 / error 7 / boundary 4 / regression 1), AC 8/8 매핑. 독립검증 1차 FAIL(V11 Authorization 경계) → 보완 → 2차 PASS(경고 4). HITL#1 승인됨(2026-10-21)."
+summary: "[Phase 4 FAIL 롤백으로 재진입] 시나리오 19건(happy 4 / error 7 / boundary 5 / regression 3), AC 8/8. 이번 라운드: SC-17(프레임워크 오류 응답 회귀)·SC-18(정규화 후 이메일 길이)·SC-19(쓰기 가드 ON 회귀) 추가, SC-13 정각 경계 확정, SC-08/09 로그인 입력 경계 추가. 독립검증 3차 FAIL(V11) → 4차 PASS(경고 4). HITL#1 재승인 대기."
 
 next_steps:
-  - "Phase 2b — wf-red 로 Red 테스트 작성 (@SpringBootTest 통합 테스트, 컴파일용 스켈레톤은 UnsupportedOperationException 한 줄만)"
+  - "HITL#1 재승인 후 Phase 2b — 테스트 수정: SC-08/09/13 행 추가, SC-17·18·19 신규. 구현이 이미 있어 새 행은 지금 구현에서 실제 실패해야 한다(SC-17: 401, SC-18: 409, SC-13 정각: 200) — 그것이 Red 의 증거. SC-19 는 already_passing 예상"
+  - "(이전) Phase 2b — wf-red 로 Red 테스트 작성 (@SpringBootTest 통합 테스트, 컴파일용 스켈레톤은 UnsupportedOperationException 한 줄만)"
 
 decisions:
+  - decision: "[롤백 재진입] 토큰 만료는 exp 와 같은 순간부터 만료(RFC 7519 §4.1.4)로 확정 — SC-13 정각 행 401"
+    rationale: "독립검증 V11 이 정각 경계를 요구했다. Spring 의 JwtTimestampValidator 는 정각을 유효로 보므로 Phase 3 에서 만료 검증을 직접 구현해야 한다"
+  - decision: "[롤백 재진입] SC-17(프레임워크 오류 응답)·SC-18(정규화 후 길이)·SC-19(쓰기 가드 ON)를 새 번호로 추가하고 SC-08/09 에 로그인 입력 경계 행을 넣었다"
+    rationale: "Phase 4 프로브로 확인된 결함(공연 오류 응답 400/405/415 → 401, 소문자화 길이 오보 409)과 검증자 V10 권고(가드 ON 회귀). 기존 번호는 재사용하지 않았다"
+  - decision: "검증자 4차 경고 중 SC-15 의 CORS 행 분리·SC-16 단언 방식 구체화는 보류"
+    rationale: "분리·구체화는 선호의 문제라 판단은 사람에게 넘긴다. SC-02 컬럼명은 AC3 의 'DB 조회' 표현에서 나온 것"
   - decision: "시나리오가 16건으로 복잡 기준선(8~12건)을 넘는다 — 표로 묶었음에도 줄이지 못함"
     rationale: "입력 경계(가입 3 + 로그인 1 + 헤더 + 환경변수)와 토큰 검증 4종(위조·typ·만료·사용자 없음)은 서로 다른 코드 경로라 합칠 수 없다. 같은 경로(필수·형식, 길이, 헤더 부재 변형)는 표의 행으로 묶고 각 행을 독립 단언한다. 12건 초과는 HITL#1 에서 사용자에게 알린다"
   - decision: "이메일은 trim + 소문자 정규화(SC-01/03/07)"
@@ -25,6 +32,9 @@ decisions:
     rationale: "Plan F8 의 DELETE 표기를 정정했다(컨트롤러 확인)"
 
 attempts:
+  - phase: "2a"
+    round: "재진입 1 (Phase 4 FAIL 롤백, RETRY_SCENARIO 1/3)"
+    result: "3차 FAIL(V11 만료 정각·로그인 입력 경계) → 4차 PASS(경고 4)"
   - phase: "2a"
     round: 1
     result: "FAIL"

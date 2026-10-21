@@ -169,11 +169,11 @@
       ],
       "when": [
         "아래 표의 각 행으로 로그인을 요청한다",
-        "표(email | password | 설명): `user@example.com` | `wrong-password` | 틀린 비밀번호 / `nobody@example.com` | `password123` | 존재하지 않는 이메일"
+        "표(email | password | 설명): `user@example.com` | `wrong-password` | 틀린 비밀번호 / `nobody@example.com` | `password123` | 존재하지 않는 이메일 / `user@example.com` | ASCII 73자 | 72바이트를 넘는 비밀번호 — 가입 쪽은 400 으로 막지만 로그인은 같은 401 이다 / `user@example.com` | 한글 25자 (75바이트) | 글자 수는 72 이하지만 바이트가 한도 초과 / 총 256자의 이메일 (형식은 유효) | `password123` | 길이를 넘는 이메일은 없는 이메일과 같다"
       ],
       "then": [
-        "두 행 모두 401 이고 `code` 는 `INVALID_CREDENTIALS` 다",
-        "두 행의 응답 본문 전체(`code` 와 `message`)가 글자 단위로 같다",
+        "모든 행이 401 이고 `code` 는 `INVALID_CREDENTIALS` 다 (500 이 아니다)",
+        "모든 행의 응답 본문 전체(`code` 와 `message`)가 글자 단위로 서로 같다",
         "응답 본문에 `accessToken` 이 없다"
       ],
       "covers": [
@@ -192,7 +192,7 @@
       ],
       "when": [
         "유효한 요청에서 아래 표의 항목 하나만 바꿔 로그인을 요청한다",
-        "표(항목 | 바꾼 값): `email` | 누락 / `null` / `\"\"` / `\"   \"` / `email` 형식 | `plainaddress` / `password` | 누락 / `null` / `\"\"` / 본문 | 본문 없음 / 깨진 JSON"
+        "표(항목 | 바꾼 값): `email` | 누락 / `null` / `\"\"` / `\"   \"` / `email` 형식 | `plainaddress` / `password` | 누락 / `null` / `\"\"` / `\"   \"` (공백만) / 본문 | 본문 없음 / 깨진 JSON"
       ],
       "then": [
         "모든 행이 400 이고 `code` 는 `INVALID_REQUEST` 다 (500 이 아니고 401 도 아니다)",
@@ -241,7 +241,7 @@
       ],
       "then": [
         "모든 행이 401 이고 `code` 는 `UNAUTHORIZED` 다",
-        "응답은 `Content-Type: application/json` 이고 본문은 `{code, message}` 형태이며 사용자 정보가 없다"
+        "응답은 `Content-Type: application/json` 이고 본문의 키는 `code`, `message` 두 개뿐이며 사용자 이메일이 없다"
       ],
       "covers": [
         "토큰 없이 또는 만료/위조된 토큰으로 GET /auth/me 호출 시 401을 반환한다"
@@ -282,7 +282,7 @@
       ],
       "when": [
         "`GET /api/auth/me` 를 호출한다",
-        "표(현재 시각 | 기대): T + 24시간 − 1초 | 200 / T + 24시간 + 1초 | 401"
+        "표(현재 시각 | 기대): T + 24시간 − 1초 | 200 / T + 24시간 (정각) | 401 / T + 24시간 + 1초 | 401"
       ],
       "then": [
         "각 행의 상태가 \"기대\" 와 같고, 401 행의 `code` 는 `UNAUTHORIZED` 다"
@@ -374,7 +374,7 @@
         "표(요청 | 기대 | 설명): `GET /api/performances/abc` | 400 | 경로 id 타입 불일치 / `GET /api/performances?page=abc` | 400 | 쿼리 파라미터 타입 불일치 / `GET /api/performances?status=NOPE` | 400 | 쿼리 enum 값 오류 / `DELETE /api/performances/{P}` | 405 | 지원하지 않는 메서드 / `PATCH /api/performances/{P}` | 405 | 지원하지 않는 메서드 / `POST /api/performances` (`Content-Type: text/plain`, 본문 `x`) | 415 | 지원하지 않는 미디어 타입 / `POST /api/performances/abc/cancel` | 400 | 경로 id 타입 불일치 / `GET /api/performances/99999` | 404 | 존재하지 않는 공연 (핸들러가 처리하던 기존 동작)"
       ],
       "then": [
-        "모든 행의 상태가 \"기대(develop 과 같다)\" 와 같다 (인증을 요구하는 401 이 아니다)"
+        "모든 행의 상태가 표의 \"기대\" 숫자와 같다 (Security 도입 이전과 같은 값이며, 인증을 요구하는 401 이 아니다)"
       ],
       "covers": [
         "기존 /api/performances/** 엔드포인트가 Security 도입 이후에도 인증 없이 그대로 동작한다(회귀 없음)"
@@ -400,11 +400,33 @@
         "400 행에서는 `users` 에 행이 생기지 않는다"
       ],
       "covers": [
-        "올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다",
-        "이미 존재하는 이메일로 가입 시도 시 409를 반환한다"
+        "올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다"
       ],
       "flow": [
         "F9"
+      ]
+    },
+    {
+      "id": "SC-19",
+      "type": "regression",
+      "title": "쓰기 가드가 켜진 환경에서는 인증 API 의 쓰기도 기존 가드 규칙을 따른다",
+      "given": [
+        "쓰기 가드가 켜져 있고 키는 `secret123` 이다",
+        "`user@example.com` 이 가입돼 있어 유효한 `accessToken` 이 있다"
+      ],
+      "when": [
+        "아래 표의 각 요청을 보낸다",
+        "표(요청 | `X-Write-Key` | 기대): `POST /api/auth/signup` (유효한 본문, 새 이메일) | 없음 | 401 / `POST /api/auth/signup` (유효한 본문, 새 이메일) | `secret123` | 201 / `POST /api/auth/login` (올바른 자격증명) | 없음 | 401 / `POST /api/auth/login` (올바른 자격증명) | `secret123` | 200 / `POST /api/performances` (유효한 본문) | 없음 | 401 / `GET /api/auth/me` (`Authorization: Bearer <accessToken>`) | 없음 | 200 (조회는 키 없이 통과한다)"
+      ],
+      "then": [
+        "모든 행의 상태가 \"기대\" 와 같다",
+        "401 행의 `code` 는 `WRITE_KEY_INVALID` 이다 (`UNAUTHORIZED` 가 아니다)"
+      ],
+      "covers": [
+        "기존 /api/performances/** 엔드포인트가 Security 도입 이후에도 인증 없이 그대로 동작한다(회귀 없음)"
+      ],
+      "flow": [
+        "F8"
       ]
     }
   ],
@@ -479,6 +501,15 @@
         ],
         "into": "SC-17",
         "reason": "같은 ERROR 디스패치 경로이고 행마다 독립 단언"
+      },
+      {
+        "scenarios": [
+          "회귀 정상 요청",
+          "만료·위조 헤더",
+          "사전 요청"
+        ],
+        "into": "SC-15",
+        "reason": "같은 permitAll 경로의 회귀 확인(재검증에서 CORS 분리 권고 — 보류)"
       }
     ]
   },
