@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-10-14 · 총 16건
+마지막 재생성: 2026-10-21 · 총 17건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -23,4 +23,7 @@
 | [ADR-0013](ADR-0013-spring-security-adoption.md) | Spring Security를 전체 도입한다 (OAuth2 Client + 커스텀 JWT 인증 필터) | 채택됨 | 2026-10-14 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 채택됨 | 2026-10-14 |
 | [ADR-0015](ADR-0015-access-token-localstorage.md) | accessToken을 프론트 localStorage에 저장한다 | 채택됨 | 2026-10-14 |
-| [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 | 2026-10-14 |
+| [ADR-0017](ADR-0017-keep-write-guard-until-ownership-check.md) | 쓰기 가드는 공연 쓰기 API 에 소유권 검사가 붙을 때까지 유지한다 | 채택됨 | 2026-10-21 |
+| [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로 대체됨) | 2026-10-14 |
+
+대체된 ADR 도 목록에 남깁니다. 과거에 왜 그렇게 판단했는지가 지워지면 같은 논의를 다시 하게 됩니다.
