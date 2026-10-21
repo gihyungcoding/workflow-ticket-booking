@@ -410,6 +410,10 @@ PostgreSQL 은 짝 없는 서로게이트를 다른 문자(`?`)로 바꿔 저장
 | `password` | `pass` + `U+D800` + `word1` (8자 이상) | 400 |
 | `password` | `pass` + `U+0000` + `word1` | 201 |
 | `login email` | `a` + `U+D800` + `b` + `@example.com` | 400 |
+| `passwordConfirm` | password 는 `password123` 로 정상, passwordConfirm 만 `passwor` + `U+D800` + `123` | 400 |
+| `passwordConfirm` | password 는 `pass?word1`(물음표), passwordConfirm 은 `pass` + `U+D800` + `word1` | 400 |
+
+로그인 비밀번호·이메일의 같은 부류는 저장된 계정과의 매칭까지 확인해야 해서 SC-23 에서 다룬다.
 
 covers: 올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다
 flow: F9, F5
@@ -431,3 +435,27 @@ flow: F9, F5
 
 covers: 이미 존재하는 이메일로 가입 시도 시 409를 반환한다
 flow: F2
+
+## SC-23 (error) 로그인 입력의 짝 없는 서로게이트·NUL 은 다른 문자로 치환돼 저장된 계정과 매칭되지 않는다
+
+짝 없는 서로게이트는 UTF-8 로 바꿀 때 `?` 로 치환된다. 로그인 비밀번호를 그대로 비교하면 `abcdefg?h1` 로 가입한 계정이 `abcdefg` + `U+D800` + `h1` 로 로그인되고(200), 이메일은 PostgreSQL 이 `?` 로 저장한 다른 계정과 매칭될 수 있다. 가입 쪽(SC-20·21)과 같은 규칙을 로그인에도 적용한다 — 요청 형식 오류이므로 401 이 아니라 400 이다(SC-09 와 같은 기준).
+
+- **Given** `user@example.com` 이 비밀번호 `abcdefg?h1`(물음표) 로, `a?b@example.com` 이 비밀번호 `password123` 으로 가입돼 있다
+- **When** 아래 표의 각 행으로 `POST /api/auth/login` 을 호출한다
+- **Then** 각 행의 상태가 "기대" 와 같다
+- **And** 400·401 행에서는 응답 본문에 `accessToken` 이 없다
+- **And** 400 행에서는 `code` 가 `INVALID_REQUEST` 이고 500 이 아니다
+
+| email | password | 설명 | 기대 |
+|---|---|---|---|
+| `user@example.com` | `abcdefg` + `U+D800` + `h1` | 비밀번호의 짝 없는 상위 서로게이트 — `?` 로 치환되면 저장된 비밀번호와 일치해 버린다 | 400 |
+| `user@example.com` | `abcdefg` + `U+DC00` + `h1` | 비밀번호의 짝 없는 하위 서로게이트 | 400 |
+| `user@example.com` | `abcdefg?h1` | 실제 물음표 — 정상 로그인은 막히지 않는다 | 200 |
+| `a` + `U+D800` + `b` + `@example.com` | `password123` | 이메일의 서로게이트 — 저장된 `a?b@example.com` 계정으로 들어가지 못한다 | 400 |
+| `a` + `U+DC00` + `b` + `@example.com` | `password123` | 이메일의 하위 서로게이트 | 400 |
+| `a` + `U+0000` + `b` + `@example.com` | `password123` | 이메일의 NUL 문자 | 400 |
+| `a?b@example.com` | `password123` | 실제 물음표 이메일 — 정상 로그인은 막히지 않는다 | 200 |
+| `a?b@example.com` | `password123` + `U+0000` + `x` | 비밀번호 중간의 NUL 뒤에 다른 값이 붙은 입력 — 앞부분만 비교해 일치하면 안 된다 | 401 |
+
+covers: 틀린 비밀번호 또는 존재하지 않는 이메일로 로그인 시 401을 반환하며, 두 경우 응답 메시지가 동일하다
+flow: F5

@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "[Phase 4 3차 FAIL 롤백(RETRY_SCENARIO 3/3) 재재재진입] 시나리오 22건 — SC-21(모든 문자열 입력의 DB 무손실 저장: 이메일·password·로그인 서로게이트)·SC-22(UNIQUE 위반만 409) 추가, SC-20 경계 행(U+001F·0080·009F·0020·00A0)·SC-18 공백 제거 후 255자·SC-12 sub 비숫자 행 보강. 독립검증 7차 PASS(경고 5, 재검증 안 함). HITL#1 승인됨(2026-10-22). [이전 요약] [Phase 4 2차 FAIL 롤백(RETRY_SCENARIO 2/3) 재재진입] 시나리오 20건 — SC-20(name 의 제어 문자·짝 없는 서로게이트 400) 추가, 독립검증 6차 PASS(경고 1). HITL#1 재승인됨(2026-10-21). [이전 요약]  시나리오 19건(happy 4 / error 7 / boundary 5 / regression 3), AC 8/8. 이번 라운드: SC-17(프레임워크 오류 응답 회귀)·SC-18(정규화 후 이메일 길이)·SC-19(쓰기 가드 ON 회귀) 추가, SC-13 정각 경계 확정, SC-08/09 로그인 입력 경계 추가. 독립검증 3차 FAIL(V11) → 4차 PASS(경고 4). SC-08 에 72바이트 비밀번호 사용자·한 글자 붙인 입력 행 추가(변이 검증에서 생존한 login 72바이트 가드를 지키기 위함, BCrypt 가 72바이트 초과를 잘라 비교하는 보안 문제) → 독립검증 5차 PASS(경고 2). HITL#1 재승인됨(2026-10-21)."
+summary: "[Phase 4 4차 FAIL 롤백(RETRY_SCENARIO 사용자 선택) 재진입] 시나리오 23건 — SC-23(로그인 비밀번호·이메일의 짝 없는 서로게이트·NUL, 400, 정상 '?' 로그인 대조) 추가, SC-21 에 passwordConfirm 서로게이트 행 2건. 독립검증 8차 PASS(경고 5, 재검증 안 함). HITL#1 대기. [이전 요약] [Phase 4 3차 FAIL 롤백(RETRY_SCENARIO 3/3) 재재재진입] 시나리오 22건 — SC-21(모든 문자열 입력의 DB 무손실 저장: 이메일·password·로그인 서로게이트)·SC-22(UNIQUE 위반만 409) 추가, SC-20 경계 행(U+001F·0080·009F·0020·00A0)·SC-18 공백 제거 후 255자·SC-12 sub 비숫자 행 보강. 독립검증 7차 PASS(경고 5, 재검증 안 함). HITL#1 승인됨(2026-10-22). [이전 요약] [Phase 4 2차 FAIL 롤백(RETRY_SCENARIO 2/3) 재재진입] 시나리오 20건 — SC-20(name 의 제어 문자·짝 없는 서로게이트 400) 추가, 독립검증 6차 PASS(경고 1). HITL#1 재승인됨(2026-10-21). [이전 요약]  시나리오 19건(happy 4 / error 7 / boundary 5 / regression 3), AC 8/8. 이번 라운드: SC-17(프레임워크 오류 응답 회귀)·SC-18(정규화 후 이메일 길이)·SC-19(쓰기 가드 ON 회귀) 추가, SC-13 정각 경계 확정, SC-08/09 로그인 입력 경계 추가. 독립검증 3차 FAIL(V11) → 4차 PASS(경고 4). SC-08 에 72바이트 비밀번호 사용자·한 글자 붙인 입력 행 추가(변이 검증에서 생존한 login 72바이트 가드를 지키기 위함, BCrypt 가 72바이트 초과를 잘라 비교하는 보안 문제) → 독립검증 5차 PASS(경고 2). HITL#1 재승인됨(2026-10-21)."
 
 next_steps:
   - "HITL#1 승인 후 Phase 2b — SC-21·22 신규와 SC-12·18·20 새 행. SC-21 이메일 서로게이트·SC-12 sub 비숫자는 지금 구현에서 실패해야 Red, SC-22 는 서비스 단위 테스트(저장소 stub)"
@@ -9,6 +9,8 @@ next_steps:
   - "(이전) Phase 2b — wf-red 로 Red 테스트 작성 (@SpringBootTest 통합 테스트, 컴파일용 스켈레톤은 UnsupportedOperationException 한 줄만)"
 
 decisions:
+  - decision: "[4차 롤백] 로그인 비밀번호·이메일의 짝 없는 서로게이트는 401 이 아니라 400(INVALID_REQUEST) — SC-23 신설, SC-21 에 passwordConfirm 행 추가"
+    rationale: "VERIFY 4차 RC-1 unresolved 변종(로그인 password 서로게이트가 '?' 로 치환돼 200)과 predicted 변종(passwordConfirm·로그인 NUL 이메일) 전수. 가입·로그인 이메일이 이미 400 이라 같은 규칙으로 통일(SC-09 요청 형식 오류=400). 리뷰어는 400/401 선택을 시나리오 몫으로 넘겼다. 보류: @Email 의 U+FFFE·bidi 로컬 파트 허용(무손실 저장이라 결함 아님, 개선 제안), 토큰 typ·exp 부재 claim 행, 72바이트 password 정상 로그인 행(검증자 참고), V5~V9 경고(SC-22 구현 누출·SC-15 CORS 분리·Plan inputs 보강·23건 복잡도 — HITL#1 에서 사람에게 고지)"
   - decision: "[3차 롤백] SC-21·22 추가 + 경계 행 보강 — VERIFY 3차 root_causes 의 reproduced 변종 전수"
     rationale: "이메일 짝 없는 서로게이트(PG '?' 치환·409 충돌)와 isUniqueViolation 두 경로 테스트 공백. 반영한 경고: V5 SC-22 Then 구체화, V11 (a)(b)(c) 경계 행. 보류: V6 SC-21 의 로그인 Then·SC-15 CORS 분리, V8 Plan inputs 보강(이메일·password 문자 규칙은 Plan 에 없다)"
   - decision: "[2차 롤백] SC-20 추가 — name 의 NUL·탭·줄바꿈·DEL·짝 없는 서로게이트는 400, 한글·짝이 맞는 이모지는 201"

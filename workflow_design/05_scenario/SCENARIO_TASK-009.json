@@ -463,7 +463,8 @@
       ],
       "when": [
         "아래 표의 각 입력으로 요청한다 (가입 이메일은 표에 적힌 값이거나 행마다 서로 다른 새 이메일이다. 로그인 행은 `POST /api/auth/login`, 나머지는 `POST /api/auth/signup`)",
-        "표(대상 | 입력 | 기대): `email` | `a` + `U+D800` + `b` + `@example.com` (짝 없는 상위 서로게이트) | 400 / `email` | `a` + `U+DC00` + `b` + `@example.com` (짝 없는 하위 서로게이트) | 400 / `email` | `a` + `U+0085` + `b` + `@example.com` (C1 제어 문자, PostgreSQL 이 저장하는 문자) | 201 / `email` | `홍길동@example.com` (한글 로컬 파트) | 201 / `password` | `pass` + `U+D800` + `word1` (8자 이상) | 400 / `password` | `pass` + `U+0000` + `word1` | 201 / `login email` | `a` + `U+D800` + `b` + `@example.com` | 400"
+        "표(대상 | 입력 | 기대): `email` | `a` + `U+D800` + `b` + `@example.com` (짝 없는 상위 서로게이트) | 400 / `email` | `a` + `U+DC00` + `b` + `@example.com` (짝 없는 하위 서로게이트) | 400 / `email` | `a` + `U+0085` + `b` + `@example.com` (C1 제어 문자, PostgreSQL 이 저장하는 문자) | 201 / `email` | `홍길동@example.com` (한글 로컬 파트) | 201 / `password` | `pass` + `U+D800` + `word1` (8자 이상) | 400 / `password` | `pass` + `U+0000` + `word1` | 201 / `login email` | `a` + `U+D800` + `b` + `@example.com` | 400 / `passwordConfirm` | password 는 `password123` 로 정상, passwordConfirm 만 `passwor` + `U+D800` + `123` | 400 / `passwordConfirm` | password 는 `pass?word1`(물음표), passwordConfirm 은 `pass` + `U+D800` + `word1` | 400",
+        "로그인 비밀번호·이메일의 같은 부류는 저장된 계정과의 매칭까지 확인해야 해서 SC-23 에서 다룬다"
       ],
       "then": [
         "각 행의 상태가 \"기대\" 와 같다",
@@ -500,6 +501,29 @@
       ],
       "flow": [
         "F2"
+      ]
+    },
+    {
+      "id": "SC-23",
+      "type": "error",
+      "title": "로그인 입력의 짝 없는 서로게이트·NUL 은 다른 문자로 치환돼 저장된 계정과 매칭되지 않는다",
+      "given": [
+        "`user@example.com` 이 비밀번호 `abcdefg?h1`(물음표) 로, `a?b@example.com` 이 비밀번호 `password123` 으로 가입돼 있다"
+      ],
+      "when": [
+        "아래 표의 각 행으로 `POST /api/auth/login` 을 호출한다",
+        "표(email | password | 기대): `user@example.com` | `abcdefg` + `U+D800` + `h1` | 400 / `user@example.com` | `abcdefg` + `U+DC00` + `h1` | 400 / `user@example.com` | `abcdefg?h1` | 200 / `a` + `U+D800` + `b` + `@example.com` | `password123` | 400 / `a` + `U+DC00` + `b` + `@example.com` | `password123` | 400 / `a` + `U+0000` + `b` + `@example.com` | `password123` | 400 / `a?b@example.com` | `password123` | 200 / `a?b@example.com` | `password123` + `U+0000` + `x` | 401"
+      ],
+      "then": [
+        "각 행의 상태가 \"기대\" 와 같다",
+        "400·401 행에서는 응답 본문에 `accessToken` 이 없다",
+        "400 행에서는 `code` 가 `INVALID_REQUEST` 이고 500 이 아니다"
+      ],
+      "covers": [
+        "틀린 비밀번호 또는 존재하지 않는 이메일로 로그인 시 401을 반환하며, 두 경우 응답 메시지가 동일하다"
+      ],
+      "flow": [
+        "F5"
       ]
     }
   ],
@@ -609,7 +633,8 @@
           "C1 제어 문자",
           "한글 로컬 파트",
           "password 서로게이트·NUL",
-          "로그인 이메일 서로게이트"
+          "로그인 이메일 서로게이트",
+          "passwordConfirm 서로게이트(password 정상·'?' 짝)"
         ],
         "into": "SC-21",
         "reason": "같은 'DB 무손실 저장' 입력 검증 경로이고 행마다 독립 단언 — Phase 4 3차 FAIL 의 reproduced 변종 전수"
@@ -622,10 +647,20 @@
         ],
         "into": "SC-20·SC-18·SC-12",
         "reason": "독립검증 V11 경고 반영 — 같은 경로의 경계 행 추가"
+      },
+      {
+        "scenarios": [
+          "로그인 비밀번호 서로게이트(상·하)",
+          "로그인 이메일 서로게이트·NUL",
+          "정상 '?' 로그인 대조",
+          "NUL 뒤 추가값 401"
+        ],
+        "into": "SC-23",
+        "reason": "같은 로그인 입력 치환 경로이고 행마다 독립 단언 — Phase 4 4차 FAIL RC-1 의 unresolved·predicted 변종 전수"
       }
     ]
   },
   "human_input": {
-    "generate_red_trigger": true
+    "generate_red_trigger": false
   }
 }
