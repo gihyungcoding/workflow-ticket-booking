@@ -1,7 +1,7 @@
 {
   "task_id": "TASK-009",
-  "status": "FAIL",
-  "status_reason": "4차 검증 — 3차 결함(이메일·password·로그인 이메일의 짝 없는 서로게이트)은 PostgreSQL 에서 해소 확인. 그러나 같은 뿌리('입력이 검증·비교·저장 단계에서 다른 값으로 치환됨')의 마지막 변종이 로그인 비밀번호에서 나왔다: 로그인 password 에는 @NotBlank 뿐이라 짝 없는 서로게이트가 getBytes(UTF_8) 에서 '?' 로 치환되어 BCrypt 비교에 들어간다 — 'abcdefg?h1' 로 가입한 계정이 'abcdefg\\ud800h1' 로 로그인되어 200(HTTP 로 직접 재현). 401 이어야 한다",
+  "status": "WARN",
+  "status_reason": "5차 검증 — 4차 결함(로그인 password 짝 없는 서로게이트가 '?' 로 치환돼 BCrypt 매칭 200)이 PostgreSQL 에서 400 으로 해소됐고, 모든 문자열 입력(가입 email·password·passwordConfirm·name, 로그인 email·password)을 HTTP 로 전수 프로브해 새 변종 없음. 리뷰어 5차 defect 0. 테스트 112/112, 아키텍처 error 0·no_target 0. 남은 WARN: PostgreSQL 통합 테스트 부재(H2 가 PG 와 다르게 동작하는 입력 부류를 테스트가 못 잡음 — 같은 뿌리로 5라운드째), @Email 이 U+FFFE·bidi 로컬 파트·name 의 U+FFFE 를 허용(무손실 저장, 위장 위험 개선 제안), 배포 전 Render JWT_SECRET 입력 필요",
   "rounds": [
     {
       "round": 1,
@@ -22,13 +22,18 @@
       "round": 4,
       "result": "FAIL",
       "summary": "로그인 비밀번호의 짝 없는 서로게이트 → '?' 치환 후 BCrypt 매칭 200(PostgreSQL HTTP 재현). 3차 결함은 해소. RETRY_SCENARIO 3/3 소진 상태"
+    },
+    {
+      "round": 5,
+      "result": "WARN",
+      "summary": "로그인 비밀번호 서로게이트 400 으로 해소, 모든 문자열 입력 PostgreSQL HTTP 전수 프로브 새 변종 없음, 리뷰어 defect 0"
     }
   ],
   "evidence": {
     "tests": {
-      "command": "cd backend && ./gradlew clean test spotlessCheck",
+      "command": "cd backend && ./gradlew clean test spotlessCheck bootJar",
       "exit_code": 0,
-      "summary": "111 tests, 0 failed, 0 errors, 0 skipped (build/test-results XML 합산). BUILD SUCCESSFUL in 1m 26s"
+      "summary": "112 tests, 0 failed, 0 errors, 0 skipped (build/test-results XML 합산). BUILD SUCCESSFUL"
     },
     "lint": {
       "command": "cd backend && ./gradlew spotlessCheck",
@@ -37,7 +42,7 @@
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "develop 대비 변경 — 운영 코드·테스트 외 워크플로우·메모리뱅크 산출물 포함(4차 시점 HEAD 72ed2f7)"
+      "summary": "71 files changed, 6764 insertions(+), 27 deletions(-) — 운영 코드·테스트 외 워크플로우·메모리뱅크 산출물 포함(5차 시점 HEAD 6a474ad)"
     },
     "regression_probe": {
       "command": "develop 워크트리와 이 브랜치를 같은 postgres(별도 DB)에 각각 띄워 같은 요청을 비교(포트 18082/18083, 쓰기 가드 OFF)",
@@ -172,6 +177,15 @@
           "note": "password 와 불일치 — 정상"
         }
       ]
+    },
+    "postgres_probe_round5": {
+      "command": "postgres:16 컨테이너(18090) + bootJar(18091, JWT_SECRET 지정)에 python urllib 로 JSON 이스케이프(\\ud800 등) 본문을 직접 전송, 이후 psql 로 저장값 확인",
+      "result": "로그인 password 상·하위 서로게이트 400(이전 200), 실제 '?' 200, 로그인 email 서로게이트·NUL 400, 'a?b' 계정 로그인 200, 비밀번호 중간 NUL 뒤 추가값·앞부분만 401, passwordConfirm 서로게이트 400, 가입 email 서로게이트·NUL 400, U+0085·한글 로컬 201 저장 일치, 이모지 쌍 password·name 201/200(과차단 없음), 72바이트 이모지 201·로그인 200",
+      "db_rows": "users 8행 — a?b@example.com 은 실제 물음표(0x3f)로 저장, c\\u0085d@example.com length 15, 홍길동@example.com length 15",
+      "caveat": "이모지 쌍이 이메일 로컬 파트에 들어가면 가입·로그인 모두 400(@Email 이 보충 평면을 거부) — 무손실·일관되게 거부되어 결함 아님. 보고된 스크립트: scratchpad/probe5.py"
+    },
+    "regression_probe_round5": {
+      "result": "공연 API 프레임워크 오류 응답 8개 요청이 develop 기록값과 같음(400×4·405×2·404·415), /api/auth/me 토큰 없음 401, 허용 목록 밖 경로 401. 이번 변경은 LoginRequest 한 파일이라 4차의 16개 요청 DIFF 0 결과가 유지됨"
     }
   },
   "acceptance_criteria": [
@@ -223,7 +237,7 @@
     "error_count": 0,
     "warn_count": 3,
     "no_target": [],
-    "files_scanned": 196,
+    "files_scanned": 199,
     "violations": [
       {
         "id": "DESIGN-003",
@@ -275,9 +289,9 @@
     ]
   },
   "regression": {
-    "full_suite": "111/111 passed",
+    "full_suite": "112/112 passed",
     "callers_checked": true,
-    "note": "공연 API 16개 요청 develop 기록값과 동일"
+    "note": "NoLoneSurrogate 사용처는 SignUpRequest·LoginRequest 뿐. 공연 API 프레임워크 오류 응답 develop 기록값과 동일"
   },
   "scope_deviations": [
     {
@@ -298,7 +312,7 @@
     }
   ],
   "code_review": {
-    "reviewer": "code-reviewer 서브에이전트 4차(이전 root_causes 이어받음·수정 커밋 부작용·JPA 지시)",
+    "reviewer": "code-reviewer 서브에이전트 5차(이전 root_causes 이어받음·수정 커밋 eea6c22 부작용·JPA 지시·HTTP 직접 재현)",
     "rounds": [
       {
         "n": 1,
@@ -319,36 +333,27 @@
         "n": 4,
         "scope": "전체 + 수정 커밋 197e5e9..HEAD · RC-1/RC-2 변종 전수",
         "findings": 1
-      }
-    ],
-    "findings": [
+      },
       {
-        "severity": "defect",
-        "category": "correctness",
-        "where": "LoginRequest.password / AuthService.login",
-        "summary": "로그인 비밀번호의 짝 없는 서로게이트가 getBytes(UTF_8) 에서 '?' 로 치환돼 BCrypt 비교에 들어간다 — '?' 를 가진 저장 비밀번호와 매칭되어 200. 가입 쪽은 @Pattern 으로 막혀 있다. 리뷰어는 BCrypt 단위로 재현, verifier 가 HTTP 로 직접 재현. 악용 여지는 작다(나머지 비밀번호를 알아야 함)",
-        "verified": true,
-        "suggested_fix": "LoginRequest.password 에 NoLoneSurrogate @Pattern(400) 또는 서비스에서 InvalidCredentialsException(401) — 시나리오가 정할 몫"
+        "n": 5,
+        "scope": "전체 + 수정 커밋 7b52d51..HEAD(eea6c22·0b379b0) · RC-1/RC-2 변종 전수, PostgreSQL 앱 HTTP 재현",
+        "findings": 0
       }
     ],
+    "findings": [],
     "suggestions": [
-      "SignUpRequest.name 이 같은 뿌리의 정규식을 직접 쓰고 나머지는 NoLoneSurrogate 상수를 쓴다 — 중복 정책",
-      "@Email 이 로컬 파트에 U+0080~U+FFFF(bidi U+202E·U+2028·U+00A0·U+FFFE·U+FFFF·U+0085) 를 허용 — 무손실 저장이라 결함은 아니나 유사 계정·시각 위장 가능, 로컬 파트 ASCII 제한 정책 검토",
-      "SC-21 에 로그인 비밀번호 서로게이트 행, passwordConfirm 서로게이트, 로그인 NUL 이메일 행이 없다 — 이번 결함이 걸리지 않은 이유"
+      "@Email 이 로컬 파트에 U+FFFE·U+FFFF·bidi U+202E·U+2028 등을 허용하고 name 은 \\p{Cc}·\\p{Cs} 만 막는다(DB 에 U+FFFE 이름 저장 확인) — 무손실 저장이라 결함은 아니나 유사 계정·시각 위장 가능, 로컬 파트 ASCII 제한·name 정책 검토",
+      "SignUpRequest.name 이 직접 정규식을 쓰고 나머지는 NoLoneSurrogate 상수를 쓴다 — 정책이 달라 의도된 중복(name 은 제어 문자까지 거부)",
+      "passwordConfirm 에는 @Pattern 이 없고 password 와의 불일치로만 걸러진다 — 결함 아님"
     ],
     "confirmed_ok": [
-      "NoLoneSurrogate.REGEX 는 코드포인트 단위라 짝이 맞는 쌍은 허용, matches() 전체 비교, trim 이후 값에 적용",
-      "응답·JWT email 은 saveAndFlush 가 반환한 정규화 값으로 DB 와 같고 role 은 enum 이름",
-      "JWT 필터는 sub 만 Long 변환·실패는 IllegalArgumentException 처리, email·role claim 은 인증에 안 씀",
-      "passwordConfirm 은 password.equals 로 password 가 통과하면 같은 값만 통과",
-      "password NUL·이모지 쌍은 BCrypt 에 안전(꼬리가 잘리지 않음)",
-      "에러 메시지 입력 에코 없음, 정상 이모지·한글·U+00A0·공백 입력을 막지 않음",
-      "이메일 길이 UTF-16 판정은 PG 문자 수보다 보수적",
-      "SQLState 23505 한정, SC-22 는 Mockito 단위라 @Transactional 문제 없음. AuthApiTest·AuthServiceSignUpFailureTest·WriteGuardAuthApiTest 는 클래스 레벨 @Transactional 없음, Given 이 properties 에 의존하는 가짜 통과 없음. WriteGuardOffIntegrationTest 는 TASK-014 소관이라 범위 밖(not_probed)"
+      "로그인 password·email 서로게이트 400 · 이모지 쌍 허용 · NUL 비교 잘림 없음 · 72바이트 초과 BCrypt 전 401 · 에러 응답 형식 INVALID_REQUEST",
+      "AuthApiTest·WriteGuardIntegrationTest·AuthServiceSignUpFailureTest 에 클래스 레벨 @Transactional 없음, Given 이 properties 에 의존하는 가짜 통과 없음. WriteGuardOffIntegrationTest 는 클래스 @Transactional 이지만 OFF 가 기본값이라 롤백돼도 단언이 거짓이 되지 않음(TASK-014 소관)",
+      "SC-23 400 행은 code 와 accessToken 부재까지 확인해 500·200 누출을 막는다"
     ]
   },
   "security": {
-    "input_validation": "이메일·password(가입)·로그인 이메일의 짝 없는 서로게이트 400, name 제어 문자·서로게이트 400, 길이·72바이트·role enum. 결함: 로그인 password 의 짝 없는 서로게이트가 '?' 로 치환돼 매칭(200)",
+    "input_validation": "가입 email·password·로그인 email·password 의 짝 없는 서로게이트 400, passwordConfirm 은 password 와의 불일치로 400, name 제어 문자·서로게이트 400, 길이·72바이트·role enum. 로그인 password 서로게이트 결함은 해소(5차 PostgreSQL HTTP 확인)",
     "authorization": "공연 API 는 의도적으로 permitAll(ADR-0017). /api/auth/me·허용 목록 밖 경로는 인증 필요. ERROR 디스패치만 열어 두었고 REQUEST 인가는 그대로. 1차 결함(오류 응답 401 회귀) 해결 확인",
     "secrets": "JWT_SECRET 환경변수만, 32바이트 미만 기동 실패. 저장소에 비밀값 없음. password_hash 는 응답·로그에 노출되지 않음",
     "logging": "자격증명·토큰을 로그로 남기는 코드 없음",
@@ -363,9 +368,9 @@
     "docs/release/first-deploy-checklist.md §6 의 백엔드 환경변수 표에 JWT_SECRET 이 없다"
   ],
   "known_gaps": [
-    "H2 가 PG 와 다르게 동작하는 입력 부류(NUL·서로게이트) 를 테스트가 못 잡음 — PostgreSQL 통합 테스트 부재(ADR-0006 예고, 같은 뿌리로 4라운드째)",
-    "SC-21 에 로그인 비밀번호 서로게이트 행 없음",
-    "exp 없는 토큰을 유효로 보는 변이 생존(우리가 발급하는 토큰은 항상 exp 보유)"
+    "PostgreSQL 통합 테스트 부재 — H2 가 PG 와 다르게 동작하는 입력 부류(NUL·서로게이트)를 테스트가 못 잡는다. 이번 5라운드 모두 Phase 4 의 PostgreSQL 수동 프로브가 결함을 찾았다(ADR-0006 예고, Testcontainers 전환은 별도 결정)",
+    "exp 없는 토큰을 유효로 보는 변이 생존(우리가 발급하는 토큰은 항상 exp 보유)",
+    "@Email 이 허용하는 U+FFFE·bidi 로컬 파트와 name 의 U+FFFE — 위장 위험 개선 제안, 이번 범위 밖"
   ],
   "human_review": {
     "decision": null,
@@ -415,14 +420,15 @@
         {
           "case": "password 의 짝 없는 서로게이트",
           "origin": "predicted",
-          "probe": "not_probed",
-          "reason": "getBytes 변환이 해시·매칭에서 같아 영향 없다고 판단, 앱 경유 재현 안 함"
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "5차 PostgreSQL HTTP 로 로그인 password 400 확인(가입 password 는 4차에서 400)"
         },
         {
           "case": "이메일 U+0085 등 C1 제어문자",
           "origin": "predicted",
           "probe": "not_reproduced",
-          "reason": "PG 에 정상 저장, 오동작 없음(리뷰어 프로브)"
+          "reason": "PG 에 정상 저장(users 3번 c\\u0085d@example.com length 15 확인), 오동작 없음"
         },
         {
           "case": "로그인 이메일의 짝 없는 서로게이트",
@@ -435,7 +441,8 @@
           "case": "로그인 password 의 짝 없는 서로게이트가 '?' 로 치환돼 저장된 '?' 비밀번호와 BCrypt 매칭(200)",
           "origin": "later",
           "probe": "reproduced",
-          "resolved": false
+          "resolved": true,
+          "evidence": "eea6c22 수정. AuthApiTest.test_sc23 · 5차 PostgreSQL HTTP: 상위 400·하위 400·실제 '?' 200"
         },
         {
           "case": "passwordConfirm 에 짝 없는 서로게이트(password 정상)",
@@ -463,6 +470,30 @@
           "probe": "reproduced",
           "resolved": true,
           "evidence": "AuthApiTest.test_sc21 · 4차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "로그인 password 에 NUL 또는 NUL 이후 추가값(BCrypt 비교가 NUL 에서 잘리는지)",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "5차 HTTP: pass\\u0000word1 200, pass\\u0000word2 401, pass 401, pass\\u0000 401 — 잘림 없음. AuthApiTest.test_sc23 행"
+        },
+        {
+          "case": "UTF-8 72바이트 초과 password 의 BCrypt 절단 매칭 또는 500",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "5차 HTTP: 가입 한글 40자(120B) 400, 로그인 10만 자·120B 한글은 BCrypt 전 401(AuthService.exceedsBcryptLimit)"
+        },
+        {
+          "case": "짝이 맞는 서로게이트(이모지) password·name 의 과차단·치환",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "5차 HTTP: 이모지 password 가입 201·로그인 200, name 가입 201(DB length 3)"
+        },
+        {
+          "case": "JWT email claim·Authorization 헤더·응답 직렬화에서의 치환",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "토큰·응답의 email 은 DB 저장값이고 입력 원문이 아니다. getBytes 는 secret·72바이트 검사에만, toLowerCase(Locale.ROOT) 는 normalize 한 곳에만 있음(리뷰어 코드 확인)"
         }
       ]
     },
