@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "3"
-phase_name: "Phase 3 - Green (3차 재수정 완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (Phase 4 4차 FAIL 롤백, HITL#1 승인)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 3 3차 재수정 완료(전체 111/111). wf-verify 로 Phase 4 를 네 번째로 수행한다 — PostgreSQL 에서 email·password 서로게이트 400·한글 로컬 파트 저장값 일치 확인, 같은 뿌리 변종 전수(code-reviewer 에 이전 root_causes 전달). 또 FAIL 이면 Phase 1 로 상승.
+Phase 2a 시나리오 23건 승인됨(SC-23 신규, SC-21 passwordConfirm 행). wf-red 로 Phase 2b 를 진행한다 — 로그인 password 짝 없는 서로게이트(SC-23 첫 행)는 지금 구현에서 200 이라 실패해야 Red. 로그인 password 에 NoLoneSurrogate 검증을 붙이는 것은 Phase 3 몫.
 
 ## 새 세션 메모
 
