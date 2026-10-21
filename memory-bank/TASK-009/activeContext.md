@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "2b"
-phase_name: "Phase 2b - Red (HITL#2 승인)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -13,12 +13,13 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-009-email-auth-security"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-009.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-009.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-009.json"
   tests: "workflow_design/05_scenario/TEST_TASK-009.json"
+  dev: "workflow_design/06_dev/DEV_TASK-009.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -29,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-HITL#2 승인 완료(CP-2.5). `wf-develop` 로 Phase 3 구현(Green). Red 테스트 16건: `api/AuthApiTest`(SC-01~14), `api/AuthRegressionApiTest`(SC-15), `config/JwtSecretConfigTest`(SC-16). Green 에서 `spring-boot-starter-security`·`security-test` 추가, V3 마이그레이션, 엔티티 제약, AuthService·컨트롤러·SecurityConfig·JWT.
+Phase 3 완료(CP-3.4, 전체 105/105). `wf-verify` 로 Phase 4 검증(HITL#3). docker postgres 로 V3 실제 마이그레이션 확인, code-reviewer 에 JPA 지시 포함.
 
 ## 알아둬야 할 것
 
