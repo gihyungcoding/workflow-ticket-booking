@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "2b"
-phase_name: "Phase 2b - Red (재작성, HITL#2 재승인)"
+phase: "3"
+phase_name: "Phase 3 - Green (재수정 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-HITL#2 재승인 완료(테스트 19건). `wf-develop` 로 Phase 3 수정. 현재 실패 3건을 통과시킨다: ① SC-13 만료 정각 401 — Spring JwtTimestampValidator 대신 `now < exp` 를 직접 비교(RFC 7519), ② SC-17 ERROR 디스패치 permitAll(`dispatcherTypeMatchers(ERROR)`), ③ SC-18 이메일 정규화 후 길이 255 초과를 400 으로(DataIntegrityViolationException catch 는 UNIQUE 위반으로 한정 검토). 테스트는 고치지 않는다.
+Phase 3 재수정 완료(CP-3.4, 전체 108/108). `wf-verify` 로 Phase 4 를 **처음부터 다시** 수행한다: develop 과의 응답 비교 프로브(SC-17 의 8개 요청이 develop 과 같은 상태인지), PostgreSQL e2e, code-reviewer(이전 결함 카테고리 지목 + 수정 커밋도 리뷰).
 
 ## 알아둬야 할 것
 
