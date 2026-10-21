@@ -1,29 +1,21 @@
 ---
 status: ACTIVE
-saved_at: 2026-10-21T00:00:00Z
-summary: "Phase 4 2차 판정 FAIL — 1차 결함(오류 디스패치 401 회귀·정규화 길이 오보)은 해결(develop 비교 16개 요청 전부 동일). 새 결함: name 의 NUL(\\u0000)이 PostgreSQL 에서 거부되어 catch 가 409 EMAIL_ALREADY_EXISTS 로 오보 — 직접 재현. AC 1~8 은 모두 PASS."
+saved_at: 2026-10-22T00:50:00Z
+summary: "Phase 4 3차 판정 FAIL — 2차 결함(name NUL 등)은 PostgreSQL 에서 해소(name 거부·동시 가입 409 수렴·develop 비교 16건 동일). 새 변종: 이메일 로컬파트의 짝 없는 서로게이트가 @Email 을 통과해 201 로 가입되나 DB 에는 a?b@x.com 으로 치환 저장, 다른 입력 a?b@x.com 은 409 오보(HTTP 로 직접 재현). 뿌리 RC-1 은 2차와 같다(입력 검증이 DB 가 무손실 저장 못 하는 문자열을 막지 않음). AC 1~8 PASS, 테스트 109/109, 아키텍처 error 0"
 
 next_steps:
-  - "HITL#3 결과: 시나리오로 롤백(Phase 2a) 선택됨(RETRY_SCENARIO 2/3). 시나리오 보완 → 2b → 3 → 4 재수행"
-  - "수정 방향: catch 를 UNIQUE 위반(SQLState 23505, H2 동일)으로 한정 + name 의 NUL·제어 문자 사전 검증 400. 짝 없는 서로게이트 정책도 함께 결정"
+  - "HITL#3 결과에 따라 롤백 — RETRY_SCENARIO 는 이미 2/3 이라 이번이 3/3, 이후 실패 시 Phase 1 로 상승"
+  - "수정 방향: 이메일에도 \\p{Cs} 거부 검증, isUniqueViolation 두 경로(23505→409, 그 외 재던짐) 서비스 테스트로 고정, PostgreSQL 통합 테스트 도입 검토(ADR-0006)"
 
 decisions:
-  - decision: "리뷰어가 '재현하지 못했다'고 한 NUL 결함을 직접 PostgreSQL 에서 재현한 뒤 FAIL 로 판정"
-    rationale: "추론만으로는 결함이 아니다 — name=a\\u0000b 가 409 EMAIL_ALREADY_EXISTS 를 받고 DB 에 행이 없음을 확인했다. 1차의 İ 길이 오보와 같은 뿌리(모든 DataIntegrityViolationException → 409)"
-  - decision: "이번 결함도 WARN 이 아니라 FAIL"
-    rationale: "잘못된 상태 코드·메시지를 돌려주는 correctness 결함이고 같은 부류의 재발이다. 낮은 발생 가능성은 판정이 아니라 수정 우선순위의 근거"
-  - decision: "H2 가 NUL 을 받아 주는 한 이 부류는 테스트가 못 잡는다 — 개선안으로 PostgreSQL 통합 테스트 도입을 회고에 올린다"
-    rationale: "ADR-0006 이 이미 'Testcontainers 로 전환' 을 예고해 두었다. 이번 태스크에서 같은 이유로 두 번째 결함"
+  - decision: "리뷰어 보고(JDBC·Validator 단위 재현)를 HTTP 로 직접 재현한 뒤 FAIL 로 판정"
+    rationale: "a\\ud800b@x.com 가입 201, DB 에 a?b@x.com(length 9), a?b@x.com 가입 409 를 확인. 리뷰어는 앱 경유를 못 했다고 했다"
+  - decision: "WARN 이 아니라 FAIL"
+    rationale: "잘못된 상태 코드·응답과 저장값 불일치인 correctness 결함이고 1·2차와 같은 뿌리다. 발생 가능성이 낮은 것은 수정 우선순위의 근거"
 
 attempts:
   - phase: "4"
-    round: 1
-    outcome: "FAIL — AC8 회귀(프레임워크 오류 응답 400/405/415 → 401), 이메일 정규화 길이 오보"
-    back_to: "2a"
-    reject_type: "RETRY_SCENARIO (COVERAGE_INSUFFICIENT) 1/3"
-  - phase: "4"
-    round: 2
-    outcome: "FAIL — name NUL → 409 오보(PostgreSQL 재현). 1차 결함은 해결"
-    back_to: "2a"
-    reject_type: "RETRY_SCENARIO (COVERAGE_INSUFFICIENT) 2/3"
+    round: 3
+    outcome: "FAIL — 이메일 짝 없는 서로게이트(RC-1 변종, origin: later). 2차 결함은 해소"
+    back_to: "미정(HITL#3)"
 ---

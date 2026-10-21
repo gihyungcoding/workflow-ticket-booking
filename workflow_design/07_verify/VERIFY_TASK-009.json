@@ -1,7 +1,7 @@
 {
   "task_id": "TASK-009",
   "status": "FAIL",
-  "status_reason": "2차 검증 — 1차 결함(오류 디스패치 401 회귀, 정규화 길이 오보)은 해결됐지만, 코드 리뷰가 같은 뿌리의 결함을 추가로 찾았고 PostgreSQL 에서 재현했다: name 에 NUL(\\u0000)이 있으면 가입한 적 없는 이메일에 409 EMAIL_ALREADY_EXISTS 로 오보된다(DataIntegrityViolationException 을 모두 UNIQUE 위반으로 취급하는 catch)",
+  "status_reason": "3차 검증 — 1·2차 결함(RC-1 의 길이 오보·name NUL, RC-2 의 오류 디스패치 401)은 PostgreSQL 에서 해소 확인. 그러나 같은 뿌리(입력 검증이 'PostgreSQL 이 무손실로 저장하지 못하는 문자열'을 막지 않음)의 변종이 이메일에서 나왔다: 이메일 로컬파트의 짝 없는 서로게이트(a\\ud800b@x.com)가 @Email 을 통과해 201 로 가입되지만 DB 에는 a?b@x.com 으로 저장되고, 서로 다른 입력인 a?b@x.com 가입은 409 로 오보된다(HTTP 로 직접 재현). H2 는 서로게이트를 그대로 저장해 테스트가 못 잡는다",
   "rounds": [
     {
       "round": 1,
@@ -12,13 +12,18 @@
       "round": 2,
       "result": "FAIL",
       "summary": "아래 — name NUL → 409 오보(PostgreSQL 재현)"
+    },
+    {
+      "round": 3,
+      "result": "FAIL",
+      "summary": "이메일 짝 없는 서로게이트 → DB '?' 치환·타 입력과 409 충돌(PostgreSQL HTTP 재현). 2차 결함(name NUL 등)은 해소"
     }
   ],
   "evidence": {
     "tests": {
       "command": "cd backend && ./gradlew clean test spotlessCheck",
       "exit_code": 0,
-      "summary": "108 tests, 0 failed, 0 skipped, 19.4s. BUILD SUCCESSFUL"
+      "summary": "109 tests, 0 failed, 0 errors, 0 skipped (build/test-results XML 합산). BUILD SUCCESSFUL in 48s"
     },
     "lint": {
       "command": "cd backend && ./gradlew spotlessCheck",
@@ -27,7 +32,7 @@
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "51 files changed, 4562 insertions(+), 8 deletions(-) — 운영 코드 18, 테스트 7, 나머지 워크플로우·메모리뱅크 산출물"
+      "summary": "66 files changed, 5597 insertions(+), 23 deletions(-) — 운영 코드·테스트 외 워크플로우·메모리뱅크 산출물 포함"
     },
     "regression_probe": {
       "command": "develop 워크트리와 이 브랜치를 같은 postgres(별도 DB)에 각각 띄워 같은 요청을 비교(포트 18082/18083, 쓰기 가드 OFF)",
@@ -120,36 +125,33 @@
         "branch": 401,
         "note": "SC-11 에서 수용한 변화(허용 목록 밖 경로는 기본 거부)"
       },
-      "body_check": "타입 불일치 400 의 본문 형식이 develop 과 같다 ({timestamp,status,error,path})"
+      "body_check": "타입 불일치 400 의 본문 형식이 develop 과 같다 ({timestamp,status,error,path})",
+      "round3_recheck": "브랜치 앱(PostgreSQL 16.14)에 같은 16개 요청 재실행 → 2차에 기록한 develop 값과 전부 동일(DIFF 0). develop 은 이번 라운드에 다시 띄우지 않았다(기록값 비교). GET /api/not-registered 는 401(의도된 변화)"
     },
     "e2e_postgres": {
-      "command": "docker postgres:16-alpine + ./gradlew bootRun (가드 OFF 인스턴스와 가드 ON 인스턴스) + curl 16항목",
-      "summary": "Flyway V1~V3 success, 가입 201(대문자·공백 정규화)·중복 409·정규화 후 255 초과(İ×64) 400·role=1 400·로그인 200·/me 200·스킴 소문자 200·변조 401·토큰 없음 401·72바이트 사용자 가입 201 → 같은 비밀번호 로그인 200 / 한 글자 붙이면 401·로그인 실패 두 경우 본문 동일·가드 ON 에서 signup 키 없음 401 WRITE_KEY_INVALID, 키 있음 201·사전 요청 200. DB: 해시 $2a$10$ 60자",
-      "limit": "로컬 PostgreSQL 16.14 — 운영(Neon)은 18.6. 이번 라운드에 JWT_SECRET 미설정 기동 실패는 다시 돌리지 않았다(1차에서 확인, 해당 경로 코드는 변경 없음, SC-16 이 덮음)"
+      "command": "docker postgres:16-alpine + ./gradlew bootRun(JWT_SECRET 설정, 가드 OFF) + python/curl 프로브",
+      "summary": "Flyway 3 migrations → v3. name: NUL·\\u0001·\\n·\\t·DEL·\\u0085·짝 없는 서로게이트(상·하)·잘못된 UTF-8 바이트 전부 400. 한글+이모지 201·저장 length 4(입력과 동일), 100자 201·101자 400, 이모지 50개 201·51개 400, ZWSP·U+FFFE 201. password NUL 201. 동일 이메일 24 동시 가입 → 201×1 + 409×23, 대소문자·공백 변형 24 동시 → 201×1 + 409×23(DB 행 1개). 중복 409·로그인 200(토큰 196자)·/me 200·토큰 없음·변조 401·로그인 실패 두 경우 본문 동일·해시 $2a$10$ 60자",
+      "limit": "로컬 PostgreSQL 16.14 — 운영(Neon)은 18.6. 가드 ON·JWT_SECRET 미설정 기동 실패는 이번 라운드 재실행 안 함(코드 변경 없음, SC-16 이 덮음)"
     },
     "reproduced_defect": {
-      "command": "PostgreSQL 에 붙은 브랜치 앱에 curl 로 POST /api/auth/signup",
+      "command": "PostgreSQL 에 붙은 브랜치 앱에 POST /api/auth/signup (python urllib)",
       "results": [
         {
-          "input": "name=\"a\\u0000b\"",
+          "input": "email=\"a\\ud800b@x.com\"",
+          "status": 201,
+          "body": "email 이 서로게이트를 담아 응답",
+          "note": "DB 에는 a?b@x.com (length 9) 로 저장"
+        },
+        {
+          "input": "email=\"a?b@x.com\" (다른 입력)",
           "status": 409,
           "body": "EMAIL_ALREADY_EXISTS",
-          "note": "결함 — 가입한 적 없는 이메일. 서버 로그: SQLState 22021 invalid byte sequence for encoding \"UTF8\": 0x00. DB 에 행 없음"
+          "note": "결함 — 가입한 적 없는 이메일이 중복으로 오보"
         },
         {
-          "input": "name=\"a\\ud800b\" (짝 없는 서로게이트)",
-          "status": 201,
-          "note": "오류는 아니지만 저장 시 U+FFFD 로 치환되어 입력과 다른 이름이 저장됨(조용한 변형)"
-        },
-        {
-          "input": "password 에 \\u0000",
-          "status": 201,
-          "note": "해시만 저장하므로 영향 없음"
-        },
-        {
-          "input": "email 로컬 파트에 \\u0000",
-          "status": 400,
-          "note": "@Email 이 거부 — 정상"
+          "input": "login email=\"a\\ud800b@x.com\"",
+          "status": 200,
+          "note": "조회도 같은 치환을 거쳐 동작은 일관 — 영향은 응답값과 DB 값 불일치·충돌"
         }
       ]
     }
@@ -208,7 +210,7 @@
       {
         "id": "DESIGN-003",
         "severity": "warn",
-        "detail": "기존 프론트 파일 3건 — 이번 변경과 무관"
+        "detail": "frontend PerformanceDetailPage:37, PerformanceEditPage:104, PerformanceListPage:46 매직 넘버 — 이번 태스크 변경 아님"
       }
     ],
     "overdue_promotions": [],
@@ -255,9 +257,9 @@
     ]
   },
   "regression": {
-    "full_suite": "108/108 passed",
+    "full_suite": "109/109 passed",
     "callers_checked": true,
-    "note": "기존 코드 중 바뀐 것은 build.gradle, application.properties(Jackson enum 숫자 거부 — 공연 요청 DTO 에 enum 필드 없음), UserRepository·User(스켈레톤 대체). 공연 API 응답은 develop 과 비교해 동일"
+    "note": "공연 API 16개 요청 develop 기록값과 동일"
   },
   "scope_deviations": [
     {
@@ -278,39 +280,54 @@
     }
   ],
   "code_review": {
-    "reviewer": "code-reviewer 서브에이전트 2차(이전 결함 카테고리 지목 + 수정 커밋 자체 리뷰 + JPA 지시)",
+    "reviewer": "code-reviewer 서브에이전트 3차(이전 root_causes 지목·수정 커밋 부작용·JPA 지시)",
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체",
+        "findings": 2
+      },
+      {
+        "n": 2,
+        "scope": "수정 커밋 · 같은 카테고리 전수",
+        "findings": 1
+      },
+      {
+        "n": 3,
+        "scope": "전체 + 수정 커밋 db43f4d · RC-1/RC-2 변종 전수",
+        "findings": 1
+      }
+    ],
     "findings": [
       {
         "severity": "defect",
         "category": "correctness",
-        "where": "AuthService.signUp 의 catch (DataIntegrityViolationException)",
-        "summary": "모든 무결성 예외를 이메일 중복으로 보고한다. name 에 NUL(\\u0000)이 있으면 @NotBlank·@Size 를 통과하고 PostgreSQL 이 거부(SQLState 22021)해 Spring 이 DataIntegrityViolationException 으로 변환 → 409 EMAIL_ALREADY_EXISTS 오보. 리뷰어는 재현하지 못했다고 했고 직접 PostgreSQL 에서 재현했다(reproduced_defect). 1차의 정규화 길이 오보와 같은 뿌리. H2 는 NUL 을 받아 주어 테스트가 못 잡는다",
+        "where": "SignUpRequest.email / AuthService.signUp",
+        "summary": "이메일 로컬파트의 짝 없는 서로게이트가 @Email 을 통과해 PostgreSQL 에서 '?' 로 치환 저장 — 응답·JWT 의 email 과 DB 값이 다르고 다른 입력 a?b@x.com 이 409 로 충돌. 리뷰어는 JDBC·Validator 단위로 재현, 앱 HTTP 경유는 verifier 가 직접 재현",
         "verified": true,
-        "suggested_fix": "catch 를 UNIQUE 위반(SQLState 23505 — H2 도 동일)으로 한정하고(java.sql.SQLException 은 ARCH-003 대상이 아님) name 의 NUL·제어 문자를 사전 검증해 400 으로 막는다"
+        "suggested_fix": "이메일에도 \\p{Cs} 거부 검증 추가(name 과 동일 정책), 또는 서비스에서 정규화 후 검증"
       }
     ],
     "suggestions": [
-      "name 의 짝 없는 서로게이트는 U+FFFD 로 조용히 치환 저장된다 — 제어 문자·짝 없는 서로게이트 정책을 정한다",
-      "존재하지 않는 이메일은 BCrypt 비교를 건너뛰어 응답 시간으로 가입 여부를 열거할 수 있다(Plan 에서 범위 밖, 가입 API 가 이미 409 로 알려줌)",
-      "가드를 켠 배포에서 브라우저 로그인에도 X-Write-Key 가 필요하다(ADR-0017 이 인지) — TASK-010 에서 request() 가 쓰기 요청에 키를 붙이므로 문제 없음",
-      "비동기 도입 시 ASYNC 디스패치에서 JwtAuthenticationFilter 가 다시 돌지 않을 수 있다 — 현재 코드에는 비동기·forward 없음",
-      "PostgreSQL 통합 테스트(e2e)에 name 특수 문자와 'UNIQUE 외 무결성 위반' 케이스를 넣어야 H2 가 못 잡는 부류를 막는다"
+      "isUniqueViolation 분기(23505 → 409, 그 외 재던짐)를 실행하는 테스트가 없다 — 수동 프로브로만 확인. existsByEmail=false + SQLState 23505/23502 원인의 DataIntegrityViolationException 을 던지는 서비스 테스트로 고정",
+      "isUniqueViolation 은 UNIQUE 가 이메일 하나뿐이라는 가정에 의존 — 제약이 늘면 constraint name(users_email_key) 로 확인",
+      "password 의 짝 없는 서로게이트는 getBytes 가 '?' 로 바꾸지만 해시·매칭이 같은 변환이라 영향 없음(not_probed)",
+      "PostgreSQL 통합 테스트(Testcontainers, ADR-0006 예고) 도입 — 이번 태스크에서 H2↔PG 차이로 세 번째 결함"
     ],
     "confirmed_ok": [
-      "수정 커밋 자체(notExpiredValidator 는 isBefore 로 정각 거부·exp 없으면 거부, nbf 미발급이라 기본 검증기 교체 영향 없음, 초 단위 절삭으로 최대 1초 짧아질 수 있으나 무시 가능)",
-      "ERROR 디스패치 permitAll 이 REQUEST 인가를 약화시키지 않음(/error 직접 호출은 인증 필요)",
-      "정규화 후 길이 검증, 로그인·가입 이메일 정규화 일치(toLowerCase 로 길이가 줄어드는 경우 없음)",
-      "password 검증 시점과 저장 시점 동일, 로그인 바이트 상한 일치",
-      "role 서수 차단, saveAndFlush 로 INSERT 예외가 메서드 안에서 변환되고 롤백됨",
-      "JwtAuthenticationFilter 파싱 예외 전부 처리(500 경로 없음), 오류 메시지가 입력값을 에코하지 않음",
-      "디스패치 타입: 프로젝트에 Callable·DeferredResult·forward 없음 — ASYNC·FORWARD 없음"
+      "name @Pattern ^[^\\p{Cc}\\p{Cs}]*$ — 전체 일치, 정상 이름(결합문자·ZWJ 이모지·앞뒤 공백) 허용, PG 가 거부하는 허용 문자 없음",
+      "UNIQUE 한정 catch — saveAndFlush 로 메서드 안에서 잡힘, 롤백됨, PG·H2 모두 SQLException 으로 귀결(24 동시 프로브와 일치)",
+      "정규화 후 길이 검증·가입/로그인 정규화 일치(Kelvin 기호 포함)",
+      "로그인 경로 열거 차이 없음",
+      "AuthApiTest 는 클래스 레벨 @Transactional 없음 — SC-20 거부 경로 count 단언은 비트랜잭션 확인으로 유효, Given 이 properties 에 의존하는 테스트 없음",
+      "WriteGuardAuthApiTest 등 다른 파일은 범위 확인 not_probed"
     ]
   },
   "security": {
-    "input_validation": "이메일 형식·길이(정규화 후)·trim, 비밀번호 8~72자와 UTF-8 72바이트(가입·로그인 일관), name 길이, role enum(숫자 거부). 결함: name 의 NUL·제어 문자 미검증 → 409 오보(PostgreSQL 재현)",
+    "input_validation": "이메일 형식·길이(정규화 후)·trim, 비밀번호 8~72자·72바이트, name 길이·제어 문자·서로게이트(400), role enum. 결함: 이메일의 짝 없는 서로게이트 미검증(PG '?' 치환·충돌)",
     "authorization": "공연 API 는 의도적으로 permitAll(ADR-0017). /api/auth/me·허용 목록 밖 경로는 인증 필요. ERROR 디스패치만 열어 두었고 REQUEST 인가는 그대로. 1차 결함(오류 응답 401 회귀) 해결 확인",
     "secrets": "JWT_SECRET 환경변수만, 32바이트 미만 기동 실패. 저장소에 비밀값 없음. password_hash 는 응답·로그에 노출되지 않음",
-    "logging": "자격증명·토큰을 로그로 남기는 코드 없음. 단 NUL 입력 시 Hibernate 가 SQLState·메시지를 WARN 으로 남김(입력값은 아님)",
+    "logging": "자격증명·토큰을 로그로 남기는 코드 없음",
     "notes": [
       "사용자 열거(타이밍)·로그인 시도 제한은 범위 밖(Plan)",
       "BCrypt 는 72바이트 초과를 잘라 비교 — 로그인 가드와 SC-08 로 차단됨(변이 검증 완료)"
@@ -322,23 +339,81 @@
     "docs/release/first-deploy-checklist.md §6 의 백엔드 환경변수 표에 JWT_SECRET 이 없다"
   ],
   "known_gaps": [
-    "exp 없는 토큰을 유효로 보는 변이가 생존(시나리오 없음, 우리가 발급하는 토큰은 항상 exp 보유)",
-    "H2 가 NUL 을 받아 주어 PostgreSQL 전용 입력 결함을 테스트가 못 잡음 — 이번 결함이 그 사례",
-    "JWT_SECRET 미설정 기동 실패는 이번 라운드 e2e 에서 다시 확인하지 않음(SC-16 이 덮음)"
+    "isUniqueViolation 분기를 실행하는 테스트 없음(수동 프로브로만 확인)",
+    "H2 가 PG 와 다르게 동작하는 입력 부류(NUL·서로게이트) 를 테스트가 못 잡음 — PostgreSQL 통합 테스트 부재",
+    "exp 없는 토큰을 유효로 보는 변이 생존(우리가 발급하는 토큰은 항상 exp 보유)"
   ],
   "human_review": {
-    "decision": "ROLLBACK_SCENARIO",
+    "decision": null,
     "verified_commit": null,
-    "verified_at": null,
-    "reject": {
-      "type": "RETRY_SCENARIO",
-      "reason_code": "COVERAGE_INSUFFICIENT",
-      "attempt": 2,
-      "max_attempts": 3,
-      "back_to": "2a",
-      "reason": "name 의 NUL 등 제어 문자가 PostgreSQL 에서 거부되어 409 EMAIL_ALREADY_EXISTS 로 오보됨 — 시나리오가 덮지 않은 경계(H2 는 NUL 을 받아 줘 테스트가 못 잡음)",
-      "decided_by": "사람(HITL#3 AskUserQuestion — 시나리오로 롤백)",
-      "escalation_note": "3회를 넘으면 ROLLBACK_PLAN(Phase 1)으로 올라간다"
+    "verified_at": null
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "입력 검증이 'DB 가 무손실로 저장하지 못하는 문자열'을 막지 않고, 무결성 예외를 전부 UNIQUE 위반(409)으로 취급한 catch 가 그것을 가렸다(H2 는 둘 다 받아 주어 테스트가 못 잡음)",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "소문자화로 길이가 늘어나는 이메일",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc18_이메일_길이는_정규화_후_기준으로_검증된다 · 3차 PostgreSQL 프로브"
+        },
+        {
+          "case": "name 에 NUL 문자",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc20_name에_제어_문자나_짝_없는_서로게이트가_있으면_400이다 · 3차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "name 의 짝 없는 서로게이트(U+FFFD 조용한 치환)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc20 · 3차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "UNIQUE 외 무결성 위반이 409 로 오보",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "reason": "SQLState 23505 한정으로 수정됨(코드 확인). 이 분기를 실행하는 테스트는 없음"
+        },
+        {
+          "case": "이메일 로컬파트의 짝 없는 서로게이트 — @Email 통과, PG 가 '?' 로 치환 저장, 다른 입력과 409 충돌",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": false
+        },
+        {
+          "case": "password 의 짝 없는 서로게이트",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "getBytes 변환이 해시·매칭에서 같아 영향 없다고 판단, 앱 경유 재현 안 함"
+        },
+        {
+          "case": "이메일 U+0085 등 C1 제어문자",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "reason": "PG 에 정상 저장, 오동작 없음(리뷰어 프로브)"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "Security 체인이 ERROR 디스패치를 인증 대상으로 삼아 프레임워크 오류 응답을 401 로 바꾼다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "공연 API 400/405/415 → 401",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceErrorResponseRegressionTest · 3차 develop 기록값 대비 16개 요청 DIFF 0"
+        }
+      ]
     }
-  }
+  ]
 }
