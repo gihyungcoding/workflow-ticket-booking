@@ -1,20 +1,19 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "Phase 4 판정 FAIL — AC8 위반(공연 API 의 프레임워크 오류 응답 400/405/415 → 401, 프로브로 확인). 보조 결함: 소문자화로 길이가 늘어나는 이메일이 409 로 오보. 나머지 AC 1~7 PASS."
+summary: "Phase 4 2차 판정 FAIL — 1차 결함(오류 디스패치 401 회귀·정규화 길이 오보)은 해결(develop 비교 16개 요청 전부 동일). 새 결함: name 의 NUL(\\u0000)이 PostgreSQL 에서 거부되어 catch 가 409 EMAIL_ALREADY_EXISTS 로 오보 — 직접 재현. AC 1~8 은 모두 PASS."
 
 next_steps:
-  - "HITL#3 결과: 시나리오로 롤백(Phase 2a) 선택됨. 시나리오 보완 → 2b → 3 → 4 재수행"
-  - "권장 이유: 두 결함 모두 시나리오가 덮지 않은 경계다(프레임워크 오류 응답·정규화 후 길이). SC-15 에 오류 행과 SC-05 에 정규화 후 길이 행을 추가한 뒤 Red→Green"
-  - "수정 방향(참고): ERROR 디스패치 permitAll(예: dispatcherTypeMatchers(ERROR).permitAll()), 정규화 후 길이 검증 또는 UNIQUE 위반으로 catch 한정"
+  - "HITL#3 — FAIL 이라 승인 선택지 없음. 롤백 선택(시나리오로 Phase 2a, 권장 / 구현으로 Phase 3). 시나리오 롤백이면 RETRY_SCENARIO 2/3 — 3회를 넘으면 설계(Phase 1)로 올라간다"
+  - "수정 방향: catch 를 UNIQUE 위반(SQLState 23505, H2 동일)으로 한정 + name 의 NUL·제어 문자 사전 검증 400. 짝 없는 서로게이트 정책도 함께 결정"
 
 decisions:
-  - decision: "프레임워크 오류 응답 회귀를 WARN 이 아니라 FAIL 로 판정"
-    rationale: "AC8 은 공연 API 가 '그대로 동작' 해야 한다고 적었고, develop 과 비교한 프로브에서 7건이 실제로 달라졌다. 정상 경로만 확인한 테스트가 통과했다고 PASS 로 쓸 수 없다"
-  - decision: "리뷰어가 '프로브 필요'라고 한 추정을 직접 프로브로 확인한 뒤 판정에 반영"
-    rationale: "추론만으로는 결함이 아니다. develop 워크트리와 브랜치를 같은 postgres 에 각각 띄워 같은 요청을 비교했다"
-  - decision: "e2e 는 로컬 PostgreSQL 16.14 에서만 확인 — 운영 Neon 은 18.6"
-    rationale: "한계로 VERIFY 에 기록했다"
+  - decision: "리뷰어가 '재현하지 못했다'고 한 NUL 결함을 직접 PostgreSQL 에서 재현한 뒤 FAIL 로 판정"
+    rationale: "추론만으로는 결함이 아니다 — name=a\\u0000b 가 409 EMAIL_ALREADY_EXISTS 를 받고 DB 에 행이 없음을 확인했다. 1차의 İ 길이 오보와 같은 뿌리(모든 DataIntegrityViolationException → 409)"
+  - decision: "이번 결함도 WARN 이 아니라 FAIL"
+    rationale: "잘못된 상태 코드·메시지를 돌려주는 correctness 결함이고 같은 부류의 재발이다. 낮은 발생 가능성은 판정이 아니라 수정 우선순위의 근거"
+  - decision: "H2 가 NUL 을 받아 주는 한 이 부류는 테스트가 못 잡는다 — 개선안으로 PostgreSQL 통합 테스트 도입을 회고에 올린다"
+    rationale: "ADR-0006 이 이미 'Testcontainers 로 전환' 을 예고해 두었다. 이번 태스크에서 같은 이유로 두 번째 결함"
 
 attempts:
   - phase: "4"
@@ -22,4 +21,8 @@ attempts:
     outcome: "FAIL — AC8 회귀(프레임워크 오류 응답 400/405/415 → 401), 이메일 정규화 길이 오보"
     back_to: "2a"
     reject_type: "RETRY_SCENARIO (COVERAGE_INSUFFICIENT) 1/3"
+  - phase: "4"
+    round: 2
+    outcome: "FAIL — name NUL → 409 오보(PostgreSQL 재현). 1차 결함은 해결"
+    back_to: "(HITL#3 결정 대기)"
 ---
