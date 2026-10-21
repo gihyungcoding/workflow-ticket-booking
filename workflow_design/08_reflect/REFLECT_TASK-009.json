@@ -1,0 +1,146 @@
+{
+  "task_id": "TASK-009",
+  "keep": [
+    {
+      "what": "Phase 4 에서 H2 가 아니라 실제 PostgreSQL(docker) 에 앱을 띄워 HTTP 로 프로브한 것",
+      "evidence": "2·3·4차 FAIL(name NUL 409 오보, 이메일 서로게이트 '?' 치환, 로그인 password 매칭 200)은 112개 H2 테스트가 모두 통과한 상태에서 PostgreSQL HTTP 프로브로만 나왔다 — VERIFY_TASK-009.json rounds·e2e_postgres"
+    },
+    {
+      "what": "develop 워크트리와 브랜치를 같은 요청 16건으로 비교한 회귀 프로브",
+      "evidence": "1차에서 공연 API 오류 응답 400/405/415→401 (RC-2) 7건을 잡았고, 이후 라운드마다 DIFF 0 으로 회귀 없음을 증명했다 — VERIFY regression_probe"
+    },
+    {
+      "what": "FAIL 마다 뿌리·변종을 누적 기록하고 check_root_causes.py 로 막은 것",
+      "evidence": "뿌리 2·변종 18(found 3·predicted 7·later 8) 이 남았고, 이 기록이 PR #18(프로브 미루기·위치별 수정 방지 규칙)의 근거가 됐다. 마지막에 not_probed 1건이 게이트에 걸려 프로브로 닫혔다"
+    }
+  ],
+  "problem": [
+    {
+      "what": "같은 뿌리(문자열 입력이 DB 에 무손실로 저장·비교되는지 검증 안 됨, RC-1)로 Phase 4 가 4번 연속 FAIL — RETRY_SCENARIO 3/3 소진, 5차에야 WARN",
+      "evidence": "CP-4.2 attempts · VERIFY rounds 2~4 — name NUL → 이메일 서로게이트 → 로그인 password 서로게이트로 한 필드씩 변종이 나왔다",
+      "phase": 4
+    },
+    {
+      "what": "수정이 필드마다 @Pattern 을 붙이는 위치별 수정이었다. LoginRequest.password 가 빠져 4차 FAIL",
+      "evidence": "DEV_TASK-009.json rollback_fixes round 3·4, root-cause-sweep.md 「공통 지점에서」 절이 이 사례를 인용",
+      "phase": 3
+    },
+    {
+      "what": "테스트가 H2 + flyway 꺼짐이라 PostgreSQL 에서만 다르게 동작하는 입력 부류(NUL·짝 없는 서로게이트·V3 SQL)를 구조적으로 잡지 못했다. 5라운드가 끝난 지금도 PostgreSQL 통합 테스트는 없다",
+      "evidence": "VERIFY status_reason 의 남은 WARN · Plan 에서 'V3 SQL 이 테스트에서 실행되지 않는다' 확인(activeContext)",
+      "phase": 1
+    },
+    {
+      "what": "3차에서 'password 짝 없는 서로게이트는 영향 없다고 판단' 해 프로브하지 않았고 그것이 4차 FAIL 이었다. 이번 검증에서도 U+FFFE·bidi 변종을 '개선 제안' 이라며 not_probed 로 미뤘다가 새 게이트에 걸렸다",
+      "evidence": "root-cause-sweep.md 프로브 규칙(TASK-009 3차 인용) · VERIFY RC-1 variants not_probed → 이번 세션 프로브로 not_reproduced",
+      "phase": 4
+    },
+    {
+      "what": "not_reproduced 의 근거가 자동 테스트가 아니라 HTTP 프로브(scratchpad)다. 규칙은 테스트를 요구하지만 스크립트는 evidence 문자열만 확인해 통과한다",
+      "evidence": "VERIFY RC-1 U+FFFE 변종 evidence — '테스트가 아니라 HTTP 프로브'",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "Plan 단계에서 '문자열 입력 필드 표'(필드 × 길이·NUL·짝 없는 서로게이트·정규화·비교 단계 변환)를 작성하고 시나리오가 필드 전수를 덮게 한다",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    },
+    {
+      "what": "테스트 DB 가 운영 DB 와 다르고 입력이 DB 로 저장·비교되는 태스크는 Plan 의 test_strategy 에 PostgreSQL 통합 테스트(ADR-0006)를 필수로 적게 한다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "check_root_causes.py 가 not_reproduced 의 evidence 에서 테스트 식별자(클래스#메서드 또는 경로)를 요구하게 한다",
+      "target": "scripts/check_root_causes.py"
+    }
+  ],
+  "insights": [
+    "입력 검증 결함은 한 필드에서 나오면 같은 타입의 모든 필드·경로에 있다. 첫 FAIL 때 '문자열 필드 전수 × 전 변환 지점' 표를 만들고 공통 지점에서 한 번에 막았다면 4라운드를 3→1로 줄일 수 있었다",
+    "H2 테스트 112개 통과는 PostgreSQL 에서의 동작을 보증하지 않는다. DB 가 다른 프로젝트에서는 운영 DB 와 같은 엔진의 통합 테스트가 Phase 3 의 일부여야 한다",
+    "'영향 없을 것이다' 라는 판단이 두 번 다음 라운드 FAIL 이나 게이트 차단으로 돌아왔다. 판단하지 말고 프로브하라는 규칙이 이 태스크에서 실제로 검증됐다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "배포 영향(JWT_SECRET 필수·V3 Neon 적용)·ADR-0017 가드 유지 결정 정리"
+    },
+    "2a": {
+      "retries": 3,
+      "note": "Phase 4 FAIL 로 RETRY_SCENARIO 3회 — SC-17~19, SC-21, SC-23 추가. 3/3 소진"
+    },
+    "2b": {
+      "retries": 3,
+      "note": "시나리오 추가마다 Red 재작성 (2~4차 Red 승인)"
+    },
+    "3": {
+      "retries": 4,
+      "note": "rework 1·2 + rollback_fixes 라운드 3·4 — 위치별 수정으로 변종이 한 필드씩 남음"
+    },
+    "4": {
+      "retries": 4,
+      "note": "FAIL 1~4차, 5차 WARN(PostgreSQL 통합 테스트 부재·위장 문자·JWT_SECRET 배포 입력). 이어서 새 게이트(#18)에 걸린 not_probed 1건을 프로브로 닫고 APPROVE"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "문자열 입력은 API 경계의 한 지점에서 '무손실 저장·비교 가능' 을 검증한다(NUL·짝 없는 서로게이트 거부)",
+      "why_broader": "사용자 입력을 받는 모든 이후 엔드포인트(공연 등록·좌석·소셜 로그인 TASK-011~013)가 같은 문제를 가진다",
+      "evidence": "VERIFY RC-1 — 4라운드 FAIL, 변종 17건",
+      "suggested_title": "문자열 입력 검증 정책"
+    },
+    {
+      "decision": "DB 동작에 의존하는 입력 처리는 운영과 같은 엔진(PostgreSQL)의 통합 테스트로 검증한다",
+      "why_broader": "테스트 인프라 전반(H2 기본)에 영향. ADR-0006 과의 관계를 정해야 한다",
+      "evidence": "VERIFY 남은 WARN · e2e_postgres 가 유일한 PostgreSQL 증거",
+      "suggested_title": "PostgreSQL 통합 테스트 도입"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "architecture.md 「Service: HTTP 관심사」 규칙은 ARCH-002(api import 금지)로만 인코딩돼 서비스가 jakarta.servlet·Spring MVC 타입을 쓰는 것은 막지 않는다",
+      "where": "docs/architecture/constraints.yaml ARCH-002 (prose_coverage ⚠ 미인코딩)",
+      "found_how": "wf-verify Step 3.5 산문↔제약 대조 — 이번 변경엔 위반 없음",
+      "suggestion": "ARCH-002 에 jakarta.servlet·org.springframework.web 금지 패턴을 추가하거나 문서에서 규칙을 좁힌다"
+    },
+    {
+      "what": "AuthService 가 org.springframework.dao.DataIntegrityViolationException 을 쓴다 — 영속성 기술 중립 예외라 ARCH-003 에 걸리지 않지만 'Service 는 영속성 프레임워크 타입 직접 사용 금지' 경계가 모호하다",
+      "where": "backend/.../service/AuthService.java",
+      "found_how": "VERIFY prose_coverage 노트",
+      "suggestion": "허용 예외 타입을 architecture.md 에 명시하거나 제약 패턴을 정한다"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§2-1 입력 경계값 표",
+      "change": "'문자열 입력 필드 전수' 행 추가 — 필드마다 길이·NUL·짝 없는 서로게이트·DB 저장/비교 변환을 같은 표에 묶고, 한 필드에서 결함이 나오면 같은 타입 전 필드를 한 시나리오로 덮게 한다. TASK-015 #0 과 같은 파일이므로 함께 반영한다",
+      "evidence": "TASK-009 Phase 4 FAIL 4회, 변종 17건",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "test_strategy",
+      "change": "테스트 DB 가 운영 DB 와 다르고 입력이 저장·비교되는 태스크는 운영과 같은 엔진의 통합 테스트(ADR-0006)를 test_strategy 에 필수로 적고, 없으면 사유를 unresolved 에 남긴다",
+      "evidence": "TASK-009 H2 112/112 통과 상태에서 PostgreSQL 결함 3회",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": "scripts/check_root_causes.py",
+      "section": "not_reproduced 검사",
+      "change": "not_reproduced 의 evidence 에 테스트 식별자(경로 또는 클래스#메서드)가 있는지 확인한다. 현재는 비어 있지만 않으면 통과한다",
+      "evidence": "TASK-009 RC-1 U+FFFE 변종 — HTTP 프로브 문자열만으로 게이트 통과",
+      "status": "pending",
+      "recurring": 0
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  }
+}
