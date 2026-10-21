@@ -1,0 +1,179 @@
+{
+  "task_id": "TASK-009",
+  "supersedes": "SCENARIO_TASK-009.json",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/JwtSecretConfigTest.java",
+    "backend/src/test/java/com/example/ticket_booking/support/AuthTestHelper.java"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_sc01_올바른_정보로_가입하면_201과_비밀번호_없는_사용자_정보를_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_sc02_저장된_비밀번호는_평문이_아니라_BCrypt_해시다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음. 이후 User getter 는 UnsupportedOperationException"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_sc03_이미_있는_이메일로_가입하면_409다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "test_sc04_필수_값이_없거나_형식이_틀리면_400이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "test_sc05_필드_길이는_상한_플러스1에서_거부되고_상한_정확히는_통과한다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "test_sc06_비밀번호는_UTF8_72바이트를_넘지_않고_확인값과_같아야_한다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "test_sc07_올바른_이메일_비밀번호로_로그인하면_200과_유효한_accessToken을_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "test_sc08_틀린_비밀번호와_없는_이메일은_똑같은_401을_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "test_sc09_로그인_요청의_필수_값_형식이_틀리면_401이_아니라_400이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "test_sc10_유효한_토큰으로_me를_조회하면_현재_사용자_정보를_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "test_sc11_인증_정보가_없으면_me와_허용_목록_밖_경로는_401이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "test_sc12_위조되거나_용도가_다른_토큰은_me에서_401이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "test_sc13_토큰은_발급_24시간_뒤에_만료된다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_function": "test_sc14_사용자가_사라진_뒤에는_유효한_토큰도_401이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_function": "test_sc15_Security_도입_뒤에도_공연_API는_인증_없이_그대로_동작한다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java",
+      "status": "already_passing",
+      "failure": null,
+      "config_applied_via": "@SpringBootTest(properties={\"CORS_ALLOWED_ORIGINS=https://app.example.com\"}) — 허용 Origin 을 실제로 주입. JWT_SECRET 은 test/resources/application.properties",
+      "note": "이 태스크가 바꾸지 않는 기존 동작(공연 API 무인증·CORS 사전 요청)이 계속된다는 부정형 회귀 — Security 구현 전에도 이미 참이라 구조적으로 Red 불가. Green 에서 SecurityConfig 가 들어간 뒤에야 의미가 생기는 안전망이다"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_function": "test_sc16_JWT_비밀키는_UTF8_32바이트_이상이_아니면_기동하지_않는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/JwtSecretConfigTest.java",
+      "status": "red",
+      "failure": "JwtTokenProvider.fromEnv 가 UnsupportedOperationException 을 던져 기대한 IllegalStateException(JWT_SECRET 메시지)/정상 반환과 불일치(행 6개). 빈 JWT_SECRET 으로 실제 기동하면 지금은 성공해 '기동 실패' 기대와 불일치"
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && ./gradlew test",
+    "total": 105,
+    "failed": 15,
+    "passed": 90,
+    "new_tests": {
+      "total": 16,
+      "failed": 15,
+      "already_passing": 1
+    },
+    "existing_tests": {
+      "total": 89,
+      "failed": 0
+    },
+    "existing_tests_still_passing": true,
+    "note": "기존 89건은 이번 변경(의존성 2개·스켈레톤 4개·test properties 1줄) 뒤에도 모두 통과"
+  },
+  "inventory_check": {
+    "scenarios": 16,
+    "test_functions": 16,
+    "match": true,
+    "id_match": true,
+    "command": "grep -ho 'void test_sc[0-9]*' (3 파일) | sort -u | wc -l  /  jq '.scenarios|length'"
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + @SpringBootTest + @AutoConfigureMockMvc, H2(PostgreSQL 모드)",
+    "mock_strategy": "목 없음. 실제 필터 체인·H2 를 태운다. 클래스 레벨 @Transactional 없음 — 요청은 각자 커밋하고 DB 확인은 리포지토리로 새로 읽는다. 표의 행은 SoftAssertions 로 독립 단언. 토큰은 구현과 독립적으로 Nimbus 로 직접 만든다(AuthTestHelper). 시각은 MutableClock",
+    "token_helper_sanity": "임시 테스트로 확인 후 삭제: pending 토큰은 올바른 키로 서명 검증 통과(typ 만 다름), 다른 키 토큰은 자기 키로만 검증, alg none 은 PlainJWT 로 파싱, 변조 토큰은 role 만 바뀌고 서명 검증 실패 — 위조 행이 '형식 깨짐' 때문에 우연히 401 이 되는 일을 막는다"
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/build.gradle (spring-security-crypto, spring-security-oauth2-jose 의존성 — starter-security 는 일부러 넣지 않음)",
+      "backend/src/main/java/com/example/ticket_booking/domain/UserRole.java",
+      "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+      "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+      "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "backend/src/test/resources/application.properties (테스트용 JWT_SECRET)"
+    ],
+    "contents": "enum 상수, 엔티티 필드와 구조 애노테이션(@Entity/@Id/@GeneratedValue/@Column(name=)/@Enumerated), 접근자 6개와 fromEnv 의 본문은 전부 UnsupportedOperationException 한 줄. UserRepository 는 커스텀 쿼리 메서드 없이 extends JpaRepository 뿐. 제약 애노테이션(@Column nullable·length·unique)은 넣지 않았다 — Phase 3",
+    "purity_check": "신규 실패 15건의 원인: 엔드포인트 404 14건(구현·컨트롤러 없음) + fromEnv UnsupportedOperationException(JwtSecretConfigTest 의 11개 단언 실패, 예외 11건). HTTP 경계 테스트는 Spring 이 404 로 렌더링하므로 예외 타입이 아니라 상태 불일치로 실패한다 — 로직이 새어 들어와 우연히 통과한 테스트 없음",
+    "why_no_starter_security": "spring-boot-starter-security 를 넣으면 자동 구성이 전 엔드포인트를 막아 기존 공연 API 테스트 89건이 Red 단계에서 깨진다. 컴파일에 필요한 BCrypt(crypto)와 Nimbus(oauth2-jose)만 추가했고 Security 설정은 Phase 3 에서 starter 와 함께 도입한다. 두 라이브러리가 Spring Boot 4.1.1 BOM 에서 버전 없이 해석되고 컴파일됨을 확인했다"
+  },
+  "risks_for_green": [
+    "SC-04 의 role 숫자 1: Jackson 기본 설정이 enum 서수를 허용하면 ORGANIZER 로 파싱돼 201 이 된다 — 400 이어야 하므로 Green 에서 FAIL_ON_NUMBERS_FOR_ENUMS 설정 여부를 확인한다",
+    "SC-16 의 '미설정' 행은 test/resources 가 JWT_SECRET 을 채워 두므로 null 을 팩토리에 직접 넘겨 대신한다. 앱 기동 행은 빈 값(--JWT_SECRET=)만 확인하고 별도 H2 DB 이름을 쓴다",
+    "SC-05 의 이메일 255자·256자는 로컬 64자+3개 레이블의 형식 유효 주소로 만든다. 256자가 400 이려면 Green 에서 email 에 @Size(max=255) 가 필요하다(@Email 만으로는 보장되지 않음)",
+    "SC-13 은 정확히 T+24h 를 단정하지 않는다(시나리오 결정)",
+    "테스트 DB 가 H2 이고 Flyway 가 꺼져 있어 V3 SQL 은 테스트에서 실행되지 않는다 — Phase 4 에서 postgres 로 확인"
+  ],
+  "human_review": {
+    "approved": false
+  }
+}
