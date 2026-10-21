@@ -2,7 +2,7 @@
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
 phase: "2b"
-phase_name: "Phase 2b - Red (재작성, HITL#2 재승인 대기)"
+phase_name: "Phase 2b - Red (재작성, HITL#2 재승인)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-HITL#1 재승인 완료(시나리오 19건). `wf-red` 로 Phase 2b — **구현이 이미 있는 Red 재작성**이다. 테스트 수정: SC-08/09/13 행 추가, SC-17·18·19 신규. 새 행은 지금 구현에서 실제로 실패해야 하고(SC-17: 401, SC-18: 409, SC-13 정각: 200) 그것이 Red 의 증거다. SC-19 는 already_passing 예상. 만료 정각은 RFC 7519 기준(정각부터 만료) — Phase 3 에서 만료 검증을 직접 구현한다.
+HITL#2 재승인 완료(테스트 19건). `wf-develop` 로 Phase 3 수정. 현재 실패 3건을 통과시킨다: ① SC-13 만료 정각 401 — Spring JwtTimestampValidator 대신 `now < exp` 를 직접 비교(RFC 7519), ② SC-17 ERROR 디스패치 permitAll(`dispatcherTypeMatchers(ERROR)`), ③ SC-18 이메일 정규화 후 길이 255 초과를 400 으로(DataIntegrityViolationException catch 는 UNIQUE 위반으로 한정 검토). 테스트는 고치지 않는다.
 
 ## 알아둬야 할 것
 
