@@ -2,7 +2,7 @@
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
 phase: "2a"
-phase_name: "Phase 2a - Scenario (HITL#1 대기)"
+phase_name: "Phase 2a - Scenario (HITL#1 승인)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -28,7 +28,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-HITL#1 승인을 받는다(CP-2.2). 승인 후 `wf-red` 로 Phase 2b Red 테스트를 작성한다.
+HITL#1 승인 완료(CP-2.2). `wf-red` 로 Phase 2b Red 테스트를 작성한다.
 
 ## 알아둬야 할 것
 

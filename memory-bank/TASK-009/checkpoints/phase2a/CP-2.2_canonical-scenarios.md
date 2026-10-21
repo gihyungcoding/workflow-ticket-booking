@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "시나리오 16건(happy 4 / error 7 / boundary 4 / regression 1), AC 8/8 매핑. 독립검증 1차 FAIL(V11 Authorization 경계) → 보완 → 2차 PASS(경고 4). HITL#1 승인 대기."
+summary: "시나리오 16건(happy 4 / error 7 / boundary 4 / regression 1), AC 8/8 매핑. 독립검증 1차 FAIL(V11 Authorization 경계) → 보완 → 2차 PASS(경고 4). HITL#1 승인됨(2026-10-21)."
 
 next_steps:
-  - "HITL#1 승인 후 Phase 2b — wf-red 로 Red 테스트 작성 (@SpringBootTest 통합 테스트, 컴파일용 스켈레톤은 UnsupportedOperationException 한 줄만)"
+  - "Phase 2b — wf-red 로 Red 테스트 작성 (@SpringBootTest 통합 테스트, 컴파일용 스켈레톤은 UnsupportedOperationException 한 줄만)"
 
 decisions:
   - decision: "시나리오가 16건으로 복잡 기준선(8~12건)을 넘는다 — 표로 묶었음에도 줄이지 못함"
