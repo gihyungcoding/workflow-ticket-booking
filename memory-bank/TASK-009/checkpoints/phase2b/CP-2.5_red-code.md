@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "Red 테스트 16건 작성 — 15건 실패(구현 없음) + 1건 already_passing(SC-15 회귀). 기존 89건 통과. HITL#2 승인 대기."
+summary: "Red 테스트 16건 작성 — 15건 실패(구현 없음) + 1건 already_passing(SC-15 회귀). 기존 89건 통과. HITL#2 승인됨(2026-10-21)."
 
 next_steps:
-  - "HITL#2 승인 후 Phase 3 — wf-develop 로 구현. spring-boot-starter-security 와 security-test 추가, V3 마이그레이션, 엔티티 제약 애노테이션, AuthService·컨트롤러·SecurityConfig·JWT"
+  - "Phase 3 — wf-develop 로 구현. spring-boot-starter-security 와 security-test 추가, V3 마이그레이션, 엔티티 제약 애노테이션, AuthService·컨트롤러·SecurityConfig·JWT"
   - "Green 에서 확인할 위험은 TEST_TASK-009.json 의 risks_for_green (role 숫자 enum, email @Size(255), JWT_SECRET 기동 검증)"
 
 decisions:
