@@ -103,6 +103,16 @@ class AuthApiTest {
 
   private record Case(String label, String rawBody) {}
 
+  /** 주어진 로컬 파트 + @ + 3개 레이블 + .com 으로 입력 길이가 total 인 형식이 유효한 이메일. */
+  private static String emailWithLocal(String local, int total) {
+    int domainLength = total - local.length() - 1;
+    int lastLabel = domainLength - 63 - 1 - 63 - 1 - ".com".length();
+    String email =
+        local + "@" + "b".repeat(63) + "." + "c".repeat(63) + "." + "d".repeat(lastLabel) + ".com";
+    assertThat(email).hasSize(total);
+    return email;
+  }
+
   /** 로컬 64자 + @ + 3개 레이블 + .com 으로 총 길이가 total 인 형식이 유효한 이메일. */
   private static String emailOfLength(int total) {
     String local = "a".repeat(64);
@@ -445,31 +455,36 @@ class AuthApiTest {
   void test_sc08_틀린_비밀번호와_없는_이메일은_똑같은_401을_받는다() throws Exception {
     // Given user@example.com / password123 으로 가입돼 있다
     givenSignedUp(EMAIL, PASSWORD, NAME, "AUDIENCE");
-
-    // When 틀린 비밀번호, 존재하지 않는 이메일로 각각 로그인을 요청한다
-    MvcResult wrongPassword = login(mockMvc, EMAIL, "wrong-password");
-    MvcResult unknownEmail = login(mockMvc, "nobody@example.com", PASSWORD);
-
+    record Row(String label, String email, String password) {}
+    List<Row> rows =
+        List.of(
+            new Row("틀린 비밀번호", EMAIL, "wrong-password"),
+            new Row("존재하지 않는 이메일", "nobody@example.com", PASSWORD),
+            new Row("72바이트 초과 비밀번호(ASCII 73자)", EMAIL, "a".repeat(73)),
+            new Row("한글 25자(75바이트) 비밀번호", EMAIL, "가".repeat(25)),
+            new Row("256자 이메일", emailOfLength(256), PASSWORD));
     SoftAssertions soft = new SoftAssertions();
-    // Then 두 행 모두 401 이고 code 는 INVALID_CREDENTIALS 다
-    soft.assertThat(wrongPassword.getResponse().getStatus()).as("틀린 비밀번호 상태").isEqualTo(401);
-    soft.assertThat(unknownEmail.getResponse().getStatus()).as("없는 이메일 상태").isEqualTo(401);
-    if (wrongPassword.getResponse().getStatus() == 401
-        && unknownEmail.getResponse().getStatus() == 401) {
-      soft.assertThat(code(wrongPassword)).as("틀린 비밀번호 code").isEqualTo("INVALID_CREDENTIALS");
-      soft.assertThat(code(unknownEmail)).as("없는 이메일 code").isEqualTo("INVALID_CREDENTIALS");
-      // And 두 응답 본문 전체가 글자 단위로 같다
-      soft.assertThat(wrongPassword.getResponse().getContentAsString())
-          .as("두 응답 본문")
-          .isEqualTo(unknownEmail.getResponse().getContentAsString());
+    String firstBody = null;
+
+    for (Row row : rows) {
+      // When 각 행으로 로그인을 요청한다
+      MvcResult result = login(mockMvc, row.email(), row.password());
+      String body = result.getResponse().getContentAsString();
+
+      // Then 모든 행이 401 이고 code 는 INVALID_CREDENTIALS 다 (500 이 아니다)
+      soft.assertThat(result.getResponse().getStatus()).as(row.label() + " 상태").isEqualTo(401);
+      if (result.getResponse().getStatus() == 401) {
+        soft.assertThat(code(result)).as(row.label() + " code").isEqualTo("INVALID_CREDENTIALS");
+        // And 모든 행의 응답 본문 전체(code 와 message)가 글자 단위로 서로 같다
+        if (firstBody == null) {
+          firstBody = body;
+        } else {
+          soft.assertThat(body).as(row.label() + " 본문").isEqualTo(firstBody);
+        }
+      }
+      // And 응답 본문에 accessToken 이 없다
+      soft.assertThat(body).as(row.label() + " accessToken 없음").doesNotContain("accessToken");
     }
-    // And 응답 본문에 accessToken 이 없다
-    soft.assertThat(wrongPassword.getResponse().getContentAsString())
-        .as("틀린 비밀번호 본문")
-        .doesNotContain("accessToken");
-    soft.assertThat(unknownEmail.getResponse().getContentAsString())
-        .as("없는 이메일 본문")
-        .doesNotContain("accessToken");
     soft.assertAll();
   }
 
@@ -484,7 +499,7 @@ class AuthApiTest {
       cases.add(loginMutated("email", mutation));
     }
     cases.add(new Case("email 형식 plainaddress", json(loginBody("plainaddress", PASSWORD))));
-    for (String mutation : new String[] {"missing", "null", "empty"}) {
+    for (String mutation : new String[] {"missing", "null", "empty", "blank"}) {
       cases.add(loginMutated("password", mutation));
     }
     cases.add(new Case("본문 깨진 JSON", "{"));
@@ -658,6 +673,7 @@ class AuthApiTest {
     List<Row> rows =
         List.of(
             new Row("T+24h-1s", FIXED_NOW.plus(24, ChronoUnit.HOURS).minusSeconds(1), 200),
+            new Row("T+24h 정각", FIXED_NOW.plus(24, ChronoUnit.HOURS), 401),
             new Row("T+24h+1s", FIXED_NOW.plus(24, ChronoUnit.HOURS).plusSeconds(1), 401));
     SoftAssertions soft = new SoftAssertions();
 
@@ -699,5 +715,40 @@ class AuthApiTest {
     assertThat(result.getResponse().getContentAsString())
         .doesNotContain(EMAIL)
         .doesNotContain(NAME);
+  }
+
+  // ---- SC-18 ----
+
+  @Test
+  void test_sc18_이메일_길이는_정규화_후_기준으로_검증된다() throws Exception {
+    // Given users 가 비어 있다 (İ 는 소문자로 바꾸면 두 글자가 되는 문자다)
+    record Row(String label, String email, int expected) {}
+    List<Row> rows =
+        List.of(
+            new Row("İ 64개, 입력 255자 → 정규화 후 319자", emailWithLocal("İ".repeat(64), 255), 400),
+            new Row("İ 1개, 입력 254자 → 정규화 후 255자", emailWithLocal("İ" + "a".repeat(63), 254), 201),
+            new Row("İ 1개, 입력 255자 → 정규화 후 256자", emailWithLocal("İ" + "a".repeat(63), 255), 400));
+    SoftAssertions soft = new SoftAssertions();
+
+    for (Row row : rows) {
+      userRepository.deleteAll();
+
+      // When 각 이메일로 가입을 요청한다
+      MvcResult result = signUp(mockMvc, row.email(), PASSWORD, NAME, "AUDIENCE");
+
+      // Then 각 행의 상태가 기대와 같다
+      soft.assertThat(result.getResponse().getStatus())
+          .as(row.label() + " 상태")
+          .isEqualTo(row.expected());
+      if (row.expected() == 400) {
+        // And 400 행에서는 code 가 INVALID_REQUEST 이다 (EMAIL_ALREADY_EXISTS 나 500 이 아니다)
+        if (result.getResponse().getStatus() == 400) {
+          soft.assertThat(code(result)).as(row.label() + " code").isEqualTo("INVALID_REQUEST");
+        }
+        // And 400 행에서는 users 에 행이 생기지 않는다
+        soft.assertThat(userRepository.count()).as(row.label() + " 행 수").isZero();
+      }
+    }
+    soft.assertAll();
   }
 }
