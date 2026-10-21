@@ -4,7 +4,7 @@ saved_at: 2026-10-21T00:00:00Z
 summary: "Phase 4 2차 판정 FAIL — 1차 결함(오류 디스패치 401 회귀·정규화 길이 오보)은 해결(develop 비교 16개 요청 전부 동일). 새 결함: name 의 NUL(\\u0000)이 PostgreSQL 에서 거부되어 catch 가 409 EMAIL_ALREADY_EXISTS 로 오보 — 직접 재현. AC 1~8 은 모두 PASS."
 
 next_steps:
-  - "HITL#3 — FAIL 이라 승인 선택지 없음. 롤백 선택(시나리오로 Phase 2a, 권장 / 구현으로 Phase 3). 시나리오 롤백이면 RETRY_SCENARIO 2/3 — 3회를 넘으면 설계(Phase 1)로 올라간다"
+  - "HITL#3 결과: 시나리오로 롤백(Phase 2a) 선택됨(RETRY_SCENARIO 2/3). 시나리오 보완 → 2b → 3 → 4 재수행"
   - "수정 방향: catch 를 UNIQUE 위반(SQLState 23505, H2 동일)으로 한정 + name 의 NUL·제어 문자 사전 검증 400. 짝 없는 서로게이트 정책도 함께 결정"
 
 decisions:
@@ -24,5 +24,6 @@ attempts:
   - phase: "4"
     round: 2
     outcome: "FAIL — name NUL → 409 오보(PostgreSQL 재현). 1차 결함은 해결"
-    back_to: "(HITL#3 결정 대기)"
+    back_to: "2a"
+    reject_type: "RETRY_SCENARIO (COVERAGE_INSUFFICIENT) 2/3"
 ---

@@ -42,7 +42,9 @@
         "source": "POST /api/auth/signup 본문",
         "constraints": [
           "필수(공백만 불가)",
-          "최대 100자"
+          "최대 100자",
+          "제어 문자(U+0000~U+001F, U+007F~U+009F)와 짝 없는 서로게이트는 400 — PostgreSQL 이 NUL 을 저장하지 못하고(SQLState 22021) 짝 없는 서로게이트는 저장 때 U+FFFD 로 바뀐다. 한글·짝이 맞는 이모지는 허용",
+          "DB 무결성 예외가 UNIQUE 위반(SQLState 23505)이 아니면 이메일 중복(409)으로 보고하지 않는다"
         ]
       },
       {
@@ -262,7 +264,8 @@
           "필수 누락·이메일 형식·password 길이(7/73자, 72바이트 초과)·name 101자·role 오류·passwordConfirm 불일치",
           "400 INVALID_REQUEST",
           "users 행 추가 없음",
-          "이메일 길이는 정규화 후 255 이하여야 한다 — 넘으면 400 INVALID_REQUEST(SC-18)"
+          "이메일 길이는 정규화 후 255 이하여야 한다 — 넘으면 400 INVALID_REQUEST(SC-18)",
+          "name 에 제어 문자·짝 없는 서로게이트가 있으면 400 INVALID_REQUEST — DB 에 닿기 전에 막는다(SC-20)"
         ],
         "covers": [
           "올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다 — 'AC1 의 \"올바른 정보로\" 의 반대편'. AC 에 별도 문장은 없으나 출처 문서 §3 의 요청 제약과 coverage-policy §2-1 의 경계값에서 나온다. 범위 확대가 아니라 AC1·AC3 입력 조건의 경계"

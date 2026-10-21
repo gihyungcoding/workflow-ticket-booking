@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "3"
-phase_name: "Phase 3 - Green (재수정 완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (Phase 4 2차 FAIL 로 롤백, RETRY_SCENARIO 2/3)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 3 재수정 완료(CP-3.4, 전체 108/108). `wf-verify` 로 Phase 4 를 **처음부터 다시** 수행한다: develop 과의 응답 비교 프로브(SC-17 의 8개 요청이 develop 과 같은 상태인지), PostgreSQL e2e, code-reviewer(이전 결함 카테고리 지목 + 수정 커밋도 리뷰).
+Phase 4 2차 FAIL(CP-4.2)로 **Phase 2a 재롤백**(RETRY_SCENARIO 2/3 — 한 번 더 실패하면 설계(Phase 1)로 올라간다). 새 시나리오 SC-20: name 에 NUL·제어 문자·짝 없는 서로게이트가 있으면 400(PostgreSQL 이 NUL 을 거부해 409 EMAIL_ALREADY_EXISTS 로 오보됨 — 직접 재현). 독립검증 → HITL#1 → Phase 2b → 3 → 4. 수정 방향: DTO 에 @Pattern(제어·서로게이트 거부) + AuthService 의 DataIntegrityViolationException catch 를 UNIQUE(SQLState 23505)로 한정.
 
 ## 알아둬야 할 것
 

@@ -327,8 +327,18 @@
     "JWT_SECRET 미설정 기동 실패는 이번 라운드 e2e 에서 다시 확인하지 않음(SC-16 이 덮음)"
   ],
   "human_review": {
-    "decision": null,
+    "decision": "ROLLBACK_SCENARIO",
     "verified_commit": null,
-    "verified_at": null
+    "verified_at": null,
+    "reject": {
+      "type": "RETRY_SCENARIO",
+      "reason_code": "COVERAGE_INSUFFICIENT",
+      "attempt": 2,
+      "max_attempts": 3,
+      "back_to": "2a",
+      "reason": "name 의 NUL 등 제어 문자가 PostgreSQL 에서 거부되어 409 EMAIL_ALREADY_EXISTS 로 오보됨 — 시나리오가 덮지 않은 경계(H2 는 NUL 을 받아 줘 테스트가 못 잡음)",
+      "decided_by": "사람(HITL#3 AskUserQuestion — 시나리오로 롤백)",
+      "escalation_note": "3회를 넘으면 ROLLBACK_PLAN(Phase 1)으로 올라간다"
+    }
   }
 }
