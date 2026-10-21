@@ -1,19 +1,19 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "3"
-phase_name: "Phase 3 - Green (4차 재수정 완료)"
+phase: "5"
+phase_name: "Phase 5 - Reflect (Phase 4 HITL#3 APPROVE, WARN)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
-last_updated: 2026-10-21
+last_updated: 2026-10-22
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-009-email-auth-security"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-009.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-009.md"
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 3 4차 재수정 완료(전체 112/112). wf-verify 로 Phase 4 를 다섯 번째로 수행한다 — PostgreSQL 에서 로그인 password 서로게이트 400 확인, 같은 뿌리 변종 전수(code-reviewer 에 이전 root_causes 전달). 또 FAIL 이면 Phase 1 로 상승.
+Phase 4 HITL#3 승인 완료(5차 WARN, verified_commit efcad41). wf-reflect 로 Phase 5 KPT 회고를 시작한다 — later 변종 8건·PostgreSQL 통합 테스트 부재를 rule_proposals 로.
 
 ## 새 세션 메모
 
