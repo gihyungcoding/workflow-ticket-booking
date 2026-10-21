@@ -288,3 +288,45 @@ flow: F8
 
 covers: 올바른 이메일/비밀번호로 POST /auth/login 호출 시 200과 유효한 accessToken을 반환한다; 토큰 없이 또는 만료/위조된 토큰으로 GET /auth/me 호출 시 401을 반환한다
 flow: F10
+
+## SC-17 (regression) 공연 API 의 프레임워크 오류 응답은 Security 도입 뒤에도 그대로다
+
+Phase 4 에서 develop 과 이 브랜치를 같은 요청으로 비교해 확인한 값이다 — 컨트롤러의 `@ExceptionHandler` 가 아니라 컨테이너(`sendError`)가 만드는 오류가 대상이다.
+
+- **Given** 공연이 하나 등록돼 있다 (id 는 P)
+- **When** 아래 표의 각 요청을 `Authorization` 없이 보낸다
+- **Then** 모든 행의 상태가 "기대(develop 과 같다)" 와 같다 (인증을 요구하는 401 이 아니다)
+
+| 요청 | 기대 | 설명 |
+|---|---|---|
+| `GET /api/performances/abc` | 400 | 경로 id 타입 불일치 |
+| `GET /api/performances?page=abc` | 400 | 쿼리 파라미터 타입 불일치 |
+| `GET /api/performances?status=NOPE` | 400 | 쿼리 enum 값 오류 |
+| `DELETE /api/performances/{P}` | 405 | 지원하지 않는 메서드 |
+| `PATCH /api/performances/{P}` | 405 | 지원하지 않는 메서드 |
+| `POST /api/performances` (`Content-Type: text/plain`, 본문 `x`) | 415 | 지원하지 않는 미디어 타입 |
+| `POST /api/performances/abc/cancel` | 400 | 경로 id 타입 불일치 |
+| `GET /api/performances/99999` | 404 | 존재하지 않는 공연 (핸들러가 처리하던 기존 동작) |
+
+허용 목록 밖 경로(`/api/not-registered`)가 404 가 아니라 401 인 것은 SC-11 에서 수용한 변화이며 이 시나리오의 대상이 아니다.
+
+covers: 기존 /api/performances/** 엔드포인트가 Security 도입 이후에도 인증 없이 그대로 동작한다(회귀 없음)
+flow: F8
+
+## SC-18 (boundary) 이메일 길이는 정규화(소문자화) 후 기준으로 검증된다
+
+- **Given** `users` 가 비어 있다
+- **When** 아래 표의 각 이메일로 가입을 요청한다 (`İ` 는 소문자로 바꾸면 두 글자(`i̇`)가 되는 문자다)
+- **Then** 각 행의 상태가 "기대" 와 같다
+- **And** 400 행에서는 `code` 가 `INVALID_REQUEST` 이다 — `EMAIL_ALREADY_EXISTS`(409) 나 500 이 아니다
+- **And** 400 행에서는 `users` 에 행이 생기지 않는다
+
+| 이메일 | 입력 길이 | 정규화 후 길이 | 기대 |
+|---|---|---|---|
+| `İ` 64개 + `@` + 도메인 | 255 | 319 | 400 |
+| `İ` 1개 + ASCII 로컬 + `@` + 도메인 | 254 | 255 | 201 |
+| `İ` 1개 + ASCII 로컬 + `@` + 도메인 | 255 | 256 | 400 |
+
+covers: 올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다; 이미 존재하는 이메일로 가입 시도 시 409를 반환한다
+flow: F9
+
