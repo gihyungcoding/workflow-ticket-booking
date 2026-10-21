@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (HITL#1 재승인, RETRY_SCENARIO 1/3)"
+phase: "2b"
+phase_name: "Phase 2b - Red (재작성, HITL#2 재승인 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21

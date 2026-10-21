@@ -455,6 +455,9 @@ class AuthApiTest {
   void test_sc08_틀린_비밀번호와_없는_이메일은_똑같은_401을_받는다() throws Exception {
     // Given user@example.com / password123 으로 가입돼 있다
     givenSignedUp(EMAIL, PASSWORD, NAME, "AUDIENCE");
+    // And long@example.com 이 ASCII a 72개, long-ko@example.com 이 한글 가 24개(72바이트)를 비밀번호로 가입돼 있다
+    givenSignedUp("long@example.com", "a".repeat(72), NAME, "AUDIENCE");
+    givenSignedUp("long-ko@example.com", "가".repeat(24), NAME, "AUDIENCE");
     record Row(String label, String email, String password) {}
     List<Row> rows =
         List.of(
@@ -462,6 +465,8 @@ class AuthApiTest {
             new Row("존재하지 않는 이메일", "nobody@example.com", PASSWORD),
             new Row("72바이트 초과 비밀번호(ASCII 73자)", EMAIL, "a".repeat(73)),
             new Row("한글 25자(75바이트) 비밀번호", EMAIL, "가".repeat(25)),
+            new Row("72바이트 비밀번호 + 1글자(ASCII)", "long@example.com", "a".repeat(72) + "b"),
+            new Row("72바이트 비밀번호 + 1글자(한글)", "long-ko@example.com", "가".repeat(24) + "b"),
             new Row("256자 이메일", emailOfLength(256), PASSWORD));
     SoftAssertions soft = new SoftAssertions();
     String firstBody = null;

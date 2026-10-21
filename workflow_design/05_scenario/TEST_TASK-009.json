@@ -66,7 +66,7 @@
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
       "status": "already_passing_rows",
       "failure": "Given 가입이 404 (기대 201) — 구현 없음",
-      "retry_note": "행 3개 추가(72바이트 초과 비밀번호 2종, 256자 이메일) — 구현에 이미 있는 가드/길이 처리로 새 행이 통과(already_passing 행). 아래 mutation_check 의 생존 변이 참고"
+      "retry_note": "행 5→7개: 72바이트 초과 비밀번호 2종, 256자 이메일, 72바이트 비밀번호 사용자 + 1글자 2종(변이 검증으로 가드를 지키게 한 행). 모두 현재 구현에서 통과(already_passing 행)"
     },
     {
       "scenario_id": "SC-09",
@@ -233,12 +233,12 @@
         },
         {
           "mutation": "AuthService.login 의 72바이트 초과 가드 제거",
-          "killed_by": null,
-          "survived": true,
-          "finding": "BCrypt matches 는 72바이트를 넘는 입력을 잘라서 비교한다(임시 테스트로 확인: 72바이트로 가입한 사용자가 73바이트 입력 'a'×72+'b' 로 로그인에 성공, encode 는 73바이트에서 IllegalArgumentException). 이 가드가 없으면 72바이트 비밀번호 사용자가 뒤에 글자를 붙여도 로그인된다. SC-08 의 새 행은 Given 사용자가 password123 이라 가드와 무관하게 401 이어서 이 가드를 지키지 못한다. 시나리오가 확정된 뒤라 2b 에서 시나리오를 고치지 않았다 — 사람에게 판단을 요청"
+          "killed_by": "SC-08 (72바이트 비밀번호 + 1글자 행 2개: 가드가 없으면 401 이 아니라 200)",
+          "survived": false,
+          "finding": "1차 시도에서는 생존 — BCrypt matches 는 72바이트 초과 입력을 잘라 비교(임시 테스트로 확인: 'a'×72 로 가입한 사용자가 'a'×72+'b' 로 로그인 성공). 사람이 '시나리오 보완 후 진행'을 선택해 SC-08 에 72바이트 비밀번호 사용자 2명과 '비밀번호 + 1글자' 행 2개를 추가한 뒤 재시도해 사망 확인"
         }
       ],
-      "all_killed": false
+      "all_killed": true
     }
   }
 }

@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "[재진입] 테스트 19건 — 구현이 이미 있는 Red 재작성. 새 행 중 SC-13 정각(200)·SC-17(401×7)·SC-18(409×2) 3건이 현재 구현에서 실제로 실패(Phase 4 결함과 일치), SC-19 및 SC-08·09 새 행은 already_passing. 변이 3건 중 1건 생존(login 72바이트 가드 — BCrypt 가 잘라서 비교). 이전 105건 통과. HITL#2 승인 대기."
+summary: "[재진입] 테스트 19건 — 구현이 이미 있는 Red 재작성. 새 행 중 SC-13 정각(200)·SC-17(401×7)·SC-18(409×2) 3건이 현재 구현에서 실제로 실패(Phase 4 결함과 일치), SC-19 및 SC-08·09 새 행은 already_passing. 변이 3건 모두 사망(생존했던 login 72바이트 가드는 SC-08 보완 후 사망 — BCrypt 가 잘라서 비교하는 보안 문제). 이전 105건 통과. HITL#2 재승인 대기."
 
 next_steps:
-  - "HITL#2 재승인 후 Phase 3 — 만료 정각 401(Spring 검증기 대신 직접 구현), ERROR 디스패치 permitAll, 정규화 후 길이 검증, 필요 시 login 72바이트 가드 보호용 시나리오 반영 여부 결정"
+  - "HITL#2 재승인 후 Phase 3 — 만료 정각 401(Spring 검증기 대신 직접 구현), ERROR 디스패치 permitAll, 정규화 후 길이 검증"
   - "(이전)"
   - "Phase 3 — wf-develop 로 구현. spring-boot-starter-security 와 security-test 추가, V3 마이그레이션, 엔티티 제약 애노테이션, AuthService·컨트롤러·SecurityConfig·JWT"
   - "Green 에서 확인할 위험은 TEST_TASK-009.json 의 risks_for_green (role 숫자 enum, email @Size(255), JWT_SECRET 기동 검증)"
@@ -14,8 +14,8 @@ decisions:
     rationale: "MockMvc 는 서블릿 컨테이너의 ERROR 디스패치(sendError → /error)를 재현하지 못한다 — 이 회귀는 MockMvc 로 쓰면 구현이 틀려도 통과하는 가짜 테스트가 된다. 현재 구현에서 401 로 실제 실패함을 확인"
   - decision: "[재진입] SC-19 는 가드를 켠 별도 테스트 클래스(WriteGuardAuthApiTest)"
     rationale: "클래스 properties 로 WRITE_GUARD_ENABLED=true 를 실제 주입. already_passing 이지만 WriteGuardFilter 에 /api/auth 면제 변이를 넣으면 실패함을 확인"
-  - decision: "[재진입] 생존 변이(login 72바이트 가드)는 시나리오를 2b 에서 고치지 않고 사람에게 판단 요청"
-    rationale: "SCENARIO 수정은 2b 에서 금지(HITL#1 확정). BCrypt 가 72바이트 초과 입력을 잘라 비교하므로 가드가 없으면 뒤에 글자를 붙여도 로그인되는 보안 문제 — 판별하려면 SC-08 에 72바이트 비밀번호 사용자(Given)와 그 비밀번호 + 1글자 입력 행이 필요"
+  - decision: "[재진입] 생존 변이(login 72바이트 가드)는 2b 에서 시나리오를 고치지 않고 사람에게 판단을 구했고, 사람이 시나리오 보완을 선택"
+    rationale: "SCENARIO 수정은 2b 에서 금지(HITL#1 확정). 2a 로 돌아가 SC-08 에 72바이트 비밀번호 사용자와 '비밀번호 + 1글자' 행을 추가·재검증·재승인한 뒤, 테스트를 고쳐 변이가 사망함을 확인(가드 제거 시 73바이트 입력이 200)"
   - decision: "spring-boot-starter-security 를 Red 에서 넣지 않고 crypto·oauth2-jose 만 추가"
     rationale: "starter 의 자동 구성이 모든 엔드포인트를 막아 기존 공연 API 테스트 89건이 Red 에서 깨진다. 컴파일에 필요한 BCrypt·Nimbus 만 추가"
   - decision: "User 엔티티는 구조 애노테이션과 접근자(throw)만, 제약 애노테이션 없음. UserRepository 는 빈 JpaRepository"
