@@ -8,7 +8,7 @@
 
 | Task ID | 제목 | Phase | 갱신 |
 |---|---|---|---|
-| TASK-009 | 이메일 인증 + Spring Security 기반 구축 | 3 Green | 2026-10-21 |
+| TASK-009 | 이메일 인증 + Spring Security 기반 구축 | 2a Scenario | 2026-10-21 |
 
 ## 차단 (0)
 

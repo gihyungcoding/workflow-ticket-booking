@@ -259,8 +259,17 @@
     "docs/release/first-deploy-checklist.md §6 의 백엔드 환경변수 표에 JWT_SECRET 이 없다"
   ],
   "human_review": {
-    "decision": null,
+    "decision": "ROLLBACK_SCENARIO",
     "verified_commit": null,
-    "verified_at": null
+    "verified_at": null,
+    "reject": {
+      "type": "RETRY_SCENARIO",
+      "reason_code": "COVERAGE_INSUFFICIENT",
+      "attempt": 1,
+      "max_attempts": 3,
+      "back_to": "2a",
+      "reason": "공연 API 의 프레임워크 오류 응답(400/405/415)과 이메일 정규화 후 길이 경계를 시나리오가 덮지 않아 회귀·오보 결함을 테스트가 못 잡았다",
+      "decided_by": "사람(HITL#3 AskUserQuestion — 시나리오로 롤백)"
+    }
   }
 }

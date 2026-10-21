@@ -4,7 +4,7 @@ saved_at: 2026-10-21T00:00:00Z
 summary: "Phase 4 판정 FAIL — AC8 위반(공연 API 의 프레임워크 오류 응답 400/405/415 → 401, 프로브로 확인). 보조 결함: 소문자화로 길이가 늘어나는 이메일이 409 로 오보. 나머지 AC 1~7 PASS."
 
 next_steps:
-  - "HITL#3 — FAIL 이라 승인 선택지 없음. 롤백 선택: 시나리오로(Phase 2a, 권장) 또는 구현으로(Phase 3)"
+  - "HITL#3 결과: 시나리오로 롤백(Phase 2a) 선택됨. 시나리오 보완 → 2b → 3 → 4 재수행"
   - "권장 이유: 두 결함 모두 시나리오가 덮지 않은 경계다(프레임워크 오류 응답·정규화 후 길이). SC-15 에 오류 행과 SC-05 에 정규화 후 길이 행을 추가한 뒤 Red→Green"
   - "수정 방향(참고): ERROR 디스패치 permitAll(예: dispatcherTypeMatchers(ERROR).permitAll()), 정규화 후 길이 검증 또는 UNIQUE 위반으로 catch 한정"
 
@@ -16,5 +16,10 @@ decisions:
   - decision: "e2e 는 로컬 PostgreSQL 16.14 에서만 확인 — 운영 Neon 은 18.6"
     rationale: "한계로 VERIFY 에 기록했다"
 
-attempts: []
+attempts:
+  - phase: "4"
+    round: 1
+    outcome: "FAIL — AC8 회귀(프레임워크 오류 응답 400/405/415 → 401), 이메일 정규화 길이 오보"
+    back_to: "2a"
+    reject_type: "RETRY_SCENARIO (COVERAGE_INSUFFICIENT) 1/3"
 ---
