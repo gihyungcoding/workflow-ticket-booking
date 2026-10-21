@@ -1,9 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "[2차 재진입] 수정 Green — 전체 109/109(SC-20 포함), 변이 3건 사망, spotlessCheck·아키텍처 error 0. name 의 제어 문자·서로게이트 거부(@Pattern), catch 를 UNIQUE(SQLState 23505)로 한정. 테스트 결함 하나 수정(서로게이트 행의 입력이 UTF-8 인코딩에서 '?' 로 바뀌어 서버에 닿지 않음). [이전 재진입 요약] 수정 Green — 전체 108/108(테스트 19 + 기존 89), spotlessCheck·아키텍처 error 0. SC-13 정각·SC-17·SC-18 Red → Green, 변이 3건 사망(exp 없는 토큰 허용 변이는 시나리오가 없어 생존 — 알려진 갭)."
+summary: "[3차 재수정] SC-21 Green — email·password·로그인 email 에 짝 없는 서로게이트 거부(@Pattern, NoLoneSurrogate 상수). 전체 111/111, spotlessCheck·아키텍처 통과. [이전] [2차 재진입] 수정 Green — 전체 109/109(SC-20 포함), 변이 3건 사망, spotlessCheck·아키텍처 error 0. name 의 제어 문자·서로게이트 거부(@Pattern), catch 를 UNIQUE(SQLState 23505)로 한정. 테스트 결함 하나 수정(서로게이트 행의 입력이 UTF-8 인코딩에서 '?' 로 바뀌어 서버에 닿지 않음). [이전 재진입 요약] 수정 Green — 전체 108/108(테스트 19 + 기존 89), spotlessCheck·아키텍처 error 0. SC-13 정각·SC-17·SC-18 Red → Green, 변이 3건 사망(exp 없는 토큰 허용 변이는 시나리오가 없어 생존 — 알려진 갭)."
 
 next_steps:
+  - "Phase 4 4차(wf-verify) — PostgreSQL 에서 email·password 서로게이트 400, 한글 로컬 파트·U+0085 201 저장값 일치, name·동시 가입 회귀, develop 비교 프로브, code-reviewer 4차(이전 root_causes 지목). 다음 FAIL 은 Phase 1 로 상승"
   - "Phase 4 — wf-verify. docker postgres 로 V3 실제 마이그레이션·가입·로그인 확인(H2 에서는 V3 가 실행되지 않음). code-reviewer 호출 시 JPA 지시 포함"
   - "Ship 에서 JWT_SECRET 이 Render 에 먼저 들어가야 한다는 점을 사람에게 알린다"
 

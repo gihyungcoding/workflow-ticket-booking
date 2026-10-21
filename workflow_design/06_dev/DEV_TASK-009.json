@@ -90,6 +90,21 @@
       "path": "backend/src/main/resources/config/application.properties",
       "change": "Jackson enum 숫자 거부 설정(spring.jackson.datatype.enum.fail-on-numbers-for-enums)",
       "lines_changed": 3
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/NoLoneSurrogate.java",
+      "change": "신규 — 짝 없는 서로게이트 거부 정규식·메시지 상수(패키지 전용)",
+      "lines_changed": 14
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SignUpRequest.java",
+      "change": "email·password 에 @Pattern(NoLoneSurrogate) 추가",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/LoginRequest.java",
+      "change": "email 에 @Pattern(NoLoneSurrogate) 추가",
+      "lines_changed": 9
     }
   ],
   "reused": [
@@ -126,13 +141,13 @@
   ],
   "test_status": "green",
   "test_result": {
-    "command": "cd backend && ./gradlew test",
-    "total": 109,
-    "passed": 109,
+    "command": "cd backend && ./gradlew clean test spotlessCheck",
+    "total": 111,
+    "passed": 111,
     "failed": 0,
-    "target_tests_passed": 20,
-    "existing_tests": 89,
-    "note": "Phase 4 2차 FAIL 롤백 후 재작성: SC-20 추가. 이전 108건 계속 통과"
+    "skipped": 0,
+    "target_tests_passed": "SC-21 포함 신규·보강 22건 시나리오 전부",
+    "note": "SC-21 의 7개 실패 행이 모두 통과. 기존 109건 계속 통과"
   },
   "lint": {
     "command": "cd backend && ./gradlew spotlessCheck",
@@ -183,7 +198,12 @@
     "all_killed": true,
     "incident": "첫 시도에서 미커밋 파일에 git checkout 이 실패하고 커밋된 스켈레톤 JwtTokenProvider 가 스켈레톤으로 되돌려져 구현을 다시 써야 했다. 복원 후 105건 통과를 확인하고, 구현을 먼저 커밋한 뒤 변이를 다시 수행했다"
   },
-  "refactoring": [],
+  "refactoring": [
+    {
+      "what": "서로게이트 거부 정규식·메시지를 NoLoneSurrogate 상수로 추출(email·password·로그인 email 3곳 공유)",
+      "why": "같은 정규식이 세 곳에 중복. name 은 제어 문자도 거부해 정규식이 달라 유지"
+    }
+  ],
   "refactoring_note": "하지 않기로 했다 — 수정이 두 곳에 국한되고 각각 한 가지 일을 한다",
   "scope_deviations": [
     {
@@ -292,5 +312,23 @@
     ],
     "all_killed": true,
     "not_testable": "catch 의 UNIQUE 한정 — 사전 검증이 길이·NUL 을 막으면 black-box 로 UNIQUE 외 무결성 위반을 만들 수 없다. Phase 4 의 PostgreSQL 에서 동시 가입 경합으로 UNIQUE 경로가 여전히 409 인지만 확인한다"
-  }
+  },
+  "rollback_fixes": [
+    {
+      "round": 3,
+      "root_cause": "RC-1 입력 검증이 'DB 가 무손실로 저장하지 못하는 문자열'을 막지 않음",
+      "variants": [
+        "email 짝 없는 서로게이트(상·하)",
+        "password 짝 없는 서로게이트",
+        "로그인 email 짝 없는 서로게이트"
+      ],
+      "tests": [
+        "AuthApiTest.test_sc21_DB가_무손실로_저장하지_못하는_문자열은_모든_문자열_입력에서_400이다"
+      ],
+      "already_covered_by_green": [
+        "UNIQUE 한정 catch — AuthServiceSignUpFailureTest.test_sc22"
+      ],
+      "note": "3차는 코드 변경이 DTO 검증 한 곳. name 은 제어 문자 정책이 있어 별도 @Pattern 유지, email·password·로그인 email 은 서로게이트만 거부(C1 U+0085·한글은 허용 — SC-21)"
+    }
+  ]
 }
