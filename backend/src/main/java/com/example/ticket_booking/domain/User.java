@@ -9,8 +9,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.CreationTimestamp;
 
-/** TASK-009 Phase 2b 스켈레톤 — 필드와 구조적 애노테이션만 있다. 제약(NOT NULL·길이·UNIQUE)은 Phase 3 에서 추가한다. */
+/**
+ * V3__create_users.sql 의 NOT NULL/UNIQUE/길이 제약을 애노테이션으로도 표현한다. 테스트는 이 애노테이션에서 스키마를 만들므로(ADR-0006)
+ * 마이그레이션과 어긋나지 않게 유지한다. email 은 저장 전에 소문자로 정규화된 값이다(AuthService).
+ */
 @Entity
 @Table(name = "users")
 public class User {
@@ -19,45 +23,53 @@ public class User {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "email")
+  @Column(name = "email", nullable = false, unique = true, length = 255)
   private String email;
 
-  @Column(name = "password_hash")
+  @Column(name = "password_hash", nullable = false, length = 255)
   private String passwordHash;
 
-  @Column(name = "name")
+  @Column(name = "name", nullable = false, length = 100)
   private String name;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "role")
+  @Column(name = "role", nullable = false, length = 20)
   private UserRole role;
 
-  @Column(name = "created_at")
+  @CreationTimestamp
+  @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
   protected User() {}
 
+  public User(String email, String passwordHash, String name, UserRole role) {
+    this.email = email;
+    this.passwordHash = passwordHash;
+    this.name = name;
+    this.role = role;
+  }
+
   public Long getId() {
-    throw new UnsupportedOperationException();
+    return id;
   }
 
   public String getEmail() {
-    throw new UnsupportedOperationException();
+    return email;
   }
 
   public String getPasswordHash() {
-    throw new UnsupportedOperationException();
+    return passwordHash;
   }
 
   public String getName() {
-    throw new UnsupportedOperationException();
+    return name;
   }
 
   public UserRole getRole() {
-    throw new UnsupportedOperationException();
+    return role;
   }
 
   public Instant getCreatedAt() {
-    throw new UnsupportedOperationException();
+    return createdAt;
   }
 }
