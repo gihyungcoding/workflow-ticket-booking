@@ -8,8 +8,15 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record SignUpRequest(
-    @NotBlank @Email @Size(max = 255) String email,
-    @NotBlank @Size(min = 8, max = 72) String password,
+    @NotBlank
+        @Email
+        @Size(max = 255)
+        @Pattern(regexp = NoLoneSurrogate.REGEX, message = NoLoneSurrogate.MESSAGE)
+        String email,
+    @NotBlank
+        @Size(min = 8, max = 72)
+        @Pattern(regexp = NoLoneSurrogate.REGEX, message = NoLoneSurrogate.MESSAGE)
+        String password,
     @NotBlank String passwordConfirm,
     @NotBlank
         @Size(max = 100)
