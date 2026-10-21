@@ -1,13 +1,17 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "[Phase 4 FAIL 롤백으로 재진입] 시나리오 19건(happy 4 / error 7 / boundary 5 / regression 3), AC 8/8. 이번 라운드: SC-17(프레임워크 오류 응답 회귀)·SC-18(정규화 후 이메일 길이)·SC-19(쓰기 가드 ON 회귀) 추가, SC-13 정각 경계 확정, SC-08/09 로그인 입력 경계 추가. 독립검증 3차 FAIL(V11) → 4차 PASS(경고 4). SC-08 에 72바이트 비밀번호 사용자·한 글자 붙인 입력 행 추가(변이 검증에서 생존한 login 72바이트 가드를 지키기 위함, BCrypt 가 72바이트 초과를 잘라 비교하는 보안 문제) → 독립검증 5차 PASS(경고 2). HITL#1 재승인됨(2026-10-21)."
+summary: "[Phase 4 2차 FAIL 롤백(RETRY_SCENARIO 2/3) 재재진입] 시나리오 20건 — SC-20(name 의 제어 문자·짝 없는 서로게이트 400) 추가, 독립검증 6차 PASS(경고 1). HITL#1 재승인 대기. [이전 요약]  시나리오 19건(happy 4 / error 7 / boundary 5 / regression 3), AC 8/8. 이번 라운드: SC-17(프레임워크 오류 응답 회귀)·SC-18(정규화 후 이메일 길이)·SC-19(쓰기 가드 ON 회귀) 추가, SC-13 정각 경계 확정, SC-08/09 로그인 입력 경계 추가. 독립검증 3차 FAIL(V11) → 4차 PASS(경고 4). SC-08 에 72바이트 비밀번호 사용자·한 글자 붙인 입력 행 추가(변이 검증에서 생존한 login 72바이트 가드를 지키기 위함, BCrypt 가 72바이트 초과를 잘라 비교하는 보안 문제) → 독립검증 5차 PASS(경고 2). HITL#1 재승인됨(2026-10-21)."
 
 next_steps:
   - "Phase 2b — 테스트 수정: SC-08/09/13 행 추가, SC-17·18·19 신규. 구현이 이미 있어 새 행은 지금 구현에서 실제 실패해야 한다(SC-17: 401, SC-18: 409, SC-13 정각: 200) — 그것이 Red 의 증거. SC-19 는 already_passing 예상"
   - "(이전) Phase 2b — wf-red 로 Red 테스트 작성 (@SpringBootTest 통합 테스트, 컴파일용 스켈레톤은 UnsupportedOperationException 한 줄만)"
 
 decisions:
+  - decision: "[2차 롤백] SC-20 추가 — name 의 NUL·탭·줄바꿈·DEL·짝 없는 서로게이트는 400, 한글·짝이 맞는 이모지는 201"
+    rationale: "PostgreSQL 이 NUL 을 저장하지 못해(SQLState 22021) 409 EMAIL_ALREADY_EXISTS 로 오보되는 것을 Phase 4 에서 직접 재현. 짝 없는 서로게이트는 저장 때 U+FFFD 로 조용히 바뀌어 입력과 다른 이름이 저장된다. 제어 문자 범위는 \\p{Cc}(U+0000~U+001F, U+007F~U+009F), 서로게이트는 \\p{Cs}"
+  - decision: "[2차 롤백] DataIntegrityViolationException catch 를 UNIQUE(SQLState 23505)로 한정하는 것은 Plan 에만 두고 시나리오로 만들지 않았다"
+    rationale: "사전 검증(SC-18·20)이 길이·NOT NULL·NUL 을 막으면 black-box 로 UNIQUE 외 무결성 위반을 만들 수 없다 — 시나리오로 단언할 수단이 없다. 코드 수준 방어이고 변이 검증도 불가능해 알려진 갭으로 기록"
   - decision: "[2b 변이 검증 결과로 재진입] SC-08 에 72바이트 비밀번호 사용자 2명과 '비밀번호 + 1글자' 행 2개 추가"
     rationale: "임시 테스트로 확인: BCrypt matches 는 72바이트 초과 입력을 잘라 비교 — 'a'×72 로 가입한 사용자가 'a'×72+'b' 로 로그인에 성공했다. login 의 가드가 막지만 테스트가 못 지키는 생존 변이였다. 사람이 '시나리오 보완 후 진행'을 선택(HITL#2)"
   - decision: "[롤백 재진입] 토큰 만료는 exp 와 같은 순간부터 만료(RFC 7519 §4.1.4)로 확정 — SC-13 정각 행 401"
@@ -34,6 +38,9 @@ decisions:
     rationale: "Plan F8 의 DELETE 표기를 정정했다(컨트롤러 확인)"
 
 attempts:
+  - phase: "2a"
+    round: "재진입 2 (Phase 4 2차 FAIL 롤백, RETRY_SCENARIO 2/3)"
+    result: "독립검증 6차 PASS(경고 1: SC-15 CORS 분리 보류)"
   - phase: "2a"
     round: "재진입 1 (Phase 4 FAIL 롤백, RETRY_SCENARIO 1/3)"
     result: "3차 FAIL(V11 만료 정각·로그인 입력 경계) → 4차 PASS(경고 4)"
