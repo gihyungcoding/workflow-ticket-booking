@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "1"
-phase_name: "Phase 1 - Plan (완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (HITL#1 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -13,9 +13,11 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-009-email-auth-security"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-009.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-009.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-009.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -26,7 +28,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 1 완료(CP-1.3). `wf-scenario` 로 Phase 2a 시나리오를 설계한다. 경계값(비밀번호 72바이트, 이메일 정규화, 만료·위조 토큰, 공연 API 회귀)을 시나리오로 확정한다.
+HITL#1 승인을 받는다(CP-2.2). 승인 후 `wf-red` 로 Phase 2b Red 테스트를 작성한다.
 
 ## 알아둬야 할 것
 

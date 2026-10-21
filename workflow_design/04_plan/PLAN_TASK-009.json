@@ -21,6 +21,7 @@
         "source": "POST /api/auth/signup 본문",
         "constraints": [
           "필수",
+          "공백만으로 된 값 불가(@NotBlank) — 8자 이상이어도 공백뿐이면 400",
           "8자 이상 72자 이하(@Size)",
           "UTF-8 바이트 길이도 72 이하 — 한글 등 다바이트 문자는 72자 이하여도 72바이트를 넘길 수 있고 BCrypt 가 거부하면 500 이 된다. 400 으로 막는다",
           "추가 복잡도 규칙 없음"
@@ -68,7 +69,8 @@
         "type": "header",
         "source": "GET /api/auth/me",
         "constraints": [
-          "Bearer <accessToken>",
+          "Bearer <accessToken> — 스킴은 대소문자 무시(RFC 7235), 스킴과 토큰 사이는 공백 한 개",
+          "'BearerXYZ'·공백 없는 'Bearer<토큰>'·공백 두 개·토큰 뒤 추가 값은 거부(401)",
           "typ=access 인 토큰만 인정",
           "서명·만료 검증. 만료는 주입된 Clock 기준(ADR-0005)"
         ]
@@ -98,7 +100,7 @@
       {
         "name": "400 INVALID_REQUEST",
         "type": "error(ErrorResponse)",
-        "description": "형식·길이·passwordConfirm 불일치·role 오류. 기존 PerformanceExceptionHandler 의 MethodArgumentNotValid·HttpMessageNotReadable 핸들러가 전 컨트롤러에 적용되므로 그대로 재사용"
+        "description": "형식·길이·passwordConfirm 불일치·role 오류. 기존 PerformanceExceptionHandler 의 MethodArgumentNotValid·HttpMessageNotReadable 핸들러가 전 컨트롤러에 적용되므로 그대로 재사용. 로그인 요청의 필수 누락·이메일 형식 오류도 401 이 아니라 400(SC-09)"
       },
       {
         "name": "200 LoginResponse",
@@ -118,12 +120,12 @@
       {
         "name": "401 UNAUTHORIZED",
         "type": "error(ErrorResponse)",
-        "description": "토큰 없음·만료·위조·typ 불일치·사용자 없음. 필터 체인 단계의 AuthenticationEntryPoint 가 ErrorResponse JSON 으로 응답(WriteGuardFilter 와 같은 방식)"
+        "description": "토큰 없음·만료·위조·typ 불일치·사용자 없음. 필터 체인 단계의 AuthenticationEntryPoint 가 ErrorResponse JSON 으로 응답(WriteGuardFilter 와 같은 방식). 허용 목록(공연 API·signup·login)에 없는 경로도 토큰 없이는 404 가 아니라 401 — 기본 거부로 수용(Phase 2a 결정, SC-11)"
       },
       {
         "name": "/api/performances/** 기존 응답",
         "type": "unchanged",
-        "description": "인증 없이 GET·POST·PUT·DELETE 모두 기존과 동일하게 동작(쓰기 가드가 켜진 환경에서는 X-Write-Key 요구도 기존 그대로)"
+        "description": "인증 없이 GET·POST(등록)·PUT·POST(취소) 모두 기존과 동일하게 동작(DELETE 엔드포인트는 없다). 쓰기 가드가 켜진 환경에서는 X-Write-Key 요구도 기존 그대로. 허용된 Origin 의 사전 요청(OPTIONS)은 인증 API 경로에서도 CORS 필터가 먼저 처리해 2xx"
       },
       {
         "name": "DB users 행",
@@ -227,7 +229,7 @@
         "name": "공연 API 회귀 없음",
         "steps": [
           "SecurityConfig: /api/performances/** permitAll, CSRF 비활성, 세션 STATELESS",
-          "기존 GET·POST·PUT·DELETE 가 토큰 없이 통과",
+          "기존 GET·POST(등록)·PUT·POST(취소) 가 토큰 없이 통과",
           "CorsFilter(최우선)·WriteGuardFilter(+1)는 Security 체인보다 먼저 실행되는 기존 순서 유지"
         ],
         "covers": [

@@ -27,9 +27,9 @@ flow: F1
 
 - **Given** `user@example.com` / `password123` 으로 가입이 끝났다
 - **When** `users` 의 해당 행을 요청과 별개로 새로 조회한다 (가입 요청과 같은 트랜잭션이 아니다)
-- **Then** 저장된 `passwordHash` 는 `password123` 과 다르다
-- **And** `passwordHash` 는 BCrypt 형식(`$2a$`·`$2b$`·`$2y$` 로 시작하는 60자)이다
-- **And** BCrypt 비교에서 `password123` 은 일치하고 `password124` 는 일치하지 않는다
+- **Then** DB 에 저장된 비밀번호 값(`password_hash` 컬럼)은 `password123` 과 다르다
+- **And** 그 값은 BCrypt 형식(`$2a$`·`$2b$`·`$2y$` 로 시작하는 60자)이다
+- **And** 그 값은 `password123` 의 BCrypt 해시로 검증되고(일치), `password124` 의 해시로는 검증되지 않는다(불일치)
 
 covers: 저장된 비밀번호가 평문이 아니라 BCrypt 해시임을 DB 조회로 확인한다
 flow: F3
@@ -165,10 +165,15 @@ flow: F5
 ## SC-10 (happy) 유효한 토큰으로 /me 를 조회하면 현재 사용자 정보를 받는다
 
 - **Given** `user@example.com` 으로 가입·로그인해 `accessToken` 을 갖고 있다
-- **When** `Authorization: Bearer <accessToken>` 으로 `GET /api/auth/me` 를 호출한다
-- **Then** 200 이다
+- **When** 아래 표의 각 `Authorization` 값으로 `GET /api/auth/me` 를 호출한다
+- **Then** 모든 행이 200 이다
 - **And** 본문은 `{id, email, name, role}` 이고 로그인 응답의 `user` 와 같다
 - **And** 비밀번호 관련 키가 없다
+
+| Authorization | 설명 |
+|---|---|
+| `Bearer <accessToken>` | 표준 표기 |
+| `bearer <accessToken>` / `BEARER <accessToken>` | 인증 스킴은 대소문자를 구분하지 않는다 (RFC 7235) |
 
 covers: 유효한 토큰으로 GET /auth/me 호출 시 200과 해당 사용자 정보를 반환한다
 flow: F6
@@ -178,13 +183,16 @@ flow: F6
 - **Given** 가입된 사용자가 있다
 - **When** 아래 표의 각 요청을 보낸다
 - **Then** 모든 행이 401 이고 `code` 는 `UNAUTHORIZED` 다
-- **And** 응답은 `Content-Type: application/json` 인 `ErrorResponse` 이고 사용자 정보가 없다
+- **And** 응답은 `Content-Type: application/json` 이고 본문은 `{code, message}` 형태이며 사용자 정보가 없다
 
 | 요청 | 설명 |
 |---|---|
 | `GET /api/auth/me` (`Authorization` 없음) | 헤더 부재 |
 | `GET /api/auth/me` + `Authorization: Basic dXNlcjpwYXNz` | Bearer 가 아닌 스킴 |
 | `GET /api/auth/me` + `Authorization: Bearer ` | 빈 토큰 |
+| `GET /api/auth/me` + `Authorization: BearerXYZ` / `Authorization: Bearer<유효 토큰>` (공백 없음) | `Bearer` 로 시작하기만 하는 값을 Bearer 로 오인하지 않는다 |
+| `GET /api/auth/me` + `Authorization: Bearer  <유효 토큰>` (공백 두 개) | 스킴과 토큰 사이 구분은 공백 한 개다 — 엄격하게 거부 |
+| `GET /api/auth/me` + `Authorization: Bearer <유효 토큰> extra` | 토큰 뒤에 다른 값이 붙은 경우 |
 | `GET /api/not-registered` (`Authorization` 없음) | 허용 목록에 없는 경로는 기본 거부 — 404 가 아니라 401 로 수용한다 |
 
 covers: 토큰 없이 또는 만료/위조된 토큰으로 GET /auth/me 호출 시 401을 반환한다
@@ -210,8 +218,9 @@ flow: F7
 
 ## SC-13 (boundary) 토큰은 발급 24시간 뒤에 만료된다
 
-- **Given** 시각 T 에 로그인해 `accessToken` 을 받았다 (시각은 테스트가 고정·이동할 수 있다)
-- **When** 시각을 아래 표의 값으로 옮긴 뒤 `GET /api/auth/me` 를 호출한다
+- **Given** 시각 T 에 로그인해 `accessToken` 을 받았다
+- **And** 현재 시각이 아래 표의 "현재 시각" 값이다 (시각은 테스트가 고정·이동할 수 있다)
+- **When** `GET /api/auth/me` 를 호출한다
 - **Then** 각 행의 상태가 "기대" 와 같고, 401 행의 `code` 는 `UNAUTHORIZED` 다
 
 | 현재 시각 | 기대 |
@@ -240,7 +249,7 @@ flow: F7
 - **Given** 공연이 하나 등록돼 있다 (id 는 P)
 - **When** 아래 표의 각 요청을 `Authorization` 없이, CSRF 토큰 없이 보낸다
 - **Then** 모든 행의 상태가 "기대" 와 같다 (인증을 요구하는 401·403 이 아니다)
-- **And** 응답 본문은 Security 도입 이전과 같은 형식이다
+- **And** 응답 본문은 기존과 같은 필드를 갖는다 — 목록은 `content`·`page`·`size`·`totalElements`, 단건·등록·수정은 `id`·`title`·`venue`·`status`, 취소 응답의 `status` 는 `CANCELLED` 다
 
 | 요청 | 기대 |
 |---|---|
@@ -250,7 +259,7 @@ flow: F7
 | `PUT /api/performances/{P}` (유효한 본문) | 200 |
 | `POST /api/performances/{P}/cancel` | 200 |
 
-같은 요청에 인증 헤더나 출처가 붙는 경우도 영향이 없다.
+공연 쓰기는 `POST`·`PUT`·`POST …/cancel` 이 전부다 (`DELETE` 엔드포인트는 없다). 같은 요청에 인증 헤더나 출처가 붙는 경우도 영향이 없다.
 
 | 요청 | 기대 |
 |---|---|
@@ -266,7 +275,7 @@ flow: F8
 - **Given** 애플리케이션을 `JWT_SECRET` 값을 바꿔 가며 기동한다
 - **When** 아래 표의 값으로 기동을 시도한다
 - **Then** 각 행의 결과가 "기대" 와 같다
-- **And** 실패 행의 오류 메시지에 `JWT_SECRET` 이 들어 있다 (어느 설정이 문제인지 알 수 있다)
+- **And** 실패 행에서 기동이 던진 예외 또는 그 원인 체인의 메시지에 `JWT_SECRET` 이 들어 있다 (어느 설정이 문제인지 알 수 있다)
 
 | JWT_SECRET | 기대 |
 |---|---|
