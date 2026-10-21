@@ -242,7 +242,8 @@
     "round2": {
       "reason": "Phase 4 2차 FAIL — name 의 NUL 이 PostgreSQL 에서 409 EMAIL_ALREADY_EXISTS 로 오보 (RETRY_SCENARIO 2/3 → SC-20 추가)",
       "mutation_check": "해당 없음 — 새 시나리오가 현재 구현에서 이미 실패(Red)하므로 변이 검증이 필요한 already_passing 행은 한글+이모지 201 행뿐(허용해야 하는 정상 입력)",
-      "known_gap": "DataIntegrityViolationException catch 를 UNIQUE(SQLState 23505)로 한정하는 변경은 black-box 로 UNIQUE 외 무결성 위반을 만들 수 없어 테스트·변이 검증이 불가능하다 — 코드 수준 방어로 기록. H2 가 NUL 을 받아 주어 PostgreSQL 전용 결함은 테스트가 못 잡는다(ADR-0006 의 Testcontainers 전환 예고 건)"
+      "known_gap": "DataIntegrityViolationException catch 를 UNIQUE(SQLState 23505)로 한정하는 변경은 black-box 로 UNIQUE 외 무결성 위반을 만들 수 없어 테스트·변이 검증이 불가능하다 — 코드 수준 방어로 기록. H2 가 NUL 을 받아 주어 PostgreSQL 전용 결함은 테스트가 못 잡는다(ADR-0006 의 Testcontainers 전환 예고 건)",
+      "test_fix_in_phase3": "SC-20 '짝 없는 서로게이트' 행의 입력 전달 방식을 수정(Java 문자열의 서로게이트는 UTF-8 인코딩 때 '?' 로 바뀌어 서버에 닿지 않음) — 구현이 맞아도 통과할 수 없던 테스트 결함. 시나리오·단언은 그대로, 변이로 검증(DEV_TASK-009 rework2.test_fix)"
     }
   }
 }

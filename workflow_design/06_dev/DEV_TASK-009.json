@@ -127,12 +127,12 @@
   "test_status": "green",
   "test_result": {
     "command": "cd backend && ./gradlew test",
-    "total": 108,
-    "passed": 108,
+    "total": 109,
+    "passed": 109,
     "failed": 0,
-    "target_tests_passed": 19,
+    "target_tests_passed": 20,
     "existing_tests": 89,
-    "note": "Phase 4 FAIL 롤백 후 재작성한 테스트 19건(SC-13 정각·SC-17·SC-18 이 Red → Green). SC-08·09·19 의 새 행은 이미 통과하던 것"
+    "note": "Phase 4 2차 FAIL 롤백 후 재작성: SC-20 추가. 이전 108건 계속 통과"
   },
   "lint": {
     "command": "cd backend && ./gradlew spotlessCheck",
@@ -184,7 +184,7 @@
     "incident": "첫 시도에서 미커밋 파일에 git checkout 이 실패하고 커밋된 스켈레톤 JwtTokenProvider 가 스켈레톤으로 되돌려져 구현을 다시 써야 했다. 복원 후 105건 통과를 확인하고, 구현을 먼저 커밋한 뒤 변이를 다시 수행했다"
   },
   "refactoring": [],
-  "refactoring_note": "하지 않기로 했다 — 수정이 세 곳에 국한되고 각각 한 가지 일을 한다. 이메일 길이 검증이 DTO(@Size)와 서비스(정규화 후)로 나뉘나 판정 시점이 달라 중복이 아니다",
+  "refactoring_note": "하지 않기로 했다 — 수정이 두 곳에 국한되고 각각 한 가지 일을 한다",
   "scope_deviations": [
     {
       "path": "backend/src/main/java/com/example/ticket_booking/service/UnauthenticatedException.java",
@@ -204,11 +204,11 @@
     }
   ],
   "carry_to_phase4": [
-    "develop 워크트리와 이 브랜치를 같은 요청으로 비교하는 프로브를 다시 수행 — 특히 SC-17 의 8개 요청이 develop 과 같은 상태가 되는지(실제 서버)",
-    "PostgreSQL e2e 재확인(V3·가입·로그인·/me·실패·사전 요청), JWT_SECRET 기동 실패",
-    "code-reviewer 재호출 시 이전 결함 카테고리(오류 디스패치 인가 회귀, 정규화·길이 오보)를 지목해 같은 부류 전수 확인 + 수정 커밋도 리뷰",
-    "알려진 갭: exp 없는 토큰 허용 변이 생존(시나리오 없음), BCrypt 가 트랜잭션 안에서 수행됨, 사용자 열거 타이밍(범위 밖)",
-    "배포: JWT_SECRET 을 Render 에 먼저 넣어야 함 — first-deploy-checklist §6 에 JWT_SECRET 항목 없음"
+    "PostgreSQL 에서 name=a\\u0000b·탭·짝 없는 서로게이트가 400 이고 DB 에 행이 없는지, 한글+이모지는 201 이고 입력과 같은 name 이 저장되는지(실제 서버)",
+    "동시 가입 경합(같은 이메일 병렬 요청)에서 UNIQUE 경로가 409 로 수렴하고 500 이 아닌지 — catch 한정의 회귀 확인",
+    "develop 비교 프로브·PostgreSQL e2e 재확인, code-reviewer 3차(이전 결함 카테고리: 오류 디스패치 인가, 정규화·길이, 무결성 예외 오분류 + 수정 커밋 자체)",
+    "알려진 갭: exp 없는 토큰 허용 변이 생존, catch UNIQUE 한정은 테스트 불가, H2 가 NUL 을 받아 주어 PostgreSQL 전용 결함은 테스트가 못 잡는다(ADR-0006 Testcontainers 예고)",
+    "배포: JWT_SECRET 을 Render 에 먼저 넣어야 함"
   ],
   "rework": {
     "reason": "Phase 4 FAIL(공연 API 프레임워크 오류 응답 400/405/415 → 401, 소문자화 길이 오보 409) → 시나리오 보완 → Red 재작성 → 이번 수정",
@@ -253,5 +253,44 @@
       }
     ],
     "all_scenario_mutations_killed": true
+  },
+  "rework2": {
+    "reason": "Phase 4 2차 FAIL — name 의 NUL 이 PostgreSQL 에서 409 EMAIL_ALREADY_EXISTS 로 오보 (RETRY_SCENARIO 2/3 → SC-20)",
+    "changed_files": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SignUpRequest.java",
+        "change": "name 에 @Pattern(\"^[^\\\\p{Cc}\\\\p{Cs}]*$\") — 제어 문자·짝 없는 서로게이트 거부, 한글·짝이 맞는 이모지 허용",
+        "lines_changed": 8
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "change": "DataIntegrityViolationException catch 를 UNIQUE 위반(근본 원인 SQLException 의 SQLState 23505 — PostgreSQL·H2 공통)으로 한정, 그 외 무결성 위반은 그대로 던진다. java.sql.SQLException 은 ARCH-003 대상이 아니다",
+        "lines_changed": 14
+      }
+    ],
+    "test_fix": {
+      "what": "SC-20 테스트의 요청 구성 방식 수정 — Java 문자열의 짝 없는 서로게이트는 UTF-8 인코딩 때 '?' 로 바뀌어 서버에 닿지 못해, '짝 없는 서로게이트' 행이 구현이 맞아도 통과할 수 없었다. name 을 JSON 문자열 리터럴(\\\\ud800 이스케이프)로 직접 보내도록 바꿨다",
+      "weakened": false,
+      "why_allowed": "시나리오와 단언(기대 상태·code·행 수·name)은 그대로이고 시나리오가 정한 입력을 실제로 보내게 한 것이다. Red 단계(2b)에서 놓친 테스트 결함이라 기록으로 남긴다",
+      "verified_by": "변이 — 서로게이트(\\\\p{Cs}) 거부만 제거하면 '짝 없는 서로게이트' 행만 실패한다"
+    }
+  },
+  "mutation_check_rework2": {
+    "results": [
+      {
+        "mutation": "@Pattern 의 name 검증을 없앰(^.*$)",
+        "killed_by": "SC-20 (NUL·탭·DEL·서로게이트 행)"
+      },
+      {
+        "mutation": "서로게이트(\\\\p{Cs}) 거부만 제거",
+        "killed_by": "SC-20 (짝 없는 서로게이트 행만)"
+      },
+      {
+        "mutation": "제어 문자(\\\\p{Cc}) 거부만 제거",
+        "killed_by": "SC-20 (NUL·탭·줄바꿈·DEL 행)"
+      }
+    ],
+    "all_killed": true,
+    "not_testable": "catch 의 UNIQUE 한정 — 사전 검증이 길이·NUL 을 막으면 black-box 로 UNIQUE 외 무결성 위반을 만들 수 없다. Phase 4 의 PostgreSQL 에서 동시 가입 경합으로 UNIQUE 경로가 여전히 409 인지만 확인한다"
   }
 }
