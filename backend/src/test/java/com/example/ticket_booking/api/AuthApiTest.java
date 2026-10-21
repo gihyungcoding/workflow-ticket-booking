@@ -41,7 +41,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * TASK-009 시나리오 SC-01 ~ SC-14.
+ * TASK-009 시나리오 SC-01 ~ SC-14, SC-18, SC-20, SC-21.
  *
  * <p>클래스 레벨 {@code @Transactional} 을 두지 않는다 — 요청은 각자 커밋하고 DB 확인은 리포지토리로 새로 읽는다(저장·삭제·불변 단언이 1차 캐시에
  * 가려지지 않게). 표의 각 행은 {@link SoftAssertions} 로 독립 단언한다 — 한 행이 실패해도 나머지 행의 결과가 함께 보인다.
@@ -646,7 +646,10 @@ class AuthApiTest {
                 "alg none", unsignedToken(id, EMAIL, "AUDIENCE", "access", issuedAt, expiresAt)),
             new Row(
                 "typ pending",
-                signedToken(jwtSecret, id, EMAIL, "AUDIENCE", "pending", issuedAt, expiresAt)));
+                signedToken(jwtSecret, id, EMAIL, "AUDIENCE", "pending", issuedAt, expiresAt)),
+            new Row(
+                "sub 가 숫자가 아님",
+                signedToken(jwtSecret, "abc", EMAIL, "AUDIENCE", "access", issuedAt, expiresAt)));
     SoftAssertions soft = new SoftAssertions();
 
     for (Row row : rows) {
@@ -732,7 +735,8 @@ class AuthApiTest {
         List.of(
             new Row("İ 64개, 입력 255자 → 정규화 후 319자", emailWithLocal("İ".repeat(64), 255), 400),
             new Row("İ 1개, 입력 254자 → 정규화 후 255자", emailWithLocal("İ" + "a".repeat(63), 254), 201),
-            new Row("İ 1개, 입력 255자 → 정규화 후 256자", emailWithLocal("İ" + "a".repeat(63), 255), 400));
+            new Row("İ 1개, 입력 255자 → 정규화 후 256자", emailWithLocal("İ" + "a".repeat(63), 255), 400),
+            new Row("앞뒤 공백 2개씩, 입력 259자 → 공백 제거 후 255자", "  " + emailOfLength(255) + "  ", 201));
     SoftAssertions soft = new SoftAssertions();
 
     for (Row row : rows) {
@@ -771,6 +775,11 @@ class AuthApiTest {
             new Row("줄바꿈", "a\\nb", 400, null),
             new Row("DEL", "a\\u007fb", 400, null),
             new Row("짝 없는 서로게이트", "a\\ud800b", 400, null),
+            new Row("제어 문자 범위의 끝 U+001F", "a\\u001fb", 400, null),
+            new Row("C1 제어 문자 범위의 처음 U+0080", "a\\u0080b", 400, null),
+            new Row("C1 제어 문자 범위의 끝 U+009F", "a\\u009fb", 400, null),
+            new Row("공백 U+0020 은 제어 문자가 아니다", "a b", 201, "a b"),
+            new Row("줄바꿈 없는 공백 U+00A0 은 제어 문자가 아니다", "a\u00a0b", 201, "a\u00a0b"),
             new Row("한글과 이모지(짝이 맞는 서로게이트 쌍)", "홍길동😀", 201, "홍길동😀"));
     SoftAssertions soft = new SoftAssertions();
     int index = 0;
@@ -804,6 +813,122 @@ class AuthApiTest {
             .isEqualTo(row.expectedName());
       }
     }
+    soft.assertAll();
+  }
+
+  // ---- SC-21 ----
+
+  @Test
+  void test_sc21_DB가_무손실로_저장하지_못하는_문자열은_모든_문자열_입력에서_400이다() throws Exception {
+    // Given users 가 비어 있다
+    // 값은 JSON 문자열 리터럴로 직접 보낸다 — Java 문자열의 짝 없는 서로게이트는 UTF-8 로 인코딩될 때 '?' 로 바뀌어 서버에 닿지 못한다
+    record Row(
+        String label,
+        String path,
+        String emailLiteral,
+        String passwordLiteral,
+        int expected,
+        String expectedEmail) {}
+    List<Row> rows =
+        List.of(
+            new Row(
+                "email 짝 없는 상위 서로게이트",
+                "/api/auth/signup",
+                "a\\ud800b@example.com",
+                "password123",
+                400,
+                null),
+            new Row(
+                "email 짝 없는 하위 서로게이트",
+                "/api/auth/signup",
+                "a\\udc00b@example.com",
+                "password123",
+                400,
+                null),
+            new Row(
+                "email C1 제어 문자 U+0085(로컬 파트)",
+                "/api/auth/signup",
+                "a\\u0085b@example.com",
+                "password123",
+                201,
+                "a\u0085b@example.com"),
+            new Row(
+                "email 한글 로컬 파트",
+                "/api/auth/signup",
+                "홍길동@example.com",
+                "password123",
+                201,
+                "홍길동@example.com"),
+            new Row(
+                "password 짝 없는 서로게이트",
+                "/api/auth/signup",
+                "pw-sur@example.com",
+                "pass\\ud800word1",
+                400,
+                null),
+            new Row(
+                "password NUL 문자",
+                "/api/auth/signup",
+                "pw-nul@example.com",
+                "pass\\u0000word1",
+                201,
+                "pw-nul@example.com"),
+            new Row(
+                "로그인 email 짝 없는 서로게이트",
+                "/api/auth/login",
+                "a\\ud800b@example.com",
+                "password123",
+                400,
+                null));
+    SoftAssertions soft = new SoftAssertions();
+
+    for (Row row : rows) {
+      long before = userRepository.count();
+      boolean signUp = row.path().endsWith("signup");
+      String body =
+          signUp
+              ? """
+                {"email":"%s","password":"%s","passwordConfirm":"%s","name":"홍길동","role":"AUDIENCE"}"""
+                  .formatted(row.emailLiteral(), row.passwordLiteral(), row.passwordLiteral())
+              : """
+                {"email":"%s","password":"%s"}"""
+                  .formatted(row.emailLiteral(), row.passwordLiteral());
+
+      // When 각 입력으로 요청한다
+      MvcResult result = postJson(mockMvc, row.path(), body);
+
+      // Then 각 행의 상태가 기대와 같다
+      soft.assertThat(result.getResponse().getStatus())
+          .as(row.label() + " 상태")
+          .isEqualTo(row.expected());
+      if (row.expected() == 400) {
+        // And 400 행에서는 code 가 INVALID_REQUEST 이다 (EMAIL_ALREADY_EXISTS 나 500 이 아니다)
+        if (result.getResponse().getStatus() == 400) {
+          soft.assertThat(code(result)).as(row.label() + " code").isEqualTo("INVALID_REQUEST");
+        }
+        // And 가입 400 행에서는 users 에 행이 생기지 않는다
+        if (signUp) {
+          soft.assertThat(userRepository.count()).as(row.label() + " 행 수").isEqualTo(before);
+        }
+      } else if (result.getResponse().getStatus() == 201) {
+        // And 가입 201 행에서는 응답의 email 이 정규화한 입력과 같고 users 에 저장된 email 도 같은 값이다
+        soft.assertThat(bodyAsMap(result).get("email"))
+            .as(row.label() + " 응답 email")
+            .isEqualTo(row.expectedEmail());
+        soft.assertThat(userRepository.findByEmail(row.expectedEmail()))
+            .as(row.label() + " 저장된 email")
+            .isPresent();
+      }
+    }
+
+    // And password 의 U+0000 201 행은 가입 뒤 같은 비밀번호로 로그인하면 200 이다
+    MvcResult loggedIn =
+        postJson(
+            mockMvc,
+            "/api/auth/login",
+            """
+            {"email":"pw-nul@example.com","password":"pass\\u0000word1"}""");
+    soft.assertThat(loggedIn.getResponse().getStatus()).as("password NUL 로그인").isEqualTo(200);
     soft.assertAll();
   }
 }

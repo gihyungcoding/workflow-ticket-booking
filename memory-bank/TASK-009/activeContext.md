@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "2b"
-phase_name: "Phase 2a 승인 완료 — Phase 2b 진입 대기"
+phase: "3"
+phase_name: "Phase 2b 승인 완료 — Phase 3 진입 대기"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-009-email-auth-security"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-009.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-009.md"
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 2a 시나리오 22건 HITL#1 승인(2026-10-22). Phase 2b(wf-red) 에서 SC-21·22 신규와 SC-12·18·20 새 행의 Red 테스트를 쓴다 — SC-21 이메일 서로게이트·SC-12 sub 비숫자는 현재 구현에서 실패해야 하고, SC-22 는 서비스 단위 테스트(저장소 stub). Phase 4 재진입 시 RETRY_SCENARIO 3/3 소진이라 다음 FAIL 은 Phase 1 로 상승.
+Phase 2b Red 22건 HITL#2 승인(2026-10-22). Phase 3(wf-develop): 이메일·password·로그인 이메일에 \p{Cs}(짝 없는 서로게이트) 거부를 name 과 같은 정책으로 추가해 SC-21 7행을 Green 으로. SC-22 등 보강 행은 이미 통과. 끝나면 Phase 4 4차 — PostgreSQL 에서 이메일·password 서로게이트 400 확인 + 같은 부류 전수 재확인. RETRY_SCENARIO 3/3 소진이라 다음 FAIL 은 Phase 1 로 상승.
 
 ## 새 세션 메모
 
