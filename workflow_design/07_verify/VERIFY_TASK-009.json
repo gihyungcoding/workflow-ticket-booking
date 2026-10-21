@@ -344,9 +344,20 @@
     "exp 없는 토큰을 유효로 보는 변이 생존(우리가 발급하는 토큰은 항상 exp 보유)"
   ],
   "human_review": {
-    "decision": null,
+    "decision": "ROLLBACK_SCENARIO",
     "verified_commit": null,
-    "verified_at": null
+    "verified_at": null,
+    "reject": {
+      "type": "RETRY_SCENARIO",
+      "reason_code": "COVERAGE_INSUFFICIENT",
+      "attempt": 3,
+      "max_attempts": 3,
+      "back_to": "2a",
+      "reason": "이메일의 짝 없는 서로게이트가 PostgreSQL 에서 '?' 로 치환 저장되고 다른 입력과 409 충돌 — 시나리오가 덮지 않은 경계. isUniqueViolation 두 경로도 테스트 없음",
+      "decided_by": "사람(HITL#3 AskUserQuestion — 시나리오로 롤백)",
+      "escalation_note": "3/3 소진 — 다음 Phase 4 FAIL 이면 ROLLBACK_PLAN(Phase 1)으로 올라간다",
+      "sweep_request": "문자열 입력 전체(email·name·password)의 'DB 무손실 저장' 변종을 한 번에 덮고, isUniqueViolation 두 경로를 시나리오에 넣는다"
+    }
   },
   "root_causes": [
     {

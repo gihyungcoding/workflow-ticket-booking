@@ -1,8 +1,8 @@
 ---
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
-phase: "3"
-phase_name: "Phase 3 - Green (2차 재수정 완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (Phase 4 3차 FAIL 롤백)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-21
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-009-email-auth-security"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-009.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-009.md"
@@ -30,7 +30,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-Phase 3 2차 재수정 완료(CP-3.4, 전체 109/109). `wf-verify` 로 Phase 4 를 **세 번째로** 수행한다. 이번엔 PostgreSQL 에서 name 의 NUL·제어 문자·서로게이트가 400 이고 한글+이모지는 입력과 같게 저장되는지, 동시 가입 경합이 409 로 수렴하는지, develop 비교 프로브 재확인, code-reviewer 3차(이전 결함 카테고리 지목). 또 실패하면 RETRY_SCENARIO 3/3 이라 상한을 넘으면 설계(Phase 1)로 올라간다.
+Phase 4 3차 FAIL(6c59d6d) → 시나리오로 롤백(Phase 2a, RETRY_SCENARIO 3/3 소진). 이메일 짝 없는 서로게이트(PG \'?\' 치환·409 충돌)와 isUniqueViolation 두 경로 테스트 공백을 시나리오에 추가하고, 문자열 입력 전체의 DB 무손실 저장 변종을 한 번에 덮는다. 다음 Phase 4 FAIL 이면 Phase 1 로 상승.
 
 ## 새 세션 메모
 
