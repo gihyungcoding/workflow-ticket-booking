@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-21T00:00:00Z
-summary: "[재진입] 테스트 19건 — 구현이 이미 있는 Red 재작성. 새 행 중 SC-13 정각(200)·SC-17(401×7)·SC-18(409×2) 3건이 현재 구현에서 실제로 실패(Phase 4 결함과 일치), SC-19 및 SC-08·09 새 행은 already_passing. 변이 3건 모두 사망(생존했던 login 72바이트 가드는 SC-08 보완 후 사망 — BCrypt 가 잘라서 비교하는 보안 문제). 이전 105건 통과. HITL#2 재승인됨(2026-10-21)."
+summary: "[2차 재진입] 테스트 20건 — SC-20 추가, 현재 구현에서 제어 문자·서로게이트 5행이 201 로 저장되어 Red(H2 기준). 전체 109건 중 1 실패·108 통과. HITL#2 승인 대기. [이전 재진입 요약] 테스트 19건 — 구현이 이미 있는 Red 재작성. 새 행 중 SC-13 정각(200)·SC-17(401×7)·SC-18(409×2) 3건이 현재 구현에서 실제로 실패(Phase 4 결함과 일치), SC-19 및 SC-08·09 새 행은 already_passing. 변이 3건 모두 사망(생존했던 login 72바이트 가드는 SC-08 보완 후 사망 — BCrypt 가 잘라서 비교하는 보안 문제). 이전 105건 통과. HITL#2 재승인 대기."
 
 next_steps:
   - "HITL#2 재승인 후 Phase 3 — 만료 정각 401(Spring 검증기 대신 직접 구현), ERROR 디스패치 permitAll, 정규화 후 길이 검증"
@@ -10,6 +10,8 @@ next_steps:
   - "Green 에서 확인할 위험은 TEST_TASK-009.json 의 risks_for_green (role 숫자 enum, email @Size(255), JWT_SECRET 기동 검증)"
 
 decisions:
+  - decision: "[2차 재진입] SC-20 은 MockMvc + H2 로 작성 — H2 는 NUL 을 받아 주므로 현재 구현은 400 대신 201 이어서 Red"
+    rationale: "PostgreSQL 에서의 409 오보 자체는 이 테스트로 재현되지 않는다(H2 한계). Phase 4 의 PostgreSQL e2e 로 확인한다. ADR-0006 이 Testcontainers 전환을 예고했다"
   - decision: "[재진입] SC-17 은 MockMvc 가 아니라 RANDOM_PORT 실제 서버 + java.net.http.HttpClient"
     rationale: "MockMvc 는 서블릿 컨테이너의 ERROR 디스패치(sendError → /error)를 재현하지 못한다 — 이 회귀는 MockMvc 로 쓰면 구현이 틀려도 통과하는 가짜 테스트가 된다. 현재 구현에서 401 로 실제 실패함을 확인"
   - decision: "[재진입] SC-19 는 가드를 켠 별도 테스트 클래스(WriteGuardAuthApiTest)"

@@ -756,4 +756,49 @@ class AuthApiTest {
     }
     soft.assertAll();
   }
+
+  // ---- SC-20 ----
+
+  @Test
+  void test_sc20_name에_제어_문자나_짝_없는_서로게이트가_있으면_400이다() throws Exception {
+    // Given users 가 비어 있다
+    record Row(String label, String name, int expected) {}
+    List<Row> rows =
+        List.of(
+            new Row("NUL 문자", "a\u0000b", 400),
+            new Row("탭", "a\tb", 400),
+            new Row("줄바꿈", "a\nb", 400),
+            new Row("DEL", "a\u007fb", 400),
+            new Row("짝 없는 서로게이트", "a\ud800b", 400),
+            new Row("한글과 이모지(짝이 맞는 서로게이트 쌍)", "홍길동😀", 201));
+    SoftAssertions soft = new SoftAssertions();
+    int index = 0;
+
+    for (Row row : rows) {
+      long before = userRepository.count();
+      String email = "name" + (index++) + "@example.com";
+
+      // When 각 name 으로 가입을 요청한다 (이메일은 행마다 새 이메일이다)
+      MvcResult result = signUp(mockMvc, email, PASSWORD, row.name(), "AUDIENCE");
+
+      // Then 각 행의 상태가 기대와 같다
+      soft.assertThat(result.getResponse().getStatus())
+          .as(row.label() + " 상태")
+          .isEqualTo(row.expected());
+      if (row.expected() == 400) {
+        // And 400 행에서는 code 가 INVALID_REQUEST 이다 (EMAIL_ALREADY_EXISTS 나 500 이 아니다)
+        if (result.getResponse().getStatus() == 400) {
+          soft.assertThat(code(result)).as(row.label() + " code").isEqualTo("INVALID_REQUEST");
+        }
+        // And 400 행에서는 users 에 행이 생기지 않는다
+        soft.assertThat(userRepository.count()).as(row.label() + " 행 수").isEqualTo(before);
+      } else if (result.getResponse().getStatus() == 201) {
+        // And 201 행에서는 응답의 name 이 요청한 값과 정확히 같다
+        soft.assertThat(bodyAsMap(result).get("name"))
+            .as(row.label() + " name")
+            .isEqualTo(row.name());
+      }
+    }
+    soft.assertAll();
+  }
 }
