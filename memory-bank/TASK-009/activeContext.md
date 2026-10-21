@@ -3,7 +3,7 @@ task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
 phase: "1"
 phase_name: "Phase 1 - Plan (완료)"
-status: IN_PROGRESS
+status: ACTIVE
 track: standard
 created_at: 2026-10-21
 last_updated: 2026-10-21
