@@ -17,6 +17,9 @@ public class AuthService {
   /** BCrypt 가 해시하는 입력의 상한(바이트). 글자 수가 아니다. */
   private static final int MAX_PASSWORD_BYTES = 72;
 
+  /** users.email 컬럼 길이. 소문자화로 길이가 늘어나는 문자가 있어 정규화 후에 판정한다. */
+  private static final int MAX_EMAIL_LENGTH = 255;
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
@@ -40,6 +43,9 @@ public class AuthService {
       throw new InvalidRequestException("password: UTF-8 기준 72바이트를 넘을 수 없습니다");
     }
     String normalizedEmail = normalize(email);
+    if (normalizedEmail.length() > MAX_EMAIL_LENGTH) {
+      throw new InvalidRequestException("email: 정규화(소문자) 후 " + MAX_EMAIL_LENGTH + "자를 넘을 수 없습니다");
+    }
     if (userRepository.existsByEmail(normalizedEmail)) {
       throw new EmailAlreadyExistsException();
     }
@@ -49,7 +55,8 @@ public class AuthService {
               new User(normalizedEmail, passwordEncoder.encode(password), name, role));
       return toResponse(saved);
     } catch (DataIntegrityViolationException exception) {
-      // existsByEmail 확인과 INSERT 사이에 같은 이메일이 먼저 들어온 경우 (UNIQUE 제약)
+      // existsByEmail 확인과 INSERT 사이에 같은 이메일이 먼저 들어온 경우(UNIQUE 제약). 길이·NOT NULL 위반은 위에서 이미 걸러져 여기로
+      // 오지 않는다
       throw new EmailAlreadyExistsException();
     }
   }

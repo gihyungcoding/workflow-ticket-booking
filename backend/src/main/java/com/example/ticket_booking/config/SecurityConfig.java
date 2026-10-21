@@ -1,6 +1,7 @@
 package com.example.ticket_booking.config;
 
 import com.example.ticket_booking.api.dto.ErrorResponse;
+import jakarta.servlet.DispatcherType;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,11 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             authorize ->
                 authorize
+                    // 컨테이너가 sendError 로 처리하는 오류(타입 불일치 400·미지원 메서드 405·미디어 타입 415)는 /error 로 다시
+                    // 디스패치된다 —
+                    // 이것까지 인증을 요구하면 기존 오류 응답이 모두 401 로 바뀐다. 원래 요청의 인가는 REQUEST 디스패치에서 이미 끝났다.
+                    .dispatcherTypeMatchers(DispatcherType.ERROR)
+                    .permitAll()
                     .requestMatchers("/api/performances/**", "/api/auth/signup", "/api/auth/login")
                     .permitAll()
                     .anyRequest()
