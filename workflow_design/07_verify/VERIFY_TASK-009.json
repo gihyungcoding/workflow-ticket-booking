@@ -461,8 +461,9 @@
         {
           "case": "@Email 이 허용하는 U+FFFE·U+FFFF·bidi U+202E·U+2028 로컬 파트",
           "origin": "predicted",
-          "probe": "not_probed",
-          "reason": "PostgreSQL 이 무손실 저장한다고 판단(U+0085·한글에서 length 일치 확인). 무결성 결함이 아닌 위장 위험이라 개선 제안으로 분류, 실행 안 함"
+          "probe": "not_reproduced",
+          "reason": "5차 보완 프로브(PostgreSQL 16.14, HTTP): 이메일 로컬 파트 U+FFFE·U+FFFF·U+202E·U+2028 가입 201, DB 저장 바이트가 입력과 동일(UTF-8 hex 대조, length 9), 같은 값 로그인 200, 재가입 409 — 치환·충돌 오보 없음. name 의 같은 4문자도 201·무손실(length 3). 무결성 결함 아님, 위장 위험은 개선 제안으로 유지",
+          "evidence": "테스트가 아니라 HTTP 프로브 — 이 변종을 고정하는 자동 테스트는 없다(rule_proposals 로 넘김). 프로브: scratchpad probe.py, 결과 8건 201 · users 8행 hex 일치"
         },
         {
           "case": "password(가입) 의 짝 없는 서로게이트 — 가입 시 400",
