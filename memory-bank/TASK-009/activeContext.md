@@ -2,7 +2,7 @@
 task_id: TASK-009
 title: "이메일 인증 + Spring Security 기반 구축"
 phase: "1"
-phase_name: "Phase 1 - Plan"
+phase_name: "Phase 1 - Plan (완료)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-10-21
@@ -13,8 +13,9 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-009-email-auth-security"
 
-last_checkpoint: null
-artifacts: {}
+last_checkpoint: "CP-1.3"
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-009.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -25,7 +26,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
 
 ## 다음 한 걸음
 
-`wf-plan` 스킬로 Phase 1 설계를 한다. Plan 전에 아래 "열린 질문" 을 사용자와 정한다.
+Phase 1 완료(CP-1.3). `wf-scenario` 로 Phase 2a 시나리오를 설계한다. 경계값(비밀번호 72바이트, 이메일 정규화, 만료·위조 토큰, 공연 API 회귀)을 시나리오로 확정한다.
 
 ## 알아둬야 할 것
 
@@ -38,7 +39,7 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
   새 환경변수(JWT 비밀키 등)는 Render 에도 입력이 필요하다는 점을 Plan 에 적는다
 - 회고 개선안 미반영 2건 (TASK-015 #0 coverage-policy.md, #1 wf-red) — 서로 다른 대상이라 시작을 막지 않는다
 
-## 열린 질문 (Phase 1 에서 사용자와 결정)
+## 열린 질문 — 1번은 결정됨(ADR-0017: 가드 유지), 나머지는 PLAN.unresolved 로 이관
 
 1. **쓰기 가드(ADR-0016)와의 관계.** ADR 은 "TASK-009 가 들어오면 가드를 제거한다" 고 했지만, 이 태스크는
    `/api/performances/**` 를 `permitAll` 로 두고 소유권 검사도 하지 않는다. 가드를 지우면 **누구나 공연을
@@ -46,3 +47,10 @@ TASK-009 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 14h 
    또 `POST /api/auth/signup·login` 이 쓰기 가드를 통과해야 하는지도 같이 정한다.
 2. **JWT 비밀키·만료 설정.** 환경변수 이름과 기본값(로컬 개발용)을 정한다. 운영 값은 저장소에 두지 않는다.
 3. **첫 배포 환경에 미치는 영향.** V3 마이그레이션과 새 환경변수가 Render 에 필요하다 — 배포는 이 태스크 범위 밖이지만 Plan 에 기록한다.
+
+## Phase 1 에서 새로 확인한 것
+
+- **배포 영향**: `JWT_SECRET` 이 필수이고 없으면 기동 실패한다. Render 가 develop 을 자동 배포하면 머지 순간 현재 배포가 내려갈 수 있다 —
+  **머지 전에 Render 에 `JWT_SECRET` 을 먼저 넣어야 한다.** V3 도 기동 시 Neon 에 적용된다. Ship 단계에서 사람에게 알린다
+- 테스트 DB 는 H2 + flyway 꺼짐이라 V3 SQL 이 테스트에서 실행되지 않는다 — Phase 4 에서 docker postgres 로 확인
+- ADR-0017 추가(e3f5242): 쓰기 가드 제거 시점을 소유권 검사 태스크로 대체. 후속 요구사항 문서·태스크는 아직 없다
