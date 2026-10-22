@@ -592,7 +592,7 @@
     "depends_on": [
       "TASK-009"
     ],
-    "status": "todo",
+    "status": "in_progress",
     "meta": {
       "estimate": {
         "unit": "hour",
