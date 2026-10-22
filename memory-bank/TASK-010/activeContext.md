@@ -1,8 +1,8 @@
 ---
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
-phase: "1"
-phase_name: "Phase 1 - Plan 완료"
+phase: "2a"
+phase_name: "Phase 2a - Scenario 승인 (HITL#1)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -13,9 +13,11 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-010-email-auth-screens"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-010.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-010.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-010.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -26,7 +28,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 1 완료. wf-scenario 로 Phase 2a 를 수행한다 — PLAN.unresolved 8건 중 시나리오에서 정할 3건을 먼저 본다.
+Phase 2a 완료(시나리오 28건, 독립검증 5차 PASS, HITL#1 승인). wf-red 로 Phase 2b 를 수행한다 — 표로 묶은 시나리오(SC-07·08·09·11·15·16·17·19·24·25·29·31·32)는 행마다 테스트 케이스가 필요하다.
 
 ## 알아둬야 할 것
 
