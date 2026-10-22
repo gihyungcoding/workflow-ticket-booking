@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-22T05:00:00Z
-summary: "[재진입 · HITL#2 대기] 시나리오 31건(SC-33~35 추가) — 신규 15케이스 중 10건 실제 실패(RC-1: login() 이 restoring 을 끝내지 않음, 취소된 요청의 401 이 토큰 삭제), 5건은 이미 통과해 변이 6건으로 검증(전부 사망, 구조적 생존 행 기록). 전체 176건 중 10 실패·166 통과. [이전] [HITL#2 승인됨 2026-10-22] 시나리오 28건 → frontend/src/auth/AuthScreens.test.tsx (test.each 행 포함 118케이스). 컴파일 스켈레톤 5개(전부 throw 'not implemented'). 실행: 161건 중 118 실패(전부 'not implemented')·43 통과(기존 전부). tsc -b 오류 0. already_passing 없음."
+summary: "[재진입 · HITL#2 승인됨 2026-10-22] 시나리오 31건(SC-33~35 추가) — 신규 15케이스 중 10건 실제 실패(RC-1: login() 이 restoring 을 끝내지 않음, 취소된 요청의 401 이 토큰 삭제), 5건은 이미 통과해 변이 6건으로 검증(전부 사망, 구조적 생존 행 기록). 전체 176건 중 10 실패·166 통과. [이전] [HITL#2 승인됨 2026-10-22] 시나리오 28건 → frontend/src/auth/AuthScreens.test.tsx (test.each 행 포함 118케이스). 컴파일 스켈레톤 5개(전부 throw 'not implemented'). 실행: 161건 중 118 실패(전부 'not implemented')·43 통과(기존 전부). tsc -b 오류 0. already_passing 없음."
 
 next_steps:
   - "HITL#2 승인 후 Phase 3 — 공통 지점에서 수정: AuthProvider 에 세션 세대(ref 카운터)를 두고 login/logout 이 올리면 진행 중 복원의 모든 결과(setUser·writeToken(null)·setRestoring)를 무시, login() 은 setRestoring(false). 취소된 effect 의 결과도 무시"

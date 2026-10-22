@@ -2,7 +2,7 @@
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
 phase: "2b"
-phase_name: "Phase 2b - Red 재진입 (HITL#2 대기)"
+phase_name: "Phase 2b - Red 재진입 승인 (HITL#2)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -31,7 +31,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 2a 재진입 — SC-33~35 추가(31건), 6차 독립검증 PASS. Red 재진입 완료(신규 15케이스 중 10 실패·5 변이 검증). HITL#2 승인 후 Phase 3 — 세션 세대로 복원 무효화.
+Phase 2a 재진입 — SC-33~35 추가(31건), 6차 독립검증 PASS. Red 재진입 완료(신규 15케이스 중 10 실패·5 변이 검증). HITL#2 승인됨. Phase 3 — 세션 세대로 복원 무효화.
 
 ## 알아둬야 할 것
 

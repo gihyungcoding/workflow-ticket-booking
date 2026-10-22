@@ -235,7 +235,7 @@
       "test_function": "SC-33 (boundary) 복원이 끝나기 전에 로그인하면 늦게 온 복원 응답이 덮어쓰지 않는다",
       "cases": 6,
       "status": "red",
-      "failure": "6행 중 3행(200·401·401 빈 바디)·... 로그인 직후 헤더가 복원을 기다려 '김철수' 를 못 찾는다(restoring 잔류) — 6행 전부 첫 단언에서 실패"
+      "failure": "6행 전부 — 로그인 직후 헤더가 복원 응답을 기다려 '김철수' 를 찾지 못한다(login() 이 restoring 을 끝내지 않음)"
     },
     {
       "scenario_id": "SC-34",
@@ -299,7 +299,7 @@
     "AUDIENCE/ORGANIZER 매핑 — SC-03 test.each 2행"
   ],
   "human_review": {
-    "approved": false
+    "approved": true
   },
   "red_retry": {
     "reason": "Phase 4 1차 FAIL — RC-1 복원 응답 경쟁. SC-33~35 추가, SC-03·07·08·29 보강",
