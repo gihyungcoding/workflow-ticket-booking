@@ -1,0 +1,363 @@
+{
+  "task_id": "TASK-010",
+  "status": "WARN",
+  "status_reason": "RC-1 변종 5건 모두 해소(테스트 + 실제 앱 확인). 남은 것: ①feature 문서 §2-5 '제출 중 로딩 표시' 부재 ②도달 불가한 not_probed 변종 1건(logout 만 하면 restoring 잔류) ③로그인 응답 대기 중 이동 시 늦은 응답이 로그인·이동을 실행하는 동작 — 프로브로 재현했고 사용자가 수락하는 동작으로 분류(OOS-2)",
+  "evidence": {
+    "tests": {
+      "command": "cd frontend && npm test",
+      "exit_code": 0,
+      "summary": "13 files, 176 passed (176) — 신규 133(시나리오 31건) + 기존 43"
+    },
+    "lint": {
+      "command": "cd frontend && npm run lint",
+      "exit_code": 0,
+      "summary": "error 0, warning 4 (기존 3 + AuthContext only-export-components 1)"
+    },
+    "build": {
+      "command": "cd frontend && npm run build",
+      "exit_code": 0,
+      "summary": "tsc -b + vite build 통과"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "30 files changed, 4608 insertions(+), 2 deletions(-) (테스트·워크플로우 산출물 포함)"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "회원가입 폼에서 비밀번호와 비밀번호 확인이 다르면 제출 전 인라인 오류를 표시한다",
+      "verdict": "PASS",
+      "evidence": "SC-04·29 통과, 실제 화면에서 불일치 오류 표시·정정 시 즉시 사라짐 확인"
+    },
+    {
+      "criterion": "회원가입 성공 시 로그인 화면으로 이동한다",
+      "verdict": "PASS",
+      "evidence": "SC-03·31 통과, 실제 백엔드(PostgreSQL) 가입 201 → /login 이동 확인"
+    },
+    {
+      "criterion": "이메일 중복(409) 응답 시 전용 오류 메시지와 로그인 링크를 표시한다",
+      "verdict": "PASS",
+      "evidence": "SC-10·30 통과, 실제 백엔드 409 에서 문구와 /login 링크 확인"
+    },
+    {
+      "criterion": "로그인 성공 시 토큰을 저장하고 이전 화면(또는 홈)으로 이동한다",
+      "verdict": "PASS",
+      "evidence": "SC-13·15·27 통과, 실제로 /performances/3 → 로그인 → 같은 화면 복귀, 토큰 저장 확인"
+    },
+    {
+      "criterion": "로그인 실패(401) 시 \"이메일 또는 비밀번호가 올바르지 않습니다\"를 표시한다",
+      "verdict": "PASS",
+      "evidence": "SC-16·17·32 통과, 실제 서버에서 틀린 비밀번호와 없는 이메일이 같은 문구"
+    },
+    {
+      "criterion": "로그인 상태에서 헤더에 사용자 이름과 로그아웃 버튼이 보이고, 클릭 시 토큰이 삭제되고 비로그인 상태로 전환된다",
+      "verdict": "PASS",
+      "evidence": "SC-20~28, 33~35 통과(복원·로그인·로그아웃 겹침, StrictMode 포함). 실제 앱: 복원 pending(4초 지연 프록시) 중 로그인 → 사용자b 즉시 표시, 늦은 복원 200(사용자a)·401 도착 뒤에도 사용자b·새 토큰 유지, 로그인→로그아웃 뒤 늦은 복원 200 도착해도 비로그인·토큰 없음"
+    }
+  ],
+  "screens": [
+    {
+      "name": "가입",
+      "state": "기본",
+      "verdict": "PASS",
+      "evidence": "이메일 포커스, 역할 미선택, 오류 없음. 실제 백엔드(PostgreSQL) + vite 개발 서버"
+    },
+    {
+      "name": "가입",
+      "state": "검증 오류(필드별)",
+      "verdict": "PASS",
+      "evidence": "빈 폼 제출 → 5개 필드 문구 표시, aria-invalid 4개(역할은 FormControl 오류)"
+    },
+    {
+      "name": "가입",
+      "state": "불일치 정정",
+      "verdict": "PASS",
+      "evidence": "불일치 오류가 확인란을 고친 직후 사라짐"
+    },
+    {
+      "name": "가입",
+      "state": "성공",
+      "verdict": "PASS",
+      "evidence": "실제 201 → /login 이동, 토큰 저장 없음"
+    },
+    {
+      "name": "가입",
+      "state": "이메일 중복(409)",
+      "verdict": "PASS",
+      "evidence": "전용 문구 + /login 링크, 입력값·역할 유지, /signup 머묾"
+    },
+    {
+      "name": "가입/로그인",
+      "state": "쓰기 가드 거부",
+      "verdict": "PASS",
+      "evidence": "백엔드 WRITE_GUARD_ENABLED=true 에서 쓰기 권한 확인 실패 문구"
+    },
+    {
+      "name": "가입",
+      "state": "제출 중",
+      "verdict": "WARN",
+      "evidence": "버튼 비활성·중복 요청 차단은 확인(요청 1회). feature 문서 §2-5 의 '로딩 표시'(스피너 등)는 없다 — 시나리오·완료 조건에는 없는 항목"
+    },
+    {
+      "name": "로그인",
+      "state": "기본·검증 오류",
+      "verdict": "PASS",
+      "evidence": "이메일·비밀번호 필수 문구"
+    },
+    {
+      "name": "로그인",
+      "state": "자격 증명 오류(401)",
+      "verdict": "PASS",
+      "evidence": "틀린 비밀번호와 없는 이메일 모두 같은 고정 문구, 토큰 없음"
+    },
+    {
+      "name": "로그인",
+      "state": "성공·이전 화면 복귀",
+      "verdict": "PASS",
+      "evidence": "/performances/3 → 헤더 로그인 링크 → 성공 → /performances/3, 헤더에 이름·로그아웃"
+    },
+    {
+      "name": "헤더",
+      "state": "새로고침 복원·무효 토큰·로그아웃",
+      "verdict": "PASS",
+      "evidence": "유효 토큰은 이름 복원, 쓰레기 토큰은 401 로 삭제되며 비로그인 헤더, 로그아웃은 토큰 삭제 후 로그인·가입 링크"
+    },
+    {
+      "name": "공통",
+      "state": "반응형·품질 하한",
+      "verdict": "PASS",
+      "evidence": "375px 폭 iframe 에서 가입·로그인 scrollWidth=375(가로 넘침 없음), 좌우 여백 16px. <html lang=ko>, <title>공연 예매, IBM Plex Sans KR 적용. 포커스 링은 MUI 기본(키보드 순회는 미확인)"
+    },
+    {
+      "name": "헤더",
+      "state": "복원 중 로그인(늦은 200)",
+      "verdict": "PASS",
+      "evidence": "실제 백엔드 + 지연 프록시: 복원 중 로그인 800ms 안에 사용자b 표시, 5초 뒤 사용자a 복원 응답이 도착해도 사용자b·토큰 유지"
+    },
+    {
+      "name": "헤더",
+      "state": "복원 중 로그인(늦은 401)",
+      "verdict": "PASS",
+      "evidence": "저장 토큰이 무효인 채 복원 pending 중 로그인 → 늦은 401 이 도착해도 새 토큰 유지"
+    },
+    {
+      "name": "헤더",
+      "state": "복원 중 로그인 뒤 로그아웃(늦은 200)",
+      "verdict": "PASS",
+      "evidence": "로그아웃 뒤 늦은 복원 200 이 도착해도 로그인·가입 링크 유지, 토큰 null"
+    },
+    {
+      "name": "로그인",
+      "state": "응답 대기 중 다른 화면으로 이동",
+      "verdict": "WARN",
+      "evidence": "로그인 응답 대기 중 헤더 '가입' 링크로 /signup 이동 → 응답 도착 시 로그인되고 /(홈)으로 이동. 사용자가 수락하는 동작으로 분류(OOS-2)"
+    }
+  ],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 225,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "기존 파일 3곳의 Skeleton height 매직 넘버 (PerformanceDetail/Edit/ListPage) — 이번 변경 아님"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "Frontend: 도메인 규칙(선점 유효성 등은 서버가 최종 판단)",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "가입 폼은 서버 @Size 와 같은 길이 검증만 UX 용으로 미러링하고 최종 판단은 서버(SC-11·32). 코드 리뷰로 확인"
+      }
+    ],
+    "overdue_promotions": 0
+  },
+  "regression": {
+    "full_suite": "176/176 passed",
+    "callers_checked": true,
+    "note": "fetchMe 호출은 AuthContext 복원 effect 하나(Grep). 수정 커밋은 AuthContext.tsx 한 파일"
+  },
+  "scope_deviations": [
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "reason": "문구 공유용 신규 소형 파일"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "reason": "throwIfApiError export"
+    },
+    {
+      "path": "frontend/src/auth/AuthScreens.test.tsx",
+      "reason": "SC-12 둘째 클릭 pointerEventsCheck 해제(사용자 승인, Phase 3 1차)"
+    }
+  ],
+  "code_review": {
+    "reviewer": "code-reviewer",
+    "round": 2,
+    "previous_round": {
+      "reviewer": "code-reviewer",
+      "round": 1,
+      "findings": [
+        {
+          "severity": "correctness",
+          "file": "frontend/src/auth/AuthContext.tsx",
+          "lines": "56-77",
+          "summary": "복원(fetchMe) 응답이 로그인/로그아웃 이후 도착하면 상태를 덮어쓴다. cancelled 는 언마운트에서만 true 가 되고 login()/logout() 은 진행 중 복원을 무효화하지 않으며, catch 의 writeToken(null) 은 cancelled 를 보지 않는다. login() 은 setRestoring(false) 도 하지 않아 복원이 느리면 헤더가 계속 비어 있다.",
+          "probe": "vitest 3건 재현 — RESULT1 A/NEW, RESULT2 B/토큰 없음, RESULT3 A/토큰 없음 (저장소 밖 임시 작성 후 삭제, git status 깨끗)"
+        },
+        {
+          "severity": "note",
+          "summary": "서버 400(INVALID_REQUEST)이 '잠시 후 다시 시도' 문구로 보인다 — 시나리오가 명시한 동작이라 결함 아님(UX 메모)"
+        },
+        {
+          "severity": "improvement",
+          "summary": "제출 실패 시 포커스 이동 없음, 역할 RadioGroup 오류 문구가 aria-describedby 로 연결되지 않음, /login/·/LOGIN 은 순환 차단을 우회(해 없음)"
+        }
+      ],
+      "no_defect_checks": [
+        "문자열 필드 전수(전송 값·길이 기준 일관)",
+        "응답 code·상태·본문 분기",
+        "에러 상태 초기화·제출 중 중복",
+        "localStorage 예외",
+        "from 검증·보안(토큰 로그·XSS 없음)",
+        "색 리터럴 없음"
+      ],
+      "test_gap": "AuthScreens.test.tsx 에 복원과 로그인/로그아웃이 겹치는 시나리오가 없다 — 시나리오 2a 의 공백"
+    },
+    "findings": [
+      {
+        "severity": "note",
+        "file": "frontend/src/pages/LoginPage.tsx",
+        "lines": "43-45",
+        "summary": "await login 이 끝난 뒤 마운트·세션 확인 없이 auth.login 과 navigate 를 실행한다(RC-1 과 같은 부류). 리뷰어는 코드 읽기만으로 not_probed 로 올렸고, 검증자가 실제 앱에서 재현했다 — OOS-2"
+      },
+      {
+        "severity": "note",
+        "file": "frontend/src/auth/AuthContext.tsx",
+        "lines": "65-67,83-87",
+        "summary": "logout() 이 restoring 을 건드리지 않아 login 없이 logout 만 하면 복원 effect 의 finally 가 stale 로 건너뛰어 restoring 이 true 로 잔류할 수 있다. 현재 UI 에서는 도달 불가(로그아웃 버튼은 user 가 있을 때만 보이고 user 는 login·복원 성공 둘 다 restoring=false 를 만든다). finally 의 stale 가드는 테스트로 고정돼 있지 않다(리뷰어 변이 M4 — 133건 모두 통과). logout 에서 setRestoring(false) 를 함께 부르거나 가드를 제거하는 편이 안전하다는 개선 권고"
+      }
+    ],
+    "mutations_by_reviewer": [
+      "M1 login 세대 증가 제거 → SC-33 3건 실패",
+      "M2 logout 세대 증가 제거 → SC-33 3건 실패(SC-34 는 통과)",
+      "M3 catch 의 stale 가드 제거 → SC-33 401 2건·SC-35 취소된 요청 행 실패",
+      "M4 finally 의 stale 가드 제거 → 전부 통과(가드가 테스트로 고정되지 않음)"
+    ],
+    "no_defect_checks": [
+      "수정 커밋은 AuthContext.tsx 한 파일 — LoginPage·SignUpPage·api/auth 는 불변, 1차 점검 항목(문자열 필드 전수·응답 code 분기·에러 초기화·localStorage 예외·from 검증) 그대로",
+      "[storedToken] 이 useState(readToken) 로 고정돼 effect 가 마운트당 한 번만 돈다 — login 뒤 새로 시작되는 복원은 없다",
+      "StrictMode 두 effect 의 startedAt 은 둘 다 0, 첫 effect 는 cancelled 로 차단"
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "복원(fetchMe)의 비동기 결과를 그 사이의 세션 변경(login/logout)과 무관하게 적용한다 — 복원의 유효성이 언마운트 여부(cancelled)로만 정해지고 복원 시작 이후의 세션 세대로 무효화되지 않는다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "복원 pending 중 로그인 후 복원 200 도착 — 화면은 이전 사용자 A, 저장 토큰은 새 토큰",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthScreens.test.tsx SC-33(200 + 홍길동 행) — 2b Red 실패 후 통과, 리뷰어 변이 M1 로 실패 확인, 실제 앱 확인"
+        },
+        {
+          "case": "복원 pending 중 로그인 후 복원 401 도착 — catch 의 writeToken(null) 이 방금 저장한 새 토큰을 삭제",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "SC-33(401 UNAUTHORIZED·401 빈 바디 행) — 변이 M3 로 실패 확인, 실제 앱 확인"
+        },
+        {
+          "case": "복원 pending 중 로그아웃 후 복원 200 도착 — setUser 로 다시 로그인 상태",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "SC-34(200 + 홍길동 행), 실제 앱 확인"
+        },
+        {
+          "case": "복원 pending 중 로그인했을 때 restoring 이 true 로 남아 헤더가 비어 있음",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "SC-33·34 가 2b 에서 첫 단언('김철수' 표시)부터 실패해 재현했고 수정 뒤 통과"
+        },
+        {
+          "case": "StrictMode 이중 effect 의 취소된 첫 요청이 401 이면 writeToken(null) 이 실행됨",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "SC-35 '401(취소된 요청)·200' 행이 2b 에서 expected null to be 'tok-1' 로 실패 후 통과, 변이 M3 로 실패 확인"
+        },
+        {
+          "case": "login 없이 logout 만 하면 restoring 이 true 로 잔류",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "현재 UI 에서 도달할 수 없다(로그아웃 버튼은 user 가 있을 때만 보이고 user 는 login·복원 성공 둘 다 restoring=false 를 만든다). 다른 호출자가 생기면 드러난다 — Phase 5 회고에서 다룬다"
+        }
+      ]
+    }
+  ],
+  "out_of_scope_findings": [
+    {
+      "id": "OOS-1",
+      "where": "backend SignUpRequest/LoginRequest email.trim()",
+      "summary": "Java trim() 은 U+0000~U+0020 을 모두 지우는데 프론트 JS trim() 은 NUL 을 지우지 않는다. 앞 NUL 이 붙은 이메일로 가입하면 201 이고 저장값은 NUL 이 제거된 주소(프로브 재현). 프론트 diff 의 결함이 아니라 TASK-009 의 서버 정규화와 이 태스크의 클라이언트 trim 사이의 차이이며, SC-08 은 중간 NUL 만 다룬다.",
+      "disposition": "Phase 5 회고에서 문자열 입력 검증 정책 ADR 후보로 이어 간다. 이 태스크의 FAIL 사유가 아님"
+    },
+    {
+      "id": "OOS-2",
+      "where": "frontend/src/pages/LoginPage.tsx:43-45",
+      "summary": "로그인 요청 응답 대기 중 다른 화면(/signup)으로 이동하면, 응답이 도착하는 순간 로그인되고 / 로 이동한다. RC-1 과 같은 부류(늦은 비동기 결과를 현재 화면·세션 맥락과 무관하게 적용)이며 실제 앱에서 재현했다. 영향은 낮다 — 사용자가 직접 제출한 로그인이고 제출 중 버튼이 비활성이라 중복 로그인은 만들어지지 않는다.",
+      "disposition": "사용자가 '수락하는 동작으로 기록'을 선택(AskUserQuestion, Phase 4 2차). 결함으로 올리지 않는다. Phase 5 회고에서 시나리오 공백으로 다룬다(언마운트·이동 뒤 도착한 응답의 정책)"
+    }
+  ],
+  "security": {
+    "input_validation": "문자열 필드 전송 값 일관(이메일만 trim). 서버가 최종 판단. 앞 NUL 이메일 차이는 OOS-1",
+    "authorization": "해당 없음 — 이번 범위는 화면·토큰 저장. Authorization 은 fetchMe 에만 부착(SC-28 로 공연 API 미부착 확인)",
+    "secrets": "토큰은 localStorage(ADR-0015), 하드코딩된 키·비밀번호 없음. 검증용 JWT_SECRET·DB 비밀번호는 로컬 임시값이며 저장소에 남기지 않음",
+    "logging": "해당 없음 — 토큰·비밀번호 로그 출력 없음"
+  },
+  "verification_environment": "실제 백엔드(Spring Boot, PostgreSQL 16 컨테이너, 포트 8081) + 복원 요청(/api/auth/me)만 4초 지연시키는 임시 프록시(8080, 스크래치 디렉터리) + vite 개발 서버. 1차는 쓰기 가드 OFF/ON 두 번. 검증 후 모두 종료",
+  "human_review": {
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "92e044746866b87e5182a6dda5f370fc2db95133",
+    "verified_at": "2026-10-22T14:50:01Z",
+    "exceptions": [
+      {
+        "item": "제출 중 로딩 표시(스피너) 부재",
+        "detail": "feature 문서 §2-5 '제출 중 — 버튼 비활성화 + 로딩 표시' 중 비활성·중복 차단만 구현. 시나리오·완료 조건에 없음",
+        "follow_up": "Phase 5 회고 — 문서와 시나리오 정합"
+      },
+      {
+        "item": "login 없이 logout 만 하면 restoring 이 true 로 잔류(not_probed)",
+        "detail": "현재 UI 에서 도달 불가. finally 의 stale 가드가 테스트로 고정되지 않음",
+        "follow_up": "Phase 5 — logout 에서 setRestoring(false) 또는 가드 제거 검토"
+      },
+      {
+        "item": "OOS-2 로그인 응답 대기 중 이동 시 늦은 응답이 로그인·이동 실행",
+        "detail": "실제 앱에서 재현. 사용자가 수락하는 동작으로 분류(AskUserQuestion, Phase 4 2차)",
+        "follow_up": "Phase 5 — 언마운트·이동 뒤 도착한 응답의 정책을 시나리오로"
+      }
+    ]
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "status": "FAIL",
+      "reason": "코드 리뷰 결함 1건(뿌리 1·변종 5, 재현 3): 토큰 복원(fetchMe) 응답이 그 사이의 로그인/로그아웃 뒤에 도착하면 세션 상태를 덮어쓰거나 새 토큰을 지운다. 118케이스에 이 겹침 시나리오가 없어 테스트가 모두 통과했다.",
+      "commit": "ac4f1f5"
+    },
+    {
+      "round": 2,
+      "status": "WARN",
+      "commit": "072dcdb"
+    }
+  ]
+}

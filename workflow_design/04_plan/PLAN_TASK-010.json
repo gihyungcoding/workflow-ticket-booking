@@ -1,0 +1,325 @@
+{
+  "task_id": "TASK-010",
+  "route": "Frontend",
+  "route_reason": "회원가입·로그인 폼, 폼 검증, 인증 상태(AuthContext), 헤더 전환이 모두 프론트 범위. 백엔드 API 는 TASK-009 로 머지돼 있고 변경하지 않는다",
+  "design": {
+    "inputs": [
+      {
+        "name": "가입 폼 입력",
+        "type": "email, password, passwordConfirm, name: str / role: 'AUDIENCE'|'ORGANIZER'",
+        "source": "SignUpPage 폼",
+        "constraints": [
+          "비밀번호와 비밀번호 확인이 다르면 제출하지 않고 인라인 오류",
+          "서버 제약을 클라이언트도 미리 안내: 비밀번호 8~72자(UTF-8 72바이트 초과 거부), 이름 100자 이하, 이메일 255자 이하",
+          "역할은 필수 선택(라디오) — 서버가 role null 을 400 으로 거부한다",
+          "이메일은 앞뒤 공백을 제거해 보낸다. 비밀번호는 어떤 변환도 하지 않는다(공백 포함 그대로). 이름은 그대로 보낸다",
+          "이메일·이름이 공백만이면 빈 값으로 본다. 비밀번호는 공백만(전부 공백)이면 빈 값으로 본다",
+          "필수/길이 위반은 제출 전에 필드 아래에 알리고 요청을 보내지 않는다 (비밀번호 8~72자, 이름 100자 이하, 이메일 255자 이하). UTF-8 바이트 한도·NUL·짝 없는 서로게이트는 검사하지 않고 서버 400 에 맡긴다",
+          "서버 오류 문구는 재제출을 시작하면 지운다. 다른 오류로 바뀌면 이전 문구가 남지 않는다"
+        ]
+      },
+      {
+        "name": "로그인 폼 입력",
+        "type": "email, password: str",
+        "source": "LoginPage 폼",
+        "constraints": [
+          "이메일·비밀번호 비어 있으면 제출하지 않는다",
+          "이메일은 앞뒤 공백 제거, 비밀번호는 그대로. 이메일 공백만·비밀번호 빈 값은 제출하지 않는다",
+          "서버 오류 문구는 재제출을 시작하면 지운다",
+          "로그인 비밀번호는 공백만이어도 제출한다(가입의 공백만 거부와 다름 — 서버가 판정). 로그인은 길이 상한을 클라이언트가 검증하지 않는다(이메일 256자·비밀번호 73자 이상도 요청이 가고 서버 400/401 을 code 로 처리). 가입의 길이 검증만 UTF-16 코드 유닛 수(서버 @Size 와 동일)"
+        ]
+      },
+      {
+        "name": "이전 화면 위치",
+        "type": "location.state.from (경로 문자열)",
+        "source": "헤더의 로그인 링크가 현재 경로를 state 로 넘긴다",
+        "constraints": [
+          "없으면 홈('/')",
+          "내부 경로('/' 로 시작, '//' 아님)만 허용 — 외부 URL 로 리다이렉트하지 않는다",
+          "'/login'·'/signup' 이면 홈으로 보낸다(로그인 화면 순환 방지)",
+          "문자열이 아니거나 비어 있으면 홈"
+        ]
+      },
+      {
+        "name": "저장된 accessToken",
+        "type": "str | null",
+        "source": "localStorage (ADR-0015)",
+        "constraints": [
+          "앱 시작 시 읽는다 — 접근이 throw 하거나 비어 있어도 비로그인 상태로 동작",
+          "토큰이 있으면 GET /api/auth/me 로 사용자 복원, 401 이면 토큰 삭제",
+          "me 복원이 401 이면 토큰 삭제. 500·네트워크 오류·형식이 틀린 200 은 토큰을 지우지 않고 비로그인으로만 표시한다(일시 오류로 로그아웃시키지 않음)",
+          "복원 응답을 기다리는 동안 헤더의 로그인 영역은 아무것도 그리지 않는다",
+          "빈 문자열·공백만인 토큰은 없는 것으로 본다 — 복원 요청을 보내지 않는다",
+          "복원 응답은 시작 이후의 로그인/로그아웃·언마운트(취소)로 무효화된다 (RC-1)"
+        ]
+      },
+      {
+        "name": "API 응답",
+        "type": "LoginResponse {accessToken, tokenType, expiresInSeconds, user} / UserResponse {id,email,name,role} / ErrorResponse {code,message}",
+        "source": "POST /api/auth/signup(201·409·400) · POST /api/auth/login(200·401) · GET /api/auth/me(200·401)",
+        "constraints": [
+          "오류는 상태가 아니라 body.code 로 분기: EMAIL_ALREADY_EXISTS(409), INVALID_CREDENTIALS(401), UNAUTHORIZED(401), WRITE_KEY_INVALID(401, 가드), INVALID_REQUEST(400)",
+          "같은 상태의 다른 code·빈 바디·비 JSON 은 일반 오류로 처리 (coverage-policy §2-1)"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "인라인 비밀번호 불일치 오류",
+        "type": "필드 helperText",
+        "description": "제출 전 표시, 네트워크 호출 없음"
+      },
+      {
+        "name": "이메일 중복 안내",
+        "type": "화면 Alert + 로그인 링크",
+        "description": "'이미 가입된 이메일입니다. 로그인해 주세요' (design 문서 §2-5) — 로그인 링크는 /login"
+      },
+      {
+        "name": "로그인 실패 안내",
+        "type": "화면 Alert",
+        "description": "'이메일 또는 비밀번호가 올바르지 않습니다' — 이메일/비밀번호 중 무엇이 틀렸는지 구분하지 않는다"
+      },
+      {
+        "name": "쓰기 거부 안내",
+        "type": "화면 Alert",
+        "description": "WRITE_KEY_INVALID 는 자격 증명 오류와 구분해 기존 WRITE_REJECTED_MESSAGE 로 표시한다 (같은 401)"
+      },
+      {
+        "name": "토큰 저장·삭제",
+        "type": "localStorage",
+        "description": "로그인 성공 시 저장, 로그아웃·me 401 시 삭제"
+      },
+      {
+        "name": "화면 이동",
+        "type": "router navigate",
+        "description": "가입 성공 → /login, 로그인 성공 → from 또는 /"
+      },
+      {
+        "name": "헤더",
+        "type": "AppHeader",
+        "description": "비로그인: 로그인·가입 링크. 로그인: 사용자 이름 + 로그아웃 버튼. 로그아웃 클릭 시 토큰 삭제·비로그인 전환"
+      },
+      {
+        "name": "제출 중 상태",
+        "type": "버튼 비활성 + 로딩",
+        "description": "중복 제출 방지 (design 문서 §2-5)"
+      },
+      {
+        "name": "공연 API 요청 헤더",
+        "type": "회귀",
+        "description": "공연 등록·수정·취소 요청에는 Authorization 헤더를 붙이지 않는다 (이번 범위의 쓰기 API 는 인증을 요구하지 않는다 — ADR-0017)"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "가입 폼 클라이언트 검증",
+        "steps": [
+          "비밀번호와 확인 입력 비교",
+          "다르면 확인 필드 아래 인라인 오류, 제출 막음",
+          "같아지면 오류 해제"
+        ],
+        "covers": [
+          "회원가입 폼에서 비밀번호와 비밀번호 확인이 다르면 제출 전 인라인 오류를 표시한다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "가입 성공",
+        "steps": [
+          "role 포함해 POST /api/auth/signup",
+          "201 이면 /login 으로 이동"
+        ],
+        "covers": [
+          "회원가입 성공 시 로그인 화면으로 이동한다"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "가입 이메일 중복",
+        "steps": [
+          "409 + code EMAIL_ALREADY_EXISTS",
+          "전용 메시지와 로그인 링크 표시",
+          "폼 입력값 유지"
+        ],
+        "covers": [
+          "이메일 중복(409) 응답 시 전용 오류 메시지와 로그인 링크를 표시한다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "로그인 성공",
+        "steps": [
+          "POST /api/auth/login",
+          "200 이면 accessToken 을 localStorage 에 저장, AuthContext 사용자 설정",
+          "location.state.from(내부 경로) 또는 / 로 이동"
+        ],
+        "covers": [
+          "로그인 성공 시 토큰을 저장하고 이전 화면(또는 홈)으로 이동한다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "로그인 실패",
+        "steps": [
+          "401 + code INVALID_CREDENTIALS",
+          "고정 문구 표시 (서버 message 를 그대로 쓰지 않는다)",
+          "토큰은 저장하지 않는다"
+        ],
+        "covers": [
+          "로그인 실패(401) 시 \"이메일 또는 비밀번호가 올바르지 않습니다\"를 표시한다"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "헤더 로그인 상태 전환",
+        "steps": [
+          "AuthContext 사용자가 있으면 이름 + 로그아웃 버튼",
+          "로그아웃 클릭 → 토큰 삭제, 사용자 null",
+          "헤더가 로그인·가입 링크로 전환"
+        ],
+        "covers": [
+          "로그인 상태에서 헤더에 사용자 이름과 로그아웃 버튼이 보이고, 클릭 시 토큰이 삭제되고 비로그인 상태로 전환된다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "새로고침 후 로그인 유지",
+        "steps": [
+          "localStorage 토큰 읽기",
+          "GET /api/auth/me (Authorization: Bearer)",
+          "200 이면 사용자 복원, 401 이면 토큰 삭제 후 비로그인",
+          "복원 시작 뒤에 login()/logout() 이 있었거나 effect 가 취소됐으면 그 응답은 상태·토큰에 아무 영향도 주지 않는다 (401 의 토큰 삭제 포함)",
+          "login() 은 진행 중인 복원을 끝낸 것으로 본다 — 헤더가 복원을 기다리지 않는다"
+        ],
+        "covers": [
+          "로그인 상태에서 헤더에 사용자 이름과 로그아웃 버튼이 보이고, 클릭 시 토큰이 삭제되고 비로그인 상태로 전환된다"
+        ],
+        "note": "AC 6 의 '로그인 상태에서 헤더' 가 새로고침 후에도 성립하기 위한 전제 (ADR-0015). 별도 AC 는 아님 — [Phase 4 1차 FAIL RC-1] 복원 응답이 세션 변경 뒤 도착하는 경쟁을 SC-33~35 가 다룬다"
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "Frontend (React)",
+    "note": "API 호출은 api/auth.ts, 상태는 auth/AuthContext.tsx, 화면은 pages/. 인증 판정·비밀번호 검증의 최종 책임은 서버 — 프론트는 입력 안내와 상태 표시만 한다 (architecture.md §2)",
+    "constraints_applied": [
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003",
+      "DEPLOY-001"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0002",
+    "ADR-0008",
+    "ADR-0012",
+    "ADR-0015",
+    "ADR-0016",
+    "ADR-0017"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "frontend/src/api/auth.ts",
+        "change": "signUp()·login()·fetchMe() — request() 를 쓰고 오류는 body.code 로 ApiError 변환. 토큰 저장 키 상수 포함"
+      },
+      {
+        "path": "frontend/src/auth/AuthContext.tsx",
+        "change": "AuthProvider·useAuth() — 토큰 localStorage 저장·복원(try/catch), 사용자 상태, login/logout"
+      },
+      {
+        "path": "frontend/src/pages/SignUpPage.tsx",
+        "change": "가입 폼(이메일·비밀번호·확인·이름·역할)과 상태별 표시"
+      },
+      {
+        "path": "frontend/src/pages/LoginPage.tsx",
+        "change": "로그인 폼과 상태별 표시, from 복귀"
+      },
+      {
+        "path": "frontend/src/components/AppHeader.tsx",
+        "change": "헤더 — 로그인/로그아웃 전환. 태스크 implementation_spec 의 4개 경로에는 없지만 AC 6 이 요구한다"
+      },
+      {
+        "path": "frontend/src/App.tsx",
+        "change": "/login·/signup 라우트 추가, AppHeader 배치"
+      },
+      {
+        "path": "frontend/src/main.tsx",
+        "change": "AuthProvider 로 앱을 감싼다"
+      },
+      {
+        "path": "frontend/src/api/http.ts",
+        "change": "Authorization 헤더 주입이 필요하면 최소 변경 — 현재 request() 는 Bearer 를 붙이지 않는다 (fetchMe 만 필요하므로 auth.ts 안에서 처리하는 안을 우선)"
+      },
+      {
+        "path": "frontend/src/auth/messages.ts",
+        "change": "공통 화면 문구 (Phase 3 에서 추가된 소형 파일)"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "frontend/src/api/http.ts",
+        "symbol": "request",
+        "note": "쓰기 메서드에 X-Write-Key 를 붙인다 — 가입·로그인 POST 도 가드를 통과하려면 이것을 거쳐야 한다"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "ApiError",
+        "note": "code 를 가진 오류. 새로 만들지 말고 import 한다"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "isWriteKeyRejected",
+        "note": "401 이어도 WRITE_KEY_INVALID 면 자격 증명 오류와 구분"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "WRITE_REJECTED_MESSAGE",
+        "note": "쓰기 거부 문구 재사용"
+      },
+      {
+        "path": "frontend/src/pages/PerformanceRegisterPage.tsx",
+        "symbol": "PerformanceRegisterPage",
+        "note": "MUI 폼·제출 중 상태·Alert 패턴 참고"
+      },
+      {
+        "path": "frontend/src/theme/index.ts",
+        "symbol": "theme",
+        "note": "색·서체는 테마 토큰만 쓴다 (DESIGN-002)"
+      }
+    ],
+    "existing_tests": [
+      "frontend/src/pages/PerformanceRegisterPage.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/src/api/http.test.ts"
+    ],
+    "unresolved": [
+      "[결정됨 2a] 가입 성공 안내는 넣지 않는다 — 이동만 (AC)",
+      "[결정됨 2a] 토큰 복원 중에는 헤더의 로그인·가입 링크도 로그아웃도 그리지 않는다",
+      "design.md §5 에 인증 관련 문구·색 매핑이 없다. 오류는 MUI 기본 Alert error 를 쓰되 색 리터럴은 두지 않는다(DESIGN-002). 문구는 이 PLAN 의 outputs 를 정본으로 삼고, 구현 후 design.md §5 에 추가할지 Phase 5 에서 판단한다",
+      "인증 오류(401 UNAUTHORIZED)와 가드 오류(401 WRITE_KEY_INVALID)와 자격 증명 오류(401 INVALID_CREDENTIALS)가 모두 401 이다 — 상태가 아니라 code 로 분기해야 한다 (TASK-009 회고: 응답 code 분기 경계값)",
+      "서버가 가입 400 을 필드별이 아니라 'field: message' 한 문자열로 준다(INVALID_REQUEST). 클라이언트 검증이 못 막은 입력(서로게이트·NUL 등)의 서버 400 은 일반 오류 문구로 표시한다 — 필드 매핑은 이번 범위 밖",
+      "소셜 로그인 버튼·'또는' 구분선은 제외(TASK-013). 보호 라우트 가드도 제외(AC·description). 로그인 후 '이전 화면' 은 헤더 링크가 state 로 넘긴 경로만 신뢰한다 — 보호 라우트가 아직 없어 다른 경로는 생기지 않는다",
+      "토큰 만료(24h) 중 사용 중 401 처리 — me 복원 시에만 다룬다. 이후 API 호출의 Authorization 부착과 만료 처리는 소유권 검사 태스크 범위로 본다",
+      "[결정됨 2a] 비밀번호 UTF-8 72바이트 초과(한글 25자 등)는 클라이언트가 막지 않는다. 가입은 서버 400 → 일반 가입 문구, 로그인은 서버 401 INVALID_CREDENTIALS → 로그인 실패 문구"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 14
+    }
+  },
+  "acceptance_criteria": [
+    "회원가입 폼에서 비밀번호와 비밀번호 확인이 다르면 제출 전 인라인 오류를 표시한다",
+    "회원가입 성공 시 로그인 화면으로 이동한다",
+    "이메일 중복(409) 응답 시 전용 오류 메시지와 로그인 링크를 표시한다",
+    "로그인 성공 시 토큰을 저장하고 이전 화면(또는 홈)으로 이동한다",
+    "로그인 실패(401) 시 \"이메일 또는 비밀번호가 올바르지 않습니다\"를 표시한다",
+    "로그인 상태에서 헤더에 사용자 이름과 로그아웃 버튼이 보이고, 클릭 시 토큰이 삭제되고 비로그인 상태로 전환된다"
+  ],
+  "test_hints": {
+    "framework": "vitest + @testing-library/react + user-event (jsdom)",
+    "command": "cd frontend && npm test (nvm use v22.23.1 선행)",
+    "mock_strategy": "화면: 기존 관례대로 ../api/auth 를 vi.mock(importOriginal 로 ApiError 등 유지)해 resolve/reject. api/auth.ts 단위: globalThis.fetch 를 vi.fn 으로 대체해 상태·code·빈 바디·비 JSON 응답을 만든다. AuthContext: localStorage 는 jsdom 실제 객체, 접근 throw 케이스는 vi.spyOn(Storage.prototype). 헤더·라우팅은 MemoryRouter + AuthProvider 로 렌더"
+  }
+}

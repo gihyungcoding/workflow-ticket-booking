@@ -1,0 +1,140 @@
+{
+  "task_id": "TASK-010",
+  "changed_files": [
+    {
+      "path": "frontend/src/api/auth.ts",
+      "change": "signUp(201 만 성공)·login(응답 형태 검증)·fetchMe(401 만 TokenRejectedError)"
+    },
+    {
+      "path": "frontend/src/auth/AuthContext.tsx",
+      "change": "AuthProvider·useAuth — 토큰 저장·복원(저장소 접근 try/catch), Provider 밖 기본값은 비로그인"
+    },
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "change": "공통 화면 문구(신규, Plan 외 소형 파일)"
+    },
+    {
+      "path": "frontend/src/pages/SignUpPage.tsx",
+      "change": "가입 폼·검증(UTF-16 길이)·서버 오류 3종 표시"
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.tsx",
+      "change": "로그인 폼·이전 화면 복귀(앱 안 경로만)"
+    },
+    {
+      "path": "frontend/src/components/AppHeader.tsx",
+      "change": "비로그인/로그인/복원 중 전환"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "change": "/login·/signup 라우트, AppHeader 배치"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "change": "AuthProvider 로 앱을 감쌈"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "change": "throwIfApiError 를 export 로 변경(한 단어) — 재사용"
+    },
+    {
+      "path": "frontend/src/auth/AuthScreens.test.tsx",
+      "change": "SC-12 둘째 클릭만 pointerEventsCheck 해제(사용자 승인) — 단언 변경 없음"
+    },
+    {
+      "path": "frontend/src/auth/AuthContext.tsx",
+      "change": "[Phase 4 롤백 수정] 세션 세대 ref 로 복원 응답 무효화 — login/logout 이 세대를 올리고 stale() 이면 then·catch·finally 모두 무시, login() 은 setRestoring(false)"
+    }
+  ],
+  "reused": [
+    {
+      "path": "frontend/src/api/http.ts",
+      "symbol": "request"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "ApiError"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "isWriteKeyRejected"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "WRITE_REJECTED_MESSAGE"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "throwIfApiError"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && npx vitest run",
+    "total": 176,
+    "passed": 176,
+    "failed": 0,
+    "target_tests_passed": 133,
+    "summary": "신규 133케이스(1차 118 + 재진입 15) + 기존 43건 통과. tsc -b 오류 0"
+  },
+  "lint": {
+    "command": "cd frontend && npm run lint",
+    "errors": 0,
+    "warnings": 4,
+    "note": "경고 4건: 기존 3 + AuthContext only-export-components 1(1차와 동일)"
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py",
+    "errors": 0,
+    "warnings": 3,
+    "note": "기존 파일의 DESIGN 경고 3건, 이번 변경 아님"
+  },
+  "refactoring": [],
+  "refactoring_note": "하지 않음 — 가입·로그인 폼의 유사 구조는 필드와 검증이 달라 합치면 조건 분기만 늘어난다. 문구만 messages.ts 로 공유",
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-1 복원(fetchMe) 비동기 결과를 세션 변경과 무관하게 적용",
+      "variants": [
+        "복원 중 로그인 후 복원 200",
+        "복원 중 로그인 후 복원 401(새 토큰 삭제)",
+        "복원 중 로그아웃 후 복원 200",
+        "로그인 후 restoring 잔류(헤더 비어 있음)",
+        "StrictMode 취소된 요청의 401"
+      ],
+      "tests": [
+        "SC-33 ×6",
+        "SC-34 ×3",
+        "SC-35 401(취소된 요청)·200"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "AuthContext.tsx AuthProvider 의 복원 effect — stale() 한 곳이 setUser·writeToken(null)·setRestoring 세 결과를 모두 지킨다. 복원 결과를 적용하는 다른 위치는 없다(Grep: fetchMe 호출은 이 effect 하나)"
+      ]
+    }
+  ],
+  "test_modifications": [
+    {
+      "file": "frontend/src/auth/AuthScreens.test.tsx",
+      "scenario": "SC-12",
+      "what": "비활성 버튼의 둘째 클릭을 userEvent.setup({pointerEventsCheck:0}) 로 변경",
+      "why": "user-event 가 disabled MUI 버튼(pointer-events: none)을 기본 거부해 테스트가 구현과 무관하게 예외로 실패. 단언(요청 1회·disabled·500 뒤 활성화)은 그대로",
+      "approved_by": "사용자 AskUserQuestion 응답 '둘째 클릭만 pointerEventsCheck 해제로 수정'"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "reason": "문구 공유용 신규 소형 파일(Plan target_files 에 없음)"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "reason": "throwIfApiError export — code 기반 ApiError 변환 중복을 피함"
+    }
+  ],
+  "carry_to_phase4": [
+    "RC-1 변종 5건의 테스트가 모두 Green — 재검증에서 같은 겹침(복원·로그인·로그아웃)과 StrictMode 를 실제 앱으로 한 번 더 확인",
+    "code-reviewer 2차: 이전 RC-1 을 지목해 같은 부류(비동기 결과를 세션 변경 뒤 적용) 전수 확인, 수정 커밋도 리뷰",
+    "OOS-1(서버 Java trim ↔ 클라이언트 JS trim NUL)은 Phase 5 ADR 후보",
+    "문서 §2-5 '제출 중 로딩 표시' 는 WARN 으로 남아 있음"
+  ]
+}

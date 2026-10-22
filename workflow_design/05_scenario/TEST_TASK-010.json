@@ -1,0 +1,346 @@
+{
+  "task_id": "TASK-010",
+  "supersedes": "TEST_TASK-010.json 1차(28건) — Phase 4 1차 FAIL(RC-1)로 2a 재진입 후 31건",
+  "test_file": "frontend/src/auth/AuthScreens.test.tsx",
+  "test_files": [
+    "frontend/src/auth/AuthScreens.test.tsx"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "SC-01 (happy) 가입 화면의 기본 상태",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "SC-02 (happy) 로그인 화면의 기본 상태",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "SC-03 (happy) 가입에 성공하면 역할(주최자→ORGANIZER) 포함해 요청하고 로그인 화면으로 이동한다",
+      "cases": 2,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "SC-04 (error) 비밀번호 확인이 다르면 제출 전에 인라인 오류를 보인다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "SC-07 (error) 필수 입력과 길이 위반은 서버로 보내지 않고 필드 아래에 알린다",
+      "cases": 26,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 Green 상태로 통과한다 — 1차 Red(118건 전부 not implemented 실패)에서 승인됨. 이번 재진입에서 행이 늘어난 시나리오는 아래 mutation_check 참고"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "SC-08 (boundary) 가입 입력은 이메일 앞뒤 공백만 제거하고 나머지는 변환 없이 보낸다",
+      "cases": 9,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 Green 상태로 통과한다 — 1차 Red(118건 전부 not implemented 실패)에서 승인됨. 이번 재진입에서 행이 늘어난 시나리오는 아래 mutation_check 참고"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "SC-09 (boundary) 로그인 입력도 이메일 앞뒤 공백만 제거하고 나머지는 변환 없이 보낸다",
+      "cases": 6,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "SC-10 (error) 이메일이 중복이면 전용 메시지와 로그인 링크를 보인다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "SC-11 (error) 중복이 아닌 가입 실패는 일반 문구로 보이고 중복 문구가 새지 않는다",
+      "cases": 12,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "SC-12 (boundary) 제출 중에는 버튼이 비활성이고 중복 요청이 가지 않는다",
+      "cases": 2,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "SC-13 (happy) 헤더 링크로 온 로그인에 성공하면 토큰을 저장하고 이전 화면으로 이동한다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_function": "SC-15 (boundary) 이전 화면은 앱 안의 경로만 믿는다",
+      "cases": 10,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_function": "SC-16 (error) 자격 증명이 틀리면 고정 문구를 보이고 토큰을 저장하지 않는다",
+      "cases": 3,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_function": "SC-17 (error) 자격 증명 실패가 아닌 로그인 이상 응답은 일반 문구로 보인다",
+      "cases": 13,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_function": "SC-19 (boundary) 서버 오류 문구는 재제출을 시작하면 지워지고 새 오류로 바뀐다",
+      "cases": 5,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_function": "SC-20 (happy) 로그인 상태의 헤더에는 이름과 로그아웃 버튼이 보인다",
+      "cases": 2,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_function": "SC-21 (happy) 로그아웃하면 토큰이 삭제되고 비로그인 상태가 된다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-22",
+      "test_function": "SC-22 (happy) 비로그인 헤더의 링크가 로그인·가입 화면으로 이어진다",
+      "cases": 2,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-23",
+      "test_function": "SC-23 (happy) 새로고침 후 저장된 토큰으로 로그인 상태가 복원된다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-24",
+      "test_function": "SC-24 (boundary) 저장된 토큰이 없거나 비어 있으면 복원 요청 없이 비로그인으로 보인다",
+      "cases": 3,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-25",
+      "test_function": "SC-25 (error) 토큰 복원이 실패하면 비로그인으로 보이고 무효 토큰만 지운다",
+      "cases": 7,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-26",
+      "test_function": "SC-26 (boundary) 브라우저 저장소를 읽지 못해도 앱이 죽지 않는다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-27",
+      "test_function": "SC-27 (boundary) 저장소에 쓰지 못해도 이번 방문 동안은 로그인 상태가 유지된다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-28",
+      "test_function": "SC-28 (regression) 헤더와 새 라우트가 기존 공연 화면을 해치지 않는다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-29",
+      "test_function": "SC-29 (boundary) 불일치를 고쳐 맞추면 오류가 사라지고 제출이 가능하다",
+      "cases": 2,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-30",
+      "test_function": "SC-30 (happy) 중복 안내의 로그인 링크는 로그인 화면으로 이동한다",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-31",
+      "test_function": "SC-31 (boundary) 가입 성공 판정은 응답 본문이 아니라 상태 201 로 한다",
+      "cases": 3,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-32",
+      "test_function": "SC-32 (boundary) 로그인은 길이 상한을 클라이언트가 막지 않고 서버 판정에 맡긴다",
+      "cases": 3,
+      "status": "already_passing",
+      "failure": null,
+      "note": "1차 Red 에서 승인된 시나리오 — 구현 후 통과 상태"
+    },
+    {
+      "scenario_id": "SC-33",
+      "test_function": "SC-33 (boundary) 복원이 끝나기 전에 로그인하면 늦게 온 복원 응답이 덮어쓰지 않는다",
+      "cases": 6,
+      "status": "red",
+      "failure": "6행 전부 — 로그인 직후 헤더가 복원 응답을 기다려 '김철수' 를 찾지 못한다(login() 이 restoring 을 끝내지 않음)"
+    },
+    {
+      "scenario_id": "SC-34",
+      "test_function": "SC-34 (boundary) 복원 중 로그인했다 로그아웃하면 늦게 온 복원 응답이 다시 로그인시키지 않는다",
+      "cases": 3,
+      "status": "red",
+      "failure": "3행 전부 — 같은 이유로 로그인 직후 헤더에 '김철수' 없음"
+    },
+    {
+      "scenario_id": "SC-35",
+      "test_function": "SC-35 (boundary) 개발 모드의 이중 마운트에서도 복원 결과가 맞다",
+      "cases": 3,
+      "status": "red",
+      "failure": "401(취소된 요청)·200 행 — 취소된 첫 요청의 401 이 토큰을 지운다(expected null to be 'tok-1')"
+    }
+  ],
+  "red_result": {
+    "command": "cd frontend && npx vitest run",
+    "total": 176,
+    "failed": 10,
+    "passed": 166,
+    "new_cases": 15,
+    "new_failed": 10,
+    "new_already_passing": 5,
+    "existing_tests_still_passing": true,
+    "note": "신규 15케이스(SC-33 6·SC-34 3·SC-35 3·SC-07 이모지 2·SC-08 이름 공백 1) 중 10건이 구현 결함(RC-1)으로 실제 실패, 5건은 이미 통과해 변이 검증으로 가짜 통과가 아님을 증명. 기존 161건은 그대로 통과. tsc -b 오류 0"
+  },
+  "inventory_check": {
+    "scenarios": 31,
+    "test_functions": 31,
+    "match": true,
+    "method": "테스트 제목의 SC-NN 고유 ID 31개 == SCENARIO_TASK-010.json 의 id 31개"
+  },
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/api/auth.ts",
+      "frontend/src/auth/AuthContext.tsx",
+      "frontend/src/pages/SignUpPage.tsx",
+      "frontend/src/pages/LoginPage.tsx",
+      "frontend/src/components/AppHeader.tsx"
+    ],
+    "contents": "타입·시그니처·상수(ACCESS_TOKEN_KEY)만. 모든 함수·컴포넌트 본문은 throw new Error('not implemented') 한 줄. App.tsx·main.tsx 는 손대지 않음",
+    "purity_check": "실패 118건 == 'not implemented' 118건 (vitest JSON 리포트로 센 값)"
+  },
+  "testing_preferences": {
+    "framework": "vitest + @testing-library/react + user-event (jsdom)",
+    "mock_strategy": "globalThis.fetch 를 vi.stubGlobal 로 대체(경로·메서드별 응답). api/auth·AuthContext 는 실제 코드로 통과. localStorage 는 jsdom 실제 객체, 접근 예외는 vi.spyOn(Storage.prototype)"
+  },
+  "config_applied_via": "해당 없음(서버 설정 아님). 환경변수 VITE_* 는 쓰지 않아 미설정 상태가 기본",
+  "risks_for_green": [
+    "기존 App.test.tsx 는 AuthProvider 없이 <App/> 을 렌더한다. Green 에서 AppHeader 가 useAuth 를 쓰면 이 기존 테스트가 깨진다 → useAuth 가 Provider 밖에서 비로그인 기본값을 돌려주거나 AppHeader 를 AuthProvider 안에서만 그리게 한다. 승인된 테스트를 고치려면 훅이 사람에게 묻는다",
+    "이메일 입력란을 type=email 로 하면 jsdom 이 앞뒤 공백을 값 정제로 지운다(SC-08·09 의 trim 행, SC-07 공백만 행이 의미를 잃을 수 있다). type=text 와 inputMode 를 쓰거나 결과를 확인한다",
+    "NUL·짝 없는 서로게이트 행(SC-08·09)은 입력값을 그대로 보내야 통과한다 — 클라이언트에서 정규화·제거하지 않는다",
+    "SC-10·30 은 중복 안내 문장 안의 로그인 링크를 부모 요소 텍스트로 찾는다(헤더의 같은 이름 링크와 구분). 링크를 문장과 같은 요소 안에 둔다",
+    "SC-23 은 복원 중 헤더가 로그인·가입·로그아웃을 모두 그리지 않아야 한다",
+    "로그인 길이 검증 없음(SC-32), 가입 길이 검증은 UTF-16 길이(SC-07 경계 행)"
+  ],
+  "validator_recommendations_applied": [
+    "통과 경계(비밀번호 8·72자, 이름 100자, 이메일 255자) — SC-07 의 pass 행",
+    "이메일 trim 뒤 길이 — SC-07 의 trim 행 2건",
+    "AUDIENCE/ORGANIZER 매핑 — SC-03 test.each 2행"
+  ],
+  "human_review": {
+    "approved": true
+  },
+  "red_retry": {
+    "reason": "Phase 4 1차 FAIL — RC-1 복원 응답 경쟁. SC-33~35 추가, SC-03·07·08·29 보강",
+    "failing_new_cases": [
+      "SC-33 ×6 — 로그인 직후 헤더가 복원 응답을 기다린다(login() 이 restoring 을 끝내지 않음)",
+      "SC-34 ×3 — 같은 이유",
+      "SC-35 401(취소된 요청)·200 ×1 — 취소된 요청의 401 이 writeToken(null)"
+    ],
+    "mutation_check": [
+      {
+        "mutation": "SignUpPage 이름 길이를 [...name].length(코드포인트)로 센다",
+        "killed": "SC-07 가입 이름 이모지 51개",
+        "result": "1 failed"
+      },
+      {
+        "mutation": "이름 상한 비교를 > 에서 >= 로",
+        "killed": "SC-07 통과: 가입 이름 이모지 50개",
+        "result": "1 failed"
+      },
+      {
+        "mutation": "전송 시 name.trim()",
+        "killed": "SC-08 name 행(이름 앞뒤 공백)",
+        "result": "1 failed, 2 passed"
+      },
+      {
+        "mutation": "복원 성공 시 setUser 제거",
+        "killed": "SC-35 200·200, 401(취소)·200",
+        "result": "2 failed"
+      },
+      {
+        "mutation": "401 에서 writeToken(null) 제거",
+        "killed": "SC-35 401·401",
+        "result": "1 failed"
+      },
+      {
+        "mutation": "login() 에 setRestoring(false) 만 추가(restoring 잔류만 고친 상태)",
+        "killed": "SC-33 200·401·401 빈 바디, SC-34 200 — 즉 덮어쓰기·토큰 삭제 단언이 실제로 작동",
+        "result": "4 failed",
+        "survived_structurally": "SC-33 500·네트워크 오류·비 JSON, SC-34 401·500 — 이 응답들은 현재 구현에서 상태·토큰을 바꾸지 않아 변이 아래에서도 통과한다(구조적 생존). 회귀 방지용으로 유지"
+      }
+    ],
+    "mutations_reverted": "변이는 /tmp 백업으로 원복, git status 로 소스 변경 없음 확인"
+  }
+}

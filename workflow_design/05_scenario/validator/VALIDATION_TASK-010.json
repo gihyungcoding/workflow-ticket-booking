@@ -1,0 +1,77 @@
+{
+  "task_id": "TASK-010",
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "MD 와 JSON 모두 시나리오 31건이다. ID 는 SC-01~04, 07~13, 15~17, 19~35 이고 ID 번호가 건너뛰는 곳(05·06·14·18)도 두 파일이 같다. 샘플로 대조한 Given/When/Then 문장과 표 행도 일치한다. SC-07 의 '경계' 문단 3개는 JSON 에서 notes 로 옮겨져 있어 유실이 없다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 31건(하한 2). happy 9건(SC-01,02,03,13,20,21,22,23,30), error 7건(SC-04,07,10,11,16,17,25), boundary 14건, regression 1건(SC-28). 개수가 많은 것은 권고 기준선을 크게 넘는다. 다만 표 행으로 묶은 결과이고 merged 근거도 기록돼 있어 위반으로 보지 않는다."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "기준 6건을 covers 와 직접 대조했다. 기준1(비밀번호 불일치)→SC-04,07,29. 기준2(가입 성공 이동)→SC-01,03,08,12,31. 기준3(이메일 중복)→SC-10,11,19,30. 기준4(로그인 성공 후 이동)→SC-02,09,13,15,27 등. 기준5(로그인 실패 문구)→SC-16,17,19,32. 기준6(헤더 이름·로그아웃)→SC-20,21~28,33~35. coverage.uncovered=[] 는 실제와 일치한다. 참고: SC-01(기본 상태)이 기준2 를, SC-02 가 기준4 를 covers 로 달고 있는데 실제 단언은 렌더링이다. 이 두 건은 커버리지로 세지 않아도 나머지 시나리오로 충족된다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "시나리오가 쓰는 flow 는 F1~F7 이다. 모두 Plan design.flows[].id 에 실재한다."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "warn",
+      "detail": "대부분의 Then 은 화면 문구·aria-invalid·localStorage·요청 본문 같은 단언 가능한 형태다. 예외: SC-29 의 '불일치 문구는 어느 시점에도 보이지 않는다'는 시점을 특정하지 않으면 전수 단언이 불가능하다. 고친 직후와 제출 직후 두 지점으로 구체화하는 것이 좋다. SC-12 의 '서버 응답이 아직 오지 않는다'는 Given 이라 문제없다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "warn",
+      "detail": "SC-28 의 When 이 '/, /performances/new, /performances/3 을 각각 연다'로 세 화면을 연다. 이어서 Then 에서 /login·/signup 을 여는 동작(두 번째 When)과 공연 등록 요청 전송(세 번째 동작)이 추가로 나온다. 한 시나리오에 When 이 여러 개다. SC-07 은 가입/로그인 두 화면의 제출을 한 표에 묶었고, SC-12 는 '두 번 연속 누른다'를 쓴다. 두 건은 같은 동작의 반복이라 경미하다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "pass",
+      "detail": "When/Then 에 함수명·클래스명·SQL 은 없다. localStorage 키 `accessToken`, `aria-invalid`, `Authorization` 헤더는 외부에서 관찰 가능한 계약이라 허용한다. 'JS string.length' 는 SC-07 notes 에만 있고 Then 은 아니다. `WRITE_REJECTED_MESSAGE` 는 문구 정본 표에서 실제 문구와 함께 병기돼 있다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "pass",
+      "detail": "시나리오가 다루는 입력은 가입·로그인 폼, location.state.from, 저장된 토큰, API 응답이다. 출력은 인라인 오류, 중복 안내, 로그인 실패 안내, 쓰기 거부 안내, 토큰 저장·삭제, 화면 이동, 헤더, 제출 중 상태, Authorization 미부착 회귀다. 모두 Plan inputs/outputs 범위 안이다. StrictMode(SC-35)와 경쟁(SC-33·34)은 Plan F7 에 명시돼 있다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "warn",
+      "detail": "SC-32 의 '비밀번호 73자/1000자 → 401 INVALID_CREDENTIALS' 행은 SC-16 의 '한글 25자·공백만 → 401 INVALID_CREDENTIALS' 와 같은 클라이언트 코드 경로(길이 검증 없이 제출 후 401 처리)를 탄다. 한쪽이 깨지면 다른 쪽도 깨질 가능성이 높다. SC-32 에서 의미 있는 행은 이메일 256자(400 INVALID_REQUEST) 하나다. 그 외 시나리오는 입력이나 경로가 달라 중복으로 보지 않는다."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "pass",
+      "detail": "App.tsx, main.tsx, http.ts 를 수정하는 태스크다. SC-28 (regression) 이 기존 공연 목록·등록·상세 화면, 새 라우트가 /performances/:id 로 오인되지 않는 것, 등록 요청에 Authorization 이 붙지 않는 것을 다룬다."
+    },
+    {
+      "id": "V11",
+      "name": "입력 경계값",
+      "verdict": "warn",
+      "detail": "coverage-policy §2-1 표를 Plan inputs 에 대본 결과, 표의 굵은 행(최대 길이+1, 필수 누락, NUL·서로게이트, 다른 code·빈 바디·비 JSON, 재제출 시 꺼짐, 미설정·빈 문자열·공백만)은 모두 시나리오가 있어 fail 사유는 없다. 문자열은 SC-07/08/09/32, 응답 분기는 SC-11/17/25/31, 재제출 초기화는 SC-19, 토큰 미설정·빈 값·공백만은 SC-24 다. 다만 취약한 곳이 있다. (1) '통과' 경계(비밀번호 8자·72자, 이름 100자, 이메일 255자)는 SC-07 의 notes 산문에만 있고 단언하는 시나리오·표 행이 없다. `>=` 와 `>` 를 잘못 쓴 off-by-one 이 모든 시나리오를 통과한다. (2) 'UTF-16 코드 유닛으로 센다'는 요구가 notes 에만 있다. 이모지 등 서로게이트 쌍이 든 이름·비밀번호의 길이 경계(예: 이모지 37개 = 74 유닛)를 보는 행이 없다. (3) role 의 AUDIENCE 매핑은 SC-03 Then 의 괄호 '(관객이면 AUDIENCE)' 에만 있다. 관객 선택 시 요청 본문을 보는 독립 단언·표 행이 없어 두 역할 모두 ORGANIZER 로 보내는 결함이 통과할 수 있다. (4) 로그인 폼에서 passwordConfirm 같은 불필요한 키가 새는지는 SC-09 가 막지만, 가입의 이름 앞뒤 공백 보존은 표 행이 없다(Plan: '이름은 그대로'). 2b 전에 (1)~(3)을 표의 행으로 올릴 것을 권한다."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 4,
+    "summary": "V1~V4 는 모두 충족했고 fail 은 없다. 시나리오 31건이 acceptance_criteria 6건 전부와 flow F1~F7 에 대응하고, 회귀 시나리오(SC-28)도 있다. 경고 4건이다. V11: 통과 경계값, UTF-16 서로게이트 쌍 길이, AUDIENCE 매핑이 산문·괄호로만 있고 단언이 없다. V6: SC-28 에 When 이 여럿이다. V5: SC-29 의 '어느 시점에도' 표현이 모호하다. V9: SC-32 의 비밀번호 73자·1000자 행이 SC-16 과 같은 경로다. 이 중 V11 이 Phase 4 FAIL 로 이어질 가능성이 가장 높아 우선 보완을 권고한다."
+  }
+}

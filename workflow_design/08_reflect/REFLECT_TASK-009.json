@@ -91,7 +91,9 @@
       "decision": "문자열 입력은 API 경계의 한 지점에서 '무손실 저장·비교 가능' 을 검증한다(NUL·짝 없는 서로게이트 거부)",
       "why_broader": "사용자 입력을 받는 모든 이후 엔드포인트(공연 등록·좌석·소셜 로그인 TASK-011~013)가 같은 문제를 가진다",
       "evidence": "VERIFY RC-1 — 4라운드 FAIL, 변종 17건",
-      "suggested_title": "문자열 입력 검증 정책"
+      "suggested_title": "문자열 입력 검증 정책",
+      "status": "recorded",
+      "adr": "ADR-0019"
     },
     {
       "decision": "DB 동작에 의존하는 입력 처리는 운영과 같은 엔진(PostgreSQL)의 통합 테스트로 검증한다",
