@@ -1,0 +1,265 @@
+{
+  "task_id": "TASK-010",
+  "status": "FAIL",
+  "status_reason": "코드 리뷰 결함 1건(뿌리 1·변종 5, 재현 3): 토큰 복원(fetchMe) 응답이 그 사이의 로그인/로그아웃 뒤에 도착하면 세션 상태를 덮어쓰거나 새 토큰을 지운다. 118케이스에 이 겹침 시나리오가 없어 테스트가 모두 통과했다.",
+  "evidence": {
+    "tests": {
+      "command": "cd frontend && npm test",
+      "exit_code": 0,
+      "summary": "161 passed (161) — 신규 118케이스 + 기존 43"
+    },
+    "lint": {
+      "command": "cd frontend && npm run lint",
+      "exit_code": 0,
+      "summary": "error 0, warning 4 (기존 3 + AuthContext only-export-components 1)"
+    },
+    "build": {
+      "command": "cd frontend && npm run build",
+      "exit_code": 0,
+      "summary": "tsc -b + vite build 통과 (청크 500kB 경고는 기존)"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "28 files changed, 3861 insertions(+), 2 deletions(-) (테스트·워크플로우 산출물 포함)"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "회원가입 폼에서 비밀번호와 비밀번호 확인이 다르면 제출 전 인라인 오류를 표시한다",
+      "verdict": "PASS",
+      "evidence": "SC-04·29 통과, 실제 화면에서 불일치 오류 표시·정정 시 즉시 사라짐 확인"
+    },
+    {
+      "criterion": "회원가입 성공 시 로그인 화면으로 이동한다",
+      "verdict": "PASS",
+      "evidence": "SC-03·31 통과, 실제 백엔드(PostgreSQL) 가입 201 → /login 이동 확인"
+    },
+    {
+      "criterion": "이메일 중복(409) 응답 시 전용 오류 메시지와 로그인 링크를 표시한다",
+      "verdict": "PASS",
+      "evidence": "SC-10·30 통과, 실제 백엔드 409 에서 문구와 /login 링크 확인"
+    },
+    {
+      "criterion": "로그인 성공 시 토큰을 저장하고 이전 화면(또는 홈)으로 이동한다",
+      "verdict": "PASS",
+      "evidence": "SC-13·15·27 통과, 실제로 /performances/3 → 로그인 → 같은 화면 복귀, 토큰 저장 확인"
+    },
+    {
+      "criterion": "로그인 실패(401) 시 \"이메일 또는 비밀번호가 올바르지 않습니다\"를 표시한다",
+      "verdict": "PASS",
+      "evidence": "SC-16·17·32 통과, 실제 서버에서 틀린 비밀번호와 없는 이메일이 같은 문구"
+    },
+    {
+      "criterion": "로그인 상태에서 헤더에 사용자 이름과 로그아웃 버튼이 보이고, 클릭 시 토큰이 삭제되고 비로그인 상태로 전환된다",
+      "verdict": "FAIL",
+      "evidence": "단독 동작은 통과(SC-20~28, 화면 확인). 그러나 복원 응답이 로그인/로그아웃 뒤에 도착하면 헤더 사용자가 이전 사용자로 바뀌거나 로그아웃 상태가 로그인으로 되돌아가고 새 토큰이 지워진다(RC-1, 리뷰어 프로브 3건 재현)"
+    }
+  ],
+  "screens": [
+    {
+      "name": "가입",
+      "state": "기본",
+      "verdict": "PASS",
+      "evidence": "이메일 포커스, 역할 미선택, 오류 없음. 실제 백엔드(PostgreSQL) + vite 개발 서버"
+    },
+    {
+      "name": "가입",
+      "state": "검증 오류(필드별)",
+      "verdict": "PASS",
+      "evidence": "빈 폼 제출 → 5개 필드 문구 표시, aria-invalid 4개(역할은 FormControl 오류)"
+    },
+    {
+      "name": "가입",
+      "state": "불일치 정정",
+      "verdict": "PASS",
+      "evidence": "불일치 오류가 확인란을 고친 직후 사라짐"
+    },
+    {
+      "name": "가입",
+      "state": "성공",
+      "verdict": "PASS",
+      "evidence": "실제 201 → /login 이동, 토큰 저장 없음"
+    },
+    {
+      "name": "가입",
+      "state": "이메일 중복(409)",
+      "verdict": "PASS",
+      "evidence": "전용 문구 + /login 링크, 입력값·역할 유지, /signup 머묾"
+    },
+    {
+      "name": "가입/로그인",
+      "state": "쓰기 가드 거부",
+      "verdict": "PASS",
+      "evidence": "백엔드 WRITE_GUARD_ENABLED=true 에서 쓰기 권한 확인 실패 문구"
+    },
+    {
+      "name": "가입",
+      "state": "제출 중",
+      "verdict": "WARN",
+      "evidence": "버튼 비활성·중복 요청 차단은 확인(요청 1회). feature 문서 §2-5 의 '로딩 표시'(스피너 등)는 없다 — 시나리오·완료 조건에는 없는 항목"
+    },
+    {
+      "name": "로그인",
+      "state": "기본·검증 오류",
+      "verdict": "PASS",
+      "evidence": "이메일·비밀번호 필수 문구"
+    },
+    {
+      "name": "로그인",
+      "state": "자격 증명 오류(401)",
+      "verdict": "PASS",
+      "evidence": "틀린 비밀번호와 없는 이메일 모두 같은 고정 문구, 토큰 없음"
+    },
+    {
+      "name": "로그인",
+      "state": "성공·이전 화면 복귀",
+      "verdict": "PASS",
+      "evidence": "/performances/3 → 헤더 로그인 링크 → 성공 → /performances/3, 헤더에 이름·로그아웃"
+    },
+    {
+      "name": "헤더",
+      "state": "새로고침 복원·무효 토큰·로그아웃",
+      "verdict": "PASS",
+      "evidence": "유효 토큰은 이름 복원, 쓰레기 토큰은 401 로 삭제되며 비로그인 헤더, 로그아웃은 토큰 삭제 후 로그인·가입 링크"
+    },
+    {
+      "name": "헤더",
+      "state": "복원 중 로그인·로그아웃과 겹침",
+      "verdict": "FAIL",
+      "evidence": "리뷰어 프로브(vitest) — 복원 pending 중 로그인 후 복원 200: 화면 A·토큰 NEW / 복원 401: 새 토큰 삭제 / 복원 pending 중 로그아웃 후 복원 200: 다시 로그인 상태"
+    },
+    {
+      "name": "공통",
+      "state": "반응형·품질 하한",
+      "verdict": "PASS",
+      "evidence": "375px 폭 iframe 에서 가입·로그인 scrollWidth=375(가로 넘침 없음), 좌우 여백 16px. <html lang=ko>, <title>공연 예매, IBM Plex Sans KR 적용. 포커스 링은 MUI 기본(키보드 순회는 미확인)"
+    }
+  ],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 225,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "기존 파일 3곳의 Skeleton height 매직 넘버 (PerformanceDetail/Edit/ListPage) — 이번 변경 아님"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "Frontend: 도메인 규칙(선점 유효성 등은 서버가 최종 판단)",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "가입 폼은 서버 @Size 와 같은 길이 검증만 UX 용으로 미러링하고 최종 판단은 서버(SC-11·32). 코드 리뷰로 확인"
+      }
+    ],
+    "overdue_promotions": 0
+  },
+  "regression": {
+    "full_suite": "161/161 passed",
+    "callers_checked": true,
+    "note": "throwIfApiError export 만 바뀐 performances.ts 의 호출부는 기존 테스트 43건이 통과"
+  },
+  "scope_deviations": [
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "reason": "문구 공유용 신규 소형 파일"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "reason": "throwIfApiError export"
+    }
+  ],
+  "code_review": {
+    "reviewer": "code-reviewer",
+    "round": 1,
+    "findings": [
+      {
+        "severity": "correctness",
+        "file": "frontend/src/auth/AuthContext.tsx",
+        "lines": "56-77",
+        "summary": "복원(fetchMe) 응답이 로그인/로그아웃 이후 도착하면 상태를 덮어쓴다. cancelled 는 언마운트에서만 true 가 되고 login()/logout() 은 진행 중 복원을 무효화하지 않으며, catch 의 writeToken(null) 은 cancelled 를 보지 않는다. login() 은 setRestoring(false) 도 하지 않아 복원이 느리면 헤더가 계속 비어 있다.",
+        "probe": "vitest 3건 재현 — RESULT1 A/NEW, RESULT2 B/토큰 없음, RESULT3 A/토큰 없음 (저장소 밖 임시 작성 후 삭제, git status 깨끗)"
+      },
+      {
+        "severity": "note",
+        "summary": "서버 400(INVALID_REQUEST)이 '잠시 후 다시 시도' 문구로 보인다 — 시나리오가 명시한 동작이라 결함 아님(UX 메모)"
+      },
+      {
+        "severity": "improvement",
+        "summary": "제출 실패 시 포커스 이동 없음, 역할 RadioGroup 오류 문구가 aria-describedby 로 연결되지 않음, /login/·/LOGIN 은 순환 차단을 우회(해 없음)"
+      }
+    ],
+    "no_defect_checks": [
+      "문자열 필드 전수(전송 값·길이 기준 일관)",
+      "응답 code·상태·본문 분기",
+      "에러 상태 초기화·제출 중 중복",
+      "localStorage 예외",
+      "from 검증·보안(토큰 로그·XSS 없음)",
+      "색 리터럴 없음"
+    ],
+    "test_gap": "AuthScreens.test.tsx 에 복원과 로그인/로그아웃이 겹치는 시나리오가 없다 — 시나리오 2a 의 공백"
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "복원(fetchMe)의 비동기 결과를 그 사이의 세션 변경(login/logout)과 무관하게 적용한다 — 복원의 유효성이 언마운트 여부(cancelled)로만 정해지고 복원 시작 이후의 세션 세대로 무효화되지 않는다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "복원 pending 중 로그인 후 복원 200 도착 — 화면은 이전 사용자 A, 저장 토큰은 새 토큰",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false
+        },
+        {
+          "case": "복원 pending 중 로그인 후 복원 401 도착 — catch 의 writeToken(null) 이 방금 저장한 새 토큰을 삭제",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false
+        },
+        {
+          "case": "복원 pending 중 로그아웃 후 복원 200 도착 — setUser 로 다시 로그인 상태",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false
+        },
+        {
+          "case": "복원 pending 중 로그인했을 때 restoring 이 true 로 남아 헤더가 비어 있음",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "login() 이 setRestoring(false) 를 하지 않는 것을 코드로 확인했으나 렌더 프로브는 하지 않음 — Phase 3 테스트가 프로브한다"
+        },
+        {
+          "case": "StrictMode 이중 effect 의 취소된 첫 요청이 401 이면 writeToken(null) 이 실행됨",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "프로브 하니스에 StrictMode 마운트가 없었음 — Phase 3 테스트가 프로브한다(같은 토큰이라 영향 가능성은 낮음)"
+        }
+      ]
+    }
+  ],
+  "out_of_scope_findings": [
+    {
+      "id": "OOS-1",
+      "where": "backend SignUpRequest/LoginRequest email.trim()",
+      "summary": "Java trim() 은 U+0000~U+0020 을 모두 지우는데 프론트 JS trim() 은 NUL 을 지우지 않는다. 앞 NUL 이 붙은 이메일로 가입하면 201 이고 저장값은 NUL 이 제거된 주소(프로브 재현). 프론트 diff 의 결함이 아니라 TASK-009 의 서버 정규화와 이 태스크의 클라이언트 trim 사이의 차이이며, SC-08 은 중간 NUL 만 다룬다.",
+      "disposition": "Phase 5 회고에서 문자열 입력 검증 정책 ADR 후보로 이어 간다. 이 태스크의 FAIL 사유가 아님"
+    }
+  ],
+  "security": {
+    "input_validation": "문자열 필드 전송 값 일관(이메일만 trim). 서버가 최종 판단. 앞 NUL 이메일 차이는 OOS-1",
+    "authorization": "해당 없음 — 이번 범위는 화면·토큰 저장. Authorization 은 fetchMe 에만 부착(SC-28 로 공연 API 미부착 확인)",
+    "secrets": "토큰은 localStorage(ADR-0015), 하드코딩된 키·비밀번호 없음. 검증용 JWT_SECRET·DB 비밀번호는 로컬 임시값이며 저장소에 남기지 않음",
+    "logging": "해당 없음 — 토큰·비밀번호 로그 출력 없음"
+  },
+  "verification_environment": "실제 백엔드(Spring Boot, PostgreSQL 16 컨테이너) + vite 개발 서버, 쓰기 가드 OFF/ON 두 번. 컨테이너·서버는 검증 후 종료",
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}

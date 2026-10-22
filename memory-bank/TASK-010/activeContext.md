@@ -1,8 +1,8 @@
 ---
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify (FAIL, 롤백 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -13,13 +13,14 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-010-email-auth-screens"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-010.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-010.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-010.json"
   red: "workflow_design/05_scenario/TEST_TASK-010.json"
   dev: "workflow_design/06_dev/DEV_TASK-010.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-010.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -30,7 +31,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 3 Green 완료(161/161). Phase 4 — wf-verify. carry_to_phase4 는 DEV_TASK-010.json.
+Phase 4 1차 FAIL — RC-1(복원 응답 경쟁, 변종 5). 겹침 동작이 시나리오에 없어 Phase 2a 로 돌아가 변종 전부를 시나리오화한 뒤 2b→3→4. 사람의 롤백 선택 대기.
 
 ## 알아둬야 할 것
 
