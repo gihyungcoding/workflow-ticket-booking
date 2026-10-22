@@ -108,7 +108,9 @@
       "decision": "문자열 입력 검증 정책 — 서버 정규화(Java trim: U+0000~U+0020)와 클라이언트 판단(JS trim)의 차이를 포함해 API 경계 한 지점에서 NUL·서로게이트·공백을 어떻게 다루는지",
       "why_broader": "TASK-009 회고의 같은 후보에 이번 OOS-1(앞 NUL 이메일이 NUL 제거된 주소로 201 저장)이 근거를 더한다. 이후 모든 입력 엔드포인트와 폼에 적용된다",
       "evidence": "REFLECT_TASK-009.json adr_candidates · VERIFY_TASK-010.json OOS-1",
-      "suggested_title": "문자열 입력 검증·정규화 정책"
+      "suggested_title": "문자열 입력 검증·정규화 정책",
+      "status": "recorded",
+      "adr": "ADR-0019"
     }
   ],
   "architecture_drift": [
