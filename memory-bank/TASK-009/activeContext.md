@@ -20,6 +20,11 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-009.json"
   tests: "workflow_design/05_scenario/TEST_TASK-009.json"
   dev: "workflow_design/06_dev/DEV_TASK-009.json"
+pull_request:
+  number: 20
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/20"
+  base: develop
+  opened_at: 2026-10-22
 ---
 
 ## 지금 무엇을 하고 있나
