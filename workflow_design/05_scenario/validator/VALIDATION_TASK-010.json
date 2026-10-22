@@ -1,0 +1,22 @@
+{
+  "task_id": "TASK-010",
+  "checks": [
+    {"id":"V1","name":"MD ↔ JSON 일치","verdict":"pass","detail":"SC-01~SC-20 20건. ID, type, 제목, GWT 문장, covers, flow 가 MD 와 JSON 에서 일치한다. 표(SC-05/08/11/13/18)는 JSON 에 문장으로 풀리지 않고 '표와 같다'로 참조만 한다. 문장 불일치는 아니다. 다만 JSON 만 읽는 Red 단계는 표 내용을 알 수 없으므로 MD 를 함께 읽어야 한다."},
+    {"id":"V2","name":"개수 하한","verdict":"pass","detail":"전체 20건. happy 7건(SC-01,02,10,14,15,16,17), error 7건, boundary 5건, regression 1건. 하한(전체 2 이상, happy 1 이상, error 1 이상)을 충족한다."},
+    {"id":"V3","name":"acceptance_criteria 커버리지","verdict":"pass","detail":"기준 6건을 직접 대조했다. AC1(비밀번호 불일치)→SC-03,04,05. AC2(가입 성공 이동)→SC-01,02,06,09. AC3(이메일 중복)→SC-07,08. AC4(로그인 성공 이동)→SC-01,06,09,10,11,13,16,19. AC5(로그인 실패 문구)→SC-12,13. AC6(헤더·로그아웃)→SC-14,15,17,18,19,20. 모두 최소 1건 대응한다. 다만 매핑이 느슨한 곳이 있다. SC-05 는 로그인 입력 검증인데 AC5 를 covers 하고, SC-20 은 회귀인데 AC6 을 covers 한다."},
+    {"id":"V4","name":"flow 대응","verdict":"pass","detail":"사용된 flow F1~F7 이 모두 Plan design.flows 에 실재한다. 존재하지 않는 flow 참조는 없다."},
+    {"id":"V5","name":"Then 관찰 가능성","verdict":"warn","detail":"SC-20 Then '기존 화면이 지금과 같이 보이고'는 단언 기준이 없다. 어떤 텍스트·요소를 확인하는지 적어야 한다. SC-12 Then '이메일이 없는 계정과 비밀번호가 틀린 계정의 화면이 똑같다'는 한 번의 실행으로 단언할 수 없고, 서버 응답이 동일하므로 의미도 없다. SC-08 '폼 값은 그대로 남고'는 어느 필드인지 지정하지 않았다. SC-01 의 포커스, SC-17 의 응답 전 헤더 비어 있음은 관찰 가능하다."},
+    {"id":"V6","name":"When 단일성","verdict":"warn","detail":"SC-16 When '헤더의 로그인 링크를 누르고, 로그인에 성공한다'는 동작이 둘이다. SC-19 When 은 (a)/(b) 두 개의 서로 다른 조건이다. SC-04 When 도 (a)/(b) 두 변형을 합쳤다. SC-06 은 Then 에 로그인 폼 제출이라는 두 번째 When 을 And 로 넣었다. SC-10 은 Then 에 '직접 와서 같은 로그인을 하면'이라는 두 번째 When 이 있다. SC-01 도 '/signup 과 /login 을 각각 연다'로 둘이다."},
+    {"id":"V7","name":"구현 누출","verdict":"warn","detail":"함수명·SQL 은 없다. 다만 SC-03/05 의 `aria-invalid=\"true\"`, 여러 시나리오의 `localStorage` 키 `accessToken` 과 `fetch` 는 DOM·저장소 세부다. 저장 키는 ADR-0015 로 정해졌고 접근성 속성은 관찰 가능하므로 경미하다. SC-20 Then 의 'ADR-0017' 참조는 단언 문장이 아니다."},
+    {"id":"V8","name":"입출력 대응","verdict":"warn","detail":"대부분 Plan 의 inputs/outputs 범위 안이다. 범위를 넘는 항목이 있다. (1) SC-06: 이메일 trim 및 비밀번호 비-trim 정책은 Plan inputs.constraints 에 없다. (2) SC-05: 공백만 있는 비밀번호는 필수 오류, 공백만 있는 이름·이메일 거부 등 trim 기반 검증은 Plan 에 없다. (3) SC-11: from 이 '/login' 또는 '/signup' 이면 '/' 로 보낸다는 규칙은 Plan 에 없다. (4) SC-18: 500·네트워크 오류 시 토큰을 보존한다는 규칙은 Plan 이 '401 이면 삭제'만 적은 것의 확장이다. Plan 에 먼저 반영하거나 시나리오에서 제거해야 한다."},
+    {"id":"V9","name":"중복","verdict":"warn","detail":"SC-01 은 렌더링 확인뿐인데 AC2/AC4 를 covers 한다. SC-02, SC-10 과 같은 화면 경로를 타며 새 코드 경로가 거의 없다. SC-14 와 SC-16 의 헤더 렌더링 확인도 일부 겹친다. 중대한 중복은 아니다."},
+    {"id":"V10","name":"회귀 누락","verdict":"pass","detail":"App.tsx, main.tsx 수정이 있고 regression 시나리오 SC-20 이 라우트·기존 화면·쓰기 요청에 Authorization 부재를 확인한다."},
+    {"id":"V11","name":"입력 경계값","verdict":"fail","detail":"coverage-policy §2-1 표를 Plan inputs 에 대조했다. 문자열 빈 값·공백·최대길이+1(비밀번호 7/73, 이름 101, 이메일 256), 필수 누락(역할), 응답 code 분기(다른 code·빈 바디·비 JSON) 행은 SC-05/08/12/13/18 이 다룬다. 누락은 두 건이다. (1) '에러 상태를 켜는 시나리오: 재제출 시 꺼짐' 행: 서버 오류 Alert(SC-07 이메일 중복, SC-08 일반 실패, SC-12 로그인 실패, SC-13 일반 실패)가 이후 재제출 시 사라지거나 성공 시 남지 않는 시나리오가 없다. SC-04 는 클라이언트 불일치 오류만 다룬다. SC-09 는 버튼 재활성화만 확인한다. 초기화 코드를 지워도 모든 테스트가 통과한다. 또한 한 번 오류를 보인 뒤 다른 종류의 오류로 바뀔 때 이전 문구가 남지 않는 것도 단언이 없다(예: 409 전용 문구 뒤 500 일반 문구). (2) UTF-8 72바이트 경계: Plan unresolved 가 '시나리오에서 한글 비밀번호 경계를 다룰지 정한다'고 위임했는데 결정이 없다. 문자 수 72 이하이지만 72바이트를 넘는 한글 비밀번호(예: 25자)가 가입 시 서버 400 일반 문구로 처리되는 행이 SC-08 에 명시되지 않았다. SC-08 의 400 행은 '72바이트 초과'를 예시로만 언급한다. 로그인 쪽도 같은 입력의 401/400 행이 없다. 또한 문자열 전수 항목(NUL·서로게이트)은 coverage.string_input_note 로 서버에 위임했는데 Red 가 테스트로 만들 시나리오 행은 없다."}
+  ],
+  "overall": {
+    "pass": false,
+    "fail_count": 1,
+    "warn_count": 5,
+    "summary": "구조, 커버리지(AC 6건), flow 대응, 회귀 시나리오는 충족한다. V11 이 fail 이다. 서버 오류 Alert 가 재제출 시 꺼지는 시나리오(coverage-policy §2-1 '에러 상태를 켜는 시나리오' 행)가 없고, Plan 이 위임한 UTF-8 72바이트 한글 비밀번호 경계의 결정과 시나리오 행이 없다. 이는 Phase 4 FAIL 의 흔한 원인이다. warn 은 When 이중 동작(SC-16, 19, 04, 06, 10), SC-20 과 SC-12 의 관찰 불가능한 Then, Plan 에 없는 규칙(SC-06 trim, SC-11 순환 방지, SC-18 보존)과 SC-01 중복이다."
+  }
+}
