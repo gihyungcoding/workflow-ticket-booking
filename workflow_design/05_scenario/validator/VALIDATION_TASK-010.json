@@ -5,73 +5,73 @@
       "id": "V1",
       "name": "MD ↔ JSON 일치",
       "verdict": "warn",
-      "detail": "시나리오 28건의 ID, type, title, GWT 문장, covers, flow는 MD와 JSON이 같다. ID는 SC-06, 14, 18이 빠진 채로 일치한다. 다만 MD의 표(SC-05, 07, 08, 09, 11, 15, 16, 17, 19, 22, 24, 25, 29, 31)와 SC-07의 '경계:' 문단이 JSON에 없다. JSON의 'then: 표의 문구가 보인다', 'given: 아래 표의 상태다'는 가리킬 표가 JSON 안에 없다. JSON만 읽는 Phase 2b가 입력 행과 기대값을 알 수 없으므로, 표를 JSON에 싣거나 JSON을 파생물로 쓰지 않는다고 명시해야 한다."
+      "detail": "시나리오는 양쪽 모두 28개이고 ID 순서(SC-01~04, 07~13, 15~17, 19~32)와 GWT 문장, 표 행이 같다. 차이는 하나다. MD SC-07 의 세 번째 경계 문단이 JSON `notes` 에 없다. 그 문단은 '비밀번호가 문자 수 72자 이하여도 UTF-8 로 72바이트를 넘는 경우(한글 25자)는 클라이언트가 막지 않고 요청이 간다 — 서버 판단은 SC-11·SC-16' 이다. MD 가 SoT 이므로 JSON 에 동기화해야 한다."
     },
     {
       "id": "V2",
       "name": "개수 하한",
       "verdict": "pass",
-      "detail": "전체 28건. happy 9건(SC-01, 02, 03, 13, 20, 21, 22, 23, 30), error 7건(SC-04, 07, 10, 11, 16, 17, 25). boundary와 regression도 있다."
+      "detail": "전체 28개로 2개 이상이다. happy 는 SC-01, 02, 03, 13, 20, 21, 22, 23, 30 이고 error 는 SC-04, 07, 10, 11, 16, 17, 19, 25 이다. 그 외 boundary 와 regression(SC-28) 이 있다."
     },
     {
       "id": "V3",
       "name": "acceptance_criteria 커버리지",
       "verdict": "pass",
-      "detail": "Plan 기준 6건을 직접 대조했다. 기준1(불일치 인라인 오류)은 SC-04, 05, 07, 29. 기준2(가입 성공 시 이동)는 SC-03, 08, 31. 기준3(중복 409 안내)은 SC-10, 11, 19, 30. 기준4(로그인 성공 시 토큰 저장·이동)는 SC-13, 15, 09, 27. 기준5(로그인 실패 문구)는 SC-16, 17, 19. 기준6(헤더 이름·로그아웃 전환)은 SC-20, 21, 23~28. 모두 대응한다. 참고로 SC-01의 covers(가입 성공)와 SC-22, 24, 26, 28의 covers(헤더)는 시나리오 내용과의 연결이 느슨하다."
+      "detail": "직접 대조했고 기준 6건 모두 대응된다. 기준1(비밀번호 불일치) → SC-04, 07, 29. 기준2(가입 성공 이동) → SC-01, 03, 08, 12, 31. 기준3(409 중복) → SC-10, 11, 19, 30. 기준4(로그인 성공·이전 화면) → SC-02, 09, 13, 15, 27. 기준5(로그인 실패 문구) → SC-07, 16, 17, 19, 32. 기준6(헤더·로그아웃) → SC-20~28. `coverage.uncovered: []` 와 일치한다."
     },
     {
       "id": "V4",
       "name": "flow 대응",
       "verdict": "pass",
-      "detail": "시나리오가 쓰는 flow는 F1~F7이고 모두 Plan design.flows[].id에 있다. 없는 flow는 쓰이지 않았다."
+      "detail": "시나리오가 쓰는 flow 는 F1~F7 이고 모두 Plan 의 design.flows[].id 에 있다. 존재하지 않는 flow 참조는 없다."
     },
     {
       "id": "V5",
       "name": "Then 관찰 가능성",
       "verdict": "pass",
-      "detail": "Then 대부분이 화면 문구, aria-invalid, disabled, localStorage 값, 요청 횟수·본문·헤더, 이동 경로로 단언할 수 있다. '내부적으로', '정상적으로' 같은 표현은 없다."
+      "detail": "Then 은 화면 문구, aria-invalid, disabled, 포커스, localStorage 값, 요청 본문·헤더, 이동 경로처럼 단언으로 옮길 수 있는 형태다. '내부적으로', '올바르게', '정상적으로' 같은 모호한 표현은 없다. SC-07 의 '필드 아래' 위치는 helperText 로 단언할 수 있다."
     },
     {
       "id": "V6",
       "name": "When 단일성",
       "verdict": "warn",
-      "detail": "SC-13의 When은 '이메일·비밀번호를 입력하고 로그인을 누른다'로 입력과 제출이 합쳐져 있다. SC-11과 SC-25는 When에 '서버가 ~ 응답을 주고 ~를 누른다/앱을 연다'로 서버 응답 설정이 들어 있다. 이 설정은 Given이어야 한다. SC-12의 '두 번 연속 누른다'는 하나의 행위로 볼 수 있어 허용한다. SC-31의 When('서버가 ~ 201로 응답한다')도 사용자 행위가 아니다."
+      "detail": "SC-28 의 When 은 '/, /performances/new, /performances/3 을 각각 연다' 로 한 시나리오에 여러 화면 진입을 묶었다. 게다가 Then 에는 '/login, /signup 을 열 때'(When 에 없는 또 다른 행위)와 '공연 등록 요청에는 Authorization 이 붙지 않는다'(등록 제출이라는 When 이 없다)까지 들어 있다. 사실상 When 이 여러 개다. SC-22 는 링크 2종을 표로 나눈 것이라 허용 범위다. SC-12 의 '두 번 연속 누른다' 는 같은 동작의 반복이라 허용한다."
     },
     {
       "id": "V7",
       "name": "구현 누출",
       "verdict": "pass",
-      "detail": "When/Then에 나오는 aria-invalid, localStorage 키 accessToken, Authorization 헤더, API 경로는 관찰 가능한 계약이거나 ADR-0015·Plan이 정한 것이다. 함수명, 클래스명, SQL은 없다. WRITE_REJECTED_MESSAGE는 문구 표에서 실제 문구와 함께 병기돼 있어 허용 범위다."
+      "detail": "When/Then 에 함수명·클래스명·SQL 은 없다. localStorage 키, 요청 본문 JSON, aria-invalid 는 외부에서 관찰되는 계약이다. 쓰기 거부 문구의 상수명 WRITE_REJECTED_MESSAGE 는 MD 문구 정본 표에만 나오고 실제 문구가 함께 적혀 있다."
     },
     {
       "id": "V8",
       "name": "입출력 대응",
       "verdict": "pass",
-      "detail": "시나리오의 입력(가입·로그인 폼, location.state.from, 저장 토큰, API 응답)과 출력(인라인 오류, 중복 안내, 로그인 실패 문구, 쓰기 거부 안내, 토큰 저장·삭제, 이동, 헤더, 제출 중 상태, Authorization 미부착)은 Plan의 design.inputs/outputs 범위 안이다. 범위를 넘는 항목은 없다."
+      "detail": "시나리오의 입력(가입·로그인 폼, location.state.from, 저장 토큰, API 응답 code)과 출력(인라인 오류, 중복 링크, 로그인 실패, 쓰기 거부, 토큰 저장·삭제, 이동, 헤더, 제출 중 상태, Authorization 미부착)은 모두 Plan 의 design.inputs/outputs 범위 안이다."
     },
     {
       "id": "V9",
       "name": "중복",
       "verdict": "warn",
-      "detail": "SC-05(불일치를 고치면 오류가 사라진다)와 SC-29(고친 뒤 제출이 가능하다)는 같은 불일치 해제 상태에서 시작하고, 제출 경로만 다르다. 한 시나리오로 합칠 수 있다. SC-03(가입 성공)과 SC-31(201 + 빈 본문/비 JSON/{})은 같은 성공 경로를 타지만, SC-31은 본문을 무시한다는 별도 분기를 검증한다. 이쪽은 정당하다."
+      "detail": "SC-16 의 2·3행(한글 25자, 공백만 8자)과 SC-32 의 비밀번호 73자·1000자 행은 모두 '클라이언트 변환 없이 요청 후 401 INVALID_CREDENTIALS 를 고정 문구로 표시' 하는 같은 코드 경로다. SC-01·SC-02 도 정적 렌더링 확인이라 경로가 겹친다. 큰 문제는 아니나 통합할 수 있다."
     },
     {
       "id": "V10",
       "name": "회귀 누락",
       "verdict": "pass",
-      "detail": "App.tsx, main.tsx, http.ts 등 기존 파일을 수정하는 태스크다. SC-28(regression)이 기존 공연 화면 3개, 헤더 공존, 새 경로 오인 방지, 공연 등록 요청에 Authorization 헤더 미부착을 단언한다."
+      "detail": "App.tsx, main.tsx, http.ts 는 기존 파일 수정이다. SC-28(regression)이 기존 공연 화면, 새 라우트 오인 방지, 공연 요청의 Authorization 미부착을 다룬다."
     },
     {
       "id": "V11",
       "name": "입력 경계값 (coverage-policy §2-1)",
-      "verdict": "fail",
-      "detail": "Plan 로그인 폼 constraints에 '길이 검증은 UTF-16 코드 유닛 수(서버 @Size와 동일)'가 있다. 이는 문자열 '최대 길이+1' 행이 로그인 입력(email, password)에도 적용된다는 뜻인데, 시나리오에 로그인 길이 초과 케이스가 없다. SC-07의 로그인 행은 이메일 빈 값/공백만과 비밀번호 빈 값뿐이다. 로그인 이메일 256자와 비밀번호 73자 이상의 동작은 정의돼 있지 않다. 차단하면 어떤 문구를 보이는지, 서버로 보내면 400이나 401을 일반 문구와 로그인 실패 문구 중 어느 쪽으로 처리하는지가 비어 있다. SC-16의 한글 25자는 72자 이하라 이 경계를 건드리지 않는다. 로그인 길이를 클라이언트가 막지 않는 것이 의도라면 Plan의 해당 문장을 바로잡고 '256자 이메일·73자 비밀번호도 요청이 간다'를 시나리오에 명시해야 한다. 나머지 행(빈 값/공백만, 최대 길이+1, 필수, 열거형 role, NUL·서로게이트 전 필드, 서버 code 분기·빈 바디·비 JSON, 재제출 시 오류 꺼짐)은 대응하는 시나리오가 있다. 참고로 가입 role의 AUDIENCE 값은 SC-03 Then의 괄호에만 적혀 있어 독립 단언으로 분리되지 않는다."
+      "verdict": "pass",
+      "detail": "design.inputs 를 표에 대본 결과 누락된 행은 없다. 문자열(email·password·passwordConfirm·name)은 빈 값·공백만·최대+1이 SC-07 에 있다. 문자열 필드 전수는 NUL·짝 없는 서로게이트가 가입(SC-08)과 로그인(SC-09)의 email·password·name 에 있다. 필수 필드는 역할 미선택이 SC-07 에 있다. 응답 code 분기는 같은 상태의 다른 code·빈 바디·비 JSON 이 SC-11, 17, 25, 31 에 있다. 에러 상태 해제(재제출)는 SC-19 에 표로 묶여 있다. 환경 입력은 토큰 없음·빈 문자열·공백만이 SC-24, 저장소 읽기 throw 가 SC-26, 쓰기 throw 가 SC-27 이다. from 값은 SC-15 에 있다. 아래 세 가지는 현재 Then 의 단언이 약한 부분이라 권고한다. (1) 비밀번호 8자·72자, 이름 100자, 이메일 255자 '통과' 경계는 SC-07 의 notes 에만 있고 Then 으로 단언되지 않는다. (2) 이메일 앞뒤 공백을 제거한 뒤 길이를 센다는 규칙을 확인하는 행이 없다(공백 포함 256자인데 trim 후 255자). (3) 역할 AUDIENCE 매핑은 SC-03 의 괄호 설명에만 있고 별도 단언 행이 없다."
     }
   ],
   "overall": {
-    "pass": false,
-    "fail_count": 1,
+    "pass": true,
+    "fail_count": 0,
     "warn_count": 3,
-    "summary": "V3(기준 6건 모두 대응)과 V4(F1~F7 실재)는 충족한다. V11이 FAIL이다. Plan이 로그인에도 UTF-16 길이 검증이 있다고 적었는데 로그인 이메일 256자·비밀번호 73자 이상의 기대 동작이 시나리오에 없다. 이 부분은 확정해서 시나리오(또는 Plan)에 써야 한다. 경고는 3건이다. V1은 MD의 표가 JSON에 빠져 JSON의 'x의 표' 참조가 비어 있다. V6은 SC-13, 11, 25, 31의 When에 입력 조합이나 서버 응답 설정이 섞여 있다. V9는 SC-05와 SC-29가 거의 겹친다."
+    "summary": "fail 항목은 없다(V1~V4, V11 모두 통과). 기준 6건이 전부 커버되고 flow F1~F7 이 실재하며 §2-1 경계 행도 채워져 있다. 경고는 세 건이다. (1) V1: MD SC-07 의 UTF-8 바이트 경계 문단이 JSON notes 에 빠져 있다. (2) V6: SC-28 의 When 이 여러 개다. (3) V9: SC-16 과 SC-32 의 일부 행이 같은 경로다. 권고도 있다. 8·72·100·255자 통과 경계를 Then 으로 승격하고, 이메일 trim 후 길이 검사와 AUDIENCE 매핑 행을 추가하는 것이다."
   }
 }
