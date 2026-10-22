@@ -1,0 +1,255 @@
+{
+  "task_id": "TASK-010",
+  "supersedes": "SCENARIO_TASK-010.json",
+  "test_file": "frontend/src/auth/AuthScreens.test.tsx",
+  "test_files": [
+    "frontend/src/auth/AuthScreens.test.tsx"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "SC-01 (happy) 가입 화면의 기본 상태",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "SC-02 (happy) 로그인 화면의 기본 상태",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "SC-03 (happy) 가입에 성공하면 역할(주최자→ORGANIZER) 포함해 요청하고 로그인 화면으로 이동한다",
+      "cases": 2,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (2건 모두)"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "SC-04 (error) 비밀번호 확인이 다르면 제출 전에 인라인 오류를 보인다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "SC-07 (error) 필수 입력과 길이 위반은 서버로 보내지 않고 필드 아래에 알린다",
+      "cases": 24,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (24건 모두)"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "SC-08 (boundary) 가입 입력은 이메일 앞뒤 공백만 제거하고 나머지는 변환 없이 보낸다",
+      "cases": 8,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (8건 모두)"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "SC-09 (boundary) 로그인 입력도 이메일 앞뒤 공백만 제거하고 나머지는 변환 없이 보낸다",
+      "cases": 6,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (6건 모두)"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "SC-10 (regression) 새 등록 라우트가 기존 상세 라우트를 가리지 않는다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "SC-11 (error) 중복이 아닌 가입 실패는 일반 문구로 보이고 중복 문구가 새지 않는다",
+      "cases": 12,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (12건 모두)"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "SC-12 (boundary) 제출 중에는 버튼이 비활성이고 중복 요청이 가지 않는다",
+      "cases": 2,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (2건 모두)"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "SC-13 (happy) 헤더 링크로 온 로그인에 성공하면 토큰을 저장하고 이전 화면으로 이동한다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_function": "SC-15 (boundary) 이전 화면은 앱 안의 경로만 믿는다",
+      "cases": 10,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (10건 모두)"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_function": "SC-16 (error) 자격 증명이 틀리면 고정 문구를 보이고 토큰을 저장하지 않는다",
+      "cases": 3,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (3건 모두)"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_function": "SC-17 (error) 자격 증명 실패가 아닌 로그인 이상 응답은 일반 문구로 보인다",
+      "cases": 13,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (13건 모두)"
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_function": "SC-19 (boundary) 서버 오류 문구는 재제출을 시작하면 지워지고 새 오류로 바뀐다",
+      "cases": 5,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (5건 모두)"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_function": "SC-20 (happy) 로그인 상태의 헤더에는 이름과 로그아웃 버튼이 보인다",
+      "cases": 2,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (2건 모두)"
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_function": "SC-21 (happy) 로그아웃하면 토큰이 삭제되고 비로그인 상태가 된다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-22",
+      "test_function": "SC-22 (happy) 비로그인 헤더의 링크가 로그인·가입 화면으로 이어진다",
+      "cases": 2,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (2건 모두)"
+    },
+    {
+      "scenario_id": "SC-23",
+      "test_function": "SC-23 (happy) 새로고침 후 저장된 토큰으로 로그인 상태가 복원된다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-24",
+      "test_function": "SC-24 (boundary) 저장된 토큰이 없거나 비어 있으면 복원 요청 없이 비로그인으로 보인다",
+      "cases": 3,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (3건 모두)"
+    },
+    {
+      "scenario_id": "SC-25",
+      "test_function": "SC-25 (error) 토큰 복원이 실패하면 비로그인으로 보이고 무효 토큰만 지운다",
+      "cases": 7,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (7건 모두)"
+    },
+    {
+      "scenario_id": "SC-26",
+      "test_function": "SC-26 (boundary) 브라우저 저장소를 읽지 못해도 앱이 죽지 않는다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-27",
+      "test_function": "SC-27 (boundary) 저장소에 쓰지 못해도 이번 방문 동안은 로그인 상태가 유지된다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-28",
+      "test_function": "SC-28 (regression) 헤더와 새 라우트가 기존 공연 화면을 해치지 않는다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-29",
+      "test_function": "SC-29 (boundary) 불일치를 고쳐 맞추면 오류가 사라지고 제출이 가능하다",
+      "cases": 2,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (2건 모두)"
+    },
+    {
+      "scenario_id": "SC-30",
+      "test_function": "SC-30 (happy) 중복 안내의 로그인 링크는 로그인 화면으로 이동한다",
+      "cases": 1,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (1건 모두)"
+    },
+    {
+      "scenario_id": "SC-31",
+      "test_function": "SC-31 (boundary) 가입 성공 판정은 응답 본문이 아니라 상태 201 로 한다",
+      "cases": 3,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (3건 모두)"
+    },
+    {
+      "scenario_id": "SC-32",
+      "test_function": "SC-32 (boundary) 로그인은 길이 상한을 클라이언트가 막지 않고 서버 판정에 맡긴다",
+      "cases": 3,
+      "status": "red",
+      "failure": "Error: not implemented — AuthProvider 스켈레톤이 던진다 (3건 모두)"
+    }
+  ],
+  "red_result": {
+    "command": "cd frontend && npx vitest run",
+    "total": 161,
+    "failed": 118,
+    "passed": 43,
+    "new_cases": 118,
+    "new_failed": 118,
+    "already_passing": [],
+    "existing_tests_still_passing": true,
+    "note": "새 케이스 118건(시나리오 28건, 표는 test.each 행 단위) 전부 실패, 기존 43건 통과. tsc -b 오류 0."
+  },
+  "inventory_check": {
+    "scenarios": 28,
+    "test_functions": 28,
+    "match": true,
+    "method": "테스트 제목의 SC-NN 고유 ID 28개 == SCENARIO_TASK-010.json 의 id 28개 (diff 없음). 표 시나리오는 test.each 한 선언이 행마다 케이스를 만든다"
+  },
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/api/auth.ts",
+      "frontend/src/auth/AuthContext.tsx",
+      "frontend/src/pages/SignUpPage.tsx",
+      "frontend/src/pages/LoginPage.tsx",
+      "frontend/src/components/AppHeader.tsx"
+    ],
+    "contents": "타입·시그니처·상수(ACCESS_TOKEN_KEY)만. 모든 함수·컴포넌트 본문은 throw new Error('not implemented') 한 줄. App.tsx·main.tsx 는 손대지 않음",
+    "purity_check": "실패 118건 == 'not implemented' 118건 (vitest JSON 리포트로 센 값)"
+  },
+  "testing_preferences": {
+    "framework": "vitest + @testing-library/react + user-event (jsdom)",
+    "mock_strategy": "globalThis.fetch 를 vi.stubGlobal 로 대체(경로·메서드별 응답). api/auth·AuthContext 는 실제 코드로 통과. localStorage 는 jsdom 실제 객체, 접근 예외는 vi.spyOn(Storage.prototype)"
+  },
+  "config_applied_via": "해당 없음(서버 설정 아님). 환경변수 VITE_* 는 쓰지 않아 미설정 상태가 기본",
+  "risks_for_green": [
+    "기존 App.test.tsx 는 AuthProvider 없이 <App/> 을 렌더한다. Green 에서 AppHeader 가 useAuth 를 쓰면 이 기존 테스트가 깨진다 → useAuth 가 Provider 밖에서 비로그인 기본값을 돌려주거나 AppHeader 를 AuthProvider 안에서만 그리게 한다. 승인된 테스트를 고치려면 훅이 사람에게 묻는다",
+    "이메일 입력란을 type=email 로 하면 jsdom 이 앞뒤 공백을 값 정제로 지운다(SC-08·09 의 trim 행, SC-07 공백만 행이 의미를 잃을 수 있다). type=text 와 inputMode 를 쓰거나 결과를 확인한다",
+    "NUL·짝 없는 서로게이트 행(SC-08·09)은 입력값을 그대로 보내야 통과한다 — 클라이언트에서 정규화·제거하지 않는다",
+    "SC-10·30 은 중복 안내 문장 안의 로그인 링크를 부모 요소 텍스트로 찾는다(헤더의 같은 이름 링크와 구분). 링크를 문장과 같은 요소 안에 둔다",
+    "SC-23 은 복원 중 헤더가 로그인·가입·로그아웃을 모두 그리지 않아야 한다",
+    "로그인 길이 검증 없음(SC-32), 가입 길이 검증은 UTF-16 길이(SC-07 경계 행)"
+  ],
+  "validator_recommendations_applied": [
+    "통과 경계(비밀번호 8·72자, 이름 100자, 이메일 255자) — SC-07 의 pass 행",
+    "이메일 trim 뒤 길이 — SC-07 의 trim 행 2건",
+    "AUDIENCE/ORGANIZER 매핑 — SC-03 test.each 2행"
+  ],
+  "human_review": {
+    "approved": false
+  }
+}

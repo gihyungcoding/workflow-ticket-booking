@@ -1,8 +1,8 @@
 ---
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
-phase: "2a"
-phase_name: "Phase 2a - Scenario 승인 (HITL#1)"
+phase: "2b"
+phase_name: "Phase 2b - Red (HITL#2 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -13,11 +13,12 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-010-email-auth-screens"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-010.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-010.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-010.json"
+  red: "workflow_design/05_scenario/TEST_TASK-010.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -28,7 +29,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 2a 완료(시나리오 28건, 독립검증 5차 PASS, HITL#1 승인). wf-red 로 Phase 2b 를 수행한다 — 표로 묶은 시나리오(SC-07·08·09·11·15·16·17·19·24·25·29·31·32)는 행마다 테스트 케이스가 필요하다.
+Phase 2b Red 작성 완료(118케이스 전부 실패, 기존 43 통과). HITL#2 승인 후 Phase 3 — wf-develop. Green 위험은 TEST_TASK-010.json 의 risks_for_green.
 
 ## 알아둬야 할 것
 
