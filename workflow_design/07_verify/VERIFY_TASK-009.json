@@ -1,0 +1,516 @@
+{
+  "task_id": "TASK-009",
+  "status": "WARN",
+  "status_reason": "5차 검증 — 4차 결함(로그인 password 짝 없는 서로게이트가 '?' 로 치환돼 BCrypt 매칭 200)이 PostgreSQL 에서 400 으로 해소됐고, 모든 문자열 입력(가입 email·password·passwordConfirm·name, 로그인 email·password)을 HTTP 로 전수 프로브해 새 변종 없음. 리뷰어 5차 defect 0. 테스트 112/112, 아키텍처 error 0·no_target 0. 남은 WARN: PostgreSQL 통합 테스트 부재(H2 가 PG 와 다르게 동작하는 입력 부류를 테스트가 못 잡음 — 같은 뿌리로 5라운드째), @Email 이 U+FFFE·bidi 로컬 파트·name 의 U+FFFE 를 허용(무손실 저장, 위장 위험 개선 제안), 배포 전 Render JWT_SECRET 입력 필요",
+  "rounds": [
+    {
+      "round": 1,
+      "result": "FAIL",
+      "summary": "공연 API 의 프레임워크 오류 응답 400/405/415 → 401, 소문자화 길이 오보 409. 시나리오로 롤백(RETRY_SCENARIO 1/3) → SC-17·18·19 추가, SC-13 정각·SC-08/09 행 추가 → Red 재작성 → 수정(3c2391e)"
+    },
+    {
+      "round": 2,
+      "result": "FAIL",
+      "summary": "아래 — name NUL → 409 오보(PostgreSQL 재현)"
+    },
+    {
+      "round": 3,
+      "result": "FAIL",
+      "summary": "이메일 짝 없는 서로게이트 → DB '?' 치환·타 입력과 409 충돌(PostgreSQL HTTP 재현). 2차 결함(name NUL 등)은 해소"
+    },
+    {
+      "round": 4,
+      "result": "FAIL",
+      "summary": "로그인 비밀번호의 짝 없는 서로게이트 → '?' 치환 후 BCrypt 매칭 200(PostgreSQL HTTP 재현). 3차 결함은 해소. RETRY_SCENARIO 3/3 소진 상태"
+    },
+    {
+      "round": 5,
+      "result": "WARN",
+      "summary": "로그인 비밀번호 서로게이트 400 으로 해소, 모든 문자열 입력 PostgreSQL HTTP 전수 프로브 새 변종 없음, 리뷰어 defect 0"
+    }
+  ],
+  "evidence": {
+    "tests": {
+      "command": "cd backend && ./gradlew clean test spotlessCheck bootJar",
+      "exit_code": 0,
+      "summary": "112 tests, 0 failed, 0 errors, 0 skipped (build/test-results XML 합산). BUILD SUCCESSFUL"
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL (위 명령에 포함)"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "71 files changed, 6764 insertions(+), 27 deletions(-) — 운영 코드·테스트 외 워크플로우·메모리뱅크 산출물 포함(5차 시점 HEAD 6a474ad)"
+    },
+    "regression_probe": {
+      "command": "develop 워크트리와 이 브랜치를 같은 postgres(별도 DB)에 각각 띄워 같은 요청을 비교(포트 18082/18083, 쓰기 가드 OFF)",
+      "result": "공연 API 16개 요청 전부 develop 과 같은 상태 — 1차 FAIL 의 7건(400×4·405×2·415×1)도 해결",
+      "rows": [
+        {
+          "request": "GET /api/performances/abc",
+          "develop": 400,
+          "branch": 400
+        },
+        {
+          "request": "GET /api/performances?page=abc",
+          "develop": 400,
+          "branch": 400
+        },
+        {
+          "request": "GET /api/performances?status=NOPE",
+          "develop": 400,
+          "branch": 400
+        },
+        {
+          "request": "DELETE /api/performances/1",
+          "develop": 405,
+          "branch": 405
+        },
+        {
+          "request": "PATCH /api/performances/1",
+          "develop": 405,
+          "branch": 405
+        },
+        {
+          "request": "POST /api/performances (text/plain)",
+          "develop": 415,
+          "branch": 415
+        },
+        {
+          "request": "POST /api/performances/abc/cancel",
+          "develop": 400,
+          "branch": 400
+        },
+        {
+          "request": "GET /api/performances/99999",
+          "develop": 404,
+          "branch": 404
+        },
+        {
+          "request": "GET /api/performances",
+          "develop": 200,
+          "branch": 200
+        },
+        {
+          "request": "GET /api/performances (무효 Bearer)",
+          "develop": 200,
+          "branch": 200
+        },
+        {
+          "request": "POST /api/performances {}",
+          "develop": 400,
+          "branch": 400
+        },
+        {
+          "request": "PUT /api/performances/99999 {}",
+          "develop": 400,
+          "branch": 400
+        },
+        {
+          "request": "POST /api/performances 깨진 JSON",
+          "develop": 400,
+          "branch": 400
+        },
+        {
+          "request": "GET /api/performances/1/",
+          "develop": 404,
+          "branch": 404
+        },
+        {
+          "request": "OPTIONS /api/performances",
+          "develop": 200,
+          "branch": 200
+        },
+        {
+          "request": "GET /api/performances/9223372036854775808",
+          "develop": 400,
+          "branch": 400
+        }
+      ],
+      "intended_difference": {
+        "request": "GET /api/not-registered",
+        "develop": 404,
+        "branch": 401,
+        "note": "SC-11 에서 수용한 변화(허용 목록 밖 경로는 기본 거부)"
+      },
+      "body_check": "타입 불일치 400 의 본문 형식이 develop 과 같다 ({timestamp,status,error,path})",
+      "round3_recheck": "브랜치 앱(PostgreSQL 16.14)에 같은 16개 요청 재실행 → 2차에 기록한 develop 값과 전부 동일(DIFF 0). develop 은 이번 라운드에 다시 띄우지 않았다(기록값 비교). GET /api/not-registered 는 401(의도된 변화)",
+      "round4_recheck": "브랜치 앱(PostgreSQL 16.14)에 같은 16개 요청 재실행 → 2차에 기록한 develop 값과 전부 동일(DIFF 0). develop 은 이번 라운드에 다시 띄우지 않았다(기록값 비교)"
+    },
+    "e2e_postgres": {
+      "command": "docker postgres:16-alpine + ./gradlew bootRun(JWT_SECRET 설정, 가드 OFF) + python/curl 프로브",
+      "summary": "email 짝 없는 상위·하위 서로게이트 400 / U+0085·한글 로컬 파트 201 (저장 length 9, 응답과 일치) / 로컬 파트 이모지 쌍·NUL 은 @Email 이 400 / password 짝 없는 서로게이트 400, NUL·이모지 쌍 201 이고 로그인 200 / 로그인 email 서로게이트 400 / name NUL·서로게이트 400, 한글+이모지·U+00A0 201 / 동일 이메일 24 동시 가입 201×1+409×23 / 중복 409·로그인·/me·변조 401·로그인 실패 두 경우 본문 동일·해시 $2a$10$ 60자",
+      "limit": "로컬 PostgreSQL 16.14 — 운영(Neon)은 18.6. 가드 ON·JWT_SECRET 미설정 기동 실패는 이번 라운드 재실행 안 함(코드 변경 없음, SC-16 이 덮음)"
+    },
+    "reproduced_defect": {
+      "command": "PostgreSQL 에 붙은 브랜치 앱에 POST /api/auth/signup · /api/auth/login (python urllib)",
+      "results": [
+        {
+          "input": "signup password=\"abcdefg?h1\"",
+          "status": 201
+        },
+        {
+          "input": "login password=\"abcdefg\\ud800h1\" (짝 없는 서로게이트)",
+          "status": 200,
+          "note": "결함 — 401 이어야 한다. getBytes(UTF_8) 가 '?' 로 치환해 저장된 'abcdefg?h1' 과 BCrypt 매칭"
+        },
+        {
+          "input": "login password=\"abcdefg?h1\"",
+          "status": 200,
+          "note": "정상"
+        },
+        {
+          "input": "login password=\"abcdefg\\u0000h1\"",
+          "status": 401,
+          "note": "NUL 은 치환되지 않아 정상 거부"
+        },
+        {
+          "input": "login email=NUL",
+          "status": 400,
+          "note": "@Email 이 거부 — 정상"
+        },
+        {
+          "input": "signup passwordConfirm 에 서로게이트",
+          "status": 400,
+          "note": "password 와 불일치 — 정상"
+        }
+      ]
+    },
+    "postgres_probe_round5": {
+      "command": "postgres:16 컨테이너(18090) + bootJar(18091, JWT_SECRET 지정)에 python urllib 로 JSON 이스케이프(\\ud800 등) 본문을 직접 전송, 이후 psql 로 저장값 확인",
+      "result": "로그인 password 상·하위 서로게이트 400(이전 200), 실제 '?' 200, 로그인 email 서로게이트·NUL 400, 'a?b' 계정 로그인 200, 비밀번호 중간 NUL 뒤 추가값·앞부분만 401, passwordConfirm 서로게이트 400, 가입 email 서로게이트·NUL 400, U+0085·한글 로컬 201 저장 일치, 이모지 쌍 password·name 201/200(과차단 없음), 72바이트 이모지 201·로그인 200",
+      "db_rows": "users 8행 — a?b@example.com 은 실제 물음표(0x3f)로 저장, c\\u0085d@example.com length 15, 홍길동@example.com length 15",
+      "caveat": "이모지 쌍이 이메일 로컬 파트에 들어가면 가입·로그인 모두 400(@Email 이 보충 평면을 거부) — 무손실·일관되게 거부되어 결함 아님. 보고된 스크립트: scratchpad/probe5.py"
+    },
+    "regression_probe_round5": {
+      "result": "공연 API 프레임워크 오류 응답 8개 요청이 develop 기록값과 같음(400×4·405×2·404·415), /api/auth/me 토큰 없음 401, 허용 목록 밖 경로 401. 이번 변경은 LoginRequest 한 파일이라 4차의 16개 요청 DIFF 0 결과가 유지됨"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "올바른 정보로 POST /auth/signup 호출 시 201과 함께 UserResponse(비밀번호 제외)를 반환한다",
+      "verdict": "PASS",
+      "evidence": "SC-01·04·05·06·18 통과 + e2e 201, 정규화 후 길이·role 숫자·한글 25자 400"
+    },
+    {
+      "criterion": "이미 존재하는 이메일로 가입 시도 시 409를 반환한다",
+      "verdict": "PASS",
+      "evidence": "SC-03 통과 + e2e 409 (소문자 표기). 단 같은 catch 가 UNIQUE 외 위반도 409 로 보고하는 결함이 아래 code_review 에 있다"
+    },
+    {
+      "criterion": "저장된 비밀번호가 평문이 아니라 BCrypt 해시임을 DB 조회로 확인한다",
+      "verdict": "PASS",
+      "evidence": "SC-02 통과 + postgres 해시 $2a$10$ 60자"
+    },
+    {
+      "criterion": "올바른 이메일/비밀번호로 POST /auth/login 호출 시 200과 유효한 accessToken을 반환한다",
+      "verdict": "PASS",
+      "evidence": "SC-07·16 통과 + e2e 로그인 200"
+    },
+    {
+      "criterion": "틀린 비밀번호 또는 존재하지 않는 이메일로 로그인 시 401을 반환하며, 두 경우 응답 메시지가 동일하다",
+      "verdict": "PASS",
+      "evidence": "SC-08·09 통과 + e2e 두 실패 본문 동일, 72바이트 사용자 + 1글자 401"
+    },
+    {
+      "criterion": "유효한 토큰으로 GET /auth/me 호출 시 200과 해당 사용자 정보를 반환한다",
+      "verdict": "PASS",
+      "evidence": "SC-10 통과 + e2e /me 200, 스킴 소문자 200"
+    },
+    {
+      "criterion": "토큰 없이 또는 만료/위조된 토큰으로 GET /auth/me 호출 시 401을 반환한다",
+      "verdict": "PASS",
+      "evidence": "SC-11·12·13(정각 401)·14 통과 + e2e 토큰 없음·변조 401"
+    },
+    {
+      "criterion": "기존 /api/performances/** 엔드포인트가 Security 도입 이후에도 인증 없이 그대로 동작한다(회귀 없음)",
+      "verdict": "PASS",
+      "evidence": "SC-15·17·19 통과 + develop 비교 프로브 16개 요청 전부 동일 (1차 FAIL 해결)"
+    }
+  ],
+  "screens": [],
+  "screens_note": "Backend 태스크 — 화면 없음",
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 199,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend PerformanceDetailPage:37, PerformanceEditPage:104, PerformanceListPage:46 매직 넘버 — 이번 태스크 변경 아님"
+      }
+    ],
+    "overdue_promotions": [],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "API: DB 접근",
+        "constraint": "ARCH-001",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: HTTP 관심사",
+        "constraint": "ARCH-002(api import 금지만)",
+        "state": "⚠ 미인코딩",
+        "note": "서비스가 jakarta.servlet·Spring MVC 타입을 쓰는 것은 막지 않는다. 이번 변경에는 위반 없음(확인함)"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용",
+        "constraint": "ARCH-003",
+        "state": "✓",
+        "note": "AuthService 가 org.springframework.dao.DataIntegrityViolationException 을 쓴다 — 영속성 기술 중립 예외라 ARCH-003 패턴(data.jpa·criteria)에 걸리지 않지만 경계가 모호하다"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어",
+        "constraint": null,
+        "state": "⚠ 미인코딩",
+        "note": "User 엔티티는 구조 애노테이션만 — 위반 없음"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "Service → config 패키지 의존(JwtTokenProvider)",
+        "constraint": null,
+        "state": "⚠ 미인코딩",
+        "note": "architecture.md §3 의 의존 방향에 config 가 정의돼 있지 않다 — 이번에 처음 생긴 방향"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "112/112 passed",
+    "callers_checked": true,
+    "note": "NoLoneSurrogate 사용처는 SignUpRequest·LoginRequest 뿐. 공연 API 프레임워크 오류 응답 develop 기록값과 동일"
+  },
+  "scope_deviations": [
+    {
+      "path": "service/UnauthenticatedException.java",
+      "reason": "SC-14 에 필요. Plan 에 없던 파일"
+    },
+    {
+      "path": "resources/config/application.properties",
+      "reason": "Jackson enum 숫자 거부 설정. Plan 은 주석 정도라고 했다"
+    },
+    {
+      "path": "config/SecurityConfig.java",
+      "reason": "PasswordEncoder·JwtTokenProvider 빈 동거"
+    },
+    {
+      "path": "config/JwtTokenProvider.java",
+      "reason": "만료 비교를 라이브러리 기본 검증기 대신 직접 구현 — SC-13 이 정각을 만료로 확정(RFC 7519)"
+    }
+  ],
+  "code_review": {
+    "reviewer": "code-reviewer 서브에이전트 5차(이전 root_causes 이어받음·수정 커밋 eea6c22 부작용·JPA 지시·HTTP 직접 재현)",
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체",
+        "findings": 2
+      },
+      {
+        "n": 2,
+        "scope": "수정 커밋 · 같은 카테고리 전수",
+        "findings": 1
+      },
+      {
+        "n": 3,
+        "scope": "전체 + 수정 커밋 db43f4d · RC-1/RC-2 변종 전수",
+        "findings": 1
+      },
+      {
+        "n": 4,
+        "scope": "전체 + 수정 커밋 197e5e9..HEAD · RC-1/RC-2 변종 전수",
+        "findings": 1
+      },
+      {
+        "n": 5,
+        "scope": "전체 + 수정 커밋 7b52d51..HEAD(eea6c22·0b379b0) · RC-1/RC-2 변종 전수, PostgreSQL 앱 HTTP 재현",
+        "findings": 0
+      }
+    ],
+    "findings": [],
+    "suggestions": [
+      "@Email 이 로컬 파트에 U+FFFE·U+FFFF·bidi U+202E·U+2028 등을 허용하고 name 은 \\p{Cc}·\\p{Cs} 만 막는다(DB 에 U+FFFE 이름 저장 확인) — 무손실 저장이라 결함은 아니나 유사 계정·시각 위장 가능, 로컬 파트 ASCII 제한·name 정책 검토",
+      "SignUpRequest.name 이 직접 정규식을 쓰고 나머지는 NoLoneSurrogate 상수를 쓴다 — 정책이 달라 의도된 중복(name 은 제어 문자까지 거부)",
+      "passwordConfirm 에는 @Pattern 이 없고 password 와의 불일치로만 걸러진다 — 결함 아님"
+    ],
+    "confirmed_ok": [
+      "로그인 password·email 서로게이트 400 · 이모지 쌍 허용 · NUL 비교 잘림 없음 · 72바이트 초과 BCrypt 전 401 · 에러 응답 형식 INVALID_REQUEST",
+      "AuthApiTest·WriteGuardIntegrationTest·AuthServiceSignUpFailureTest 에 클래스 레벨 @Transactional 없음, Given 이 properties 에 의존하는 가짜 통과 없음. WriteGuardOffIntegrationTest 는 클래스 @Transactional 이지만 OFF 가 기본값이라 롤백돼도 단언이 거짓이 되지 않음(TASK-014 소관)",
+      "SC-23 400 행은 code 와 accessToken 부재까지 확인해 500·200 누출을 막는다"
+    ]
+  },
+  "security": {
+    "input_validation": "가입 email·password·로그인 email·password 의 짝 없는 서로게이트 400, passwordConfirm 은 password 와의 불일치로 400, name 제어 문자·서로게이트 400, 길이·72바이트·role enum. 로그인 password 서로게이트 결함은 해소(5차 PostgreSQL HTTP 확인)",
+    "authorization": "공연 API 는 의도적으로 permitAll(ADR-0017). /api/auth/me·허용 목록 밖 경로는 인증 필요. ERROR 디스패치만 열어 두었고 REQUEST 인가는 그대로. 1차 결함(오류 응답 401 회귀) 해결 확인",
+    "secrets": "JWT_SECRET 환경변수만, 32바이트 미만 기동 실패. 저장소에 비밀값 없음. password_hash 는 응답·로그에 노출되지 않음",
+    "logging": "자격증명·토큰을 로그로 남기는 코드 없음",
+    "notes": [
+      "사용자 열거(타이밍)·로그인 시도 제한은 범위 밖(Plan)",
+      "BCrypt 는 72바이트 초과를 잘라 비교 — 로그인 가드와 SC-08 로 차단됨(변이 검증 완료)"
+    ]
+  },
+  "deploy_notes": [
+    "머지 전에 Render 에 JWT_SECRET(32바이트 이상)을 넣어야 한다 — 없으면 머지 후 자동 배포가 기동 실패해 현재 배포가 내려간다(Render 자동 배포 설정은 확인하지 않음)",
+    "V3 마이그레이션이 기동 시 Neon 에 적용된다 — 운영 PostgreSQL 은 18.6 이고 이번 확인은 16.14 에서 했다",
+    "docs/release/first-deploy-checklist.md §6 의 백엔드 환경변수 표에 JWT_SECRET 이 없다"
+  ],
+  "known_gaps": [
+    "PostgreSQL 통합 테스트 부재 — H2 가 PG 와 다르게 동작하는 입력 부류(NUL·서로게이트)를 테스트가 못 잡는다. 이번 5라운드 모두 Phase 4 의 PostgreSQL 수동 프로브가 결함을 찾았다(ADR-0006 예고, Testcontainers 전환은 별도 결정)",
+    "exp 없는 토큰을 유효로 보는 변이 생존(우리가 발급하는 토큰은 항상 exp 보유)",
+    "@Email 이 허용하는 U+FFFE·bidi 로컬 파트와 name 의 U+FFFE — 위장 위험 개선 제안, 이번 범위 밖"
+  ],
+  "human_review": {
+    "decision": "APPROVE",
+    "verified_commit": "efcad4112022757a3fab4ba155a1c04e1c40e494",
+    "verified_at": "2026-10-21T16:32:07Z"
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "입력 검증이 'DB 가 무손실로 저장하지 못하거나 비교 단계에서 다른 값으로 치환되는 문자열'을 막지 않고, 무결성 예외를 전부 UNIQUE 위반(409)으로 취급한 catch 가 그것을 가렸다(H2 는 둘 다 받아 주어 테스트가 못 잡음)",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "소문자화로 길이가 늘어나는 이메일",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc18_이메일_길이는_정규화_후_기준으로_검증된다 · 3차 PostgreSQL 프로브"
+        },
+        {
+          "case": "name 에 NUL 문자",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc20_name에_제어_문자나_짝_없는_서로게이트가_있으면_400이다 · 3차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "name 의 짝 없는 서로게이트(U+FFFD 조용한 치환)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc20 · 3차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "UNIQUE 외 무결성 위반이 409 로 오보",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "reason": "SQLState 23505 한정으로 수정됨(코드 확인). 이 분기를 실행하는 테스트는 없음"
+        },
+        {
+          "case": "이메일 로컬파트의 짝 없는 서로게이트 — @Email 통과, PG 가 '?' 로 치환 저장, 다른 입력과 409 충돌",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc21 · 4차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "password 의 짝 없는 서로게이트",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "5차 PostgreSQL HTTP 로 로그인 password 400 확인(가입 password 는 4차에서 400)"
+        },
+        {
+          "case": "이메일 U+0085 등 C1 제어문자",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "reason": "PG 에 정상 저장(users 3번 c\\u0085d@example.com length 15 확인), 오동작 없음"
+        },
+        {
+          "case": "로그인 이메일의 짝 없는 서로게이트",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc21 · 4차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "로그인 password 의 짝 없는 서로게이트가 '?' 로 치환돼 저장된 '?' 비밀번호와 BCrypt 매칭(200)",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "eea6c22 수정. AuthApiTest.test_sc23 · 5차 PostgreSQL HTTP: 상위 400·하위 400·실제 '?' 200"
+        },
+        {
+          "case": "passwordConfirm 에 짝 없는 서로게이트(password 정상)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "4차 PostgreSQL 프로브 400(password 와 불일치)"
+        },
+        {
+          "case": "로그인 이메일에 NUL",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "4차 PostgreSQL 프로브 400(@Email 거부)"
+        },
+        {
+          "case": "@Email 이 허용하는 U+FFFE·U+FFFF·bidi U+202E·U+2028 로컬 파트",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "reason": "5차 보완 프로브(PostgreSQL 16.14, HTTP): 이메일 로컬 파트 U+FFFE·U+FFFF·U+202E·U+2028 가입 201, DB 저장 바이트가 입력과 동일(UTF-8 hex 대조, length 9), 같은 값 로그인 200, 재가입 409 — 치환·충돌 오보 없음. name 의 같은 4문자도 201·무손실(length 3). 무결성 결함 아님, 위장 위험은 개선 제안으로 유지",
+          "evidence": "테스트가 아니라 HTTP 프로브 — 이 변종을 고정하는 자동 테스트는 없다(rule_proposals 로 넘김). 프로브: scratchpad probe.py, 결과 8건 201 · users 8행 hex 일치"
+        },
+        {
+          "case": "password(가입) 의 짝 없는 서로게이트 — 가입 시 400",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthApiTest.test_sc21 · 4차 PostgreSQL 프로브 400"
+        },
+        {
+          "case": "로그인 password 에 NUL 또는 NUL 이후 추가값(BCrypt 비교가 NUL 에서 잘리는지)",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "5차 HTTP: pass\\u0000word1 200, pass\\u0000word2 401, pass 401, pass\\u0000 401 — 잘림 없음. AuthApiTest.test_sc23 행"
+        },
+        {
+          "case": "UTF-8 72바이트 초과 password 의 BCrypt 절단 매칭 또는 500",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "5차 HTTP: 가입 한글 40자(120B) 400, 로그인 10만 자·120B 한글은 BCrypt 전 401(AuthService.exceedsBcryptLimit)"
+        },
+        {
+          "case": "짝이 맞는 서로게이트(이모지) password·name 의 과차단·치환",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "5차 HTTP: 이모지 password 가입 201·로그인 200, name 가입 201(DB length 3)"
+        },
+        {
+          "case": "JWT email claim·Authorization 헤더·응답 직렬화에서의 치환",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "reason": "토큰·응답의 email 은 DB 저장값이고 입력 원문이 아니다. getBytes 는 secret·72바이트 검사에만, toLowerCase(Locale.ROOT) 는 normalize 한 곳에만 있음(리뷰어 코드 확인)"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "Security 체인이 ERROR 디스패치를 인증 대상으로 삼아 프레임워크 오류 응답을 401 로 바꾼다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "공연 API 400/405/415 → 401",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceErrorResponseRegressionTest · 3차 develop 기록값 대비 16개 요청 DIFF 0"
+        }
+      ]
+    }
+  ]
+}

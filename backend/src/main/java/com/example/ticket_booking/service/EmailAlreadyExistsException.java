@@ -1,0 +1,8 @@
+package com.example.ticket_booking.service;
+
+public class EmailAlreadyExistsException extends RuntimeException {
+
+  public EmailAlreadyExistsException() {
+    super("이미 가입된 이메일입니다");
+  }
+}

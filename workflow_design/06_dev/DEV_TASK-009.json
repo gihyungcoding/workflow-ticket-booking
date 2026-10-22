@@ -1,0 +1,353 @@
+{
+  "task_id": "TASK-009",
+  "changed_files": [
+    {
+      "path": "backend/build.gradle",
+      "change": "spring-boot-starter-security 추가(crypto·oauth2-jose 는 Red 에서 추가)",
+      "lines_changed": 4
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V3__create_users.sql",
+      "change": "users 테이블 — BIGSERIAL, email UNIQUE, TIMESTAMPTZ(V1·V2 관례)",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+      "change": "스켈레톤 → 실제 엔티티. NOT NULL·UNIQUE·길이 제약, @CreationTimestamp, 접근자",
+      "lines_changed": 36
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+      "change": "findByEmail, existsByEmail 추가",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+      "change": "signUp(정규화·확인값·72바이트·중복·BCrypt), login, getMe",
+      "lines_changed": 93
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/UserResponse.java",
+      "change": "record",
+      "lines_changed": 5
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/LoginResponse.java",
+      "change": "record",
+      "lines_changed": 4
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/EmailAlreadyExistsException.java",
+      "change": "신규 → 409",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidCredentialsException.java",
+      "change": "신규 → 401, 메시지 한 가지",
+      "lines_changed": 9
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/UnauthenticatedException.java",
+      "change": "신규 → 401 UNAUTHORIZED (Plan 에 없음, scope_deviations)",
+      "lines_changed": 9
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "change": "스켈레톤 → HS256 발급·검증, Clock 기반 만료(skew 0), typ=access, fromEnv fail-fast",
+      "lines_changed": 97
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtAuthenticationFilter.java",
+      "change": "Bearer 파싱(스킴 대소문자 무시, 공백 한 개), 실패해도 체인 계속",
+      "lines_changed": 52
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+      "change": "SecurityFilterChain(CSRF off·STATELESS·공연 API permitAll·나머지 authenticated), EntryPoint 401 JSON, PasswordEncoder·JwtTokenProvider 빈",
+      "lines_changed": 76
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+      "change": "signup 201 / login 200 / me",
+      "lines_changed": 50
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+      "change": "409 EMAIL_ALREADY_EXISTS / 401 INVALID_CREDENTIALS / 401 UNAUTHORIZED",
+      "lines_changed": 35
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SignUpRequest.java",
+      "change": "Bean Validation + 이메일 trim 컴팩트 생성자",
+      "lines_changed": 20
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/LoginRequest.java",
+      "change": "Bean Validation + 이메일 trim 컴팩트 생성자",
+      "lines_changed": 12
+    },
+    {
+      "path": "backend/src/main/resources/config/application.properties",
+      "change": "Jackson enum 숫자 거부 설정(spring.jackson.datatype.enum.fail-on-numbers-for-enums)",
+      "lines_changed": 3
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/NoLoneSurrogate.java",
+      "change": "신규 — 짝 없는 서로게이트 거부 정규식·메시지 상수(패키지 전용)",
+      "lines_changed": 14
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SignUpRequest.java",
+      "change": "email·password 에 @Pattern(NoLoneSurrogate) 추가",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/LoginRequest.java",
+      "change": "email 에 @Pattern(NoLoneSurrogate) 추가",
+      "lines_changed": 9
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/LoginRequest.java",
+      "change": "password 에 NoLoneSurrogate @Pattern 추가(4차 롤백 수정)",
+      "lines_changed": 3
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java",
+      "symbol": "ErrorResponse(code,message)",
+      "note": "401·409 모든 응답과 EntryPoint 의 JSON 본문"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java",
+      "symbol": "Clock 빈",
+      "note": "JwtTokenProvider 의 iat·exp·만료 판정 (ADR-0005)"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+      "symbol": "MethodArgumentNotValid·HttpMessageNotReadable 핸들러",
+      "note": "전역 @RestControllerAdvice 라 auth 의 400 INVALID_REQUEST 를 그대로 처리 — 새 핸들러 불필요"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidRequestException.java",
+      "symbol": "InvalidRequestException",
+      "note": "passwordConfirm 불일치·72바이트 초과를 400 INVALID_REQUEST 로"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java",
+      "symbol": "응답 직접 작성 패턴·fromEnv fail-fast 관례",
+      "note": "EntryPoint 의 JSON 작성과 JwtTokenProvider.fromEnv 가 같은 방식"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/CorsConfig.java",
+      "symbol": "서블릿 필터 최우선 순서",
+      "note": "변경하지 않음 — Security 체인보다 먼저 사전 요청을 처리한다(SC-15 가 확인)"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && ./gradlew clean test spotlessCheck",
+    "total": 112,
+    "passed": 112,
+    "failed": 0,
+    "skipped": 0,
+    "target_tests_passed": "SC-23 포함 시나리오 23건 전부",
+    "note": "SC-23 비밀번호 서로게이트 2행이 400 으로 통과. 기존 111건 계속 통과"
+  },
+  "lint": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py",
+    "errors": 0,
+    "note": "ARCH-001~004·DEPLOY-001/002 통과. 경고 3건은 기존 DESIGN-003(이번 변경과 무관)"
+  },
+  "mutation_check": {
+    "method": "구현을 일부러 망가뜨려 해당 테스트가 실패하는지 확인하고 git checkout 으로 원복, 매번 git status 로 작업 트리가 깨끗함을 확인",
+    "results": [
+      {
+        "mutation": "/api/performances/** permitAll 제거",
+        "killed_by": "SC-15"
+      },
+      {
+        "mutation": "CSRF 보호 켬",
+        "killed_by": "SC-15"
+      },
+      {
+        "mutation": "JWT 만료 허용오차 0 → 60초",
+        "killed_by": "SC-13"
+      },
+      {
+        "mutation": "typ=access 검증 제거",
+        "killed_by": "SC-12"
+      },
+      {
+        "mutation": "Bearer 스킴을 대소문자 구분으로",
+        "killed_by": "SC-10"
+      },
+      {
+        "mutation": "이메일 소문자 정규화 제거",
+        "killed_by": "SC-01, SC-03, SC-07"
+      },
+      {
+        "mutation": "비밀번호 72바이트 검사 제거",
+        "killed_by": "SC-06"
+      },
+      {
+        "mutation": "이메일 @Size(max=255) 제거",
+        "killed_by": "SC-05"
+      }
+    ],
+    "all_killed": true,
+    "incident": "첫 시도에서 미커밋 파일에 git checkout 이 실패하고 커밋된 스켈레톤 JwtTokenProvider 가 스켈레톤으로 되돌려져 구현을 다시 써야 했다. 복원 후 105건 통과를 확인하고, 구현을 먼저 커밋한 뒤 변이를 다시 수행했다"
+  },
+  "refactoring": [
+    {
+      "what": "서로게이트 거부 정규식·메시지를 NoLoneSurrogate 상수로 추출(email·password·로그인 email 3곳 공유)",
+      "why": "같은 정규식이 세 곳에 중복. name 은 제어 문자도 거부해 정규식이 달라 유지"
+    }
+  ],
+  "refactoring_note": "하지 않기로 했다 — 수정이 두 곳에 국한되고 각각 한 가지 일을 한다",
+  "scope_deviations": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/UnauthenticatedException.java",
+      "reason": "SC-14(삭제된 사용자의 유효 토큰 → 401)에 필요. Plan 의 신규 파일 목록에 없었다"
+    },
+    {
+      "path": "backend/src/main/resources/config/application.properties",
+      "reason": "Plan 은 'jwt 시크릿 바인딩 주석 정도' 라고 했으나 실제로는 Jackson enum 숫자 거부 설정이 필요했다(SC-04 role=1). Jackson 3 에서는 spring.jackson.datatype.enum.* 이다"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+      "reason": "PasswordEncoder·JwtTokenProvider 빈을 함께 둠 — 별도 JwtConfig 를 만들지 않았다"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "reason": "만료 비교를 라이브러리 기본 검증기 대신 직접 구현 — 시나리오 SC-13 이 정각을 만료로 확정(RFC 7519). Plan 의 '라이브러리 사용' 전제에서 벗어남"
+    }
+  ],
+  "carry_to_phase4": [
+    "PostgreSQL 에서 name=a\\u0000b·탭·짝 없는 서로게이트가 400 이고 DB 에 행이 없는지, 한글+이모지는 201 이고 입력과 같은 name 이 저장되는지(실제 서버)",
+    "동시 가입 경합(같은 이메일 병렬 요청)에서 UNIQUE 경로가 409 로 수렴하고 500 이 아닌지 — catch 한정의 회귀 확인",
+    "develop 비교 프로브·PostgreSQL e2e 재확인, code-reviewer 3차(이전 결함 카테고리: 오류 디스패치 인가, 정규화·길이, 무결성 예외 오분류 + 수정 커밋 자체)",
+    "알려진 갭: exp 없는 토큰 허용 변이 생존, catch UNIQUE 한정은 테스트 불가, H2 가 NUL 을 받아 주어 PostgreSQL 전용 결함은 테스트가 못 잡는다(ADR-0006 Testcontainers 예고)",
+    "배포: JWT_SECRET 을 Render 에 먼저 넣어야 함"
+  ],
+  "rework": {
+    "reason": "Phase 4 FAIL(공연 API 프레임워크 오류 응답 400/405/415 → 401, 소문자화 길이 오보 409) → 시나리오 보완 → Red 재작성 → 이번 수정",
+    "changed_files": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "change": "JwtTimestampValidator(정각을 유효로 봄) 대신 notExpiredValidator — now < exp 일 때만 유효(RFC 7519). exp 없는 토큰은 거부",
+        "lines_changed": 21
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+        "change": "authorizeHttpRequests 에 dispatcherTypeMatchers(ERROR).permitAll() — sendError 오류가 /error 로 재디스패치될 때 401 이 되지 않게",
+        "lines_changed": 6
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "change": "정규화(소문자) 후 이메일 길이 255 초과면 InvalidRequestException(400). DataIntegrityViolationException catch 는 UNIQUE 경합 전용이 되도록 앞단에서 길이를 막음",
+        "lines_changed": 9
+      }
+    ],
+    "test_status_progress": "Red 3건(SC-13 정각 200, SC-17 401×7, SC-18 409×2) → 모두 Green. 기존·이전 105건 통과 유지"
+  },
+  "mutation_check_rework": {
+    "results": [
+      {
+        "mutation": "만료 비교를 !isAfter(정각 유효)로",
+        "killed_by": "SC-13"
+      },
+      {
+        "mutation": "ERROR 디스패치 permit 제거",
+        "killed_by": "SC-17"
+      },
+      {
+        "mutation": "정규화 후 이메일 길이 검증 제거",
+        "killed_by": "SC-18"
+      },
+      {
+        "mutation": "exp 없는 토큰을 유효로 (참고)",
+        "killed_by": null,
+        "survived": true,
+        "note": "시나리오 없음 — 우리가 발급하는 토큰은 항상 exp 가 있고 서명 키 없이는 만들 수 없어 심층 방어 수준. 알려진 갭으로 남김"
+      }
+    ],
+    "all_scenario_mutations_killed": true
+  },
+  "rework2": {
+    "reason": "Phase 4 2차 FAIL — name 의 NUL 이 PostgreSQL 에서 409 EMAIL_ALREADY_EXISTS 로 오보 (RETRY_SCENARIO 2/3 → SC-20)",
+    "changed_files": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/SignUpRequest.java",
+        "change": "name 에 @Pattern(\"^[^\\\\p{Cc}\\\\p{Cs}]*$\") — 제어 문자·짝 없는 서로게이트 거부, 한글·짝이 맞는 이모지 허용",
+        "lines_changed": 8
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "change": "DataIntegrityViolationException catch 를 UNIQUE 위반(근본 원인 SQLException 의 SQLState 23505 — PostgreSQL·H2 공통)으로 한정, 그 외 무결성 위반은 그대로 던진다. java.sql.SQLException 은 ARCH-003 대상이 아니다",
+        "lines_changed": 14
+      }
+    ],
+    "test_fix": {
+      "what": "SC-20 테스트의 요청 구성 방식 수정 — Java 문자열의 짝 없는 서로게이트는 UTF-8 인코딩 때 '?' 로 바뀌어 서버에 닿지 못해, '짝 없는 서로게이트' 행이 구현이 맞아도 통과할 수 없었다. name 을 JSON 문자열 리터럴(\\\\ud800 이스케이프)로 직접 보내도록 바꿨다",
+      "weakened": false,
+      "why_allowed": "시나리오와 단언(기대 상태·code·행 수·name)은 그대로이고 시나리오가 정한 입력을 실제로 보내게 한 것이다. Red 단계(2b)에서 놓친 테스트 결함이라 기록으로 남긴다",
+      "verified_by": "변이 — 서로게이트(\\\\p{Cs}) 거부만 제거하면 '짝 없는 서로게이트' 행만 실패한다"
+    }
+  },
+  "mutation_check_rework2": {
+    "results": [
+      {
+        "mutation": "@Pattern 의 name 검증을 없앰(^.*$)",
+        "killed_by": "SC-20 (NUL·탭·DEL·서로게이트 행)"
+      },
+      {
+        "mutation": "서로게이트(\\\\p{Cs}) 거부만 제거",
+        "killed_by": "SC-20 (짝 없는 서로게이트 행만)"
+      },
+      {
+        "mutation": "제어 문자(\\\\p{Cc}) 거부만 제거",
+        "killed_by": "SC-20 (NUL·탭·줄바꿈·DEL 행)"
+      }
+    ],
+    "all_killed": true,
+    "not_testable": "catch 의 UNIQUE 한정 — 사전 검증이 길이·NUL 을 막으면 black-box 로 UNIQUE 외 무결성 위반을 만들 수 없다. Phase 4 의 PostgreSQL 에서 동시 가입 경합으로 UNIQUE 경로가 여전히 409 인지만 확인한다"
+  },
+  "rollback_fixes": [
+    {
+      "round": 3,
+      "root_cause": "RC-1 입력 검증이 'DB 가 무손실로 저장하지 못하는 문자열'을 막지 않음",
+      "variants": [
+        "email 짝 없는 서로게이트(상·하)",
+        "password 짝 없는 서로게이트",
+        "로그인 email 짝 없는 서로게이트"
+      ],
+      "tests": [
+        "AuthApiTest.test_sc21_DB가_무손실로_저장하지_못하는_문자열은_모든_문자열_입력에서_400이다"
+      ],
+      "already_covered_by_green": [
+        "UNIQUE 한정 catch — AuthServiceSignUpFailureTest.test_sc22"
+      ],
+      "note": "3차는 코드 변경이 DTO 검증 한 곳. name 은 제어 문자 정책이 있어 별도 @Pattern 유지, email·password·로그인 email 은 서로게이트만 거부(C1 U+0085·한글은 허용 — SC-21)"
+    },
+    {
+      "round": 4,
+      "root_cause": "RC-1 입력 검증이 'DB 가 무손실로 저장하지 못하거나 비교 단계에서 치환되는 문자열'을 막지 않음",
+      "variants": [
+        "로그인 password 짝 없는 서로게이트가 '?' 로 치환돼 저장된 '?' 비밀번호와 BCrypt 매칭(200)",
+        "passwordConfirm 서로게이트(이미 통과)",
+        "로그인 email NUL·서로게이트(이미 통과)"
+      ],
+      "tests": [
+        "AuthApiTest.test_sc23_로그인_입력의_짝_없는_서로게이트와_NUL은_저장된_계정과_매칭되지_않는다",
+        "AuthApiTest.test_sc21_DB가_무손실로_저장하지_못하는_문자열은_모든_문자열_입력에서_400이다"
+      ],
+      "note": "코드 변경은 LoginRequest.password 한 곳. 모든 문자열 입력(가입 email·password·passwordConfirm·name, 로그인 email·password)이 이제 서로게이트 정책 아래에 있다. 리뷰어 제안(name 의 별도 정규식 중복)은 name 이 제어 문자까지 거부하는 다른 정책이라 유지"
+    }
+  ]
+}

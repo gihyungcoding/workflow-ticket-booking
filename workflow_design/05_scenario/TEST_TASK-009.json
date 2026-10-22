@@ -1,0 +1,343 @@
+{
+  "task_id": "TASK-009",
+  "supersedes": "SCENARIO_TASK-009.json (Phase 4 4차 FAIL 롤백으로 재작성 — 23건)",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/WriteGuardAuthApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/JwtSecretConfigTest.java",
+    "backend/src/test/java/com/example/ticket_booking/support/AuthTestHelper.java",
+    "backend/src/test/java/com/example/ticket_booking/service/AuthServiceSignUpFailureTest.java"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_sc01_올바른_정보로_가입하면_201과_비밀번호_없는_사용자_정보를_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_sc02_저장된_비밀번호는_평문이_아니라_BCrypt_해시다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음. 이후 User getter 는 UnsupportedOperationException"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_sc03_이미_있는_이메일로_가입하면_409다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "test_sc04_필수_값이_없거나_형식이_틀리면_400이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "test_sc05_필드_길이는_상한_플러스1에서_거부되고_상한_정확히는_통과한다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "test_sc06_비밀번호는_UTF8_72바이트를_넘지_않고_확인값과_같아야_한다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "엔드포인트가 없어 404 (기대 상태와 불일치) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "test_sc07_올바른_이메일_비밀번호로_로그인하면_200과_유효한_accessToken을_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "test_sc08_틀린_비밀번호와_없는_이메일은_똑같은_401을_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "already_passing_rows",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음",
+      "retry_note": "행 5→7개: 72바이트 초과 비밀번호 2종, 256자 이메일, 72바이트 비밀번호 사용자 + 1글자 2종(변이 검증으로 가드를 지키게 한 행). 모두 현재 구현에서 통과(already_passing 행)"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "test_sc09_로그인_요청의_필수_값_형식이_틀리면_401이_아니라_400이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "already_passing_rows",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음",
+      "retry_note": "password 공백만 행 추가 — 구현이 이미 @NotBlank 라 통과(already_passing 행). 변이로 검증함"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "test_sc10_유효한_토큰으로_me를_조회하면_현재_사용자_정보를_받는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "test_sc11_인증_정보가_없으면_me와_허용_목록_밖_경로는_401이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "test_sc12_위조되거나_용도가_다른_토큰은_me에서_401이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "already_passing",
+      "failure": null,
+      "note": "3차 보강 행(sub 가 숫자가 아닌 토큰) — 현재 구현이 이미 401(NumberFormatException 은 IllegalArgumentException 으로 잡힘). 변이 검증으로 가짜 통과가 아님을 확인"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "test_sc13_토큰은_발급_24시간_뒤에_만료된다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "[T+24h 정각 상태] expected: 401 but was: 200 — Spring JwtTimestampValidator 가 정각을 아직 유효로 본다",
+      "retry_note": "T+24h 정각 행 추가 — 현재 구현은 200 (RFC 기준 401 이어야 함) → Red"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_function": "test_sc14_사용자가_사라진_뒤에는_유효한_토큰도_401이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "Given 가입이 404 (기대 201) — 구현 없음"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_function": "test_sc15_Security_도입_뒤에도_공연_API는_인증_없이_그대로_동작한다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java",
+      "status": "already_passing",
+      "failure": null,
+      "config_applied_via": "@SpringBootTest(properties={\"CORS_ALLOWED_ORIGINS=https://app.example.com\"}) — 허용 Origin 을 실제로 주입. JWT_SECRET 은 test/resources/application.properties",
+      "note": "이 태스크가 바꾸지 않는 기존 동작(공연 API 무인증·CORS 사전 요청)이 계속된다는 부정형 회귀 — Security 구현 전에도 이미 참이라 구조적으로 Red 불가. Green 에서 SecurityConfig 가 들어간 뒤에야 의미가 생기는 안전망이다"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_function": "test_sc16_JWT_비밀키는_UTF8_32바이트_이상이_아니면_기동하지_않는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/JwtSecretConfigTest.java",
+      "status": "red",
+      "failure": "JwtTokenProvider.fromEnv 가 UnsupportedOperationException 을 던져 기대한 IllegalStateException(JWT_SECRET 메시지)/정상 반환과 불일치(행 6개). 빈 JWT_SECRET 으로 실제 기동하면 지금은 성공해 '기동 실패' 기대와 불일치"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_function": "test_sc17_공연_API의_프레임워크_오류_응답은_Security_도입_뒤에도_그대로다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
+      "status": "red",
+      "failure": "7개 행이 401 (기대 400×4·405×2·415×1) — 존재하지 않는 공연 404 행만 통과. Phase 4 프로브와 같은 증상",
+      "config_applied_via": "@SpringBootTest(webEnvironment=RANDOM_PORT) + java.net.http.HttpClient — MockMvc 는 컨테이너의 ERROR 디스패치(sendError→/error)를 재현하지 못해 이 회귀를 가짜 통과로 만든다"
+    },
+    {
+      "scenario_id": "SC-18",
+      "test_function": "test_sc18_이메일_길이는_정규화_후_기준으로_검증된다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "already_passing",
+      "failure": null,
+      "note": "3차 보강 행(앞뒤 공백 포함 259자 → 공백 제거 후 255자 201) — 이미 통과. 변이 검증 완료"
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_function": "test_sc19_쓰기_가드가_켜진_환경에서는_인증_API의_쓰기도_기존_가드_규칙을_따른다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/WriteGuardAuthApiTest.java",
+      "status": "already_passing",
+      "failure": null,
+      "config_applied_via": "@SpringBootTest(properties={\"WRITE_GUARD_ENABLED=true\",\"WRITE_API_KEY=secret123\"}) — 가드를 실제로 켜서 기동",
+      "note": "ADR-0017 의 결정(가드는 건드리지 않고 인증 API 도 면제하지 않는다) 확인. WriteGuardFilter 가 이미 전역이라 구현 전에도 통과. 변이로 검증함(면제하면 signup·login 키 없음 행이 201·200 으로 실패)"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_function": "test_sc20_name에_제어_문자나_짝_없는_서로게이트가_있으면_400이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "already_passing",
+      "failure": null,
+      "note": "3차 보강 행(U+001F·0080·009F 400, U+0020·00A0 201) — 이미 통과(\\p{Cc} 가 범위 전체). 변이 검증 완료. 기존 행은 이전 라운드에 Green 으로 통과"
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_function": "test_sc21_DB가_무손실로_저장하지_못하는_문자열은_모든_문자열_입력에서_400이다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "7건: email 짝 없는 상위·하위 서로게이트 가입이 400 이 아니라 201 (+행 생성), password 짝 없는 서로게이트 가입 201, 로그인 email 서로게이트 200. 통과 행: email U+0085·한글 로컬 파트 201, password NUL 201 및 로그인 200",
+      "note": "Phase 4 3차 FAIL 의 재현된 결함(이메일 서로게이트)과 같은 부류. H2 기준 Red — H2 는 서로게이트를 그대로 저장하므로 PostgreSQL 의 '?' 치환 자체는 Phase 4 에서 확인한다. 값은 JSON 리터럴로 직접 전송(서로게이트가 UTF-8 인코딩에서 '?' 로 바뀌지 않게) / 4차 보강: passwordConfirm 서로게이트 행 2건 추가 — 이미 통과(AuthService 의 password.equals 불일치 → 400). 변이(확인값 비교를 UTF-8 왕복 후 비교로 변경) 시 '물음표 password + 서로게이트 confirm' 행이 실패해 사망, '정상 password + 서로게이트 confirm' 행은 어떤 비교 방식이든 불일치라 생존(보호 가치 낮음 — 시나리오 표의 독립 행으로 유지)"
+    },
+    {
+      "scenario_id": "SC-22",
+      "test_function": "test_sc22_가입_중_저장_실패는_이메일_중복_UNIQUE_위반일_때만_409다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/AuthServiceSignUpFailureTest.java",
+      "status": "already_passing",
+      "failure": null,
+      "note": "2차 Green 에서 isUniqueViolation 로 이미 구현됨 — 그 구현에 테스트가 없다는 것이 Phase 4 3차 리뷰의 공백 지적. 변이 검증으로 가짜 통과가 아님을 확인",
+      "test_level": "서비스 단위 테스트(Mockito 저장소·인코더, SQLException 의 SQLState 지정)"
+    },
+    {
+      "scenario_id": "SC-23",
+      "test_function": "test_sc23_로그인_입력의_짝_없는_서로게이트와_NUL은_저장된_계정과_매칭되지_않는다",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "status": "red",
+      "failure": "비밀번호 짝 없는 상위·하위 서로게이트 2행: 400 이어야 하는데 200 + accessToken 발급(abcdefg?h1 로 가입한 계정에 서로게이트 비밀번호로 로그인 — Phase 4 4차에서 HTTP 로 재현된 결함과 동일). 나머지 6행(email 서로게이트·NUL 400, 실제 물음표 비밀번호·이메일 200, NUL 뒤 추가값 401)은 이미 통과",
+      "note": "행 단위 SoftAssertions 라 이미 통과하는 행도 지켜진다. 변이: LoginRequest.email 의 NoLoneSurrogate @Pattern 제거 → email 서로게이트 상·하 2행 사망(NUL 행은 @Email 이 거부해 생존 — 의도된 이중 방어, 실제 보호 대상은 @Email). 값은 JSON 리터럴로 직접 전송."
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && ./gradlew test",
+    "total": 112,
+    "failed": 1,
+    "passed": 111,
+    "new_or_changed": {
+      "scenarios": [
+        "SC-21(passwordConfirm 행 2건)",
+        "SC-23"
+      ],
+      "failed": [
+        "SC-23(비밀번호 서로게이트 2행)"
+      ],
+      "already_passing": [
+        "SC-21 passwordConfirm 행 2건",
+        "SC-23 의 email·실제 물음표·NUL 행"
+      ]
+    },
+    "existing_tests_still_passing": true,
+    "note": "구현이 이미 있는 Red 재작성(4차) — SC-23 의 비밀번호 서로게이트 2행이 현재 구현에서 실제로 실패(200). 이전 111건 중 110건 계속 통과(SC-21 은 이번에 행만 추가돼 여전히 통과)"
+  },
+  "inventory_check": {
+    "scenarios": 23,
+    "test_functions": 23,
+    "match": true,
+    "id_match": true,
+    "command": "grep -rhoE 'void test_sc[0-9]+' (AuthApiTest·AuthRegressionApiTest·PerformanceErrorResponseRegressionTest·WriteGuardAuthApiTest·JwtSecretConfigTest·AuthServiceSignUpFailureTest) | sort -u | wc -l / jq '.scenarios|length'"
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + @SpringBootTest + @AutoConfigureMockMvc, H2(PostgreSQL 모드)",
+    "mock_strategy": "목 없음. 실제 필터 체인·H2 를 태운다. 클래스 레벨 @Transactional 없음 — 요청은 각자 커밋하고 DB 확인은 리포지토리로 새로 읽는다. 표의 행은 SoftAssertions 로 독립 단언. 토큰은 구현과 독립적으로 Nimbus 로 직접 만든다(AuthTestHelper). 시각은 MutableClock",
+    "token_helper_sanity": "임시 테스트로 확인 후 삭제: pending 토큰은 올바른 키로 서명 검증 통과(typ 만 다름), 다른 키 토큰은 자기 키로만 검증, alg none 은 PlainJWT 로 파싱, 변조 토큰은 role 만 바뀌고 서명 검증 실패 — 위조 행이 '형식 깨짐' 때문에 우연히 401 이 되는 일을 막는다"
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/build.gradle (spring-security-crypto, spring-security-oauth2-jose 의존성 — starter-security 는 일부러 넣지 않음)",
+      "backend/src/main/java/com/example/ticket_booking/domain/UserRole.java",
+      "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+      "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+      "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "backend/src/test/resources/application.properties (테스트용 JWT_SECRET)"
+    ],
+    "contents": "enum 상수, 엔티티 필드와 구조 애노테이션(@Entity/@Id/@GeneratedValue/@Column(name=)/@Enumerated), 접근자 6개와 fromEnv 의 본문은 전부 UnsupportedOperationException 한 줄. UserRepository 는 커스텀 쿼리 메서드 없이 extends JpaRepository 뿐. 제약 애노테이션(@Column nullable·length·unique)은 넣지 않았다 — Phase 3",
+    "purity_check": "신규 실패 15건의 원인: 엔드포인트 404 14건(구현·컨트롤러 없음) + fromEnv UnsupportedOperationException(JwtSecretConfigTest 의 11개 단언 실패, 예외 11건). HTTP 경계 테스트는 Spring 이 404 로 렌더링하므로 예외 타입이 아니라 상태 불일치로 실패한다 — 로직이 새어 들어와 우연히 통과한 테스트 없음",
+    "why_no_starter_security": "spring-boot-starter-security 를 넣으면 자동 구성이 전 엔드포인트를 막아 기존 공연 API 테스트 89건이 Red 단계에서 깨진다. 컴파일에 필요한 BCrypt(crypto)와 Nimbus(oauth2-jose)만 추가했고 Security 설정은 Phase 3 에서 starter 와 함께 도입한다. 두 라이브러리가 Spring Boot 4.1.1 BOM 에서 버전 없이 해석되고 컴파일됨을 확인했다",
+    "round4": "스켈레톤 추가 없음 — 테스트 파일(AuthApiTest)만 변경"
+  },
+  "risks_for_green": [
+    "SC-04 의 role 숫자 1: Jackson 기본 설정이 enum 서수를 허용하면 ORGANIZER 로 파싱돼 201 이 된다 — 400 이어야 하므로 Green 에서 FAIL_ON_NUMBERS_FOR_ENUMS 설정 여부를 확인한다",
+    "SC-16 의 '미설정' 행은 test/resources 가 JWT_SECRET 을 채워 두므로 null 을 팩토리에 직접 넘겨 대신한다. 앱 기동 행은 빈 값(--JWT_SECRET=)만 확인하고 별도 H2 DB 이름을 쓴다",
+    "SC-05 의 이메일 255자·256자는 로컬 64자+3개 레이블의 형식 유효 주소로 만든다. 256자가 400 이려면 Green 에서 email 에 @Size(max=255) 가 필요하다(@Email 만으로는 보장되지 않음)",
+    "SC-13 은 정확히 T+24h 를 단정하지 않는다(시나리오 결정)",
+    "테스트 DB 가 H2 이고 Flyway 가 꺼져 있어 V3 SQL 은 테스트에서 실행되지 않는다 — Phase 4 에서 postgres 로 확인"
+  ],
+  "human_review": {
+    "approved": true
+  },
+  "red_retry": {
+    "reason": "Phase 4 FAIL — 공연 API 프레임워크 오류 응답 회귀, 이메일 정규화 후 길이 오보 (RETRY_SCENARIO 1/3 → 시나리오 SC-17·18·19 추가, SC-08·09·13 행 추가 → 테스트 재작성)",
+    "mutation_check": {
+      "method": "구현(이미 커밋됨)을 일부러 망가뜨려 이미 통과하는 행·시나리오가 실제로 지켜지는지 확인하고 git checkout 으로 원복, 매번 운영 코드 작업 트리가 깨끗함을 확인",
+      "results": [
+        {
+          "mutation": "LoginRequest.password 의 @NotBlank 제거",
+          "killed_by": "SC-09 (공백만 행)",
+          "survived": false
+        },
+        {
+          "mutation": "WriteGuardFilter 가 /api/auth/ 경로를 면제",
+          "killed_by": "SC-19 (signup·login 키 없음 행이 201·200)",
+          "survived": false
+        },
+        {
+          "mutation": "AuthService.login 의 72바이트 초과 가드 제거",
+          "killed_by": "SC-08 (72바이트 비밀번호 + 1글자 행 2개: 가드가 없으면 401 이 아니라 200)",
+          "survived": false,
+          "finding": "1차 시도에서는 생존 — BCrypt matches 는 72바이트 초과 입력을 잘라 비교(임시 테스트로 확인: 'a'×72 로 가입한 사용자가 'a'×72+'b' 로 로그인 성공). 사람이 '시나리오 보완 후 진행'을 선택해 SC-08 에 72바이트 비밀번호 사용자 2명과 '비밀번호 + 1글자' 행 2개를 추가한 뒤 재시도해 사망 확인"
+        }
+      ],
+      "all_killed": true
+    },
+    "round2": {
+      "reason": "Phase 4 2차 FAIL — name 의 NUL 이 PostgreSQL 에서 409 EMAIL_ALREADY_EXISTS 로 오보 (RETRY_SCENARIO 2/3 → SC-20 추가)",
+      "mutation_check": "해당 없음 — 새 시나리오가 현재 구현에서 이미 실패(Red)하므로 변이 검증이 필요한 already_passing 행은 한글+이모지 201 행뿐(허용해야 하는 정상 입력)",
+      "known_gap": "DataIntegrityViolationException catch 를 UNIQUE(SQLState 23505)로 한정하는 변경은 black-box 로 UNIQUE 외 무결성 위반을 만들 수 없어 테스트·변이 검증이 불가능하다 — 코드 수준 방어로 기록. H2 가 NUL 을 받아 주어 PostgreSQL 전용 결함은 테스트가 못 잡는다(ADR-0006 의 Testcontainers 전환 예고 건)",
+      "test_fix_in_phase3": "SC-20 '짝 없는 서로게이트' 행의 입력 전달 방식을 수정(Java 문자열의 서로게이트는 UTF-8 인코딩 때 '?' 로 바뀌어 서버에 닿지 않음) — 구현이 맞아도 통과할 수 없던 테스트 결함. 시나리오·단언은 그대로, 변이로 검증(DEV_TASK-009 rework2.test_fix)"
+    },
+    "round3": {
+      "reason": "Phase 4 3차 FAIL — 이메일 짝 없는 서로게이트(PG '?' 치환·409 충돌) (RETRY_SCENARIO 3/3 → SC-21·22 추가, SC-12·18·20 행 보강)",
+      "mutation_check": {
+        "method": "구현을 일부러 망가뜨려 이미 통과하는 새 행·시나리오가 실제로 지켜지는지 확인하고 git checkout 으로 원복(운영 코드 작업 트리 깨끗함 확인)",
+        "results": [
+          {
+            "mutation": "AuthService.signUp 의 catch 에서 UNIQUE 한정 제거(항상 409)",
+            "killed_by": "SC-22 (23502·22021 행)",
+            "survived": false
+          },
+          {
+            "mutation": "AuthService.signUp 의 catch 가 항상 재던짐(UNIQUE 경합도 409 안 줌)",
+            "killed_by": "SC-22 (23505 행)",
+            "survived": false
+          },
+          {
+            "mutation": "SignUpRequest name 패턴이 U+001F·C1 범위를 놓침",
+            "killed_by": "SC-20 (U+001F·0080·009F 행)",
+            "survived": false
+          },
+          {
+            "mutation": "SignUpRequest name 패턴이 U+0020·U+00A0 까지 거부",
+            "killed_by": "SC-20 (공백·NBSP 201 행)",
+            "survived": false
+          },
+          {
+            "mutation": "SignUpRequest 이메일 trim 제거",
+            "killed_by": "SC-18 (앞뒤 공백 255자 행)",
+            "survived": false
+          },
+          {
+            "mutation": "JwtTokenProvider.verifyAccessToken 의 IllegalArgumentException catch 제거",
+            "killed_by": "SC-12 (sub 비숫자 행)",
+            "survived": false
+          }
+        ],
+        "all_killed": true
+      },
+      "known_gap": "H2 가 서로게이트를 그대로 저장해 PostgreSQL 의 '?' 치환 자체는 테스트가 못 본다 — 입력을 400 으로 막는 것으로 지킨다. SC-21 의 password NUL·U+0085·한글 로컬 파트 행과 SC-22 는 이미 통과하는 허용·분류 행"
+    },
+    "round4": {
+      "reason": "Phase 4 4차 FAIL — 로그인 비밀번호 짝 없는 서로게이트가 '?' 로 치환돼 저장된 '?' 비밀번호와 BCrypt 매칭(200) (RETRY_SCENARIO → SC-23 추가, SC-21 passwordConfirm 행 추가)",
+      "mutation_check": {
+        "method": "구현을 일시 변경해 이미 통과하는 행이 실제로 지켜지는지 확인 후 git checkout 으로 원복(운영 코드 작업 트리 깨끗함 확인)",
+        "results": [
+          {
+            "mutation": "LoginRequest.email 의 NoLoneSurrogate @Pattern 제거",
+            "killed_by": "SC-23 email 서로게이트 상·하 행, SC-21 로그인 email 행",
+            "survived": false
+          },
+          {
+            "mutation": "AuthService.signUp 의 확인값 비교를 UTF-8 왕복 후 비교로 변경",
+            "killed_by": "SC-21 passwordConfirm(password 는 물음표) 행",
+            "survived": false
+          }
+        ],
+        "survivors": [
+          "SC-21 passwordConfirm(정상 password) 행 — 값이 어떻게 비교돼도 불일치라 구조적으로 생존",
+          "SC-23 email NUL 행 — @Email 이 거부(이중 방어)"
+        ],
+        "all_killed": false
+      }
+    }
+  }
+}

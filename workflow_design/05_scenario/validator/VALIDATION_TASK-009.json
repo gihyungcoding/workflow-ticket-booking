@@ -1,0 +1,77 @@
+{
+  "task_id": "TASK-009",
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "MD, JSON 모두 SC-01~SC-23 의 23건이고 ID·type·title·covers·flow 가 같다. Given/When/Then 문장과 표 내용도 일치한다. 사소한 차이는 두 가지다. MD 의 SC-15 표 사이 문단('공연 쓰기는 POST·PUT·POST …/cancel 이 전부다…')과 SC-17 머리말은 JSON 에 없다. SC-21 의 SC-23 안내 문장은 MD 에서는 문단이고 JSON 에서는 when 항목이다. GWT 의미는 바뀌지 않는다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 23건(≥2). happy 4건(SC-01, 02, 07, 10). error 12건. boundary 4건. regression 3건. 하한은 충족한다."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "Plan 기준 8건을 직접 대조했다. 기준1 은 SC-01·04·05·06·18·20·21 이 덮는다. 기준2 는 SC-03·22. 기준3 은 SC-02. 기준4 는 SC-07·16. 기준5 는 SC-08·09·23. 기준6 은 SC-10. 기준7 은 SC-11·12·13·14·16. 기준8 은 SC-15·17·19. 8건 모두 대응하고 문자열도 Plan 과 일치한다. coverage.uncovered=[] 와 일치한다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "시나리오가 쓴 flow 는 F1~F10 이고 모두 Plan 의 design.flows[].id 에 있다. SC-21 만 F9, F5 두 개를 쓴다. 미대응 flow 도 없다."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "warn",
+      "detail": "대부분의 Then 은 상태코드·code·키 집합·DB 행 수처럼 단언 가능하다. 예외가 SC-22 다. Then 의 '응답에 EMAIL_ALREADY_EXISTS 가 없다'와 '예외 종류로 확인한다'가 서로 맞지 않는다. 서비스 계층 단언인데 HTTP 응답을 말하고 있다. SC-12 의 '사용자 정보가 응답에 없다'는 무엇을 단언하는지 모호하다. 이메일 값 부재 등으로 구체화하는 편이 낫다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "warn",
+      "detail": "SC-15 는 When 이 'Authorization 없이, CSRF 없이'인데, 두 번째 표에서는 Bearer 헤더가 붙은 GET 과 CORS 사전 요청(OPTIONS)을 섞는다. 앞의 When 문장과 어긋나고 CORS 는 다른 동작이다. 병합 사유에도 '재검증에서 CORS 분리 권고 — 보류'라고 적혀 있다. SC-21 은 signup 과 login 두 호출을 한 When 에 섞는다. SC-19 도 서로 다른 엔드포인트의 요청을 한 표에 묶었다. 각 행이 독립 단언이라 치명적이지는 않다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "warn",
+      "detail": "SC-22 가 When/Then 에 SQLState `23505`·`23502`·`22021` 과 `DataIntegrityViolationException` 클래스명, '서비스 계층 단언'을 직접 담고 있다. SC-02 는 `password_hash` 컬럼명과 BCrypt 접두를 쓰는데, 이는 AC3 'DB 조회로 확인'에서 나온 것이라 허용 가능하다. SC-22 는 HTTP 로 관찰 가능한 형태로 바꾸거나, 불가피한 서비스 계층 시나리오임을 명시해야 한다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "warn",
+      "detail": "Plan 의 design.inputs 에는 짝 없는 서로게이트·제어문자 규칙이 name 에만 있다. SC-21 과 SC-23 은 이를 email·password·passwordConfirm·로그인 email/password 로 넓힌다. 구체적으로는 이런 행들이다. 이메일 서로게이트 400. password 서로게이트 400. password 의 U+0000 은 201 이고 로그인도 200. 로그인 NUL 이메일 400. NUL 뒤 추가값 401. 이 규칙은 Plan 의 inputs·flows(F5, F9)에 명시되지 않았다. 시나리오가 Plan 범위를 넘었거나 Plan 이 불완전하다. Plan 에 반영하거나 결정으로 기록해야 한다. 그 밖의 입출력(필드, 401/409/400, 헤더, JWT_SECRET, 공연 회귀)은 Plan 범위 안이다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "warn",
+      "detail": "개수 문제가 있다. 23건은 coverage-policy §4 의 '복잡' 기준선(8~12건)의 약 2배이고, 12건을 넘으면 사용자에게 알리라고 돼 있다. 사실상 같은 경로로 보이는 후보는 세 쌍이다. SC-05 의 email 255 와 SC-18 의 마지막 행(공백 제거 후 255)은 길이 경계라 일부 겹친다. SC-08 의 256자 이메일과 SC-23 의 로그인 이메일 행들은 서로 다른 입력이라 대체로 구분된다. SC-20, SC-21 은 필드가 다르고 검증 지점이 달라 중복은 아니다. 다만 분할 검토를 사용자에게 알릴 사항이다."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "pass",
+      "detail": "Security 도입이 기존 공연 API 를 바꾸는 태스크이고, regression 시나리오가 SC-15(정상 동작·CORS), SC-17(프레임워크 오류 400/404/405/415), SC-19(쓰기 가드)로 있다."
+    },
+    {
+      "id": "V11",
+      "name": "입력 경계값",
+      "verdict": "pass",
+      "detail": "design.inputs 를 §2-1 표에 필드별로 대조했다. 문자열은 email·password·name·LoginRequest 모두 빈값·공백·최대+1 이 있다(SC-04/05/08/09/18). passwordConfirm 은 누락·null·빈 값과 불일치가 있다(SC-04/06). 필수 필드는 누락·null 이 모두 있다. role 열거형은 정의 밖 값과 두 값 각각이 있다(SC-04/01). 시각 경계 T+24h−1s/정각/+1s 가 있다(SC-13). JWT_SECRET 은 미설정·빈·공백·31/32/33바이트가 있다(SC-16). Authorization 헤더는 부재·Basic·빈 토큰·BearerXYZ·공백 두 개·추가값·대소문자가 있다(SC-10/11). 공연 쿼리·경로·메서드·미디어 타입은 SC-17 에 있다. 표의 행에서 빠진 것은 없다. 참고(fail 아님)로 토큰 claim 에서 `typ` 또는 `exp` 가 아예 없는 경우, 72바이트 password 로 정상 로그인하는 성공 행은 시나리오에 없다. Phase 4 에서 지적될 수 있으니 추가를 권한다."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 5,
+    "summary": "구조(V1~V4)와 입력 경계(V11)는 충족한다. warn 5건은 다음과 같다. (V5) SC-22 의 Then 이 HTTP 응답과 서비스 단언 사이에서 어긋난다. (V6) SC-15 의 When 이 일관되지 않고 CORS 가 섞여 있으며, SC-21 은 signup 과 login 을 한 When 에 둔다. (V7) SC-22 가 SQLState·예외 클래스명을 노출한다. (V8) SC-21/23 의 서로게이트·NUL 규칙이 Plan design.inputs 에는 name 에만 있다. (V9) 23건으로 복잡 기준선(8~12)을 크게 넘으므로 사용자에게 알려야 한다. 참고: 토큰의 typ·exp 부재 claim 시나리오 추가를 권한다."
+  }
+}

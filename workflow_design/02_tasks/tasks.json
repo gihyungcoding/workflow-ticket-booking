@@ -460,7 +460,7 @@
     "reason_primary": "users 테이블, 비밀번호 해싱, Security 설정, JWT 발급/검증이 모두 서버 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "todo",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",
