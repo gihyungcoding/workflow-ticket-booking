@@ -49,7 +49,8 @@
           "토큰이 있으면 GET /api/auth/me 로 사용자 복원, 401 이면 토큰 삭제",
           "me 복원이 401 이면 토큰 삭제. 500·네트워크 오류·형식이 틀린 200 은 토큰을 지우지 않고 비로그인으로만 표시한다(일시 오류로 로그아웃시키지 않음)",
           "복원 응답을 기다리는 동안 헤더의 로그인 영역은 아무것도 그리지 않는다",
-          "빈 문자열·공백만인 토큰은 없는 것으로 본다 — 복원 요청을 보내지 않는다"
+          "빈 문자열·공백만인 토큰은 없는 것으로 본다 — 복원 요청을 보내지 않는다",
+          "복원 응답은 시작 이후의 로그인/로그아웃·언마운트(취소)로 무효화된다 (RC-1)"
         ]
       },
       {
@@ -187,12 +188,14 @@
         "steps": [
           "localStorage 토큰 읽기",
           "GET /api/auth/me (Authorization: Bearer)",
-          "200 이면 사용자 복원, 401 이면 토큰 삭제 후 비로그인"
+          "200 이면 사용자 복원, 401 이면 토큰 삭제 후 비로그인",
+          "복원 시작 뒤에 login()/logout() 이 있었거나 effect 가 취소됐으면 그 응답은 상태·토큰에 아무 영향도 주지 않는다 (401 의 토큰 삭제 포함)",
+          "login() 은 진행 중인 복원을 끝낸 것으로 본다 — 헤더가 복원을 기다리지 않는다"
         ],
         "covers": [
           "로그인 상태에서 헤더에 사용자 이름과 로그아웃 버튼이 보이고, 클릭 시 토큰이 삭제되고 비로그인 상태로 전환된다"
         ],
-        "note": "AC 6 의 '로그인 상태에서 헤더' 가 새로고침 후에도 성립하기 위한 전제 (ADR-0015). 별도 AC 는 아님"
+        "note": "AC 6 의 '로그인 상태에서 헤더' 가 새로고침 후에도 성립하기 위한 전제 (ADR-0015). 별도 AC 는 아님 — [Phase 4 1차 FAIL RC-1] 복원 응답이 세션 변경 뒤 도착하는 경쟁을 SC-33~35 가 다룬다"
       }
     ]
   },
@@ -218,28 +221,23 @@
     "target_files": [
       {
         "path": "frontend/src/api/auth.ts",
-        "change": "signUp()·login()·fetchMe() — request() 를 쓰고 오류는 body.code 로 ApiError 변환. 토큰 저장 키 상수 포함",
-        "new": true
+        "change": "signUp()·login()·fetchMe() — request() 를 쓰고 오류는 body.code 로 ApiError 변환. 토큰 저장 키 상수 포함"
       },
       {
         "path": "frontend/src/auth/AuthContext.tsx",
-        "change": "AuthProvider·useAuth() — 토큰 localStorage 저장·복원(try/catch), 사용자 상태, login/logout",
-        "new": true
+        "change": "AuthProvider·useAuth() — 토큰 localStorage 저장·복원(try/catch), 사용자 상태, login/logout"
       },
       {
         "path": "frontend/src/pages/SignUpPage.tsx",
-        "change": "가입 폼(이메일·비밀번호·확인·이름·역할)과 상태별 표시",
-        "new": true
+        "change": "가입 폼(이메일·비밀번호·확인·이름·역할)과 상태별 표시"
       },
       {
         "path": "frontend/src/pages/LoginPage.tsx",
-        "change": "로그인 폼과 상태별 표시, from 복귀",
-        "new": true
+        "change": "로그인 폼과 상태별 표시, from 복귀"
       },
       {
         "path": "frontend/src/components/AppHeader.tsx",
-        "change": "헤더 — 로그인/로그아웃 전환. 태스크 implementation_spec 의 4개 경로에는 없지만 AC 6 이 요구한다",
-        "new": true
+        "change": "헤더 — 로그인/로그아웃 전환. 태스크 implementation_spec 의 4개 경로에는 없지만 AC 6 이 요구한다"
       },
       {
         "path": "frontend/src/App.tsx",
@@ -252,6 +250,10 @@
       {
         "path": "frontend/src/api/http.ts",
         "change": "Authorization 헤더 주입이 필요하면 최소 변경 — 현재 request() 는 Bearer 를 붙이지 않는다 (fetchMe 만 필요하므로 auth.ts 안에서 처리하는 안을 우선)"
+      },
+      {
+        "path": "frontend/src/auth/messages.ts",
+        "change": "공통 화면 문구 (Phase 3 에서 추가된 소형 파일)"
       }
     ],
     "reusable": [
