@@ -1,8 +1,8 @@
 ---
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
-phase: "3"
-phase_name: "Phase 3 - Green 재수정"
+phase: "4"
+phase_name: "Phase 4 - Verify 2차 (WARN, HITL#3 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-010-email-auth-screens"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-010.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-010.md"
@@ -31,7 +31,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 2a 재진입 — SC-33~35 추가(31건), 6차 독립검증 PASS. Red 재진입 완료(신규 15케이스 중 10 실패·5 변이 검증). Phase 3 재수정 완료(176/176). Phase 4 2차 — wf-verify (RC-1 지목 리뷰).
+Phase 4 2차 WARN — HITL#3 승인 대기. 승인되면 verified_commit 기록 후 Phase 5.
 
 ## 알아둬야 할 것
 
