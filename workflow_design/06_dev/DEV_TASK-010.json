@@ -1,0 +1,116 @@
+{
+  "task_id": "TASK-010",
+  "changed_files": [
+    {
+      "path": "frontend/src/api/auth.ts",
+      "change": "signUp(201 만 성공)·login(응답 형태 검증)·fetchMe(401 만 TokenRejectedError)"
+    },
+    {
+      "path": "frontend/src/auth/AuthContext.tsx",
+      "change": "AuthProvider·useAuth — 토큰 저장·복원(저장소 접근 try/catch), Provider 밖 기본값은 비로그인"
+    },
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "change": "공통 화면 문구(신규, Plan 외 소형 파일)"
+    },
+    {
+      "path": "frontend/src/pages/SignUpPage.tsx",
+      "change": "가입 폼·검증(UTF-16 길이)·서버 오류 3종 표시"
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.tsx",
+      "change": "로그인 폼·이전 화면 복귀(앱 안 경로만)"
+    },
+    {
+      "path": "frontend/src/components/AppHeader.tsx",
+      "change": "비로그인/로그인/복원 중 전환"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "change": "/login·/signup 라우트, AppHeader 배치"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "change": "AuthProvider 로 앱을 감쌈"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "change": "throwIfApiError 를 export 로 변경(한 단어) — 재사용"
+    },
+    {
+      "path": "frontend/src/auth/AuthScreens.test.tsx",
+      "change": "SC-12 둘째 클릭만 pointerEventsCheck 해제(사용자 승인) — 단언 변경 없음"
+    }
+  ],
+  "reused": [
+    {
+      "path": "frontend/src/api/http.ts",
+      "symbol": "request"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "ApiError"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "isWriteKeyRejected"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "WRITE_REJECTED_MESSAGE"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "throwIfApiError"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && npx vitest run",
+    "total": 161,
+    "passed": 161,
+    "failed": 0,
+    "target_tests_passed": 118,
+    "summary": "신규 118케이스 + 기존 43건 통과. tsc -b 오류 0"
+  },
+  "lint": {
+    "command": "cd frontend && npm run lint",
+    "errors": 0,
+    "warnings": 4,
+    "note": "경고 4건 중 3건은 기존 파일(set-state-in-effect). 1건은 AuthContext.tsx 의 only-export-components(Plan 이 정한 경로에 AuthProvider·useAuth 를 함께 둠)"
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py",
+    "errors": 0,
+    "warnings": 3,
+    "note": "기존 파일의 DESIGN 경고 3건, 이번 변경 아님"
+  },
+  "refactoring": [],
+  "refactoring_note": "하지 않음 — 가입·로그인 폼의 유사 구조는 필드와 검증이 달라 합치면 조건 분기만 늘어난다. 문구만 messages.ts 로 공유",
+  "rollback_fixes": [],
+  "test_modifications": [
+    {
+      "file": "frontend/src/auth/AuthScreens.test.tsx",
+      "scenario": "SC-12",
+      "what": "비활성 버튼의 둘째 클릭을 userEvent.setup({pointerEventsCheck:0}) 로 변경",
+      "why": "user-event 가 disabled MUI 버튼(pointer-events: none)을 기본 거부해 테스트가 구현과 무관하게 예외로 실패. 단언(요청 1회·disabled·500 뒤 활성화)은 그대로",
+      "approved_by": "사용자 AskUserQuestion 응답 '둘째 클릭만 pointerEventsCheck 해제로 수정'"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "reason": "문구 공유용 신규 소형 파일(Plan target_files 에 없음)"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "reason": "throwIfApiError export — code 기반 ApiError 변환 중복을 피함"
+    }
+  ],
+  "carry_to_phase4": [
+    "화면 확인(Step 2.5): 가입·로그인·헤더 전환·중복 안내를 실제 앱으로 — 빈 상태/로딩/오류 상태",
+    "Authorization 은 fetchMe 에만 붙고 공연 API 에는 안 붙는다(SC-28) — 범위 확인",
+    "코드 리뷰 시 폼 입력 문자열 필드 전수(NUL·서로게이트) 전송 값 동일성 재확인, 이메일 type 이 text 인지(jsdom 정제 회피)",
+    "design.md §5 에 인증 문구 매핑 없음 — Phase 5 에서 추가 여부 판단"
+  ]
+}

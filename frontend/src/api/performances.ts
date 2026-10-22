@@ -91,7 +91,7 @@ export async function getPerformance(id: string): Promise<Performance> {
   return response.json()
 }
 
-async function throwIfApiError(response: Response): Promise<never> {
+export async function throwIfApiError(response: Response): Promise<never> {
   const body = await response.json().catch(() => null)
   if (body && typeof body.code === 'string') {
     throw new ApiError(body.code, typeof body.message === 'string' ? body.message : '')

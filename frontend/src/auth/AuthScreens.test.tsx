@@ -567,7 +567,8 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
 
     // When 두 번 연속 누른다
     await clickButton(row.button)
-    await clickButton(row.button)
+    // 비활성 버튼은 pointer-events: none 이라 user-event 가 기본으로 거부한다 — 둘째 클릭만 검사를 끈다.
+    await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByRole('button', { name: row.button }))
 
     // Then 요청은 한 번뿐, 응답 전까지 disabled
     expect(callsTo(row.key)).toHaveLength(1)
