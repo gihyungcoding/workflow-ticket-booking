@@ -170,6 +170,6 @@
     }
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true
   }
 }

@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-22T06:00:00Z
 summary: "[Phase 4 롤백 재수정] RC-1 수정 — 세션 세대 ref 로 복원 응답 무효화(공통 지점 stale()). 전체 176/176 통과(신규 133 + 기존 43), tsc 0, 린트 error 0. [이전] [Green] 전체 161/161 통과(신규 118 + 기존 43). tsc 0, 린트 error 0(경고 4, 신규 1은 only-export-components). 리팩토링 없음. SC-12 테스트 결함 1건은 사용자 승인으로 둘째 클릭만 수정."
 

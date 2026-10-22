@@ -2,8 +2,8 @@
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
 phase: "5"
-phase_name: "Phase 5 - Reflect (HITL#4 대기)"
-status: ACTIVE
+phase_name: "Phase 5 - Reflect 완료"
+status: DONE
 track: standard
 created_at: 2026-10-22
 last_updated: 2026-10-22
@@ -32,7 +32,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 5 회고 작성 완료 — HITL#4 승인 대기. 승인되면 태스크 종료 후 /wf-ship.
+TASK-010 완료 — 회고 승인(승인 + ADR 작성). /wf-adr 로 ADR 후보 2건을 기록하고 /wf-ship 으로 PR 을 만든다.
 
 ## 알아둬야 할 것
 

@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-22T09:00:00Z
-summary: "[Phase 5 · HITL#4 대기] KPT Keep 4·Problem 5·Try 4. 재시도 2a 6·2b 1·3 1·4 1(FAIL→WARN). ADR 후보 2(클라이언트 세션 상태 전이 규칙, 문자열 입력 검증 정책 — TASK-009 후보에 OOS-1 근거 추가). drift 4. 규칙 개선안 4건(미반영 기존 3건과 대상 파일이 달라 recurring 0)."
+summary: "[Phase 5 · HITL#4 승인됨 2026-10-22 — 승인 + ADR 작성] KPT Keep 4·Problem 5·Try 4. 재시도 2a 6·2b 1·3 1·4 1(FAIL→WARN). ADR 후보 2(클라이언트 세션 상태 전이 규칙, 문자열 입력 검증 정책 — TASK-009 후보에 OOS-1 근거 추가). drift 4. 규칙 개선안 4건(미반영 기존 3건과 대상 파일이 달라 recurring 0)."
 
 next_steps:
-  - "HITL#4 승인 후 태스크 종료(rebuild_memory_bank_index, tasks.json done) → /wf-ship"
+  - "/wf-adr 로 ADR 후보 2건 기록 → /wf-ship"
   - "승인 + 규칙 반영을 고르면 coverage-policy 한 행을 반영하고 스타터에도 같은 변경이 필요하다고 알린다"
 
 decisions:

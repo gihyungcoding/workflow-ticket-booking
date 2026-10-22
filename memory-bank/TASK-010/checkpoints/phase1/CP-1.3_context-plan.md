@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-22T03:00:00Z
 summary: "PLAN_TASK-010.json 작성 완료 — route Frontend, flows 7건이 AC 6건을 전부 덮음(F7 은 새로고침 후 로그인 유지 전제). 신규 5 · 기존 3 파일 변경. EXIT GATE 통과."
 
