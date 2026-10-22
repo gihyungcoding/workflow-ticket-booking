@@ -2,7 +2,7 @@
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
 phase: "1"
-phase_name: "Phase 1 - Plan"
+phase_name: "Phase 1 - Plan 완료"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: null
+last_checkpoint: "CP-1.3"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
 ---
@@ -26,7 +26,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-wf-plan 으로 Phase 1 을 수행한다. Backend 태스크이므로 architecture.md 계층 배치와 ADR-0012~0015 를 먼저 읽는다.
+Phase 1 완료(CP-1.3). wf-scenario 로 Phase 2a 를 수행한다. 시나리오가 기준선(8~12)을 넘을 것이므로 표로 묶고 근거를 남긴다. 2a 에서 확정할 unresolved 는 CP-1.3 next_steps 참고.
 
 ## 알아둬야 할 것
 

@@ -1,0 +1,448 @@
+{
+  "task_id": "TASK-011",
+  "route": "Backend",
+  "route_reason": "OAuth2 제공자 연동, 계정 자동 연결 판정, pendingToken 발급·검증, 가입 완료 API 가 모두 서버 범위. 프론트(TASK-013)와 애플(TASK-012)은 이 태스크에 포함하지 않는다",
+  "design": {
+    "inputs": [
+      {
+        "name": "제공자 사용자 정보(attributes)",
+        "type": "Map<String,Object>",
+        "source": "OAuth2 제공자 userinfo 응답 (카카오·네이버·구글)",
+        "constraints": [
+          "카카오(중첩): id, kakao_account.email, kakao_account.is_email_verified, kakao_account.profile.nickname",
+          "네이버(response 래퍼): response.id, response.email, response.name — 이메일 검증 플래그를 주지 않는다",
+          "구글(평면): sub, email, email_verified, name",
+          "email·name·providerUserId 는 모두 외부 입력이다 — 문자열 필드 전수(NUL·짝 없는 서로게이트·제어문자·길이)를 본다 (ADR-0019)",
+          "email 은 users 와 같은 정규화(앞뒤 공백 제거·소문자) 뒤 255자 이하, name 은 1~100자, providerUserId 는 1~255자 (users·social_accounts 컬럼 길이)",
+          "검증 플래그가 true(불리언)일 때만 검증됨으로 본다 — 문자열 \"true\"·숫자 1·누락·null 은 검증되지 않음"
+        ]
+      },
+      {
+        "name": "제공자 등록 설정",
+        "type": "환경변수",
+        "source": "KAKAO/NAVER/GOOGLE 의 CLIENT_ID·CLIENT_SECRET (이름은 unresolved 로 확정)",
+        "constraints": [
+          "미설정·빈 문자열·공백만이면 그 제공자를 등록하지 않는다 (제안 — unresolved)",
+          "값에 앞뒤 공백이 있으면 제거한다"
+        ]
+      },
+      {
+        "name": "pendingToken",
+        "type": "str (JWT)",
+        "source": "POST /api/auth/social/complete 요청 본문",
+        "constraints": [
+          "필수(@NotBlank)",
+          "HS256 서명 검증, typ=\"pending\", 만료 5분 — 주입된 Clock 기준 exp 와 같은 순간부터 만료(ADR-0005, TASK-009 와 같은 규칙)",
+          "클레임: email, name, provider, providerUserId, typ, exp",
+          "accessToken(typ=access)으로 대신할 수 없다"
+        ]
+      },
+      {
+        "name": "role",
+        "type": "UserRole",
+        "source": "POST /api/auth/social/complete 요청 본문",
+        "constraints": [
+          "필수(@NotNull)",
+          "AUDIENCE | ORGANIZER 만 — 정의 밖 값·숫자는 400 (fail-on-numbers-for-enums)"
+        ]
+      },
+      {
+        "name": "프론트 리다이렉트 기준 주소",
+        "type": "환경변수",
+        "source": "배포 설정 (이름은 unresolved)",
+        "constraints": [
+          "고정 설정값만 쓴다 — 요청 파라미터로 받지 않는다(오픈 리다이렉트 방지)",
+          "소스에 배포 도메인을 하드코딩하지 않는다"
+        ]
+      },
+      {
+        "name": "Authorization 헤더",
+        "type": "str",
+        "source": "기존 인증 필요 엔드포인트 호출",
+        "constraints": [
+          "pendingToken 은 일반 API 의 Bearer 로 인정되지 않는다 (typ 검증 — 기존 verifyAccessToken)"
+        ]
+      },
+      {
+        "name": "기존 DB 상태",
+        "type": "users, social_accounts",
+        "source": "DB",
+        "constraints": [
+          "users.email UNIQUE(소문자 정규화 값)",
+          "social_accounts UNIQUE(provider, provider_user_id)",
+          "social_accounts.user_id → users(id) FK"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "302 → {프론트}/oauth2/redirect?token=<accessToken>",
+        "type": "redirect",
+        "description": "재로그인 또는 이메일 일치 + 검증됨 자동 연결 성공 (§4)"
+      },
+      {
+        "name": "302 → {프론트}/oauth2/redirect?pendingToken=<pendingToken>",
+        "type": "redirect",
+        "description": "신규 또는 이메일 미검증 — users·social_accounts 행을 만들지 않는다"
+      },
+      {
+        "name": "302 → 프론트 로그인 화면(실패 표식 쿼리)",
+        "type": "redirect",
+        "description": "제공자 인증 취소·실패, 필수 속성(이메일·이름) 누락·이상 — 쿼리 규약은 TASK-013 과 합의(unresolved)"
+      },
+      {
+        "name": "200 LoginResponse",
+        "type": "response",
+        "description": "POST /api/auth/social/complete 성공 — accessToken(+user). users·social_accounts 각 1행 생성"
+      },
+      {
+        "name": "401 + 에러 코드",
+        "type": "error",
+        "description": "pendingToken 만료·위조·typ 불일치 (코드명은 unresolved, 제안 PENDING_SIGNUP_EXPIRED)"
+      },
+      {
+        "name": "409 EMAIL_ALREADY_EXISTS",
+        "type": "error",
+        "description": "가입 완료 시점에 이메일이 이미 users 에 있음 — 행을 만들지 않는다 (제안, unresolved)"
+      },
+      {
+        "name": "400 INVALID_REQUEST",
+        "type": "error",
+        "description": "role·pendingToken 형식 위반"
+      },
+      {
+        "name": "401 UNAUTHORIZED",
+        "type": "error",
+        "description": "pendingToken 을 Bearer 로 인증 필요 엔드포인트에 사용"
+      },
+      {
+        "name": "users·social_accounts 행",
+        "type": "db",
+        "description": "연결 시 social_accounts 1행 추가, 완료 시 users+social_accounts 생성, 재로그인·미완료 가입은 변경 없음"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "신규 소셜 사용자 — 가입 대기",
+        "steps": [
+          "제공자 콜백 → CustomOAuth2UserService 가 attributes 에서 email·name·providerUserId 추출·정규화",
+          "(provider, providerUserId) 가 social_accounts 에 없음",
+          "users.email 과 일치하는 행이 없음",
+          "users·social_accounts 에 쓰지 않고 pendingToken(5분) 발급",
+          "프론트 /oauth2/redirect?pendingToken=… 로 302"
+        ],
+        "covers": [
+          "처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "이메일 일치 + 검증됨 — 자동 연결",
+        "steps": [
+          "(provider, providerUserId) 없음",
+          "users.email 일치하고 제공자 검증 플래그 == true",
+          "social_accounts 행 추가 (기존 users 행·역할은 그대로)",
+          "accessToken 발급",
+          "프론트 /oauth2/redirect?token=… 로 302"
+        ],
+        "covers": [
+          "이미 이메일 회원가입된 계정과 같은 이메일로, email_verified가 true인 소셜 로그인을 하면 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "이메일 일치해도 미검증 — 자동 연결 안 함",
+        "steps": [
+          "검증 플래그가 false·미제공(네이버는 항상 미제공)·불리언이 아님",
+          "이메일이 기존 users 와 같아도 연결하지 않음",
+          "신규 가입과 동일하게 pendingToken 발급 (F1 과 같은 출력)"
+        ],
+        "covers": [
+          "email_verified가 false(또는 미제공)인 경우에는 이메일이 같아도 자동 연결하지 않고 신규 가입과 동일하게 pendingToken을 발급한다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "같은 제공자 계정 재로그인",
+        "steps": [
+          "(provider, providerUserId) 가 social_accounts 에 이미 있음",
+          "연결된 users 로 accessToken 발급 — 이메일 비교·행 추가 없음",
+          "동시에 두 콜백이 와도 UNIQUE(provider, provider_user_id) 때문에 중복 행이 생기지 않는다 (유니크 위반이면 재조회해 같은 사용자로 로그인)"
+        ],
+        "covers": [
+          "같은 제공자 계정으로 재로그인해도 social_accounts의 유니크 제약(provider, provider_user_id)에 의해 중복 행이 생기지 않는다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "제공자별 속성 정규화",
+        "steps": [
+          "제공자 id(kakao·naver·google)로 매핑 선택",
+          "카카오·네이버는 중첩 구조, 구글은 평면 구조에서 이메일·이름·검증 플래그·providerUserId 추출",
+          "필수 값이 없거나 이상하면 실패 처리(F9)"
+        ],
+        "covers": [
+          "카카오/네이버(중첩 응답 구조)와 구글(평면 구조) 각각에서 이메일과 이름을 정상적으로 추출한다(제공자별 매핑 단위 테스트)"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "가입 완료 — POST /api/auth/social/complete",
+        "steps": [
+          "pendingToken 서명·만료·typ=pending 검증",
+          "role 검증",
+          "users INSERT + social_accounts INSERT 를 한 트랜잭션으로",
+          "accessToken 발급, 200 LoginResponse",
+          "만료·위조·typ 불일치면 401 — 행을 만들지 않는다"
+        ],
+        "covers": [
+          "만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "토큰 용도 분리",
+        "steps": [
+          "pendingToken(typ=pending)으로 인증 필요 엔드포인트(예: /api/auth/me) 호출 → 거부(401)",
+          "accessToken(typ=access)을 /api/auth/social/complete 의 pendingToken 으로 제출 → 401"
+        ],
+        "covers": [
+          "pendingToken으로 /api/auth/social/complete 외의 인증 필요 엔드포인트를 호출하면 거부된다(typ 클레임 검증)"
+        ]
+      },
+      {
+        "id": "F8",
+        "name": "소셜 전용 계정의 이메일 로그인",
+        "steps": [
+          "users.password_hash 가 null 인 계정으로 POST /api/auth/login",
+          "해시 비교로 가지 않고 INVALID_CREDENTIALS(401) — 계정 존재 여부를 알리지 않는 기존 응답과 같다"
+        ],
+        "covers": [],
+        "note": "AC 에 직접 없음 — V4 가 password_hash 를 nullable 로 바꾸는 데서 오는 회귀 방지(NPE·500 금지). 범위를 넓히는 것이 아니라 AC 구현의 귀결이다. 사용자 확인 대상으로 Plan 보고에 올린다 [사용자 확인됨 — Plan 단계에서 범위 포함 선택]"
+      },
+      {
+        "id": "F9",
+        "name": "제공자 실패·이상 속성",
+        "steps": [
+          "제공자 인증 취소·오류, 이메일·이름 누락, 문자열 필드 위반(NUL·서로게이트·길이 초과)",
+          "OAuth2LoginFailureHandler 가 프론트 로그인 화면으로 302",
+          "users·social_accounts·pendingToken 어느 것도 만들지 않는다"
+        ],
+        "covers": [],
+        "note": "AC 에 직접 없음 — 태스크 implementation_spec 에 OAuth2LoginFailureHandler 가 명시돼 있고 feature 문서 §2-5 '제공자 인증 취소/실패' 와 users.email·name NOT NULL 제약의 귀결 [사용자 확인됨 — Plan 단계에서 범위 포함 선택]"
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "API / Service / Repository + 보안 설정(config)",
+    "note": "판정(자동 연결·가입 대기·완료)은 Service(AuthService) 가 소유하고 결과 타입(로그인/대기)을 돌려준다. 리다이렉트·쿼리 조립은 HTTP 관심사라 config 의 핸들러가 한다. Controller 는 /complete 의 검증과 위임만 한다. SocialAccountRepository 는 AuthService 를 통해서만 부른다 (architecture.md §2·§3)",
+    "constraints_applied": [
+      "ARCH-001",
+      "ARCH-002",
+      "ARCH-003",
+      "ARCH-004",
+      "DEPLOY-002"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0003",
+    "ADR-0005",
+    "ADR-0006",
+    "ADR-0010",
+    "ADR-0012",
+    "ADR-0013",
+    "ADR-0014",
+    "ADR-0016",
+    "ADR-0017",
+    "ADR-0018",
+    "ADR-0019"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "backend/build.gradle",
+        "change": "spring-boot-starter-security-oauth2-client 추가 (Boot 4.1.1 의 정식 이름 — Maven Central 에서 확인)"
+      },
+      {
+        "path": "backend/src/main/resources/db/migration/V4__create_social_accounts.sql",
+        "change": "users.password_hash NOT NULL 해제 + social_accounts 테이블(UNIQUE(provider, provider_user_id), FK)",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/SocialAccount.java",
+        "change": "엔티티 (id, userId, provider, providerUserId, createdAt) — 테스트 스키마가 이 애노테이션에서 만들어지므로 V4 제약과 같게(ADR-0006)",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/SocialProvider.java",
+        "change": "enum KAKAO, NAVER, GOOGLE, APPLE (APPLE 은 TASK-012 가 쓴다)",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+        "change": "passwordHash nullable 로 — 소셜 전용 계정(비밀번호 없음)을 만드는 생성 경로 추가"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/SocialAccountRepository.java",
+        "change": "findByProviderAndProviderUserId, 사용자 조회",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "change": "소셜 로그인 판정(재로그인·자동 연결·가입 대기)과 completeSocialSignUp 추가, login() 의 null 해시 방어(F8)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/SocialProfile.java",
+        "change": "정규화된 제공자 프로필(provider, providerUserId, email, name, emailVerified) 값 객체 — 구현 spec 경로에 없는 소형 파일",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/SocialLoginResult.java",
+        "change": "판정 결과 타입 — 로그인(accessToken) 또는 가입 대기(pendingToken). 핸들러가 리다이렉트를 고르는 근거",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PendingSignupExpiredException.java",
+        "change": "pendingToken 만료·위조·용도 불일치",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "change": "issuePendingToken·verifyPendingToken(typ=pending, 5분, 클레임 4종) 추가. 기존 access 검증은 그대로 pending 을 거부"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/CustomOAuth2UserService.java",
+        "change": "제공자별 attributes → SocialProfile 정규화(카카오·네이버 중첩, 구글 평면). 매핑은 attributes 맵을 받는 순수 함수로 두어 제공자 호출 없이 단위 테스트한다",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginSuccessHandler.java",
+        "change": "AuthService 결과에 따라 token 또는 pendingToken 으로 프론트 리다이렉트",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginFailureHandler.java",
+        "change": "실패 시 프론트 로그인 화면으로 리다이렉트",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+        "change": "oauth2Login 구성(userService·성공/실패 핸들러), permitAll 에 /api/auth/social/complete·/oauth2/**·/login/oauth2/** 추가, 제공자 등록(환경변수) 연결"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+        "change": "POST /api/auth/social/complete 추가 (@Valid @RequestBody)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+        "change": "PendingSignupExpiredException → 401 (코드명은 unresolved)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/CompleteSocialSignUpRequest.java",
+        "change": "record(@NotBlank pendingToken, @NotNull role)",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/resources/config/application.properties",
+        "change": "제공자 등록·스코프·리다이렉트 URI 설정 (방식은 unresolved)"
+      },
+      {
+        "path": "backend/src/test/resources/application.properties",
+        "change": "테스트용 제공자 설정·프론트 주소 (2b 에서 필요 시)"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "symbol": "issueAccessToken",
+        "note": "accessToken 발급 — 새로 만들지 말 것. pendingToken 도 같은 인코더·디코더·notExpiredValidator 패턴을 따른다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "symbol": "verifyAccessToken",
+        "note": "typ=access 검증 — pendingToken 을 일반 API 에서 거부하는 AC7 의 근거"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "symbol": "AuthService",
+        "note": "normalize(소문자)·isUniqueViolation(SQLState 23505)·exceedsBcryptLimit·toResponse 와 UNIQUE 경쟁 처리 패턴을 재사용한다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/EmailAlreadyExistsException.java",
+        "symbol": "EmailAlreadyExistsException",
+        "note": "/complete 의 이메일 충돌에 재사용(409)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java",
+        "symbol": "ErrorResponse",
+        "note": "에러 응답 형식"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+        "symbol": "AuthExceptionHandler",
+        "note": "인증 예외 매핑 위치 — 새 핸들러를 만들지 않고 여기에 추가"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/NoLoneSurrogate.java",
+        "symbol": "NoLoneSurrogate",
+        "note": "짝 없는 서로게이트 거부 제약(ADR-0019). 패키지 전용(final class) — 제공자 속성 검증은 같은 규칙을 공통 지점에서 쓸 수단이 필요하다(unresolved)"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+        "symbol": "MutableClock",
+        "note": "pendingToken 5분 만료 정각 경계 테스트"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/AuthTestHelper.java",
+        "symbol": "AuthTestHelper",
+        "note": "요청·토큰 조립 헬퍼"
+      }
+    ],
+    "existing_tests": [
+      "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardAuthApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/config/JwtSecretConfigTest.java",
+      "backend/src/test/java/com/example/ticket_booking/service/AuthServiceSignUpFailureTest.java",
+      "backend/src/test/java/com/example/ticket_booking/config/ArchitectureCheckTest.java"
+    ],
+    "unresolved": [
+      "의존성: spring-boot-starter-security-oauth2-client 를 추가한다(Boot 4.1.1 에서 -security- 가 들어간 이름이 정식, 옛 이름도 Central 에 있음). 현재 build.gradle 에는 없다 — ADR-0013 이 이미 결정한 구성이라 새 컴포넌트는 아니다",
+      "구글 스코프: 기본 구글 등록은 openid 를 포함해 OIDC 경로(oidcUserService)를 탄다. 제안: 스코프를 profile,email 로 두어 세 제공자 모두 CustomOAuth2UserService 한 경로로 처리한다. openid 를 쓰면 oidcUserService 도 구현해야 한다",
+      "제공자 등록 방식·환경변수 이름: 등록은 config/application.properties 에 빈 기본값으로 쓰면 clientId 가 비어 기동이 실패한다(config/application.properties 는 테스트에서도 로딩됨). 제안: 환경변수가 있는 제공자만 코드로 등록하고, 하나도 없으면 oauth2Login 을 켜지 않아 이메일 인증만으로 기동한다. 미설정·빈 문자열·공백만의 처리를 시나리오 경계 행으로 대본다(coverage-policy §2-1 환경변수 행)",
+      "OAuth2 state 저장: 기본 구현은 HttpSession 에 인가 요청을 저장한다. SessionCreationPolicy.STATELESS 와의 상호작용(세션을 직접 만든다)과, 분리 배포·애플 form_post(TASK-012)를 고려한 쿠키 저장소 필요 여부를 Phase 3 설계에서 정한다. 시나리오는 state 저장 방식에 의존하지 않게 쓴다",
+      "네이버: 이메일 검증 플래그를 제공하지 않는다. AC3 의 문구('미제공이면 자동 연결하지 않는다')대로 네이버는 자동 연결이 일어나지 않는다. ADR-0014 의 '4개 제공자 모두 동등 플래그 제공' 가정과 어긋난다 — Phase 5 drift 후보. 카카오는 is_email_verified(와 is_email_valid)를 본다",
+      "이메일 미제공·빈 값(카카오 동의 항목 미동의 등): users.email 이 NOT NULL 이라 가입할 수 없다 → pendingToken 을 발급하지 않고 실패 처리(F9). 제안",
+      "name 미제공·빈 값·100자 초과: users.name 이 NOT NULL ≤100. ADR-0019(조용한 변형 금지)에 따라 자르거나 대체하지 않고 실패 처리(F9)를 제안. 2a 에서 확정",
+      "외부 입력 문자열 필드 전수(ADR-0019): 제공자 속성의 NUL·짝 없는 서로게이트·제어문자를 이메일·이름·providerUserId 에 대해 모두 거부한다. 거부 지점은 공통 한 곳(정규화 함수)에 둔다 — TASK-009 RC-1 처럼 필드마다 따로 붙이지 않는다. NoLoneSurrogate 는 api.dto 패키지 전용이라 같은 규칙을 쓸 공통 수단이 필요하다",
+      "/complete 충돌 처리(제안): pendingToken 의 이메일이 그 사이 users 에 생김(F3 미검증 경로·경쟁) → 409 EMAIL_ALREADY_EXISTS, 행을 만들지 않는다. 같은 pendingToken 으로 두 번 호출하면 두 번째는 같은 이유로 409(재사용 방지는 토큰 5분 만료와 유일성 제약에 맡긴다). (provider, providerUserId) 가 그 사이 이미 연결됐다면 어떤 응답인지는 2a 에서 정한다",
+      "pendingToken 오류 코드명: 만료·위조·typ 불일치는 모두 401. 코드명 제안 PENDING_SIGNUP_EXPIRED (프론트 문구 '로그인 정보가 만료되었습니다. 다시 로그인해 주세요' 와 대응, TASK-013 이 code 로 분기). 위조와 만료를 구분해 노출하지 않는다",
+      "프론트 리다이렉트: 기준 주소 환경변수 이름(제안 FRONTEND_BASE_URL)과 미설정 시 동작, 실패 시 쿼리 규약(제안 /login?error=social)은 TASK-013 과 맞춰야 한다. 토큰을 쿼리 문자열에 싣는 것은 명세(§4)대로이며 브라우저 히스토리·서버 로그·Referer 노출 위험이 있다 — 바꾸지 않고 Phase 5 후보로 남긴다",
+      "[결정됨 Plan] PostgreSQL 통합 테스트(미반영 제안 TASK-009 #1): 이번에는 Testcontainers 를 도입하지 않는다(사용자 선택). H2 는 flyway 가 꺼져 V4 SQL·UNIQUE·FK 를 실행하지 않으므로 Phase 4 에서 실제 PostgreSQL 로 앱을 띄워 V4 마이그레이션·유니크·전 문자열 입력(이메일·이름·providerUserId)을 HTTP 로 프로브하는 것을 필수 항목으로 한다. 자동 회귀 테스트는 없다는 한계를 VERIFY 에 적는다. Testcontainers 도입은 ADR-0006 이행 시점으로 미룬다",
+      "쓰기 가드(ADR-0016·0017): POST /api/auth/social/complete 도 쓰기 메서드라 가드가 켜지면 X-Write-Key 가 필요하다. OAuth2 콜백(GET)은 가드 대상이 아니다. TASK-013 이 request() 로 호출하면 자동으로 붙는다",
+      "같은 사용자에 같은 제공자의 다른 providerUserId 를 연결하는 것은 스키마가 막지 않는다(UNIQUE 는 (provider, provider_user_id)). 이 태스크는 막지 않는다",
+      "시나리오 규모: 제공자 3 × 판정 분기 × 외부 입력 경계로 8~12건 기준선을 넘을 가능성이 크다 — 표로 묶고 묶은 근거를 CP-2.2 decisions 에 남긴다"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 16
+    }
+  },
+  "acceptance_criteria": [
+    "처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다",
+    "이미 이메일 회원가입된 계정과 같은 이메일로, email_verified가 true인 소셜 로그인을 하면 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)",
+    "email_verified가 false(또는 미제공)인 경우에는 이메일이 같아도 자동 연결하지 않고 신규 가입과 동일하게 pendingToken을 발급한다",
+    "같은 제공자 계정으로 재로그인해도 social_accounts의 유니크 제약(provider, provider_user_id)에 의해 중복 행이 생기지 않는다",
+    "카카오/네이버(중첩 응답 구조)와 구글(평면 구조) 각각에서 이메일과 이름을 정상적으로 추출한다(제공자별 매핑 단위 테스트)",
+    "만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다",
+    "pendingToken으로 /api/auth/social/complete 외의 인증 필요 엔드포인트를 호출하면 거부된다(typ 클레임 검증)"
+  ],
+  "test_hints": {
+    "framework": "JUnit 5 + Spring Boot Test (@SpringBootTest + MockMvc, H2 MODE=PostgreSQL) + AssertJ(SoftAssertions)",
+    "command": "cd backend && export JAVA_HOME=/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home && ./gradlew test",
+    "mock_strategy": "제공자 호출은 하지 않는다. 제공자별 매핑은 attributes 맵을 직접 넣는 순수 함수로 단위 테스트, 판정은 AuthService(@SpringBootTest, H2)로, 핸들러는 가짜 OAuth2AuthenticationToken + MockHttpServletResponse 로 리다이렉트 URL 만 본다. 시각은 MutableClock(만료 정각 경계)",
+    "test_strategy": "테스트 DB(H2)가 운영(PostgreSQL)과 달라 V4 SQL·UNIQUE·FK 는 H2 에서 실행되지 않는다(사용자 선택: Testcontainers 는 도입하지 않는다). 대신 Phase 4 에서 실제 PostgreSQL 로 앱을 띄워 V4 마이그레이션·유니크 제약·제공자 문자열 입력 전수(NUL·서로게이트·길이)를 HTTP 로 프로브한다 — 이 프로브가 H2 로 잡지 못하는 부분의 유일한 증거다"
+  }
+}
