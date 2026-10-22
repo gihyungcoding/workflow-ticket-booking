@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-22T03:40:00Z
-summary: "[3차 작성] 2차 독립검증 FAIL(V11: 빈 토큰·문자열 전수 전송·201 본문) 반영 — 31건, 마지막 재검증(3/3) 대기. [2차 작성] 1차 독립검증 FAIL(V11: 재제출 시 오류 초기화·72바이트 경계 누락) 반영 — 28건(happy 9 / error 8 / boundary 10 / regression 1), When 단일화, Plan 에 trim·순환방지·복원실패 보존 규칙 반영. 재검증 대기. [1차] 20건 작성 → FAIL 1·WARN 5."
+summary: "[3차 검증 FAIL — 재검증 3/3 소진] V11: 로그인 비밀번호 공백만·가입 비밀번호 확인 공백만 경계 2건 누락. 사용자 결정 대기(Phase 1 롤백 제안 vs 2건 보완 후 예외 재검증). [3차 작성] 2차 독립검증 FAIL(V11: 빈 토큰·문자열 전수 전송·201 본문) 반영 — 31건, 마지막 재검증(3/3) 대기. [2차 작성] 1차 독립검증 FAIL(V11: 재제출 시 오류 초기화·72바이트 경계 누락) 반영 — 28건(happy 9 / error 8 / boundary 10 / regression 1), When 단일화, Plan 에 trim·순환방지·복원실패 보존 규칙 반영. 재검증 대기. [1차] 20건 작성 → FAIL 1·WARN 5."
 
 next_steps:
-  - "scenario-validator 3차 호출 (재검증 3/3 — 또 FAIL 이면 Phase 1 롤백 제안)"
+  - "사용자 결정: 재검증 3/3 소진 — Phase 1 롤백(규칙) 또는 V11 2건만 보완 후 추가 검증(예외)"
   - "HITL#1 승인 후 Phase 2b"
 
 decisions:
@@ -26,6 +26,10 @@ decisions:
     rationale: "서버가 거부한다(TASK-009 RC-1). 화면은 입력을 변환하지 않고 보내며(SC-06) 400 은 일반 문구(SC-08·13)"
 
 attempts:
+  - phase: "2a"
+    round: 3
+    outcome: "FAIL — V11(로그인 비밀번호 공백만, 가입 비밀번호 확인 공백만) · WARN 4 · 31건은 복잡도 기준선(8~12) 초과"
+    reject_type: "VALIDATOR_FAIL 3/3 (소진)"
   - phase: "2a"
     round: 2
     outcome: "FAIL — V11(accessToken 빈 문자열·공백, 문자열 전수 NUL·서로게이트 전송 단언, 가입 201 비정상 본문) · WARN 4(When 이중 SC-05·06·10·22, 오류 없이 모호, SC-13/15 겹침)"
