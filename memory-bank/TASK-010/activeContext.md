@@ -1,8 +1,8 @@
 ---
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
-phase: "4"
-phase_name: "Phase 4 - Verify 승인 (EXCEPTION_APPROVE)"
+phase: "5"
+phase_name: "Phase 5 - Reflect (HITL#4 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-010-email-auth-screens"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-010.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-010.md"
@@ -21,6 +21,7 @@ artifacts:
   red: "workflow_design/05_scenario/TEST_TASK-010.json"
   dev: "workflow_design/06_dev/DEV_TASK-010.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-010.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-010.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -31,7 +32,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 4 2차 WARN 예외 승인됨(verified_commit 92e0447). Phase 5 — wf-reflect.
+Phase 5 회고 작성 완료 — HITL#4 승인 대기. 승인되면 태스크 종료 후 /wf-ship.
 
 ## 알아둬야 할 것
 
