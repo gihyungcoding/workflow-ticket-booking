@@ -100,7 +100,9 @@
       "decision": "클라이언트 세션 상태 전이 규칙 — 토큰 복원·로그인·로그아웃을 세션 세대로 직렬화하고, 401 만 토큰 삭제, 저장소 접근 실패는 메모리 상태로 유지",
       "why_broader": "TASK-011~013(소셜 로그인 콜백·역할 선택·pendingToken)이 같은 세션 상태에 로그인 경로를 더 추가한다. 경로마다 복원과의 겹침을 다시 정하지 않게 해야 한다",
       "evidence": "CP-3.4 decisions(세션 세대 useRef, stale() 한 지점) · VERIFY RC-1",
-      "suggested_title": "클라이언트 인증 세션 상태 전이 규칙"
+      "suggested_title": "클라이언트 인증 세션 상태 전이 규칙",
+      "status": "recorded",
+      "adr": "ADR-0018"
     },
     {
       "decision": "문자열 입력 검증 정책 — 서버 정규화(Java trim: U+0000~U+0020)와 클라이언트 판단(JS trim)의 차이를 포함해 API 경계 한 지점에서 NUL·서로게이트·공백을 어떻게 다루는지",

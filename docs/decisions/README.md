@@ -25,5 +25,6 @@
 | [ADR-0015](ADR-0015-access-token-localstorage.md) | accessToken을 프론트 localStorage에 저장한다 | 채택됨 | 2026-10-14 |
 | [ADR-0017](ADR-0017-keep-write-guard-until-ownership-check.md) | 쓰기 가드는 공연 쓰기 API 에 소유권 검사가 붙을 때까지 유지한다 | 채택됨 | 2026-10-21 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로 대체됨) | 2026-10-14 |
+| [ADR-0018](ADR-0018-client-session-generation.md) | 클라이언트 세션 상태는 세대로 직렬화하고, 늦게 온 복원 응답은 버린다 | 채택됨 | 2026-10-22 |
 
 대체된 ADR 도 목록에 남깁니다. 과거에 왜 그렇게 판단했는지가 지워지면 같은 논의를 다시 하게 됩니다.
