@@ -973,7 +973,7 @@
     "string_input_note": "문자열 필드 전수(NUL·짝 없는 서로게이트·UTF-8 72바이트 초과): 프론트는 이메일 앞뒤 공백 외에는 입력을 변환·거부하지 않고(가입 SC-08, 로그인 SC-09 — email·password·name 전 필드) 거부는 서버가 한다(TASK-009 RC-1). 화면은 SC-11(400 행)·SC-17·SC-16 로 일반 문구를 보인다. 서버 응답 쪽은 가입 201 본문 무시(SC-31), 로그인 200 비정상 본문(SC-17)."
   },
   "human_input": {
-    "generate_red_trigger": false
+    "generate_red_trigger": true
   },
   "source_of_truth": "SCENARIO_TASK-010.md — JSON 은 파생물이다. 표는 시나리오마다 `table`(마크다운 행), 문구 정본 표는 MD 상단. 표를 가리키는 문장('표와 같다')은 `table` 필드를 본다"
 }

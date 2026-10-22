@@ -2,7 +2,7 @@
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
 phase: "2a"
-phase_name: "Phase 2a - Scenario 재진입 (HITL#1 대기)"
+phase_name: "Phase 2a - Scenario 재진입 승인 (HITL#1)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -31,7 +31,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 2a 재진입 — SC-33~35 추가(31건), 6차 독립검증 PASS. HITL#1 승인 후 Phase 2b(보강 행 추가·변이 검증)→3→4 재검증.
+Phase 2a 재진입 — SC-33~35 추가(31건), 6차 독립검증 PASS. HITL#1 승인됨. Phase 2b(보강 행 추가·변이 검증)→3→4 재검증.
 
 ## 알아둬야 할 것
 
