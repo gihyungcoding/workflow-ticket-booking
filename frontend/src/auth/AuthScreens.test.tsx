@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { StrictMode } from 'react'
 import { ThemeProvider } from '@mui/material/styles'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { registerPerformance, WRITE_REJECTED_MESSAGE } from '../api/performances'
@@ -93,10 +94,12 @@ const bodyOf = (call: Call) => JSON.parse(String(call.init.body)) as Record<stri
 
 function deferred() {
   let resolve!: (r: Response) => void
-  const promise = new Promise<Response>((r) => {
-    resolve = r
+  let reject!: (e: unknown) => void
+  const promise = new Promise<Response>((res, rej) => {
+    resolve = res
+    reject = rej
   })
-  return { promise, resolve }
+  return { promise, resolve, reject }
 }
 
 // ---------- 렌더 ----------
@@ -107,8 +110,8 @@ function Where() {
 }
 const where = () => screen.getByTestId('where').textContent
 
-function renderAt(entry: string | { pathname: string; state?: unknown }) {
-  return render(
+function renderAt(entry: string | { pathname: string; state?: unknown }, options: { strict?: boolean } = {}) {
+  const tree = (
     <ThemeProvider theme={theme}>
       <MemoryRouter initialEntries={[entry]}>
         <AuthProvider>
@@ -116,8 +119,9 @@ function renderAt(entry: string | { pathname: string; state?: unknown }) {
           <Where />
         </AuthProvider>
       </MemoryRouter>
-    </ThemeProvider>,
+    </ThemeProvider>
   )
+  return render(options.strict ? <StrictMode>{tree}</StrictMode> : tree)
 }
 
 // ---------- 폼 ----------
@@ -316,6 +320,13 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     { label: '가입 이름 공백만', screen: '가입', signUp: { name: '   ' }, field: LABEL.name, message: MSG.nameRequired },
     { label: '가입 이름 101자', screen: '가입', signUp: { name: '가'.repeat(101) }, field: LABEL.name, message: MSG.nameMax },
     {
+      label: '가입 이름 이모지 51개 (102 UTF-16 유닛)',
+      screen: '가입',
+      signUp: { name: '😀'.repeat(51) },
+      field: LABEL.name,
+      message: MSG.nameMax,
+    },
+    {
       label: '가입 이메일 256자',
       screen: '가입',
       signUp: { email: emailOf(256) },
@@ -336,6 +347,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     // 통과 경계
     { label: '통과: 가입 비밀번호 8자', screen: '가입', signUp: samePw('abcdefgh'), pass: true },
     { label: '통과: 가입 비밀번호 72자', screen: '가입', signUp: samePw('a'.repeat(72)), pass: true },
+    { label: '통과: 가입 이름 이모지 50개 (100 UTF-16 유닛)', screen: '가입', signUp: { name: '😀'.repeat(50) }, pass: true },
     { label: '통과: 가입 이름 100자', screen: '가입', signUp: { name: '가'.repeat(100) }, pass: true },
     { label: '통과: 가입 이메일 255자', screen: '가입', signUp: { email: emailOf(255) }, pass: true },
     {
@@ -383,6 +395,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     { field: 'password', input: `pass${LONE}word1`, sent: `pass${LONE}word1` },
     { field: 'name', input: `홍${NUL}길동😀`, sent: `홍${NUL}길동😀` },
     { field: 'name', input: `홍${LONE}길동`, sent: `홍${LONE}길동` },
+    { field: 'name', input: ' 홍길동 ', sent: ' 홍길동 ' },
   ]
   test.each(SC08_ROWS)(
     'SC-08 (boundary) 가입 입력은 이메일 앞뒤 공백만 제거하고 나머지는 변환 없이 보낸다 — $field',
@@ -1097,5 +1110,103 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     // And 표의 문구, 토큰 없음
     expect(await screen.findByText(row.message)).toBeInTheDocument()
     expect(token()).toBeNull()
+  })
+  // ---------- 복원 응답 경쟁 (Phase 4 RC-1) ----------
+
+  const B_LOGIN = {
+    accessToken: 'tok-new',
+    tokenType: 'Bearer',
+    expiresInSeconds: 86400,
+    user: { id: 2, email: 'kim@example.com', name: '김철수', role: 'AUDIENCE' },
+  }
+  const LATE_RESTORE: { label: string; settle: (d: ReturnType<typeof deferred>) => void }[] = [
+    { label: '200 + 홍길동', settle: (d) => d.resolve(res(200, USER)) },
+    { label: '401 UNAUTHORIZED', settle: (d) => d.resolve(res(401, { code: 'UNAUTHORIZED' })) },
+    { label: '401 빈 바디', settle: (d) => d.resolve(res(401)) },
+    { label: '500', settle: (d) => d.resolve(res(500)) },
+    { label: '네트워크 오류', settle: (d) => d.reject(new TypeError('Failed to fetch')) },
+    { label: '200 비 JSON', settle: (d) => d.resolve(text(200, 'ok')) },
+  ]
+  // 늦게 온 응답이 처리될 시간을 준다 — 아무 일도 일어나지 않아야 하는 단언 전용.
+  const settleLate = (d: ReturnType<typeof deferred>, settle: (d: ReturnType<typeof deferred>) => void) =>
+    act(async () => {
+      settle(d)
+      await new Promise((r) => setTimeout(r, 30))
+    })
+
+  async function loginWhileRestoring() {
+    localStorage.setItem('accessToken', 'tok-old')
+    const me = deferred()
+    stubServer({ 'GET /api/auth/me': () => me.promise, 'POST /api/auth/login': () => res(200, B_LOGIN) })
+    renderAt('/login')
+    fillLogin({ email: 'kim@example.com' })
+    await clickButton('로그인')
+    return me
+  }
+
+  test.each(LATE_RESTORE)('SC-33 (boundary) 복원이 끝나기 전에 로그인하면 늦게 온 복원 응답이 덮어쓰지 않는다 — $label', async ({ settle }) => {
+    // Given 복원 중(tok-old)이고 로그인 응답이 김철수다 / When 로그인을 누른다
+    const me = await loginWhileRestoring()
+
+    // Then 복원 응답이 오기 전에 이미 헤더에 김철수와 로그아웃이 보인다
+    expect(await screen.findByText('김철수')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+    // And 늦은 복원 응답이 도착한 뒤에도 김철수, 토큰은 tok-new
+    await settleLate(me, settle)
+    expect(screen.getByText('김철수')).toBeInTheDocument()
+    expect(token()).toBe('tok-new')
+    // And 복원 응답의 사용자는 나타나지 않는다
+    expect(screen.queryByText('홍길동')).not.toBeInTheDocument()
+  })
+
+  test.each(LATE_RESTORE.filter((r) => ['200 + 홍길동', '401 UNAUTHORIZED', '500'].includes(r.label)))(
+    'SC-34 (boundary) 복원 중 로그인했다 로그아웃하면 늦게 온 복원 응답이 다시 로그인시키지 않는다 — $label',
+    async ({ settle }) => {
+      // Given 복원 중에 김철수로 로그인했고 헤더에 로그아웃이 보인다
+      const me = await loginWhileRestoring()
+      await screen.findByText('김철수')
+
+      // When 로그아웃을 누른다
+      await clickButton('로그아웃')
+
+      // Then 늦은 복원 응답이 도착한 뒤에도 로그인·가입 링크만 있다
+      await settleLate(me, settle)
+      expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: '가입' })).toBeInTheDocument()
+      expect(screen.queryByText('김철수')).not.toBeInTheDocument()
+      expect(screen.queryByText('홍길동')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument()
+      // And accessToken 이 없다
+      expect(token()).toBeNull()
+    },
+  )
+
+  const STRICT_ROWS = [
+    { label: '200·200', first: () => res(200, USER), second: () => res(200, USER), user: true, tokenKept: true },
+    { label: '401·401', first: () => res(401), second: () => res(401), user: false, tokenKept: false },
+    { label: '401(취소된 요청)·200', first: () => res(401), second: () => res(200, USER), user: true, tokenKept: true },
+  ]
+  test.each(STRICT_ROWS)('SC-35 (boundary) 개발 모드의 이중 마운트에서도 복원 결과가 맞다 — $label', async (row) => {
+    // Given tok-1 이 있고 StrictMode 안에서 렌더되며, me 는 요청 순서대로 응답한다
+    localStorage.setItem('accessToken', 'tok-1')
+    let n = 0
+    stubServer({ 'GET /api/auth/me': () => (++n === 1 ? row.first() : row.second()) })
+
+    // When 앱을 처음 연다
+    renderAt('/', { strict: true })
+
+    // Then 표의 헤더
+    if (row.user) {
+      expect(await screen.findByText('홍길동')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+    } else {
+      expect(await screen.findByRole('link', { name: '로그인' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: '가입' })).toBeInTheDocument()
+    }
+    // And 토큰
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30))
+    })
+    expect(token()).toBe(row.tokenKept ? 'tok-1' : null)
   })
 })

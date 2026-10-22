@@ -1,8 +1,8 @@
 ---
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
-phase: "2a"
-phase_name: "Phase 2a - Scenario 재진입 승인 (HITL#1)"
+phase: "2b"
+phase_name: "Phase 2b - Red 재진입 (HITL#2 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-010-email-auth-screens"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-010.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-010.md"
@@ -31,7 +31,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 2a 재진입 — SC-33~35 추가(31건), 6차 독립검증 PASS. HITL#1 승인됨. Phase 2b(보강 행 추가·변이 검증)→3→4 재검증.
+Phase 2a 재진입 — SC-33~35 추가(31건), 6차 독립검증 PASS. Red 재진입 완료(신규 15케이스 중 10 실패·5 변이 검증). HITL#2 승인 후 Phase 3 — 세션 세대로 복원 무효화.
 
 ## 알아둬야 할 것
 
