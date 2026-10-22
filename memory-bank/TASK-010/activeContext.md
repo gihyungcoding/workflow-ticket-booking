@@ -2,7 +2,7 @@
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
 phase: "4"
-phase_name: "Phase 4 - Verify 2차 (WARN, HITL#3 대기)"
+phase_name: "Phase 4 - Verify 승인 (EXCEPTION_APPROVE)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -31,7 +31,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 4 2차 WARN — HITL#3 승인 대기. 승인되면 verified_commit 기록 후 Phase 5.
+Phase 4 2차 WARN 예외 승인됨(verified_commit 92e0447). Phase 5 — wf-reflect.
 
 ## 알아둬야 할 것
 

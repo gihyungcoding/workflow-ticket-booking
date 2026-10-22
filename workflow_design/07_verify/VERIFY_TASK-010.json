@@ -326,9 +326,26 @@
   },
   "verification_environment": "실제 백엔드(Spring Boot, PostgreSQL 16 컨테이너, 포트 8081) + 복원 요청(/api/auth/me)만 4초 지연시키는 임시 프록시(8080, 스크래치 디렉터리) + vite 개발 서버. 1차는 쓰기 가드 OFF/ON 두 번. 검증 후 모두 종료",
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "92e044746866b87e5182a6dda5f370fc2db95133",
+    "verified_at": "2026-10-22T14:50:01Z",
+    "exceptions": [
+      {
+        "item": "제출 중 로딩 표시(스피너) 부재",
+        "detail": "feature 문서 §2-5 '제출 중 — 버튼 비활성화 + 로딩 표시' 중 비활성·중복 차단만 구현. 시나리오·완료 조건에 없음",
+        "follow_up": "Phase 5 회고 — 문서와 시나리오 정합"
+      },
+      {
+        "item": "login 없이 logout 만 하면 restoring 이 true 로 잔류(not_probed)",
+        "detail": "현재 UI 에서 도달 불가. finally 의 stale 가드가 테스트로 고정되지 않음",
+        "follow_up": "Phase 5 — logout 에서 setRestoring(false) 또는 가드 제거 검토"
+      },
+      {
+        "item": "OOS-2 로그인 응답 대기 중 이동 시 늦은 응답이 로그인·이동 실행",
+        "detail": "실제 앱에서 재현. 사용자가 수락하는 동작으로 분류(AskUserQuestion, Phase 4 2차)",
+        "follow_up": "Phase 5 — 언마운트·이동 뒤 도착한 응답의 정책을 시나리오로"
+      }
+    ]
   },
   "rounds": [
     {
