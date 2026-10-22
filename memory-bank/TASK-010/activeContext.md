@@ -2,7 +2,7 @@
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
 phase: "2b"
-phase_name: "Phase 2b - Red (HITL#2 대기)"
+phase_name: "Phase 2b - Red 승인 (HITL#2)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -29,7 +29,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-Phase 2b Red 작성 완료(118케이스 전부 실패, 기존 43 통과). HITL#2 승인 후 Phase 3 — wf-develop. Green 위험은 TEST_TASK-010.json 의 risks_for_green.
+Phase 2b Red 작성 완료(118케이스 전부 실패, 기존 43 통과). HITL#2 승인됨. Phase 3 — wf-develop 로 구현한다. Green 위험은 TEST_TASK-010.json 의 risks_for_green.
 
 ## 알아둬야 할 것
 

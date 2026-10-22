@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-22T05:00:00Z
-summary: "[Red 작성 · HITL#2 대기] 시나리오 28건 → frontend/src/auth/AuthScreens.test.tsx (test.each 행 포함 118케이스). 컴파일 스켈레톤 5개(전부 throw 'not implemented'). 실행: 161건 중 118 실패(전부 'not implemented')·43 통과(기존 전부). tsc -b 오류 0. already_passing 없음."
+summary: "[HITL#2 승인됨 2026-10-22] 시나리오 28건 → frontend/src/auth/AuthScreens.test.tsx (test.each 행 포함 118케이스). 컴파일 스켈레톤 5개(전부 throw 'not implemented'). 실행: 161건 중 118 실패(전부 'not implemented')·43 통과(기존 전부). tsc -b 오류 0. already_passing 없음."
 
 next_steps:
   - "HITL#2 승인 후 Phase 3 — wf-develop 로 api/auth.ts·AuthContext·SignUpPage·LoginPage·AppHeader 구현, App.tsx 라우트·헤더, main.tsx AuthProvider"
