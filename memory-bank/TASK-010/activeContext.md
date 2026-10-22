@@ -2,7 +2,7 @@
 task_id: TASK-010
 title: "이메일 회원가입/로그인 화면"
 phase: "1"
-phase_name: "Phase 1 - Plan"
+phase_name: "Phase 1 - Plan 완료"
 status: ACTIVE
 track: standard
 created_at: 2026-10-22
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-010-email-auth-screens"
 
-last_checkpoint: null
+last_checkpoint: "CP-1.3"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-010.json"
 ---
@@ -26,7 +26,7 @@ TASK-010 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 10h 
 
 ## 다음 한 걸음
 
-wf-plan 으로 Phase 1 을 수행한다. Frontend 태스크이므로 `docs/product/design.md` 와 `design-tokens.css` 를 먼저 읽는다.
+Phase 1 완료. wf-scenario 로 Phase 2a 를 수행한다 — PLAN.unresolved 8건 중 시나리오에서 정할 3건을 먼저 본다.
 
 ## 알아둬야 할 것
 
