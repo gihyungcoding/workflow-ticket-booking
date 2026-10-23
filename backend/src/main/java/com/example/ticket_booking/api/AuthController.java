@@ -1,5 +1,6 @@
 package com.example.ticket_booking.api;
 
+import com.example.ticket_booking.api.dto.CompleteSocialSignUpRequest;
 import com.example.ticket_booking.api.dto.LoginRequest;
 import com.example.ticket_booking.api.dto.SignUpRequest;
 import com.example.ticket_booking.service.AuthService;
@@ -40,6 +41,13 @@ public class AuthController {
   @PostMapping("/login")
   public LoginResponse login(@Valid @RequestBody LoginRequest request) {
     return authService.login(request.email(), request.password());
+  }
+
+  /** 소셜 가입 대기(pendingToken)에서 역할을 골라 가입을 끝낸다. 인증 토큰이 아니라 pendingToken 이 신원이다. */
+  @PostMapping("/social/complete")
+  public LoginResponse completeSocialSignUp(
+      @Valid @RequestBody CompleteSocialSignUpRequest request) {
+    return authService.completeSocialSignUp(request.pendingToken(), request.role());
   }
 
   /** 보안 체인이 토큰을 검증해 principal(사용자 id)을 넣어 둔다 — 인증 없이는 여기까지 오지 않는다. */

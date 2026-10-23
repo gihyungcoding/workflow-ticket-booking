@@ -31,21 +31,30 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 public class JwtTokenProvider {
 
   public static final long ACCESS_TOKEN_SECONDS = 86400;
+  public static final long PENDING_TOKEN_SECONDS = 300;
   private static final String TYPE_ACCESS = "access";
+  private static final String TYPE_PENDING = "pending";
   private static final int MIN_SECRET_BYTES = 32;
 
   private final JwtEncoder encoder;
   private final JwtDecoder decoder;
+  private final JwtDecoder pendingDecoder;
   private final Clock clock;
 
   private JwtTokenProvider(SecretKey key, Clock clock) {
     this.encoder = new NimbusJwtEncoder(new ImmutableSecret<>(key));
+    this.decoder = decoderFor(key, clock, TYPE_ACCESS);
+    this.pendingDecoder = decoderFor(key, clock, TYPE_PENDING);
+    this.clock = clock;
+  }
+
+  /** 같은 키·같은 만료 판단으로 용도(typ)만 달리 검증하는 디코더 — 한 용도의 토큰이 다른 용도로 통과하지 못한다. */
+  private static JwtDecoder decoderFor(SecretKey key, Clock clock, String type) {
     NimbusJwtDecoder nimbusDecoder =
         NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
     nimbusDecoder.setJwtValidator(
-        new DelegatingOAuth2TokenValidator<>(notExpiredValidator(clock), accessTypeValidator()));
-    this.decoder = nimbusDecoder;
-    this.clock = clock;
+        new DelegatingOAuth2TokenValidator<>(notExpiredValidator(clock), typeValidator(type)));
+    return nimbusDecoder;
   }
 
   /**
@@ -97,15 +106,45 @@ public class JwtTokenProvider {
   public record PendingSignup(
       String email, String name, SocialProvider provider, String providerUserId) {}
 
-  /** typ=pending, 발급 시각 + 5분 만료의 토큰을 발급한다. */
+  /** typ=pending, 발급 시각 + 5분 만료의 토큰을 발급한다. sub 가 없어 사용자 토큰으로 오인될 여지가 없다. */
   public String issuePendingToken(
       String email, String name, SocialProvider provider, String providerUserId) {
-    throw new UnsupportedOperationException();
+    Instant issuedAt = clock.instant();
+    JwtClaimsSet claims =
+        JwtClaimsSet.builder()
+            .issuedAt(issuedAt)
+            .expiresAt(issuedAt.plusSeconds(PENDING_TOKEN_SECONDS))
+            .claim("email", email)
+            .claim("name", name)
+            .claim("provider", provider.name())
+            .claim("providerUserId", providerUserId)
+            .claim("typ", TYPE_PENDING)
+            .build();
+    JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+    return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
   }
 
   /** 서명·만료·용도(typ=pending)·필수 클레임이 모두 유효하면 값을, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. */
   public Optional<PendingSignup> verifyPendingToken(String token) {
-    throw new UnsupportedOperationException();
+    try {
+      Jwt jwt = pendingDecoder.decode(token);
+      String email = textClaim(jwt, "email");
+      String name = textClaim(jwt, "name");
+      String providerUserId = textClaim(jwt, "providerUserId");
+      String provider = textClaim(jwt, "provider");
+      if (email == null || name == null || providerUserId == null || provider == null) {
+        return Optional.empty();
+      }
+      return Optional.of(
+          new PendingSignup(email, name, SocialProvider.valueOf(provider), providerUserId));
+    } catch (JwtException | IllegalArgumentException exception) {
+      return Optional.empty();
+    }
+  }
+
+  /** 문자열이고 공백만이 아닌 클레임 값. 없거나 다른 타입이면 null. */
+  private static String textClaim(Jwt jwt, String name) {
+    return jwt.getClaims().get(name) instanceof String value && !value.isBlank() ? value : null;
   }
 
   /**
@@ -121,11 +160,11 @@ public class JwtTokenProvider {
     };
   }
 
-  private static OAuth2TokenValidator<Jwt> accessTypeValidator() {
+  private static OAuth2TokenValidator<Jwt> typeValidator(String type) {
     return jwt ->
-        TYPE_ACCESS.equals(jwt.getClaimAsString("typ"))
+        type.equals(jwt.getClaims().get("typ"))
             ? OAuth2TokenValidatorResult.success()
             : OAuth2TokenValidatorResult.failure(
-                new OAuth2Error("invalid_token", "access 토큰이 아니다", null));
+                new OAuth2Error("invalid_token", type + " 토큰이 아니다", null));
   }
 }

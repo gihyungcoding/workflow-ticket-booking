@@ -8,33 +8,40 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
- * Red 단계 컴파일용 스켈레톤 — 스키마 제약(NOT NULL·UNIQUE(provider, provider_user_id)·길이)은 Phase 3 에서 추가한다. 접근자
- * 본문은 던지기만 한다.
+ * V4__create_social_accounts.sql 의 NOT NULL/UNIQUE/길이 제약을 애노테이션으로도 표현한다. 테스트는 이 애노테이션에서 스키마를
+ * 만들므로(ADR-0006) 마이그레이션과 어긋나지 않게 유지한다. (provider, provider_user_id) 는 제공자 계정 하나가 사용자 하나에만 연결되게 하는
+ * 유일 제약이다.
  */
 @Entity
-@Table(name = "social_accounts")
+@Table(
+    name = "social_accounts",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uq_social_accounts_provider_user",
+            columnNames = {"provider", "provider_user_id"}))
 public class SocialAccount {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "user_id")
+  @Column(name = "user_id", nullable = false)
   private Long userId;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "provider")
+  @Column(name = "provider", nullable = false, length = 20)
   private SocialProvider provider;
 
-  @Column(name = "provider_user_id")
+  @Column(name = "provider_user_id", nullable = false, length = 255)
   private String providerUserId;
 
   @CreationTimestamp
-  @Column(name = "created_at")
+  @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
   protected SocialAccount() {}
@@ -46,22 +53,22 @@ public class SocialAccount {
   }
 
   public Long getId() {
-    throw new UnsupportedOperationException();
+    return id;
   }
 
   public Long getUserId() {
-    throw new UnsupportedOperationException();
+    return userId;
   }
 
   public SocialProvider getProvider() {
-    throw new UnsupportedOperationException();
+    return provider;
   }
 
   public String getProviderUserId() {
-    throw new UnsupportedOperationException();
+    return providerUserId;
   }
 
   public Instant getCreatedAt() {
-    throw new UnsupportedOperationException();
+    return createdAt;
   }
 }
