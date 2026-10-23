@@ -652,7 +652,7 @@
     "| 소셜 이메일 형식 | 이메일 가입과 같은 규칙: `@` 가 정확히 하나이고 앞뒤가 비어 있지 않으며, 공백류(`\\u00a0` 등 Z*)·서식 문자(`\\u200b`·`\\u202e` 등 Cf)·제어문자·짝 없는 서로게이트가 없다 (ADR-0019) |"
   ],
   "coverage": {
-    "acceptance_criteria_total": 7,
+    "acceptance_criteria_total": 9,
     "acceptance_criteria_covered": 9,
     "uncovered": [],
     "merged": [

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
-phase: "4"
-phase_name: "Phase 4 - Verify 1차 FAIL (HITL#3 대기)"
+phase: "2a"
+phase_name: "Phase 2a - 시나리오 재진입 (Phase 4 FAIL 롤백, HITL#1 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-011.md"
@@ -31,7 +31,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 4 1차 FAIL — 뿌리 2 · 변종 8. RC-1(이메일 소유 미증명 계정의 자동 연결, 재현됨)이 핵심. 사용자에게 롤백 지점과 자동 연결 정책을 묻는다. VERIFY_TASK-011.json 참조.
+Phase 2a 재진입 — 시나리오 21건(SC-21 추가), 4차 검증 PASS(경고 3). HITL#1 승인을 받으면 Phase 2b 로. Phase 4 FAIL 원인 RC-1·RC-2 와 정책(ADR-0020)은 VERIFY_TASK-011.json·CP-4.2 참조.
 
 ## 알아둬야 할 것
 

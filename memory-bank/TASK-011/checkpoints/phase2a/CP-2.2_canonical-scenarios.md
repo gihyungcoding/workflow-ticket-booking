@@ -1,14 +1,20 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-23T03:00:00Z
-summary: "[HITL#1 승인됨 2026-10-23 · 3차 검증 PASS (경고 4)] 20건, AC 7/7. 경고 반영: V5(SC-16 상태 코드)·V7(SC-08 Spring 오류 코드명 제거)·V8(Plan outputs 에 인가 요청 302·기동 실패)·V11 보강(카카오 플래그 비불리언, /complete 의 pendingToken JSON 타입). 보류: V6(SC-16·17·19 한 시나리오 내 다중 호출). [3차 작성 · 마지막 재검증(3/3) 대기] 2차 독립검증 FAIL(V11: 카카오 id 정수 경계·문자열 아닌 타입·FRONTEND_BASE_URL 표기 변형·알 수 없는 {provider}) 반영 — §2-1 표를 Plan 입력마다 끝까지 대 보고 행을 채웠다(소문자화로 길어지는 이메일 포함), V6·V7·V8 정리. 20건. [2차 작성 · 재검증 대기] 1차 독립검증 FAIL(V11: FRONTEND_BASE_URL 환경변수 경계·오픈 리다이렉트 방지 시나리오 누락) 반영 — SC-19(기준 주소 환경변수)·SC-20(콜백 조작 × 상황) 추가, SC-16 에 redirect_uri·X-Forwarded-Host 행, name·providerUserId 제어문자 행, 카카오 is_email_valid 조합, V5·V6·V8 경고 정리. 20건(happy 4 / error 9 / boundary 6 / regression 1). [1차] 18건 작성 → FAIL 1(V11) · WARN 3."
+summary: "[Phase 4 FAIL 롤백 재진입 · 4차 검증 PASS (경고 3) · HITL#1 대기] 21건(SC-21 추가), AC 9/9. 사용자 결정: 롤백 지점 Phase 2a, 자동 연결 정책 '검증된 소셜 계정에만'(ADR-0020). RC-1·RC-2 재현 변종 전부 반영 — 규약 표(emailVerified 클레임·연결 대상·소셜 이메일 형식), SC-01·02·03·07·09·10·12 보강, SC-21 신규. 경고: V1 JSON 총계 낡음(수정함)·V6 When 단일성(SC-21 포함)·V9 SC-12/SC-21 409 겹침. [이전 요약] 20건 HITL#1 승인(2026-10-23)."
 
 next_steps:
-  - "Phase 2b (HITL#1 승인 완료) — wf-red (표 행마다 케이스, 시나리오 20건은 8~12 기준선 초과)"
+  - "HITL#1 — 승인 시 generate_red_trigger=true 후 Phase 2b 재진입(wf-red): 바뀐 시나리오 행(SC-01·02·03·07·09·10·12)을 고치고 SC-21 을 추가, Red 스켈레톤에 users.email_verified·pendingToken emailVerified 추가. 변이 검증으로 가짜 통과가 아님을 증명(구현이 이미 있는 Red 재작성)"
   - "2차 독립검증 결과 처리 — PASS 면 HITL#1(시나리오가 8~12 기준선 초과 20건임을 알린다), FAIL 이면 지적 보완(재검증 최대 3회)"
   - "HITL#1 승인 후 Phase 2b — wf-red. 표 행마다 테스트 케이스, 환경변수 시나리오(SC-16·19)와 쓰기 가드(SC-18)는 설정 주입 수단을 TEST JSON 에 적는다(config_applied_via)"
 
 decisions:
+  - decision: "[롤백 재진입] 자동 연결 대상을 users.email_verified=true 계정으로 좁힌다 (ADR-0020, 사용자 선택 '검증된 소셜 계정에만 자동 연결')"
+    rationale: "Phase 4 RC-1 — 이메일 가입 선점·미검증 소셜 가입 선점·네이버 계정이 임시 테스트로 재현됐다. 이메일 가입자가 같은 이메일로 소셜 로그인하면 연결되지 않고 /complete 가 409 — 연결 수단은 후속 태스크. 정당한 사용자의 가입이 선점 이메일에 막히는 것은 수용한 잔여 위험(Plan unresolved)"
+  - decision: "[롤백 재진입] 소셜 이메일 형식은 이메일 가입과 같은 규칙으로 — 정확히 하나의 @, 앞뒤 비어 있지 않음, 공백류·서식 문자(Cf)·제어문자·짝 없는 서로게이트 거부. pendingToken 검증도 같은 규칙을 재적용"
+    rationale: "RC-2 — 규칙이 toProfile 에만 있어 서명된 토큰의 값이 DB 오류(500)·'?' 치환으로 샌다. 규칙을 공통 지점 한 곳에 둔다. 정당한 경로에서는 도달하지 않으므로 심각도는 낮음"
+  - decision: "[롤백 재진입] 4차 검증 경고 중 JSON 총계만 고쳤다. V6·V9·보강 후보(SC-19 http:// 정상 행, SC-16 한쪽 빈 값 행, name 앞뒤 공백)는 보류"
+    rationale: "V6/V9 는 3차에서 이미 사유를 적어 보류한 항목과 같은 성격. 보강 후보는 FAIL 사유가 아니고 이번 롤백의 뿌리와 무관 — HITL#1 요약에 알린다"
   - decision: "속성 타입은 엄격히 본다 — 문자열이어야 할 값이 숫자·불리언·객체·배열이면 문자열로 바꿔 쓰지 않고 실패. 카카오 id 는 양의 정수(Long 범위)만"
     rationale: "2차 V11. ADR-0019(조용한 변형 금지)와 검증 플래그의 '불리언만 인정' 규칙과 같은 방향. 숫자를 toString 으로 받으면 다른 제공자 ID 와 충돌하거나 500 이 난다"
   - decision: "FRONTEND_BASE_URL 은 http(s) 절대 주소만, 스킴 대소문자 무관(값은 바꾸지 않음), 경로 허용, 쿼리·프래그먼트·사용자 정보·호스트 없음은 기동 실패"
@@ -31,6 +37,10 @@ decisions:
     rationale: "coverage-policy §3 — 같은 코드 경로의 입력은 하나로 묶고 이유를 남긴다"
 
 attempts:
+  - phase: "2a"
+    round: "재진입 1 (Phase 4 FAIL 롤백)"
+    outcome: "RC-1·RC-2 변종을 시나리오로 가져옴, 4차 검증 PASS(경고 3) — HITL#1 대기"
+    back_to: "2a"
   - phase: "2a"
     round: 3
     outcome: "PASS — 경고 4(V5 SC-16 정상 동작 모호, V6 SC-19·16·17 다중 호출, V7 SC-08 Spring 오류 코드명, V8 Plan outputs 에 인가 요청 302·기동 실패 없음). V11 은 통과하되 카카오 플래그 비불리언·/complete pendingToken JSON 타입 행 보강 권고"
