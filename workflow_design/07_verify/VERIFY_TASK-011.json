@@ -1,0 +1,268 @@
+{
+  "task_id": "TASK-011",
+  "status": "FAIL",
+  "status_reason": "RC-1 — 이메일 소유가 증명되지 않은 계정(이메일 가입, 미검증 이메일로 만든 소셜 가입)이 검증된 소셜 로그인의 자동 연결 대상이 된다. 임시 테스트로 재현(변종 4건 모두). emailVerified 가 pendingToken 에 실리지 않아 /complete 가 구분하지 못한다. 시나리오·ADR-0014 정책이 걸려 있어 Phase 2a 로 돌아가 정책을 정해야 한다",
+  "evidence": {
+    "tests": {
+      "command": "./gradlew cleanTest test spotlessCheck",
+      "exit_code": 0,
+      "summary": "132 tests, 0 failures, 0 errors, 0 skipped (새 20건 4개 클래스 + 기존 112건)"
+    },
+    "lint": {
+      "command": "./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "47 files changed, 5016 insertions(+), 19 deletions(-) (main 13개 수정·신규, 승인 테스트 6개 전부 추가 — 기존 테스트 변경 0)"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "처음 로그인하면 users 행을 만들지 않고 pendingToken 을 발급해 역할 선택으로 보낸다",
+      "verdict": "PASS",
+      "evidence": "SC-01·SC-06·SC-09 통과, PG 프로브: /complete 200 후 users.password_hash NULL·social_accounts 1행"
+    },
+    {
+      "criterion": "이메일 가입 계정과 같은 이메일 + email_verified=true 면 기존 계정에 연결하고 바로 accessToken 발급(역할 유지)",
+      "verdict": "PASS",
+      "evidence": "SC-02 통과(카카오·구글·대소문자/공백 변형). 단 이 기준 자체가 RC-1(선점 계정 자동 연결)을 만든다 — 판정은 status FAIL 에서 다룬다"
+    },
+    {
+      "criterion": "email_verified 가 false(미제공)이면 자동 연결하지 않고 pendingToken 발급",
+      "verdict": "PASS",
+      "evidence": "SC-03 19행 통과(구글·카카오 플래그 변형, 네이버 포함)"
+    },
+    {
+      "criterion": "같은 제공자 계정으로 재로그인해도 유니크 제약으로 중복 행이 없다",
+      "verdict": "PASS",
+      "evidence": "SC-04·SC-05·SC-13 통과. PG: uq_social_accounts_provider_user 존재, 동일 토큰 20 병렬 → 200 1건·409 19건·users 1행·social_accounts 1행"
+    },
+    {
+      "criterion": "카카오/네이버(중첩)·구글(평면)에서 이메일과 이름을 추출한다",
+      "verdict": "PASS",
+      "evidence": "SC-06·SC-07 통과(구조 변형·타입 엄격·길이 경계 포함)"
+    },
+    {
+      "criterion": "만료된 pendingToken 으로 /complete 호출 시 401",
+      "verdict": "PASS",
+      "evidence": "SC-10 통과(만료 정각·위조·alg=none·typ 불일치·클레임 누락 등 22행, 메시지 단일)"
+    },
+    {
+      "criterion": "pendingToken 으로 인증 필요한 다른 엔드포인트를 호출하면 거부된다(typ 검증)",
+      "verdict": "PASS",
+      "evidence": "SC-14 통과(sub 를 가진 pending 토큰 포함), PG 프로브: pendingToken 으로 /api/auth/me → 401 UNAUTHORIZED"
+    }
+  ],
+  "screens": [],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 250,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "기존 프론트 파일 3곳(PerformanceDetail/Edit/ListPage)의 Skeleton height 매직 넘버 — 이번 변경 아님"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직, DB 접근",
+        "constraint": "ARCH-001",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: HTTP 관심사, SQL/영속성 프레임워크 타입 직접 사용",
+        "constraint": "ARCH-002·ARCH-003",
+        "state": "✓",
+        "note": "AuthService 는 java.sql.SQLException·spring.dao 예외만 사용(TASK-009 와 같은 관례)"
+      },
+      {
+        "rule": "domain: 영속성 접근, HTTP 관심사, 트랜잭션 제어",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "엔티티의 jakarta.persistence 애노테이션은 기존 관례(User)와 같다. 이번 변경은 SocialAccount 에 같은 방식으로 추가"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "SocialAccountRepository 는 파생 쿼리 1개뿐 — 위반 없음"
+      }
+    ],
+    "overdue_promotions": 0
+  },
+  "regression": {
+    "full_suite": "132/132 passed",
+    "callers_checked": true,
+    "note": "AuthService 생성자 확장 — 기존 3-인자 사용처(AuthServiceSignUpFailureTest)는 3-인자 생성자를 남겨 호환"
+  },
+  "scope_deviations": [
+    "SocialLoginConfig.java 신규(제공자 등록·핸들러 빈 분리)",
+    "StrictStringDeserializer.java 신규(pendingToken 숫자·불리언 400)",
+    "AuthService 3-인자 생성자 유지(승인된 기존 테스트 호환)"
+  ],
+  "code_review": {
+    "reviewer": "code-reviewer",
+    "jpa_instruction_included": true,
+    "findings": [
+      {
+        "id": "F-1",
+        "severity": "high",
+        "category": "correctness/security",
+        "where": "AuthService.loginWithSocial·completeSocialSignUp, JwtTokenProvider.PendingSignup",
+        "summary": "이메일 소유가 증명되지 않은 계정이 자동 연결 대상이 되고 emailVerified 가 pendingToken 에 실리지 않는다",
+        "root_cause": "RC-1"
+      },
+      {
+        "id": "F-2",
+        "severity": "low",
+        "category": "correctness",
+        "where": "CustomOAuth2UserService.email()",
+        "summary": "소셜 이메일에 @Email 형식·서식 문자(제로폭·RTL·NBSP) 검증이 없어 SignUpRequest 보다 느슨하다 (JDK 프로브로 재현)",
+        "root_cause": "RC-2"
+      },
+      {
+        "id": "F-3",
+        "severity": "low",
+        "category": "defense-in-depth",
+        "where": "JwtTokenProvider.verifyPendingToken",
+        "summary": "서명된 pendingToken 의 이메일 256자·이름 101자·providerUserId 256자·NUL 이 500(22001/22021), 짝 없는 서로게이트는 200 이지만 '?' 로 저장 (PG 프로브 재현). JWT_SECRET 이 있어야 위조 가능 — 정상 경로에서는 toProfile 이 먼저 거부해 도달 불가",
+        "root_cause": "RC-2"
+      },
+      {
+        "id": "F-4",
+        "severity": "low",
+        "category": "ux",
+        "where": "OAuth2LoginSuccessHandler",
+        "summary": "loginWithSocial 의 OAuth2 외 예외(DB 오류 등)는 실패 리다이렉트가 아니라 500 — 의도적일 수 있음"
+      },
+      {
+        "id": "F-5",
+        "severity": "medium",
+        "category": "security",
+        "where": "OAuth2LoginSuccessHandler",
+        "summary": "accessToken(24h)·pendingToken 이 리다이렉트 쿼리 문자열에 실린다 — 명세 §4 를 따른 것이라 이번 변경의 결함은 아님. Phase 5 ADR 후보"
+      }
+    ],
+    "confirmed_ok": [
+      "두 catch 모두 SQLState 23505 로 한정(RC-1 TASK-009 와 같은 결함 없음)",
+      "access↔pending typ 상호 불통, 정각 만료, 필수 클레임 검증",
+      "리다이렉트 주소는 FRONTEND_BASE_URL 에서만 — open redirect 없음",
+      "새 테스트 4개 클래스에 클래스 레벨 @Transactional 없음, 가드·설정은 실제로 주입",
+      "기존 테스트 변경 0건(6개 파일 전부 추가)"
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "이메일 소유가 증명되지 않은 계정(이메일 가입, 제공자가 검증하지 않은 이메일로 만든 소셜 가입)이 emailVerified=true 소셜 로그인의 자동 연결 대상이 되고, emailVerified 가 pendingToken 에 실리지 않아 /complete 가 검증된 이메일과 미검증 이메일을 구분하지 못한다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "공격자가 피해자 이메일로 이메일 가입을 선점한 뒤 피해자가 구글(검증됨)로 로그인하면 자동 연결되고 공격자의 비밀번호 로그인이 유지된다",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "임시 테스트 PROBE A — accessToken 발급·social_accounts 1행·비밀번호 로그인 유효"
+        },
+        {
+          "case": "공격자가 카카오 미검증 이메일로 /complete 해 password_hash NULL 계정을 만든 뒤, 피해자의 구글 로그인이 그 계정에 연결되고 공격자의 카카오 로그인이 같은 계정으로 계속 된다",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "임시 테스트 PROBE B — social rows=2, 공격자 카카오 재로그인 accessToken 발급"
+        },
+        {
+          "case": "미검증 이메일로 선점된 이메일은 정당한 사용자의 이메일 가입을 EMAIL_ALREADY_EXISTS 로 영구히 막는다",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "임시 테스트 PROBE B — 이메일 가입 409"
+        },
+        {
+          "case": "네이버(항상 미검증)로 만든 계정에 이후 카카오·구글(검증됨) 로그인이 자동 연결된다",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "임시 테스트 PROBE C — 연결 후 accessToken 발급"
+        },
+        {
+          "case": "애플 로그인(TASK-012)이 같은 loginWithSocial 을 쓰므로 같은 경로를 상속한다",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "TASK-012 구현 전 — 코드 경로 확인만 가능",
+          "resolved": false
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "외부 문자열 검증 규칙이 toProfile 에만 있고, 이메일 형식·서식 문자 규칙이 이메일 가입(SignUpRequest)과도 pendingToken 검증(verifyPendingToken)과도 한 규칙으로 공유되지 않는다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "@ 없는 이메일, 제로폭·RTL·NBSP 가 낀 이메일이 소셜 경로에서 통과한다",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "리뷰어 JDK 프로브(앱 미기동) — 코드 경로 판정"
+        },
+        {
+          "case": "서명된 pendingToken 의 이메일 256자·이름 101자·providerUserId 256자·NUL 이 verifyPendingToken 에서 걸러지지 않아 500",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "PG 프로브 — SQLState 22001/22021 로 500 (JWT_SECRET 서명 토큰 필요)"
+        },
+        {
+          "case": "서명된 pendingToken 의 짝 없는 서로게이트가 200 이지만 '?' 로 저장된다",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "PG 프로브 — 저장된 이메일 바이트 613f62… ('a?b@…')"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "제공자 attributes 는 toProfile 한 곳에서 타입·제어문자·서로게이트·길이를 거부(SC-07 통과). /complete 는 @NotBlank·@NotNull + 숫자·불리언 거부. 갭: RC-2",
+    "authorization": "RC-1 — 계정 선점 후 소셜 로그인 자동 연결로 접근 권한이 남는다. pendingToken typ 분리·만료는 이상 없음",
+    "secrets": "소스에 하드코딩된 시크릿 없음(제공자 ID·SECRET·JWT_SECRET 은 환경변수)",
+    "logging": "토큰·이메일을 로그에 남기는 코드 없음(오류 로그에 SQL 상태만). 리다이렉트 쿼리 문자열의 토큰은 접근 로그·히스토리·Referer 에 남을 수 있음(F-5)"
+  },
+  "verification_environment": {
+    "database": "docker postgres:16-alpine, Flyway V1~V4 적용, spring.jpa.hibernate.ddl-auto=validate",
+    "app": "./gradlew bootRun (PORT=18080) — GOOGLE·KAKAO 제공자 설정, FRONTEND_BASE_URL=https://app.example.test",
+    "pg_probe_results": [
+      "V4 적용 'Successfully applied 4 migrations', JPA validate 통과",
+      "users.password_hash nullable, social_accounts: PK·FK(users)·UNIQUE(provider, provider_user_id)",
+      "/oauth2/authorization/google·kakao → 302 (제공자 호스트), naver·foo·GOOGLE → 404",
+      "/complete 정상 200 → /me 200, 같은 토큰 재호출 409 EMAIL_ALREADY_EXISTS, 같은 제공자 계정·다른 이메일 409 SOCIAL_ACCOUNT_ALREADY_LINKED",
+      "소셜 전용 계정 이메일 로그인 → 401 INVALID_CREDENTIALS",
+      "20 병렬 동일 토큰 → 200 1건·409 19건, 500 없음, users 1행·social_accounts 1행",
+      "문자열 경계: 이메일 255·이름 100·이름 이모지 50개(코드포인트 50 = 저장 길이 50)·이름 끝 공백·providerUserId 255 → 200 이고 저장값 일치"
+    ],
+    "not_probed": [
+      "loginWithSocial 의 PG 동시성(SC-05)과 핸들러 경로 — HTTP 로 구동할 제공자 서버가 없다. H2 테스트(SC-05)만 있음. 자동 회귀 테스트 없음은 Plan 결정(Testcontainers 미도입)의 한계",
+      "실제 제공자(카카오·네이버·구글) 왕복 — 클라이언트 ID·SECRET 없음"
+    ],
+    "cleanup": "앱 종료, 컨테이너 중지(--rm), 임시 프로브 테스트 파일 삭제(git status 깨끗)"
+  },
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "status": "FAIL",
+      "note": "뿌리 2 · 변종 8 (RC-1 5: 재현 4·미프로브 1 / RC-2 3: 재현 3)"
+    }
+  ]
+}

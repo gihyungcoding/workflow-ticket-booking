@@ -1,8 +1,8 @@
 ---
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
-phase: "3"
-phase_name: "Phase 3 - Green 완료"
+phase: "4"
+phase_name: "Phase 4 - Verify 1차 FAIL (HITL#3 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -13,13 +13,14 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-011.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-011.json"
   red: "workflow_design/05_scenario/TEST_TASK-011.json"
   dev: "workflow_design/06_dev/DEV_TASK-011.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-011.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -30,7 +31,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 3 Green 완료(전체 132/132, spotlessCheck·아키텍처 error 0). Phase 4 — wf-verify. 실제 PostgreSQL 프로브 필수(V4 마이그레이션·UNIQUE·FK·전 문자열 입력). 미해결 3건은 DEV_TASK-011.json 의 unresolved_for_phase4.
+Phase 4 1차 FAIL — 뿌리 2 · 변종 8. RC-1(이메일 소유 미증명 계정의 자동 연결, 재현됨)이 핵심. 사용자에게 롤백 지점과 자동 연결 정책을 묻는다. VERIFY_TASK-011.json 참조.
 
 ## 알아둬야 할 것
 
