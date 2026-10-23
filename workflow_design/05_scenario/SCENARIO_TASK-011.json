@@ -668,7 +668,7 @@
     ]
   },
   "human_input": {
-    "generate_red_trigger": false
+    "generate_red_trigger": true
   },
   "source_of_truth": "SCENARIO_TASK-011.md — JSON 은 파생물이다. 표는 시나리오마다 `table`(마크다운 행), 규약 정본 표는 `conventions_table`. 표를 가리키는 문장('표와 같다')은 `table` 필드를 본다"
 }

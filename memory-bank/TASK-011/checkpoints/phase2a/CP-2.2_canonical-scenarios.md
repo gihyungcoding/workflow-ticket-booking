@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-23T03:00:00Z
-summary: "[3차 검증 PASS (경고 4) · HITL#1 대기] 20건, AC 7/7. 경고 반영: V5(SC-16 상태 코드)·V7(SC-08 Spring 오류 코드명 제거)·V8(Plan outputs 에 인가 요청 302·기동 실패)·V11 보강(카카오 플래그 비불리언, /complete 의 pendingToken JSON 타입). 보류: V6(SC-16·17·19 한 시나리오 내 다중 호출). [3차 작성 · 마지막 재검증(3/3) 대기] 2차 독립검증 FAIL(V11: 카카오 id 정수 경계·문자열 아닌 타입·FRONTEND_BASE_URL 표기 변형·알 수 없는 {provider}) 반영 — §2-1 표를 Plan 입력마다 끝까지 대 보고 행을 채웠다(소문자화로 길어지는 이메일 포함), V6·V7·V8 정리. 20건. [2차 작성 · 재검증 대기] 1차 독립검증 FAIL(V11: FRONTEND_BASE_URL 환경변수 경계·오픈 리다이렉트 방지 시나리오 누락) 반영 — SC-19(기준 주소 환경변수)·SC-20(콜백 조작 × 상황) 추가, SC-16 에 redirect_uri·X-Forwarded-Host 행, name·providerUserId 제어문자 행, 카카오 is_email_valid 조합, V5·V6·V8 경고 정리. 20건(happy 4 / error 9 / boundary 6 / regression 1). [1차] 18건 작성 → FAIL 1(V11) · WARN 3."
+summary: "[HITL#1 승인됨 2026-10-23 · 3차 검증 PASS (경고 4)] 20건, AC 7/7. 경고 반영: V5(SC-16 상태 코드)·V7(SC-08 Spring 오류 코드명 제거)·V8(Plan outputs 에 인가 요청 302·기동 실패)·V11 보강(카카오 플래그 비불리언, /complete 의 pendingToken JSON 타입). 보류: V6(SC-16·17·19 한 시나리오 내 다중 호출). [3차 작성 · 마지막 재검증(3/3) 대기] 2차 독립검증 FAIL(V11: 카카오 id 정수 경계·문자열 아닌 타입·FRONTEND_BASE_URL 표기 변형·알 수 없는 {provider}) 반영 — §2-1 표를 Plan 입력마다 끝까지 대 보고 행을 채웠다(소문자화로 길어지는 이메일 포함), V6·V7·V8 정리. 20건. [2차 작성 · 재검증 대기] 1차 독립검증 FAIL(V11: FRONTEND_BASE_URL 환경변수 경계·오픈 리다이렉트 방지 시나리오 누락) 반영 — SC-19(기준 주소 환경변수)·SC-20(콜백 조작 × 상황) 추가, SC-16 에 redirect_uri·X-Forwarded-Host 행, name·providerUserId 제어문자 행, 카카오 is_email_valid 조합, V5·V6·V8 경고 정리. 20건(happy 4 / error 9 / boundary 6 / regression 1). [1차] 18건 작성 → FAIL 1(V11) · WARN 3."
 
 next_steps:
-  - "HITL#1 승인 후 Phase 2b — wf-red (표 행마다 케이스, 시나리오 20건은 8~12 기준선 초과)"
+  - "Phase 2b (HITL#1 승인 완료) — wf-red (표 행마다 케이스, 시나리오 20건은 8~12 기준선 초과)"
   - "2차 독립검증 결과 처리 — PASS 면 HITL#1(시나리오가 8~12 기준선 초과 20건임을 알린다), FAIL 이면 지적 보완(재검증 최대 3회)"
   - "HITL#1 승인 후 Phase 2b — wf-red. 표 행마다 테스트 케이스, 환경변수 시나리오(SC-16·19)와 쓰기 가드(SC-18)는 설정 주입 수단을 TEST JSON 에 적는다(config_applied_via)"
 
