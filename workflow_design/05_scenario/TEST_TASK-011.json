@@ -251,6 +251,6 @@
     "SC-16 의 기동은 케이스마다 새 컨텍스트라 느리다(전체 약 1분 40초). Green 이 컨텍스트 기동을 불필요하게 무겁게 만들지 않게 주의"
   ],
   "human_review": {
-    "approved": false
+    "approved": true
   }
 }
