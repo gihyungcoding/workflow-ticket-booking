@@ -80,6 +80,8 @@
         "| 구글 | 배열 `[true]` / 객체 `{\"v\":true}` | `{\"sub\":\"g-1\",\"email\":\"hong@example.com\",\"email_verified\":[true],\"name\":\"길동\"}` |",
         "| 카카오 | `is_email_verified: false` | `{\"id\":777,\"kakao_account\":{\"email\":\"hong@example.com\",\"is_email_verified\":false,\"profile\":{\"nickname\":\"길동\"}}}` |",
         "| 카카오 | 필드 누락 | `{\"id\":777,\"kakao_account\":{\"email\":\"hong@example.com\",\"profile\":{\"nickname\":\"길동\"}}}` |",
+        "| 카카오 | `is_email_verified` 가 문자열 `\"true\"` / 숫자 `1` / `null` | `{\"id\":777,\"kakao_account\":{\"email\":\"hong@example.com\",\"is_email_verified\":\"true\",\"is_email_valid\":true,\"profile\":{\"nickname\":\"길동\"}}}` |",
+        "| 카카오 | `is_email_valid` 가 문자열 `\"true\"` / 숫자 `1` / `null` (`is_email_verified` 는 `true`) | `{\"id\":777,\"kakao_account\":{\"email\":\"hong@example.com\",\"is_email_verified\":true,\"is_email_valid\":\"true\",\"profile\":{\"nickname\":\"길동\"}}}` |",
         "| 카카오 | `is_email_verified: true` 이지만 `is_email_valid: false` | `{\"id\":777,\"kakao_account\":{\"email\":\"hong@example.com\",\"is_email_verified\":true,\"is_email_valid\":false,\"profile\":{\"nickname\":\"길동\"}}}` |",
         "| 카카오 | `is_email_verified: true` 이지만 `is_email_valid` 누락 | `{\"id\":777,\"kakao_account\":{\"email\":\"hong@example.com\",\"is_email_verified\":true,\"profile\":{\"nickname\":\"길동\"}}}` |",
         "| 네이버 | 플래그를 제공하지 않는다 | `{\"response\":{\"id\":\"n-1\",\"email\":\"hong@example.com\",\"name\":\"길동\"}}` |"
@@ -172,7 +174,7 @@
       "then": [
         "표의 \"통과\" 행이 아니면 302 `https://app.example.test/login?error=social` 으로 이동하고 쿼리에 `token`·`pendingToken` 이 없다",
         "`users`·`social_accounts` 행 수가 그대로다",
-        "\"통과\" 행은 오류 없이 가입 대기(`…?pendingToken=`)로 이동한다 (길이는 UTF-16 코드 유닛 수로 센다)"
+        "\"통과\" 행은 가입 대기(`…?pendingToken=`)로 이동한다 (길이는 UTF-16 코드 유닛 수로 센다)"
       ],
       "table": [
         "| 필드 | 이상한 값 | 결과 |",
@@ -229,9 +231,9 @@
       "table": [
         "| 인증 결과 |",
         "|---|",
-        "| 사용자가 제공자 화면에서 취소했다 (`error=access_denied`) |",
-        "| 토큰 교환이 실패했다 (`invalid_token_response`) |",
-        "| 사용자 정보 조회가 실패했다 (`invalid_user_info_response`) |"
+        "| 사용자가 제공자 화면에서 취소했다 |",
+        "| 제공자와의 토큰 교환이 실패했다 |",
+        "| 제공자의 사용자 정보 조회가 실패했다 |"
       ],
       "covers": [
         "처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다"
@@ -323,6 +325,7 @@
         "| `role` 누락 / `null` |",
         "| `role` 이 정의 밖 (`ADMIN`) / 소문자 (`audience`) / 숫자 (`1`) |",
         "| `pendingToken` 누락 / `null` / 빈 문자열 / 공백만 |",
+        "| `pendingToken` 이 문자열이 아님: 숫자 / 객체 / 배열 / 불리언 |",
         "| 본문이 비어 있음 / JSON 이 아님 |"
       ],
       "covers": [
@@ -442,7 +445,7 @@
       ],
       "then": [
         "표의 결과가 된다",
-        "서버는 어느 경우에도 기동에 성공하고 `POST /api/auth/signup`·`POST /api/auth/login` 은 정상 동작한다"
+        "서버는 어느 경우에도 기동에 성공하고 `POST /api/auth/signup` 은 201, 올바른 자격 증명의 `POST /api/auth/login` 은 200 이다"
       ],
       "table": [
         "| `<P>_CLIENT_ID` / `<P>_CLIENT_SECRET` | 결과 |",

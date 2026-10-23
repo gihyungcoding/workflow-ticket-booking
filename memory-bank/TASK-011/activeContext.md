@@ -2,7 +2,7 @@
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
 phase: "2a"
-phase_name: "Phase 2a - Scenario (독립검증 중)"
+phase_name: "Phase 2a - Scenario (HITL#1 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -28,7 +28,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 2a — 시나리오 20건 작성, 1차 독립검증 FAIL(V11) 보완 후 2차 검증 중. 통과하면 HITL#1.
+Phase 2a — 시나리오 20건, 3차 독립검증 PASS. HITL#1 승인 대기. 승인되면 Phase 2b(wf-red).
 
 ## 알아둬야 할 것
 

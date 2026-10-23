@@ -71,6 +71,8 @@ flow: F2
 | 구글 | 배열 `[true]` / 객체 `{"v":true}` | `{"sub":"g-1","email":"hong@example.com","email_verified":[true],"name":"길동"}` |
 | 카카오 | `is_email_verified: false` | `{"id":777,"kakao_account":{"email":"hong@example.com","is_email_verified":false,"profile":{"nickname":"길동"}}}` |
 | 카카오 | 필드 누락 | `{"id":777,"kakao_account":{"email":"hong@example.com","profile":{"nickname":"길동"}}}` |
+| 카카오 | `is_email_verified` 가 문자열 `"true"` / 숫자 `1` / `null` | `{"id":777,"kakao_account":{"email":"hong@example.com","is_email_verified":"true","is_email_valid":true,"profile":{"nickname":"길동"}}}` |
+| 카카오 | `is_email_valid` 가 문자열 `"true"` / 숫자 `1` / `null` (`is_email_verified` 는 `true`) | `{"id":777,"kakao_account":{"email":"hong@example.com","is_email_verified":true,"is_email_valid":"true","profile":{"nickname":"길동"}}}` |
 | 카카오 | `is_email_verified: true` 이지만 `is_email_valid: false` | `{"id":777,"kakao_account":{"email":"hong@example.com","is_email_verified":true,"is_email_valid":false,"profile":{"nickname":"길동"}}}` |
 | 카카오 | `is_email_verified: true` 이지만 `is_email_valid` 누락 | `{"id":777,"kakao_account":{"email":"hong@example.com","is_email_verified":true,"profile":{"nickname":"길동"}}}` |
 | 네이버 | 플래그를 제공하지 않는다 | `{"response":{"id":"n-1","email":"hong@example.com","name":"길동"}}` |
@@ -124,7 +126,7 @@ flow: F5
 - **When** 해당 제공자 콜백을 처리한다
 - **Then** 표의 "통과" 행이 아니면 302 `https://app.example.test/login?error=social` 으로 이동하고 쿼리에 `token`·`pendingToken` 이 없다
 - **And** `users`·`social_accounts` 행 수가 그대로다
-- **And** "통과" 행은 오류 없이 가입 대기(`…?pendingToken=`)로 이동한다 (길이는 UTF-16 코드 유닛 수로 센다)
+- **And** "통과" 행은 가입 대기(`…?pendingToken=`)로 이동한다 (길이는 UTF-16 코드 유닛 수로 센다)
 
 | 필드 | 이상한 값 | 결과 |
 |---|---|---|
@@ -170,9 +172,9 @@ flow: F9
 
 | 인증 결과 |
 |---|
-| 사용자가 제공자 화면에서 취소했다 (`error=access_denied`) |
-| 토큰 교환이 실패했다 (`invalid_token_response`) |
-| 사용자 정보 조회가 실패했다 (`invalid_user_info_response`) |
+| 사용자가 제공자 화면에서 취소했다 |
+| 제공자와의 토큰 교환이 실패했다 |
+| 제공자의 사용자 정보 조회가 실패했다 |
 
 covers: 처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다
 flow: F9
@@ -231,6 +233,7 @@ flow: F6, F7
 | `role` 누락 / `null` |
 | `role` 이 정의 밖 (`ADMIN`) / 소문자 (`audience`) / 숫자 (`1`) |
 | `pendingToken` 누락 / `null` / 빈 문자열 / 공백만 |
+| `pendingToken` 이 문자열이 아님: 숫자 / 객체 / 배열 / 불리언 |
 | 본문이 비어 있음 / JSON 이 아님 |
 
 covers: 만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다
@@ -301,7 +304,7 @@ flow: F8
 - **Given** 서버가 `FRONTEND_BASE_URL=https://app.example.test` 와 아래 표의 제공자 환경변수 값으로 기동했다 (표에 없는 제공자는 설정이 없다)
 - **When** `GET /oauth2/authorization/<제공자>` 를 표의 요청 조작과 함께 호출한다 (조작이 없으면 그대로)
 - **Then** 표의 결과가 된다
-- **And** 서버는 어느 경우에도 기동에 성공하고 `POST /api/auth/signup`·`POST /api/auth/login` 은 정상 동작한다
+- **And** 서버는 어느 경우에도 기동에 성공하고 `POST /api/auth/signup` 은 201, 올바른 자격 증명의 `POST /api/auth/login` 은 200 이다
 
 | `<P>_CLIENT_ID` / `<P>_CLIENT_SECRET` | 결과 |
 |---|---|
@@ -409,6 +412,7 @@ flow: F1, F4, F9
 - 묶은 것(§3): 제공자 3종 × 같은 판정은 표 행으로(SC-02·03·06), 필드별 이상 입력은 같은 정규화·거부 지점이라 SC-07 한 건의 표, pendingToken 무효 11행은 같은 검증 경로라 SC-10 한 건, 가입 완료 형식 위반은 SC-11, 충돌은 SC-12. 동시성(SC-05·13)은 단일 판정과 경로가 달라(유니크 위반 재조회·재시도) 따로 둔다.
 - OOS-1(TASK-010): 서버 `trim()` 이 앞 NUL 을 지워 통과시키던 차이를 소셜 입력에서는 SC-07 의 "앞의 NUL" 행으로 거부로 못박았다. 이메일 가입(TASK-009) 서버 수정은 이 태스크 범위 밖이다.
 - PostgreSQL: H2 는 V4 SQL·UNIQUE·FK 를 실행하지 않는다. Phase 4 의 실제 PostgreSQL HTTP 프로브가 필수 증거다(Plan 결정).
+- 3차 검증(PASS, 경고 4) 반영: V5(SC-16 '정상 동작'을 상태 코드로)·V7(SC-08 의 Spring 오류 코드명 제거)·V8(Plan outputs 에 인가 요청 302 와 기동 실패)·V11 보강(카카오 검증 플래그의 비불리언 변형, `/complete` 의 pendingToken JSON 타입). 보류: V6 — SC-19 의 기동 + 콜백 확인, SC-16 의 부가 호출, SC-17 의 요청 4개 표는 같은 환경에서 결과만 달리 보는 표라 한 시나리오로 묶었다(Red 에서 행 단위 케이스로 나눈다).
 - 1차 검증(V11) 반영: `FRONTEND_BASE_URL` 환경변수 경계(SC-19)와 오픈 리다이렉트 방지(SC-20, SC-16 의 `redirect_uri`·`X-Forwarded-Host` 행)를 추가했고, name·providerUserId 의 제어문자 행과 카카오 `is_email_valid` 조합을 보강했다. 제공자 설정이 있는데 기준 주소가 이상하면 기동하지 않는다 — 잘못된 `Location` 으로 열리는 것보다 낫고 `JWT_SECRET` 과 같은 관례다. V5(SC-18 내부 순서 문구 제거)·V6(SC-17 을 요청 표로)·V8(Plan outputs 에 404·`WRITE_KEY_INVALID`·`SOCIAL_ACCOUNT_ALREADY_LINKED` 반영)도 고쳤다.
 - 2차 검증(V11) 반영: §2-1 표를 Plan 입력마다 끝까지 대 보고 채웠다 — 카카오 `id` 정수 행(음수·0·소수·범위 초과·타입 혼동·경계 통과), email·name·providerUserId·중첩 구조의 문자열 아님·객체 아님 행, 정규화(소문자) 뒤 길이가 늘어나는 이메일(`İ`), 검증 플래그의 `"TRUE"`·배열·객체, `FRONTEND_BASE_URL` 표기 변형(스킴 대소문자·경로·쿼리·프래그먼트·사용자 정보·호스트 없음·접두사만 일치), 인가 요청 경로 변수(`foo`·`apple`·대소문자). V6(SC-19 를 기동 한 번으로)·V7(`permitAll` 용어 제거)도 고쳤다.
 - AC 밖 흐름(F8·F9)·설정·가드 시나리오(SC-07·08·12·15·16·18·19·20)의 `covers` 는 가장 가까운 AC 에 매단 것이며 커버리지로 세지 않는다 — AC 7개는 SC-01~06·10·14 가 덮는다.
