@@ -1,8 +1,8 @@
 ---
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
-phase: "1"
-phase_name: "Phase 1 - Plan 완료"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (독립검증 중)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -13,9 +13,11 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-011.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-011.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -26,7 +28,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 1 완료(CP-1.3). wf-scenario 로 Phase 2a 를 수행한다. 시나리오가 기준선(8~12)을 넘을 것이므로 표로 묶고 근거를 남긴다. 2a 에서 확정할 unresolved 는 CP-1.3 next_steps 참고.
+Phase 2a — 시나리오 20건 작성, 1차 독립검증 FAIL(V11) 보완 후 2차 검증 중. 통과하면 HITL#1.
 
 ## 알아둬야 할 것
 

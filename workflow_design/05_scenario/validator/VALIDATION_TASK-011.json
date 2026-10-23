@@ -1,0 +1,22 @@
+{
+  "task_id": "TASK-011",
+  "checks": [
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "시나리오 18건(SC-01~SC-18)의 ID·type·title·Given/When/Then 문장·표 행·covers·flow 가 MD 와 JSON 에서 같다. SC-10 의 flow 는 MD 'F6, F7', JSON ['F6','F7'] 로 의미가 같다. 규약 표도 conventions_table 과 일치한다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 18건, happy 4건(SC-01·02·04·09), error 9건, boundary 5건, regression 1건(SC-17). 하한을 충족한다."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "Plan 기준 7건을 직접 대조했다. 기준1→SC-01, 기준2→SC-02, 기준3→SC-03, 기준4→SC-04·05·13, 기준5→SC-06, 기준6→SC-10, 기준7→SC-14. 모두 대응된다. 다만 SC-07·08·12·15·16 은 기준1을, SC-11·18 은 기준6을 covers 에 끌어다 썼다. 이 기준들의 취지(F9, F8, 설정, 형식 검증, 쓰기 가드)와 맞지 않는 형식적 연결이라 covers 가 부풀려져 있다. 판정에는 영향이 없다."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오가 쓰는 flow F1~F9 가 모두 Plan design.flows[].id 에 있다. 모든 flow 가 최소 1건씩 대응된다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "대부분 상태코드·Location·행 수·응답 필드로 단언할 수 있다. 예외는 SC-18 의 '(토큰 검증까지 가지 않는다)' 로, 밖에서 관찰할 수 없는 내부 순서다. 행 수 불변이나 pendingToken 이 유효해도 401 이라는 단언으로 바꿔야 한다. SC-05 와 SC-13 은 동시성을 결정적으로 재현하는 수단이 Then 에 없어 플레이키해질 위험이 있다."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "SC-17 의 When 이 가입 → 로그인 → me → performances 4개 호출의 연쇄다. 'A 하고 B 하면' 형태라 위반이다. SC-02 와 SC-09 는 Then 안에서 /api/auth/me 를 추가로 호출하고, SC-15 는 Given 에서 비교용 응답을 먼저 받아 둔다. 이들도 동작이 하나 더 있는 구조라 경계선이다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "pass", "detail": "클래스명(AuthService 등)은 문서 상단 대상 목록에만 있고 When/Then 에는 없다. When/Then 은 HTTP·리다이렉트·DB 행 수·클레임으로 쓰여 있다. SC-08 의 'invalid_token_response' 는 OAuth2 표준 오류 코드라 구현 세부로 보지 않는다."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "warn", "detail": "Plan outputs 에 없는 출력이 시나리오에 등장한다. SOCIAL_ACCOUNT_ALREADY_LINKED(409)는 Plan 에 EMAIL_ALREADY_EXISTS 만 있고 나머지는 '2a 에서 정한다' 로 위임돼 있어 확정은 허용된다. SC-16 의 404 (미등록 제공자)와 SC-18 의 WRITE_KEY_INVALID(401)는 Plan outputs 에 없고 unresolved 문구로만 언급된다. Plan outputs 에 반영되지 않았음을 사람이 알아야 한다."},
+    {"id": "V9", "name": "중복", "verdict": "pass", "detail": "같은 코드 경로만 타는 시나리오는 없다. SC-04 는 재로그인, SC-05 는 동시 연결, SC-13 은 동시 가입 완료다. SC-07 과 SC-08 은 실패 리다이렉트 결과가 같지만 진입 경로가 다르다(속성 정규화 대 제공자 실패 콜백)."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "AuthService·JwtTokenProvider·SecurityConfig·User 등 기존 파일을 수정하는 태스크다. SC-17(regression)이 이메일 가입·로그인·me·공연 API 를 대본다. SC-15 는 password_hash nullable 화에 따른 로그인 회귀를, SC-14 는 기존 Bearer 거부 동작을 대본다."},
+    {"id": "V11", "name": "입력 경계값", "verdict": "fail", "detail": "coverage-policy §2-1 표에 Plan inputs 를 대본 결과 누락된 행이 있다. (1) 입력 '프론트 리다이렉트 기준 주소'(환경변수 FRONTEND_BASE_URL)에 대한 환경변수 행이 시나리오에 없다. 미설정, 빈 문자열, 공백만, 앞뒤 공백·끝 슬래시일 때 리다이렉트가 어떻게 되는지 아무 시나리오도 다루지 않는다. 미설정이면 'null/oauth2/redirect' 같은 Location 이 나가거나 fail-open 될 수 있고, Plan unresolved 가 '미설정 시 동작'을 2a 에서 정하라고 넘겼는데 규약 표는 테스트 값만 적었다. SC-16 은 제공자 CLIENT_ID/SECRET 만 대본다. (2) Plan 제약 '요청 파라미터로 받지 않는다(오픈 리다이렉트 방지)'는 규약 표에 문장만 있고, 콜백에 redirect/returnUrl 류 파라미터를 붙여도 기준 주소가 바뀌지 않는다는 시나리오가 없다. (3) 문자열 필드 전수 행에서 제어문자(탭 등)는 email 에만 있다. name 과 providerUserId 에는 NUL·서로게이트·길이만 있고 제어문자 행이 없다. Plan 은 세 필드 모두 NUL·서로게이트·제어문자·길이를 요구했고 공통 한 곳에서 막는다고 했으니 필드별로 증명하는 행이 필요하다. (4) Plan 이 카카오는 is_email_verified 와 is_email_valid 를 본다고 적었으나 is_email_valid 가 false 이고 is_email_verified 가 true 인 조합은 SC-03 표에 없다. (1)과 (2)가 fail 사유이고 (3)(4)는 보강 권고다."}
+  ],
+  "overall": {
+    "pass": false,
+    "fail_count": 1,
+    "warn_count": 3,
+    "summary": "구조·개수·AC 커버리지·flow 대응은 충족하고 MD/JSON 도 일치한다. 그러나 V11 에서 FRONTEND_BASE_URL 환경변수 경계(미설정·빈 값·공백·끝 슬래시)와 오픈 리다이렉트 방지(요청 파라미터 무시) 시나리오가 빠져 fail 이다. name·providerUserId 의 제어문자 행과 카카오 is_email_valid 조합도 보강이 필요하다. 경고는 V5(SC-18 내부 순서 Then), V6(SC-17 다중 When), V8(Plan outputs 에 없는 404·WRITE_KEY_INVALID·SOCIAL_ACCOUNT_ALREADY_LINKED)이다."
+  }
+}
