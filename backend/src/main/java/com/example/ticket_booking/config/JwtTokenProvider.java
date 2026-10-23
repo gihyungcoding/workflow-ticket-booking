@@ -1,5 +1,6 @@
 package com.example.ticket_booking.config;
 
+import com.example.ticket_booking.domain.SocialProvider;
 import com.example.ticket_booking.domain.UserRole;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
@@ -90,6 +91,21 @@ public class JwtTokenProvider {
     } catch (JwtException | IllegalArgumentException exception) {
       return Optional.empty();
     }
+  }
+
+  /** pendingToken 이 담는 값. */
+  public record PendingSignup(
+      String email, String name, SocialProvider provider, String providerUserId) {}
+
+  /** typ=pending, 발급 시각 + 5분 만료의 토큰을 발급한다. */
+  public String issuePendingToken(
+      String email, String name, SocialProvider provider, String providerUserId) {
+    throw new UnsupportedOperationException();
+  }
+
+  /** 서명·만료·용도(typ=pending)·필수 클레임이 모두 유효하면 값을, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. */
+  public Optional<PendingSignup> verifyPendingToken(String token) {
+    throw new UnsupportedOperationException();
   }
 
   /**

@@ -91,6 +91,16 @@ public class AuthService {
         .orElseThrow(UnauthenticatedException::new);
   }
 
+  /** 제공자 로그인 판정 — 재로그인·자동 연결이면 accessToken, 아니면 가입 대기(pendingToken). */
+  public SocialLoginResult loginWithSocial(SocialProfile profile) {
+    throw new UnsupportedOperationException();
+  }
+
+  /** pendingToken 과 역할로 users·social_accounts 를 만들고 로그인시킨다. */
+  public LoginResponse completeSocialSignUp(String pendingToken, UserRole role) {
+    throw new UnsupportedOperationException();
+  }
+
   /** 예외의 근본 원인이 UNIQUE 위반(SQLState 23505 — PostgreSQL·H2 공통)인지 본다. */
   private static boolean isUniqueViolation(Throwable exception) {
     return NestedExceptionUtils.getMostSpecificCause(exception) instanceof SQLException sql

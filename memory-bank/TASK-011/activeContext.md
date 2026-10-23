@@ -1,8 +1,8 @@
 ---
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
-phase: "2a"
-phase_name: "Phase 2a - Scenario 승인 (HITL#1)"
+phase: "2b"
+phase_name: "Phase 2b - Red (HITL#2 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -13,11 +13,12 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-011.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-011.json"
+  red: "workflow_design/05_scenario/TEST_TASK-011.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -28,7 +29,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 2a — 시나리오 20건, 3차 독립검증 PASS. HITL#1 승인됨. Phase 2b — wf-red 로 Red 테스트를 작성한다.
+Phase 2b Red 작성 완료(새 20건 중 18 실패·2 already_passing, 기존 112 통과). HITL#2 승인 후 Phase 3 — wf-develop. Green 위험은 TEST_TASK-011.json 의 risks_for_green.
 
 ## 알아둬야 할 것
 
