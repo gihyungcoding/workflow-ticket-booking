@@ -14,11 +14,13 @@
 | 로그인 성공 리다이렉트 | 302 `{기준 주소}/oauth2/redirect?token=<accessToken>` |
 | 가입 대기 리다이렉트 | 302 `{기준 주소}/oauth2/redirect?pendingToken=<pendingToken>` |
 | 실패 리다이렉트 | 302 `{기준 주소}/login?error=social` (쿼리에 token·pendingToken 없음) |
-| pendingToken | HS256, `typ=pending`, 클레임 `email` `name` `provider` `providerUserId`, 발급 시각 + 5분(그 정각부터 만료) |
+| pendingToken | HS256, `typ=pending`, 클레임 `email` `name` `provider` `providerUserId` `emailVerified`(불리언 — 제공자가 검증한 이메일인가), 발급 시각 + 5분(그 정각부터 만료). 검증할 때 이메일·이름·providerUserId 에 제공자 속성과 같은 문자열 규칙을 다시 적용한다 |
 | 오류 코드 | `PENDING_SIGNUP_EXPIRED`(401) · `EMAIL_ALREADY_EXISTS`(409) · `SOCIAL_ACCOUNT_ALREADY_LINKED`(409) · `INVALID_REQUEST`(400) · `INVALID_CREDENTIALS`(401) · `UNAUTHORIZED`(401) · `WRITE_KEY_INVALID`(401) |
 | 제공자 설정 환경변수 | `KAKAO_CLIENT_ID` `KAKAO_CLIENT_SECRET` `NAVER_CLIENT_ID` `NAVER_CLIENT_SECRET` `GOOGLE_CLIENT_ID` `GOOGLE_CLIENT_SECRET` |
 | 이메일 정규화 | 앞뒤 공백(U+0020)만 제거하고 소문자로 — `users.email` 과 같은 규칙. 제어문자·짝 없는 서로게이트는 변환하지 않고 거부한다 (ADR-0019) |
 | 이메일 검증됨 | 제공자 플래그가 불리언 `true` 일 때만. 문자열 `"true"`·숫자·`null`·누락은 검증되지 않음 |
+| 자동 연결 대상 (ADR-0020) | (provider, providerUserId) 가 없고, 제공자 이메일이 검증됐고, **같은 이메일의 `users` 행의 `email_verified` 가 `true`** 일 때만. `email_verified` 는 이메일 가입이면 `false`, 소셜 가입 완료이면 pendingToken 의 `emailVerified` 다 |
+| 소셜 이메일 형식 | 이메일 가입과 같은 규칙: `@` 가 정확히 하나이고 앞뒤가 비어 있지 않으며, 공백류(`\u00a0` 등 Z*)·서식 문자(`\u200b`·`\u202e` 등 Cf)·제어문자·짝 없는 서로게이트가 없다 (ADR-0019) |
 
 ## SC-01 (happy) 처음 로그인하는 소셜 사용자는 가입 대기가 된다
 
@@ -27,19 +29,19 @@
 - **When** 구글 콜백을 처리한다
 - **Then** 302 `https://app.example.test/oauth2/redirect?pendingToken=<토큰>` 으로 이동하고 쿼리에 `token` 은 없다
 - **And** `users`·`social_accounts` 행 수가 그대로다 (아무것도 만들지 않는다)
-- **And** pendingToken 의 클레임은 `email=new@example.com` `name=신규` `provider=GOOGLE` `providerUserId=g-100` `typ=pending` 이고 만료는 발급 시각 + 5분이다
+- **And** pendingToken 의 클레임은 `email=new@example.com` `name=신규` `provider=GOOGLE` `providerUserId=g-100` `typ=pending` `emailVerified=true` 이고 만료는 발급 시각 + 5분이다
 
 covers: 처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다
 flow: F1
 
 ## SC-02 (happy) 이메일이 일치하고 검증됐으면 기존 계정에 연결하고 바로 로그인한다
 
-- **Given** 이메일로 가입한 사용자 A(`hong@example.com`, 역할 `ORGANIZER`, 이름 `홍길동`)가 있고 `social_accounts` 는 비어 있다
+- **Given** 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(`hong@example.com`, 역할 `ORGANIZER`, 이름 `홍길동`, `email_verified=true`, 비밀번호 해시 없음)가 있고 `social_accounts` 는 비어 있다 (A 에 연결된 다른 제공자 행은 이 시나리오의 대상이 아니다)
 - **And** 제공자가 아래 표의 사용자 정보를 돌려줬다
 - **When** 해당 제공자 콜백을 처리한다
 - **Then** 302 `https://app.example.test/oauth2/redirect?token=<accessToken>` 으로 이동하고 쿼리에 `pendingToken` 은 없다
 - **And** 그 accessToken 으로 `GET /api/auth/me` 를 호출하면 A 의 정보(역할 `ORGANIZER`)가 나온다
-- **And** `users` 행 수는 그대로이고 A 의 이메일·이름·역할·비밀번호 해시는 바뀌지 않는다
+- **And** `users` 행 수는 그대로이고 A 의 이메일·이름·역할·`email_verified`·비밀번호 해시는 바뀌지 않는다
 - **And** `social_accounts` 에 (표의 provider, 표의 providerUserId, A) 행이 정확히 1건 생긴다
 
 | 제공자 | 돌려준 사용자 정보 | provider | providerUserId |
@@ -48,12 +50,12 @@ flow: F1
 | 구글 | `{"sub":"g-1","email":"hong@example.com","email_verified":true,"name":"길동"}` | `GOOGLE` | `g-1` |
 | 구글 (이메일 대문자·앞뒤 공백) | `{"sub":"g-2","email":"  Hong@Example.COM  ","email_verified":true,"name":"길동"}` | `GOOGLE` | `g-2` |
 
-covers: 이미 이메일 회원가입된 계정과 같은 이메일로, email_verified가 true인 소셜 로그인을 하면 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)
+covers: 이메일이 일치하고 email_verified가 true인 소셜 로그인이며 기존 계정의 이메일 소유도 확인된 경우(users.email_verified=true — 제공자가 검증한 이메일로 만든 소셜 계정)에만 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)
 flow: F2
 
 ## SC-03 (boundary) 이메일이 같아도 검증되지 않았으면 연결하지 않고 가입 대기가 된다
 
-- **Given** 이메일로 가입한 사용자 A(`hong@example.com`)가 있고 `social_accounts` 는 비어 있다
+- **Given** 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(`hong@example.com`, `email_verified=true`)가 있고 `social_accounts` 는 비어 있다 (제공자 플래그가 연결을 막는 유일한 이유가 되게 A 는 연결 대상이다)
 - **And** 제공자가 아래 표의 사용자 정보를 돌려줬다 (이메일은 모두 A 와 같다)
 - **When** 해당 제공자 콜백을 처리한다
 - **Then** 302 `…/oauth2/redirect?pendingToken=<토큰>` 으로 이동하고 쿼리에 `token` 은 없다
@@ -138,6 +140,9 @@ flow: F5
 | email | `a\tb@example.com` (탭) / `a\u0001b@example.com` (제어문자) | 실패 |
 | email | 정규화(소문자) 후 256자 — 정규화 전에는 255자 이하 (`İ` 가 소문자화로 두 글자가 된다) | 실패 |
 | email | 문자열이 아님: 숫자 `123` / 불리언 `true` / 객체 / 배열 | 실패 |
+| email | 형식 밖: `@` 없음(`no-at-sign`) / `@` 둘(`a@b@example.com`) / 로컬 파트 없음(`@example.com`) / 도메인 없음(`a@`) | 실패 |
+| email | 공백류: 안쪽 공백(`a b@example.com`) / NBSP(`a\u00a0b@example.com`) | 실패 |
+| email | 서식 문자: 제로폭 공백(`a\u200bb@example.com`) / RTL 덮어쓰기(`a\u202eb@example.com`) | 실패 |
 | email | 정규화 후 255자 | 통과 |
 | name | 누락 / `null` / 빈 문자열 / 공백만 | 실패 |
 | name | 101자 | 실패 |
@@ -159,8 +164,8 @@ flow: F5
 | 구조 | 카카오 `kakao_account` 없음 / 네이버 `response` 래퍼 없음 / 카카오 `profile` 없음(이름 누락) | 실패 |
 | 구조 | 중첩 값이 객체가 아님: 카카오 `kakao_account`·`profile` 이 문자열·배열 / 네이버 `response` 가 문자열·배열 | 실패 |
 
-covers: 처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다
-flow: F9
+covers: 처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다; 소셜 제공자가 준 이메일은 이메일 가입과 같은 규칙(형식·공백류·서식 문자 거부)으로 검증하고, 서명된 pendingToken 의 값도 같은 규칙을 다시 적용해 어긋나면 401 로 거부한다(DB 오류 500·저장값 변형이 없다)
+flow: F5, F9
 
 ## SC-08 (error) 제공자 인증이 실패하거나 취소되면 실패 화면으로 돌려보낸다
 
@@ -184,13 +189,14 @@ flow: F9
 - **Given** `users` 에 `new@example.com` 이 없고, SC-01 이 발급한 pendingToken(구글, `new@example.com`, `신규`, `g-100`)이 유효하다
 - **When** `POST /api/auth/social/complete` 를 `{"pendingToken":"<토큰>","role":<표의 role>}` 로 호출한다
 - **Then** 200 이고 응답은 `tokenType=Bearer` · `expiresInSeconds=86400` · `user={id, email:"new@example.com", name:"신규", role:<표의 role>}` 이다
-- **And** `users` 에 이메일 `new@example.com`·이름 `신규`·역할(표)·비밀번호 해시 없음 인 행이 1건, `social_accounts` 에 (`GOOGLE`, `g-100`, 그 사용자) 행이 1건 생긴다
+- **And** `users` 에 이메일 `new@example.com`·이름 `신규`·역할(표)·`email_verified`(표)·비밀번호 해시 없음 인 행이 1건, `social_accounts` 에 (`GOOGLE`, `g-100`, 그 사용자) 행이 1건 생긴다
 - **And** 응답의 accessToken 으로 `GET /api/auth/me` 를 호출하면 같은 사용자가 나온다
 
-| 보낸 role | 저장·응답의 role |
-|---|---|
-| `AUDIENCE` | `AUDIENCE` |
-| `ORGANIZER` | `ORGANIZER` |
+| 보낸 role | pendingToken 의 `emailVerified` | 저장·응답의 role | 저장된 `email_verified` |
+|---|---|---|---|
+| `AUDIENCE` | `true` | `AUDIENCE` | `true` |
+| `ORGANIZER` | `true` | `ORGANIZER` | `true` |
+| `AUDIENCE` | `false` (제공자가 검증하지 않은 이메일) | `AUDIENCE` | `false` |
 
 covers: 처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다
 flow: F6
@@ -217,8 +223,12 @@ flow: F6
 | `typ` 클레임 없음 | 실패 |
 | 필수 클레임(`email` `name` `provider` `providerUserId`) 중 하나 누락 | 실패 |
 | `provider` 가 알 수 없는 값(`FOO`) / 빈 문자열 | 실패 |
+| `emailVerified` 클레임 누락 / 불리언이 아님(문자열 `"true"`·숫자 `1`) | 실패 |
+| 서명은 맞지만 값이 규칙 밖: 이메일 정규화 후 256자 / 이름 101자 / `providerUserId` 256자 | 실패 |
+| 서명은 맞지만 값에 NUL·짝 없는 서로게이트 (이메일·이름·`providerUserId` 각각) | 실패 |
+| 서명은 맞지만 이메일이 형식 밖 (`@` 없음) / 서식 문자 포함 | 실패 |
 
-covers: 만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다
+covers: 만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다; 소셜 제공자가 준 이메일은 이메일 가입과 같은 규칙(형식·공백류·서식 문자 거부)으로 검증하고, 서명된 pendingToken 의 값도 같은 규칙을 다시 적용해 어긋나면 401 로 거부한다(DB 오류 500·저장값 변형이 없다)
 flow: F6, F7
 
 ## SC-11 (error) 가입 완료 요청의 형식이 틀리면 400 이다
@@ -249,7 +259,7 @@ flow: F6
 
 | 상태 | 응답 `code` |
 |---|---|
-| pendingToken 의 이메일이 `users` 에 이미 있다 (이메일 가입자 — SC-03 에서 이어진 경우) | `EMAIL_ALREADY_EXISTS` |
+| pendingToken 의 이메일이 `users` 에 이미 있다 (이메일 가입자 — SC-03·SC-21 에서 이어진 경우) | `EMAIL_ALREADY_EXISTS` |
 | 같은 pendingToken 으로 이미 가입을 끝냈다 (두 번째 호출) | `EMAIL_ALREADY_EXISTS` |
 | pendingToken 의 (provider, providerUserId) 가 이미 다른 이메일의 사용자에게 연결돼 있다 | `SOCIAL_ACCOUNT_ALREADY_LINKED` |
 
@@ -337,7 +347,7 @@ flow: F1
 | `GET /api/auth/me` (U 의 accessToken) | 200 과 U 의 정보 |
 | `GET /api/performances` (인증 없음) | 200 (토큰 없이 부르는 기존 동작 그대로) |
 
-covers: 이미 이메일 회원가입된 계정과 같은 이메일로, email_verified가 true인 소셜 로그인을 하면 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)
+covers: 이메일이 일치하고 email_verified가 true인 소셜 로그인이며 기존 계정의 이메일 소유도 확인된 경우(users.email_verified=true — 제공자가 검증한 이메일로 만든 소셜 계정)에만 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)
 flow: F2
 
 ## SC-18 (error) 쓰기 가드가 켜져 있으면 가입 완료도 키가 있어야 한다
@@ -402,6 +412,25 @@ flow: F1
 covers: 처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다
 flow: F1, F4, F9
 
+## SC-21 (error) 이메일 소유가 확인되지 않은 계정은 자동 연결 대상이 아니다
+
+- **Given** 아래 표의 상태로 `hong@example.com` 계정 A 가 만들어져 있고 `social_accounts` 는 비어 있다
+- **And** 제공자(구글)가 검증된 이메일로 `{"sub":"g-1","email":"hong@example.com","email_verified":true,"name":"길동"}` 를 돌려줬다
+- **When** 구글 콜백을 처리한다
+- **Then** 연결하지 않고 302 `…/oauth2/redirect?pendingToken=<토큰>` 으로 이동하며 쿼리에 `token` 은 없다
+- **And** `users`·`social_accounts` 행 수가 그대로이고 A 의 정보(이메일·이름·역할·`email_verified`·비밀번호 해시)는 바뀌지 않는다
+- **And** 그 pendingToken 으로 `POST /api/auth/social/complete` 를 호출하면 409 `EMAIL_ALREADY_EXISTS` 이고 행 수가 그대로다
+- **And** A 를 만든 쪽의 로그인은 계속 된다 (표의 "A 의 로그인")
+
+| A 가 만들어진 방식 | `email_verified` | A 의 로그인 |
+|---|---|---|
+| 이메일 가입 (`/signup`, 비밀번호 `password123`) | `false` | 이메일·`password123` → 200 |
+| 카카오가 검증하지 않은 이메일로 소셜 가입 완료 (`is_email_verified:false`, 카카오 `777`) | `false` | 카카오 `777` 콜백 → 로그인 주소(재로그인) |
+| 네이버로 소셜 가입 완료 (플래그 없음, 네이버 `n-1`) | `false` | 네이버 `n-1` 콜백 → 로그인 주소(재로그인) |
+
+covers: 이메일 소유가 확인되지 않은 계정(이메일 가입 계정, 제공자가 검증하지 않은 이메일 또는 네이버로 만든 소셜 계정)은 같은 이메일의 검증된 소셜 로그인이어도 자동 연결 대상이 아니며, 그 로그인은 pendingToken 을 받고 가입 완료는 409 EMAIL_ALREADY_EXISTS 가 된다 (제공자의 emailVerified 는 pendingToken 에 실려 users.email_verified 로 저장된다)
+flow: F3, F6
+
 ---
 
 ## 커버리지·판단 기록
@@ -415,5 +444,6 @@ flow: F1, F4, F9
 - 3차 검증(PASS, 경고 4) 반영: V5(SC-16 '정상 동작'을 상태 코드로)·V7(SC-08 의 Spring 오류 코드명 제거)·V8(Plan outputs 에 인가 요청 302 와 기동 실패)·V11 보강(카카오 검증 플래그의 비불리언 변형, `/complete` 의 pendingToken JSON 타입). 보류: V6 — SC-19 의 기동 + 콜백 확인, SC-16 의 부가 호출, SC-17 의 요청 4개 표는 같은 환경에서 결과만 달리 보는 표라 한 시나리오로 묶었다(Red 에서 행 단위 케이스로 나눈다).
 - 1차 검증(V11) 반영: `FRONTEND_BASE_URL` 환경변수 경계(SC-19)와 오픈 리다이렉트 방지(SC-20, SC-16 의 `redirect_uri`·`X-Forwarded-Host` 행)를 추가했고, name·providerUserId 의 제어문자 행과 카카오 `is_email_valid` 조합을 보강했다. 제공자 설정이 있는데 기준 주소가 이상하면 기동하지 않는다 — 잘못된 `Location` 으로 열리는 것보다 낫고 `JWT_SECRET` 과 같은 관례다. V5(SC-18 내부 순서 문구 제거)·V6(SC-17 을 요청 표로)·V8(Plan outputs 에 404·`WRITE_KEY_INVALID`·`SOCIAL_ACCOUNT_ALREADY_LINKED` 반영)도 고쳤다.
 - 2차 검증(V11) 반영: §2-1 표를 Plan 입력마다 끝까지 대 보고 채웠다 — 카카오 `id` 정수 행(음수·0·소수·범위 초과·타입 혼동·경계 통과), email·name·providerUserId·중첩 구조의 문자열 아님·객체 아님 행, 정규화(소문자) 뒤 길이가 늘어나는 이메일(`İ`), 검증 플래그의 `"TRUE"`·배열·객체, `FRONTEND_BASE_URL` 표기 변형(스킴 대소문자·경로·쿼리·프래그먼트·사용자 정보·호스트 없음·접두사만 일치), 인가 요청 경로 변수(`foo`·`apple`·대소문자). V6(SC-19 를 기동 한 번으로)·V7(`permitAll` 용어 제거)도 고쳤다.
-- AC 밖 흐름(F8·F9)·설정·가드 시나리오(SC-07·08·12·15·16·18·19·20)의 `covers` 는 가장 가까운 AC 에 매단 것이며 커버리지로 세지 않는다 — AC 7개는 SC-01~06·10·14 가 덮는다.
-- 시나리오가 8~12 기준선을 넘는다(20건). 제공자 3 × 판정 4 × 외부 입력 경계의 곱이 표 행으로 흡수됐으며 Red 케이스 수는 표 행 수가 정한다.
+- AC 밖 흐름(F8·F9)·설정·가드 시나리오(SC-07·08·12·15·16·18·19·20)의 `covers` 는 가장 가까운 AC 에 매단 것이며 커버리지로 세지 않는다 — AC 9개는 SC-01~07·10·14·21 이 덮는다 (AC8 은 SC-07·SC-10 의 이메일 규칙 행, AC7 은 SC-21).
+- **Phase 4 FAIL 롤백(2a 재진입, RC-1·RC-2)**: ADR-0020 으로 자동 연결 대상을 `users.email_verified=true` 계정으로 좁혔다(사용자 결정 '검증된 소셜 계정에만 자동 연결'). 규약 표에 `emailVerified` 클레임·연결 대상·소셜 이메일 형식 행을 추가, SC-01(클레임)·SC-02·03(연결 대상 A 를 검증된 소셜 계정으로)·SC-09(`emailVerified` 저장 행)·SC-10(`emailVerified` 클레임과 서명된 값의 규칙 위반 행)·SC-07(이메일 형식·공백류·서식 문자 행)·SC-12 를 보강하고 SC-21 을 추가했다. 재현된 변종 전부를 가져갔다 — 이메일 가입 선점·미검증 소셜 가입 선점·네이버·정당한 사용자의 이메일 가입 차단(수용한 잔여 위험으로 Plan 에 기록)·위조 pendingToken 의 DB 오류·`?` 치환 저장·이메일 형식. 이메일 가입자의 소셜 연결 수단(이메일 인증·로그인 후 연결)과 토큰을 쿼리 문자열에 싣는 규약은 이 태스크 밖이다.
+- 시나리오가 8~12 기준선을 넘는다(21건). 제공자 3 × 판정 4 × 외부 입력 경계의 곱이 표 행으로 흡수됐으며 Red 케이스 수는 표 행 수가 정한다.

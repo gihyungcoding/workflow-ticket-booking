@@ -15,7 +15,7 @@
       "then": [
         "302 `https://app.example.test/oauth2/redirect?pendingToken=<토큰>` 으로 이동하고 쿼리에 `token` 은 없다",
         "`users`·`social_accounts` 행 수가 그대로다 (아무것도 만들지 않는다)",
-        "pendingToken 의 클레임은 `email=new@example.com` `name=신규` `provider=GOOGLE` `providerUserId=g-100` `typ=pending` 이고 만료는 발급 시각 + 5분이다"
+        "pendingToken 의 클레임은 `email=new@example.com` `name=신규` `provider=GOOGLE` `providerUserId=g-100` `typ=pending` `emailVerified=true` 이고 만료는 발급 시각 + 5분이다"
       ],
       "table": [],
       "covers": [
@@ -28,7 +28,7 @@
       "type": "happy",
       "title": "이메일이 일치하고 검증됐으면 기존 계정에 연결하고 바로 로그인한다",
       "given": [
-        "이메일로 가입한 사용자 A(`hong@example.com`, 역할 `ORGANIZER`, 이름 `홍길동`)가 있고 `social_accounts` 는 비어 있다",
+        "제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(`hong@example.com`, 역할 `ORGANIZER`, 이름 `홍길동`, `email_verified=true`, 비밀번호 해시 없음)가 있고 `social_accounts` 는 비어 있다 (A 에 연결된 다른 제공자 행은 이 시나리오의 대상이 아니다)",
         "제공자가 아래 표의 사용자 정보를 돌려줬다"
       ],
       "when": [
@@ -37,7 +37,7 @@
       "then": [
         "302 `https://app.example.test/oauth2/redirect?token=<accessToken>` 으로 이동하고 쿼리에 `pendingToken` 은 없다",
         "그 accessToken 으로 `GET /api/auth/me` 를 호출하면 A 의 정보(역할 `ORGANIZER`)가 나온다",
-        "`users` 행 수는 그대로이고 A 의 이메일·이름·역할·비밀번호 해시는 바뀌지 않는다",
+        "`users` 행 수는 그대로이고 A 의 이메일·이름·역할·`email_verified`·비밀번호 해시는 바뀌지 않는다",
         "`social_accounts` 에 (표의 provider, 표의 providerUserId, A) 행이 정확히 1건 생긴다"
       ],
       "table": [
@@ -48,7 +48,7 @@
         "| 구글 (이메일 대문자·앞뒤 공백) | `{\"sub\":\"g-2\",\"email\":\"  Hong@Example.COM  \",\"email_verified\":true,\"name\":\"길동\"}` | `GOOGLE` | `g-2` |"
       ],
       "covers": [
-        "이미 이메일 회원가입된 계정과 같은 이메일로, email_verified가 true인 소셜 로그인을 하면 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)"
+        "이메일이 일치하고 email_verified가 true인 소셜 로그인이며 기존 계정의 이메일 소유도 확인된 경우(users.email_verified=true — 제공자가 검증한 이메일로 만든 소셜 계정)에만 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)"
       ],
       "flow": "F2"
     },
@@ -57,7 +57,7 @@
       "type": "boundary",
       "title": "이메일이 같아도 검증되지 않았으면 연결하지 않고 가입 대기가 된다",
       "given": [
-        "이메일로 가입한 사용자 A(`hong@example.com`)가 있고 `social_accounts` 는 비어 있다",
+        "제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(`hong@example.com`, `email_verified=true`)가 있고 `social_accounts` 는 비어 있다 (제공자 플래그가 연결을 막는 유일한 이유가 되게 A 는 연결 대상이다)",
         "제공자가 아래 표의 사용자 정보를 돌려줬다 (이메일은 모두 A 와 같다)"
       ],
       "when": [
@@ -187,6 +187,9 @@
         "| email | `a\\tb@example.com` (탭) / `a\\u0001b@example.com` (제어문자) | 실패 |",
         "| email | 정규화(소문자) 후 256자 — 정규화 전에는 255자 이하 (`İ` 가 소문자화로 두 글자가 된다) | 실패 |",
         "| email | 문자열이 아님: 숫자 `123` / 불리언 `true` / 객체 / 배열 | 실패 |",
+        "| email | 형식 밖: `@` 없음(`no-at-sign`) / `@` 둘(`a@b@example.com`) / 로컬 파트 없음(`@example.com`) / 도메인 없음(`a@`) | 실패 |",
+        "| email | 공백류: 안쪽 공백(`a b@example.com`) / NBSP(`a\\u00a0b@example.com`) | 실패 |",
+        "| email | 서식 문자: 제로폭 공백(`a\\u200bb@example.com`) / RTL 덮어쓰기(`a\\u202eb@example.com`) | 실패 |",
         "| email | 정규화 후 255자 | 통과 |",
         "| name | 누락 / `null` / 빈 문자열 / 공백만 | 실패 |",
         "| name | 101자 | 실패 |",
@@ -209,9 +212,13 @@
         "| 구조 | 중첩 값이 객체가 아님: 카카오 `kakao_account`·`profile` 이 문자열·배열 / 네이버 `response` 가 문자열·배열 | 실패 |"
       ],
       "covers": [
-        "처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다"
+        "처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다",
+        "소셜 제공자가 준 이메일은 이메일 가입과 같은 규칙(형식·공백류·서식 문자 거부)으로 검증하고, 서명된 pendingToken 의 값도 같은 규칙을 다시 적용해 어긋나면 401 로 거부한다(DB 오류 500·저장값 변형이 없다)"
       ],
-      "flow": "F9"
+      "flow": [
+        "F5",
+        "F9"
+      ]
     },
     {
       "id": "SC-08",
@@ -252,14 +259,15 @@
       ],
       "then": [
         "200 이고 응답은 `tokenType=Bearer` · `expiresInSeconds=86400` · `user={id, email:\"new@example.com\", name:\"신규\", role:<표의 role>}` 이다",
-        "`users` 에 이메일 `new@example.com`·이름 `신규`·역할(표)·비밀번호 해시 없음 인 행이 1건, `social_accounts` 에 (`GOOGLE`, `g-100`, 그 사용자) 행이 1건 생긴다",
+        "`users` 에 이메일 `new@example.com`·이름 `신규`·역할(표)·`email_verified`(표)·비밀번호 해시 없음 인 행이 1건, `social_accounts` 에 (`GOOGLE`, `g-100`, 그 사용자) 행이 1건 생긴다",
         "응답의 accessToken 으로 `GET /api/auth/me` 를 호출하면 같은 사용자가 나온다"
       ],
       "table": [
-        "| 보낸 role | 저장·응답의 role |",
-        "|---|---|",
-        "| `AUDIENCE` | `AUDIENCE` |",
-        "| `ORGANIZER` | `ORGANIZER` |"
+        "| 보낸 role | pendingToken 의 `emailVerified` | 저장·응답의 role | 저장된 `email_verified` |",
+        "|---|---|---|---|",
+        "| `AUDIENCE` | `true` | `AUDIENCE` | `true` |",
+        "| `ORGANIZER` | `true` | `ORGANIZER` | `true` |",
+        "| `AUDIENCE` | `false` (제공자가 검증하지 않은 이메일) | `AUDIENCE` | `false` |"
       ],
       "covers": [
         "처음 로그인(기존 이메일과 매칭되지 않음)하면 users 행을 생성하지 않고 pendingToken을 발급해 역할 선택 화면으로 보낸다"
@@ -295,10 +303,15 @@
         "| accessToken (`typ=access`) 을 보냄 | 실패 |",
         "| `typ` 클레임 없음 | 실패 |",
         "| 필수 클레임(`email` `name` `provider` `providerUserId`) 중 하나 누락 | 실패 |",
-        "| `provider` 가 알 수 없는 값(`FOO`) / 빈 문자열 | 실패 |"
+        "| `provider` 가 알 수 없는 값(`FOO`) / 빈 문자열 | 실패 |",
+        "| `emailVerified` 클레임 누락 / 불리언이 아님(문자열 `\"true\"`·숫자 `1`) | 실패 |",
+        "| 서명은 맞지만 값이 규칙 밖: 이메일 정규화 후 256자 / 이름 101자 / `providerUserId` 256자 | 실패 |",
+        "| 서명은 맞지만 값에 NUL·짝 없는 서로게이트 (이메일·이름·`providerUserId` 각각) | 실패 |",
+        "| 서명은 맞지만 이메일이 형식 밖 (`@` 없음) / 서식 문자 포함 | 실패 |"
       ],
       "covers": [
-        "만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다"
+        "만료된 pendingToken으로 POST /api/auth/social/complete 호출 시 401을 반환한다",
+        "소셜 제공자가 준 이메일은 이메일 가입과 같은 규칙(형식·공백류·서식 문자 거부)으로 검증하고, 서명된 pendingToken 의 값도 같은 규칙을 다시 적용해 어긋나면 401 로 거부한다(DB 오류 500·저장값 변형이 없다)"
       ],
       "flow": [
         "F6",
@@ -351,7 +364,7 @@
       "table": [
         "| 상태 | 응답 `code` |",
         "|---|---|",
-        "| pendingToken 의 이메일이 `users` 에 이미 있다 (이메일 가입자 — SC-03 에서 이어진 경우) | `EMAIL_ALREADY_EXISTS` |",
+        "| pendingToken 의 이메일이 `users` 에 이미 있다 (이메일 가입자 — SC-03·SC-21 에서 이어진 경우) | `EMAIL_ALREADY_EXISTS` |",
         "| 같은 pendingToken 으로 이미 가입을 끝냈다 (두 번째 호출) | `EMAIL_ALREADY_EXISTS` |",
         "| pendingToken 의 (provider, providerUserId) 가 이미 다른 이메일의 사용자에게 연결돼 있다 | `SOCIAL_ACCOUNT_ALREADY_LINKED` |"
       ],
@@ -490,7 +503,7 @@
         "| `GET /api/performances` (인증 없음) | 200 (토큰 없이 부르는 기존 동작 그대로) |"
       ],
       "covers": [
-        "이미 이메일 회원가입된 계정과 같은 이메일로, email_verified가 true인 소셜 로그인을 하면 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)"
+        "이메일이 일치하고 email_verified가 true인 소셜 로그인이며 기존 계정의 이메일 소유도 확인된 경우(users.email_verified=true — 제공자가 검증한 이메일로 만든 소셜 계정)에만 users 행을 새로 만들지 않고 기존 계정에 social_accounts 행을 추가한 뒤 바로 accessToken을 발급한다(역할은 기존 값 유지)"
       ],
       "flow": "F2"
     },
@@ -589,6 +602,38 @@
         "F4",
         "F9"
       ]
+    },
+    {
+      "id": "SC-21",
+      "type": "error",
+      "title": "이메일 소유가 확인되지 않은 계정은 자동 연결 대상이 아니다",
+      "given": [
+        "아래 표의 상태로 `hong@example.com` 계정 A 가 만들어져 있고 `social_accounts` 는 비어 있다",
+        "제공자(구글)가 검증된 이메일로 `{\"sub\":\"g-1\",\"email\":\"hong@example.com\",\"email_verified\":true,\"name\":\"길동\"}` 를 돌려줬다"
+      ],
+      "when": [
+        "구글 콜백을 처리한다"
+      ],
+      "then": [
+        "연결하지 않고 302 `…/oauth2/redirect?pendingToken=<토큰>` 으로 이동하며 쿼리에 `token` 은 없다",
+        "`users`·`social_accounts` 행 수가 그대로이고 A 의 정보(이메일·이름·역할·`email_verified`·비밀번호 해시)는 바뀌지 않는다",
+        "그 pendingToken 으로 `POST /api/auth/social/complete` 를 호출하면 409 `EMAIL_ALREADY_EXISTS` 이고 행 수가 그대로다",
+        "A 를 만든 쪽의 로그인은 계속 된다 (표의 \"A 의 로그인\")"
+      ],
+      "table": [
+        "| A 가 만들어진 방식 | `email_verified` | A 의 로그인 |",
+        "|---|---|---|",
+        "| 이메일 가입 (`/signup`, 비밀번호 `password123`) | `false` | 이메일·`password123` → 200 |",
+        "| 카카오가 검증하지 않은 이메일로 소셜 가입 완료 (`is_email_verified:false`, 카카오 `777`) | `false` | 카카오 `777` 콜백 → 로그인 주소(재로그인) |",
+        "| 네이버로 소셜 가입 완료 (플래그 없음, 네이버 `n-1`) | `false` | 네이버 `n-1` 콜백 → 로그인 주소(재로그인) |"
+      ],
+      "covers": [
+        "이메일 소유가 확인되지 않은 계정(이메일 가입 계정, 제공자가 검증하지 않은 이메일 또는 네이버로 만든 소셜 계정)은 같은 이메일의 검증된 소셜 로그인이어도 자동 연결 대상이 아니며, 그 로그인은 pendingToken 을 받고 가입 완료는 409 EMAIL_ALREADY_EXISTS 가 된다 (제공자의 emailVerified 는 pendingToken 에 실려 users.email_verified 로 저장된다)"
+      ],
+      "flow": [
+        "F3",
+        "F6"
+      ]
     }
   ],
   "conventions_table": [
@@ -598,15 +643,17 @@
     "| 로그인 성공 리다이렉트 | 302 `{기준 주소}/oauth2/redirect?token=<accessToken>` |",
     "| 가입 대기 리다이렉트 | 302 `{기준 주소}/oauth2/redirect?pendingToken=<pendingToken>` |",
     "| 실패 리다이렉트 | 302 `{기준 주소}/login?error=social` (쿼리에 token·pendingToken 없음) |",
-    "| pendingToken | HS256, `typ=pending`, 클레임 `email` `name` `provider` `providerUserId`, 발급 시각 + 5분(그 정각부터 만료) |",
+    "| pendingToken | HS256, `typ=pending`, 클레임 `email` `name` `provider` `providerUserId` `emailVerified`(불리언 — 제공자가 검증한 이메일인가), 발급 시각 + 5분(그 정각부터 만료). 검증할 때 이메일·이름·providerUserId 에 제공자 속성과 같은 문자열 규칙을 다시 적용한다 |",
     "| 오류 코드 | `PENDING_SIGNUP_EXPIRED`(401) · `EMAIL_ALREADY_EXISTS`(409) · `SOCIAL_ACCOUNT_ALREADY_LINKED`(409) · `INVALID_REQUEST`(400) · `INVALID_CREDENTIALS`(401) · `UNAUTHORIZED`(401) · `WRITE_KEY_INVALID`(401) |",
     "| 제공자 설정 환경변수 | `KAKAO_CLIENT_ID` `KAKAO_CLIENT_SECRET` `NAVER_CLIENT_ID` `NAVER_CLIENT_SECRET` `GOOGLE_CLIENT_ID` `GOOGLE_CLIENT_SECRET` |",
     "| 이메일 정규화 | 앞뒤 공백(U+0020)만 제거하고 소문자로 — `users.email` 과 같은 규칙. 제어문자·짝 없는 서로게이트는 변환하지 않고 거부한다 (ADR-0019) |",
-    "| 이메일 검증됨 | 제공자 플래그가 불리언 `true` 일 때만. 문자열 `\"true\"`·숫자·`null`·누락은 검증되지 않음 |"
+    "| 이메일 검증됨 | 제공자 플래그가 불리언 `true` 일 때만. 문자열 `\"true\"`·숫자·`null`·누락은 검증되지 않음 |",
+    "| 자동 연결 대상 (ADR-0020) | (provider, providerUserId) 가 없고, 제공자 이메일이 검증됐고, **같은 이메일의 `users` 행의 `email_verified` 가 `true`** 일 때만. `email_verified` 는 이메일 가입이면 `false`, 소셜 가입 완료이면 pendingToken 의 `emailVerified` 다 |",
+    "| 소셜 이메일 형식 | 이메일 가입과 같은 규칙: `@` 가 정확히 하나이고 앞뒤가 비어 있지 않으며, 공백류(`\\u00a0` 등 Z*)·서식 문자(`\\u200b`·`\\u202e` 등 Cf)·제어문자·짝 없는 서로게이트가 없다 (ADR-0019) |"
   ],
   "coverage": {
     "acceptance_criteria_total": 7,
-    "acceptance_criteria_covered": 7,
+    "acceptance_criteria_covered": 9,
     "uncovered": [],
     "merged": [
       {
@@ -668,7 +715,7 @@
     ]
   },
   "human_input": {
-    "generate_red_trigger": true
+    "generate_red_trigger": false
   },
   "source_of_truth": "SCENARIO_TASK-011.md — JSON 은 파생물이다. 표는 시나리오마다 `table`(마크다운 행), 규약 정본 표는 `conventions_table`. 표를 가리키는 문장('표와 같다')은 `table` 필드를 본다"
 }

@@ -1,6 +1,6 @@
 # ADR-0014: 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다
 
-- **상태**: 채택됨
+- **상태**: 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다
 - **날짜**: 2026-10-14
 - **관련**: ADR-0012, ADR-0013, `docs/product/features/user-authentication.md`
 
