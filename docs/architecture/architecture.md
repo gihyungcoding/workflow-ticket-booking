@@ -96,6 +96,8 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0014](../decisions/ADR-0014-social-account-auto-link-policy.md)
 - accessToken 저장 위치로 프론트 localStorage 채택 →
   [ADR-0015](../decisions/ADR-0015-access-token-localstorage.md)
+- 소셜 로그인 토큰은 URL fragment 로 프론트에 넘긴다 →
+  [ADR-0021](../decisions/ADR-0021-social-login-token-via-url-fragment.md)
 
 ## 7. 알려진 부채
 

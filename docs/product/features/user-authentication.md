@@ -482,6 +482,7 @@ public record CompleteSocialSignUpRequest(@NotBlank String pendingToken, @NotNul
 | 이메일이 같고 `email_verified`가 true이면 기존 계정에 소셜 연결을 자동으로 추가한다(계정 연결 정책) | 같은 이메일로 여러 경로에 가입했다고 사용자가 혼란스러워하는 것을 막는다. 검증되지 않은 이메일은 신뢰하지 않아 계정 탈취 경로를 막는다 | **전체** | ADR-0014 |
 | 소셜 최초 가입자는 `users` 행을 바로 만들지 않고 `pendingToken`(5분)으로 역할 선택을 받은 뒤 생성한다 | 역할 없는 "반쪽 계정"이 DB에 남는 것을 막는다 | 이 기능만 | — |
 | `accessToken` 저장 위치로 localStorage를 쓴다 | 새로고침 후에도 로그인 유지가 필요. 이 단계에서 XSS 방어(CSP 등)는 범위 밖으로 수용 | **전체** | ADR-0015 |
+| 소셜 로그인 콜백은 토큰을 쿼리가 아닌 URL fragment(`#token=`, `#pendingToken=`)로 프론트에 넘긴다 | 쿼리 문자열은 접근 로그·히스토리·Referer 에 남는다. fragment 는 서버로 가지 않고 서버 상태도 필요 없다. 프론트는 읽은 즉시 `history.replaceState` 로 지운다 | **전체** | ADR-0021 |
 | `accessToken` 만료는 24시간, 리프레시 토큰은 두지 않는다 | 재로그인 빈도가 낮은 서비스 특성상 리프레시 로직의 복잡도가 이득보다 크다 | 이 기능만 | — |
 
 ADR-0012(JWT 인증 방식), ADR-0013(Spring Security 전체 도입),
