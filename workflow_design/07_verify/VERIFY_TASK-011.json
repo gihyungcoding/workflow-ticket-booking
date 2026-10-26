@@ -224,7 +224,8 @@
           "origin": "predicted",
           "probe": "not_probed",
           "reason": "TASK-012 미구현(SocialProvider.APPLE 은 enum 상수뿐). loginWithSocial 의 필터는 상속된다. 애플의 email_verified 가 문자열 \"true\" 로 올 수 있어 TASK-012 가 엄격히 처리해야 한다 — 인계",
-          "resolved": false
+          "resolved": false,
+          "deferred_to": "TASK-012"
         }
       ]
     },
