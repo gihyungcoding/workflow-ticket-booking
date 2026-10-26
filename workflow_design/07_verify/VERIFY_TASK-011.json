@@ -292,9 +292,16 @@
     }
   },
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "4e58dac602a99d1a4a2d215c8adb96e108894474",
+    "verified_at": "2026-10-26T08:10:00Z",
+    "exceptions": [
+      "미검증 이메일 선점으로 정당한 이메일 가입/소셜 가입이 409 — ADR-0020 이 수용한 잔여 위험(메일 인증·로그인 후 연결 수단은 후속 태스크)",
+      "애플 변종(RC-1)은 TASK-012 로 이관 — 애플 email_verified 문자열 \"true\" 를 엄격히 처리해야 함",
+      "실제 제공자 왕복과 HTTP 경유 loginWithSocial 은 프로브하지 못함(제공자 서버·클라이언트 ID 없음). PG 위 핸들러 직접 호출 테스트로 대체",
+      "V4 를 43bb8bb 상태로 적용해 둔 개발 DB 가 있으면 flyway validate 실패 — 사람이 확인",
+      "tasks.json 의 AC 문구(이메일 가입 계정과 같은 이메일 자동 연결)가 ADR-0020 정책과 어긋남 — 갱신 필요"
+    ]
   },
   "rounds": [
     {
