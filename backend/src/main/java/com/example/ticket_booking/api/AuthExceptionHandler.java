@@ -3,13 +3,18 @@ package com.example.ticket_booking.api;
 import com.example.ticket_booking.api.dto.ErrorResponse;
 import com.example.ticket_booking.service.EmailAlreadyExistsException;
 import com.example.ticket_booking.service.InvalidCredentialsException;
+import com.example.ticket_booking.service.PendingSignupExpiredException;
+import com.example.ticket_booking.service.SocialAccountAlreadyLinkedException;
 import com.example.ticket_booking.service.UnauthenticatedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/** 인증 API 의 409·401 만 담당한다. 요청 검증 실패(400)는 전역인 PerformanceExceptionHandler 가 이미 같은 형식으로 처리한다. */
+/**
+ * 인증 API 의 409·401 만 담당한다(소셜 가입 완료 포함). 요청 검증 실패(400)는 전역인 PerformanceExceptionHandler 가 이미 같은 형식으로
+ * 처리한다.
+ */
 @RestControllerAdvice
 public class AuthExceptionHandler {
 
@@ -31,5 +36,19 @@ public class AuthExceptionHandler {
   public ResponseEntity<ErrorResponse> handleUnauthenticated(UnauthenticatedException exception) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(new ErrorResponse("UNAUTHORIZED", exception.getMessage()));
+  }
+
+  @ExceptionHandler(SocialAccountAlreadyLinkedException.class)
+  public ResponseEntity<ErrorResponse> handleSocialAccountAlreadyLinked(
+      SocialAccountAlreadyLinkedException exception) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ErrorResponse("SOCIAL_ACCOUNT_ALREADY_LINKED", exception.getMessage()));
+  }
+
+  @ExceptionHandler(PendingSignupExpiredException.class)
+  public ResponseEntity<ErrorResponse> handlePendingSignupExpired(
+      PendingSignupExpiredException exception) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body(new ErrorResponse("PENDING_SIGNUP_EXPIRED", exception.getMessage()));
   }
 }

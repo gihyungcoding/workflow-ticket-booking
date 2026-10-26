@@ -26,7 +26,8 @@ public class User {
   @Column(name = "email", nullable = false, unique = true, length = 255)
   private String email;
 
-  @Column(name = "password_hash", nullable = false, length = 255)
+  /** 소셜 전용 계정은 비밀번호가 없어 null 이다(V4). 이메일 로그인은 null 해시를 항상 실패로 본다. */
+  @Column(name = "password_hash", length = 255)
   private String passwordHash;
 
   @Column(name = "name", nullable = false, length = 100)
@@ -35,6 +36,10 @@ public class User {
   @Enumerated(EnumType.STRING)
   @Column(name = "role", nullable = false, length = 20)
   private UserRole role;
+
+  /** 이메일 소유가 확인된 계정인가. 이메일 가입은 false, 소셜 가입은 제공자가 검증했을 때만 true — 자동 연결 대상 판정에 쓴다(ADR-0020). */
+  @Column(name = "email_verified", nullable = false)
+  private boolean emailVerified;
 
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -47,6 +52,17 @@ public class User {
     this.passwordHash = passwordHash;
     this.name = name;
     this.role = role;
+  }
+
+  /** 이메일 소유가 확인된 계정인가 — 소셜 가입 완료 시 제공자의 emailVerified 를 저장한다. */
+  public User(
+      String email, String passwordHash, String name, UserRole role, boolean emailVerified) {
+    this(email, passwordHash, name, role);
+    this.emailVerified = emailVerified;
+  }
+
+  public boolean isEmailVerified() {
+    return emailVerified;
   }
 
   public Long getId() {

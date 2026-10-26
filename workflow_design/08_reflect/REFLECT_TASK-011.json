@@ -1,0 +1,146 @@
+{
+  "task_id": "TASK-011",
+  "keep": [
+    {
+      "what": "Phase 4 에서 실제 PostgreSQL 프로브와 code-reviewer 의 뿌리·변종 스윕을 같이 돌려 계정 선점(pre-account-hijacking) 결함을 병합 전에 잡았다",
+      "evidence": "VERIFY 1라운드 FAIL RC-1(변종 5)·RC-2(변종 3), 임시 테스트 PROBE A·B·C 로 재현"
+    },
+    {
+      "what": "승인된 테스트를 고쳐야 할 때 직접 고치지 않고 AskUserQuestion 으로 물은 뒤 HITL#1·#2 를 그 한 건에 한해 다시 받았고, 변이(복구 로직 제거)로 가짜 통과가 아님을 확인했다",
+      "evidence": "SC-05 Given 정정(d3b6a2f), TEST_TASK-011.json amendments"
+    },
+    {
+      "what": "저장소 파일을 만들지 않고 환경변수만 바꿔 기존 테스트 전체를 실제 PostgreSQL(Flyway V1~V4, validate)에서 돌렸다",
+      "evidence": "VERIFY evidence.pg_run — 소셜 콜백·/complete·SC-05 동시성 PG 통과, V4 백필 수동 확인"
+    }
+  ],
+  "problem": [
+    {
+      "what": "ADR-0014(이메일이 같으면 자동 연결)를 위협 모델 없이 받아들여 Phase 1~3 을 끝까지 갔고, Phase 4 에서 계정 선점으로 FAIL 해 2a→2b→3→4 를 전부 다시 돌았다",
+      "evidence": "VERIFY 1라운드 RC-1, ADR-0020 이 ADR-0014 를 일부 대체",
+      "phase": 4
+    },
+    {
+      "what": "2a 재진입에서 정책이 바뀐 개념(연결 대상 계정)을 쓰는 시나리오를 전수 대조하지 않아 SC-05 의 Given 이 ADR-0020 과 충돌한 채 Red 승인을 받았고, Green 에서 132/133 으로 드러나 HITL#1·#2 를 한 번 더 받았다",
+      "evidence": "TEST_TASK-011.json amendments, 커밋 d3b6a2f",
+      "phase": 3
+    },
+    {
+      "what": "check_root_causes.py 에 '사람이 ADR 로 수용한 잔여 위험'과 '아직 없는 기능의 변종'을 표현할 방법이 없어 Phase 4 도중 검사 스크립트를 고쳐야 했다",
+      "evidence": "커밋 9faa2c5, 2라운드 게이트 2건 위반",
+      "phase": 4
+    },
+    {
+      "what": "2라운드 code-reviewer 는 프로브를 실행하지 않고 코드 추적으로 해소를 판정해 변종 해소 증거를 내가 실행한 테스트로 보강해야 했다",
+      "evidence": "VERIFY code_review.probes_run_by_reviewer=false",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "정책이 바뀌어 2a 로 재진입할 때, 바뀐 개념을 쓰는 모든 시나리오의 Given 을 Grep 으로 대조하고 결과를 CP-2.2 decisions 에 적는다",
+      "target": ".claude/skills/wf-scenario/SKILL.md"
+    },
+    {
+      "what": "외부 신원(이메일 등)으로 계정을 동일시하거나 연결하는 설계는 Plan 에서 '누가 그 신원을 먼저 선점할 수 있는가'를 unresolved 에 적는다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "H2 테스트 스위트를 환경변수 오버라이드로 실제 DB 위에서 그대로 돌리는 방법과 제외할 자체 H2 컨텍스트 테스트를 증거 수집 절차에 적는다",
+      "target": ".claude/skills/wf-verify/references/evidence-integrity.md"
+    }
+  ],
+  "insights": [
+    "검증 정책을 정하는 ADR(자동 연결 같은 신원 동일시)은 구현 전에 공격자 관점으로 한 번 읽는다. 이번 FAIL 은 코드가 아니라 ADR 이 만든 구조였다",
+    "정책을 바꾼 롤백에서는 새 시나리오뿐 아니라 바뀐 개념을 쓰는 기존 시나리오가 함께 깨진다. 전수 대조가 없으면 그 비용은 Green 에서 나온다",
+    "공통 지점(SocialInputRules)으로 규칙을 모은 뒤에는 뿌리 2건의 변종 6개가 한 번에 해소됐다. 경로별 패치 대신 공통 지점을 고르는 규칙이 2라운드 PASS 를 만들었다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "ADR-0014 의 자동 연결 정책에 선점 위협을 묻지 않음 — 4 에서 FAIL 의 뿌리"
+    },
+    "2a": {
+      "retries": 1,
+      "note": "Phase 4 FAIL 롤백 재진입 1회, 독립검증 4라운드째 PASS, 이후 SC-05 Given 정정 HITL#1 1회 추가"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "롤백 재진입 — 구현이 있어 변이 검증 2건, 새 21건 중 6 실패·15 이미 통과, SC-05 정정 HITL#2 1회 추가"
+    },
+    "3": {
+      "retries": 1,
+      "note": "롤백 재진입 — 첫 실행 132/133(SC-05) 후 133/133. 최초 Green 은 132/132"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1라운드 FAIL(뿌리 2·변종 8), 2라운드 WARN 예외 승인(수용 위험 1·이관 1)"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "accessToken·pendingToken 을 리다이렉트 쿼리 문자열에 싣는 규약(명세 §4)",
+      "why_broader": "TASK-012(애플)·TASK-013(프론트)이 같은 규약을 쓴다. 접근 로그·히스토리·Referer 노출 대응(fragment, 일회용 코드 교환)을 한 번에 정해야 한다",
+      "evidence": "VERIFY F-5",
+      "suggested_title": "소셜 로그인 토큰 전달 방식",
+      "status": "proposed"
+    },
+    {
+      "decision": "문자열 입력의 조용한 변환 금지를 전역 역직렬화 정책으로 올릴지(현재 pendingToken 필드에만 StrictStringDeserializer)",
+      "why_broader": "ADR-0019 의 정본은 서버지만 TASK-009 엔드포인트는 숫자→문자열 변환이 남아 있다",
+      "evidence": "CP-3.4 decisions(전역 coercion 설정 기각)",
+      "suggested_title": "JSON 문자열 필드의 타입 엄격성",
+      "status": "proposed"
+    },
+    {
+      "decision": "프록시 뒤 콜백 주소(server.forward-headers-strategy)와 OAuth2 state 저장소",
+      "why_broader": "요청 조작 방어(SC-16·20)와 배포 환경(Render) 사이 상충이고 다중 인스턴스·애플 form_post 에도 걸린다",
+      "evidence": "DEV unresolved_for_phase4",
+      "suggested_title": "OAuth2 콜백 주소와 state 저장",
+      "status": "proposed"
+    }
+  ],
+  "architecture_drift": [],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-scenario/SKILL.md",
+      "section": "Step 4 (Phase 4 FAIL 로 들어왔다면)",
+      "change": "정책·정의가 바뀐 롤백이면 바뀐 개념(예: 연결 대상 계정)을 쓰는 모든 기존 시나리오의 Given·Then 을 Grep 으로 대조하고 결과를 CP-2.2 decisions 에 적는다",
+      "evidence": "TASK-011 SC-05 Given 이 ADR-0020 과 충돌한 채 Red 승인 → Green 에서 발견",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 1.5 / Step 4 unresolved",
+      "change": "이메일 등 외부 신원으로 계정을 동일시·연결하는 설계는 선점 가능성('누가 그 신원을 먼저 가질 수 있는가')을 unresolved 에 적고 관련 ADR 의 위협을 확인한다",
+      "evidence": "TASK-011 Phase 4 RC-1 — ADR-0014 자동 연결이 계정 선점 경로",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-verify/references/evidence-integrity.md",
+      "section": "§1 증거 수집",
+      "change": "H2 로 도는 스위트를 환경변수(SPRING_DATASOURCE_URL, SPRING_FLYWAY_ENABLED=true, SPRING_JPA_HIBERNATE_DDL_AUTO=validate)로 실제 DB 위에서 돌리는 방법과, 자체 H2 컨텍스트를 만드는 테스트는 환경 문제로 분리해 기록하는 방법을 적는다",
+      "evidence": "TASK-011 VERIFY evidence.pg_run — 133건 중 124 통과, 9건은 H2 컨텍스트에 PG Flyway 를 강제한 환경 문제",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": "scripts/check_root_causes.py",
+      "section": "accepted_risk · deferred_to",
+      "change": "변종에 accepted_risk(ADR 번호 필수)와 deferred_to(TASK ID)를 허용 — 프로젝트에는 적용했다. 스타터 저장소에도 같은 변경이 필요하다",
+      "evidence": "TASK-011 Phase 4 2라운드 게이트 위반 2건",
+      "status": "applied",
+      "applied_in": "9faa2c5",
+      "recurring": 0
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": true
+  }
+}

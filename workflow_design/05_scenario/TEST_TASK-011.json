@@ -1,0 +1,337 @@
+{
+  "task_id": "TASK-011",
+  "supersedes": "SCENARIO_TASK-011.json",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/SocialProviderConfigTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/WriteGuardSocialCompleteTest.java",
+    "backend/src/test/java/com/example/ticket_booking/support/FakeOAuth2User.java",
+    "backend/src/test/java/com/example/ticket_booking/support/PendingTokenTestHelper.java"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_sc01_처음_로그인하는_소셜_사용자는_가입_대기가_된다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 1,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError — pendingToken 에 emailVerified 클레임이 없다 (expected true but was null)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_sc02_이메일이_일치하고_검증됐으면_기존_계정에_연결하고_바로_로그인한다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 3,
+      "status": "red",
+      "failure": "UnsupportedOperationException — User.isEmailVerified 스켈레톤. 실제 getter 로 임시 교체해 보면 통과한다(동작은 이미 연결·로그인) — 변이 M2 로 가짜 통과가 아님을 증명"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_sc03_이메일이_같아도_검증되지_않았으면_연결하지_않고_가입_대기가_된다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 19,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어 — 변이 M1(제공자 검증 플래그 무시)으로 가짜 통과가 아님을 증명"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "test_sc04_이미_연결된_제공자_계정은_이메일이_바뀌거나_미검증이어도_같은_사용자로_로그인한다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "test_sc05_같은_제공자_계정의_콜백이_동시에_와도_연결_행은_하나다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Given 정정(amendments 참조). 구현이 이미 있어 통과 — 동시성 회귀 방어, 변이로 가짜 통과 아님 확인"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "test_sc06_제공자마다_다른_응답_구조에서_같은_필드를_뽑는다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 4,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "test_sc07_필수_값이_없거나_이상한_제공자_응답은_아무것도_만들지_않고_실패로_돌려보낸다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 68,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError (16 failures) — 이메일 형식·공백류·서식 문자 행이 실패 주소가 아니라 가입 대기로 통과한다"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "test_sc08_제공자_인증이_실패하거나_취소되면_실패_화면으로_돌려보낸다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 3,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "test_sc09_역할을_고르면_가입이_끝나고_로그인된다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 2,
+      "status": "red",
+      "failure": "UnsupportedOperationException — User.isEmailVerified 스켈레톤. 실제 getter 로 임시 교체하면 AUDIENCE·ORGANIZER(emailVerified=true) 행이 '저장된 email_verified false' 로 실패한다 (가입 완료가 클레임을 무시)"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "test_sc10_만료되거나_위조된_pendingToken_은_401_이고_아무것도_만들지_않는다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 20,
+      "status": "red",
+      "failure": "ServletException(DataIntegrityViolationException: Value too long) — 서명은 맞지만 길이 규칙 밖인 값을 검증하지 않아 DB 오류 500. emailVerified 클레임·이메일 형식·NUL·서로게이트 행도 같은 이유로 401 이 아니다"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "test_sc11_가입_완료_요청의_형식이_틀리면_400_이다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 15,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "test_sc12_가입_완료_시점에_이미_있는_이메일_연결은_409_이고_아무것도_만들지_않는다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 3,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "test_sc13_같은_pendingToken_으로_가입_완료가_동시에_와도_사용자는_하나만_생긴다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_function": "test_sc14_pendingToken_은_일반_API_의_인증_토큰으로_쓸_수_없다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 4,
+      "status": "already_passing",
+      "note": "구조적으로 Red 불가 — AC7 의 '일반 API 에서 pendingToken 거부'는 TASK-009 의 typ=access 검증이 이미 충족한다. 변이 검증으로 가짜 통과가 아님을 증명(typ 검증 제거 시 실패)",
+      "failure": null
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_function": "test_sc15_비밀번호가_없는_소셜_전용_계정으로_이메일_로그인하면_401_이다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 2,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_function": "test_sc16_제공자_설정이_있는_제공자만_인가_요청을_받는다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/SocialProviderConfigTest.java",
+      "cases": "설정 7 × 제공자 3 + 요청 조작 2 + 경로 4",
+      "status": "already_passing",
+      "config_applied_via": "SpringApplicationBuilder(TicketBookingApplication).web(SERVLET).properties(Map) — 환경변수를 @Value 가 읽는 기본 프로퍼티로 주입, 공백 값이 명령행 파싱에서 사라지지 않게 인자가 아닌 맵으로 전달. 케이스마다 새 컨텍스트(H2 DB 이름 분리)",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_function": "test_sc17_기존_이메일_인증과_공연_API_는_그대로_동작한다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "cases": 4,
+      "status": "already_passing",
+      "note": "기존 이메일 가입·로그인·me·공연 API 를 지키는 회귀 시나리오 — 구현 전에도 통과. 변이 검증으로 증명(signup permitAll 제거·공연 API 인증 요구 시 실패)",
+      "failure": null
+    },
+    {
+      "scenario_id": "SC-18",
+      "test_function": "test_sc18_쓰기_가드가_켜져_있으면_가입_완료도_키가_있어야_한다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/WriteGuardSocialCompleteTest.java",
+      "cases": 4,
+      "status": "already_passing",
+      "config_applied_via": "@SpringBootTest(properties={\"WRITE_GUARD_ENABLED=true\",\"WRITE_API_KEY=server-key\"})",
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어",
+      "failure": null
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_function": "test_sc19_프론트_기준_주소_환경변수가_이상하면_기동하지_않거나_정리해서_쓴다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/SocialProviderConfigTest.java",
+      "cases": 18,
+      "status": "already_passing",
+      "config_applied_via": "SpringApplicationBuilder(TicketBookingApplication).web(SERVLET).properties(Map) — 환경변수를 @Value 가 읽는 기본 프로퍼티로 주입, 공백 값이 명령행 파싱에서 사라지지 않게 인자가 아닌 맵으로 전달. 케이스마다 새 컨텍스트(H2 DB 이름 분리)",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_function": "test_sc20_콜백_요청을_조작해도_리다이렉트_주소는_설정값에서만_나온다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 27,
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_function": "test_sc21_이메일_소유가_확인되지_않은_계정은_자동_연결_대상이_아니다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "cases": 3,
+      "status": "red",
+      "failure": "UnsupportedOperationException — User.isEmailVerified 스켈레톤. 실제 getter 로 임시 교체하면 9건 실패: 3개 출발점 모두에서 구글 검증 로그인이 가입 대기가 아니라 로그인 주소로 이동하고 social_accounts 행이 생긴다"
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && ./gradlew cleanTest test",
+    "total": 133,
+    "failed": 6,
+    "passed": 127,
+    "new_tests": 21,
+    "new_failed": 6,
+    "new_already_passing": [
+      "SC-03",
+      "SC-04",
+      "SC-05",
+      "SC-06",
+      "SC-08",
+      "SC-11",
+      "SC-12",
+      "SC-13",
+      "SC-14",
+      "SC-15",
+      "SC-16",
+      "SC-17",
+      "SC-18",
+      "SC-19",
+      "SC-20"
+    ],
+    "existing_tests_still_passing": true,
+    "existing_tests": 112,
+    "note": "새 테스트 21건 중 6건 실패(SC-01·02·07·09·10·21). 나머지 15건은 Phase 3 구현이 이미 있어 통과한다. 기존 112건 전부 통과. 스켈레톤: User.isEmailVerified 가 던진다 — SC-02·09·21 의 UnsupportedOperationException 은 이것이고, 임시로 실제 getter 로 바꿔 보면 SC-09·21 은 동작 결함(저장값 불일치·연결 발생)으로 실패, SC-02 는 통과"
+  },
+  "inventory_check": {
+    "scenarios": 21,
+    "test_functions": 21,
+    "match": true,
+    "method": "새 테스트 4개 클래스의 'void test_scNN' 21개 ID 와 SCENARIO_TASK-011.json 의 id 21개를 정렬해 비교 — 일치"
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/build.gradle (spring-boot-starter-security-oauth2-client 추가 — OAuth2AuthenticationToken 등 테스트 컴파일에 필요)",
+      "domain/SocialProvider.java (enum)",
+      "domain/SocialAccount.java (엔티티: 구조 애노테이션만, 제약 없음, 접근자 던지기)",
+      "repository/SocialAccountRepository.java (인터페이스)",
+      "service/SocialProfile.java·SocialLoginResult.java (값 레코드)",
+      "service/PendingSignupExpiredException.java·SocialAccountAlreadyLinkedException.java",
+      "api/dto/CompleteSocialSignUpRequest.java (검증 애노테이션 없음)",
+      "service/AuthService.java (loginWithSocial·completeSocialSignUp 던지기)",
+      "config/JwtTokenProvider.java (issuePendingToken·verifyPendingToken 던지기, PendingSignup 레코드)",
+      "config/CustomOAuth2UserService.java (toProfile 던지기)",
+      "config/OAuth2LoginSuccessHandler.java·OAuth2LoginFailureHandler.java (생성자는 필드 대입, 핸들러 메서드 던지기)",
+      "domain/User.java (email_verified 필드·5-인자 생성자·isEmailVerified 던지기 — 컬럼 제약·마이그레이션은 Phase 3, Phase 4 롤백 재진입)"
+    ],
+    "contents": "시그니처·필드·enum 상수·레코드와 던지기 한 줄만. 스키마 제약(NOT NULL·UNIQUE(provider, provider_user_id)·길이)·검증 애노테이션(@NotBlank·@NotNull)·User.passwordHash nullable 은 넣지 않았다(Phase 3). SecurityConfig·AuthController·AuthExceptionHandler 는 건드리지 않았다",
+    "purity_check": "UnsupportedOperationException 으로 실패한 테스트 9건(SC-01~08·20) == 스켈레톤 핸들러를 지나는 테스트 9건. 나머지 실패 9건은 스켈레톤에 도달하기 전의 부재(엔드포인트 404·제공자 미등록·핸들러 빈 없음·NOT NULL 스키마)로 실패 — 스켈레톤에 로직이 들어갔다는 신호가 아니다"
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + Spring Boot Test(@SpringBootTest, MockMvc, SpringApplicationBuilder) + AssertJ(SoftAssertions), H2 MODE=PostgreSQL",
+    "mock_strategy": "제공자 서버 없음 — FakeOAuth2User 에 attributes 를 담아 성공·실패 핸들러를 직접 실행. pendingToken 은 구현의 issuePendingToken 에 기대지 않고 Nimbus 로 직접 서명(PendingTokenTestHelper). 시각은 MutableClock. 동시성은 래치로 같은 시점 시작"
+  },
+  "mutation_check": [
+    {
+      "mutation": "JwtTokenProvider.accessTypeValidator 가 항상 성공",
+      "killed": "SC-14",
+      "note": "처음에는 통과했다 — sub=1 사용자가 DB 에 없어 /me 가 사용자 조회 실패로 401 을 내 typ 검증이 지워져도 가려졌다. 테스트가 실제 사용자 id 를 sub 로 갖는 typ=pending 토큰을 쓰도록 강화한 뒤 사망"
+    },
+    {
+      "mutation": "SecurityConfig permitAll 에서 /api/auth/signup 제거",
+      "killed": "SC-17"
+    },
+    {
+      "mutation": "SecurityConfig permitAll 에서 /api/performances/** 제거",
+      "killed": "SC-17, SC-14"
+    },
+    {
+      "mutation": "WriteGuardFilter 가 /api/auth/social 경로를 면제",
+      "killed": "SC-18 (키가 틀린 행: 실패 3→6)"
+    }
+  ],
+  "mutations_reverted": "변이는 /tmp 백업으로 원복하고 diff 로 확인했다. 변이는 커밋하지 않는다",
+  "risks_for_green": [
+    "핸들러는 Spring 빈이어야 한다 — SC-19 가 컨텍스트에서 getBean(OAuth2LoginSuccessHandler.class) 로 기준 주소 적용을 확인한다. 생성자 시그니처는 OAuth2LoginSuccessHandler(AuthService, String frontendBaseUrl), OAuth2LoginFailureHandler(String frontendBaseUrl), 테스트가 new 로도 만든다",
+    "성공 핸들러는 OAuth2AuthenticationToken 의 principal attributes 와 authorizedClientRegistrationId(kakao·naver·google)로 CustomOAuth2UserService.toProfile 을 호출하고, 이상한 속성은 예외를 던지지 않고 실패 주소(/login?error=social)로 리다이렉트한다(SC-07). DefaultOAuth2User 가 아닌 임의 OAuth2User 를 받는다",
+    "속성 타입을 엄격히 본다: 문자열이어야 할 값의 숫자·불리언·객체·배열은 실패, 카카오 id 는 Integer·Long·BigInteger 가 올 수 있다(Long 범위의 양의 정수만 통과, Double 1.5 는 실패), 검증 플래그는 Boolean.TRUE 만",
+    "이메일 정규화는 trim(U+0020)+toLowerCase(Locale.ROOT) 뒤 길이 255 — 'İ' 는 소문자화로 두 글자가 된다. 제어문자·짝 없는 서로게이트는 변환 전 원문에서 거부하고(앞 NUL 포함) trim 이 지우지 못하게 한다",
+    "SocialAccount 에 UNIQUE(provider, provider_user_id)·NOT NULL·길이를, User.passwordHash 를 nullable 로 — 테스트 스키마는 H2 가 엔티티 애노테이션에서 만든다(ADR-0006). SC-15 의 Given 은 new User(email, null, ...) 를 저장한다",
+    "동시성(SC-05·13): 유니크 위반은 SQLState 23505 로 구분해 재조회(재로그인)·409 로 바꾼다. 클래스 레벨 @Transactional 을 두지 않는다",
+    "제공자 설정이 하나도 없으면 FRONTEND_BASE_URL 이 미설정이어도 기동(SC-19), 설정이 있는데 기준 주소가 이상하면 기동 실패하고 예외 체인 메시지에 FRONTEND_BASE_URL(SC-19). 등록은 공백 제거 뒤 ID·SECRET 이 둘 다 있을 때만(SC-16), 미등록 제공자 경로는 404",
+    "SC-16 의 기동은 케이스마다 새 컨텍스트라 느리다(전체 약 1분 40초). Green 이 컨텍스트 기동을 불필요하게 무겁게 만들지 않게 주의",
+    "[롤백 재진입] users.email_verified 를 V4 마이그레이션(새 컬럼 NOT NULL DEFAULT false)과 User 엔티티에 추가한다. 이메일 가입은 false, 소셜 가입 완료는 pendingToken.emailVerified",
+    "[롤백 재진입] 자동 연결(loginWithSocial)은 users.email_verified=true 인 계정에만 — 아니면 pendingToken. issuePendingToken·PendingSignup 에 emailVerified 를 싣고 verifyPendingToken 이 불리언인지 검증",
+    "[롤백 재진입] 이메일/이름/providerUserId 규칙은 공통 지점 한 곳(예: SocialProfile 생성 시점)에 두고 toProfile 과 verifyPendingToken 이 같이 쓴다. 이메일 형식: 정확히 하나의 @, 앞뒤 비어 있지 않음, 공백류(Z*)·서식 문자(Cf) 거부",
+    "[롤백 재진입] SC-10 의 새 행은 mockMvc 가 처리되지 않은 예외를 그대로 던지는 현재 상태(500)에서는 첫 행에서 중단된다 — Green 이후 전 행이 401 로 모두 평가된다",
+    "[롤백 재진입] SocialProfile 에는 이미 emailVerified 가 있다. PendingTokenTestHelper.signed 는 기본으로 emailVerified=true 클레임을 넣는다 — 기존 SC-10 행(provider=FOO 등)이 emailVerified 누락 때문에 우연히 401 이 되는 가짜 통과를 막는다"
+  ],
+  "human_review": {
+    "approved": true
+  },
+  "red_retry": {
+    "round": 2,
+    "reason": "Phase 4 1차 FAIL 롤백(RC-1·RC-2) → Phase 2a 재진입 → 시나리오 21건 승인(2026-10-26)",
+    "note": "구현(Phase 3)이 이미 있다 — 바뀐 행 중 현재 동작과 다른 것만 Red 이고, 나머지는 이미 통과한다",
+    "changed_scenarios": [
+      "SC-01",
+      "SC-02",
+      "SC-03",
+      "SC-07",
+      "SC-09",
+      "SC-10"
+    ],
+    "added_scenarios": [
+      "SC-21"
+    ],
+    "mutation_check": [
+      {
+        "mutation": "AuthService.loginWithSocial 이 제공자 검증 플래그(emailVerified)를 무시하고 항상 이메일로 연결",
+        "killed": "SC-03",
+        "note": "SC-03 만 실패(SC-02·04 통과)"
+      },
+      {
+        "mutation": "AuthService.loginWithSocial 이 자동 연결을 아예 하지 않음",
+        "killed": "SC-02",
+        "note": "SC-02 만 실패(SC-03·04 통과). 검증용으로 User.isEmailVerified 를 임시로 실제 값으로 바꿔 실행했다"
+      }
+    ],
+    "mutations_reverted": "변이와 임시 getter 교체를 원복했다 (git diff 로 main 은 User.java 스켈레톤 +15줄만 남음)"
+  },
+  "amendments": [
+    {
+      "scenario_id": "SC-05",
+      "when": "2026-10-26 (Phase 3 재진입 중)",
+      "change": "Given: 이메일로 가입한 사용자 A → 제공자 검증 소셜 가입 사용자 A(email_verified=true). 단언·When 불변",
+      "reason": "2a 재진입에서 SC-02·03 만 연결 대상을 바꾸고 SC-05 를 놓쳤다. ADR-0020 에서 이메일 가입자는 자동 연결 대상이 아니라 Green 에서 가입 대기가 되어 실패(133건 중 유일)",
+      "observed_failure": "변경 전 Given 으로 SC-05 실패: 두 응답 모두 pendingToken 으로 이동(token 기대)",
+      "mutation_check": "AuthService.loginWithSocial 의 UNIQUE 위반 복구를 제거(항상 rethrow)하면 SC-05 FAILED, 원복 후 소스 diff 없음",
+      "approved_hitl1": true,
+      "approved_hitl2": true,
+      "approved_by": "AskUserQuestion 응답(사용자)"
+    }
+  ]
+}

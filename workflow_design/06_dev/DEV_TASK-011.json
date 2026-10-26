@@ -1,0 +1,196 @@
+{
+  "task_id": "TASK-011",
+  "changed_files": [
+    {
+      "path": "backend/src/main/resources/db/migration/V4__create_social_accounts.sql",
+      "change": "users.password_hash NOT NULL 해제, social_accounts 테이블(FK ON DELETE CASCADE, UNIQUE(provider, provider_user_id)); users.email_verified BOOLEAN NOT NULL DEFAULT false 추가 (V4 미병합이라 같은 파일에 편집)",
+      "lines_changed": 12
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/SocialAccount.java",
+      "change": "스켈레톤 → 실제 엔티티. NOT NULL·길이·UNIQUE 제약, 접근자",
+      "lines_changed": 40
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+      "change": "passwordHash nullable(소셜 전용 계정), email_verified(NOT NULL) 필드와 isEmailVerified()",
+      "lines_changed": 3
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+      "change": "loginWithSocial(재로그인·자동 연결·가입 대기, 트랜잭션 없이 UNIQUE 경합은 재조회), completeSocialSignUp(pendingToken 검증→이메일·연결 중복 409→users·social_accounts 생성), login 의 null 해시 가드; 자동 연결을 대상 계정 email_verified=true 로 한정, pendingToken 에 emailVerified 전달, /complete 가 저장",
+      "lines_changed": 113
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "change": "pendingToken 발급(typ=pending, 5분)·검증, 용도별 디코더(typeValidator 일반화); emailVerified 클레임(Boolean 만 허용), 검증 시 SocialInputRules 재적용",
+      "lines_changed": 60
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/CustomOAuth2UserService.java",
+      "change": "제공자별 attributes → SocialProfile 정규화. 문자열 규칙은 SocialInputRules 에 위임",
+      "lines_changed": 135
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginSuccessHandler.java",
+      "change": "판정 결과를 {FRONTEND_BASE_URL}/oauth2/redirect?token|pendingToken 으로, 이상한 응답은 /login?error=social 로 리다이렉트",
+      "lines_changed": 50
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginFailureHandler.java",
+      "change": "실패·취소 → {FRONTEND_BASE_URL}/login?error=social",
+      "lines_changed": 18
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
+      "change": "제공자 환경변수 쌍이 있는 제공자만 등록(ClientRegistrationRepository), 핸들러 빈, FRONTEND_BASE_URL 검증·정리, 미등록 제공자 경로 404 용 resolver (Plan 에 없는 새 파일 — scope_deviations)",
+      "lines_changed": 210
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+      "change": "/api/auth/social/complete·/oauth2/**·/login/oauth2/** permitAll, 제공자가 있을 때만 oauth2Login(핸들러·resolver·loginPage)",
+      "lines_changed": 35
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+      "change": "POST /api/auth/social/complete",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+      "change": "PENDING_SIGNUP_EXPIRED(401), SOCIAL_ACCOUNT_ALREADY_LINKED(409)",
+      "lines_changed": 16
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/CompleteSocialSignUpRequest.java",
+      "change": "@NotBlank·@NotNull, pendingToken 은 StrictStringDeserializer",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/StrictStringDeserializer.java",
+      "change": "JSON 문자열만 받는 역직렬화기 — 숫자·불리언이 문자열로 조용히 바뀌어 400 대신 401 이 되는 것을 막는다 (Plan 에 없는 새 파일 — scope_deviations)",
+      "lines_changed": 25
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SocialInputRules.java",
+      "change": "외부 문자열(이메일·이름·providerUserId) 규칙의 공통 지점 — 타입·제어문자·서로게이트·길이, 이메일 형식(@ 하나, 양쪽 비어 있지 않음)·공백류(Z*)·서식 문자(Cf) 거부 (Plan 에 없는 새 파일 — scope_deviations)",
+      "lines_changed": 85
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "symbol": "notExpiredValidator·encoder",
+      "note": "pendingToken 도 같은 키·같은 만료 판단(skew 0, 정각 만료)을 쓴다"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+      "symbol": "isUniqueViolation·toResponse",
+      "note": "SQLState 23505 로 경합 판정"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java",
+      "symbol": "WriteGuardFilter",
+      "note": "/complete 가드는 기존 필터가 이미 처리(SC-18)"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "./gradlew cleanTest test",
+    "total": 133,
+    "passed": 133,
+    "failed": 0,
+    "skipped": 0,
+    "target_tests_passed": 21,
+    "summary": "새 테스트 21건 + 기존 112건 모두 통과. 재진입 첫 실행 132/133 — SC-05 Given 이 ADR-0020 과 충돌(시나리오 정정, TEST amendments)"
+  },
+  "lint": {
+    "command": "./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "errors": 0,
+    "warnings": 3,
+    "no_target": [],
+    "files_scanned": 251,
+    "note": "경고 3건은 기존 프론트 파일의 DESIGN-003 (이 태스크 범위 밖)"
+  },
+  "refactoring": [
+    {
+      "what": "login() 과 completeSocialSignUp() 이 같은 LoginResponse 조립을 쓰도록 toLoginResponse 로 추출",
+      "why": "토큰 발급·응답 조립이 두 곳에서 같은 모양으로 반복되던 것을 한 곳에 둔다"
+    },
+    {
+      "what": "JwtTokenProvider 의 디코더 생성을 decoderFor(key, clock, type) 로 일반화",
+      "why": "access·pending 이 같은 키·만료 판단에 용도(typ)만 달라 한 지점에서 만든다"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
+      "reason": "Plan 은 제공자 등록을 SecurityConfig 에 두려 했으나 조건부 빈 4개(등록소·resolver·핸들러 2종)와 URL 검증이 커서 별도 설정 클래스로 분리했다. SecurityConfig 는 체인 구성만 맡는다"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/StrictStringDeserializer.java",
+      "reason": "SC-11 의 pendingToken 숫자·불리언 행이 400 이어야 하는데 Jackson 은 이를 문자열로 바꿔 받아 401 이 됐다. 전역 coercion 설정은 TASK-009 엔드포인트의 동작까지 바꾸므로 이 필드에만 적용했다"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+      "reason": "생성자를 소셜 저장소를 받는 4-인자로 확장하되, 승인된 기존 테스트(AuthServiceSignUpFailureTest)가 3-인자 생성자를 쓰므로 3-인자 생성자를 남겼다(소셜 메서드는 4-인자일 때만 동작)"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SocialInputRules.java",
+      "reason": "RC-2 변종(소셜 이메일 형식·서식 문자, 위조 pendingToken 의 DB 오류·'?' 치환)을 공통 지점에서 막기 위한 새 파일"
+    }
+  ],
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-1 이메일 소유가 증명되지 않은 계정이 자동 연결 대상 (ADR-0020)",
+      "variants": [
+        "이메일 가입 선점 후 피해자 소셜 로그인",
+        "미검증 소셜 가입 선점",
+        "네이버(검증 플래그 없음) 계정 선점"
+      ],
+      "tests": [
+        "SC-21 (Origin 3종: EMAIL_SIGNUP·KAKAO_UNVERIFIED·NAVER)",
+        "SC-02",
+        "SC-03",
+        "SC-09 (emailVerified 저장 행)",
+        "SC-01 (emailVerified 클레임)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "AuthService.loginWithSocial — 연결 조건 profile.emailVerified && target.isEmailVerified (단일 판정 지점)",
+        "AuthService.completeSocialSignUp — 검증 여부를 users.email_verified 로 저장",
+        "JwtTokenProvider.issuePendingToken/verifyPendingToken — emailVerified 클레임(Boolean 만)",
+        "V4 + User — users.email_verified NOT NULL DEFAULT false"
+      ]
+    },
+    {
+      "root_cause": "RC-2 외부 문자열 규칙이 경로마다 달라 한쪽을 통과한 값이 다른 쪽에서 DB 오류·다른 값이 됨",
+      "variants": [
+        "소셜 이메일 형식 미검증(@ 없음·여러 개·빈 양쪽)",
+        "공백류·서식 문자(NBSP·제로폭·방향 제어)",
+        "서명된 pendingToken 의 규칙 밖 값(길이·NUL·서로게이트·형식)"
+      ],
+      "tests": [
+        "SC-07 (이메일 행)",
+        "SC-10 (claimsRow 행)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "SocialInputRules.email/name/providerUserId — toProfile(CustomOAuth2UserService)과 verifyPendingToken(JwtTokenProvider)이 같은 지점을 호출"
+      ]
+    }
+  ],
+  "unresolved_for_phase4": [
+    "OAuth2 인가 요청(state)은 기본 HttpSession 에 저장된다 — STATELESS 정책과 무관하게 세션을 만든다. 단일 인스턴스에서는 동작하나 다중 인스턴스·애플 form_post(TASK-012)에는 쿠키 저장소가 필요할 수 있다",
+    "콜백 주소는 {baseUrl}(요청에서 유도)이다. 프록시(Render) 뒤에서 X-Forwarded-Proto 를 해석하지 않으면 http 로 만들어져 제공자에 등록한 https 주소와 어긋날 수 있다 — 배포 전 server.forward-headers-strategy 를 정해야 한다(요청 조작 방어(SC-16)와 상충하므로 ADR 후보)",
+    "PostgreSQL 실제 프로브(V4 마이그레이션·UNIQUE·FK·전 문자열 입력)는 Phase 4 필수 — H2 는 V4 SQL 을 실행하지 않는다",
+    "재검증 필수: 실제 PostgreSQL 로 V4 수정본 실행(email_verified 컬럼 NOT NULL DEFAULT false, 기존 users 행 백필 false)과 loginWithSocial 의 자동 연결·동시 콜백 경로 프로브. 이전 라운드는 /complete 경로만 PG 로 확인했다",
+    "롤백 라운드 root_causes(RC-1 3종·RC-2 3종)를 code-reviewer 에 이어받게 하고 수정 커밋을 최소 1회 다시 리뷰"
+  ],
+  "rollback_note": "SC-05 의 Given 이 2a 재진입에서 누락된 ADR-0020 불일치였음 — 사용자 승인으로 시나리오·테스트 Given 만 정정(TEST_TASK-011.json amendments)"
+}

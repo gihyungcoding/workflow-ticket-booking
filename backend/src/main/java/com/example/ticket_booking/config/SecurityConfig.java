@@ -4,6 +4,7 @@ import com.example.ticket_booking.api.dto.ErrorResponse;
 import jakarta.servlet.DispatcherType;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -40,7 +43,13 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(
-      HttpSecurity http, JwtTokenProvider jwtTokenProvider) throws Exception {
+      HttpSecurity http,
+      JwtTokenProvider jwtTokenProvider,
+      ObjectProvider<ClientRegistrationRepository> clientRegistrations,
+      ObjectProvider<OAuth2AuthorizationRequestResolver> authorizationRequestResolver,
+      ObjectProvider<OAuth2LoginSuccessHandler> successHandler,
+      ObjectProvider<OAuth2LoginFailureHandler> failureHandler)
+      throws Exception {
     http.csrf(csrf -> csrf.disable())
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -55,7 +64,14 @@ public class SecurityConfig {
                     // 이것까지 인증을 요구하면 기존 오류 응답이 모두 401 로 바뀐다. 원래 요청의 인가는 REQUEST 디스패치에서 이미 끝났다.
                     .dispatcherTypeMatchers(DispatcherType.ERROR)
                     .permitAll()
-                    .requestMatchers("/api/performances/**", "/api/auth/signup", "/api/auth/login")
+                    .requestMatchers(
+                        "/api/performances/**",
+                        "/api/auth/signup",
+                        "/api/auth/login",
+                        "/api/auth/social/complete")
+                    .permitAll()
+                    // 소셜 로그인 시작·콜백 경로. 제공자가 등록되지 않은 경로가 401 이 아니라 404 로 떨어지게 열어 둔다
+                    .requestMatchers("/oauth2/**", "/login/oauth2/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -63,6 +79,20 @@ public class SecurityConfig {
         .addFilterBefore(
             new JwtAuthenticationFilter(jwtTokenProvider),
             UsernamePasswordAuthenticationFilter.class);
+    // 제공자가 하나도 설정되지 않았으면 OAuth2 로그인 필터를 아예 달지 않는다(이메일 인증만 동작)
+    if (clientRegistrations.getIfAvailable() != null) {
+      // loginPage 를 지정해 Spring 이 만드는 기본 로그인 화면(/login)을 열지 않는다 — 로그인 화면은 프론트에 있다
+      http.oauth2Login(
+          login ->
+              login
+                  .loginPage("/login")
+                  .authorizationEndpoint(
+                      endpoint ->
+                          endpoint.authorizationRequestResolver(
+                              authorizationRequestResolver.getObject()))
+                  .successHandler(successHandler.getObject())
+                  .failureHandler(failureHandler.getObject()));
+    }
     return http.build();
   }
 

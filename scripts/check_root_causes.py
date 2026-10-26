@@ -16,13 +16,16 @@ UNIQUE 위반으로 취급하는 catch" 가 뿌리였다. 증상 하나를 고�
 -----------
 - `root_causes` 의 구조 (id, 요약, 변종 목록 또는 변종이 없는 사유, 변종마다 출처·프로브 결과)
 - FAIL 이면 `root_causes` 가 비어 있지 않다 — 결함이 있다는 판정에 뿌리가 없을 수 없다
-- FAIL 이 아니면 **재현된 변종은 모두 해소(resolved)** 되어 있고 근거가 있다
+- FAIL 이 아니면 **재현된 변종은 모두 해소(resolved)** 되어 있고 근거가 있다.
+  고치지 않기로 한 변종은 `accepted_risk` 에 **수용한 결정(ADR 번호)** 을 적으면 해소와 같게
+  본다 — 사람이 승인한 정책의 결과여야 하며 resolved 로 적지 않는다
 - 이전에 커밋된 VERIFY 에 있던 뿌리·변종이 지금 파일에서 **사라지지 않았다** —
   불리한 항목을 지워 PASS 로 가는 길을 막는다
 - **이전 라운드에서 `not_probed` 였던 변종은 이번 라운드에 프로브되어 있다.** 프로브하지
   않은 채 넘긴 변종이 다음 FAIL 이 됐다 — TASK-009 3차에 "password 의 짝 없는 서로게이트" 를
   "영향 없다고 판단" 하고 건너뛰었고, 그것이 4차 FAIL(로그인 비밀번호 200)이었다.
-  Phase 3 가 그 변종의 테스트를 쓰는 것이 프로브다. `not_reproduced` 로 바꾸려면 그것을 보인
+  Phase 3 가 그 변종의 테스트를 쓰는 것이 프로브다. 아직 없는 기능의 변종은 `deferred_to` 에
+  그 기능을 만드는 태스크 ID 를 적어 넘긴다. `not_reproduced` 로 바꾸려면 그것을 보인
   테스트를 `evidence` 에 적는다
 
 "이전 라운드" 는 그 VERIFY 버전 이후 이 브랜치에서 소스가 바뀐 경우다. Phase 4 는 코드를
@@ -184,7 +187,7 @@ def validate_record(data: dict) -> tuple[list[str], dict]:
 
             if probe == "reproduced":
                 stats["reproduced"] += 1
-                if resolved is not True:
+                if resolved is not True and not _accepted(v):
                     stats["unresolved_reproduced"] += 1
                     # FAIL 은 아직 고치기 전이라 정상이다. 그 밖의 판정은 안 된다.
                     if status != "FAIL":
@@ -193,6 +196,22 @@ def validate_record(data: dict) -> tuple[list[str], dict]:
                             "고치고 resolved: true 와 evidence 를 적거나, status 를 FAIL 로 둔다"
                         )
     return problems, stats
+
+
+ADR_REF = re.compile(r"ADR-\d{4}")
+TASK_REF = re.compile(r"^TASK-\d{3,}$")
+
+
+def _accepted(v: dict) -> bool:
+    """수용한 결정(ADR 번호)을 근거로 해소하지 않기로 한 변종."""
+    risk = v.get("accepted_risk")
+    return isinstance(risk, str) and bool(ADR_REF.search(risk))
+
+
+def _deferred(v: dict) -> bool:
+    """아직 없는 기능의 변종 — 만들 태스크 ID 로 이관했다."""
+    target = v.get("deferred_to")
+    return isinstance(target, str) and bool(TASK_REF.match(target))
 
 
 def _git(*args: str) -> str | None:
@@ -285,6 +304,8 @@ def unprobed_followup_problems(data: dict, keys: set[tuple[str, str]]) -> list[s
         if v is None:
             continue  # 사라진 변종은 carried_forward_problems 가 이미 잡는다
         probe = v.get("probe")
+        if probe == "not_probed" and _deferred(v):
+            continue
         if probe == "not_probed":
             problems.append(
                 f"{rc_id}: 이전 라운드에서 프로브하지 않은 변종이 아직 not_probed 다 — {case!r}. "
