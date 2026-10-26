@@ -131,8 +131,9 @@
       "section": "test_strategy",
       "change": "테스트 DB 가 운영 DB 와 다르고 입력이 저장·비교되는 태스크는 운영과 같은 엔진의 통합 테스트(ADR-0006)를 test_strategy 에 필수로 적고, 없으면 사유를 unresolved 에 남긴다",
       "evidence": "TASK-009 H2 112/112 통과 상태에서 PostgreSQL 결함 3회",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "f4910e7"
     },
     {
       "target": "scripts/check_root_causes.py",
