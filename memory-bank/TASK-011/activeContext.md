@@ -46,3 +46,13 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 - 크기: 16h 로 정상 WRU 범위(4~16h)의 상한이다. 시나리오가 기준선(8~12)을 넘으면 2a 에서 사용자에게 알린다
 - 열린 회고 개선안 7건은 서로 다른 대상이라 시작을 막지 않는다 (TASK-009 #1·#2, TASK-010 #0~#3, TASK-015 #1)
 - TASK-010 브랜치의 로컬 커밋 `14b74ba`(PR 정보 기록)는 푸시되지 않은 채 그 브랜치에 남아 있다 — PR #21 은 이미 머지됐다
+
+## Pull Request
+
+```yaml
+pull_request:
+  number: 22
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/22"
+  base: develop
+  opened_at: 2026-10-26
+```
