@@ -117,7 +117,7 @@
       "type": "boundary",
       "title": "같은 제공자 계정의 콜백이 동시에 와도 연결 행은 하나다",
       "given": [
-        "이메일로 가입한 사용자 A(`hong@example.com`)가 있고 `social_accounts` 는 비어 있다",
+        "제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(`hong@example.com`, `email_verified=true`)가 있고 `social_accounts` 는 비어 있다",
         "구글이 `{\"sub\":\"g-5\",\"email\":\"hong@example.com\",\"email_verified\":true,\"name\":\"길동\"}` 를 돌려주는 콜백 두 건이 동시에 들어온다"
       ],
       "when": [

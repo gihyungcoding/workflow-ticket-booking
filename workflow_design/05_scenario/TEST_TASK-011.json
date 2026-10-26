@@ -52,7 +52,7 @@
       "cases": 1,
       "status": "already_passing",
       "failure": null,
-      "note": "Phase 3 구현이 이미 있어 통과 — 이번 롤백에서 바뀐 행이 아니거나(Phase 3 에서 Red→Green 확인됨) 바뀐 Given 이 현재 동작과 일치한다. 회귀 방어"
+      "note": "Given 정정(amendments 참조). 구현이 이미 있어 통과 — 동시성 회귀 방어, 변이로 가짜 통과 아님 확인"
     },
     {
       "scenario_id": "SC-06",
@@ -320,5 +320,18 @@
       }
     ],
     "mutations_reverted": "변이와 임시 getter 교체를 원복했다 (git diff 로 main 은 User.java 스켈레톤 +15줄만 남음)"
-  }
+  },
+  "amendments": [
+    {
+      "scenario_id": "SC-05",
+      "when": "2026-10-26 (Phase 3 재진입 중)",
+      "change": "Given: 이메일로 가입한 사용자 A → 제공자 검증 소셜 가입 사용자 A(email_verified=true). 단언·When 불변",
+      "reason": "2a 재진입에서 SC-02·03 만 연결 대상을 바꾸고 SC-05 를 놓쳤다. ADR-0020 에서 이메일 가입자는 자동 연결 대상이 아니라 Green 에서 가입 대기가 되어 실패(133건 중 유일)",
+      "observed_failure": "변경 전 Given 으로 SC-05 실패: 두 응답 모두 pendingToken 으로 이동(token 기대)",
+      "mutation_check": "AuthService.loginWithSocial 의 UNIQUE 위반 복구를 제거(항상 rethrow)하면 SC-05 FAILED, 원복 후 소스 diff 없음",
+      "approved_hitl1": true,
+      "approved_hitl2": true,
+      "approved_by": "AskUserQuestion 응답(사용자)"
+    }
+  ]
 }

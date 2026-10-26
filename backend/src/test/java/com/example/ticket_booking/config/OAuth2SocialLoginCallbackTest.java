@@ -407,8 +407,8 @@ class OAuth2SocialLoginCallbackTest {
 
   @Test
   void test_sc05_같은_제공자_계정의_콜백이_동시에_와도_연결_행은_하나다() throws Exception {
-    // Given 이메일로 가입한 사용자 A 가 있고 social_accounts 는 비어 있다
-    User a = saveEmailUser("hong@example.com", UserRole.AUDIENCE, "홍길동");
+    // Given 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(email_verified=true)가 있고 social_accounts 는 비어 있다
+    User a = saveVerifiedSocialUser("hong@example.com", UserRole.AUDIENCE, "홍길동");
     Map<String, Object> attributes = google("g-5", "hong@example.com", true, "길동");
     ExecutorService executor = Executors.newFixedThreadPool(2);
     CountDownLatch ready = new CountDownLatch(2);
