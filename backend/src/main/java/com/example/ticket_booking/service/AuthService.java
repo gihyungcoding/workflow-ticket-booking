@@ -120,13 +120,20 @@ public class AuthService {
     if (linked.isPresent()) {
       return loggedIn(linked.get().getUserId());
     }
+    // 자동 연결은 양쪽 모두 이메일 소유가 확인됐을 때만이다(ADR-0020) — 제공자가 검증했어도 대상 계정이 미검증이면 선점일 수 있다
     Optional<User> sameEmail =
-        profile.emailVerified() ? userRepository.findByEmail(profile.email()) : Optional.empty();
+        profile.emailVerified()
+            ? userRepository.findByEmail(profile.email()).filter(User::isEmailVerified)
+            : Optional.empty();
     if (sameEmail.isEmpty()) {
       return new SocialLoginResult(
           null,
           jwtTokenProvider.issuePendingToken(
-              profile.email(), profile.name(), profile.provider(), profile.providerUserId()));
+              profile.email(),
+              profile.name(),
+              profile.provider(),
+              profile.providerUserId(),
+              profile.emailVerified()));
     }
     Long userId = sameEmail.get().getId();
     try {
@@ -163,7 +170,9 @@ public class AuthService {
     }
     User user;
     try {
-      user = userRepository.saveAndFlush(new User(pending.email(), null, pending.name(), role));
+      user =
+          userRepository.saveAndFlush(
+              new User(pending.email(), null, pending.name(), role, pending.emailVerified()));
     } catch (DataIntegrityViolationException exception) {
       // 존재 확인과 INSERT 사이에 같은 이메일이 먼저 들어왔다(동시 요청)
       if (!isUniqueViolation(exception)) {

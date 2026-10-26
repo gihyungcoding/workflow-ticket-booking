@@ -37,8 +37,8 @@ public class User {
   @Column(name = "role", nullable = false, length = 20)
   private UserRole role;
 
-  /** Red 단계 컴파일용 — 컬럼 제약(NOT NULL DEFAULT false)·마이그레이션은 Phase 3 에서 추가한다. */
-  @Column(name = "email_verified")
+  /** 이메일 소유가 확인된 계정인가. 이메일 가입은 false, 소셜 가입은 제공자가 검증했을 때만 true — 자동 연결 대상 판정에 쓴다(ADR-0020). */
+  @Column(name = "email_verified", nullable = false)
   private boolean emailVerified;
 
   @CreationTimestamp
@@ -62,7 +62,7 @@ public class User {
   }
 
   public boolean isEmailVerified() {
-    throw new UnsupportedOperationException();
+    return emailVerified;
   }
 
   public Long getId() {

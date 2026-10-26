@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -104,11 +105,19 @@ public class JwtTokenProvider {
 
   /** pendingToken 이 담는 값. */
   public record PendingSignup(
-      String email, String name, SocialProvider provider, String providerUserId) {}
+      String email,
+      String name,
+      SocialProvider provider,
+      String providerUserId,
+      boolean emailVerified) {}
 
   /** typ=pending, 발급 시각 + 5분 만료의 토큰을 발급한다. sub 가 없어 사용자 토큰으로 오인될 여지가 없다. */
   public String issuePendingToken(
-      String email, String name, SocialProvider provider, String providerUserId) {
+      String email,
+      String name,
+      SocialProvider provider,
+      String providerUserId,
+      boolean emailVerified) {
     Instant issuedAt = clock.instant();
     JwtClaimsSet claims =
         JwtClaimsSet.builder()
@@ -118,33 +127,38 @@ public class JwtTokenProvider {
             .claim("name", name)
             .claim("provider", provider.name())
             .claim("providerUserId", providerUserId)
+            .claim("emailVerified", emailVerified)
             .claim("typ", TYPE_PENDING)
             .build();
     JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
     return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
   }
 
-  /** 서명·만료·용도(typ=pending)·필수 클레임이 모두 유효하면 값을, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. */
+  /**
+   * 서명·만료·용도(typ=pending)·필수 클레임이 모두 유효하면 값을, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. 서명이 맞아도 문자열은 제공자 응답과
+   * 같은 규칙(SocialInputRules)을 다시 거친다 — 키가 새거나 발급 쪽에 결함이 있어도 규칙 밖의 값이 DB 에 닿지 않는다.
+   */
   public Optional<PendingSignup> verifyPendingToken(String token) {
     try {
       Jwt jwt = pendingDecoder.decode(token);
-      String email = textClaim(jwt, "email");
-      String name = textClaim(jwt, "name");
-      String providerUserId = textClaim(jwt, "providerUserId");
-      String provider = textClaim(jwt, "provider");
-      if (email == null || name == null || providerUserId == null || provider == null) {
+      Map<String, Object> claims = jwt.getClaims();
+      String email = SocialInputRules.email(claims.get("email"));
+      String name = SocialInputRules.name(claims.get("name"));
+      String providerUserId = SocialInputRules.providerUserId(claims.get("providerUserId"));
+      // 검증 여부는 Boolean 이어야 한다 — 없거나 "true"·1 같은 값은 거부한다(참으로 읽히면 자동 연결 근거가 되기 때문)
+      if (email == null
+          || name == null
+          || providerUserId == null
+          || !(claims.get("provider") instanceof String provider)
+          || !(claims.get("emailVerified") instanceof Boolean emailVerified)) {
         return Optional.empty();
       }
       return Optional.of(
-          new PendingSignup(email, name, SocialProvider.valueOf(provider), providerUserId));
+          new PendingSignup(
+              email, name, SocialProvider.valueOf(provider), providerUserId, emailVerified));
     } catch (JwtException | IllegalArgumentException exception) {
       return Optional.empty();
     }
-  }
-
-  /** 문자열이고 공백만이 아닌 클레임 값. 없거나 다른 타입이면 null. */
-  private static String textClaim(Jwt jwt, String name) {
-    return jwt.getClaims().get(name) instanceof String value && !value.isBlank() ? value : null;
   }
 
   /**
