@@ -2,11 +2,11 @@
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
 phase: "2a"
-phase_name: "Phase 2a - 시나리오 재진입 (Phase 4 FAIL 롤백, HITL#1 대기)"
+phase_name: "Phase 2a - 시나리오 재진입 승인 (HITL#1, Phase 4 FAIL 롤백)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
-last_updated: 2026-10-23
+last_updated: 2026-10-26
 
 primary_category: Backend
 sub_categories: []
@@ -31,7 +31,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 2a 재진입 — 시나리오 21건(SC-21 추가), 4차 검증 PASS(경고 3). HITL#1 승인을 받으면 Phase 2b 로. Phase 4 FAIL 원인 RC-1·RC-2 와 정책(ADR-0020)은 VERIFY_TASK-011.json·CP-4.2 참조.
+Phase 2a 재진입 — 시나리오 21건(SC-21 추가), 4차 검증 PASS(경고 3). HITL#1 승인됨(2026-10-26). Phase 2b 재진입 — wf-red. Phase 4 FAIL 원인 RC-1·RC-2 와 정책(ADR-0020)은 VERIFY_TASK-011.json·CP-4.2 참조.
 
 ## 알아둬야 할 것
 

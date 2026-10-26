@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-23T03:00:00Z
-summary: "[Phase 4 FAIL 롤백 재진입 · 4차 검증 PASS (경고 3) · HITL#1 대기] 21건(SC-21 추가), AC 9/9. 사용자 결정: 롤백 지점 Phase 2a, 자동 연결 정책 '검증된 소셜 계정에만'(ADR-0020). RC-1·RC-2 재현 변종 전부 반영 — 규약 표(emailVerified 클레임·연결 대상·소셜 이메일 형식), SC-01·02·03·07·09·10·12 보강, SC-21 신규. 경고: V1 JSON 총계 낡음(수정함)·V6 When 단일성(SC-21 포함)·V9 SC-12/SC-21 409 겹침. [이전 요약] 20건 HITL#1 승인(2026-10-23)."
+summary: "[HITL#1 승인됨 2026-10-26 · Phase 4 FAIL 롤백 재진입 · 4차 검증 PASS (경고 3)] 21건(SC-21 추가), AC 9/9. 사용자 결정: 롤백 지점 Phase 2a, 자동 연결 정책 '검증된 소셜 계정에만'(ADR-0020). RC-1·RC-2 재현 변종 전부 반영 — 규약 표(emailVerified 클레임·연결 대상·소셜 이메일 형식), SC-01·02·03·07·09·10·12 보강, SC-21 신규. 경고: V1 JSON 총계 낡음(수정함)·V6 When 단일성(SC-21 포함)·V9 SC-12/SC-21 409 겹침. [이전 요약] 20건 HITL#1 승인(2026-10-23)."
 
 next_steps:
-  - "HITL#1 — 승인 시 generate_red_trigger=true 후 Phase 2b 재진입(wf-red): 바뀐 시나리오 행(SC-01·02·03·07·09·10·12)을 고치고 SC-21 을 추가, Red 스켈레톤에 users.email_verified·pendingToken emailVerified 추가. 변이 검증으로 가짜 통과가 아님을 증명(구현이 이미 있는 Red 재작성)"
+  - "Phase 2b 재진입 (HITL#1 승인 완료) — wf-red: 바뀐 시나리오 행(SC-01·02·03·07·09·10·12)을 고치고 SC-21 을 추가, Red 스켈레톤에 users.email_verified·pendingToken emailVerified 추가. 변이 검증으로 가짜 통과가 아님을 증명(구현이 이미 있는 Red 재작성)"
   - "2차 독립검증 결과 처리 — PASS 면 HITL#1(시나리오가 8~12 기준선 초과 20건임을 알린다), FAIL 이면 지적 보완(재검증 최대 3회)"
   - "HITL#1 승인 후 Phase 2b — wf-red. 표 행마다 테스트 케이스, 환경변수 시나리오(SC-16·19)와 쓰기 가드(SC-18)는 설정 주입 수단을 TEST JSON 에 적는다(config_applied_via)"
 
