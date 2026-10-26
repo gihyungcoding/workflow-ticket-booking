@@ -109,6 +109,13 @@ class SocialCompleteApiTest {
     return OBJECT_MAPPER.writeValueAsString(map);
   }
 
+  /** 정상 pendingToken 의 클레임 하나만 바꿔 서명한다. */
+  private String claimsRow(String claim, Object value, Instant issuedAt) {
+    Map<String, Object> claims = PendingTokenTestHelper.validClaims(issuedAt);
+    claims.put(claim, value);
+    return PendingTokenTestHelper.signedClaims(secret, claims);
+  }
+
   private MvcResult complete(String rawBody) throws Exception {
     return postJson(mockMvc, COMPLETE, rawBody);
   }
@@ -126,13 +133,18 @@ class SocialCompleteApiTest {
     Map<String, String> rows = new LinkedHashMap<>();
     rows.put("AUDIENCE", "AUDIENCE");
     rows.put("ORGANIZER", "ORGANIZER");
+    rows.put("AUDIENCE/제공자 미검증", "AUDIENCE");
     SoftAssertions soft = new SoftAssertions();
 
     for (Map.Entry<String, String> row : rows.entrySet()) {
       cleanUp();
 
       // When POST /api/auth/social/complete 를 pendingToken 과 role 로 호출한다
-      MvcResult result = complete(body(validToken(), row.getKey()));
+      // 라벨에 '미검증' 이 있는 행은 pendingToken 의 emailVerified 가 false 다
+      boolean emailVerified = !row.getKey().contains("미검증");
+      MvcResult result =
+          complete(
+              body(PendingTokenTestHelper.valid(secret, FIXED_NOW, emailVerified), row.getValue()));
 
       // Then 200 이고 응답은 tokenType·expiresInSeconds·user 를 담는다
       soft.assertThat(result.getResponse().getStatus()).as(row.getKey() + " — 상태").isEqualTo(200);
@@ -158,6 +170,9 @@ class SocialCompleteApiTest {
         soft.assertThat(saved.getName()).isEqualTo(NAME);
         soft.assertThat(saved.getRole()).isEqualTo(UserRole.valueOf(row.getValue()));
         soft.assertThat(saved.getPasswordHash()).as(row.getKey() + " — 비밀번호 해시").isNull();
+        soft.assertThat(saved.isEmailVerified())
+            .as(row.getKey() + " — email_verified")
+            .isEqualTo(emailVerified);
         soft.assertThat(accounts.get(0).getProvider()).isEqualTo(SocialProvider.valueOf(PROVIDER));
         soft.assertThat(accounts.get(0).getProviderUserId()).isEqualTo(PROVIDER_USER_ID);
         soft.assertThat(accounts.get(0).getUserId()).isEqualTo(saved.getId());
@@ -263,6 +278,62 @@ class SocialCompleteApiTest {
             FIXED_NOW,
             false));
     rows.add(new TokenRow("수 KB 길이의 임의 문자열", () -> "a".repeat(8192), FIXED_NOW, false));
+    // RC-1·RC-2 (Phase 4 FAIL): emailVerified 클레임과, 서명은 맞지만 규칙 밖인 값
+    Instant issued = FIXED_NOW;
+    rows.add(
+        new TokenRow(
+            "emailVerified 누락",
+            () -> claimsRow("emailVerified", PendingTokenTestHelper.ABSENT, issued),
+            FIXED_NOW,
+            false));
+    rows.add(
+        new TokenRow(
+            "emailVerified 문자열 \"true\"",
+            () -> claimsRow("emailVerified", "true", issued),
+            FIXED_NOW,
+            false));
+    rows.add(
+        new TokenRow(
+            "emailVerified 숫자 1", () -> claimsRow("emailVerified", 1, issued), FIXED_NOW, false));
+    rows.add(
+        new TokenRow(
+            "이메일 정규화 후 256자",
+            () -> claimsRow("email", "a".repeat(244) + "@example.com", issued),
+            FIXED_NOW,
+            false));
+    rows.add(
+        new TokenRow(
+            "이름 101자", () -> claimsRow("name", "가".repeat(101), issued), FIXED_NOW, false));
+    rows.add(
+        new TokenRow(
+            "providerUserId 256자",
+            () -> claimsRow("providerUserId", "p".repeat(256), issued),
+            FIXED_NOW,
+            false));
+    for (String field : new String[] {"email", "name", "providerUserId"}) {
+      String prefix = field.equals("email") ? "a" : "x";
+      String suffix = field.equals("email") ? "b@example.com" : "y";
+      rows.add(
+          new TokenRow(
+              field + " 에 NUL",
+              () -> claimsRow(field, prefix + "\u0000" + suffix, issued),
+              FIXED_NOW,
+              false));
+      rows.add(
+          new TokenRow(
+              field + " 에 짝 없는 서로게이트",
+              () -> claimsRow(field, prefix + "\ud800" + suffix, issued),
+              FIXED_NOW,
+              false));
+    }
+    rows.add(
+        new TokenRow("이메일 @ 없음", () -> claimsRow("email", "no-at-sign", issued), FIXED_NOW, false));
+    rows.add(
+        new TokenRow(
+            "이메일에 제로폭 공백",
+            () -> claimsRow("email", "a\u200bb@example.com", issued),
+            FIXED_NOW,
+            false));
     Set<String> messages = new HashSet<>();
     SoftAssertions soft = new SoftAssertions();
 

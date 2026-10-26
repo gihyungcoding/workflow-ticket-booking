@@ -37,6 +37,10 @@ public class User {
   @Column(name = "role", nullable = false, length = 20)
   private UserRole role;
 
+  /** Red 단계 컴파일용 — 컬럼 제약(NOT NULL DEFAULT false)·마이그레이션은 Phase 3 에서 추가한다. */
+  @Column(name = "email_verified")
+  private boolean emailVerified;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -48,6 +52,17 @@ public class User {
     this.passwordHash = passwordHash;
     this.name = name;
     this.role = role;
+  }
+
+  /** 이메일 소유가 확인된 계정인가 — 소셜 가입 완료 시 제공자의 emailVerified 를 저장한다. */
+  public User(
+      String email, String passwordHash, String name, UserRole role, boolean emailVerified) {
+    this(email, passwordHash, name, role);
+    this.emailVerified = emailVerified;
+  }
+
+  public boolean isEmailVerified() {
+    throw new UnsupportedOperationException();
   }
 
   public Long getId() {

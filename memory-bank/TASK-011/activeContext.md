@@ -1,8 +1,8 @@
 ---
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
-phase: "2a"
-phase_name: "Phase 2a - 시나리오 재진입 승인 (HITL#1, Phase 4 FAIL 롤백)"
+phase: "2b"
+phase_name: "Phase 2b - Red 재작성 (Phase 4 FAIL 롤백, HITL#2 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-011.md"
@@ -31,7 +31,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 2a 재진입 — 시나리오 21건(SC-21 추가), 4차 검증 PASS(경고 3). HITL#1 승인됨(2026-10-26). Phase 2b 재진입 — wf-red. Phase 4 FAIL 원인 RC-1·RC-2 와 정책(ADR-0020)은 VERIFY_TASK-011.json·CP-4.2 참조.
+Phase 2b 재진입 — Red 재작성 완료(새 21건 중 6 실패·15 이미 통과, 변이 2건 사망). HITL#2 승인을 받으면 Phase 3 재진입(wf-develop). risks_for_green 마지막 5건 참조.
 
 ## 알아둬야 할 것
 

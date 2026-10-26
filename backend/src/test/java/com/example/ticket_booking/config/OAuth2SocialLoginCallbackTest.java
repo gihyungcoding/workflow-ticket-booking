@@ -1,7 +1,10 @@
 package com.example.ticket_booking.config;
 
 import static com.example.ticket_booking.support.AuthTestHelper.OBJECT_MAPPER;
+import static com.example.ticket_booking.support.AuthTestHelper.code;
+import static com.example.ticket_booking.support.AuthTestHelper.login;
 import static com.example.ticket_booking.support.AuthTestHelper.payloadOf;
+import static com.example.ticket_booking.support.AuthTestHelper.postJson;
 import static com.example.ticket_booking.support.PendingTokenTestHelper.queryOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -104,6 +107,11 @@ class OAuth2SocialLoginCallbackTest {
 
   private User saveEmailUser(String email, UserRole role, String name) {
     return userRepository.save(new User(email, passwordEncoder.encode(PASSWORD), name, role));
+  }
+
+  /** 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 — 비밀번호 해시가 없고 email_verified=true (자동 연결 대상). */
+  private User saveVerifiedSocialUser(String email, UserRole role, String name) {
+    return userRepository.save(new User(email, null, name, role, true));
   }
 
   private static String emailOf(int length) {
@@ -222,6 +230,7 @@ class OAuth2SocialLoginCallbackTest {
       soft.assertThat(payload.get("provider")).isEqualTo("GOOGLE");
       soft.assertThat(payload.get("providerUserId")).isEqualTo("g-100");
       soft.assertThat(payload.get("typ")).isEqualTo("pending");
+      soft.assertThat(payload.get("emailVerified")).as("emailVerified 클레임").isEqualTo(true);
       soft.assertThat(((Number) payload.get("exp")).longValue())
           .as("만료는 발급 시각 + 5분")
           .isEqualTo(FIXED_NOW.plusSeconds(300).getEpochSecond());
@@ -240,8 +249,9 @@ class OAuth2SocialLoginCallbackTest {
 
   @Test
   void test_sc02_이메일이_일치하고_검증됐으면_기존_계정에_연결하고_바로_로그인한다() throws Exception {
-    // Given 이메일로 가입한 사용자 A(hong@example.com, ORGANIZER, 홍길동)가 있다
-    User a = saveEmailUser("hong@example.com", UserRole.ORGANIZER, "홍길동");
+    // Given 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(hong@example.com, ORGANIZER, 홍길동, email_verified=true)가
+    // 있다
+    User a = saveVerifiedSocialUser("hong@example.com", UserRole.ORGANIZER, "홍길동");
     String hashBefore = a.getPasswordHash();
     List<ProviderRow> rows =
         List.of(
@@ -294,6 +304,7 @@ class OAuth2SocialLoginCallbackTest {
       soft.assertThat(reread.getName()).isEqualTo("홍길동");
       soft.assertThat(reread.getRole()).isEqualTo(UserRole.ORGANIZER);
       soft.assertThat(reread.getPasswordHash()).isEqualTo(hashBefore);
+      soft.assertThat(reread.isEmailVerified()).as(row.label() + " — email_verified").isTrue();
       // And social_accounts 에 (provider, providerUserId, A) 가 정확히 1건 생긴다
       List<SocialAccount> accounts = socialAccountRepository.findAll();
       soft.assertThat(accounts).as(row.label() + " — social_accounts 행 수").hasSize(1);
@@ -310,8 +321,9 @@ class OAuth2SocialLoginCallbackTest {
 
   @Test
   void test_sc03_이메일이_같아도_검증되지_않았으면_연결하지_않고_가입_대기가_된다() throws Exception {
-    // Given 이메일로 가입한 사용자 A(hong@example.com)가 있고 social_accounts 는 비어 있다
-    User a = saveEmailUser("hong@example.com", UserRole.AUDIENCE, "홍길동");
+    // Given 소셜 가입을 끝낸 검증된 사용자 A(hong@example.com, email_verified=true)가 있고 social_accounts 는 비어 있다
+    // (제공자 플래그가 연결을 막는 유일한 이유가 되도록 A 는 연결 대상이다)
+    User a = saveVerifiedSocialUser("hong@example.com", UserRole.AUDIENCE, "홍길동");
     String hongEmail = "hong@example.com";
     record Row(String label, String registrationId, Map<String, Object> attributes) {}
     List<Row> rows =
@@ -539,7 +551,15 @@ class OAuth2SocialLoginCallbackTest {
       "a\ud800b@example.com",
       "a\tb@example.com",
       "a\u0001b@example.com",
-      "\u0130".repeat(124) + "@example.com"
+      "\u0130".repeat(124) + "@example.com",
+      "no-at-sign",
+      "a@b@example.com",
+      "@example.com",
+      "a@",
+      "a b@example.com",
+      "a\u00a0b@example.com",
+      "a\u200bb@example.com",
+      "a\u202eb@example.com"
     };
     for (Object email : badEmails) {
       fail(rows, "email=" + describe(email), "google", google("g-new", email, true, "신규"));
@@ -766,6 +786,101 @@ class OAuth2SocialLoginCallbackTest {
               new OAuth2AuthenticationException(new OAuth2Error("access_denied")), request);
       soft.assertThat(cancelled).as("취소 / " + manipulation.getKey()).startsWith(FAILURE_URL);
       soft.assertThat(cancelled).as("취소 / " + manipulation.getKey()).doesNotContain("evil.example");
+    }
+    soft.assertAll();
+  }
+
+  // ---------- SC-21 ----------
+
+  private enum Origin {
+    EMAIL_SIGNUP,
+    KAKAO_UNVERIFIED,
+    NAVER
+  }
+
+  @Test
+  void test_sc21_이메일_소유가_확인되지_않은_계정은_자동_연결_대상이_아니다() throws Exception {
+    SoftAssertions soft = new SoftAssertions();
+
+    for (Origin origin : Origin.values()) {
+      // Given 표의 방식으로 hong@example.com 계정 A 가 만들어져 있고 social_accounts 는 비어 있다
+      cleanUp();
+      Map<String, Object> ownerCallback = null;
+      String ownerRegistration = null;
+      switch (origin) {
+        case EMAIL_SIGNUP ->
+            authService.signUp("hong@example.com", PASSWORD, PASSWORD, "홍길동", UserRole.AUDIENCE);
+        case KAKAO_UNVERIFIED -> {
+          ownerRegistration = "kakao";
+          ownerCallback = kakao(777, "hong@example.com", false, true, "길동");
+        }
+        case NAVER -> {
+          ownerRegistration = "naver";
+          ownerCallback = naver("n-1", "hong@example.com", "길동");
+        }
+      }
+      if (ownerCallback != null) {
+        String pending = queryOf(callback(ownerRegistration, ownerCallback)).get("pendingToken");
+        authService.completeSocialSignUp(pending, UserRole.AUDIENCE);
+      }
+      User a = userRepository.findByEmail("hong@example.com").orElseThrow();
+      Counts before = counts();
+
+      // And 구글이 검증된 이메일로 사용자 정보를 돌려줬다
+      // When 구글 콜백을 처리한다
+      String location = callback("google", google("g-1", "hong@example.com", true, "길동"));
+
+      // Then 연결하지 않고 가입 대기로 이동하며 쿼리에 token 은 없다
+      assertPending(soft, origin.toString(), location);
+      // And users·social_accounts 행 수가 그대로이고 A 의 정보는 바뀌지 않는다
+      soft.assertThat(counts()).as(origin + " — 행 수").isEqualTo(before);
+      User reread = userRepository.findById(a.getId()).orElseThrow();
+      soft.assertThat(reread.getName()).as(origin + " — A 의 이름").isEqualTo(a.getName());
+      soft.assertThat(reread.getPasswordHash())
+          .as(origin + " — A 의 비밀번호 해시")
+          .isEqualTo(a.getPasswordHash());
+      // And 그 pendingToken 으로 가입 완료를 호출하면 409 EMAIL_ALREADY_EXISTS 이고 행 수가 그대로다
+      String pendingToken = queryOf(location).get("pendingToken");
+      if (pendingToken != null) {
+        MvcResult complete =
+            postJson(
+                mockMvc,
+                "/api/auth/social/complete",
+                OBJECT_MAPPER.writeValueAsString(
+                    Map.of("pendingToken", pendingToken, "role", "AUDIENCE")));
+        soft.assertThat(complete.getResponse().getStatus())
+            .as(origin + " — 가입 완료 상태")
+            .isEqualTo(409);
+        soft.assertThat(code(complete))
+            .as(origin + " — 가입 완료 code")
+            .isEqualTo("EMAIL_ALREADY_EXISTS");
+        soft.assertThat(counts()).as(origin + " — 가입 완료 뒤 행 수").isEqualTo(before);
+      }
+      // And A 를 만든 쪽의 로그인은 계속 된다
+      switch (origin) {
+        case EMAIL_SIGNUP -> {
+          MvcResult emailLogin = login(mockMvc, "hong@example.com", PASSWORD);
+          soft.assertThat(emailLogin.getResponse().getStatus())
+              .as(origin + " — A 의 로그인")
+              .isEqualTo(200);
+        }
+        case KAKAO_UNVERIFIED ->
+            assertLoggedIn(
+                soft,
+                origin + " — A 의 로그인",
+                callback("kakao", kakao(777, "hong@example.com", false, true, "길동")),
+                a.getId());
+        case NAVER ->
+            assertLoggedIn(
+                soft,
+                origin + " — A 의 로그인",
+                callback("naver", naver("n-1", "hong@example.com", "길동")),
+                a.getId());
+      }
+      // And A 의 email_verified 는 false 다
+      soft.assertThat(userRepository.findById(a.getId()).orElseThrow().isEmailVerified())
+          .as(origin + " — email_verified")
+          .isFalse();
     }
     soft.assertAll();
   }
