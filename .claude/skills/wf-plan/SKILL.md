@@ -234,6 +234,17 @@ route 가 Frontend 이면 화면 간 이동을 flow 로 적었는가, 타입을 
 **`flows[].covers` 가 `acceptance_criteria` 를 전부 덮는지 확인한다.** 덮이지 않은 기준이
 있으면 flow를 추가하거나, 그 기준이 이 태스크 범위인지 사용자에게 확인한다.
 
+**설계가 걸리는 두 부류는 `unresolved` 에 따로 적는다.** 시나리오 단계에서 놓치면 Phase 4 에서
+FAIL 로 돌아오는 부류다.
+
+- **테스트 DB 와 운영 DB 가 다르고 입력이 저장·비교되는 태스크**: 운영과 같은 엔진의 통합
+  테스트(ADR-0006)를 `test_hints` 의 전략에 **필수로** 적는다. 둘 수 없으면 그 사유를
+  `unresolved` 에 남긴다. H2 가 통과시키는 문자열·제약 결함은 운영 엔진에서만 드러난다
+  (→ TASK-009 · TASK-011 Phase 4)
+- **이메일 등 외부 신원으로 계정을 동일시하거나 연결하는 설계**: "누가 그 신원을 먼저 가질 수
+  있는가"(선점 가능성)를 `unresolved` 에 적고, 참조한 ADR 이 그 위협을 다루는지 확인한다.
+  다루지 않으면 Phase 2a 전에 사용자에게 알린다 (→ TASK-011 의 자동 연결이 계정 선점 경로였다)
+
 ### Step 5 — 저장
 
 1. `workflow_design/04_plan/PLAN_<ID>.json` 저장 (atomic — `docs/workflow/data-antipatterns.md` §6)
