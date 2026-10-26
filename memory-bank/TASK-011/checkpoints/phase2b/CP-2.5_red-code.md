@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-26T01:00:00Z
-summary: "[재진입 · HITL#2 대기] Phase 4 FAIL 롤백(RC-1·RC-2) → 시나리오 21건 승인 → Red 재작성. 구현(Phase 3)이 이미 있어 실행 133건 중 6건 실패(SC-01·02·07·09·10·21), 새 21건 중 15건은 이미 통과, 기존 112건 통과. SC-02·09·21 은 User.isEmailVerified 스켈레톤(던지기) 때문에 실패하나, 임시로 실제 getter 로 바꿔 보면 SC-09·21 은 동작 결함으로 실패(저장값 불일치·연결 발생), SC-02 는 통과. 변이 2건(M1 검증 플래그 무시→SC-03, M2 연결 안 함→SC-02)이 사망, 원복 확인. spotlessCheck 통과."
+summary: "[재진입 · HITL#2 승인됨 2026-10-26] Phase 4 FAIL 롤백(RC-1·RC-2) → 시나리오 21건 승인 → Red 재작성. 구현(Phase 3)이 이미 있어 실행 133건 중 6건 실패(SC-01·02·07·09·10·21), 새 21건 중 15건은 이미 통과, 기존 112건 통과. SC-02·09·21 은 User.isEmailVerified 스켈레톤(던지기) 때문에 실패하나, 임시로 실제 getter 로 바꿔 보면 SC-09·21 은 동작 결함으로 실패(저장값 불일치·연결 발생), SC-02 는 통과. 변이 2건(M1 검증 플래그 무시→SC-03, M2 연결 안 함→SC-02)이 사망, 원복 확인. spotlessCheck 통과."
 
 next_steps:
-  - "HITL#2 승인 후 Phase 3 재진입(wf-develop): V4 에 users.email_verified, User 엔티티 컬럼·getter, pendingToken emailVerified 발급·검증, 자동 연결 조건, 규칙 공통 지점(이메일 형식·서식 문자, verifyPendingToken 재검증), /complete 가 emailVerified 저장. TEST_TASK-011.json 의 risks_for_green 마지막 5건 참조"
+  - "Phase 3 재진입 (HITL#2 승인 완료) — wf-develop: V4 에 users.email_verified, User 엔티티 컬럼·getter, pendingToken emailVerified 발급·검증, 자동 연결 조건, 규칙 공통 지점(이메일 형식·서식 문자, verifyPendingToken 재검증), /complete 가 emailVerified 저장. TEST_TASK-011.json 의 risks_for_green 마지막 5건 참조"
   - "Phase 3 뒤 Phase 4 재검증 — RC-1·RC-2 변종 전부 해소 확인(임시 프로브로 재현했던 A·B·C 포함), 실제 PostgreSQL 프로브 재실행(새 컬럼·마이그레이션), code-reviewer 에 이전 root_causes 전달"
   - "Phase 3 (HITL#2 승인 완료) — wf-develop. V4 마이그레이션·SocialAccount 제약·User.passwordHash nullable, AuthService 소셜 판정, JwtTokenProvider pendingToken, CustomOAuth2UserService 정규화, 핸들러 2종, SecurityConfig(oauth2Login·제공자 등록·FRONTEND_BASE_URL 기동 검증), AuthController /complete, AuthExceptionHandler"
   - "Green 위험은 TEST_TASK-011.json 의 risks_for_green (핸들러를 빈으로, 속성 타입 엄격 검사, İ 소문자화, 유니크 위반 처리, 컨텍스트 기동 비용)"

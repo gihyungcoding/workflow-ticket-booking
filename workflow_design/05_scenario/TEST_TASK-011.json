@@ -290,7 +290,7 @@
     "[롤백 재진입] SocialProfile 에는 이미 emailVerified 가 있다. PendingTokenTestHelper.signed 는 기본으로 emailVerified=true 클레임을 넣는다 — 기존 SC-10 행(provider=FOO 등)이 emailVerified 누락 때문에 우연히 401 이 되는 가짜 통과를 막는다"
   ],
   "human_review": {
-    "approved": false
+    "approved": true
   },
   "red_retry": {
     "round": 2,
