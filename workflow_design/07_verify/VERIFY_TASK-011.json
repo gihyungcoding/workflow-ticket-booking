@@ -1,12 +1,12 @@
 {
   "task_id": "TASK-011",
-  "status": "FAIL",
-  "status_reason": "RC-1 — 이메일 소유가 증명되지 않은 계정(이메일 가입, 미검증 이메일로 만든 소셜 가입)이 검증된 소셜 로그인의 자동 연결 대상이 된다. 임시 테스트로 재현(변종 4건 모두). emailVerified 가 pendingToken 에 실리지 않아 /complete 가 구분하지 못한다. 시나리오·ADR-0014 정책이 걸려 있어 Phase 2a 로 돌아가 정책을 정해야 한다",
+  "status": "WARN",
+  "status_reason": "2라운드: RC-1·RC-2 변종 해소를 테스트(SC-21·SC-01~03·SC-07·SC-09·SC-10, H2 133/133 + 실제 PostgreSQL 소셜 경로)와 리뷰어 코드 추적으로 확인. 남은 것은 ADR-0020 이 수용한 잔여 위험(미검증 이메일 선점으로 정당한 가입이 409)과 애플(TASK-012) 미프로브, 리뷰어가 프로브를 실행하지 않았다는 점이다",
   "evidence": {
     "tests": {
-      "command": "./gradlew cleanTest test spotlessCheck",
+      "command": "./gradlew cleanTest test",
       "exit_code": 0,
-      "summary": "132 tests, 0 failures, 0 errors, 0 skipped (새 20건 4개 클래스 + 기존 112건)"
+      "summary": "133 tests, 0 failures, 0 errors, 0 skipped (새 21건 4개 클래스 + 기존 112건)"
     },
     "lint": {
       "command": "./gradlew spotlessCheck",
@@ -15,7 +15,12 @@
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "47 files changed, 5016 insertions(+), 19 deletions(-) (main 13개 수정·신규, 승인 테스트 6개 전부 추가 — 기존 테스트 변경 0)"
+      "summary": "53 files changed, 6011 insertions(+), 21 deletions(-)"
+    },
+    "pg_run": {
+      "command": "SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:55432/tb2 SPRING_FLYWAY_ENABLED=true SPRING_JPA_HIBERNATE_DDL_AUTO=validate ./gradlew cleanTest test (postgres:16-alpine)",
+      "exit_code": 1,
+      "summary": "133건 중 124 통과·9 실패. 9건은 자체 H2 컨텍스트를 쓰는 JwtSecretConfigTest·SocialProviderConfigTest(SC-16·19)·PerformanceConstraintTest 에 PG 용 Flyway 를 강제해 'Unknown data type TIMESTAMPTZ' — 환경 문제이며 일반 설정에서는 통과. 소셜 콜백(SC-01~08·20·21, SC-05 동시성 포함)·/complete(SC-09~13)는 PG 에서 통과. Flyway V1~V4 success, ddl-auto=validate 통과"
     }
   },
   "acceptance_criteria": [
@@ -27,27 +32,27 @@
     {
       "criterion": "이메일 가입 계정과 같은 이메일 + email_verified=true 면 기존 계정에 연결하고 바로 accessToken 발급(역할 유지)",
       "verdict": "PASS",
-      "evidence": "SC-02 통과(카카오·구글·대소문자/공백 변형). 단 이 기준 자체가 RC-1(선점 계정 자동 연결)을 만든다 — 판정은 status FAIL 에서 다룬다"
+      "evidence": "ADR-0020 로 대상이 '검증된 소셜 계정'으로 좁혀졌다(사용자 결정). SC-02(대상 email_verified=true 연결)·SC-21(이메일 가입·카카오 미검증·네이버 계정은 연결 안 됨, 가입 대기→/complete 409) 통과. tasks.json 의 AC 문구는 이메일 가입 계정이라 정책과 어긋난다 — 갱신 필요(후속 보고)"
     },
     {
       "criterion": "email_verified 가 false(미제공)이면 자동 연결하지 않고 pendingToken 발급",
       "verdict": "PASS",
-      "evidence": "SC-03 19행 통과(구글·카카오 플래그 변형, 네이버 포함)"
+      "evidence": "SC-03 통과(제공자 미검증 + 검증된 대상). SC-01 은 pendingToken 의 emailVerified 클레임 확인"
     },
     {
       "criterion": "같은 제공자 계정으로 재로그인해도 유니크 제약으로 중복 행이 없다",
       "verdict": "PASS",
-      "evidence": "SC-04·SC-05·SC-13 통과. PG: uq_social_accounts_provider_user 존재, 동일 토큰 20 병렬 → 200 1건·409 19건·users 1행·social_accounts 1행"
+      "evidence": "SC-04·SC-05(Given 정정)·SC-13 통과, SC-05 는 PostgreSQL 에서도 통과(동시 콜백, 연결 행 1건). 변이(UNIQUE 복구 제거) 시 실패 확인"
     },
     {
       "criterion": "카카오/네이버(중첩)·구글(평면)에서 이메일과 이름을 추출한다",
       "verdict": "PASS",
-      "evidence": "SC-06·SC-07 통과(구조 변형·타입 엄격·길이 경계 포함)"
+      "evidence": "SC-06·SC-07 통과(구조 변형·타입 엄격·길이 경계, 이메일 형식·공백류·서식 문자 행 추가)"
     },
     {
       "criterion": "만료된 pendingToken 으로 /complete 호출 시 401",
       "verdict": "PASS",
-      "evidence": "SC-10 통과(만료 정각·위조·alg=none·typ 불일치·클레임 누락 등 22행, 메시지 단일)"
+      "evidence": "SC-10 통과(만료 정각·위조·alg=none·typ 불일치·클레임 누락, emailVerified 누락·비불리언, 규칙 밖 값 행 추가, 메시지 단일)"
     },
     {
       "criterion": "pendingToken 으로 인증 필요한 다른 엔드포인트를 호출하면 거부된다(typ 검증)",
@@ -97,7 +102,7 @@
     "overdue_promotions": 0
   },
   "regression": {
-    "full_suite": "132/132 passed",
+    "full_suite": "133/133 passed",
     "callers_checked": true,
     "note": "AuthService 생성자 확장 — 기존 3-인자 사용처(AuthServiceSignUpFailureTest)는 3-인자 생성자를 남겨 호환"
   },
@@ -155,6 +160,28 @@
       "리다이렉트 주소는 FRONTEND_BASE_URL 에서만 — open redirect 없음",
       "새 테스트 4개 클래스에 클래스 레벨 @Transactional 없음, 가드·설정은 실제로 주입",
       "기존 테스트 변경 0건(6개 파일 전부 추가)"
+    ],
+    "round": 2,
+    "probes_run_by_reviewer": false,
+    "findings_round2": [
+      {
+        "id": "F-6",
+        "severity": "low",
+        "category": "design",
+        "summary": "이메일 가입 사용자의 소셜 로그인이 막다른 길(409) — ADR-0020 수용 위험, 후속 태스크 ID 추적 필요"
+      },
+      {
+        "id": "F-7",
+        "severity": "low",
+        "category": "test",
+        "summary": "SocialInputRules 단위 테스트 없음(콜백·/complete 테스트로 간접 검증)"
+      }
+    ],
+    "confirmed_ok_round2": [
+      "users 생성 지점 2곳(signUp=false, completeSocialSignUp=pending 값), social_accounts 생성 지점 2곳, pendingToken 발급·검증 각 1곳",
+      "User 에 email_verified setter 없음",
+      "로그인·가입 경로는 emailVerified 를 읽지 않아 영향 없음",
+      "소셜 테스트 클래스에 클래스 레벨 @Transactional 없음, WriteGuardSocialCompleteTest 설정 실제 적용"
     ]
   },
   "root_causes": [
@@ -167,35 +194,36 @@
           "case": "공격자가 피해자 이메일로 이메일 가입을 선점한 뒤 피해자가 구글(검증됨)로 로그인하면 자동 연결되고 공격자의 비밀번호 로그인이 유지된다",
           "origin": "found",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "임시 테스트 PROBE A — accessToken 발급·social_accounts 1행·비밀번호 로그인 유효"
+          "resolved": true,
+          "evidence": "SC-21 EMAIL_SIGNUP 행 + 리뷰어 코드 추적: loginWithSocial 의 findByEmail(..).filter(User::isEmailVerified)"
         },
         {
           "case": "공격자가 카카오 미검증 이메일로 /complete 해 password_hash NULL 계정을 만든 뒤, 피해자의 구글 로그인이 그 계정에 연결되고 공격자의 카카오 로그인이 같은 계정으로 계속 된다",
           "origin": "found",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "임시 테스트 PROBE B — social rows=2, 공격자 카카오 재로그인 accessToken 발급"
+          "resolved": true,
+          "evidence": "SC-21 KAKAO_UNVERIFIED 행 + SC-09(emailVerified 저장) + pendingToken emailVerified 클레임(SC-01)"
         },
         {
           "case": "미검증 이메일로 선점된 이메일은 정당한 사용자의 이메일 가입을 EMAIL_ALREADY_EXISTS 로 영구히 막는다",
           "origin": "predicted",
           "probe": "reproduced",
           "resolved": false,
-          "evidence": "임시 테스트 PROBE B — 이메일 가입 409"
+          "evidence": "임시 테스트 PROBE B — 이메일 가입 409",
+          "accepted_risk": "ADR-0020 이 수용한 잔여 위험 — 해소 수단(메일 인증·로그인 후 연결)은 후속 태스크. 코드상 동작은 409 그대로"
         },
         {
           "case": "네이버(항상 미검증)로 만든 계정에 이후 카카오·구글(검증됨) 로그인이 자동 연결된다",
           "origin": "predicted",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "임시 테스트 PROBE C — 연결 후 accessToken 발급"
+          "resolved": true,
+          "evidence": "SC-21 NAVER 행 (naverProfile 은 emailVerified=false 고정)"
         },
         {
           "case": "애플 로그인(TASK-012)이 같은 loginWithSocial 을 쓰므로 같은 경로를 상속한다",
           "origin": "predicted",
           "probe": "not_probed",
-          "reason": "TASK-012 구현 전 — 코드 경로 확인만 가능",
+          "reason": "TASK-012 미구현(SocialProvider.APPLE 은 enum 상수뿐). loginWithSocial 의 필터는 상속된다. 애플의 email_verified 가 문자열 \"true\" 로 올 수 있어 TASK-012 가 엄격히 처리해야 한다 — 인계",
           "resolved": false
         }
       ]
@@ -209,29 +237,29 @@
           "case": "@ 없는 이메일, 제로폭·RTL·NBSP 가 낀 이메일이 소셜 경로에서 통과한다",
           "origin": "found",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "리뷰어 JDK 프로브(앱 미기동) — 코드 경로 판정"
+          "resolved": true,
+          "evidence": "SC-07 이메일 형식·NBSP·제로폭·RTL 행 통과 (SocialInputRules 공유)"
         },
         {
           "case": "서명된 pendingToken 의 이메일 256자·이름 101자·providerUserId 256자·NUL 이 verifyPendingToken 에서 걸러지지 않아 500",
           "origin": "found",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "PG 프로브 — SQLState 22001/22021 로 500 (JWT_SECRET 서명 토큰 필요)"
+          "resolved": true,
+          "evidence": "SC-10 이메일 256자·이름 101자·pid 256자·NUL 행 → 401 (PG 에서도 통과)"
         },
         {
           "case": "서명된 pendingToken 의 짝 없는 서로게이트가 200 이지만 '?' 로 저장된다",
           "origin": "found",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "PG 프로브 — 저장된 이메일 바이트 613f62… ('a?b@…')"
+          "resolved": true,
+          "evidence": "SC-10 짝 없는 서로게이트 행 → 401, '?' 저장 경로 없음"
         }
       ]
     }
   ],
   "security": {
-    "input_validation": "제공자 attributes 는 toProfile 한 곳에서 타입·제어문자·서로게이트·길이를 거부(SC-07 통과). /complete 는 @NotBlank·@NotNull + 숫자·불리언 거부. 갭: RC-2",
-    "authorization": "RC-1 — 계정 선점 후 소셜 로그인 자동 연결로 접근 권한이 남는다. pendingToken typ 분리·만료는 이상 없음",
+    "input_validation": "외부 문자열(제공자 응답·서명된 pendingToken)은 SocialInputRules 한 곳의 규칙을 거친다(SC-07·SC-10 통과)",
+    "authorization": "자동 연결은 제공자 검증 + 대상 users.email_verified 일 때만(SC-21). 잔여 위험: 미검증 이메일 소셜 가입이 이메일을 선점하면 정당한 사용자의 가입이 409(ADR-0020 수용). pendingToken typ 분리·만료 이상 없음",
     "secrets": "소스에 하드코딩된 시크릿 없음(제공자 ID·SECRET·JWT_SECRET 은 환경변수)",
     "logging": "토큰·이메일을 로그에 남기는 코드 없음(오류 로그에 SQL 상태만). 리다이렉트 쿼리 문자열의 토큰은 접근 로그·히스토리·Referer 에 남을 수 있음(F-5)"
   },
@@ -251,7 +279,16 @@
       "loginWithSocial 의 PG 동시성(SC-05)과 핸들러 경로 — HTTP 로 구동할 제공자 서버가 없다. H2 테스트(SC-05)만 있음. 자동 회귀 테스트 없음은 Plan 결정(Testcontainers 미도입)의 한계",
       "실제 제공자(카카오·네이버·구글) 왕복 — 클라이언트 ID·SECRET 없음"
     ],
-    "cleanup": "앱 종료, 컨테이너 중지(--rm), 임시 프로브 테스트 파일 삭제(git status 깨끗)"
+    "cleanup": "앱 종료, 컨테이너 중지(--rm), 임시 프로브 테스트 파일 삭제(git status 깨끗)",
+    "round2": {
+      "database": "docker postgres:16-alpine (V4 백필 수동 검증: V1~V3 후 기존 행 삽입→V4, email_verified=false·NOT NULL DEFAULT false, NULL 삽입 거부), 새 DB 에 Flyway V1~V4 success + validate",
+      "not_probed": [
+        "실제 제공자 왕복(클라이언트 ID·SECRET 없음)",
+        "HTTP 로 구동한 loginWithSocial(제공자 서버 없음) — 대신 PG 위에서 핸들러를 직접 호출하는 SC 테스트로 확인",
+        "V4 를 43bb8bb 상태로 적용해 둔 개발 DB 의 flyway validate 실패 가능성 — 사람이 확인"
+      ],
+      "cleanup": "컨테이너 제거, 저장소 변경 없음"
+    }
   },
   "human_review": {
     "decision": null,
@@ -263,6 +300,11 @@
       "round": 1,
       "status": "FAIL",
       "note": "뿌리 2 · 변종 8 (RC-1 5: 재현 4·미프로브 1 / RC-2 3: 재현 3)"
+    },
+    {
+      "round": 2,
+      "status": "WARN",
+      "note": "뿌리 2 이어받음 · RC-1 해소 3·수용 1·미프로브(애플) 1 / RC-2 해소 3. 새 뿌리 없음"
     }
   ]
 }
