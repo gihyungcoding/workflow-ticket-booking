@@ -1,10 +1,9 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-26T08:40:00Z
-summary: "회고 초안 — Keep 3 · Problem 4 · Try 3, ADR 후보 3, 규칙 제안 4(적용 1·대기 3). HITL#4 대기."
+summary: "회고 승인(HITL#4, 2026-10-26) — Keep 3 · Problem 4 · Try 3, ADR 후보 3(제안 상태), 규칙 제안 4(적용 1·대기 3). 리포트: https://claude.ai/artifact/KsYhAu3XEcjHQrq4AWNwHu"
 
 next_steps:
-  - "HITL#4 승인 후 태스크 종료, tasks.json done, 인덱스 재생성"
   - "Ship — /wf-ship (PR 생성·푸시·머지는 사용자 확인 후)"
   - "Ship 전 보고: tasks.json AC 문구가 ADR-0020 과 어긋남, V4 로컬 DB 확인, 스타터에 check_root_causes 변경 반영"
 
@@ -14,5 +13,5 @@ decisions:
 attempts:
   - phase: "5"
     round: 1
-    outcome: "회고 초안 작성"
+    outcome: "HITL#4 승인하고 종료"
 ---

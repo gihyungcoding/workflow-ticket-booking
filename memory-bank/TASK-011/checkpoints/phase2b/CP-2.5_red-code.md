@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-26T01:00:00Z
 summary: "[재진입 · HITL#2 승인됨 2026-10-26] Phase 4 FAIL 롤백(RC-1·RC-2) → 시나리오 21건 승인 → Red 재작성. 구현(Phase 3)이 이미 있어 실행 133건 중 6건 실패(SC-01·02·07·09·10·21), 새 21건 중 15건은 이미 통과, 기존 112건 통과. SC-02·09·21 은 User.isEmailVerified 스켈레톤(던지기) 때문에 실패하나, 임시로 실제 getter 로 바꿔 보면 SC-09·21 은 동작 결함으로 실패(저장값 불일치·연결 발생), SC-02 는 통과. 변이 2건(M1 검증 플래그 무시→SC-03, M2 연결 안 함→SC-02)이 사망, 원복 확인. spotlessCheck 통과."
 

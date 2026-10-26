@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-23T02:00:00Z
 summary: "[Phase 1 완료] route Backend. flows F1~F9 — AC 7개를 F1~F7 이 덮고, F8(소셜 전용 계정 이메일 로그인 401)·F9(제공자 실패 리다이렉트)는 AC 밖이지만 사용자 확인으로 포함. 변경 대상 20건(기존 9·신규 11), 재사용 9. unresolved 15건 중 PostgreSQL 통합 테스트는 '실제 PG 프로브만(Testcontainers 미도입)'으로 결정. check_plan 통과."
 

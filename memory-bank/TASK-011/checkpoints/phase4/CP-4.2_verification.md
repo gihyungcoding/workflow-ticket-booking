@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-26T07:50:00Z
 summary: "[2라운드 WARN, HITL#3 예외 승인] 테스트 133/133·spotlessCheck·아키텍처 error 0, 실제 PostgreSQL 소셜 경로 통과, 리뷰 차단 결함 없음. RC-1·RC-2 변종 해소(수용 위험 1은 accepted_risk ADR-0020, 애플은 deferred_to TASK-012). 승인 커밋 4e58dac."
 

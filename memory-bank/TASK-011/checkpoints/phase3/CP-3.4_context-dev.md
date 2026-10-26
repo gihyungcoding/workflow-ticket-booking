@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-26T05:30:00Z
 summary: "[Phase 4 FAIL 롤백 후 재진입] Green 완료 — 전체 133/133(새 21 + 기존 112), spotlessCheck·아키텍처 error 0. RC-1(검증된 계정에만 자동 연결, users.email_verified·pendingToken emailVerified)과 RC-2(SocialInputRules 공통 규칙, toProfile·verifyPendingToken 공유)를 공통 지점에서 고쳤다. 첫 실행 132/133 — SC-05 Given 이 ADR-0020 과 충돌해 사용자 승인(HITL#1·#2)으로 Given 만 정정했다."
 

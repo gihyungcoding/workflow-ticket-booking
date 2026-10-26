@@ -1,9 +1,9 @@
 ---
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
-phase: "4"
-phase_name: "Phase 4 - 재검증 WARN, HITL#3 예외 승인"
-status: ACTIVE
+phase: "5"
+phase_name: "Phase 5 - 회고 승인, 태스크 종료"
+status: DONE
 track: standard
 created_at: 2026-10-23
 last_updated: 2026-10-26
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-011.md"
@@ -31,7 +31,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 4 HITL#3 예외 승인됨(2026-10-26, verified_commit 4e58dac). Phase 5 — wf-reflect.
+회고 승인됨(2026-10-26). /wf-ship — PR 생성·푸시·머지는 사용자 확인 후. Ship 전 보고: tasks.json AC 문구가 ADR-0020 과 어긋남, V4 로컬 DB 확인.
 
 ## 알아둬야 할 것
 

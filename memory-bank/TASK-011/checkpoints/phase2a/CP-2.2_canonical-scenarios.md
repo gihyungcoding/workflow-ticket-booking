@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-23T03:00:00Z
 summary: "[HITL#1 승인됨 2026-10-26 · Phase 4 FAIL 롤백 재진입 · 4차 검증 PASS (경고 3)] 21건(SC-21 추가), AC 9/9. 사용자 결정: 롤백 지점 Phase 2a, 자동 연결 정책 '검증된 소셜 계정에만'(ADR-0020). RC-1·RC-2 재현 변종 전부 반영 — 규약 표(emailVerified 클레임·연결 대상·소셜 이메일 형식), SC-01·02·03·07·09·10·12 보강, SC-21 신규. 경고: V1 JSON 총계 낡음(수정함)·V6 When 단일성(SC-21 포함)·V9 SC-12/SC-21 409 겹침. [이전 요약] 20건 HITL#1 승인(2026-10-23)."
 
