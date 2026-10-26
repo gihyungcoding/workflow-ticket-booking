@@ -57,6 +57,8 @@ Phase 4 가 FAIL 을 내면 Phase 3(또는 2a)으로 돌아가고, 고친 뒤 �
 | `origin` | `found` 리뷰어가 보고한 결함 · `predicted` 같은 뿌리라 있을 법해서 첫 라운드에 미리 적음 · `later` 이후 라운드에서 뒤늦게 나옴 |
 | `probe` | `reproduced` 재현함 · `not_reproduced` 시도했으나 재현 안 됨 · `not_probed` 못 함 (`reason` 필수) |
 | `resolved` | 고쳤으면 `true` + `evidence`(그것을 막는 테스트). FAIL 이 아닌 판정에서 `reproduced` 변종은 반드시 `true` |
+| `accepted_risk` | 사람이 ADR 로 수용해 고치지 않기로 한 `reproduced` 변종. 값에 ADR 번호(`ADR-0020` 등)를 적는다. `resolved` 는 `false` 로 둔다 — 해소가 아니다 |
+| `deferred_to` | 아직 없는 기능의 `not_probed` 변종(예: 다음 태스크가 만드는 로그인 수단). 그 기능을 만드는 태스크 ID(`TASK-012`). 해당 태스크가 이 변종을 시나리오로 가져가야 한다 |
 
 변종이 정말 없으면 `variants: []` 와 함께 `no_variants_reason` 에 **무엇을 검토했고 왜 없는지**
 쓴다 (예: "이 catch 가 있는 진입점이 이 하나뿐임을 Grep 으로 확인").
