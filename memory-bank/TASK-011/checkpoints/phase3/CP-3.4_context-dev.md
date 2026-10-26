@@ -1,33 +1,27 @@
 ---
 status: ACTIVE
-saved_at: 2026-10-23T09:30:00Z
-summary: "Green 완료 — 전체 132/132 통과(새 20 + 기존 112), spotlessCheck 통과, 아키텍처 error 0(경고 3 기존). 첫 실행 16/18 → SC-11(숫자·불리언 pendingToken 이 문자열로 변환돼 401)과 SC-16(미등록 제공자 경로 500) 두 건을 구현 쪽에서 고쳐 통과. 승인된 테스트는 수정하지 않았다."
+saved_at: 2026-10-26T05:30:00Z
+summary: "[Phase 4 FAIL 롤백 후 재진입] Green 완료 — 전체 133/133(새 21 + 기존 112), spotlessCheck·아키텍처 error 0. RC-1(검증된 계정에만 자동 연결, users.email_verified·pendingToken emailVerified)과 RC-2(SocialInputRules 공통 규칙, toProfile·verifyPendingToken 공유)를 공통 지점에서 고쳤다. 첫 실행 132/133 — SC-05 Given 이 ADR-0020 과 충돌해 사용자 승인(HITL#1·#2)으로 Given 만 정정했다."
 
 next_steps:
-  - "Phase 4 — wf-verify. 실제 PostgreSQL 로 앱을 띄워 V4 마이그레이션·UNIQUE·FK·이메일/이름/providerUserId 전 문자열 입력을 HTTP 로 프로브(필수, H2 는 V4 를 실행하지 않는다)"
-  - "code-reviewer 호출 시 CLAUDE.md 의 JPA 지시 포함(비트랜잭션 확인·Given 설정 실제 적용). loginWithSocial 이 트랜잭션 없이 동작하는 점과 completeSocialSignUp 의 경합 처리를 짚게 한다"
-  - "DEV_TASK-011.json 의 unresolved_for_phase4 3건(state 저장소, 프록시 뒤 콜백 주소, PG 프로브)을 HITL#3 요약에 보인다"
+  - "Phase 4 재검증 — wf-verify. RC-1·RC-2 변종 전부 재프로브, 실제 PostgreSQL 로 V4 수정본·loginWithSocial(자동 연결·동시 콜백) 프로브"
+  - "code-reviewer 호출 시 root_causes 이어받기(origin: later 규칙), 수정 커밋 재리뷰, CLAUDE.md JPA 지시 포함"
+  - "DEV unresolved_for_phase4 를 HITL#3 요약에 보인다"
 
 decisions:
-  - decision: "loginWithSocial 에 @Transactional 을 걸지 않는다"
-    rationale: "같은 제공자 계정의 콜백이 동시에 오면 연결 INSERT 하나가 UNIQUE 위반(23505)이 된다. 한 트랜잭션 안에서는 그 실패가 이후 재조회까지 롤백 전용으로 만든다. 호출마다 따로 커밋하고, 위반이면 먼저 들어간 행을 다시 읽어 그 사용자로 로그인시킨다(SC-05)"
-  - decision: "completeSocialSignUp 은 @Transactional, users→social_accounts 순서로 saveAndFlush 하고 각각의 UNIQUE 위반을 다른 409 로 바꾼다"
-    rationale: "둘 중 하나가 실패하면 둘 다 만들지 않아야 한다(SC-12 행 수 단언). 예외가 던져지면 트랜잭션이 롤백된다. 이메일 존재 확인을 연결 확인보다 먼저 해 같은 토큰 재사용(SC-12 상태 2)이 EMAIL_ALREADY_EXISTS 가 된다"
-  - decision: "SocialLoginConfig 를 새 설정 클래스로 분리했다(Plan 의 SecurityConfig 에서 이동)"
-    rationale: "조건부 빈 4개와 FRONTEND_BASE_URL 검증이 커서 체인 구성(SecurityConfig)과 섞지 않는다. 제공자 환경변수 쌍이 하나도 없으면 빈이 하나도 만들어지지 않아 oauth2Login 도 달리지 않는다"
-  - decision: "미등록 제공자 경로는 인가 요청 resolver 를 감싸 IllegalArgumentException 을 null 로 바꿔 404 로 보낸다"
-    rationale: "Spring 기본은 InvalidClientRegistrationIdException(패키지 비공개, IllegalArgumentException 상속)을 500 으로 낸다. 시나리오 SC-16 은 foo·apple·대소문자 변형 모두 404"
-  - decision: "pendingToken 필드에만 StrictStringDeserializer 를 붙였다 (전역 coercion 설정 대신)"
-    rationale: "전역 설정은 TASK-009 엔드포인트(가입·로그인)의 숫자→문자열 동작까지 바꾼다. ADR-0019(조용한 변환 금지)에 따른 전역 정책은 Phase 5 의 ADR 후보로 남긴다"
-  - decision: "AuthService 에 3-인자 생성자를 남겼다"
-    rationale: "승인된 기존 테스트(AuthServiceSignUpFailureTest)가 사용한다. 승인된 테스트는 고치지 않는다"
-  - decision: "구글은 profile,email 스코프(OIDC 아님)로 userinfo 를 읽는다"
-    rationale: "Plan unresolved 제안대로 세 제공자가 같은 경로(OAuth2UserService → attributes → toProfile)를 탄다"
-  - decision: "리팩토링: toLoginResponse 추출, JwtTokenProvider.decoderFor 일반화"
-    rationale: "로그인 응답 조립과 디코더 생성이 두 곳에서 반복되던 것을 한 지점에 둔다. 리팩토링 뒤 전체 스위트 재실행 132/132"
+  - decision: "문자열 규칙을 config.SocialInputRules 한 곳에 두고 toProfile·verifyPendingToken 이 같이 쓴다"
+    rationale: "RC-2 변종 3종의 뿌리가 경로별 규칙 불일치다. 필드마다 따로 붙이면 빠뜨린 한 곳이 다음 FAIL 이 된다. 규칙 위반은 null 로 돌려 호출 쪽이 OAuth2AuthenticationException(제공자 응답) 또는 빈 Optional→401(토큰)로 바꾼다"
+  - decision: "이메일은 NBSP 등 공백류(Z*)와 서식 문자(Cf)를 주소 안에서 거부, 이름은 기존 규칙(제어문자·서로게이트)만"
+    rationale: "눈으로 구별되지 않는 다른 이메일 계정을 막는 것이 목적이다. 이름은 공백이 정상이고 SC-07/10 이 요구하지 않는다"
+  - decision: "V4 마이그레이션 파일에 email_verified 컬럼을 추가했다 (V5 가 아니라)"
+    rationale: "V4 는 병합·배포된 적이 없어 체크섬 충돌 대상이 없다. 로컬에 V4 를 적용해 둔 DB 가 있다면 재생성이 필요하다"
+  - decision: "자동 연결 조건에 대상 계정의 email_verified 를 추가 (User::isEmailVerified 필터)"
+    rationale: "ADR-0020. 미검증 대상이면 pendingToken → /complete 가 409 EMAIL_ALREADY_EXISTS"
+  - decision: "SC-05 Given 정정은 승인된 테스트 수정이라 사용자에게 물어 처리했다"
+    rationale: "wf-develop: 테스트가 잘못됐으면 임의로 고치지 않고 Phase 2 로 알린다. 사용자가 'Given 만 수정'을 택했고 HITL#1·#2 를 이 건에 한해 다시 받았다. 변이(복구 제거)로 가짜 통과가 아님을 확인"
 
 attempts:
   - phase: "3"
-    round: 1
-    result: "통과 — 첫 실행 20건 중 18 통과, SC-11·SC-16 실패 → 구현 보완 후 132/132"
+    round: 2
+    result: "통과 — 재진입 첫 실행 132/133(SC-05) → 시나리오·테스트 Given 정정 승인 후 133/133"
 ---

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-011
 title: "소셜 로그인 연동(카카오/네이버/구글)"
-phase: "2b"
-phase_name: "Phase 2b - Red 재작성 승인 (HITL#2, Phase 4 FAIL 롤백)"
+phase: "3"
+phase_name: "Phase 3 - Green 재진입 완료 (Phase 4 FAIL 롤백)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-23
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-011-social-login-oauth2"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-011.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-011.md"
@@ -31,7 +31,7 @@ TASK-011 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 16h 
 
 ## 다음 한 걸음
 
-Phase 2b 재진입 — Red 재작성 완료(새 21건 중 6 실패·15 이미 통과, 변이 2건 사망). HITL#2 승인됨(2026-10-26). Phase 3 재진입 — wf-develop. risks_for_green 마지막 5건 참조.
+Phase 3 재진입 완료(133/133, spotlessCheck·아키텍처 error 0). SC-05 Given 정정은 사용자 승인(HITL#1·#2). Phase 4 재검증 — wf-verify: RC-1·RC-2 변종 전부 재프로브, 실제 PostgreSQL 로 V4 수정본·loginWithSocial 프로브, code-reviewer 에 root_causes 이어받기.
 
 ## 알아둬야 할 것
 
