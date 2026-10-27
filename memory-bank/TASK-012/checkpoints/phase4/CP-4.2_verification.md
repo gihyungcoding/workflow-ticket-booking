@@ -1,14 +1,13 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-27T00:00:00Z
-summary: "[Phase 4 1라운드 FAIL, HITL#3 REJECT → Phase 3 롤백] 테스트 H2 145/145 · PostgreSQL DB 연결 클래스 113/113 · 린트·아키텍처 error 0. 그러나 리뷰어의 [correctness] 결함을 체인 프로브로 독립 재현: 운영 경로에서 id_token email_verified \"TRUE\"/\"True\"/\"tRue\" 가 자동 연결로 읽혀 승인된 SC-06 과 다르다(뿌리 1 · 변종 8, 재현 3). 실익 있는 악용 경로는 없음(애플 서명 토큰). R-1(세션 쿠키)은 사용자가 수용·후속 태스크로 결정."
+summary: "[Phase 4 2라운드 WARN, HITL#3 대기] RC-1 해소(재현 변종 3개를 운영 경로 테스트로 Red→Green, 2회차 리뷰어 결함 없음). H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK. 남은 경고: R-1(교차 사이트 form_post 세션 쿠키, 실제 브라우저 미검증 — 사용자가 수용·후속 태스크로 결정)."
 
 next_steps:
-  - "사용자 결정(HITL#3): 구현으로 롤백 + R-1 수용하고 후속 태스크로. Phase 3 에서:"
-  - "구현 롤백 — Phase 3: RC-1 의 reproduced 변종 3개를 '새' 플로우 테스트로 먼저 실패시킨 뒤(승인된 테스트는 고치지 않는다) 공통 지점(애플 OIDC 디코더 팩토리의 email_verified 클레임 변환 제거)에서 고친다. DEV 의 rollback_fixes 에 {root_cause, variants, tests, fix_locus: common, sites} 기록"
-  - "(기각된 대안) 시나리오 롤백 — SC-06 행을 운영 경로 의미에 맞춰 SC-05 로 옮김: HITL#1·#2 재승인 필요해서 선택하지 않았다"
-  - "재검증 시 이전 root_causes 를 그대로 이어받고, 수정 커밋도 최소 1회 다시 리뷰한다. PostgreSQL 프로브와 체인 프로브(email_verified 변종)를 다시 실행한다"
-  - "Docker Desktop 은 검증을 위해 검증자가 켰다(원래 꺼져 있었다). 검증용 컨테이너 tb-verify-012 는 정리함"
+  - "HITL#3 — WARN 이라 승인 / 예외 승인 / 롤백 선택. 승인 시 VERIFY 의 human_review.decision·verified_commit(승인 시점 HEAD)·verified_at 기록, python3 scripts/check_freshness.py --task-id TASK-012 로 확인"
+  - "승인되면 Phase 5 (wf-reflect). 회고 입력: 이 태스크의 Phase 4 FAIL 1회(RC-1)와 그 원인 — 프레임워크 정규화 이후 값을 가정한 테스트가 운영 경로를 우회"
+  - "Phase 5 회고·후속 후보: ① 프레임워크가 입력을 정규화하는 계층이 있으면 그 계층 이후 값 기준의 통합 테스트를 같이 쓴다(wf-scenario/wf-red 지침 후보) ② Phase 2b 하네스 프로브에 프레임워크 변환기를 포함한다 ③ architecture.md 계층 표에 config 행이 없다(미인코딩) ④ R-1 후속 태스크: SameSite=None;Secure 또는 쿠키 기반 저장소+ADR, 실제 브라우저 검증 ⑤ ADR-0021(fragment) 리다이렉트 형식 후속 태스크 ⑥ user-authentication.md §1-3 계정 연결 정책 문장(ADR-0020 이전 내용) 갱신"
+  - "Docker Desktop 은 검증을 위해 켠 것이다(원래 꺼져 있었다). 검증용 컨테이너 tb-verify-012 는 정리한다"
 
 decisions:
   - decision: "리뷰어 소견을 믿지 않고 실제 필터 체인으로 독립 재현했다"
@@ -23,9 +22,17 @@ decisions:
   - decision: "롤백 대상은 구현(Phase 3), R-1 은 수용 — 둘 다 사용자 선택"
     rationale: "구현 롤백은 승인된 시나리오·테스트를 그대로 지키고 공통 지점 1곳을 고친다. 시나리오 롤백은 코드는 단순해지지만 HITL#1·#2 를 다시 받고 테스트를 고쳐야 한다. R-1 은 AC 밖의 배포 설정 결정이라 후속 태스크로 분리"
 
+  - decision: "2라운드: 1라운드의 일회성 체인 프로브를 영구 회귀 테스트로 승격했고 PostgreSQL·HTTP 프로브를 수정 커밋 기준으로 다시 실행했다"
+    rationale: "재검증은 이전 증거를 믿지 않고 수정 커밋 3f4f382 로 bootJar 를 다시 빌드해 같은 프로브를 돌린다. 결과가 1라운드와 같다(ALL OK)는 것 자체가 수정이 다른 경로를 건드리지 않았다는 증거"
+  - decision: "상태는 PASS 가 아니라 WARN"
+    rationale: "R-1 은 사용자가 수용했지만 '교차 사이트 form_post 에서 세션 쿠키가 전송되는가'는 실제 브라우저로 확인하지 못한 가정이다. 측정하지 않은 것을 PASS 로 쓰지 않는다. 결함이 아니라 미검증 위험이라 FAIL 도 아니다"
+
 attempts:
   - phase: "4"
     round: 1
     outcome: "Phase 4 FAIL — RC-1: 운영 경로의 Spring 클레임 변환 때문에 email_verified 대소문자 변형이 검증됨으로 읽힘(승인된 SC-06 과 불일치)"
     back_to: "3"
+  - phase: "4"
+    round: 2
+    outcome: "WARN — RC-1 해소, R-1 미검증(사용자 수용)"
 ---

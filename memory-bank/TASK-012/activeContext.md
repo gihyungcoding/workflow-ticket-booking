@@ -1,8 +1,8 @@
 ---
 task_id: TASK-012
 title: "애플 로그인 연동"
-phase: "3"
-phase_name: "Phase 3 - Green (재작업 완료, Phase 4 재검증 대기)"
+phase: "4"
+phase_name: "Phase 4 - Verify (2라운드 WARN, HITL#3 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-27
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-012-apple-login-oauth2"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-012.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-012.md"
@@ -25,13 +25,13 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 재작업을 마쳤다 — Phase 4 1라운드 FAIL(RC-1: 운영 경로에서 id_token `email_verified` 가 Spring 디코더에 의해 미리 Boolean(대소문자 무시)으로 변환됨)에 대응. 재현된 변종 3개(`"TRUE"`/`"True"`/`"tRue"`)를 새 운영 경로 테스트 `AppleEmailVerifiedFlowTest` 로 먼저 실패시킨 뒤 공통 지점(`SocialLoginConfig.appleIdTokenDecoderFactory` — 디코더의 email_verified 변환 제거) 1곳에서 고쳤다. 승인된 테스트는 고치지 않았다. 전체 146건 통과, 린트·아키텍처 error 0. 변이 N1~N3 모두 잡힘(N1 은 새 테스트만 잡음).
-R-1(세션 쿠키 SameSite 미지정)은 사용자가 '수용하고 후속 태스크로' 결정 — 이번 태스크에서 바꾸지 않는다.
+Phase 4 재검증(2라운드)을 마쳤다 — 상태 WARN, HITL#3 승인 대기. RC-1(운영 경로에서 id_token email_verified 가 Spring 디코더에 의해 Boolean 으로 미리 변환) 해소: 재현 변종 3개를 새 운영 경로 테스트 AppleEmailVerifiedFlowTest 로 Red→Green, 2회차 리뷰어 결함 없음. H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK.
+남은 경고 R-1: 교차 사이트 form_post 에서 세션 쿠키(SameSite 미지정) 전송은 실제 브라우저로 미검증 — 사용자가 1라운드 HITL#3 에서 수용·후속 태스크로 결정.
 확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (사용자 선택).
 
 ## 다음 한 걸음
 
-Phase 4 재검증(wf-verify, 2라운드). `VERIFY_TASK-012.json` 의 이전 `root_causes` 를 그대로 이어받고, 수정 커밋도 code-reviewer 로 다시 리뷰한다. 체인 프로브(email_verified 15종)·실제 PostgreSQL 프로브(Docker 컨테이너를 다시 띄운다)·실제 HTTP 확인을 다시 돈다.
+HITL#3 승인(또는 예외 승인) → `verified_commit` 기록 → Phase 5 (wf-reflect). 회고 입력은 CP-4.2 next_steps 의 후보 6건.
 
 ## 알아둬야 할 것
 
