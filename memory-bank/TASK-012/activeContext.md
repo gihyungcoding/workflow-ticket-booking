@@ -2,7 +2,7 @@
 task_id: TASK-012
 title: "애플 로그인 연동"
 phase: "4"
-phase_name: "Phase 4 - Verify (2라운드 WARN, HITL#3 대기)"
+phase_name: "Phase 4 - Verify (HITL#3 예외 승인 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-27
@@ -25,13 +25,13 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 재검증(2라운드)을 마쳤다 — 상태 WARN, HITL#3 승인 대기. RC-1(운영 경로에서 id_token email_verified 가 Spring 디코더에 의해 Boolean 으로 미리 변환) 해소: 재현 변종 3개를 새 운영 경로 테스트 AppleEmailVerifiedFlowTest 로 Red→Green, 2회차 리뷰어 결함 없음. H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK.
+Phase 4 재검증(2라운드)을 마쳤다 — 상태 WARN, HITL#3 예외 승인(R-1 기록, verified_commit 기록). RC-1(운영 경로에서 id_token email_verified 가 Spring 디코더에 의해 Boolean 으로 미리 변환) 해소: 재현 변종 3개를 새 운영 경로 테스트 AppleEmailVerifiedFlowTest 로 Red→Green, 2회차 리뷰어 결함 없음. H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK.
 남은 경고 R-1: 교차 사이트 form_post 에서 세션 쿠키(SameSite 미지정) 전송은 실제 브라우저로 미검증 — 사용자가 1라운드 HITL#3 에서 수용·후속 태스크로 결정.
 확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (사용자 선택).
 
 ## 다음 한 걸음
 
-HITL#3 승인(또는 예외 승인) → `verified_commit` 기록 → Phase 5 (wf-reflect). 회고 입력은 CP-4.2 next_steps 의 후보 6건.
+Phase 5 (wf-reflect) — KPT 회고, 규칙 개선안, HITL#4. 회고 입력은 CP-4.2 next_steps 의 후보 6건과 Phase 4 FAIL 1회(RC-1).
 
 ## 알아둬야 할 것
 

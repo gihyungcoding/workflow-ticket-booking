@@ -1,11 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-27T00:00:00Z
-summary: "[Phase 4 2라운드 WARN, HITL#3 대기] RC-1 해소(재현 변종 3개를 운영 경로 테스트로 Red→Green, 2회차 리뷰어 결함 없음). H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK. 남은 경고: R-1(교차 사이트 form_post 세션 쿠키, 실제 브라우저 미검증 — 사용자가 수용·후속 태스크로 결정)."
+summary: "[Phase 4 2라운드 WARN, HITL#3 예외 승인] RC-1 해소(재현 변종 3개를 운영 경로 테스트로 Red→Green, 2회차 리뷰어 결함 없음). H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK. 남은 경고: R-1(교차 사이트 form_post 세션 쿠키, 실제 브라우저 미검증 — 사용자가 수용·후속 태스크로 결정)."
 
 next_steps:
-  - "HITL#3 — WARN 이라 승인 / 예외 승인 / 롤백 선택. 승인 시 VERIFY 의 human_review.decision·verified_commit(승인 시점 HEAD)·verified_at 기록, python3 scripts/check_freshness.py --task-id TASK-012 로 확인"
-  - "승인되면 Phase 5 (wf-reflect). 회고 입력: 이 태스크의 Phase 4 FAIL 1회(RC-1)와 그 원인 — 프레임워크 정규화 이후 값을 가정한 테스트가 운영 경로를 우회"
+  - "Phase 5 (wf-reflect) — KPT 회고 + 규칙 개선안, HITL#4. 입력: Phase 4 FAIL 1회(RC-1)와 attempts, 후보 6건(아래)"
   - "Phase 5 회고·후속 후보: ① 프레임워크가 입력을 정규화하는 계층이 있으면 그 계층 이후 값 기준의 통합 테스트를 같이 쓴다(wf-scenario/wf-red 지침 후보) ② Phase 2b 하네스 프로브에 프레임워크 변환기를 포함한다 ③ architecture.md 계층 표에 config 행이 없다(미인코딩) ④ R-1 후속 태스크: SameSite=None;Secure 또는 쿠키 기반 저장소+ADR, 실제 브라우저 검증 ⑤ ADR-0021(fragment) 리다이렉트 형식 후속 태스크 ⑥ user-authentication.md §1-3 계정 연결 정책 문장(ADR-0020 이전 내용) 갱신"
   - "Docker Desktop 은 검증을 위해 켠 것이다(원래 꺼져 있었다). 검증용 컨테이너 tb-verify-012 는 정리한다"
 
@@ -27,6 +26,9 @@ decisions:
   - decision: "상태는 PASS 가 아니라 WARN"
     rationale: "R-1 은 사용자가 수용했지만 '교차 사이트 form_post 에서 세션 쿠키가 전송되는가'는 실제 브라우저로 확인하지 못한 가정이다. 측정하지 않은 것을 PASS 로 쓰지 않는다. 결함이 아니라 미검증 위험이라 FAIL 도 아니다"
 
+  - decision: "HITL#3 2라운드: EXCEPTION_APPROVE (R-1 예외 기록), verified_commit 기록"
+    rationale: "WARN 사유는 사용자가 이미 수용·후속 태스크로 결정한 R-1 하나다. 일반 승인이 아니라 예외 승인으로 미검증 가정(실제 브라우저)을 VERIFY 에 남겨 /wf-ship 과 회고가 읽게 한다"
+
 attempts:
   - phase: "4"
     round: 1
@@ -34,5 +36,5 @@ attempts:
     back_to: "3"
   - phase: "4"
     round: 2
-    outcome: "WARN — RC-1 해소, R-1 미검증(사용자 수용)"
+    outcome: "WARN — RC-1 해소, R-1 미검증(사용자 수용) → EXCEPTION_APPROVE"
 ---

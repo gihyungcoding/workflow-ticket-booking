@@ -303,9 +303,19 @@
     "open_risk_R1": "사용자가 수용하고 후속 태스크로 결정(HITL#3 1라운드). state 가 HttpSession 에 저장되고 JSESSIONID 에 SameSite/Secure 가 없다(실제 HTTP 로 확인). 교차 사이트 form_post 에서의 쿠키 전송은 브라우저 동작에 달려 있어 미검증. 가용성 위험(중간), 인증 우회 아님"
   },
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "8714a946b2cc55456777a8bf6c40a57d57ffe4dc",
+    "verified_at": "2026-10-27T02:25:04Z",
+    "exceptions": [
+      {
+        "id": "R-1",
+        "what": "인가 요청 state 가 HttpSession 에 저장되고 JSESSIONID 에 SameSite/Secure 가 없어, 교차 사이트 form_post 콜백에서 세션 쿠키가 전송되는지를 실제 브라우저로 확인하지 못했다(MockMvc 는 같은 세션을 그대로 넘긴다). Chrome 은 Lax+POST 약 2분 예외에 의존한다.",
+        "severity": "가용성 위험(중간) — 인증 우회·탈취 경로 아님. state 를 못 찾으면 필터가 거부해 실패 화면(/login?error=social)으로 간다",
+        "decision": "사용자가 수용하고 후속 태스크로 분리하기로 결정(HITL#3 1라운드) 후 2라운드에서 예외 승인",
+        "basis": "실제 브라우저 검증이 필요하다는 점을 승인 근거에 남긴다. 선택지: (a) server.servlet.session.cookie.same-site=none + secure=true (b) 서명된 쿠키 기반 인가 요청 저장소 + ADR",
+        "follow_up": "Phase 5 회고에서 후속 태스크 후보로 올린다 (affects: 모든 소셜 제공자의 배포 설정과 HTTPS 전제)"
+      }
+    ]
   },
   "rounds": [
     {
