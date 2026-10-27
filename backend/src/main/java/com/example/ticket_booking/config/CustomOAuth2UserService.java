@@ -85,7 +85,9 @@ public final class CustomOAuth2UserService {
 
   /**
    * 애플은 id_token 클레임이 평면이고 이름이 없다. email_verified 는 불리언이 아니라 문자열 "true" 로 올 수 있어, 불리언 true 이거나 정확히
-   * 문자열 "true" 일 때만 검증된 것으로 본다(잘못 true 면 미검증 이메일이 기존 계정에 연결된다 — ADR-0020).
+   * 문자열 "true" 일 때만 검증된 것으로 본다(잘못 true 면 미검증 이메일이 기존 계정에 연결된다 — ADR-0020). Spring 의 기본 id_token
+   * 디코더는 이 클레임을 먼저 Boolean 으로 바꿔 버리므로(대소문자 무시) 원문 타입이 도달하도록
+   * SocialLoginConfig.appleIdTokenDecoderFactory 가 그 변환을 뺀다.
    */
   private static SocialProfile appleProfile(Map<?, ?> attributes, String appleUser) {
     Object verified = attributes.get("email_verified");

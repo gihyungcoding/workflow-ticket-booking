@@ -54,7 +54,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     }
   }
 
-  /** 애플의 최초 인가 콜백(form_post)이 싣는 user 파라미터. 애플의 POST 콜백에서만 읽는다 — GET 쿼리나 다른 제공자의 값은 무시한다. */
+  /**
+   * 애플의 최초 인가 콜백(form_post)이 싣는 user 파라미터. 애플의 POST 콜백에서만 읽는다 — GET 이나 다른 제공자의 값은 무시한다.
+   * getParameter 는 POST 본문뿐 아니라 쿼리스트링의 user 도 합친다(영향은 이름 문자열뿐 — 신원은 id_token 만 쓴다).
+   */
   private static String appleUser(HttpServletRequest request, String registrationId) {
     boolean appleForm =
         "apple".equals(registrationId) && "POST".equalsIgnoreCase(request.getMethod());

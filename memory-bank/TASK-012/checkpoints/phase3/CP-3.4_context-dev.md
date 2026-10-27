@@ -1,13 +1,13 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-27T00:00:00Z
-summary: "[Phase 3 완료] 전체 145건 중 통과 144 · 실패 0 · 건너뜀 1(기존 DockerfileTest 조건부). 대상 12건 전부 Green. 린트 error 0, 아키텍처 제약 위반 0. 변이 검증 10건 중 9건 잡힘, 안 잡힌 1건은 불필요한 검사라 제거. 승인된 테스트는 한 줄도 고치지 않았다."
+summary: "[Phase 3 재작업 완료 — Phase 4 1라운드 FAIL(RC-1) 대응] 전체 146건 통과 · 실패 0 · 건너뜀 0. 대상 13건(승인 12 + RC-1 회귀 1) Green. 린트 error 0, 아키텍처 위반 0. 재현된 변종 3개를 새 테스트로 먼저 실패시킨 뒤 공통 지점 1곳에서 고쳤고, 승인된 테스트는 고치지 않았다. 변이 N1~N3 모두 잡힘."
 
 next_steps:
-  - "Phase 4 — wf-verify. code-reviewer 호출 시 CLAUDE.md 의 JPA 리뷰 지시를 따른다(테스트가 클래스 레벨 @Transactional 이 아니라 해당 없음 — 이번 테스트는 모두 비트랜잭션 + 리포지토리 재조회라고 명시)"
-  - "Phase 4 필수 증거: 실제 PostgreSQL 로 앱을 띄워 애플 이름 경계(합성 100자·4바이트 문자)를 /api/auth/social/complete 까지 프로브 (PLAN 결정)"
-  - "HITL#3 에 올릴 것: DEV_TASK-012.json 의 open_risks R-1 — 교차 사이트 form_post 에서 세션 쿠키 전송은 미검증 가정(Chrome 2분 예외). 선택지 (a) SameSite=None;Secure 설정 (b) 쿠키 기반 저장소+ADR. 사용자 결정 필요"
-  - "리뷰어에게 요청: email_verified 해석(불리언/\"true\" 외 전부 false)이 선점 경로를 열지 않는지, Client Secret 서명·파싱 오류 메시지에 키 본문이 새지 않는지, user 파라미터 출처 제한(apple+POST)"
+  - "Phase 4 재검증 — wf-verify. 이전 root_causes(RC-1)를 그대로 이어받아 변종이 모두 해소됐는지 보고, 수정 커밋도 code-reviewer 로 최소 1회 다시 리뷰한다(이전 소견 카테고리 correctness 를 지목해 같은 부류 전수 확인 요청)"
+  - "재검증 필수: ① 체인 프로브(email_verified 15종)를 다시 돌려 \"TRUE\"·\"True\"·\"tRue\" 가 가입 대기인지 ② 실제 PostgreSQL 프로브(이름 경계) ③ 앱 기동 후 실제 HTTP 로 인가 요청 확인. Docker 는 이미 켜져 있다(검증용 컨테이너는 삭제했으니 다시 띄운다: postgres:16-alpine, 포트 55433)"
+  - "R-1(세션 쿠키)은 사용자가 수용하고 후속 태스크로 결정 — 승인 근거에 '실제 브라우저 검증 필요' 를 남긴다"
+  - "Phase 5 회고 후보: ① 프레임워크가 입력을 정규화하는 계층이 있으면 attributes 를 직접 주입하는 단위/핸들러 테스트가 변환 이전 값을 가정할 수 있다 — 그 계층 이후 값 기준의 통합 테스트를 같이 쓴다 ② Phase 2b 하네스 프로브에 프레임워크 변환기를 포함한다 ③ architecture.md 계층 표에 config 행이 없다"
 
 decisions:
   - decision: "AuthService·Repository·스키마를 바꾸지 않고 config 5곳만 고쳤다 (Plan 의 target_files 와 같다). 추가로 SocialInputRules.text() 가시성만 넓혔다"
@@ -25,5 +25,16 @@ decisions:
   - decision: "변이 검증을 10건 수행: 잡히지 않은 것은 M9 하나"
     rationale: "한 번에 12건이 전부 초록이면 가짜 통과를 의심해야 한다. 핵심 동작(client_secret 교체·다른 제공자 보호·email_verified 양방향·iss 검증·form_post·GET 무시·부분 변환·exp)을 망가뜨려 해당 테스트가 실제로 실패함을 확인했다"
 
-attempts: []
+  - decision: "[Phase 4 롤백] 승인된 SC-06 을 고치지 않고 새 파일 AppleEmailVerifiedFlowTest 를 추가한다"
+    rationale: "승인된 테스트는 사람이 승인한 사양이다. SC-06 의 행(\"True\"·\"TRUE\"·\"tRue\" → 가입 대기)은 맞고 구현이 틀렸다. SC-06 은 attributes 직접 주입이라 운영 경로를 증명하지 못하므로, 같은 값을 id_token 으로 실제 필터 체인에 통과시키는 새 테스트가 그 사양을 운영 경로에서 지킨다. 변이 N1 이 새 테스트만 잡는다는 점이 이 분리의 정당화"
+  - decision: "[Phase 4 롤백] 고치는 위치는 JwtDecoderFactory<ClientRegistration> 빈 하나 — SecurityConfig 변경 없음"
+    rationale: "OAuth2LoginConfigurer.getJwtDecoderFactoryBean() 이 컨텍스트의 이 타입 빈을 자동으로 쓴다(javap 로 확인, 테스트로 입증). 애플 설정이 있을 때만 만들어 기존 제공자·미설정 동작은 그대로(SC-12·SC-11 가드 통과). 변환기 전체를 끄지 않고 email_verified 한 항목만 뺀다 — 나머지 클레임(exp·iat·aud 등)의 타입 변환은 Spring 의 id_token 검증이 의존한다"
+  - decision: "[Phase 4 롤백] 리뷰어 low 소견: tokenEndpoint 중복 연결은 그대로 두고, user 파라미터 쿼리스트링 합침은 주석만 정정"
+    rationale: "tokenEndpoint 명시 연결은 중복이지만 무해하고 의도를 드러낸다. getParameter 의 쿼리스트링 합침은 영향이 이름 문자열뿐이고 신원은 id_token 만 쓰며 state 바인딩을 통과한 요청이다 — 동작 변경은 AC 밖이라 하지 않고 주석의 '쿼리는 무시' 오해만 바로잡았다"
+
+attempts:
+  - phase: "3"
+    round: 2
+    outcome: "Phase 4 1라운드 FAIL(RC-1) 로 롤백되어 재작업 — 승인된 사양(SC-06)과 운영 경로의 불일치를 공통 지점에서 해소"
+    back_to: "4"
 ---

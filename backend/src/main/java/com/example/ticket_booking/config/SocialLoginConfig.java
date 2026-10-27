@@ -6,13 +6,16 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
@@ -20,6 +23,7 @@ import org.springframework.security.oauth2.client.endpoint.DefaultOAuth2TokenReq
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.oidc.authentication.OidcIdTokenDecoderFactory;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
@@ -27,9 +31,12 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.converter.ClaimTypeConverter;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
+import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
+import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import org.springframework.util.MultiValueMap;
 
 /**
@@ -154,6 +161,25 @@ public class SocialLoginConfig {
           return parameters;
         });
     return client;
+  }
+
+  /**
+   * id_token 디코더의 클레임 변환에서 email_verified 만 뺀다. Spring 의 기본 변환기는 이 클레임을 문자열 → Boolean(대소문자 무시)으로 바꿔
+   * 놓아 "TRUE" 같은 값도 검증된 이메일로 읽히게 한다. 원문 타입이 그대로 도달해야 {@link CustomOAuth2UserService} 가 불리언 true 또는
+   * 정확히 문자열 "true" 일 때만 검증됨으로 본다(ADR-0020). OAuth2LoginConfigurer 가 컨텍스트의 이 타입 빈을 자동으로 쓴다.
+   */
+  @Bean
+  @Conditional(AppleConfigured.class)
+  public JwtDecoderFactory<ClientRegistration> appleIdTokenDecoderFactory() {
+    OidcIdTokenDecoderFactory factory = new OidcIdTokenDecoderFactory();
+    factory.setClaimTypeConverterFactory(
+        registration -> {
+          Map<String, Converter<Object, ?>> converters =
+              new HashMap<>(OidcIdTokenDecoderFactory.createDefaultClaimTypeConverters());
+          converters.remove(StandardClaimNames.EMAIL_VERIFIED);
+          return new ClaimTypeConverter(converters);
+        });
+    return factory;
   }
 
   /**
