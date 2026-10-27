@@ -1,0 +1,173 @@
+{
+  "task_id": "TASK-012",
+  "keep": [
+    {
+      "what": "시나리오 작성 전에 제품 결정 2건(이름 합성 순서·이름 없을 때 대체)만 AskUserQuestion 으로 먼저 받고, 나머지 unresolved 는 제안값으로 시나리오에 쓰되 HITL#1 요약에 '제가 정한 값'으로 명시했다",
+      "evidence": "CP-2.2 decisions — 사용자 선택 2건 + 제안값 목록. 2a 의 재시도는 독립검증 V11 1회뿐이고 사용자 결정 때문에 시나리오를 다시 쓴 적은 없다(HITL#1·#2 모두 1회에 승인)"
+    },
+    {
+      "what": "첫 Green 직후 변이 검증 10건으로 가짜 통과를 점검하고, 안 잡힌 변이(M9)를 '필요 없는 코드' 신호로 읽어 제거했다",
+      "evidence": "DEV_TASK-012.json mutation_check — 10건 중 9건 잡힘, M9(PEM 헤더 라벨 검사)는 어떤 테스트도 요구하지 않아 parsePrivateKey 를 단순화(refactoring)"
+    },
+    {
+      "what": "Phase 4 에서 리뷰어의 [correctness] 소견을 믿지 않고 실제 필터 체인으로 독립 재현한 뒤에야 FAIL 을 선언했고, 재현 프로브를 영구 회귀 테스트로 승격했다",
+      "evidence": "VERIFY chain_probe_email_verified — 15종 값 중 \"TRUE\"/\"True\"/\"tRue\" 가 자동 연결됨을 확인(리뷰어는 단독 변환기 프로브였고 \"True\" 는 추정만 했다) → AppleEmailVerifiedFlowTest(Red 6건 → Green). 변이 N1 은 이 새 테스트만 잡았다"
+    },
+    {
+      "what": "PLAN 에서 'PostgreSQL 프로브 필수'를 못박아 Phase 4 에서 실제 앱+PostgreSQL+진짜 HTTP 로 이름 경계(100자·4바이트 문자)와 세션 쿠키 속성을 확인했다",
+      "evidence": "VERIFY postgres_probe — 8개 경계 ALL OK, JSESSIONID 에 SameSite/Secure 없음을 사실로 확인(R-1 의 전제). 자동 PostgreSQL 테스트가 없다는 PLAN 결정의 한계를 이 프로브가 메웠다"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Phase 4 FAIL(RC-1): 승인된 SC-06 의 \"True\"/\"TRUE\"/\"tRue\" → 가입 대기 사양이 운영 경로에서 지켜지지 않았다. Spring 의 OIDC 디코더가 id_token 의 email_verified 를 미리 Boolean(대소문자 무시)으로 바꾸는데, 핸들러 테스트가 attributes 를 직접 주입해 이 변환을 우회했고 구현의 \"정확히 문자열 true\" 분기는 운영에서 도달하지 않는 죽은 분기였다. 원인은 세 겹이다: ① TASK-011 인계('문자열 \"true\" 로 올 수 있다')를 코드로 확인하지 않고 사양으로 옮겼다 ② PLAN 의 unresolved 에 '[Phase 3 확인] … 애플 id_token 클레임은 email_verified 를 문자열 그대로 둔다(클레임 변환 대상이 아님)' 라는 틀린 사실이 있었고 Phase 3 가 그 항목을 닫지 않았다 ③ Phase 2b 하네스 프로브가 변환기 없는 순수 NimbusJwtDecoder 로 확인해 Spring 변환을 포함하지 못했다",
+      "evidence": "VERIFY_TASK-012.json root_causes RC-1(재현 3·미재현 5) / PLAN_TASK-012.json codebase_analysis.unresolved '[Phase 3 확인]' 항목 / TEST_TASK-012.json harness_probe / CP-4.2 attempts(round 1 FAIL → Phase 3 롤백). 보안 실익은 없었다(id_token 은 애플이 서명) — 그러나 승인된 사양과 운영 동작이 달랐고 검증 1라운드와 롤백이 들었다",
+      "phase": 4
+    },
+    {
+      "what": "Phase 2a 독립검증 1회차 V11 fail: 시나리오 입력 경계표(coverage-policy §2-1)에 '필수 필드 누락'(콜백 code)과 '서버 응답으로 분기하는 로직'(토큰 엔드포인트의 400 다른 code·500·빈 바디·비 JSON)이 빠졌다. 정책 표에는 이 행이 있는데도, Plan 의 design.inputs 에 외부 서버 응답이 입력으로 적혀 있지 않아 표를 입력에 대는 작업에서 걸러졌다",
+      "evidence": "VALIDATION_TASK-012.json round 1 V11 (1)(2) / PLAN_TASK-012.json design.inputs — 환경변수·폼 파라미터·id_token 클레임·Clock 만 있고 토큰 엔드포인트 응답은 flows 안에만 있었다 / CP-2.2 attempts round 1 FAIL",
+      "phase": "2a"
+    },
+    {
+      "what": "전체 스위트를 환경변수로 PostgreSQL 에 돌리자 10건이 실패했다. 구현 결함이 아니라 인공물이었다: SpringApplicationBuilder 로 자체 H2 URL 을 넘기는 테스트 4개는 PostgreSQL 드라이버/계정 환경변수와 충돌하고, @DataJpaTest 슬라이스는 SPRING_FLYWAY_ENABLED=true 때문에 PostgreSQL 전용 마이그레이션(TIMESTAMPTZ)이 H2 에서 실행됐다. 원인을 가르는 데 한 번의 조사가 들었고, Docker 데몬이 꺼져 있어 기동까지 해야 했다. TASK-011 의 미반영 제안(evidence-integrity.md)이 정확히 이 내용이다",
+      "evidence": "VERIFY_TASK-012.json evidence.tests_postgresql.first_attempt·excluded / 미반영 제안 TASK-011 #2 [evidence-integrity.md]",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "Phase 3 가 PLAN 의 unresolved 중 'Phase 3 확인'·'확인 필요' 로 표시된 항목을 하나씩 닫고 결과(확인한 방법·사실·시나리오 영향)를 DEV_<ID>.json 의 plan_unresolved_resolution 에 남기게 한다. 확인되지 않은 항목이 남으면 Green 게이트를 통과하지 못한다",
+      "target": ".claude/skills/wf-develop/SKILL.md"
+    },
+    {
+      "what": "coverage-policy §2-1 에 행 추가: '외부 제공자의 클레임·응답을 프레임워크(Spring OIDC 디코더 등)가 변환한 뒤 판정에 쓰는 값' — 시나리오 Given 에 변환 전/후 중 어느 쪽인지 적고, 판정 시나리오는 변환 계층을 실제로 통과시키는 테스트(attributes 직접 주입만 쓰지 않는다)를 짝으로 둔다",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    },
+    {
+      "what": "Plan 의 design.inputs 에 외부 서비스의 응답(토큰·userinfo·JWKS 응답)도 source: '외부 서버 응답' 으로 적게 해서 §2-1 의 '서버 응답으로 분기하는 로직' 행이 입력 경계 대조 대상에 들어오게 한다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "하네스 프로브(구현 없이 확인하는 하네스 가정)는 프레임워크가 입력을 바꾸는 계층(디코더·컨버터·역직렬화)을 포함해 실행한다. 순수 라이브러리 단독 실행은 '프레임워크가 바꾸지 않는다'는 증거가 아니다",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "PostgreSQL 위에서 스위트를 돌리는 절차를 실제로 적는다: Docker 데몬 사전 확인, 환경변수 3종+드라이버/계정, 자체 H2 URL 을 넘기는 테스트와 @DataJpaTest 슬라이스는 제외하되 제외 목록과 사유를 VERIFY 에 그대로 적는 형식",
+      "target": ".claude/skills/wf-verify/references/evidence-integrity.md"
+    }
+  ],
+  "insights": [
+    "'검증됨' 같은 신뢰 판정 플래그는 프레임워크가 변환한 뒤의 값을 기준으로 사양화해야 하고, 사양에 쓴 '원문 타입' 전제는 운영 경로에서 한 번 관찰하기 전까지 가정이다. 인계 문서·PLAN 의 외부 형식 서술('문자열로 올 수 있다', '변환 대상이 아니다')도 마찬가지다 — 이번 태스크는 그 가정 두 개가 모두 틀렸고 하나는 PLAN 의 '확인 필요' 항목으로 적혀 있었는데 아무도 닫지 않았다",
+    "attributes 를 직접 주입하는 핸들러·단위 테스트는 구현 결함은 잡지만 '프레임워크가 값을 바꾸는 계층의 부재'는 증명하지 못한다. 변이 검증도 같은 한계다 — 10건 변이는 코드 결함은 잡았지만 변환기 존재 자체는 못 봤고, 운영 경로를 통과시킨 체인 프로브만 이것을 드러냈다. 사양이 외부 입력의 타입·값에 걸려 있으면 운영 경로 테스트를 시나리오 단계에서 짝으로 둔다",
+    "같은 문제가 미반영 제안으로 이미 쌓여 있었다(evidence-integrity.md TASK-011 #2, wf-plan ×2, coverage-policy.md TASK-010 #0, wf-develop TASK-010 #2, wf-red TASK-015 #1). 이번 태스크가 그 중 세 개를 다시 겪었다 — 제안이 쌓이는 파일이 곧 이 워크플로우의 반복 마찰이다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "unresolved 14건에 '[Phase 3 확인]' 항목이 있었는데 그 중 하나(애플 클레임은 변환 대상이 아님)가 사실과 달랐고 Phase 3 에서 닫히지 않았다 — RC-1 의 뿌리 중 하나"
+    },
+    "2a": {
+      "retries": 1,
+      "note": "독립검증 1회차 V11 fail(콜백 code 누락·토큰 응답 변형·이름 100자 경계·env 개별 공백·릴레이 주소), 표 행 추가 후 2회차 PASS, 경고 V6 보류. 제품 결정 2건은 사전 질문으로 재작업 없음"
+    },
+    "2b": {
+      "retries": 0,
+      "note": "테스트 12건(Red 11 + already_passing 1), 하네스 프로브 2건 — 단 프로브가 Spring 의 id_token 클레임 변환을 포함하지 않아 RC-1 을 놓쳤다"
+    },
+    "3": {
+      "retries": 1,
+      "note": "첫 실행 12/12 Green, 변이 10건. Phase 4 FAIL 로 롤백되어 RC-1 재작업(새 운영 경로 테스트 Red 6건 → Green, 공통 지점 1곳 수정)"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1라운드 FAIL(RC-1, 독립 재현) → 사용자 결정(구현 롤백, R-1 수용) → 2라운드 WARN → EXCEPTION_APPROVE(R-1)"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "OIDC 제공자의 검증 플래그(email_verified)는 프레임워크가 변환하기 전의 원문 타입으로 판정하고, 이를 위해 id_token 디코더의 해당 클레임 변환을 끈다(애플에 적용)",
+      "why_broader": "구글을 OIDC 로 전환하거나 새 OIDC 제공자를 추가할 때 같은 판단이 반복된다. 자동 연결 정책(ADR-0020)의 전제인 '제공자 이메일 검증됨'의 해석 규칙이 제공자마다 암묵적으로 다르면 선점 경로가 열린다",
+      "evidence": "CP-3.4 decisions(Phase 4 롤백), DEV rollback_fixes, VERIFY RC-1",
+      "suggested_title": "소셜 제공자의 이메일 검증 플래그 해석 규칙",
+      "status": "proposed"
+    },
+    {
+      "decision": "인가 요청 state 를 HttpSession 에 두고 세션 쿠키에 SameSite/Secure 를 지정하지 않은 채 애플 form_post(교차 사이트 POST)를 받는다 — 브라우저 기본 동작에 의존(Chrome Lax+POST 2분 예외)",
+      "why_broader": "모든 소셜 제공자의 콜백·배포 설정(HTTPS 전제, 분리 배포 ADR-0016)에 걸리고, 해결책이 새 컴포넌트(쿠키 기반 저장소)나 전역 쿠키 설정이다. TASK-011 이 이미 후보로 올린 항목('OAuth2 콜백 주소와 state 저장')이 이번에 실제 HTTP 로 사실이 확인됐다",
+      "evidence": "VERIFY postgres_probe.session_cookie (Set-Cookie: JSESSIONID=…; Path=/; HttpOnly), DEV open_risks R-1, 사용자 예외 승인(HITL#3)",
+      "suggested_title": "OAuth2 인가 요청 state 저장과 세션 쿠키 속성",
+      "status": "proposed"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "architecture.md §2 계층 표에 config 패키지(보안 설정·OAuth 핸들러·제공자 등록 — Service 를 호출하는 HTTP 관심사)의 행이 없다. 이번 태스크의 운영 코드 6개가 모두 여기에 있는데 어떤 제약도 적용되지 않는다",
+      "where": "docs/architecture/architecture.md §2, backend/src/main/java/com/example/ticket_booking/config/",
+      "found_how": "Phase 4 Step 3.5 산문↔기계 규칙 대조(변경된 main 패키지가 config 뿐이고 ARCH-001~004 의 paths 에 없다)",
+      "suggestion": "계층 표에 config 행(책임·하지 않는 것)을 추가하고, 검사 가능한 것(예: config 가 repository 를 직접 import 하지 않는다)을 constraints.yaml 로 옮긴다 — architecture-doc 스킬로"
+    },
+    {
+      "what": "architecture.md §2 'Service: HTTP 관심사를 갖지 않는다' 는 ARCH-002(api 패키지 import 금지)로만 일부 인코딩돼 있고 servlet·Spring MVC 타입 import 는 검사하지 않는다. domain 의 '영속성 접근·HTTP 관심사·트랜잭션 제어' 도 미인코딩",
+      "where": "docs/architecture/constraints.yaml (ARCH-002), docs/architecture/architecture.md §2",
+      "found_how": "VERIFY architecture.prose_coverage",
+      "suggestion": "service/** 와 domain/** 에서 jakarta.servlet·org.springframework.web 의 forbidden_import 를 추가할지 판단(기존 코드가 걸리지 않는지 확인 후 warn 으로 시작)"
+    },
+    {
+      "what": "user-authentication.md §1-3 '계정 연결 정책' 문장이 ADR-0020 이전 내용(이메일이 같으면 이메일 가입 계정에도 연결)이고, tasks.json 의 TASK-011 acceptance_criteria 문구도 어긋난다",
+      "where": "docs/product/features/user-authentication.md §1-3, workflow_design/02_tasks/tasks.json TASK-011",
+      "found_how": "Phase 0 인계 메모(activeContext 의 '문서 갱신 필요')를 이 태스크가 범위 밖으로 확정(PLAN unresolved '[문서 어긋남]')",
+      "suggestion": "ADR-0020 을 반영해 §1-3 을 고치고 tasks.json 문구를 정정(별도 문서 커밋)"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-develop/SKILL.md",
+      "section": "Step 1 / Step 6 DEV JSON",
+      "change": "PLAN 의 unresolved 중 'Phase 3 확인'·'확인 필요' 항목마다 해소 결과(확인 방법·사실·시나리오 영향)를 DEV_<ID>.json 의 plan_unresolved_resolution 에 적고, 열린 항목이 남으면 EXIT GATE 불통과로 한다",
+      "evidence": "TASK-012 PLAN 의 '[Phase 3 확인] … 애플 id_token 클레임은 email_verified 를 문자열 그대로 둔다(클레임 변환 대상이 아님)' 가 틀린 사실이었고 닫히지 않아 Phase 4 FAIL(RC-1)",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§2-1 입력 타입별 경계표",
+      "change": "'프레임워크가 외부 입력을 변환한 뒤 판정에 쓰는 값' 행 추가 — Given 에 변환 전/후를 명시하고 판정 테스트는 변환 계층을 실제로 통과시킨다",
+      "evidence": "TASK-012 SC-06 이 attributes 직접 주입으로 Spring 의 id_token 클레임 변환을 우회해 가짜로 통과",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 4 design.inputs",
+      "change": "외부 서비스 응답(토큰 엔드포인트·userinfo·JWKS)을 design.inputs 에 source '외부 서버 응답' 으로 포함해 coverage-policy §2-1 '서버 응답으로 분기하는 로직' 행이 대조 대상이 되게 한다",
+      "evidence": "TASK-012 독립검증 1회차 V11 fail — 토큰 엔드포인트 응답 변형·콜백 code 누락이 Plan inputs 에 없어 시나리오에서 빠졌다",
+      "status": "pending",
+      "recurring": 2
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 3 / 하네스 프로브",
+      "change": "구현 없이 하네스 가정을 확인하는 프로브는 프레임워크가 입력을 바꾸는 계층(디코더·컨버터·역직렬화)을 포함해 실행하고, 라이브러리 단독 실행 결과를 '프레임워크가 바꾸지 않는다'의 증거로 쓰지 않는다",
+      "evidence": "TASK-012 2b 프로브는 변환기 없는 NimbusJwtDecoder 로 email_verified 가 문자열로 남는 것을 확인했지만 운영 디코더(OidcIdTokenDecoderFactory)는 Boolean 으로 바꾼다",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-verify/references/evidence-integrity.md",
+      "section": "§1 증거 수집",
+      "change": "PostgreSQL 위에서 스위트를 돌리는 절차(Docker 데몬 사전 확인, 환경변수 3종+드라이버/계정)와, 자체 H2 URL 을 넘기는 테스트·@DataJpaTest 슬라이스는 제외하고 제외 목록·사유를 VERIFY 에 그대로 적는 형식. TASK-011 #2 의 미완성 제안을 이것으로 대체·반영한다",
+      "evidence": "TASK-012 전체 스위트를 PostgreSQL 환경변수로 돌리면 10건이 인공물로 실패(VERIFY tests_postgresql.first_attempt) — TASK-011 에서 이미 제안된 내용",
+      "status": "pending",
+      "recurring": 1
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": false,
+    "artifact_url": null
+  }
+}
