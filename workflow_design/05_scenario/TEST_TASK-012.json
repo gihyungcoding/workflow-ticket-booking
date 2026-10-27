@@ -166,6 +166,6 @@
     "브라우저가 교차 사이트 POST 에 세션 쿠키를 보내는지(PLAN unresolved)는 MockMvc 가 같은 세션을 그대로 넘기므로 이 테스트들이 증명하지 못한다 — Phase 3 설계와 Phase 4 확인 항목"
   ],
   "human_review": {
-    "approved": false
+    "approved": true
   }
 }

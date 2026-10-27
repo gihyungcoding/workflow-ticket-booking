@@ -1,11 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-27T00:00:00Z
-summary: "[2b 작성 완료, HITL#2 대기] 테스트 12건(시나리오 12 == 함수 12) — 11건 Red + SC-12 already_passing(부정형 회귀). 전체 145건 중 실패 11건은 모두 새 테스트, 기존 133건 통과. 컴파일 스켈레톤은 AppleClientSecretGenerator 하나(본문 UOE). 하네스 가정 2가지는 던져 버릴 프로브로 확인."
+summary: "[2b 완료, HITL#2 승인] 테스트 12건(시나리오 12 == 함수 12) — 11건 Red + SC-12 already_passing(부정형 회귀). 전체 145건 중 실패 11건은 모두 새 테스트, 기존 133건 통과. 컴파일 스켈레톤은 AppleClientSecretGenerator 하나(본문 UOE). 하네스 가정 2가지는 던져 버릴 프로브로 확인."
 
 next_steps:
-  - "HITL#2 — Red 테스트 12건 승인 받기 (already_passing SC-12 와 '지금 통과하는 가드 행' 을 숨기지 않고 요약에 명시)"
-  - "승인되면 TEST_TASK-012.json 의 human_review.approved 를 true 로 → Phase 3 (wf-develop)"
+  - "Phase 3 (wf-develop) — 승인된 테스트 12건을 통과시키는 최소 구현 + 리팩토링. 승인 후 테스트·린트 설정을 고치면 훅이 사람에게 묻는다"
+  - "먼저 TEST_TASK-012.json 의 risks_for_green 7건을 읽는다 (API 고정: AppleClientSecretGenerator 생성자·generate, Client Secret 규격 exp=iat+300·aud 문자열, 애플 등록은 OIDC·registrationId=apple, 지금 통과하는 가드 SC-12·SC-11 #2~#10·#23)"
   - "Phase 3 에서 정할 것: 인가 요청 state 저장(세션 vs 쿠키, form_post 교차 사이트 POST) — 쿠키 저장소를 택하면 ADR. Spring Security 7.1.1 API 확인 항목(PLAN unresolved). risks_for_green 7건은 TEST_TASK-012.json 참고"
 
 decisions:

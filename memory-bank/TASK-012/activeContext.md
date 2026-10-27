@@ -2,7 +2,7 @@
 task_id: TASK-012
 title: "애플 로그인 연동"
 phase: "2b"
-phase_name: "Phase 2b - Red (HITL#2 대기)"
+phase_name: "Phase 2b - Red (HITL#2 승인 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-27
@@ -23,13 +23,13 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b (Red) 테스트 12건을 작성했다 — 11건 Red, SC-12 만 already_passing(부정형 회귀). 전체 145건 중 실패 11건은 모두 새 테스트이고 기존 133건은 통과. 컴파일 스켈레톤은 `AppleClientSecretGenerator` 하나. HITL#2 승인 대기. CP-2.5 저장.
+Phase 2b (Red) 테스트 12건을 작성했다 — 11건 Red, SC-12 만 already_passing(부정형 회귀). 전체 145건 중 실패 11건은 모두 새 테스트이고 기존 133건은 통과. 컴파일 스켈레톤은 `AppleClientSecretGenerator` 하나. HITL#2 승인 완료. CP-2.5 저장.
 설계 요지: AuthService 는 바꾸지 않는다. 애플 고유 관심사(Client Secret·토큰 교환·form_post·클레임 정규화·user 이름)는 config 에 두고 `SocialProfile` 만 만들어 기존 `loginWithSocial` 에 합류시킨다.
 확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (사용자 선택).
 
 ## 다음 한 걸음
 
-HITL#2 승인 → Phase 3 (wf-develop). Phase 3 이 정할 것: 인가 요청 state 저장(세션 vs 쿠키). `TEST_TASK-012.json` 의 `risks_for_green` 7건을 먼저 읽는다.
+Phase 3 (wf-develop) — 승인된 테스트 12건을 통과시키는 최소 구현. Phase 3 이 정할 것: 인가 요청 state 저장(세션 vs 쿠키). `TEST_TASK-012.json` 의 `risks_for_green` 7건을 먼저 읽는다.
 
 ## 알아둬야 할 것
 

@@ -4,8 +4,8 @@
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | flows F1~F7, 변경 대상 5건, AuthService 무변경 |
 | 2a Scenario | ✅ 완료 | CP-2.2 | 시나리오 12건, 검증 2회차 PASS, HITL#1 승인 |
-| 2b Red | 🔄 HITL#2 대기 | CP-2.5 | 테스트 12건, Red 11 + already_passing 1 |
-| 3 Green | ⬜ 대기 | — | |
+| 2b Red | ✅ 완료 | CP-2.5 | 테스트 12건, Red 11 + already_passing 1, HITL#2 승인 |
+| 3 Green | 🔄 다음 | — | |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 
