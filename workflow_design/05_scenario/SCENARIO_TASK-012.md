@@ -45,12 +45,11 @@ flow: F1
 ## SC-02 (happy) 토큰 교환 요청에는 요청마다 새로 만든 Client Secret 이 실린다
 
 - **Given** 애플 등록(`APPLE_*` 설정, SC-01 과 같은 값)이 있고 토큰 엔드포인트가 가짜 서버다(요청을 기록한다)
-- **And** 현재 시각은 `2026-10-27T00:00:00Z` 다
-- **When** 인가 코드 `code-1` 로 토큰 교환을 요청한다
-- **Then** 가짜 서버가 받은 요청은 `POST` 폼이고 `grant_type=authorization_code` `code=code-1` `client_id=com.example.tickets.web` 이다
-- **And** `client_secret` 은 SC-01 규격의 JWT 이고 `iat=1793059200` 이며 공개 키로 서명이 검증된다
-- **And** 요청에 `Authorization` 헤더가 없다
-- **And** 시각을 `2026-10-27T00:10:00Z` 로 옮겨 다시 교환하면 두 번째 요청의 `client_secret` 은 `iat=1793059800` 이다 (첫 번째와 다른 값)
+- **When** `2026-10-27T00:00:00Z` 에 인가 코드 `code-1` 로, 이어서 `2026-10-27T00:10:00Z` 에 인가 코드 `code-2` 로 토큰 교환을 두 번 요청한다
+- **Then** 가짜 서버가 받은 첫 요청은 `POST` 폼이고 `grant_type=authorization_code` `code=code-1` `client_id=com.example.tickets.web` 이다
+- **And** 첫 요청의 `client_secret` 은 SC-01 규격의 JWT 이고 `iat=1793059200` 이며 공개 키로 서명이 검증된다
+- **And** 두 요청 모두 `Authorization` 헤더가 없다
+- **And** 두 번째 요청은 `code=code-2` 이고 `client_secret` 은 SC-01 규격의 JWT 로 `iat=1793059800` 이다 (첫 번째 요청의 `client_secret` 과 다른 값)
 
 covers: 애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다
 flow: F2
@@ -81,7 +80,9 @@ flow: F2
 | 12 | apple | POST | `{"name":{"firstName":" 길동","lastName":"홍"}}` | ` 길동 홍` (앞 공백 그대로 — 부분을 변환하지 않는다) |
 | 13 | apple | POST | `{"name":{"firstName":"민😀","lastName":"김"}}` (짝이 맞는 서로게이트) | `민😀 김` |
 | 14 | apple | GET | 정상 JSON(1번과 같은 값) | `Apple 사용자` (POST 가 아니면 읽지 않는다) |
-| 15 | google (클레임 `{"sub":"g-1","email":"new@example.com","email_verified":true,"name":"구글이름"}`) | POST | 정상 JSON(1번과 같은 값) | `구글이름` (apple 이 아니면 읽지 않는다. 이 행은 `provider=GOOGLE` `providerUserId=g-1`) |
+| 15 | apple | POST | `firstName` 100자만 (`lastName` 없음) / `lastName` 100자만 (`firstName` 없음) | 그 100자 그대로 |
+| 16 | apple | POST | `firstName` 98자 + `😀` (UTF-16 코드 유닛 합 100, `lastName` 없음) | 합성 결과 그대로 |
+| 17 | google (클레임 `{"sub":"g-1","email":"new@example.com","email_verified":true,"name":"구글이름"}`) | POST | 정상 JSON(1번과 같은 값) | `구글이름` (apple 이 아니면 읽지 않는다. 이 행은 `provider=GOOGLE` `providerUserId=g-1`) |
 
 covers: 애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다
 flow: F4
@@ -113,6 +114,8 @@ flow: F4
 | `user` | `lastName` 에 NUL / 짝 없는 서로게이트 | 거부 |
 | `user` | `firstName` 101자 / `lastName` 101자 | 거부 |
 | `user` | `firstName` 50자 + `lastName` 50자 (합성 101자) | 거부 |
+| `user` | `firstName` 99자 + `😀` (UTF-16 코드 유닛 합 101, `lastName` 없음) | 거부 |
+| `email` + 클레임 `is_private_email` | `abc123@privaterelay.appleid.com` 과 `"is_private_email":"true"` / `"is_private_email":"false"` / `is_private_email` 누락 | 허용 — pendingToken `email=abc123@privaterelay.appleid.com` `emailVerified=true` (릴레이 여부는 신원 판정에 쓰이지 않는다) |
 | `user` (Given: `social_accounts` 에 (`APPLE`, `a-100`, B) 가 이미 있다) | 이미 연결된 계정의 재로그인 콜백에 `not-json` 이 실렸다 | 거부 (이름을 쓰지 않는 경우에도 구조 이상은 거부) |
 
 covers: 애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다; 애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다
@@ -208,6 +211,7 @@ flow: F4
 - **When** 애플이 브라우저를 통해 `POST /login/oauth2/code/apple` 로 아래 표의 상황을 돌려준다
 - **Then** 302 `https://app.example.test/login?error=social` 이고 쿼리에 `token`·`pendingToken` 이 없다
 - **And** `users`·`social_accounts` 행 수가 그대로다
+- **And** 상황 1~4·12·13 에서는 가짜 토큰 엔드포인트가 받은 요청이 0건이다
 
 | # | 상황 |
 |---|---|
@@ -222,6 +226,14 @@ flow: F4
 | 9 | `id_token` 의 `nonce` 가 인가 요청의 `nonce` 와 다르다 |
 | 10 | `id_token` 의 `exp` 가 과거다 |
 | 11 | `id_token` 이 JWKS 에 없는 키로 서명됐다 |
+| 12 | 폼에 유효한 `state` 는 있지만 `code` 가 없다 |
+| 13 | 유효한 `state` 와 `code=` (빈 문자열) |
+| 14 | 토큰 엔드포인트가 400 이고 `{"error":"invalid_grant"}` / `{"error":"invalid_request"}` 를 돌려준다 |
+| 15 | 토큰 엔드포인트가 500 이고 본문이 비어 있다 |
+| 16 | 토큰 엔드포인트가 400 이고 본문이 JSON 이 아니다(`<html>error</html>`) |
+| 17 | 토큰 엔드포인트가 200 이고 본문이 비어 있다 |
+| 18 | 토큰 엔드포인트가 200 이고 본문이 JSON 이 아니다(`not json`) |
+| 19 | 토큰 엔드포인트가 200 이고 JSON 이지만 `access_token` 이 없다 |
 
 covers: 애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다; 애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다
 flow: F2
@@ -245,7 +257,6 @@ flow: F3
 - **Given** 서버가 `FRONTEND_BASE_URL=https://app.example.test` 와 아래 표의 환경변수로 기동을 시도한다 (표에 없는 값은 설정이 없다. "유효"는 테스트가 만든 EC P-256 키의 PKCS#8 PEM 이다)
 - **When** 기동에 성공하면 표의 요청을 보낸다
 - **Then** 표의 결과가 된다
-- **And** 기동에 성공한 경우 `POST /api/auth/signup` 은 201, 올바른 자격 증명의 `POST /api/auth/login` 은 200 이다
 
 | # | 환경변수 상태 | 요청 | 결과 |
 |---|---|---|---|
@@ -258,7 +269,7 @@ flow: F3
 | 7 | `APPLE_PRIVATE_KEY` 만 없다 | 같음 | 404 |
 | 8 | 네 값이 모두 빈 문자열 | 같음 | 404 |
 | 9 | 네 값이 모두 공백만 | 같음 | 404 |
-| 10 | `APPLE_TEAM_ID` 만 공백만 (나머지는 유효) | 같음 | 404 |
+| 10 | `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` 중 하나만 공백만 (각각 따로, 나머지는 유효) | 같음 | 404 |
 | 11 | 네 값 모두 앞뒤에 공백이 붙어 있다 | 같음 | 302 이고 `client_id` 는 공백을 제거한 `APPLE_CLIENT_ID` 다 |
 | 12 | 애플 네 값만 유효하고 `FRONTEND_BASE_URL` 이 없다 | (기동) | 기동 실패 — 오류 메시지에 `FRONTEND_BASE_URL` |
 | 13 | 개인 키가 PEM 실제 개행 | 같음 | 302 |
