@@ -47,7 +47,7 @@ final class SocialInputRules {
   }
 
   /** 문자열이어야 하고 제어 문자·짝 없는 서로게이트가 없어야 한다. trim 이 앞뒤 NUL 을 지우기 전의 원문에서 본다. */
-  private static String text(Object value) {
+  static String text(Object value) {
     if (!(value instanceof String text)) {
       return null;
     }

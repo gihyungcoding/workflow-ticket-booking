@@ -4,6 +4,7 @@ import com.example.ticket_booking.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -15,6 +16,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
+import org.springframework.security.oauth2.client.endpoint.DefaultOAuth2TokenRequestParametersConverter;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
@@ -23,17 +28,24 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequest
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
+import org.springframework.util.MultiValueMap;
 
 /**
  * 소셜 로그인 제공자 등록과 프론트 리다이렉트 설정(ADR-0013). 제공자는 환경변수 {@code <KAKAO|NAVER|GOOGLE>_CLIENT_ID}·{@code
  * _CLIENT_SECRET} 둘 다 (공백 제거 뒤) 값이 있을 때만 등록한다 — 하나도 없으면 이 설정의 빈이 하나도 만들어지지 않고 서버는 이메일 인증만으로 기동한다.
  * 하나라도 있으면 프론트 기준 주소 FRONTEND_BASE_URL 이 올바라야 하고, 아니면 기동이 실패한다 — 리다이렉트 주소를 요청에서 얻지 않으므로 이 값이 유일한
  * 출처다.
+ *
+ * <p>애플은 고정 비밀번호 대신 서명한 JWT 를 Client Secret 으로 쓰므로 {@code APPLE_CLIENT_ID} {@code APPLE_TEAM_ID}
+ * {@code APPLE_KEY_ID} {@code APPLE_PRIVATE_KEY} 네 값이 모두 있을 때만 등록한다. 개인 키가 올바르지 않으면 기동이 실패한다.
  */
 @Configuration
 public class SocialLoginConfig {
 
   private static final String CALLBACK = "{baseUrl}/login/oauth2/code/{registrationId}";
+  private static final String APPLE = "apple";
 
   @Bean
   @Conditional(AnyProviderConfigured.class)
@@ -48,6 +60,9 @@ public class SocialLoginConfig {
     if (configured(environment, "GOOGLE")) {
       registrations.add(google(id(environment, "GOOGLE"), secret(environment, "GOOGLE")));
     }
+    if (appleConfigured(environment)) {
+      registrations.add(apple(environment.getProperty("APPLE_CLIENT_ID").trim()));
+    }
     return new InMemoryClientRegistrationRepository(registrations);
   }
 
@@ -59,8 +74,18 @@ public class SocialLoginConfig {
   @Conditional(AnyProviderConfigured.class)
   public OAuth2AuthorizationRequestResolver authorizationRequestResolver(
       ClientRegistrationRepository clientRegistrations) {
-    OAuth2AuthorizationRequestResolver delegate =
+    DefaultOAuth2AuthorizationRequestResolver delegate =
         new DefaultOAuth2AuthorizationRequestResolver(clientRegistrations, "/oauth2/authorization");
+    // 애플은 name·email 스코프를 요청하면 response_mode=form_post 를 요구한다 — 콜백이 POST 로 온다
+    delegate.setAuthorizationRequestCustomizer(
+        builder ->
+            builder.attributes(
+                attributes -> {
+                  if (APPLE.equals(attributes.get(OAuth2ParameterNames.REGISTRATION_ID))) {
+                    builder.additionalParameters(
+                        parameters -> parameters.put("response_mode", "form_post"));
+                  }
+                }));
     return new OAuth2AuthorizationRequestResolver() {
       @Override
       public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
@@ -94,6 +119,41 @@ public class SocialLoginConfig {
   @Conditional(AnyProviderConfigured.class)
   public OAuth2LoginFailureHandler oauth2LoginFailureHandler(Environment environment) {
     return new OAuth2LoginFailureHandler(frontendBaseUrl(environment));
+  }
+
+  @Bean
+  @Conditional(AppleConfigured.class)
+  public AppleClientSecretGenerator appleClientSecretGenerator(
+      Environment environment, Clock clock) {
+    return new AppleClientSecretGenerator(
+        environment.getProperty("APPLE_TEAM_ID").trim(),
+        environment.getProperty("APPLE_CLIENT_ID").trim(),
+        environment.getProperty("APPLE_KEY_ID").trim(),
+        AppleClientSecretGenerator.parsePrivateKey(environment.getProperty("APPLE_PRIVATE_KEY")),
+        clock);
+  }
+
+  /**
+   * 코드 교환 요청의 파라미터를 기본 방식 그대로 만들되, 애플 등록일 때만 client_secret 을 요청마다 새로 만든 JWT 로 바꾼다 — 다른 제공자의 정적
+   * client_secret 은 건드리지 않는다.
+   */
+  @Bean
+  @Conditional(AppleConfigured.class)
+  public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest>
+      appleTokenResponseClient(AppleClientSecretGenerator clientSecrets) {
+    DefaultOAuth2TokenRequestParametersConverter<OAuth2AuthorizationCodeGrantRequest> defaults =
+        new DefaultOAuth2TokenRequestParametersConverter<>();
+    RestClientAuthorizationCodeTokenResponseClient client =
+        new RestClientAuthorizationCodeTokenResponseClient();
+    client.setParametersConverter(
+        request -> {
+          MultiValueMap<String, String> parameters = defaults.convert(request);
+          if (APPLE.equals(request.getClientRegistration().getRegistrationId())) {
+            parameters.set(OAuth2ParameterNames.CLIENT_SECRET, clientSecrets.generate());
+          }
+          return parameters;
+        });
+    return client;
   }
 
   /**
@@ -138,6 +198,26 @@ public class SocialLoginConfig {
         .userInfoUri("https://openapi.naver.com/v1/nid/me")
         .userNameAttributeName("response")
         .clientName("Naver")
+        .build();
+  }
+
+  /**
+   * 애플은 userinfo 엔드포인트가 없고 id_token(OIDC)에 사용자 정보가 있다 — 서명(JWKS)·iss·aud·exp·nonce 를 Spring 의 OIDC
+   * 공급자가 검증한다. client_secret 은 정적 값이 없어 비워 두고 토큰 교환 때 {@link #appleTokenResponseClient} 가 채운다.
+   */
+  private static ClientRegistration apple(String clientId) {
+    return ClientRegistration.withRegistrationId(APPLE)
+        .clientId(clientId)
+        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .redirectUri(CALLBACK)
+        .scope("openid", "name", "email")
+        .authorizationUri("https://appleid.apple.com/auth/authorize")
+        .tokenUri("https://appleid.apple.com/auth/token")
+        .jwkSetUri("https://appleid.apple.com/auth/keys")
+        .issuerUri("https://appleid.apple.com")
+        .userNameAttributeName(IdTokenClaimNames.SUB)
+        .clientName("Apple")
         .build();
   }
 
@@ -189,11 +269,18 @@ public class SocialLoginConfig {
     return environment.getProperty(prefix + "_CLIENT_SECRET").trim();
   }
 
+  private static boolean appleConfigured(Environment environment) {
+    return hasText(environment.getProperty("APPLE_CLIENT_ID"))
+        && hasText(environment.getProperty("APPLE_TEAM_ID"))
+        && hasText(environment.getProperty("APPLE_KEY_ID"))
+        && hasText(environment.getProperty("APPLE_PRIVATE_KEY"));
+  }
+
   private static boolean hasText(String value) {
     return value != null && !value.isBlank();
   }
 
-  /** 제공자 환경변수가 한 쌍이라도 갖춰졌는가. */
+  /** 제공자 환경변수가 하나라도 갖춰졌는가. */
   static class AnyProviderConfigured implements Condition {
 
     @Override
@@ -201,7 +288,17 @@ public class SocialLoginConfig {
       Environment environment = context.getEnvironment();
       return configured(environment, "KAKAO")
           || configured(environment, "NAVER")
-          || configured(environment, "GOOGLE");
+          || configured(environment, "GOOGLE")
+          || appleConfigured(environment);
+    }
+  }
+
+  /** 애플 환경변수 네 값이 모두 갖춰졌는가. */
+  static class AppleConfigured implements Condition {
+
+    @Override
+    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+      return appleConfigured(context.getEnvironment());
     }
   }
 }

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-012
 title: "애플 로그인 연동"
-phase: "2b"
-phase_name: "Phase 2b - Red (HITL#2 승인 완료)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-27
@@ -13,23 +13,24 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-012-apple-login-oauth2"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-012.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-012.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-012.json"
   red: "workflow_design/05_scenario/TEST_TASK-012.json"
+  dev: "workflow_design/06_dev/DEV_TASK-012.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b (Red) 테스트 12건을 작성했다 — 11건 Red, SC-12 만 already_passing(부정형 회귀). 전체 145건 중 실패 11건은 모두 새 테스트이고 기존 133건은 통과. 컴파일 스켈레톤은 `AppleClientSecretGenerator` 하나. HITL#2 승인 완료. CP-2.5 저장.
-설계 요지: AuthService 는 바꾸지 않는다. 애플 고유 관심사(Client Secret·토큰 교환·form_post·클레임 정규화·user 이름)는 config 에 두고 `SocialProfile` 만 만들어 기존 `loginWithSocial` 에 합류시킨다.
+Phase 3 (Green) 를 마쳤다 — 전체 145건 중 통과 144 · 실패 0 · 건너뜀 1(기존 조건부), 대상 12건 전부 Green, 린트 error 0, 아키텍처 제약 위반 0. 승인된 테스트는 고치지 않았다. 변이 검증 10건(9건 잡힘, 1건은 불필요한 검사라 제거). CP-3.4 저장.
+변경: config 5곳(AppleClientSecretGenerator·CustomOAuth2UserService·OAuth2LoginSuccessHandler·SocialLoginConfig·SecurityConfig) + SocialInputRules 가시성 1줄. AuthService 는 그대로.
 확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (사용자 선택).
 
 ## 다음 한 걸음
 
-Phase 3 (wf-develop) — 승인된 테스트 12건을 통과시키는 최소 구현. Phase 3 이 정할 것: 인가 요청 state 저장(세션 vs 쿠키). `TEST_TASK-012.json` 의 `risks_for_green` 7건을 먼저 읽는다.
+Phase 4 — wf-verify. 필수 증거: 실제 PostgreSQL 로 애플 이름 경계(100자·4바이트 문자) 프로브. HITL#3 에 올릴 사용자 결정: `DEV_TASK-012.json` 의 open_risks R-1(교차 사이트 form_post 에서 세션 쿠키 전송 — Chrome 2분 예외에 기댐).
 
 ## 알아둬야 할 것
 

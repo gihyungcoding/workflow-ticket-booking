@@ -2,9 +2,14 @@ package com.example.ticket_booking.config;
 
 import com.example.ticket_booking.domain.SocialProvider;
 import com.example.ticket_booking.service.SocialProfile;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 제공자마다 다른 사용자 정보(attributes)를 같은 모양의 {@link SocialProfile} 로 바꾼다. 제공자가 준 값은 외부 입력이다 — 문자열 규칙은
@@ -12,13 +17,27 @@ import org.springframework.security.oauth2.core.OAuth2Error;
  */
 public final class CustomOAuth2UserService {
 
+  /** 애플이 이름을 주지 않았을 때(재로그인 등) 신규 가입 대기에 쓰는 이름. users.name 은 NOT NULL 이다. */
+  static final String APPLE_NO_NAME = "Apple 사용자";
+
+  private static final JsonMapper JSON = JsonMapper.builder().build();
+
   private CustomOAuth2UserService() {}
 
   /**
-   * registrationId(kakao·naver·google)와 제공자 attributes 로 정규화된 프로필을 만든다. 이상하면
+   * registrationId(kakao·naver·google·apple)와 제공자 attributes 로 정규화된 프로필을 만든다. 이상하면
    * OAuth2AuthenticationException.
    */
   public static SocialProfile toProfile(String registrationId, Map<String, Object> attributes) {
+    return toProfile(registrationId, attributes, null);
+  }
+
+  /**
+   * 애플은 이름을 id_token 이 아니라 최초 인가 콜백의 {@code user} 폼 파라미터로만 준다. appleUser 는 그 원문이고 registrationId 가
+   * apple 일 때만 쓴다(없으면 null).
+   */
+  public static SocialProfile toProfile(
+      String registrationId, Map<String, Object> attributes, String appleUser) {
     if (registrationId == null || attributes == null) {
       throw invalid("제공자 응답이 비었다");
     }
@@ -26,6 +45,7 @@ public final class CustomOAuth2UserService {
       case "google" -> googleProfile(attributes);
       case "kakao" -> kakaoProfile(attributes);
       case "naver" -> naverProfile(attributes);
+      case "apple" -> appleProfile(attributes, appleUser);
       default -> throw invalid("지원하지 않는 제공자다");
     };
   }
@@ -61,6 +81,69 @@ public final class CustomOAuth2UserService {
         email(response.get("email")),
         name(response.get("name")),
         false);
+  }
+
+  /**
+   * 애플은 id_token 클레임이 평면이고 이름이 없다. email_verified 는 불리언이 아니라 문자열 "true" 로 올 수 있어, 불리언 true 이거나 정확히
+   * 문자열 "true" 일 때만 검증된 것으로 본다(잘못 true 면 미검증 이메일이 기존 계정에 연결된다 — ADR-0020).
+   */
+  private static SocialProfile appleProfile(Map<?, ?> attributes, String appleUser) {
+    Object verified = attributes.get("email_verified");
+    return new SocialProfile(
+        SocialProvider.APPLE,
+        providerUserId(attributes.get("sub")),
+        email(attributes.get("email")),
+        appleName(appleUser),
+        Boolean.TRUE.equals(verified) || "true".equals(verified));
+  }
+
+  /**
+   * {@code user} 파라미터(JSON)의 firstName·lastName 을 공백 1칸으로 이어 붙인다. 서명되지 않은 값이라 이메일은 읽지 않고, 부분을 변환하지
+   * 않으며 (ADR-0019), 구조가 이상하거나 규칙 밖이면 거부한다. 비었거나 이름이 없으면 {@link #APPLE_NO_NAME}.
+   */
+  private static String appleName(String user) {
+    if (user == null || user.isBlank()) {
+      return APPLE_NO_NAME;
+    }
+    JsonNode root;
+    try {
+      root = JSON.readTree(user);
+    } catch (JacksonException exception) {
+      throw invalid("애플 이름 정보의 형식이 다르다");
+    }
+    if (root == null || !root.isObject()) {
+      throw invalid("애플 이름 정보의 형식이 다르다");
+    }
+    JsonNode name = root.get("name");
+    if (name == null || name.isNull()) {
+      return APPLE_NO_NAME;
+    }
+    if (!name.isObject()) {
+      throw invalid("애플 이름 정보의 형식이 다르다");
+    }
+    List<String> parts = new ArrayList<>();
+    addNamePart(parts, name.get("firstName"));
+    addNamePart(parts, name.get("lastName"));
+    if (parts.isEmpty()) {
+      return APPLE_NO_NAME;
+    }
+    return name(String.join(" ", parts));
+  }
+
+  private static void addNamePart(List<String> parts, JsonNode node) {
+    if (node == null || node.isNull()) {
+      return;
+    }
+    if (!node.isString()) {
+      throw invalid("이름이 올바르지 않다");
+    }
+    String text = SocialInputRules.text(node.stringValue());
+    if (text == null) {
+      throw invalid("이름이 올바르지 않다");
+    }
+    if (!text.isBlank()) {
+      parts.add(text);
+    }
   }
 
   private static Map<?, ?> object(Object value) {

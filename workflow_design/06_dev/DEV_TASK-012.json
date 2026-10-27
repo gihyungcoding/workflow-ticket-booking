@@ -1,0 +1,73 @@
+{
+  "task_id": "TASK-012",
+  "changed_files": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/AppleClientSecretGenerator.java", "change": "스켈레톤을 실제 구현으로 교체: ES256 서명 Client Secret 생성(iss=팀 ID, sub=클라이언트 ID, aud=문자열, iat/exp=+300초, kid, 주입된 Clock) + APPLE_PRIVATE_KEY 파싱(PKCS#8 EC P-256, 실패 시 키 본문 없이 기동 실패)", "lines_changed": 92 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/CustomOAuth2UserService.java", "change": "toProfile 에 apple 분기 + user 파라미터 오버로드: sub·email 정규화, email_verified 엄격 해석(불리언 true 또는 정확히 \"true\"), firstName/lastName 합성·검증·부재 대체('Apple 사용자')", "lines_changed": 85 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginSuccessHandler.java", "change": "apple 의 POST 콜백에서만 user 파라미터를 읽어 toProfile 에 전달", "lines_changed": 16 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java", "change": "애플 ClientRegistration(OIDC: jwkSetUri·issuerUri·scope openid name email·sub), 네 환경변수가 갖춰질 때만 등록·AnyProviderConfigured 에 포함, 인가 요청에 response_mode=form_post, Client Secret 생성기 빈, 애플일 때만 client_secret 을 바꾸는 토큰 응답 클라이언트 빈", "lines_changed": 103 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java", "change": "토큰 응답 클라이언트 빈이 있을 때만 oauth2Login 의 tokenEndpoint 에 연결", "lines_changed": 11 },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/SocialInputRules.java", "change": "text() 를 private 에서 package-private 으로 (애플 이름의 '공백만'과 '제어 문자'를 구분하려면 같은 규칙을 그대로 써야 한다)", "lines_changed": 2 }
+  ],
+  "reused": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/SocialInputRules.java", "symbol": "name/text/email/providerUserId" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java", "symbol": "loginWithSocial / completeSocialSignUp (변경 없음 — 애플은 SocialProfile 만 만들어 합류)" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java", "symbol": "AnyProviderConfigured·hasText·frontendBaseUrl·CALLBACK (애플도 같은 등록 조건·기준 주소 검증을 탄다)" },
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java", "symbol": "Nimbus 서명 + 주입된 Clock + fail-fast 관례 (직접 호출하지 않고 같은 관례만 따랐다 — 서명 알고리즘이 HS256 이 아니라 ES256 이라 재사용할 코드가 없다)" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && export JAVA_HOME=/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home && ./gradlew cleanTest test",
+    "total": 145,
+    "passed": 144,
+    "failed": 0,
+    "skipped": 1,
+    "target_tests_passed": 12,
+    "note": "대상 12건(AppleClientSecretGeneratorTest·AppleLoginCallbackTest·AppleOAuth2FlowTest·AppleProviderConfigTest) 전부 통과, 기존 133건 통과. 건너뛴 1건은 기존 DockerfileTest 의 조건부 테스트(Red 시점과 같다)"
+  },
+  "lint": { "command": "cd backend && ./gradlew spotlessCheck", "errors": 0, "warnings": 0 },
+  "architecture_check": { "command": "python3 scripts/check_architecture.py", "errors": 0, "warnings": 3, "note": "경고 3건은 기존 프론트 DESIGN-003 (이 태스크와 무관)" },
+  "refactoring": [
+    { "what": "parsePrivateKey 의 PEM 헤더 라벨 정규식 검사를 제거하고 '-----' 로 시작하는 줄만 걷어낸 본문을 PKCS#8 로 읽는 방식으로 단순화", "why": "변이 검증(M9)에서 라벨 검사를 빼도 어떤 테스트도 실패하지 않았다 — SEC1·공개 키·헤더만 있는 PEM 은 본문 파싱 단계에서 이미 거부된다. 어떤 테스트도 요구하지 않는 분기를 남기지 않았다" }
+  ],
+  "mutation_check": [
+    { "mutation": "M1 client_secret 교체 제거", "caught_by": ["SC-02", "SC-10"] },
+    { "mutation": "M2 client_secret 교체를 모든 제공자에 적용", "caught_by": ["SC-12"] },
+    { "mutation": "M3 email_verified 를 대소문자 무시로 해석", "caught_by": ["SC-06"] },
+    { "mutation": "M4 email_verified 문자열 \"true\" 거부", "caught_by": ["SC-03", "SC-04", "SC-05", "SC-08"] },
+    { "mutation": "M5 issuerUri 제거 (iss 검증 해제)", "caught_by": ["SC-09"] },
+    { "mutation": "M6 response_mode=form_post 제거", "caught_by": ["SC-11"] },
+    { "mutation": "M7 user 파라미터를 GET 에서도 읽음", "caught_by": ["SC-03"] },
+    { "mutation": "M8 이름 부분을 strip 으로 변환", "caught_by": ["SC-03"] },
+    { "mutation": "M9 PEM 헤더 라벨 검사 제거", "caught_by": [], "outcome": "잡히지 않음 → 해당 검사를 제거(리팩토링)" },
+    { "mutation": "M10 Client Secret exp 를 +600 으로", "caught_by": ["SC-01"] }
+  ],
+  "mutations_reverted": "각 변이는 백업 후 실행하고 복원했다. cmp 로 4개 파일이 백업과 동일함을 확인했고 변이는 커밋하지 않았다",
+  "scope_deviations": [
+    { "path": "backend/src/main/java/com/example/ticket_booking/config/SocialInputRules.java", "reason": "Plan 의 reusable 이지만 target_files 에는 없다. text() 의 가시성만 private → package-private 으로 넓혔다(1줄). 애플 이름의 부분이 '공백만'(없는 값)인지 '제어 문자 포함'(거부)인지 구분하려면 새 규칙을 만들지 않고 같은 규칙을 그대로 써야 한다 — 규칙 복제(ADR-0019 가 금지한 필드별 분산)보다 가시성 확대가 낫다" }
+  ],
+  "open_risks": [
+    {
+      "id": "R-1",
+      "title": "인가 요청 state 저장은 HttpSession 그대로 — 교차 사이트 form_post 에서 세션 쿠키가 전송되는지는 이 테스트들이 증명하지 못한다",
+      "decision": "이번 태스크에서는 저장 방식을 바꾸지 않았다. 세션 쿠키(JSESSIONID)에 SameSite 를 지정하지 않으므로 브라우저 기본 동작에 기댄다: Safari·Firefox 는 속성 없는 쿠키를 교차 사이트 POST 에도 보내고, Chrome 은 'Lax+POST' 예외로 쿠키 생성 후 약 2분 안의 교차 사이트 최상위 POST 에 보낸다",
+      "residual": "Chrome 에서 애플 로그인(2단계 인증 등)이 2분 넘게 걸리면 state 를 못 찾아 로그인이 실패한다. 이 가정은 실제 브라우저로 확인하지 못했다(MockMvc 는 같은 세션을 그대로 넘긴다)",
+      "options": [
+        "(a) 세션 쿠키를 SameSite=None; Secure 로 (server.servlet.session.cookie.same-site=none, secure=true) — 설정 두 줄이지만 모든 제공자의 배포 설정과 HTTPS 전제를 건드린다",
+        "(b) 인가 요청 저장소를 서명된 쿠키 기반으로 교체 — 새 컴포넌트라 ADR 필요, 별도 태스크 규모"
+      ],
+      "needs": "사용자 결정(배포 설정 변경)이라 Phase 4 HITL#3 에 올린다. AC 밖이라 이번 태스크에서 조용히 넓히지 않았다"
+    },
+    {
+      "id": "R-2",
+      "title": "ADR-0021(토큰 fragment) 리다이렉트 형식은 여전히 query 다",
+      "note": "PLAN 에서 범위 밖으로 확정. 후속 태스크가 핸들러를 바꿀 때 애플도 같은 핸들러라 함께 따른다"
+    },
+    {
+      "id": "R-3",
+      "title": "자동 PostgreSQL 통합 테스트 없음",
+      "note": "PLAN 결정대로 마이그레이션·SQL 변경이 없다. Phase 4 에서 실제 PostgreSQL 로 애플 이름 경계(100자, 4바이트 문자)를 /complete 까지 프로브하는 것이 필수 증거다"
+    }
+  ],
+  "dependencies_changed": [],
+  "human_review": null
+}
