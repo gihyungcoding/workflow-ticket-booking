@@ -13,20 +13,21 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-012-apple-login-oauth2"
 
-last_checkpoint: null
+last_checkpoint: "CP-1.3"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-012.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-TASK-012 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 12h → standard 트랙, risk high, complexity 복잡)
+Phase 1 (Plan) 을 마쳤다 — `PLAN_TASK-012.json` 저장, `check_plan.py` 통과, CP-1.3 저장. (estimate 12h → standard 트랙, risk high, complexity 복잡)
 기준: develop `27494da` (PR #22 · TASK-011 병합 포함). 백엔드 테스트 `cleanTest test` BUILD SUCCESSFUL.
+설계 요지: AuthService 는 바꾸지 않는다. 애플 고유 관심사(Client Secret·토큰 교환·form_post·클레임 정규화·user 이름)는 모두 config 에 두고 `SocialProfile` 만 만들어 기존 `loginWithSocial` 에 합류시킨다.
 출처 문서: `docs/product/features/user-authentication.md` (§1-2 Task D, §1-3 애플 이름 캡처, §3 API, §5 Task D 완료 조건, §6 구현 참고)
 
 ## 다음 한 걸음
 
-Phase 1 — wf-plan. 아래 "알아둬야 할 것"의 인계 항목을 Plan 의 unresolved 에 반영한다.
+Phase 2a — wf-scenario. PLAN 의 unresolved 중 `[결정 필요 2a]` 4건(이름 대체 문자열·이름 합성/거부·설정 일부 누락·user 출처 제한)과 `email_verified` 변종 양방향을 시나리오로 확정한다. 시나리오가 기준선(8~12)을 넘으면 사용자에게 알린다.
 
 ## 알아둬야 할 것
 

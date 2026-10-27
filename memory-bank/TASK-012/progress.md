@@ -2,8 +2,8 @@
 
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
-| 1 Plan | 🔄 진행 중 | — | |
-| 2a Scenario | ⬜ 대기 | — | |
+| 1 Plan | ✅ 완료 | CP-1.3 | flows F1~F7, 변경 대상 5건, AuthService 무변경 |
+| 2a Scenario | 🔄 다음 | — | 확정할 unresolved 4건 + email_verified 변종 |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |
