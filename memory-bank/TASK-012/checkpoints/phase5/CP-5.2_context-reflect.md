@@ -1,13 +1,13 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-27T00:00:00Z
-summary: "[Phase 5 회고 작성 완료, HITL#4 대기] Keep 4 / Problem 3 / Try 5 / 인사이트 3. ADR 후보 2건(이메일 검증 플래그 해석 규칙, 인가 요청 state 저장·세션 쿠키), drift 3건(config 계층 행 없음, Service/domain 미인코딩, feature 문서 계정 연결 정책), 규칙 제안 5건(wf-develop·coverage-policy·wf-plan·wf-red·evidence-integrity). 반복: wf-plan ×3."
+summary: "[Phase 5 완료, HITL#4 승인 — 승인 + 반복 제안 지금 반영] Keep 4 / Problem 3 / Try 5 / 인사이트 3. ADR 후보 2건(이메일 검증 플래그 해석 규칙, 인가 요청 state 저장·세션 쿠키), drift 3건(config 계층 행 없음, Service/domain 미인코딩, feature 문서 계정 연결 정책), 규칙 제안 5건(wf-develop·coverage-policy·wf-plan·wf-red·evidence-integrity). 반복: wf-plan ×3."
 
 next_steps:
-  - "완료 리포트 Artifact 발행(standard 트랙) 후 HITL#4 — 승인 / 승인+ADR 작성 / 승인+반복 제안 지금 반영 / 회고 보완"
-  - "승인되면 completion_report.approved_by_human=true, CP-5.2 ARCHIVED, 모든 CP status ARCHIVED, python3 scripts/rebuild_memory_bank_index.py(tasks.json status done), verify_workflow_artifacts exit 0, 커밋"
-  - "그 뒤 /wf-ship 으로 PR 준비(머지는 사람이)"
-  - "'지금 반영' 을 고르면 해당 대상의 미반영 제안을 이번 것과 이전 것 모두 한 커밋으로 반영하고 REFLECT 들에 status applied·applied_in 기록. 워크플로우 자산(.claude/, docs/workflow/)이라 스타터에도 같은 변경이 필요함을 알린다"
+  - "반복 제안 5건(wf-plan·wf-develop·coverage-policy·wf-red·evidence-integrity)을 이번 것과 이전 것 모두 한 커밋으로 반영 → REFLECT 들에 status applied·applied_in 기록. 워크플로우 자산이라 스타터에도 같은 변경이 필요함을 사용자에게 알린다"
+  - "/wf-ship 으로 PR 준비 — 승인한 코드(verified_commit 8714a94)가 그대로인지 대조한 뒤 PR 을 만든다. 머지는 사람이"
+  - "후속 태스크 후보: R-1(SameSite=None;Secure 또는 쿠키 기반 저장소+ADR, 실제 브라우저 검증) · ADR-0021 fragment 리다이렉트 형식 변경 · user-authentication.md §1-3 갱신 · architecture.md 에 config 계층 행 추가"
+  - "ADR 후보 2건은 proposed 로 남는다(/wf-adr 로 기록할 때 승격)"
 
 decisions:
   - decision: "KPT 는 이 태스크에서 실제로 일어난 사건만 근거로 썼다: Phase 4 FAIL 1회(RC-1) · Phase 2a 독립검증 fail 1회(V11) · PostgreSQL 전체 스위트 인공물 10건"

@@ -7,7 +7,7 @@
 | 2b Red | ✅ 완료 | CP-2.5 | 테스트 12건, Red 11 + already_passing 1, HITL#2 승인 |
 | 3 Green | ✅ 재작업 완료 | CP-3.4 | 146건 통과, RC-1 공통 지점 수정 |
 | 4 Verify | ✅ 완료 | CP-4.2 | 2라운드 WARN, HITL#3 예외 승인(R-1) |
-| 5 Reflect | 🔄 다음 | — | |
+| 5 Reflect | ✅ 완료 | CP-5.2 | HITL#4 승인, 태스크 종료 |
 
 ## 완료 조건
 

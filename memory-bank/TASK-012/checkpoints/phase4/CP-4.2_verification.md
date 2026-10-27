@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-27T00:00:00Z
 summary: "[Phase 4 2라운드 WARN, HITL#3 예외 승인] RC-1 해소(재현 변종 3개를 운영 경로 테스트로 Red→Green, 2회차 리뷰어 결함 없음). H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK. 남은 경고: R-1(교차 사이트 form_post 세션 쿠키, 실제 브라우저 미검증 — 사용자가 수용·후속 태스크로 결정)."
 

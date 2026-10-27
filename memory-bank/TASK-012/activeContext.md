@@ -1,9 +1,9 @@
 ---
 task_id: TASK-012
 title: "애플 로그인 연동"
-phase: "4"
-phase_name: "Phase 4 - Verify (HITL#3 예외 승인 완료)"
-status: ACTIVE
+phase: "5"
+phase_name: "Phase 5 - Reflect (HITL#4 승인, 태스크 종료)"
+status: DONE
 track: standard
 created_at: 2026-10-27
 last_updated: 2026-10-27
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-012-apple-login-oauth2"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-012.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-012.md"
@@ -21,17 +21,16 @@ artifacts:
   red: "workflow_design/05_scenario/TEST_TASK-012.json"
   dev: "workflow_design/06_dev/DEV_TASK-012.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-012.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-012.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 재검증(2라운드)을 마쳤다 — 상태 WARN, HITL#3 예외 승인(R-1 기록, verified_commit 기록). RC-1(운영 경로에서 id_token email_verified 가 Spring 디코더에 의해 Boolean 으로 미리 변환) 해소: 재현 변종 3개를 새 운영 경로 테스트 AppleEmailVerifiedFlowTest 로 Red→Green, 2회차 리뷰어 결함 없음. H2 146/146 · PostgreSQL 114/114 · 린트·아키텍처 error 0 · 실제 앱+PostgreSQL HTTP/이름 경계 프로브 ALL OK.
-남은 경고 R-1: 교차 사이트 form_post 에서 세션 쿠키(SameSite 미지정) 전송은 실제 브라우저로 미검증 — 사용자가 1라운드 HITL#3 에서 수용·후속 태스크로 결정.
-확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (사용자 선택).
+TASK-012 를 종료했다(DONE). Phase 1~5 완료: 시나리오 12건, 테스트 13건(승인 12 + RC-1 회귀 1), H2 146/146 · PostgreSQL 114/114, Phase 4 FAIL 1회(RC-1) 후 예외 승인(R-1). 승인한 코드는 verified_commit 8714a94. 회고 승인(HITL#4) — 승인 + 반복 제안 지금 반영.
 
 ## 다음 한 걸음
 
-Phase 5 (wf-reflect) — KPT 회고, 규칙 개선안, HITL#4. 회고 입력은 CP-4.2 next_steps 의 후보 6건과 Phase 4 FAIL 1회(RC-1).
+`/wf-ship` 으로 머지를 준비한다(승인한 코드 신선도 대조 → PR 생성, 머지는 사람이). 후속 태스크 후보: R-1(세션 쿠키 SameSite), ADR-0021 fragment 리다이렉트, user-authentication.md §1-3 갱신, architecture.md 에 config 계층 행.
 
 ## 알아둬야 할 것
 

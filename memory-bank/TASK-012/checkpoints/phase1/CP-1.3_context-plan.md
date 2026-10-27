@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-27T00:00:00Z
 summary: "[Phase 1 완료] route Backend. flows F1~F7 — AC 3개를 모두 덮는다(F1·F2·F7=AC1, F4=AC2, F3·F5=AC3, F6=AC2·3 거부 경로). 변경 대상 5건(기존 4·신규 1), 재사용 8. AuthService 변경 없음 — 애플은 SocialProfile 만 만들어 기존 loginWithSocial 에 합류. unresolved 14건 중 2a 확정 필요 4건(이름 대체·이름 합성/거부·설정 일부 누락·user 출처 제한), Phase 3 설계 필요 1건(state 저장과 form_post). check_plan 통과."
 

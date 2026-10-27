@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-27T00:00:00Z
 summary: "[2a 완료, HITL#1 승인] 시나리오 12건(happy 7 / boundary 3 / error 1 / regression 1), AC 3/3 매핑. 복잡 기준선(8~12) 상단. 검증 2회차 pass(fail 0, warn 1 — V6 SC-02 When). 1회차는 V11 fail 6건(code 누락·토큰 응답 변형·이름 100자·env 개별 공백 등)을 표 행으로 추가해 해소."
 

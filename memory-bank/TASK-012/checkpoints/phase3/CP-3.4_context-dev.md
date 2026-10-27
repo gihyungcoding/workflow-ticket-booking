@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-27T00:00:00Z
 summary: "[Phase 3 재작업 완료 — Phase 4 1라운드 FAIL(RC-1) 대응] 전체 146건 통과 · 실패 0 · 건너뜀 0. 대상 13건(승인 12 + RC-1 회귀 1) Green. 린트 error 0, 아키텍처 위반 0. 재현된 변종 3개를 새 테스트로 먼저 실패시킨 뒤 공통 지점 1곳에서 고쳤고, 승인된 테스트는 고치지 않았다. 변이 N1~N3 모두 잡힘."
 
