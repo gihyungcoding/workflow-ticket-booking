@@ -145,7 +145,8 @@
       "section": "§2-1 타입별 경계값 표",
       "change": "'비동기 결과를 상태에 적용하는 곳' 행 추가 — 시작 이후의 로그인·로그아웃·언마운트·화면 이동·StrictMode 취소, 늦게 오는 성공·401·5xx·네트워크 오류·비 JSON. 개별 응답이 아니라 '응답이 오는 사이 무엇이 바뀔 수 있는가' 를 묻는다",
       "evidence": "TASK-010 Phase 4 1차 FAIL RC-1 — 118케이스가 정상 흐름만 덮어 통과",
-      "status": "pending",
+      "status": "applied",
+      "applied_in": "6731b6f",
       "recurring": 0
     },
     {
@@ -161,7 +162,8 @@
       "section": "Step 3 — Green 확인",
       "change": "테스트 결함으로 판단해 승인된 테스트를 고쳐야 할 때의 3요건 — 단언은 바꾸지 않는다, 사용자 승인(AskUserQuestion)을 받는다, DEV_<ID>.json 의 test_modifications 에 파일·시나리오·사유·승인 근거를 남긴다",
       "evidence": "TASK-010 SC-12 — disabled MUI 버튼 둘째 클릭을 user-event 가 거부, pointerEventsCheck: 0 으로 한 줄 수정",
-      "status": "pending",
+      "status": "applied",
+      "applied_in": "6731b6f",
       "recurring": 0
     },
     {

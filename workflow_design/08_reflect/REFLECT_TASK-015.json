@@ -83,8 +83,9 @@
       "section": "구현이 이미 있는 Red 재작성 — 변이 검증",
       "change": "변이 검증은 변이 적용 후 git diff 로 변경을 확인하고 나서 테스트를 실행한다(셸 치환 실패로 미적용된 변이의 통과를 변이 생존으로 오독하지 않게). TASK-014 #0 과 같은 절을 고친다",
       "evidence": "TASK-015 Phase 3 변이 첫 시도 sed 오류 + '5 passed'",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "6731b6f"
     }
   ],
   "completion_report": {
