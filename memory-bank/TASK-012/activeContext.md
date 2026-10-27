@@ -1,8 +1,8 @@
 ---
 task_id: TASK-012
 title: "애플 로그인 연동"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (HITL#1 승인 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-27
@@ -13,21 +13,22 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-012-apple-login-oauth2"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-012.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-012.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-012.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 (Plan) 을 마쳤다 — `PLAN_TASK-012.json` 저장, `check_plan.py` 통과, CP-1.3 저장. (estimate 12h → standard 트랙, risk high, complexity 복잡)
-기준: develop `27494da` (PR #22 · TASK-011 병합 포함). 백엔드 테스트 `cleanTest test` BUILD SUCCESSFUL.
-설계 요지: AuthService 는 바꾸지 않는다. 애플 고유 관심사(Client Secret·토큰 교환·form_post·클레임 정규화·user 이름)는 모두 config 에 두고 `SocialProfile` 만 만들어 기존 `loginWithSocial` 에 합류시킨다.
-출처 문서: `docs/product/features/user-authentication.md` (§1-2 Task D, §1-3 애플 이름 캡처, §3 API, §5 Task D 완료 조건, §6 구현 참고)
+Phase 2a (Scenario) 를 마쳤다 — 시나리오 12건(happy 7 / boundary 3 / error 1 / regression 1), AC 3/3, 독립검증 2회차 PASS(warn 1: V6), HITL#1 승인. CP-2.2 저장.
+확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (모두 사용자 선택). 보류한 경고 V6(SC-02 When 에 교환 두 번)은 승인과 함께 확정.
+설계 요지: AuthService 는 바꾸지 않는다. 애플 고유 관심사(Client Secret·토큰 교환·form_post·클레임 정규화·user 이름)는 config 에 두고 `SocialProfile` 만 만들어 기존 `loginWithSocial` 에 합류시킨다.
 
 ## 다음 한 걸음
 
-Phase 2a — wf-scenario. PLAN 의 unresolved 중 `[결정 필요 2a]` 4건(이름 대체 문자열·이름 합성/거부·설정 일부 누락·user 출처 제한)과 `email_verified` 변종 양방향을 시나리오로 확정한다. 시나리오가 기준선(8~12)을 넘으면 사용자에게 알린다.
+Phase 2b — wf-red. 시나리오 12건을 실패하는 테스트로 옮긴다(스텁은 예외를 던지게, 실제 로직 금지). 가짜 애플 서버(JDK HttpServer)와 tokenUri/jwkSetUri 교체 방법을 2b 에서 정한다.
 
 ## 알아둬야 할 것
 

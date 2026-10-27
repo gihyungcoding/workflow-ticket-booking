@@ -1,11 +1,13 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-27T00:00:00Z
-summary: "[2a 독립검증 통과, HITL#1 대기] 시나리오 12건(happy 7 / boundary 3 / error 1 / regression 1), AC 3/3 매핑. 복잡 기준선(8~12) 상단. 검증 2회차 pass(fail 0, warn 1 — V6 SC-02 When). 1회차는 V11 fail 6건(code 누락·토큰 응답 변형·이름 100자·env 개별 공백 등)을 표 행으로 추가해 해소."
+summary: "[2a 완료, HITL#1 승인] 시나리오 12건(happy 7 / boundary 3 / error 1 / regression 1), AC 3/3 매핑. 복잡 기준선(8~12) 상단. 검증 2회차 pass(fail 0, warn 1 — V6 SC-02 When). 1회차는 V11 fail 6건(code 누락·토큰 응답 변형·이름 100자·env 개별 공백 등)을 표 행으로 추가해 해소."
 
 next_steps:
-  - "HITL#1 — 시나리오 12건 승인 받기 (요약에 2a 확정 unresolved 4건, 사용자 확인 2건, 보류한 경고 V6 을 명시)"
-  - "승인되면 SCENARIO_TASK-012.json 의 human_input.generate_red_trigger 를 true 로, validate_phase2a_gate.py 실행"
+  - "Phase 2b — wf-red. 시나리오 12건을 실패하는 테스트로 옮긴다 (Java/Spring: 본문이 예외를 던지는 스텁만, 실제 로직 금지 — memory 의 Red skeleton 규약)"
+  - "2b 에서 주의: SC-02·09·10·12 는 가짜 애플 서버(토큰 엔드포인트·JWKS)가 필요하다 — JDK 내장 HttpServer, 새 의존성 없음. tokenUri/jwkSetUri 를 테스트가 바꿀 수 있는 방법(ClientRegistrationRepository 빈 오버라이드)을 정해야 한다"
+  - "2b 에서 주의: SC-04 의 대형 표(NUL·서로게이트 등)는 파라미터화 테스트로, 테스트 함수 개수 == 승인된 시나리오 개수(12)"
+  - "Phase 3 로 미룬 것: 인가 요청 state 저장(세션 vs 쿠키), Spring Security 7.1.1 API 확인 항목 (PLAN unresolved)"
 
 decisions:
   - decision: "새로 작성 (기존 시나리오 확장 아님)"
