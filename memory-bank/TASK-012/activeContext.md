@@ -2,7 +2,7 @@
 task_id: TASK-012
 title: "애플 로그인 연동"
 phase: "3"
-phase_name: "Phase 3 - Green (완료)"
+phase_name: "Phase 3 - Green (Phase 4 FAIL 로 롤백, 재작업 중)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-27
@@ -13,24 +13,25 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-012-apple-login-oauth2"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-012.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-012.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-012.json"
   red: "workflow_design/05_scenario/TEST_TASK-012.json"
   dev: "workflow_design/06_dev/DEV_TASK-012.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-012.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 (Green) 를 마쳤다 — 전체 145건 중 통과 144 · 실패 0 · 건너뜀 1(기존 조건부), 대상 12건 전부 Green, 린트 error 0, 아키텍처 제약 위반 0. 승인된 테스트는 고치지 않았다. 변이 검증 10건(9건 잡힘, 1건은 불필요한 검사라 제거). CP-3.4 저장.
-변경: config 5곳(AppleClientSecretGenerator·CustomOAuth2UserService·OAuth2LoginSuccessHandler·SocialLoginConfig·SecurityConfig) + SocialInputRules 가시성 1줄. AuthService 는 그대로.
+Phase 4 1라운드가 FAIL 이라 Phase 3 으로 롤백했다(사용자가 '구현으로 롤백' 선택). 뿌리 RC-1: 운영 경로에서 Spring OIDC 디코더가 id_token 의 `email_verified` 를 Boolean 으로 미리 변환해, 승인된 SC-06 의 `"True"`/`"TRUE"`/`"tRue"` 가 가입 대기가 아니라 자동 연결로 읽힌다(체인 프로브로 재현). 테스트는 H2 145/145 · PG 113/113, 린트·아키텍처 error 0, 보안 결함 없음.
+R-1(세션 쿠키 SameSite 미지정)은 사용자가 '수용하고 후속 태스크로' 결정 — 이번 태스크에서 바꾸지 않는다.
 확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (사용자 선택).
 
 ## 다음 한 걸음
 
-Phase 4 — wf-verify. 필수 증거: 실제 PostgreSQL 로 애플 이름 경계(100자·4바이트 문자) 프로브. HITL#3 에 올릴 사용자 결정: `DEV_TASK-012.json` 의 open_risks R-1(교차 사이트 form_post 에서 세션 쿠키 전송 — Chrome 2분 예외에 기댐).
+Phase 3 재작업(wf-develop): `VERIFY_TASK-012.json` 의 `root_causes` RC-1 을 먼저 읽는다. 재현된 변종 3개(`"TRUE"`/`"True"`/`"tRue"`)를 **새 플로우 테스트로 먼저 실패시킨 뒤**(승인된 테스트는 고치지 않는다) 공통 지점(애플 OIDC 디코더 팩토리의 email_verified 클레임 변환 제거)에서 고친다. `DEV_TASK-012.json` 에 `rollback_fixes` 기록. 그 뒤 Phase 4 재검증 — 이전 root_causes 를 이어받고, 수정 커밋도 리뷰하고, PG 프로브·체인 프로브를 다시 돈다.
 
 ## 알아둬야 할 것
 

@@ -1,12 +1,12 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-27T00:00:00Z
-summary: "[Phase 4 1라운드 FAIL, HITL#3 대기] 테스트 H2 145/145 · PostgreSQL DB 연결 클래스 113/113 · 린트·아키텍처 error 0. 그러나 리뷰어의 [correctness] 결함을 체인 프로브로 독립 재현: 운영 경로에서 id_token email_verified \"TRUE\"/\"True\"/\"tRue\" 가 자동 연결로 읽혀 승인된 SC-06 과 다르다(뿌리 1 · 변종 8, 재현 3). 실익 있는 악용 경로는 없음(애플 서명 토큰). R-1(세션 쿠키)은 별도 사용자 결정 대기."
+summary: "[Phase 4 1라운드 FAIL, HITL#3 REJECT → Phase 3 롤백] 테스트 H2 145/145 · PostgreSQL DB 연결 클래스 113/113 · 린트·아키텍처 error 0. 그러나 리뷰어의 [correctness] 결함을 체인 프로브로 독립 재현: 운영 경로에서 id_token email_verified \"TRUE\"/\"True\"/\"tRue\" 가 자동 연결로 읽혀 승인된 SC-06 과 다르다(뿌리 1 · 변종 8, 재현 3). 실익 있는 악용 경로는 없음(애플 서명 토큰). R-1(세션 쿠키)은 사용자가 수용·후속 태스크로 결정."
 
 next_steps:
-  - "HITL#3 — FAIL 이라 승인 선택지 없음. 롤백 대상(구현 / 시나리오)과 R-1 처리 방침을 사용자에게 받는다"
-  - "구현 롤백이면 Phase 3: RC-1 의 reproduced 변종 3개를 '새' 플로우 테스트로 먼저 실패시킨 뒤(승인된 테스트는 고치지 않는다) 공통 지점(애플 OIDC 디코더 팩토리의 email_verified 클레임 변환 제거)에서 고친다. DEV 의 rollback_fixes 에 {root_cause, variants, tests, fix_locus: common, sites} 기록"
-  - "시나리오 롤백이면 Phase 2a: SC-06 의 \"True\"/\"TRUE\"/\"tRue\" 행을 운영 경로 의미(Spring 변환 이후)에 맞춰 고치고 SC-05 로 옮긴다 — HITL#1·#2 재승인 필요"
+  - "사용자 결정(HITL#3): 구현으로 롤백 + R-1 수용하고 후속 태스크로. Phase 3 에서:"
+  - "구현 롤백 — Phase 3: RC-1 의 reproduced 변종 3개를 '새' 플로우 테스트로 먼저 실패시킨 뒤(승인된 테스트는 고치지 않는다) 공통 지점(애플 OIDC 디코더 팩토리의 email_verified 클레임 변환 제거)에서 고친다. DEV 의 rollback_fixes 에 {root_cause, variants, tests, fix_locus: common, sites} 기록"
+  - "(기각된 대안) 시나리오 롤백 — SC-06 행을 운영 경로 의미에 맞춰 SC-05 로 옮김: HITL#1·#2 재승인 필요해서 선택하지 않았다"
   - "재검증 시 이전 root_causes 를 그대로 이어받고, 수정 커밋도 최소 1회 다시 리뷰한다. PostgreSQL 프로브와 체인 프로브(email_verified 변종)를 다시 실행한다"
   - "Docker Desktop 은 검증을 위해 검증자가 켰다(원래 꺼져 있었다). 검증용 컨테이너 tb-verify-012 는 정리함"
 
@@ -20,8 +20,12 @@ decisions:
   - decision: "R-1(세션 쿠키)은 결함이 아니라 사용자 결정 사항으로 둔다"
     rationale: "리뷰어 의견: 보안 결함이 아니라 가용성 위험(중간). 실제 HTTP 로 JSESSIONID 에 SameSite·Secure 가 없음을 확인했다. 선택지 (a) SameSite=None;Secure 설정 (b) 쿠키 기반 저장소+ADR 은 AC 밖의 배포 설정 결정이라 HITL#3 에서 묻는다"
 
+  - decision: "롤백 대상은 구현(Phase 3), R-1 은 수용 — 둘 다 사용자 선택"
+    rationale: "구현 롤백은 승인된 시나리오·테스트를 그대로 지키고 공통 지점 1곳을 고친다. 시나리오 롤백은 코드는 단순해지지만 HITL#1·#2 를 다시 받고 테스트를 고쳐야 한다. R-1 은 AC 밖의 배포 설정 결정이라 후속 태스크로 분리"
+
 attempts:
   - phase: "4"
     round: 1
     outcome: "Phase 4 FAIL — RC-1: 운영 경로의 Spring 클레임 변환 때문에 email_verified 대소문자 변형이 검증됨으로 읽힘(승인된 SC-06 과 불일치)"
+    back_to: "3"
 ---

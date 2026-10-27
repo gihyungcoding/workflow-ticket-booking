@@ -273,8 +273,24 @@
     "open_risk_R1": "state 가 HttpSession 에 저장되고 JSESSIONID 에 SameSite/Secure 가 없다(실제 HTTP 로 확인). 교차 사이트 form_post 에서의 쿠키 전송은 브라우저 동작에 달려 있어 미검증. 가용성 위험(중간), 인증 우회 아님"
   },
   "human_review": {
-    "decision": null,
+    "decision": "REJECT",
     "verified_commit": null,
-    "verified_at": null
+    "verified_at": null,
+    "reject": {
+      "attempt": 1,
+      "back_to": "3",
+      "reason_code": "VERIFY_FAIL_ROOT_CAUSE",
+      "root_causes": [
+        "RC-1"
+      ],
+      "chosen_by": "사용자(AskUserQuestion) — 구현으로 롤백 선택, 시나리오 롤백 대안은 기각"
+    },
+    "accepted_decisions": [
+      {
+        "id": "R-1",
+        "decision": "수용하고 후속 태스크로",
+        "detail": "인가 요청 state 의 HttpSession 저장과 JSESSIONID 의 SameSite/Secure 미지정은 이번 태스크에서 바꾸지 않는다. 가용성 위험(Chrome 에서 2분 넘는 애플 로그인 실패 가능)으로 Phase 5 회고·후속 태스크 후보에 기록하고, 실제 브라우저 검증이 필요하다는 점을 승인 근거에 남긴다. 선택지: (a) same-site=none;secure 설정 (b) 쿠키 기반 저장소 + ADR"
+      }
+    ]
   }
 }

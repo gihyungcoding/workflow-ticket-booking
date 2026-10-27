@@ -5,8 +5,8 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | flows F1~F7, 변경 대상 5건, AuthService 무변경 |
 | 2a Scenario | ✅ 완료 | CP-2.2 | 시나리오 12건, 검증 2회차 PASS, HITL#1 승인 |
 | 2b Red | ✅ 완료 | CP-2.5 | 테스트 12건, Red 11 + already_passing 1, HITL#2 승인 |
-| 3 Green | ✅ 완료 | CP-3.4 | 145건 중 144 통과·0 실패, 변이 10건 |
-| 4 Verify | 🔄 다음 | — | PostgreSQL 프로브 필수, R-1 사용자 결정 |
+| 3 Green | 🔄 재작업 | CP-3.4 | Phase 4 FAIL(RC-1) 롤백 — email_verified 운영 경로 변환 |
+| 4 Verify | ⬜ 재검증 대기 | CP-4.2 | 1라운드 FAIL, R-1 수용 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건
