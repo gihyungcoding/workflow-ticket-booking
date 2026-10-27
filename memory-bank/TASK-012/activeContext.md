@@ -1,8 +1,8 @@
 ---
 task_id: TASK-012
 title: "애플 로그인 연동"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (HITL#1 승인 완료)"
+phase: "2b"
+phase_name: "Phase 2b - Red (HITL#2 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-27
@@ -13,22 +13,23 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-012-apple-login-oauth2"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-012.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-012.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-012.json"
+  red: "workflow_design/05_scenario/TEST_TASK-012.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a (Scenario) 를 마쳤다 — 시나리오 12건(happy 7 / boundary 3 / error 1 / regression 1), AC 3/3, 독립검증 2회차 PASS(warn 1: V6), HITL#1 승인. CP-2.2 저장.
-확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (모두 사용자 선택). 보류한 경고 V6(SC-02 When 에 교환 두 번)은 승인과 함께 확정.
+Phase 2b (Red) 테스트 12건을 작성했다 — 11건 Red, SC-12 만 already_passing(부정형 회귀). 전체 145건 중 실패 11건은 모두 새 테스트이고 기존 133건은 통과. 컴파일 스켈레톤은 `AppleClientSecretGenerator` 하나. HITL#2 승인 대기. CP-2.5 저장.
 설계 요지: AuthService 는 바꾸지 않는다. 애플 고유 관심사(Client Secret·토큰 교환·form_post·클레임 정규화·user 이름)는 config 에 두고 `SocialProfile` 만 만들어 기존 `loginWithSocial` 에 합류시킨다.
+확정한 결정: 표시 이름 `firstName lastName` 공백 1칸 · 이름 없으면 `Apple 사용자` (사용자 선택).
 
 ## 다음 한 걸음
 
-Phase 2b — wf-red. 시나리오 12건을 실패하는 테스트로 옮긴다(스텁은 예외를 던지게, 실제 로직 금지). 가짜 애플 서버(JDK HttpServer)와 tokenUri/jwkSetUri 교체 방법을 2b 에서 정한다.
+HITL#2 승인 → Phase 3 (wf-develop). Phase 3 이 정할 것: 인가 요청 state 저장(세션 vs 쿠키). `TEST_TASK-012.json` 의 `risks_for_green` 7건을 먼저 읽는다.
 
 ## 알아둬야 할 것
 
