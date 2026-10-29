@@ -1,0 +1,213 @@
+{
+  "task_id": "TASK-013",
+  "changed_files": [
+    {
+      "path": "frontend/src/api/auth.ts",
+      "change": "completeSocialSignUp(pendingToken, role) 추가, 로그인 응답 검증을 readLoginResult 로 공통화, readPendingSignup(표시용 페이로드 디코더), 에러 코드 상수",
+      "lines_changed": 49
+    },
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "change": "소셜 문구 5개 추가",
+      "lines_changed": 7
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.tsx",
+      "change": "?error=social 배너, SocialLoginButtons",
+      "lines_changed": 6
+    },
+    {
+      "path": "frontend/src/pages/SignUpPage.tsx",
+      "change": "SocialLoginButtons",
+      "lines_changed": 2
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "change": "/oauth2/redirect, /oauth2/role 라우트",
+      "lines_changed": 4
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "change": "개발 프록시에 /oauth2/authorization 추가(/oauth2/redirect 제외)",
+      "lines_changed": 2
+    },
+    {
+      "path": "frontend/src/components/SocialLoginButtons.tsx",
+      "change": "신규 — 구분선 + 4개 제공자 링크(apiUrl)",
+      "lines_changed": 34
+    },
+    {
+      "path": "frontend/src/pages/OAuthRedirectPage.tsx",
+      "change": "신규 — 쿼리 한 번 읽기(parseCallback)·주소 지우기·token/pendingToken/실패 분기, 언마운트 뒤 응답 무시",
+      "lines_changed": 70
+    },
+    {
+      "path": "frontend/src/pages/RoleSelectionPage.tsx",
+      "change": "신규 — 안내 문구, 역할 라디오, 제출 중 비활성, 만료/409/일반 실패, 넘어온 pendingToken 이 없으면 /login",
+      "lines_changed": 139
+    }
+  ],
+  "reused": [
+    {
+      "path": "frontend/src/api/auth.ts",
+      "symbol": "fetchMe"
+    },
+    {
+      "path": "frontend/src/auth/AuthContext.tsx",
+      "symbol": "useAuth().login"
+    },
+    {
+      "path": "frontend/src/api/http.ts",
+      "symbol": "apiUrl / request"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "ApiError / throwIfApiError / isWriteKeyRejected / WRITE_REJECTED_MESSAGE"
+    },
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "symbol": "AUTH_MESSAGES"
+    },
+    {
+      "path": "frontend/src/pages/SignUpPage.tsx",
+      "symbol": "역할 라디오·이미 가입 문구 마크업 패턴"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" npm test -- --run",
+    "total": 269,
+    "passed": 269,
+    "failed": 0,
+    "target_tests_passed": 93,
+    "note": "대상 SocialLoginScreens.test.tsx 93케이스(시나리오 14건) 전부 통과, 기존 13개 파일 176개 통과. tsc(tsconfig.app) 오류 0, npm run build 성공, check_architecture error 0(기존 DESIGN-003 warn 3건)"
+  },
+  "lint": {
+    "command": "cd frontend && npm run lint",
+    "errors": 0,
+    "warnings": 0,
+    "note": "변경·신규 파일에는 경고 없음. 출력된 경고 4건은 기존 파일(PerformanceList/Detail/EditPage, AuthContext) 것이라 이 태스크 범위 밖"
+  },
+  "refactoring": [
+    {
+      "what": "로그인·소셜 가입 완료 응답 검증을 readLoginResult 한 곳으로 모음",
+      "why": "completeSocialSignUp 이 login 과 같은 규칙(accessToken 비어 있지 않음 + user.name)을 써야 한다 — 두 곳에 복사하지 않는다"
+    },
+    {
+      "what": "OAuthRedirectPage 의 중복 요청 방지 ref(started) 제거",
+      "why": "변이 검증에서 제거해도 어떤 테스트도 실패하지 않았다 — 필요 없는 코드다. 개발용 이중 실행의 둘째 요청은 화면을 떠난 뒤 도착해 무해하다"
+    }
+  ],
+  "plan_unresolved_resolution": [],
+  "plan_unresolved_note": "PLAN 의 unresolved 에 '확인 필요'·'Phase 3 확인' 표시가 붙은 항목은 없었다. [2a 확정] 6건은 Phase 2a 에서 시나리오로 닫혔고, [Phase 4 필수 증거]·[열린 위험 R-1]·[개발 환경] 항목은 Phase 4 로 넘긴다",
+  "test_modifications": [
+    {
+      "file": "frontend/src/auth/SocialLoginScreens.test.tsx",
+      "scenario": "SC-06",
+      "what": "비활성 버튼의 둘째 클릭을 userEvent.setup({ pointerEventsCheck: 0 }).click(...) 로 변경",
+      "why": "user-event 가 disabled MUI 버튼(pointer-events: none)을 기본 거부해 테스트가 구현과 무관하게 예외로 실패(2케이스). 단언(요청 1회·버튼 비활성·요청 본문·토큰 저장·홈 이동)은 그대로 — TASK-010 SC-12 와 같은 유형",
+      "approved_by": "사용자 AskUserQuestion 응답 '둘째 클릭만 pointerEventsCheck 해제 (Recommended)'"
+    }
+  ],
+  "mutation_check": {
+    "run": "Green 직후 변이 15건 + 가드 제거 뒤 1건. 변이는 적용 여부를 파일 비교로 확인하고 매번 원복(원복 후 소스 비교 일치)",
+    "killed": [
+      {
+        "id": "M1b",
+        "what": "쿼리를 첫 렌더 상태가 아니라 렌더마다 읽음",
+        "failed": "SC-02 8케이스"
+      },
+      {
+        "id": "M3",
+        "what": "콜백 페이지가 화면을 떠난 뒤 응답을 적용",
+        "failed": "SC-13 2케이스"
+      },
+      {
+        "id": "M4",
+        "what": "역할 선택이 화면을 떠난 뒤 응답을 적용",
+        "failed": "SC-13 1케이스"
+      },
+      {
+        "id": "M5",
+        "what": "제출 중 버튼 비활성 제거",
+        "failed": "SC-06"
+      },
+      {
+        "id": "M6",
+        "what": "비정상 콜백 이동을 push 로",
+        "failed": "SC-03 9케이스"
+      },
+      {
+        "id": "M7",
+        "what": "둘 다 있어도 token 우선",
+        "failed": "SC-03 1케이스"
+      },
+      {
+        "id": "M8",
+        "what": "409 중 소셜 연결 code 를 일반 실패로",
+        "failed": "SC-09 1케이스"
+      },
+      {
+        "id": "M9",
+        "what": "pendingToken 디코드에서 UTF-8 해석 제거",
+        "failed": "SC-05 4케이스"
+      },
+      {
+        "id": "M10",
+        "what": "소셜 링크가 apiUrl 대신 상대 경로",
+        "failed": "SC-01 3케이스"
+      },
+      {
+        "id": "M11",
+        "what": "error 값과 무관하게 배너 표시",
+        "failed": "SC-11 3케이스"
+      },
+      {
+        "id": "M12",
+        "what": "콜백 쿼리 공백 제거 생략",
+        "failed": "SC-02·SC-03 3케이스"
+      },
+      {
+        "id": "M13",
+        "what": "역할 미선택이어도 요청",
+        "failed": "SC-07"
+      },
+      {
+        "id": "M14",
+        "what": "token 로그인 후 push 이동",
+        "failed": "SC-02"
+      }
+    ],
+    "survived": [
+      {
+        "id": "M2",
+        "what": "콜백 요청 중복 방지(started ref) 제거",
+        "action": "코드 제거 — 필요 없는 코드였다"
+      },
+      {
+        "id": "M15",
+        "what": "콜백에서 주소의 토큰을 지우지 않는다(navigate('/oauth2/redirect', replace))",
+        "why": "승인된 시나리오는 이동한 뒤의 주소만 단언하고 대기 중 주소는 보지 않는다. 지우기는 PLAN 이 요구한 노출 완화(ADR-0021)라 코드는 둔다",
+        "action": "Phase 4 에서 앱을 띄워 대기 중 주소창에 토큰이 없는지 실제로 확인한다. 테스트 보강은 승인된 테스트 변경이라 사용자 판단 몫"
+      }
+    ]
+  },
+  "open_risks": [
+    {
+      "id": "R-1",
+      "title": "애플 form_post 교차 사이트 콜백의 세션 쿠키(TASK-012 인계)",
+      "note": "이 태스크에서 고치지 않는다. Phase 4 에서 가능한 만큼 실제 브라우저로 확인해 기록"
+    },
+    {
+      "id": "R-2",
+      "title": "대기 중 주소의 토큰 지우기는 자동 테스트가 지키지 못한다(M15)",
+      "note": "Phase 4 수동 확인"
+    },
+    {
+      "id": "R-3",
+      "title": "개발 프록시(vite.config.ts)는 jsdom 으로 검증 불가",
+      "note": "Phase 4 에서 dev 서버로 /oauth2/authorization 은 백엔드로, /oauth2/redirect 는 프론트로 가는지 확인"
+    }
+  ],
+  "scope_deviations": []
+}

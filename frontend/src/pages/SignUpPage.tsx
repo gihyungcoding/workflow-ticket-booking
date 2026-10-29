@@ -17,6 +17,7 @@ import { EMAIL_ALREADY_EXISTS, signUp } from '../api/auth'
 import type { UserRole } from '../api/auth'
 import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected } from '../api/performances'
 import { AUTH_MESSAGES } from '../auth/messages'
+import { SocialLoginButtons } from '../components/SocialLoginButtons'
 
 const EMAIL_MAX = 255
 const PASSWORD_MIN = 8
@@ -170,6 +171,7 @@ export function SignUpPage() {
       <Button type="submit" variant="contained" disabled={submitting}>
         가입하기
       </Button>
+      <SocialLoginButtons />
     </Stack>
   )
 }

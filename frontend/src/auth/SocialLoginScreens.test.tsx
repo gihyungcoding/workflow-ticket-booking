@@ -469,7 +469,8 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
 
       // When 계속하기를 두 번 연달아 누른다
       await userEvent.click(screen.getByRole('button', { name: '계속하기' }))
-      await userEvent.click(screen.getByRole('button', { name: '계속하기' }))
+      // 비활성 버튼은 pointer-events: none 이라 user-event 가 기본으로 거부한다 — 둘째 클릭만 검사를 끈다.
+      await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByRole('button', { name: '계속하기' }))
 
       // Then 응답을 기다리는 동안 계속하기가 비활성이고 요청은 한 번만 간다
       expect(screen.getByRole('button', { name: '계속하기' })).toBeDisabled()
