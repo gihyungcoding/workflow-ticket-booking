@@ -2,7 +2,7 @@
 task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
 phase: "1"
-phase_name: "Phase 1 - Plan (시작)"
+phase_name: "Phase 1 - Plan 완료 (2a 진입 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-29
@@ -13,17 +13,18 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-013-social-login-frontend"
 
-last_checkpoint: null
-artifacts: {}
+last_checkpoint: "CP-1.3"
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-013.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-TASK-013 을 시작했다. Phase 1(Plan) 진입 전. 선행 TASK-011·TASK-012 는 develop 에 머지됨. 프론트 골격 확인 완료 — `npm test` 176/176 통과, `npm run lint` error 0(기존 warning 3건).
+TASK-013 Phase 1(Plan) 완료. flows F1~F5 가 AC 5개를 덮는다. 선행 TASK-011·TASK-012 는 develop 에 머지됨. 프론트 골격 확인 완료 — `npm test` 176/176 통과, `npm run lint` error 0(기존 warning 3건).
 
 ## 다음 한 걸음
 
-`wf-plan` — 코드베이스 조사(기존 `LoginPage`·`SignUpPage`·`AuthContext`·`api/auth.ts`·라우터), 백엔드 콜백·`POST /api/auth/social/complete` 응답 계약을 **백엔드 소스에서 직접** 확인(응답 필드를 feature 문서 문장으로 가정하지 않는다).
+`wf-scenario`(Phase 2a) — (Phase 1 에서 한 일: 코드베이스 조사(기존 `LoginPage`·`SignUpPage`·`AuthContext`·`api/auth.ts`·라우터), 백엔드 콜백·`POST /api/auth/social/complete` 응답 계약을 **백엔드 소스에서 직접** 확인, 응답 필드를 feature 문서 문장으로 가정하지 않음). 2a 확정 6건은 CP-1.3 next_steps 참고.
 
 ## 알아둬야 할 것
 
