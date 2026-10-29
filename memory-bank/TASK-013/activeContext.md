@@ -1,8 +1,8 @@
 ---
 task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
-phase: "1"
-phase_name: "Phase 1 - Plan 완료 (2a 진입 대기)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (작성 완료, 독립검증 전)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-29
@@ -13,9 +13,10 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-013-social-login-frontend"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-013.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-013.md"
 ---
 
 ## 지금 무엇을 하고 있나
