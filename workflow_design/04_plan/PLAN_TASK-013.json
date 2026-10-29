@@ -19,8 +19,8 @@
         "type": "token | pendingToken: str (둘 중 하나)",
         "source": "백엔드 OAuth2LoginSuccessHandler 가 302 로 보낸 /oauth2/redirect?token=… 또는 ?pendingToken=… (query — 사용자 결정 2026-10-29, ADR-0021 fragment 전환은 후속)",
         "constraints": [
-          "token 이 있으면 pendingToken 은 보지 않고 로그인 처리한다 / pendingToken 만 있으면 역할 선택으로 보낸다",
-          "둘 다 없음·값이 빈 문자열·둘 다 있음은 정상 응답이 아니다 — 실패(F5)로 처리한다(백엔드는 이 경우를 만들지 않는다)",
+          "token 과 pendingToken 중 **공백을 뺀 값이 비어 있지 않은 것이 정확히 하나**일 때만 정상이다. token 이면 로그인 처리 / pendingToken 이면 역할 선택으로 보낸다. 값이 빈 문자열·공백만인 쪽은 없는 것으로 본다(예: `?token=&pendingToken=x` 는 pendingToken 만 있는 것)",
+          "둘 다 없음(쿼리 없음·모르는 파라미터만·빈/공백만)·둘 다 비어 있지 않음은 정상 응답이 아니다 — 실패(F5)로 처리한다(백엔드는 이 경우를 만들지 않는다)",
           "읽은 즉시 주소창에서 토큰 쿼리를 지운다(history.replace) — 접근 로그·Referer·히스토리 노출을 줄이는 ADR-0021 의 완화를 query 에서도 적용한다",
           "StrictMode 가 효과를 두 번 실행하므로 쿼리는 첫 렌더에서 한 번만 읽어 보관한다 — 두 번째 실행이 이미 지워진 주소를 읽어 '파라미터 없음' 으로 오판하면 안 된다",
           "파싱은 한 함수에 모은다 — ADR-0021 로 query→fragment 가 바뀔 때 수정 지점이 한 곳이다"
@@ -81,6 +81,15 @@
           "서명을 검증하지 않는다 — 표시 전용이며 신원 판단에 쓰지 않는다(서버가 /complete 에서 검증)",
           "디코드 실패·email/name 이 문자열이 아님·형식 이상이면 이메일·이름 없는 일반 안내로 대체하고 화면은 계속 동작한다",
           "name 은 UTF-8(한글·4바이트 문자) 디코드가 맞아야 한다(atob 만 쓰면 깨진다). 값은 React 텍스트로만 렌더한다(HTML 로 넣지 않는다)"
+        ]
+      },
+      {
+        "name": "저장된 토큰 복원 응답(외부 서버 응답)",
+        "type": "200 UserResponse | 401 | 그 밖",
+        "source": "AuthProvider 가 앱 시작 때 보내는 GET /api/auth/me (이미 구현 — TASK-010, ADR-0018)",
+        "constraints": [
+          "이 태스크의 새 로그인 경로(콜백 token·역할 제출)가 끝난 뒤 도착한 복원 응답은 상태·토큰 어디에도 영향을 주지 않는다 — 늦은 401 이 방금 저장한 새 토큰을 지우면 안 된다",
+          "새 코드는 auth.login() 만 거쳐 로그인한다 — 직접 localStorage 를 쓰면 세대 규칙을 우회한다"
         ]
       }
     ],
