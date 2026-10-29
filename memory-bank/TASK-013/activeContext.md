@@ -3,7 +3,7 @@ task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
 phase: "1"
 phase_name: "Phase 1 - Plan (시작)"
-status: IN_PROGRESS
+status: ACTIVE
 track: standard
 created_at: 2026-10-29
 last_updated: 2026-10-29
