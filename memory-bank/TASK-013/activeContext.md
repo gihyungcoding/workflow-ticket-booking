@@ -1,8 +1,8 @@
 ---
 task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
-phase: "2a"
-phase_name: "Phase 2a 완료 (HITL#1 승인, 2b 진입 대기)"
+phase: "2b"
+phase_name: "Phase 2b - Red (테스트 작성 완료, HITL#2 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-29
@@ -13,10 +13,12 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-013-social-login-frontend"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-013.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-013.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-013.json"
+  red: "workflow_design/05_scenario/TEST_TASK-013.json"
 ---
 
 ## 지금 무엇을 하고 있나

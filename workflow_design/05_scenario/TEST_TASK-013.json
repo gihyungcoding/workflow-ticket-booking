@@ -1,0 +1,146 @@
+{
+  "task_id": "TASK-013",
+  "supersedes": "SCENARIO_TASK-013.json",
+  "test_file": "frontend/src/auth/SocialLoginScreens.test.tsx",
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "SC-01 (happy) 로그인·가입 화면에 소셜 버튼 네 개가 보이고 각각 인가 주소로 이동한다 — $label",
+      "cases": 7,
+      "status": "red",
+      "failure": "role=\"group\" name=\"소셜 로그인\" 을 찾을 수 없다 — 소셜 버튼이 아직 없다",
+      "config_applied_via": "vi.stubEnv('VITE_API_BASE_URL', 표의 값) — 미설정 행은 stub 하지 않음. afterEach 에서 vi.unstubAllEnvs()"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "SC-02 (happy) 콜백에 token 이 오면 사용자 정보를 얻어 로그인하고 홈으로 이동한다 — $label",
+      "cases": 8,
+      "status": "red",
+      "failure": "role=progressbar name='로그인 처리 중' 을 찾을 수 없다 — /oauth2/redirect 라우트가 없다"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "SC-03 (error) 콜백이 정상이 아니면 로그인 화면으로 돌아가 오류 배너를 보인다 — $label",
+      "cases": 15,
+      "status": "red",
+      "failure": "expected '/oauth2/redirect?token=tok-1' to be '/login?error=social' — 콜백 화면이 없어 이동하지 않는다"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "SC-04 (happy) 콜백에 pendingToken 이 오면 역할 선택 화면으로 이동한다 — $label",
+      "cases": 4,
+      "status": "red",
+      "failure": "expected '/oauth2/redirect?pendingToken=…' to be '/oauth2/role'"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "SC-05 (boundary) pendingToken 페이로드가 달라도 역할 선택은 동작하고 안내 문구만 바뀐다 — $label",
+      "cases": 13,
+      "status": "red",
+      "failure": "role=button name='계속하기' 를 찾을 수 없다 — 역할 선택 화면이 없다"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "SC-06 (happy) 역할을 골라 제출하면 가입을 완료하고 로그인해 홈으로 이동한다 — $label",
+      "cases": 2,
+      "status": "red",
+      "failure": "role=button name='계속하기' 를 찾을 수 없다"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "SC-07 (error) 역할을 고르지 않고 제출하면 인라인 오류를 보이고 요청하지 않는다",
+      "cases": 1,
+      "status": "red",
+      "failure": "role=button name='계속하기' 를 찾을 수 없다"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "SC-08 (error) pendingToken 이 만료되면 안내와 로그인 화면으로 가는 버튼을 보인다",
+      "cases": 1,
+      "status": "red",
+      "failure": "role=button name='계속하기' 를 찾을 수 없다"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "SC-09 (error) 만료가 아닌 가입 완료 실패는 문구를 보이고 입력을 유지한 채 다시 시도할 수 있다 — $label",
+      "cases": 10,
+      "status": "red",
+      "failure": "role=button name='계속하기' 를 찾을 수 없다"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "SC-10 (error) 가입 완료가 실패한 뒤 다시 제출하면 이전 문구가 사라지고 성공하면 로그인한다 — $label",
+      "cases": 3,
+      "status": "red",
+      "failure": "role=button name='계속하기' 를 찾을 수 없다"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "SC-11 (error) 로그인 화면은 error=social 일 때만 실패 배너를 보인다 — $label",
+      "cases": 5,
+      "status": "red",
+      "failure": "role=group name='소셜 로그인' 을 찾을 수 없다(4행), error=social 행은 배너 텍스트를 찾을 수 없다(1행)"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "SC-12 (boundary) 역할 선택 화면은 이동할 때 넘어온 pendingToken 이 없으면 열리지 않는다 — $label",
+      "cases": 4,
+      "status": "red",
+      "failure": "expected '/oauth2/role' to be '/login' — 역할 선택 라우트가 없어 이동하지 않는다"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "SC-13 (boundary) 응답이 오기 전에 상태가 이미 바뀌었으면 늦은 응답은 그 상태를 덮어쓰지 않는다 — $label",
+      "cases": 18,
+      "status": "red",
+      "failure": "콜백 행(7)은 progressbar '로그인 처리 중', 역할 제출 행(6)은 '계속하기' 를 찾을 수 없다. 복원 경쟁 행(5)은 new-tok 이 저장되지 않아 시간 초과"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_function": "SC-14 (regression) 소셜 버튼이 있어도 이메일 로그인·가입은 그대로 동작한다 — $label",
+      "cases": 2,
+      "status": "already_passing",
+      "failure": null,
+      "note": "이 태스크가 바꾸지 않는 기존 동작(이메일 로그인·가입) — 구현 전에도 통과, 구조적으로 Red 불가. 소셜 버튼을 폼 안의 <button> 으로 넣어 제출을 가로채거나 요청이 늘면 Green 에서 이 시나리오가 깨진다(변이 검증 대상)"
+    }
+  ],
+  "red_result": {
+    "command": "cd frontend && PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" npx vitest run src/auth/SocialLoginScreens.test.tsx",
+    "total": 93,
+    "failed": 91,
+    "passed": 2,
+    "summary": "시나리오 14건 = 케이스 93. 13개 시나리오(91케이스)는 기능이 없어 실패, SC-14(2케이스)는 already_passing. 실패 원인은 전부 '요소·경로가 없다'(소셜 그룹·progressbar·계속하기 버튼·이동 경로)이고 테스트 코드 결함은 없다",
+    "existing_tests_still_passing": true,
+    "existing_tests": "13 files, 176/176 통과 (새 파일 제외 실행)"
+  },
+  "inventory_check": {
+    "scenarios": 14,
+    "test_functions": 14,
+    "match": true,
+    "cases": 93,
+    "method": "grep -oE \"'SC-[0-9]+ \" frontend/src/auth/SocialLoginScreens.test.tsx | sort -u → SC-01 … SC-14 (14개, 각 1회 정의). 표로 묶은 시나리오는 test.each 한 정의(= 시나리오 한 건)이고 행마다 케이스가 돈다(TASK-010 관례)"
+  },
+  "testing_preferences": {
+    "framework": "vitest + @testing-library/react + user-event (jsdom)",
+    "mock_strategy": "fetch 응답만 vi.stubGlobal 로 대체하고 App·AuthProvider·MemoryRouter 는 실제로 통과시킨다. 붙들어 둔 응답은 deferred() 로 제어. 이동·뒤로 가기는 테스트 전용 Nav 컴포넌트로 흉내. pendingToken 은 브라우저 API(TextEncoder·btoa)로 base64url 을 만들어 모양만 JWT 와 같게 한다"
+  },
+  "compile_skeleton": {
+    "files": [],
+    "contents": "없음 — 테스트가 새 모듈(SocialLoginButtons·OAuthRedirectPage·RoleSelectionPage·completeSocialSignUp)을 직접 import 하지 않고 App 을 통해 렌더·fetch 로만 접근한다. 라우트·페이지가 없으면 요소를 찾지 못해 단언이 실패하므로 스텁 없이 정직한 Red 다",
+    "purity_check": "해당 없음(구현 코드를 한 줄도 추가하지 않았다. git status: 새 테스트 파일 1개)"
+  },
+  "harness_probe": {
+    "ran": false,
+    "not_verified": [
+      "SC-02 '이미 로그인한 상태' 행: 헤더에 옛사용자를 먼저 띄운 뒤 Nav 로 콜백에 이동하는 하네스 — 구현이 없어 끝까지 못 돌려 봤다(Green 에서 확인). 실제 브라우저의 전체 페이지 로드와는 다르다(복원이 콜백과 동시에 시작되는 경우는 SC-13 restore 행이 다룬다)",
+      "SC-13 restore 행: 복원 요청 보류 + 콜백 로그인 하네스가 Green 후 의도대로 경쟁을 만드는지는 변이 검증(복원 가드 제거)으로 확인한다",
+      "SC-13 role-nav·callback-nav 행: 비로그인 헤더의 가입 링크가 보류 중에도 눌린다는 가정",
+      "StrictMode 행: 개발용 이중 실행에서 쿼리를 한 번만 읽는 규칙 — Green 에서 StrictMode 를 빼 변이해 실패하는지 확인",
+      "브라우저 뒤로 가기: MemoryRouter 의 navigate(-1) — 실제 브라우저 히스토리와 같다고 가정"
+    ],
+    "note": "프로브 테스트는 만들지 않았다. 하네스는 프레임워크 계층(Router·AuthProvider·MUI)을 실제로 통과시키므로 직접 주입 테스트가 아니다"
+  },
+  "human_review": {
+    "approved": false
+  }
+}
