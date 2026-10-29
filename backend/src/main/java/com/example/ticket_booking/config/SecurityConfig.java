@@ -13,6 +13,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -48,7 +50,9 @@ public class SecurityConfig {
       ObjectProvider<ClientRegistrationRepository> clientRegistrations,
       ObjectProvider<OAuth2AuthorizationRequestResolver> authorizationRequestResolver,
       ObjectProvider<OAuth2LoginSuccessHandler> successHandler,
-      ObjectProvider<OAuth2LoginFailureHandler> failureHandler)
+      ObjectProvider<OAuth2LoginFailureHandler> failureHandler,
+      ObjectProvider<OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest>>
+          tokenResponseClient)
       throws Exception {
     http.csrf(csrf -> csrf.disable())
         .sessionManagement(
@@ -90,6 +94,11 @@ public class SecurityConfig {
                       endpoint ->
                           endpoint.authorizationRequestResolver(
                               authorizationRequestResolver.getObject()))
+                  // 애플만 client_secret 을 요청마다 만들어야 해서, 그 빈이 있을 때만 토큰 교환 클라이언트를 바꾼다
+                  .tokenEndpoint(
+                      endpoint ->
+                          tokenResponseClient.ifAvailable(
+                              client -> endpoint.accessTokenResponseClient(client)))
                   .successHandler(successHandler.getObject())
                   .failureHandler(failureHandler.getObject()));
     }

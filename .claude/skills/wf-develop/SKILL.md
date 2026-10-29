@@ -32,6 +32,7 @@ Red 테스트를 통과시킨다. **최소 구현 → 확인 → 리팩토링** 
 - `test_status == "green"`, `failed == 0`
 - `passed >= red_scenarios.length`
 - 전체 테스트 스위트 통과 (기존 테스트 포함)
+- PLAN 의 '확인 필요'·'Phase 3 확인' 항목이 모두 `plan_unresolved_resolution` 에 닫혀 있음
 - 린트 error 0 — **린트 도구가 없으면 `"errors": null` + `skipped_reason`.**
   `"command": "N/A", "errors": 0` 으로 적으면 이 게이트가 무력해진다
 - `CP-3.4` 저장 및 커밋
@@ -64,6 +65,14 @@ cat workflow_design/04_plan/PLAN_TASK-001.json         # 어디를 고치는가,
 - 고친 내용은 `DEV_<ID>.json` 의 `rollback_fixes` 에
   `{root_cause, variants, tests, fix_locus: "common" | "per_site", sites}` 로 남긴다
 
+**PLAN 의 `unresolved` 중 '확인 필요'·'Phase 3 확인' 으로 표시된 항목은 구현 전에 하나씩 닫는다.**
+코드·명령으로 실제로 확인한 뒤 결과(확인 방법 · 사실 · 시나리오에 미치는 영향)를
+`DEV_<ID>.json` 의 `plan_unresolved_resolution` 에 남긴다. 사실이 PLAN 의 서술과 다르면
+구현을 시작하기 전에 `CP-3.4` 의 `decisions` 에 적고, 시나리오·테스트가 그 사실에 기대고
+있으면 2a/2b 로 돌아갈지 사용자에게 알린다. 닫지 않은 항목이 남은 채 Green 으로 가지 않는다
+(→ TASK-012: '애플 id_token 클레임은 email_verified 를 문자열 그대로 둔다(변환 대상이 아님)'
+이라는 틀린 서술이 닫히지 않은 채 Green 이 되어 Phase 4 에서 FAIL 했다).
+
 구현 순서나 재사용 대상을 정했으면 `CP-3.4` 의 `decisions` 에 남긴다.
 
 ### Step 2 — 최소 구현
@@ -88,6 +97,14 @@ pytest                                        # 전체 스위트
 
 실패가 남아 있으면 Step 2로 돌아간다. **테스트를 고치지 않는다.**
 테스트가 정말 잘못됐다고 판단되면 Phase 2b로 롤백을 사용자에게 제안한다.
+
+**롤백이 과해서 승인된 테스트를 직접 고쳐야 한다면** 아래 셋을 모두 지킨다 (예: 테스트 도구가
+동작을 거부해 설정 한 줄을 주는 경우 — 비활성 버튼의 둘째 클릭을 user-event 가 거부해
+`pointerEventsCheck: 0` 을 준 TASK-010 SC-12). 하나라도 빠지면 고친 것이 아니라 약화한 것이다.
+
+1. 단언은 바꾸지 않는다 — 고치는 것은 테스트가 동작을 관찰하는 방법(설정·헬퍼)뿐이다
+2. 사용자 승인을 `AskUserQuestion` 으로 받는다
+3. `DEV_<ID>.json` 의 `test_modifications` 에 파일 · 시나리오 · 사유 · 승인 근거를 남긴다
 
 `CP-3.4` 를 갱신한다 — `summary` 에 통과 수 한 줄. 실행 출력은 `DEV_<ID>.json` 에 있다.
 
@@ -160,9 +177,18 @@ pytest
     { "what": "매장 ID 목록 조회를 리포지토리로 이동",
       "why": "API 계층에 쿼리 로직이 있었음" }
   ],
+  "plan_unresolved_resolution": [
+    { "item": "keyword 길이 상한이 DB 컬럼과 같은가",
+      "how": "V3 마이그레이션 SQL 확인", "fact": "컬럼 50자, DTO 도 50자",
+      "impact": "없음" }
+  ],
+  "test_modifications": [],
   "scope_deviations": []
 }
 ```
+
+`plan_unresolved_resolution` — PLAN 의 '확인 필요'·'Phase 3 확인' 항목마다 한 행. 없으면 `[]` 와 함께
+이유를 적는다. `test_modifications` — 승인된 테스트를 고친 경우만(위 3요건), 없으면 `[]`.
 
 `scope_deviations` — Plan에 없던 파일을 고쳤다면 여기에 이유와 함께 적는다.
 비어 있는 것이 정상이고, 항목이 있으면 Phase 4가 그것을 검토한다.

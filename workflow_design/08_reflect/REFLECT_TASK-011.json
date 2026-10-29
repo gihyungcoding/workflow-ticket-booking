@@ -129,8 +129,9 @@
       "section": "§1 증거 수집",
       "change": "H2 로 도는 스위트를 환경변수(SPRING_DATASOURCE_URL, SPRING_FLYWAY_ENABLED=true, SPRING_JPA_HIBERNATE_DDL_AUTO=validate)로 실제 DB 위에서 돌리는 방법과, 자체 H2 컨텍스트를 만드는 테스트는 환경 문제로 분리해 기록하는 방법을 적는다",
       "evidence": "TASK-011 VERIFY evidence.pg_run — 133건 중 124 통과, 9건은 H2 컨텍스트에 PG Flyway 를 강제한 환경 문제",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "6731b6f"
     },
     {
       "target": "scripts/check_root_causes.py",

@@ -1,0 +1,171 @@
+{
+  "task_id": "TASK-012",
+  "supersedes": "SCENARIO_TASK-012.json",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/config/AppleClientSecretGeneratorTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/AppleOAuth2FlowTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/AppleProviderConfigTest.java",
+    "backend/src/test/java/com/example/ticket_booking/support/AppleTestKeys.java (테스트 지원 — 키·PEM 형태·Client Secret 단언)",
+    "backend/src/test/java/com/example/ticket_booking/support/FakeProviderServer.java (테스트 지원 — JDK HttpServer 가짜 토큰·JWKS·사용자 정보 서버)"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_sc01_client_secret_은_es256_으로_서명된_jwt_다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleClientSecretGeneratorTest.java",
+      "cases": 2,
+      "status": "red",
+      "failure": "UnsupportedOperationException — AppleClientSecretGenerator 생성자 (컴파일용 스켈레톤)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_sc02_토큰_교환_요청에는_요청마다_새로_만든_client_secret_이_실린다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleOAuth2FlowTest.java",
+      "cases": 2,
+      "status": "red",
+      "failure": "AssertionFailedError — [apple 인가 요청 상태] expected 302 but was 404 (애플 제공자가 등록되지 않는다)",
+      "config_applied_via": "@DynamicPropertySource 로 APPLE_CLIENT_ID·APPLE_TEAM_ID·APPLE_KEY_ID·APPLE_PRIVATE_KEY(테스트가 만든 EC P-256 PKCS#8 PEM)·FRONTEND_BASE_URL·KAKAO/NAVER/GOOGLE_CLIENT_ID/SECRET 주입. 토큰·JWKS 주소는 @TestConfiguration 의 BeanPostProcessor 가 ClientRegistrationRepository 생성 시 가짜 서버로 교체. 시각은 @Import(ClockTestConfig) 의 MutableClock"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_sc03_최초_로그인의_이름은_가입_대기_토큰에_실린다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+      "cases": 20,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError(38) — 가입 대기 주소가 아니라 https://app.example.test/login?error=social (CustomOAuth2UserService.toProfile 이 apple 을 '지원하지 않는 제공자'로 거부). 구글 행(17)만 현재 동작과 같지만 같은 테스트 안의 다른 행이 실패한다"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "test_sc04_규칙_밖의_외부_문자열은_아무것도_만들지_않고_거부하고_경계_안의_값은_받아들인다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+      "cases": 60,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError(12) — 허용 행 6개(email 255자·대문자/앞뒤 공백·릴레이 주소 3종·sub 255자)가 가입 대기 주소가 아니라 실패 주소로 간다(행마다 단언 2개). 거부 행은 apple 미지원이라 현재도 실패 주소여서 통과하며, 애플이 지원된 뒤에 규칙이 실제로 거부하는지는 Phase 3 에서 이 행들이 지킨다",
+      "note": "거부 행 54개는 구현 전에도 참이다(애플 미지원 → 실패 주소). 같은 테스트의 허용 행 6개가 실패하므로 테스트는 Red 다. Green 에서 거부 행이 '규칙 때문에' 거부되는지는 허용 행과 짝으로 지킨다"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "test_sc05_이메일이_일치하고_애플이_검증했으면_기존_계정에_연결하고_바로_로그인한다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+      "cases": 3,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError(9) — 로그인 주소가 아니라 실패 주소, /me 와 social_accounts(APPLE) 행 없음"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "test_sc06_애플의_검증_플래그가_true_로_읽히지_않으면_연결하지_않고_가입_대기가_된다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+      "cases": 19,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError(38) — 가입 대기 주소가 아니라 실패 주소 (19행 모두)"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "test_sc07_이미_연결된_애플_계정은_이메일이_바뀌거나_미검증이어도_같은_사용자로_로그인하고_이름은_바뀌지_않는다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+      "cases": 2,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError(2) — 로그인 주소가 아니라 실패 주소"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "test_sc08_역할을_고르면_애플_이름으로_가입이_끝나고_로그인된다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+      "cases": 4,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError(4) — Given 의 가입 대기 토큰을 받지 못한다 (Expecting not blank but was: null)"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "test_sc09_애플_인증이_실패하거나_id_token_이_검증을_통과하지_못하면_실패_화면으로_돌려보낸다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleOAuth2FlowTest.java",
+      "cases": 20,
+      "status": "red",
+      "failure": "AssertionFailedError — [apple 인가 요청 상태] expected 302 but was 404 (Given 의 인가 요청 시작에서 멈춘다)",
+      "config_applied_via": "SC-02 와 같다 (@DynamicPropertySource + BeanPostProcessor 로 가짜 서버 주소 교체)"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "test_sc10_인가_요청부터_form_post_콜백까지_이어지면_이름이_담긴_가입_대기로_끝난다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleOAuth2FlowTest.java",
+      "cases": 1,
+      "status": "red",
+      "failure": "AssertionFailedError — [apple 인가 요청 상태] expected 302 but was 404",
+      "config_applied_via": "SC-02 와 같다"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "test_sc11_애플_설정이_갖춰진_경우에만_인가_요청을_받고_개인_키가_올바르지_않으면_기동하지_않는다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleProviderConfigTest.java",
+      "cases": 26,
+      "status": "red",
+      "failure": "AssertJMultipleFailuresError(27) — 구현이 필요한 행만 실패: #1(인가 요청 규약)·#11(앞뒤 공백)·#13~16(키 형태 4종 → 404) 과 #12(FRONTEND_BASE_URL)·#17~22(키 오류 → 기동 성공해 버림)",
+      "config_applied_via": "SpringApplicationBuilder(TicketBookingApplication).properties(환경변수 Map) — 행마다 새 컨텍스트, 임의 포트, 행별 H2 URL",
+      "note": "#2~#10, #23 은 구현 전에도 참이다(애플 미등록 → 404, 구글 인가 요청 정상). 같은 테스트의 다른 행이 실패하므로 테스트는 Red 이고, 이 행들은 Phase 3 이 애플 등록을 과하게 열지 않는지 지키는 가드다"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "test_sc12_애플을_추가해도_다른_제공자의_토큰_교환은_설정된_정적_client_secret_을_그대로_쓴다()",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/AppleOAuth2FlowTest.java",
+      "cases": 3,
+      "status": "already_passing",
+      "failure": null,
+      "note": "이 태스크가 바꾸지 않는 기존 동작(카카오·네이버 폼 본문의 정적 client_secret, 구글 Authorization Basic) — 부정형 회귀라 구현 전에도 참이다. 전체 필터 체인을 실제로 타므로 가짜 통과가 아니다(가짜 서버가 받은 요청을 직접 단언). Phase 3 이 토큰 응답 클라이언트를 바꿀 때 다른 제공자의 client_secret 을 덮어쓰면 실패한다",
+      "config_applied_via": "SC-02 와 같다 (애플·카카오·네이버·구글 환경변수가 모두 적용된 컨텍스트에서 실행 — 카카오·네이버·구글은 현재 구현으로 등록되고 애플은 아직 등록되지 않는다)"
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && export JAVA_HOME=/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home && ./gradlew cleanTest test",
+    "total": 145,
+    "failed": 11,
+    "passed": 133,
+    "skipped": 1,
+    "new_tests": 12,
+    "new_failed": 11,
+    "new_already_passing": [
+      "SC-12"
+    ],
+    "existing_tests_still_passing": true,
+    "existing_tests": 133,
+    "note": "새 테스트 12건 중 11건 실패, SC-12 만 already_passing(부정형 회귀). 기존 133건 전부 통과(건너뛴 1건은 기존 DockerfileTest 의 조건부 테스트). 실패 원인은 모두 '애플 구현 없음': SC-01 은 스켈레톤의 UnsupportedOperationException, SC-03~08 은 CustomOAuth2UserService 가 apple 을 지원하지 않아 실패 주소로 이동, SC-02·09·10 은 애플 제공자 미등록으로 인가 요청이 404, SC-11 은 등록·키 검증 행이 실패. 테스트 코드 결함(컴파일·오타·잘못된 단언)으로 인한 실패는 없다"
+  },
+  "inventory_check": {
+    "scenarios": 12,
+    "test_functions": 12,
+    "match": true,
+    "method": "새 테스트 4개 클래스의 'void test_scNN' 12개 ID 를 정렬해 SCENARIO_TASK-012.json 의 id 12개와 비교 — 일치 (SC-01 / SC-03~08 / SC-02·09·10·12 / SC-11)"
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/src/main/java/com/example/ticket_booking/config/AppleClientSecretGenerator.java (클래스·생성자 시그니처 (teamId, clientId, keyId, ECPrivateKey, Clock)·generate() — 본문은 UnsupportedOperationException 한 줄)"
+    ],
+    "contents": "새 테스트가 참조하는 새 심볼은 AppleClientSecretGenerator 하나뿐이다. 나머지 시나리오는 기존 클래스(OAuth2LoginSuccessHandler, CustomOAuth2UserService, SocialLoginConfig, AuthService)만 쓰므로 스켈레톤이 필요 없다 — 구현이 없으면 단언이 실패하는 것이 정직한 Red 다. 빈(bean)은 스켈레톤으로 추가하지 않았다(기존 SocialProviderConfigTest 가 제공자 환경변수를 켠 채 컨텍스트를 띄우므로 UOE 빈은 기존 테스트를 깬다)",
+    "purity_check": "src/main 변경은 AppleClientSecretGenerator.java 신규 1개뿐(git status). UnsupportedOperationException 은 생성자 1 + generate 1 = 2곳이고 로직·값 반환이 없다. 이를 직접 밟는 테스트(SC-01)는 UOE 로 실패한다. 나머지 10건은 HTTP/핸들러 경계라 단언 실패로 나타난다 — 프로젝트 관례(feedback_java_tdd_red_skeleton 5번)대로 UOE 개수 == 실패 개수를 요구하지 않는다"
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + Spring Boot Test(@SpringBootTest, MockMvc, SpringApplicationBuilder) + AssertJ(SoftAssertions), H2 MODE=PostgreSQL",
+    "mock_strategy": "애플·카카오·네이버·구글 서버는 JDK 내장 HttpServer 로 만든 가짜(FakeProviderServer — 새 의존성 없음). 토큰·JWKS·사용자 정보 주소만 테스트 컨텍스트에서 교체하고 나머지 등록 내용은 구현이 정한 그대로 쓴다. id_token 은 테스트가 RSA 키로 서명하고, Client Secret 은 테스트가 만든 EC P-256 키 쌍의 공개 키로 구현과 무관하게 Nimbus 로 검증한다. 콜백 직접 호출 테스트는 FakeOAuth2User 에 id_token 클레임을 담아 성공 핸들러를 실행. 시각은 MutableClock"
+  },
+  "harness_probe": {
+    "what": "Green 에서 하네스 결함이 드러나 승인된 테스트를 고치지 않게, 구현 없이 확인 가능한 하네스 가정 두 가지를 던져 버릴 프로브 테스트로 확인했다(커밋하지 않고 삭제)",
+    "results": [
+      "FakeProviderServer 의 JWKS 로 서명한 id_token 이 NimbusJwtDecoder 로 검증된다 — email_verified 는 문자열 \"true\" 그대로, aud 는 단일 값, 다른 키로 서명한 토큰은 거부",
+      "form_post(POST) 콜백이 Spring OAuth2 로그인 필터를 거쳐 토큰 엔드포인트까지 도달하고 성공 핸들러 리다이렉트로 끝난다 (카카오 등록으로 확인)"
+    ],
+    "not_verified": "애플 OIDC 경로 자체(nonce 대조·issuerUri·aud 검증)와 요청마다 client_secret 교체는 구현이 있어야 관찰된다 — Phase 3 에서 처음 실행된다"
+  },
+  "risks_for_green": [
+    "API 고정: SC-01 이 AppleClientSecretGenerator(String teamId, String clientId, String keyId, ECPrivateKey privateKey, Clock clock) 와 String generate() 를 쓴다. 운영 빈 생성은 이 생성자를 PEM 파싱 결과로 부르면 된다",
+    "Client Secret 규격 고정: exp = iat + 300, aud 는 문자열, 서명은 JOSE R‖S 64바이트, kid = APPLE_KEY_ID",
+    "SC-02·09·10 은 ClientRegistrationRepository 가 만들어질 때 토큰·JWKS 주소만 바꾼다. 따라서 애플 등록은 OIDC(scope 에 openid, jwkSetUri 사용, issuerUri=https://appleid.apple.com, userNameAttributeName=sub)여야 하고 애플의 registrationId 는 'apple' 이다. 토큰 응답 클라이언트는 빈을 노출할 필요가 없다 — 필터 체인으로 검증한다",
+    "SC-12(already_passing)와 SC-11 #2~#10·#23 은 지금 통과하는 가드다: client_secret 교체 로직이 다른 제공자를 건드리거나 애플 등록 조건이 느슨하면 깨진다",
+    "SC-04 의 거부 행은 현재 '애플 미지원'으로 통과한다 — Green 이 애플을 지원한 뒤에는 거부 행이 규칙(SocialInputRules) 때문에 거부되는지를 이 테스트가 지킨다. 허용 행(255자·릴레이·대문자 이메일)과 짝으로 읽는다",
+    "id_token 의 exp·iat 검증은 시스템 시각이다(Spring 디코더). MutableClock 은 Client Secret 과 pendingToken 만 지배한다",
+    "브라우저가 교차 사이트 POST 에 세션 쿠키를 보내는지(PLAN unresolved)는 MockMvc 가 같은 세션을 그대로 넘기므로 이 테스트들이 증명하지 못한다 — Phase 3 설계와 Phase 4 확인 항목"
+  ],
+  "human_review": {
+    "approved": true
+  }
+}

@@ -1,0 +1,493 @@
+{
+  "task_id": "TASK-012",
+  "source_of_truth": "SCENARIO_TASK-012.md — JSON 은 파생물이다. 표는 시나리오마다 `table`(마크다운 행), 규약 정본 표는 `conventions_table`. 표를 가리키는 문장('표와 같다')은 `table` 필드를 본다",
+  "conventions_table": [
+    "| 항목 | 값 |",
+    "|---|---|",
+    "| 애플 설정 환경변수 | `APPLE_CLIENT_ID`(Services ID) `APPLE_TEAM_ID` `APPLE_KEY_ID` `APPLE_PRIVATE_KEY`(`.p8`, PKCS#8 EC P-256). **네 값이 모두 (공백 제거 뒤) 있을 때만** 애플 제공자를 등록한다. 하나라도 없거나 공백이면 조용히 등록하지 않는다(다른 제공자와 같다). 네 값이 갖춰졌는데 키가 올바르지 않으면 기동하지 않는다. 애플만 설정돼도 `FRONTEND_BASE_URL` 이 올바라야 한다 |",
+    "| 개인 키 허용 형태 | (a) `-----BEGIN PRIVATE KEY-----` PEM(실제 개행) (b) 같은 PEM 에서 개행이 두 글자 `\\n` 으로 표기된 환경변수 값 (c) 헤더·푸터 없는 PKCS#8 DER 의 base64 (d) 앞뒤 공백·개행이 붙은 위 형태. 그 밖(EC P-256 이 아닌 키, SEC1 `BEGIN EC PRIVATE KEY`, 공개 키, 깨진 본문)은 기동 실패 — 오류 메시지에 `APPLE_PRIVATE_KEY` 가 있고 키 본문은 없다 |",
+    "| Client Secret | compact JWS. 헤더 `alg=ES256` `kid=<APPLE_KEY_ID>`. 클레임 `iss=<APPLE_TEAM_ID>` `sub=<APPLE_CLIENT_ID>` `aud`=문자열 `https://appleid.apple.com` `iat`=발급 시각(초) `exp`=`iat`+300. 서명은 JOSE 형식(R‖S, 64바이트). 시각은 주입된 `Clock` 에서만 얻는다. **토큰 교환 요청마다 새로 만든다** |",
+    "| 애플 인가 요청 | `GET /oauth2/authorization/apple` → 302 `https://appleid.apple.com/auth/authorize?…` 파라미터 `client_id`=`APPLE_CLIENT_ID` `response_type=code` `scope`=`openid name email` `response_mode=form_post` `redirect_uri`=`<서버 주소>/login/oauth2/code/apple` `state` `nonce` |",
+    "| 토큰 교환 | `POST` 폼, `grant_type=authorization_code` `code` `client_id` `client_secret`(위 JWT). `Authorization` 헤더는 없다. 애플이 아닌 제공자의 교환은 설정된 정적 `client_secret` 을 그대로 쓴다 |",
+    "| id_token 검증 | 서명(애플 JWKS)·`iss=https://appleid.apple.com`·`aud=APPLE_CLIENT_ID`·`exp`·`nonce` 중 하나라도 어긋나면 로그인 실패 |",
+    "| 콜백 | `POST /login/oauth2/code/apple` (폼: `code` `state` `user`). 실패는 302 `{기준 주소}/login?error=social` (쿼리에 token·pendingToken 없음) |",
+    "| id_token 클레임 → 프로필 | `sub`→providerUserId(문자열 1~255자), `email`→이메일(TASK-011 과 같은 규칙: 소문자·앞뒤 공백 제거, 제어문자·서식 문자·공백류·짝 없는 서로게이트 거부, 255자 이하), 이름 클레임은 없다 |",
+    "| 이메일 검증됨 | 클레임 `email_verified` 가 **불리언 `true` 이거나 정확히 문자열 `\"true\"`(소문자 4글자, 앞뒤 공백·다른 대소문자 없음)** 일 때만. 그 밖(`false`·`\"false\"`·`\"True\"`·`\"TRUE\"`·`\" true\"`·`\"true \"`·`\"1\"`·`1`·`0`·`\"yes\"`·`\"\"`·`null`·누락·배열·객체)은 검증되지 않음 |",
+    "| `user` 파라미터 | **등록 ID 가 `apple` 이고 메서드가 POST 일 때만** 읽는다. 그 밖(GET, 다른 제공자)에서는 있어도 무시한다. JSON 객체 `{\"name\":{\"firstName\":…,\"lastName\":…},\"email\":…}` 이고 **`email` 은 읽지 않는다**(신원은 id_token 만). 비어 있거나 공백만이면 없는 것으로 본다 |",
+    "| 표시 이름 | `firstName`·`lastName` 중 **JSON 문자열이면서 공백만이 아닌** 것을 `firstName`, `lastName` 순으로 **공백 1칸**으로 이어 붙인다(각 부분은 변환하지 않는다 — 앞뒤 공백도 그대로, ADR-0019). JSON `null`·빈 문자열·공백만은 없는 값이다. 둘 다 없거나 `name` 키가 없거나 빈 객체면 이름 없음 |",
+    "| 이름 없음 | 신규 가입 대기의 `name` 은 고정 문자열 `Apple 사용자` (사용자 결정) |",
+    "| 이름 거부 | `user` 가 JSON 이 아니거나 객체가 아님 · `name` 이 객체가 아님 · `firstName`/`lastName` 이 `null` 이 아닌데 문자열도 아님(숫자·불리언·배열·객체) · 부분 또는 합성 결과에 제어문자(NUL·탭·개행 포함)·짝 없는 서로게이트가 있음 · 합성 결과가 100자(UTF-16 코드 유닛)를 넘음 → 자르거나 바꾸지 않고 로그인 실패 |",
+    "| 이름 반영 시점 | 이름은 `users` 행을 **만들 때** 한 번만 반영된다(pendingToken 의 `name` → `/complete`). 이미 있는 `users` 행의 이름은 어떤 콜백으로도 바뀌지 않는다 |"
+  ],
+  "scenarios": [
+    {
+      "id": "SC-01",
+      "type": "happy",
+      "title": "Client Secret 은 ES256 으로 서명된 JWT 다",
+      "given": [
+        "테스트가 만든 EC P-256 키 쌍의 개인 키로 `APPLE_TEAM_ID=TEAM123456` `APPLE_CLIENT_ID=com.example.tickets.web` `APPLE_KEY_ID=KEY1234567` 를 설정했다",
+        "현재 시각은 아래 표의 시각이다"
+      ],
+      "when": [
+        "Client Secret 을 생성한다"
+      ],
+      "then": [
+        "결과는 점으로 구분된 세 부분이고 헤더의 `alg` 는 `ES256`, `kid` 는 `KEY1234567` 이다",
+        "클레임은 `iss=TEAM123456` `sub=com.example.tickets.web` `aud=https://appleid.apple.com`(문자열) 이고 `iat`·`exp` 는 표의 값이다",
+        "서명은 base64url 로 풀면 64바이트이고, 짝이 되는 공개 키로 검증하면 성공하고 다른 키 쌍의 공개 키로 검증하면 실패한다"
+      ],
+      "table": [
+        "| 현재 시각 | `iat` | `exp` |",
+        "|---|---|---|",
+        "| `2026-10-27T00:00:00Z` | `1793059200` | `1793059500` |",
+        "| `2026-10-27T00:10:00Z` | `1793059800` | `1793060100` |"
+      ],
+      "covers": [
+        "애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다"
+      ],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-02",
+      "type": "happy",
+      "title": "토큰 교환 요청에는 요청마다 새로 만든 Client Secret 이 실린다",
+      "given": [
+        "애플 등록(`APPLE_*` 설정, SC-01 과 같은 값)이 있고 토큰 엔드포인트가 가짜 서버다(요청을 기록한다)"
+      ],
+      "when": [
+        "`2026-10-27T00:00:00Z` 에 인가 코드 `code-1` 로, 이어서 `2026-10-27T00:10:00Z` 에 인가 코드 `code-2` 로 토큰 교환을 두 번 요청한다"
+      ],
+      "then": [
+        "가짜 서버가 받은 첫 요청은 `POST` 폼이고 `grant_type=authorization_code` `code=code-1` `client_id=com.example.tickets.web` 이다",
+        "첫 요청의 `client_secret` 은 SC-01 규격의 JWT 이고 `iat=1793059200` 이며 공개 키로 서명이 검증된다",
+        "두 요청 모두 `Authorization` 헤더가 없다",
+        "두 번째 요청은 `code=code-2` 이고 `client_secret` 은 SC-01 규격의 JWT 로 `iat=1793059800` 이다 (첫 번째 요청의 `client_secret` 과 다른 값)"
+      ],
+      "covers": [
+        "애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다"
+      ],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-03",
+      "type": "happy",
+      "title": "최초 로그인의 이름은 가입 대기 토큰에 실린다",
+      "given": [
+        "`users` 에 이메일 `new@example.com` 인 사용자가 없고 `social_accounts` 가 비어 있다",
+        "애플이 `{\"sub\":\"a-001\",\"email\":\"new@example.com\",\"email_verified\":\"true\"}` 를 돌려줬다 (id_token 검증을 통과한 클레임)",
+        "콜백 요청의 메서드와 `user` 파라미터는 아래 표와 같다"
+      ],
+      "when": [
+        "해당 제공자 콜백을 처리한다"
+      ],
+      "then": [
+        "302 `https://app.example.test/oauth2/redirect?pendingToken=<토큰>` 으로 이동하고 쿼리에 `token` 은 없다",
+        "`users`·`social_accounts` 행 수가 그대로다",
+        "pendingToken 의 `email=new@example.com` `provider=APPLE` `providerUserId=a-001` `emailVerified=true` 이고 `name` 은 표의 값이다"
+      ],
+      "table": [
+        "| # | 제공자 | 메서드 | `user` 파라미터 | pendingToken `name` |",
+        "|---|---|---|---|---|",
+        "| 1 | apple | POST | `{\"name\":{\"firstName\":\"길동\",\"lastName\":\"홍\"},\"email\":\"other@example.com\"}` | `길동 홍` (`email` 은 `new@example.com` 그대로 — `user` 의 이메일은 무시) |",
+        "| 2 | apple | POST | `{\"name\":{\"firstName\":\"길동\"}}` | `길동` |",
+        "| 3 | apple | POST | `{\"name\":{\"lastName\":\"홍\"}}` | `홍` |",
+        "| 4 | apple | POST | `{\"name\":{\"firstName\":\"   \",\"lastName\":\"홍\"}}` | `홍` |",
+        "| 5 | apple | POST | `{\"name\":{\"firstName\":null,\"lastName\":\"홍\"}}` | `홍` |",
+        "| 6 | apple | POST | `{\"name\":{\"firstName\":\"\",\"lastName\":\"\"}}` | `Apple 사용자` |",
+        "| 7 | apple | POST | `{\"name\":{}}` | `Apple 사용자` |",
+        "| 8 | apple | POST | `{}` / `{\"email\":\"other@example.com\"}` (`name` 키 없음) | `Apple 사용자` |",
+        "| 9 | apple | POST | 파라미터 없음 | `Apple 사용자` |",
+        "| 10 | apple | POST | 빈 문자열 / 공백만 | `Apple 사용자` |",
+        "| 11 | apple | POST | `firstName` 49자 + `lastName` 50자 (합성 100자) | 합성 결과 100자 그대로 |",
+        "| 12 | apple | POST | `{\"name\":{\"firstName\":\" 길동\",\"lastName\":\"홍\"}}` | ` 길동 홍` (앞 공백 그대로 — 부분을 변환하지 않는다) |",
+        "| 13 | apple | POST | `{\"name\":{\"firstName\":\"민😀\",\"lastName\":\"김\"}}` (짝이 맞는 서로게이트) | `민😀 김` |",
+        "| 14 | apple | GET | 정상 JSON(1번과 같은 값) | `Apple 사용자` (POST 가 아니면 읽지 않는다) |",
+        "| 15 | apple | POST | `firstName` 100자만 (`lastName` 없음) / `lastName` 100자만 (`firstName` 없음) | 그 100자 그대로 |",
+        "| 16 | apple | POST | `firstName` 98자 + `😀` (UTF-16 코드 유닛 합 100, `lastName` 없음) | 합성 결과 그대로 |",
+        "| 17 | google (클레임 `{\"sub\":\"g-1\",\"email\":\"new@example.com\",\"email_verified\":true,\"name\":\"구글이름\"}`) | POST | 정상 JSON(1번과 같은 값) | `구글이름` (apple 이 아니면 읽지 않는다. 이 행은 `provider=GOOGLE` `providerUserId=g-1`) |"
+      ],
+      "covers": [
+        "애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다"
+      ],
+      "flow": "F4"
+    },
+    {
+      "id": "SC-04",
+      "type": "boundary",
+      "title": "규칙 밖의 외부 문자열은 아무것도 만들지 않고 거부하고, 경계 안의 값은 받아들인다",
+      "given": [
+        "`users` 에 이메일 `new@example.com` 인 사용자가 없고 `social_accounts` 가 비어 있다 (이미 연결된 계정 행은 Given 을 따로 적는다)",
+        "애플이 기본 클레임 `{\"sub\":\"a-100\",\"email\":\"new@example.com\",\"email_verified\":\"true\"}` 에서 표의 한 필드만 바꾼 값을 돌려줬다 (입력이 `user` 인 행은 클레임을 기본값 그대로 두고 POST 콜백에 표의 `user` 를 싣는다)"
+      ],
+      "when": [
+        "애플 콜백을 처리한다"
+      ],
+      "then": [
+        "결과는 표와 같다 — 거부면 302 `https://app.example.test/login?error=social` 이고 쿼리에 `token`·`pendingToken` 이 없고 `users`·`social_accounts` 행 수가 그대로다 / 허용이면 302 `…/oauth2/redirect?pendingToken=<토큰>` 이고 pendingToken 의 값이 표와 같다"
+      ],
+      "table": [
+        "| 입력 | 값 | 결과 |",
+        "|---|---|---|",
+        "| `email` | 누락 / `null` / 숫자 `123` / 빈 문자열 / 공백만 | 거부 |",
+        "| `email` | `no-at-sign` / `a@@b.com` / `@b.com` / `a@` | 거부 |",
+        "| `email` | `a\\u0000@b.com` / 앞뒤에 NUL / 짝 없는 서로게이트 / 탭·개행 포함 | 거부 |",
+        "| `email` | 안에 NBSP(` `) / 제로폭 공백(`​`) / 방향 제어(`‮`) | 거부 |",
+        "| `email` | 소문자화 뒤 256자 / 소문자화로 길어지는 문자(`İ`)로 소문자화 뒤 256자 | 거부 |",
+        "| `email` | 소문자화 뒤 정확히 255자 | 허용 — pendingToken `email` 이 그 255자 |",
+        "| `email` | `  New@Example.COM ` | 허용 — pendingToken `email=new@example.com` |",
+        "| `sub` | 누락 / `null` / 숫자 `12345` / 불리언 / 빈 문자열 / 공백만 | 거부 |",
+        "| `sub` | NUL 포함 / 짝 없는 서로게이트 / 탭 포함 | 거부 |",
+        "| `sub` | 256자 | 거부 |",
+        "| `sub` | 정확히 255자 | 허용 — pendingToken `providerUserId` 가 그 255자 |",
+        "| `user` | `not-json` / `[]` / `\"홍길동\"` / `123` / `null` / `true` | 거부 |",
+        "| `user` | `{\"name\":\"홍길동\"}` / `{\"name\":[]}` / `{\"name\":123}` | 거부 |",
+        "| `user` | `firstName` 이 숫자 `123` / 불리언 / 배열 / 객체 (`lastName` 은 `\"홍\"`) | 거부 |",
+        "| `user` | `firstName` 에 NUL(`\\u0000`) / 탭 / 개행 / 짝 없는 서로게이트(`\\ud800`) | 거부 |",
+        "| `user` | `lastName` 에 NUL / 짝 없는 서로게이트 | 거부 |",
+        "| `user` | `firstName` 101자 / `lastName` 101자 | 거부 |",
+        "| `user` | `firstName` 50자 + `lastName` 50자 (합성 101자) | 거부 |",
+        "| `user` | `firstName` 99자 + `😀` (UTF-16 코드 유닛 합 101, `lastName` 없음) | 거부 |",
+        "| `email` + 클레임 `is_private_email` | `abc123@privaterelay.appleid.com` 과 `\"is_private_email\":\"true\"` / `\"is_private_email\":\"false\"` / `is_private_email` 누락 | 허용 — pendingToken `email=abc123@privaterelay.appleid.com` `emailVerified=true` (릴레이 여부는 신원 판정에 쓰이지 않는다) |",
+        "| `user` (Given: `social_accounts` 에 (`APPLE`, `a-100`, B) 가 이미 있다) | 이미 연결된 계정의 재로그인 콜백에 `not-json` 이 실렸다 | 거부 (이름을 쓰지 않는 경우에도 구조 이상은 거부) |"
+      ],
+      "covers": [
+        "애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다",
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+      ],
+      "flow": "F6"
+    },
+    {
+      "id": "SC-05",
+      "type": "happy",
+      "title": "이메일이 일치하고 애플이 검증했으면 기존 계정에 연결하고 바로 로그인한다",
+      "given": [
+        "제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(`hong@example.com`, 역할 `ORGANIZER`, 이름 `홍길동`, `email_verified=true`, 비밀번호 해시 없음)가 있고 `social_accounts` 는 비어 있다",
+        "애플이 아래 표의 클레임을 돌려줬다"
+      ],
+      "when": [
+        "애플 콜백을 처리한다 (`user` 파라미터 없음)"
+      ],
+      "then": [
+        "302 `https://app.example.test/oauth2/redirect?token=<accessToken>` 으로 이동하고 쿼리에 `pendingToken` 은 없다",
+        "그 accessToken 으로 `GET /api/auth/me` 를 호출하면 A 의 정보(역할 `ORGANIZER`)가 나온다",
+        "`users` 행 수는 그대로이고 A 의 이메일·이름·역할·`email_verified`·비밀번호 해시는 바뀌지 않는다",
+        "`social_accounts` 에 (`APPLE`, `a-1`, A) 행이 정확히 1건 생긴다"
+      ],
+      "table": [
+        "| `email_verified` | 클레임 |",
+        "|---|---|",
+        "| 불리언 `true` | `{\"sub\":\"a-1\",\"email\":\"hong@example.com\",\"email_verified\":true}` |",
+        "| 문자열 `\"true\"` | `{\"sub\":\"a-1\",\"email\":\"hong@example.com\",\"email_verified\":\"true\"}` |",
+        "| 문자열 `\"true\"` + 이메일 대문자·앞뒤 공백 | `{\"sub\":\"a-1\",\"email\":\"  Hong@Example.COM  \",\"email_verified\":\"true\"}` |"
+      ],
+      "covers": [
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+      ],
+      "flow": "F5"
+    },
+    {
+      "id": "SC-06",
+      "type": "boundary",
+      "title": "애플의 검증 플래그가 `true` 로 읽히지 않으면 연결하지 않고 가입 대기가 된다",
+      "given": [
+        "제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(`hong@example.com`, `email_verified=true`)가 있고 `social_accounts` 는 비어 있다 (플래그가 연결을 막는 유일한 이유가 되게 A 는 연결 대상이다)",
+        "애플이 `{\"sub\":\"a-1\",\"email\":\"hong@example.com\",\"email_verified\":<표의 값>}` 를 돌려줬다 (이메일은 A 와 같다)"
+      ],
+      "when": [
+        "애플 콜백을 처리한다"
+      ],
+      "then": [
+        "302 `…/oauth2/redirect?pendingToken=<토큰>` 으로 이동하고 쿼리에 `token` 은 없다",
+        "`users`·`social_accounts` 행 수가 그대로이고 A 의 정보는 바뀌지 않는다",
+        "pendingToken 의 `email` 은 `hong@example.com`, `emailVerified` 는 `false` 다"
+      ],
+      "table": [
+        "| `email_verified` 값 | 클레임 표기 |",
+        "|---|---|",
+        "| 불리언 `false` | `false` |",
+        "| 문자열 `\"false\"` | `\"false\"` |",
+        "| 필드 누락 | (키 없음) |",
+        "| `null` | `null` |",
+        "| 다른 대소문자 | `\"True\"` / `\"TRUE\"` / `\"tRue\"` |",
+        "| 앞뒤 공백 | `\" true\"` / `\"true \"` |",
+        "| 숫자 표기 | `\"1\"` / `1` / `0` |",
+        "| 다른 긍정 표기 | `\"yes\"` / `\"t\"` |",
+        "| 빈 문자열 | `\"\"` |",
+        "| 전각 문자 | `\"ｔｒｕｅ\"` |",
+        "| 뒤에 NUL | `\"true\\u0000\"` |",
+        "| 배열 / 객체 | `[true]` / `{\"v\":true}` |"
+      ],
+      "covers": [
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+      ],
+      "flow": "F3"
+    },
+    {
+      "id": "SC-07",
+      "type": "happy",
+      "title": "이미 연결된 애플 계정은 이메일이 바뀌거나 미검증이어도 같은 사용자로 로그인하고 이름은 바뀌지 않는다",
+      "given": [
+        "사용자 B(`b@example.com`, 이름 `원래이름`)가 있고 `social_accounts` 에 (`APPLE`, `a-9`, B) 가 있다",
+        "애플이 `{\"sub\":\"a-9\",\"email\":\"other@example.com\",\"email_verified\":\"false\"}` 를 돌려줬다 (이메일이 다르고 검증도 되지 않았다)"
+      ],
+      "when": [
+        "애플 POST 콜백을 처리한다 (`user` 파라미터는 표와 같다)"
+      ],
+      "then": [
+        "302 `…/oauth2/redirect?token=<accessToken>` 으로 이동하고 그 토큰의 사용자는 B 다",
+        "`social_accounts` 는 여전히 (`APPLE`, `a-9`, B) 1건뿐이고 `users` 행 수·B 의 이메일·이름(`원래이름`)은 그대로다"
+      ],
+      "table": [
+        "| `user` 파라미터 |",
+        "|---|",
+        "| 없음 |",
+        "| `{\"name\":{\"firstName\":\"새\",\"lastName\":\"이름\"}}` |"
+      ],
+      "covers": [
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다",
+        "애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다"
+      ],
+      "flow": "F5"
+    },
+    {
+      "id": "SC-08",
+      "type": "happy",
+      "title": "역할을 고르면 애플 이름으로 가입이 끝나고 로그인된다",
+      "given": [
+        "아래 표의 애플 콜백을 처리해 가입 대기(pendingToken)를 받았다 (`users`·`social_accounts` 는 비어 있다)"
+      ],
+      "when": [
+        "`POST /api/auth/social/complete` 에 `{\"pendingToken\":<그 토큰>,\"role\":\"ORGANIZER\"}` 를 보낸다"
+      ],
+      "then": [
+        "200 `LoginResponse` 이고 `user.email=new@example.com` `user.role=ORGANIZER` `user.name` 은 표의 값이다",
+        "그 `accessToken` 으로 `GET /api/auth/me` 를 호출하면 같은 이메일·이름·역할이 나온다",
+        "`users` 에 새 행이 정확히 1건(이메일 `new@example.com`, 이름 표의 값, 역할 `ORGANIZER`, 비밀번호 해시 없음, `email_verified` 표의 값)이고 `social_accounts` 에 (`APPLE`, `a-001`, 그 사용자) 가 정확히 1건이다"
+      ],
+      "table": [
+        "| # | 클레임 `email_verified` | `user` 파라미터 | `users.name` | `users.email_verified` |",
+        "|---|---|---|---|---|",
+        "| 1 | `\"true\"` | `{\"name\":{\"firstName\":\"길동\",\"lastName\":\"홍\"}}` | `길동 홍` | `true` |",
+        "| 2 | `\"true\"` | 없음 | `Apple 사용자` | `true` |",
+        "| 3 | `\"true\"` | `firstName` 49자 + `lastName` 50자 (합성 100자) | 100자 그대로 | `true` |",
+        "| 4 | `\"false\"` | `{\"name\":{\"firstName\":\"길동\",\"lastName\":\"홍\"}}` | `길동 홍` | `false` |"
+      ],
+      "notes": [
+        "(공통 클레임: `{\"sub\":\"a-001\",\"email\":\"new@example.com\",\"email_verified\":<표>}`)"
+      ],
+      "covers": [
+        "애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다",
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+      ],
+      "flow": "F4"
+    },
+    {
+      "id": "SC-09",
+      "type": "error",
+      "title": "애플 인증이 실패하거나 id_token 이 검증을 통과하지 못하면 실패 화면으로 돌려보낸다",
+      "given": [
+        "애플 등록이 있고 토큰 엔드포인트와 JWKS 는 가짜 서버다",
+        "사용자가 `GET /oauth2/authorization/apple` 로 시작해 애플로 보내졌다 (`state`·`nonce` 가 발급됐고 같은 세션이다)",
+        "`users`·`social_accounts` 가 비어 있다"
+      ],
+      "when": [
+        "애플이 브라우저를 통해 `POST /login/oauth2/code/apple` 로 아래 표의 상황을 돌려준다"
+      ],
+      "then": [
+        "302 `https://app.example.test/login?error=social` 이고 쿼리에 `token`·`pendingToken` 이 없다",
+        "`users`·`social_accounts` 행 수가 그대로다",
+        "상황 1~4·12·13 에서는 가짜 토큰 엔드포인트가 받은 요청이 0건이다"
+      ],
+      "table": [
+        "| # | 상황 |",
+        "|---|---|",
+        "| 1 | 사용자가 취소했다 — 폼이 `error=user_cancelled_authorize` 와 발급된 `state` |",
+        "| 2 | `code` 와 함께 온 `state` 가 발급한 값과 다르다 |",
+        "| 3 | `code` 만 있고 `state` 가 없다 |",
+        "| 4 | 이미 한 번 성공(또는 실패)한 콜백의 `state` 를 다시 쓴다 |",
+        "| 5 | 토큰 엔드포인트가 400 `{\"error\":\"invalid_client\"}` 를 돌려준다 |",
+        "| 6 | 토큰 응답에 `id_token` 이 없다 |",
+        "| 7 | `id_token` 의 `iss` 가 `https://appleid.apple.com` 이 아니다 |",
+        "| 8 | `id_token` 의 `aud` 가 `APPLE_CLIENT_ID` 가 아니다 |",
+        "| 9 | `id_token` 의 `nonce` 가 인가 요청의 `nonce` 와 다르다 |",
+        "| 10 | `id_token` 의 `exp` 가 과거다 |",
+        "| 11 | `id_token` 이 JWKS 에 없는 키로 서명됐다 |",
+        "| 12 | 폼에 유효한 `state` 는 있지만 `code` 가 없다 |",
+        "| 13 | 유효한 `state` 와 `code=` (빈 문자열) |",
+        "| 14 | 토큰 엔드포인트가 400 이고 `{\"error\":\"invalid_grant\"}` / `{\"error\":\"invalid_request\"}` 를 돌려준다 |",
+        "| 15 | 토큰 엔드포인트가 500 이고 본문이 비어 있다 |",
+        "| 16 | 토큰 엔드포인트가 400 이고 본문이 JSON 이 아니다(`<html>error</html>`) |",
+        "| 17 | 토큰 엔드포인트가 200 이고 본문이 비어 있다 |",
+        "| 18 | 토큰 엔드포인트가 200 이고 본문이 JSON 이 아니다(`not json`) |",
+        "| 19 | 토큰 엔드포인트가 200 이고 JSON 이지만 `access_token` 이 없다 |"
+      ],
+      "covers": [
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다",
+        "애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다"
+      ],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-10",
+      "type": "happy",
+      "title": "인가 요청부터 form_post 콜백까지 이어지면 이름이 담긴 가입 대기로 끝난다",
+      "given": [
+        "애플 등록이 있고 토큰 엔드포인트와 JWKS 는 가짜 서버다 (`users`·`social_accounts` 는 비어 있다)",
+        "사용자가 `GET /oauth2/authorization/apple` 로 시작해 애플로 보내졌다 (`state`·`nonce` 발급, 같은 세션)",
+        "가짜 토큰 엔드포인트는 JWKS 의 키로 서명한 id_token(`iss=https://appleid.apple.com` `aud=APPLE_CLIENT_ID` 발급된 `nonce` 미래의 `exp` `sub=a-200` `email=full@example.com` `email_verified=\"true\"`)을 돌려준다"
+      ],
+      "when": [
+        "애플이 브라우저를 통해 `POST /login/oauth2/code/apple` 로 `code=code-9` 발급된 `state` `user={\"name\":{\"firstName\":\"길동\",\"lastName\":\"홍\"}}` 를 보낸다"
+      ],
+      "then": [
+        "302 `https://app.example.test/oauth2/redirect?pendingToken=<토큰>` 으로 이동하고 쿼리에 `token` 은 없다",
+        "pendingToken 의 `email=full@example.com` `name=길동 홍` `provider=APPLE` `providerUserId=a-200` `emailVerified=true` 이다",
+        "가짜 토큰 엔드포인트가 받은 요청의 `client_secret` 은 SC-01 규격의 JWT 이고 `code=code-9` 였다",
+        "`users`·`social_accounts` 행 수가 그대로다"
+      ],
+      "covers": [
+        "애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다",
+        "애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다",
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+      ],
+      "flow": "F3"
+    },
+    {
+      "id": "SC-11",
+      "type": "boundary",
+      "title": "애플 설정이 갖춰진 경우에만 인가 요청을 받고, 개인 키가 올바르지 않으면 기동하지 않는다",
+      "given": [
+        "서버가 `FRONTEND_BASE_URL=https://app.example.test` 와 아래 표의 환경변수로 기동을 시도한다 (표에 없는 값은 설정이 없다. \"유효\"는 테스트가 만든 EC P-256 키의 PKCS#8 PEM 이다)"
+      ],
+      "when": [
+        "기동에 성공하면 표의 요청을 보낸다"
+      ],
+      "then": [
+        "표의 결과가 된다"
+      ],
+      "table": [
+        "| # | 환경변수 상태 | 요청 | 결과 |",
+        "|---|---|---|---|",
+        "| 1 | 애플 네 값 모두 유효 (카카오·네이버·구글 미설정) | `GET /oauth2/authorization/apple` | 302 이고 `Location` 이 규약의 애플 인가 요청(`client_id`·`response_type=code`·`scope=openid name email`·`response_mode=form_post`·`redirect_uri` 가 `/login/oauth2/code/apple` 로 끝남·`state`·`nonce`) |",
+        "| 2 | 애플 + 구글 모두 설정 | `GET /oauth2/authorization/google` | 302 이고 `Location` 이 `accounts.google.com` 으로 시작하며 `response_mode` 파라미터가 없다 |",
+        "| 3 | 애플 네 값 모두 미설정 | `GET /oauth2/authorization/apple` | 404 |",
+        "| 4 | `APPLE_CLIENT_ID` 만 없다 | 같음 | 404 |",
+        "| 5 | `APPLE_TEAM_ID` 만 없다 | 같음 | 404 |",
+        "| 6 | `APPLE_KEY_ID` 만 없다 | 같음 | 404 |",
+        "| 7 | `APPLE_PRIVATE_KEY` 만 없다 | 같음 | 404 |",
+        "| 8 | 네 값이 모두 빈 문자열 | 같음 | 404 |",
+        "| 9 | 네 값이 모두 공백만 | 같음 | 404 |",
+        "| 10 | `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` 중 하나만 공백만 (각각 따로, 나머지는 유효) | 같음 | 404 |",
+        "| 11 | 네 값 모두 앞뒤에 공백이 붙어 있다 | 같음 | 302 이고 `client_id` 는 공백을 제거한 `APPLE_CLIENT_ID` 다 |",
+        "| 12 | 애플 네 값만 유효하고 `FRONTEND_BASE_URL` 이 없다 | (기동) | 기동 실패 — 오류 메시지에 `FRONTEND_BASE_URL` |",
+        "| 13 | 개인 키가 PEM 실제 개행 | 같음 | 302 |",
+        "| 14 | 개인 키의 개행이 두 글자 `\\n` 으로 표기됐다 | 같음 | 302 |",
+        "| 15 | 개인 키가 헤더·푸터 없는 base64 본문뿐이다 | 같음 | 302 |",
+        "| 16 | 개인 키 PEM 앞뒤에 공백·개행이 붙어 있다 | 같음 | 302 |",
+        "| 17 | 개인 키가 `not-a-key` | (기동) | 기동 실패 — 메시지에 `APPLE_PRIVATE_KEY` 가 있고 `not-a-key` 같은 키 본문은 없다 |",
+        "| 18 | 개인 키가 RSA PKCS#8 PEM | (기동) | 기동 실패 — 메시지에 `APPLE_PRIVATE_KEY` |",
+        "| 19 | 개인 키가 EC P-384 PKCS#8 PEM | (기동) | 기동 실패 — 메시지에 `APPLE_PRIVATE_KEY` |",
+        "| 20 | 개인 키가 SEC1 `-----BEGIN EC PRIVATE KEY-----` | (기동) | 기동 실패 — 메시지에 `APPLE_PRIVATE_KEY` |",
+        "| 21 | 개인 키가 공개 키 PEM | (기동) | 기동 실패 — 메시지에 `APPLE_PRIVATE_KEY` |",
+        "| 22 | 개인 키가 PEM 헤더·푸터만 있고 본문이 없다 | (기동) | 기동 실패 — 메시지에 `APPLE_PRIVATE_KEY` |",
+        "| 23 | `APPLE_PRIVATE_KEY=not-a-key` 이지만 `APPLE_TEAM_ID` 가 없다 | `GET /oauth2/authorization/apple` | 기동 성공, 404 (네 값이 갖춰질 때만 키를 본다) |"
+      ],
+      "covers": [
+        "애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다"
+      ],
+      "flow": "F7"
+    },
+    {
+      "id": "SC-12",
+      "type": "regression",
+      "title": "애플을 추가해도 다른 제공자의 토큰 교환은 설정된 정적 Client Secret 을 그대로 쓴다",
+      "given": [
+        "카카오·네이버·구글 제공자가 `<P>_CLIENT_ID=id-<P>` `<P>_CLIENT_SECRET=secret-<P>` 로 설정돼 있고 애플도 설정돼 있다",
+        "각 제공자의 토큰 엔드포인트는 가짜 서버다(요청을 기록한다)"
+      ],
+      "when": [
+        "표의 제공자로 인가 코드 `code-2` 의 토큰 교환을 요청한다"
+      ],
+      "then": [
+        "가짜 서버가 받은 클라이언트 인증 정보는 표의 전달 방식으로 표의 값 그대로다 (JWT 가 아니다. 애플 추가 전과 전달 방식이 같다)"
+      ],
+      "table": [
+        "| 제공자 | 전달 방식 | `client_id` | `client_secret` |",
+        "|---|---|---|---|",
+        "| 카카오 | 폼 본문 | `id-KAKAO` | `secret-KAKAO` |",
+        "| 네이버 | 폼 본문 | `id-NAVER` | `secret-NAVER` |",
+        "| 구글 | `Authorization: Basic` (`id-GOOGLE:secret-GOOGLE`), 폼 본문에 `client_secret` 없음 | `id-GOOGLE` | `secret-GOOGLE` |"
+      ],
+      "covers": [
+        "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+      ],
+      "flow": "F2"
+    }
+  ],
+  "coverage": {
+    "acceptance_criteria_total": 3,
+    "acceptance_criteria_covered": 3,
+    "uncovered": [],
+    "merged": [
+      {
+        "scenarios": [
+          "최초 로그인 이름 변형 17행(정상·부분·공백·null·빈 값·경계 100자·앞 공백·서로게이트·GET·타 제공자)"
+        ],
+        "into": "SC-03",
+        "reason": "같은 user 파라미터 파싱·표시 이름 합성 경로 — 입력 형태와 메서드·제공자만 다르다"
+      },
+      {
+        "scenarios": [
+          "id_token 클레임(email·sub) 이상 값 약 25행 + user 이상 값 약 20행 + 허용 경계(255자 등)"
+        ],
+        "into": "SC-04",
+        "reason": "같은 정규화·거부 지점(SocialInputRules 한 곳) — 필드마다 따로 붙이지 않는다는 ADR-0019 정책을 표로 증명. 거부/허용 결과 열을 둔다"
+      },
+      {
+        "scenarios": [
+          "email_verified 가 true 로 읽히는 변형"
+        ],
+        "into": "SC-05",
+        "reason": "같은 연결 경로 — 불리언/문자열/대문자 이메일만 다르다"
+      },
+      {
+        "scenarios": [
+          "email_verified 가 true 로 읽히지 않는 변형 약 20행"
+        ],
+        "into": "SC-06",
+        "reason": "같은 해석 함수 — TASK-011 인계(RC-1 변종)를 양방향(SC-05/SC-06)으로 전부 가져온다"
+      },
+      {
+        "scenarios": [
+          "인증 실패·취소·state/code 이상·토큰 엔드포인트 응답 변형·id_token 검증 실패 19행"
+        ],
+        "into": "SC-09",
+        "reason": "모두 같은 실패 리다이렉트 경로 — 실패 원인만 다르다"
+      },
+      {
+        "scenarios": [
+          "환경변수 상태 약 10행 + 개인 키 형식 10행 + 구글 응답 모드 행"
+        ],
+        "into": "SC-11",
+        "reason": "같은 등록 판정·기동 검증 경로 — 환경변수·키 값만 다르다 (TASK-011 SC-16/19 와 같은 방식)"
+      }
+    ],
+    "skipped": [
+      {
+        "item": "대상 계정이 이메일 가입(미검증)이면 애플이 검증했어도 연결하지 않는다 (ADR-0020)",
+        "reason": "AuthService 를 바꾸지 않고 TASK-011 SC-21 이 같은 코드 경로를 이미 검증한다. 애플 고유 위험(플래그 해석)은 SC-05/SC-06 이 덮는다"
+      },
+      {
+        "item": "애플만 설정된 서버에서 FRONTEND_BASE_URL 의 형식 오류(스킴 없음·공백만·쿼리 포함 등)",
+        "reason": "frontendBaseUrl() 은 제공자와 무관한 단일 검증 함수이고 TASK-011 SC-19 가 형식 변형 전수를 이미 검증한다. 애플이 새로 더하는 것은 '애플만 설정돼도 이 검증이 적용된다'는 연결뿐이라 SC-11 #12(누락 → 기동 실패)가 그것을 본다"
+      },
+      {
+        "item": "콜백 요청을 조작해도 리다이렉트 주소는 설정값에서만 나온다 / 쓰기 가드 / pendingToken 만료·위조 / /complete 충돌",
+        "reason": "TASK-011 SC-10·12·18·20 이 같은 핸들러·엔드포인트로 이미 검증한다. 이 태스크는 그 코드를 바꾸지 않는다"
+      }
+    ]
+  },
+  "human_input": {
+    "generate_red_trigger": true
+  }
+}

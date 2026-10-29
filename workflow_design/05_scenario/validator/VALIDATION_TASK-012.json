@@ -1,0 +1,77 @@
+{
+  "task_id": "TASK-012",
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "MD 와 JSON 모두 SC-01~SC-12 의 12건이다. ID·type·flow·covers 가 같고 Given/When/Then 문장도 같다. 표 행 수도 같다(SC-03 17행, SC-04 21행, SC-06 14행, SC-09 19행, SC-11 23행). 규약 표 12행도 일치한다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "총 12건이다. happy 는 SC-01·02·03·05·07·08·10 이고 error 는 SC-09, boundary 는 SC-04·06·11, regression 은 SC-12 다. 하한(총 2 이상, happy 1 이상, error 1 이상)을 충족한다."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "기준 3건 모두 대응한다. 기준1(ES256 Client Secret)은 SC-01, 02, 09, 10, 11 이 covers 한다. 기준2(최초 로그인 이름 반영)는 SC-03, 04, 07, 08, 10 이다. 기준3(TASK-011 흐름 동일)은 SC-04, 05, 06, 07, 08, 09, 10, 12 다. covers 문자열이 Plan 의 기준 문구와 정확히 같다. 이름이 users 행에 실제로 반영되는 단계는 SC-08 이 /complete 와 /me 로 확인한다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "사용한 flow 는 F1, F2, F3, F4, F5, F6, F7 이고 모두 Plan 의 design.flows[].id 에 있다."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "pass",
+      "detail": "Then 은 대부분 302 Location, 쿼리 키 유무, 행 수, pendingToken 필드값, JWT 헤더·클레임, 가짜 서버가 받은 요청처럼 밖에서 단언할 수 있다. '올바르게'나 '정상적으로' 같은 표현은 없다. SC-04 의 'Then 거부면…/허용이면…' 은 표의 결과 열로 분기하지만 열마다 단언이 정해져 있어 허용한다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "warn",
+      "detail": "SC-02 의 When 은 '00:00 에 code-1 로, 이어서 00:10 에 code-2 로 토큰 교환을 두 번 요청한다' 로 요청이 둘이다. Then 이 요청별로 나뉘어 있어 하나의 When 이 아니다. 요청마다 새로 만든다는 속성을 보려는 의도지만 시나리오를 쪼개거나 When 을 하나로 정리하는 편이 낫다. SC-08 도 Given 에 콜백 처리가 있고 When 은 /complete 하나뿐이라 문제 없다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "pass",
+      "detail": "When/Then 에 함수명·SQL 은 없다. SC-08 Then 의 `LoginResponse` 는 API 응답 타입 이름이라 계약의 일부로 본다. 클래스명(`AppleClientSecretGenerator`, `SocialInputRules` 등)은 시나리오 머리말 설명에만 나온다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "pass",
+      "detail": "시나리오가 다루는 입력은 Plan 의 design.inputs 범위 안이다. 환경변수 4종과 FRONTEND_BASE_URL, form_post 의 code·state·user, id_token 클레임(sub·email·email_verified·is_private_email), Clock 이다. 출력도 Client Secret, 인가 요청, 토큰·pendingToken·에러 리다이렉트, 기동 실패·404 로 Plan 과 맞는다. SC-03 #17 과 SC-12 는 다른 제공자를 다루지만 회귀 확인이라 범위를 넘지 않는다. 'Apple 사용자' 대체 이름은 Plan 의 unresolved 를 2a 에서 확정한 값이다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "pass",
+      "detail": "같은 경로를 타는 시나리오 쌍은 표로 이미 합쳐져 있다(coverage.merged). SC-03 과 SC-10 은 한 번은 핸들러 직접 호출, 한 번은 필터 체인 전체라 경로가 다르다. SC-05 와 SC-07 은 신규 연결과 재로그인으로 갈린다."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "pass",
+      "detail": "Plan 의 target_files 는 기존 파일 수정(CustomOAuth2UserService, OAuth2LoginSuccessHandler, SocialLoginConfig, SecurityConfig)을 포함한다. 이에 대해 SC-12(regression)가 다른 제공자의 정적 client_secret 전달 방식을, SC-11 #2 가 구글 인가 요청에 response_mode 가 없음을, SC-03 #17 이 구글 name 처리를 확인한다."
+    },
+    {
+      "id": "V11",
+      "name": "입력 경계값",
+      "verdict": "pass",
+      "detail": "coverage-policy §2-1 의 각 행을 Plan 입력에 대봤고 누락된 행은 없다. 환경변수는 SC-11 의 미설정, 빈 문자열, 공백만, 항목별 공백, 앞뒤 공백, PEM 개행·`\\n` 리터럴·헤더 없음 변형으로 덮는다. 문자열 필드는 email·sub·user 이름에 대해 빈 값, 최대 길이±1(255/256, 100/101, UTF-16 코드 유닛 경계), NUL, 짝 없는 서로게이트, 소문자화 뒤 길이(`İ`)를 다룬다. email_verified 는 불리언·문자열·대소문자·공백·숫자·null·누락·배열·객체를 SC-05/06 이 양방향으로 다룬다. 필수 필드의 누락과 null 은 SC-04 에 있다. 서버 응답 분기는 SC-09 #5, 14~19 가 같은 상태의 다른 code·빈 바디·비 JSON 을 덮는다. 에러 상태 재제출은 SC-09 #4 (state 재사용)가 있다. 시각 경계는 SC-01 이 두 시각을 쓰고 id_token exp 는 #10 이다. FRONTEND_BASE_URL 형식 변형은 TASK-011 SC-19 에 위임하고 사유를 skipped 에 적었다. 참고로 `user` 파라미터가 중복 전달되는 경우와 매우 큰 크기는 다루지 않았지만 §2-1 표에 해당 행이 없으므로 fail 사유는 아니다."
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 1,
+    "summary": "구조, 커버리지, 입력 경계값은 충족한다. MD 와 JSON 이 일치하고, acceptance_criteria 3건이 모두 대응하며, flow 가 실재한다. §2-1 의 경계 행도 빠짐이 없다. SC-02 의 When 이 토큰 교환 요청 두 건을 담고 있으니(V6) 하나의 When 으로 정리하거나 시나리오를 나눌 것을 권고한다."
+  }
+}

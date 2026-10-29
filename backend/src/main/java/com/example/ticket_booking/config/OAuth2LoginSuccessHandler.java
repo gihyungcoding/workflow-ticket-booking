@@ -31,17 +31,20 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
   public void onAuthenticationSuccess(
       HttpServletRequest request, HttpServletResponse response, Authentication authentication)
       throws IOException {
-    response.sendRedirect(redirectLocation(authentication));
+    response.sendRedirect(redirectLocation(request, authentication));
   }
 
-  private String redirectLocation(Authentication authentication) {
+  private String redirectLocation(HttpServletRequest request, Authentication authentication) {
     try {
       if (!(authentication instanceof OAuth2AuthenticationToken token)) {
         return OAuth2LoginFailureHandler.failureLocation(frontendBaseUrl);
       }
+      String registrationId = token.getAuthorizedClientRegistrationId();
       SocialProfile profile =
           CustomOAuth2UserService.toProfile(
-              token.getAuthorizedClientRegistrationId(), token.getPrincipal().getAttributes());
+              registrationId,
+              token.getPrincipal().getAttributes(),
+              appleUser(request, registrationId));
       SocialLoginResult result = authService.loginWithSocial(profile);
       return result.accessToken() != null
           ? frontendBaseUrl + "/oauth2/redirect?token=" + encode(result.accessToken())
@@ -49,6 +52,16 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     } catch (OAuth2AuthenticationException exception) {
       return OAuth2LoginFailureHandler.failureLocation(frontendBaseUrl);
     }
+  }
+
+  /**
+   * 애플의 최초 인가 콜백(form_post)이 싣는 user 파라미터. 애플의 POST 콜백에서만 읽는다 — GET 이나 다른 제공자의 값은 무시한다.
+   * getParameter 는 POST 본문뿐 아니라 쿼리스트링의 user 도 합친다(영향은 이름 문자열뿐 — 신원은 id_token 만 쓴다).
+   */
+  private static String appleUser(HttpServletRequest request, String registrationId) {
+    boolean appleForm =
+        "apple".equals(registrationId) && "POST".equalsIgnoreCase(request.getMethod());
+    return appleForm ? request.getParameter("user") : null;
   }
 
   private static String encode(String value) {

@@ -1,0 +1,283 @@
+{
+  "task_id": "TASK-012",
+  "route": "Backend",
+  "route_reason": "ES256 Client Secret 서명, 토큰 교환 파라미터, form_post 콜백 처리, id_token 클레임 정규화가 모두 서버(config) 범위. 화면·스키마 변경 없음 (DDL 없이 social_accounts.provider='APPLE' 로 기록)",
+
+  "design": {
+    "inputs": [
+      {
+        "name": "애플 환경변수",
+        "type": "String x4",
+        "source": "환경변수 APPLE_CLIENT_ID(Services ID), APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY(.p8 PKCS#8 PEM) + 기존 FRONTEND_BASE_URL",
+        "constraints": [
+          "네 값이 모두 있을 때만 애플 제공자를 등록한다 — 기존 제공자의 '둘 다 있을 때만 등록' 관례를 따른다 (일부만 있을 때의 처리는 unresolved)",
+          "개인 키는 기동 시 한 번 파싱한다 — 형식이 틀리면 기동 실패 (JWT_SECRET 과 같은 fail-fast 관례). 키·Client Secret 은 로그·예외 메시지에 남기지 않는다",
+          "애플이 하나만 설정돼도 FRONTEND_BASE_URL 이 올바라야 기동한다 (기존 규칙 그대로)"
+        ]
+      },
+      {
+        "name": "애플 콜백 POST 폼 파라미터",
+        "type": "application/x-www-form-urlencoded (response_mode=form_post)",
+        "source": "브라우저가 애플의 폼을 /login/oauth2/code/apple 로 POST",
+        "constraints": [
+          "code, state — Spring OAuth2LoginAuthenticationFilter 가 처리한다 (state 는 인가 요청 저장소와 대조, unresolved 참고)",
+          "user — 최초 인가에만 오는 JSON 문자열 {\"name\":{\"firstName\":..,\"lastName\":..},\"email\":..}. 서명되지 않은 클라이언트 경유 값이다: 이름만 쓰고 email 은 무시한다 (신원은 검증된 id_token 만)",
+          "user 는 없을 수 있다(재로그인·최초 인가 후 가입 미완료 재시도) · JSON 이 아닐 수 있다 · name 이 없거나 일부 필드만 있을 수 있다",
+          "user 의 이름은 SocialInputRules.name 과 같은 규칙(문자열·제어문자 없음·짝 없는 서로게이트 없음·1~100자)을 통과해야 한다 (ADR-0019)"
+        ]
+      },
+      {
+        "name": "애플 id_token 클레임",
+        "type": "Map<String,Object> (OidcUser.getAttributes())",
+        "source": "토큰 교환 응답의 id_token — Spring OIDC 공급자가 서명(JWKS)·iss·aud·exp·nonce 를 검증한 뒤의 클레임. 애플은 userinfo 엔드포인트가 없다",
+        "constraints": [
+          "sub → providerUserId (1~255자 문자열), email → 이메일 (SocialInputRules.email), 이름 클레임은 없다",
+          "email_verified 는 불리언 true 가 아니라 문자열 \"true\" 로 올 수 있다 — 불리언 true 또는 정확히 문자열 \"true\" 만 검증됨, 그 밖(\"True\"·\"TRUE\"·\" true\"·\"1\"·숫자 1·\"false\"·누락·null·객체)은 전부 검증되지 않음 (TASK-011 인계 RC-1 변종, 잘못 true 가 되면 선점 계정 자동 연결 경로가 열린다)",
+          "is_private_email 은 신원 판정에 쓰지 않는다 (릴레이 주소도 애플이 검증한 이메일이다)",
+          "email 이 없거나 형식이 틀리면 가입할 수 없다 → 실패 리다이렉트 (TASK-011 F9 와 같은 처리)"
+        ]
+      },
+      {
+        "name": "현재 시각 (Clock)",
+        "type": "java.time.Clock",
+        "source": "주입된 Clock 빈 (ADR-0005)",
+        "constraints": ["Client Secret 의 iat/exp 는 주입된 Clock 으로 만든다 — 테스트에서 MutableClock 으로 경계 확인"]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Client Secret (ES256 JWT)",
+        "type": "String (compact JWS)",
+        "description": "header alg=ES256·kid=APPLE_KEY_ID, claims iss=APPLE_TEAM_ID·sub=APPLE_CLIENT_ID·aud=https://appleid.apple.com·iat·exp(발급 후 짧은 TTL, 애플 상한 6개월 이내). 토큰 교환 요청의 client_secret 파라미터로 전달된다"
+      },
+      {
+        "name": "애플 인가 요청",
+        "type": "302 → appleid.apple.com/auth/authorize",
+        "description": "scope=openid name email, response_mode=form_post (name·email 스코프를 요청하면 애플이 form_post 를 요구한다), state·nonce 포함"
+      },
+      {
+        "name": "302 → {프론트}/oauth2/redirect?token=<accessToken>",
+        "type": "redirect",
+        "description": "재로그인 또는 이메일 일치 + 양쪽 검증됨 자동 연결 (TASK-011 핸들러 그대로. 리다이렉트 형식은 ADR-0021 후속 태스크 몫)"
+      },
+      {
+        "name": "302 → {프론트}/oauth2/redirect?pendingToken=<pendingToken>",
+        "type": "redirect",
+        "description": "신규 가입 대기. pendingToken.name 에 최초 인가의 이름이 실린다 → POST /api/auth/social/complete 에서 users.name 으로 저장"
+      },
+      {
+        "name": "302 → {프론트}/login?error=social",
+        "type": "redirect",
+        "description": "id_token/user 가 규칙 밖(이메일 없음·잘못된 sub·이름 제어문자·100자 초과 등)이거나 제공자 인증 실패 — 아무것도 만들지 않는다"
+      },
+      {
+        "name": "기동 실패 / 404",
+        "type": "error",
+        "description": "애플 개인 키 형식 오류는 기동 실패. 애플이 설정되지 않았으면 /oauth2/authorization/apple 은 기존처럼 404"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "Client Secret 생성 (ES256)",
+        "steps": [
+          "기동 시 APPLE_PRIVATE_KEY(.p8) 를 EC P-256 개인 키로 파싱",
+          "AppleClientSecretGenerator.generate() 가 header(alg=ES256, kid)·claims(iss=teamId, sub=clientId, aud, iat, exp) 를 만든다",
+          "Nimbus ECDSASigner 로 서명 — 공개 키로 검증되는 JOSE(R||S) 서명",
+          "Clock 기준으로 iat/exp 를 정한다"
+        ],
+        "covers": ["애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다"]
+      },
+      {
+        "id": "F2",
+        "name": "토큰 교환에 Client Secret 사용 + id_token 검증",
+        "steps": [
+          "애플 ClientRegistration 등록: authorizationUri, tokenUri, jwkSetUri, issuerUri=https://appleid.apple.com, scope(openid,name,email), userNameAttributeName=sub, CLIENT_SECRET_POST",
+          "인가 요청 리졸버가 애플에 response_mode=form_post 를 추가",
+          "코드 교환 시 토큰 응답 클라이언트의 파라미터 변환기가 client_secret 을 요청마다 AppleClientSecretGenerator 가 만든 JWT 로 바꿔 넣는다",
+          "Spring OIDC 공급자가 id_token 의 서명·iss·aud·exp·nonce 를 검증하고 클레임을 principal attributes 로 만든다"
+        ],
+        "covers": ["애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다"]
+      },
+      {
+        "id": "F3",
+        "name": "form_post 콜백 → 프로필 정규화 (엄격한 email_verified)",
+        "steps": [
+          "POST /login/oauth2/code/apple 이 Spring OAuth2 로그인 필터를 통과해 인증 성공 → OAuth2LoginSuccessHandler",
+          "CustomOAuth2UserService.toProfile(\"apple\", claims, …) 의 애플 분기가 sub·email·email_verified 를 SocialProfile 로 만든다",
+          "email_verified 는 불리언 true 또는 문자열 \"true\" 만 true — 나머지는 false",
+          "규칙 밖 값이면 OAuth2AuthenticationException → 실패 리다이렉트"
+        ],
+        "covers": ["애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"]
+      },
+      {
+        "id": "F4",
+        "name": "최초 로그인 이름 캡처 → users 행 반영",
+        "steps": [
+          "콜백이 POST 이고 등록 ID 가 apple 이면 성공 핸들러가 요청의 user 파라미터를 읽는다",
+          "JSON 을 파싱해 firstName·lastName 으로 표시 이름을 만들고 SocialInputRules.name 규칙을 적용한다",
+          "SocialProfile.name 에 넣어 AuthService.loginWithSocial 로 넘긴다 (AuthService 변경 없음)",
+          "신규 가입 대기면 pendingToken.name 에 실린다 → POST /api/auth/social/complete 가 users.name 으로 저장",
+          "user 가 없으면(재로그인) 이름을 쓰지 않는다 — 이미 연결된 계정은 name 이 필요 없고, 신규인데 이름이 없는 경우의 대체는 unresolved"
+        ],
+        "covers": ["애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다"]
+      },
+      {
+        "id": "F5",
+        "name": "TASK-011 판정 흐름 합류",
+        "steps": [
+          "이미 (APPLE, sub) 가 연결돼 있으면 재로그인 → accessToken",
+          "email_verified=true 이고 users.email 일치 + 대상 계정 email_verified=true 이면 social_accounts(APPLE) 행만 추가 → accessToken (ADR-0020)",
+          "그 밖에는 DB 에 쓰지 않고 pendingToken 발급 → /complete 에서 users·social_accounts(APPLE) 생성",
+          "email_verified 가 \"false\"·누락이면 이메일이 같아도 자동 연결하지 않는다"
+        ],
+        "covers": ["애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"]
+      },
+      {
+        "id": "F6",
+        "name": "규칙 밖 입력 거부",
+        "steps": [
+          "email 없음·형식 오류·제어문자·공백류, sub 길이/타입 오류, user 이름의 제어문자·서로게이트·100자 초과",
+          "조용히 바꾸거나 자르지 않고 거부 (ADR-0019) → /login?error=social, users·social_accounts 변화 없음"
+        ],
+        "covers": ["애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다", "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"]
+      },
+      {
+        "id": "F7",
+        "name": "애플 제공자 설정",
+        "steps": [
+          "네 환경변수가 갖춰졌을 때만 등록, AnyProviderConfigured 에 애플 포함",
+          "애플이 설정되지 않으면 /oauth2/authorization/apple 은 기존처럼 404 (SocialProviderConfigTest 와 일치)",
+          "개인 키 형식이 틀리면 기동 실패(키 내용을 메시지에 싣지 않는다)"
+        ],
+        "covers": ["애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다"]
+      }
+    ]
+  },
+
+  "architecture_refs": {
+    "layer": "보안 설정(config) — AuthService/Repository 변경 없음",
+    "note": "판정(연결·가입 대기·재로그인)은 이미 Service(AuthService.loginWithSocial)가 소유하고 SocialProfile 하나로 입력받는다. 애플 고유 관심사(서명된 Client Secret, 토큰 교환 파라미터, form_post, id_token 클레임 정규화, user 파라미터 파싱)는 모두 HTTP·OAuth 프로토콜 관심사라 config 에 둔다. 새 계층·컴포넌트는 없다 (architecture.md §2·§3). 인가 요청 상태 저장소를 세션에서 쿠키로 바꾸게 되면 교차 관심사 결정이므로 ADR 후보 (unresolved)",
+    "constraints_applied": ["ARCH-001", "ARCH-002", "ARCH-003", "ARCH-004", "DEPLOY-002"]
+  },
+  "adr_refs": [
+    "ADR-0003",
+    "ADR-0005",
+    "ADR-0012",
+    "ADR-0013",
+    "ADR-0014",
+    "ADR-0016",
+    "ADR-0019",
+    "ADR-0020",
+    "ADR-0021"
+  ],
+
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/AppleClientSecretGenerator.java",
+        "change": "ES256 서명 Client Secret 생성(teamId·clientId·keyId·개인 키·Clock 주입). 개인 키 PEM 파싱·기동 시 검증",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/CustomOAuth2UserService.java",
+        "change": "toProfile 에 apple 분기 추가(sub·email·엄격한 email_verified), user 파라미터 이름 파싱·검증. 이름 파라미터를 받는 오버로드 또는 인자 추가"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/OAuth2LoginSuccessHandler.java",
+        "change": "등록 ID 가 apple 이고 POST 이면 요청의 user 파라미터를 toProfile 에 넘긴다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
+        "change": "애플 ClientRegistration 등록(OIDC: jwkSetUri·issuerUri·scope), AnyProviderConfigured 에 애플 추가, 인가 요청 리졸버에 response_mode=form_post 커스터마이저, client_secret 을 요청마다 생성해 넣는 토큰 응답 클라이언트 빈, AppleClientSecretGenerator 빈"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+        "change": "oauth2Login 의 tokenEndpoint 에 애플용 토큰 응답 클라이언트 연결 (다른 제공자는 기본 동작 유지)"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SocialInputRules.java",
+        "symbol": "SocialInputRules",
+        "note": "이메일·이름·providerUserId 규칙의 단일 지점 — 애플의 sub·email·user 이름도 반드시 여기를 거친다. 새 규칙을 따로 만들지 말 것"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "symbol": "loginWithSocial",
+        "note": "재로그인·자동 연결·pendingToken 판정과 UNIQUE 경쟁 처리가 이미 있다 — 애플 전용 분기를 만들지 말고 SocialProfile 만 넘긴다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "symbol": "completeSocialSignUp",
+        "note": "pendingToken.name 을 users.name 으로 저장하는 경로 — AC2 의 '반영'은 이 기존 경로가 한다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "symbol": "JwtTokenProvider",
+        "note": "Nimbus 인코더 + 주입된 Clock(ADR-0005) + fail-fast fromEnv 관례 — Client Secret 생성기도 같은 관례. 의존성(spring-security-oauth2-jose → nimbus-jose-jwt 10.9.1)은 이미 있다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
+        "symbol": "AnyProviderConfigured",
+        "note": "제공자 등록 조건·configured/id/secret 헬퍼와 FRONTEND_BASE_URL 검증 — 애플도 같은 방식으로 얹는다"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/FakeOAuth2User.java",
+        "symbol": "FakeOAuth2User",
+        "note": "id_token 클레임 맵을 그대로 담는 가짜 principal — 필수 값이 빠진 응답도 만들 수 있다"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+        "symbol": "MutableClock",
+        "note": "Client Secret iat/exp 경계 테스트"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/PendingTokenTestHelper.java",
+        "symbol": "queryOf",
+        "note": "리다이렉트 주소에서 pendingToken 을 꺼내는 헬퍼"
+      }
+    ],
+    "existing_tests": [
+      "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+      "backend/src/test/java/com/example/ticket_booking/config/SocialProviderConfigTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardSocialCompleteTest.java",
+      "backend/src/test/java/com/example/ticket_booking/config/ArchitectureCheckTest.java"
+    ],
+    "unresolved": [
+      "[결정 필요 2a] 애플 이름 — 신규인데 이름이 없을 때: id_token 에는 이름 클레임이 없고 user 파라미터는 최초 인가에만 온다. 최초 인가 후 가입을 끝내지 않으면(pendingToken 5분 만료·탭 닫기) 다음 로그인에는 이름이 오지 않는데 users.name 은 NOT NULL 이고 pendingToken 검증도 name 을 필수로 요구한다. 제안: 이름이 없으면 고정 대체 문자열을 쓴다(예: 'Apple 사용자'). 이메일 로컬 파트는 릴레이 주소에서 무의미한 난수라 부적절. 이것은 사용자 입력의 '조용한 변형'이 아니라 '부재'의 대체지만 제품 결정이므로 2a 에서 확정한다",
+      "[결정 필요 2a] 애플 이름 합성·거부: user.name.firstName/lastName 을 어떻게 표시 이름으로 만들지(제안: 비어 있지 않은 부분을 공백 하나로 이어 붙임, 순서 firstName lastName) · 합성 결과가 100자를 넘거나 제어문자가 있으면 ADR-0019 에 따라 자르지 않고 거부(실패 리다이렉트) · user 가 JSON 이 아니거나 name 이 객체가 아니면 '이름 없음'으로 볼지 실패로 볼지(제안: 서명되지 않은 값이므로 구조가 이상하면 실패 — 부재와 구분)",
+      "[TASK-011 인계 RC-1 변종] email_verified 해석: 불리언 true 또는 정확히 문자열 \"true\" 만 true. 시나리오 변종 전수 — \"true\"·true(true), \"false\"·false·\"True\"·\"TRUE\"·\" true\"·\"true \"·\"1\"·1·0·\"yes\"·누락·null·빈 문자열·배열·객체(전부 false). 잘못 true 면 미검증 이메일의 애플 계정이 같은 이메일의 검증된 계정에 붙는다(ADR-0020 경로 1). 반대로 잘못 false 면 정당한 사용자가 자동 연결 대신 pendingToken→409 에 이른다 — 양방향 모두 단언한다",
+      "[결정 필요 Phase 3 설계] 인가 요청 state 저장과 form_post: 기본 저장소는 HttpSession 이다. 애플 콜백은 apple.com 에서 오는 교차 사이트 POST 라 SameSite=Lax 세션 쿠키는 전송되지 않을 수 있다(Safari 는 확실히, Chrome 은 Lax+POST 2분 예외에 의존) → state 를 못 찾아 로그인이 실패한다. 선택지: (a) AuthorizationRequestRepository 를 쿠키 기반(서명/암호화)으로 교체, (b) 세션 쿠키를 SameSite=None;Secure. MockMvc 로는 브라우저 쿠키 동작을 증명할 수 없다 — 시나리오는 저장 방식에 의존하지 않게 쓰고, 선택은 Phase 3 에서 하되 쿠키 저장소를 택하면 ADR 로 남긴다(TASK-011 PLAN 이 이 태스크로 미룬 항목). 분리 배포(ADR-0016)에서 콜백이 백엔드 도메인으로 직접 오므로 CORS 와는 무관",
+      "[결정 필요 2a] 애플 설정이 일부만 있을 때: 기존 관례는 '한 쌍이라도 비면 조용히 미등록'. 네 값 중 일부만 있는 경우를 미등록으로 둘지 기동 실패로 둘지(제안: 기존과 같이 미등록 — 단 개인 키가 있는데 형식이 틀리면 기동 실패). 공백만·앞뒤 공백·APPLE_PRIVATE_KEY 의 이스케이프된 개행(\\n 리터럴)·PEM 헤더 유무 변형을 경계 행으로 대본다(coverage-policy §2-1 환경변수 행)",
+      "[Phase 3 확인] Spring Security 7.1.1 API 확인 사항: RestClientAuthorizationCodeTokenResponseClient 의 파라미터 변환기로 client_secret 교체 가능한지 · ClientRegistration 빌더가 CLIENT_SECRET_POST 에서 비어 있지 않은 clientSecret 을 요구하는지(요구하면 자리표시 값을 넣고 변환기가 대체) · OidcIdTokenValidator 가 issuerUri 가 있을 때만 iss 를 대조하므로 issuerUri=https://appleid.apple.com 를 반드시 지정 · OAuth2LoginAuthenticationFilter 가 POST 콜백을 처리하는지(기본 매처에 메서드 제한이 없는지) · 애플 id_token 클레임은 email_verified 를 문자열 그대로 둔다(클레임 변환 대상이 아님)",
+      "[결정 필요 2a] user 파라미터의 출처 제한: 서명되지 않은 값이라 변조 가능하다(본인 이름 변조뿐이라 위험은 낮음). 제안: 등록 ID 가 apple 이고 메서드가 POST 일 때만 읽는다 — GET 쿼리의 user 는 무시. 이메일 필드는 읽지 않는다. SecurityConfig 는 CSRF 를 끄고 있어 POST 콜백이 막히지 않는다(OAuth state 가 CSRF 방어)",
+      "[범위 밖 — 알림] ADR-0021(토큰은 URL fragment)이 TASK-011 핸들러의 query 리다이렉트를 후속 태스크에서 바꾸라고 한다. 이 태스크는 같은 핸들러를 쓰지만 리다이렉트 형식을 바꾸지 않는다(acceptance_criteria 밖 — 조용히 넓히지 않는다). 후속 태스크가 바꿀 때 애플도 함께 따른다",
+      "[PostgreSQL 통합 테스트 — 사유] 이 태스크는 마이그레이션·SQL·새 제약이 없다(social_accounts.provider VARCHAR(20) 에 'APPLE' 은 길이 5). DB 에 닿는 코드는 TASK-011 이 Phase 4 에서 실제 PostgreSQL 로 프로브한 AuthService 경로 그대로다. 새로 DB 에 들어가는 외부 문자열은 Apple 이름(users.name)뿐이고 SocialInputRules 가 NUL·서로게이트·100자를 앞서 거부한다. 그래서 자동 PostgreSQL 통합 테스트는 만들지 않는다(Testcontainers 미도입 — ADR-0006). 대신 Phase 4 에서 PostgreSQL 로 앱을 띄워 애플 이름의 경계(100자, 4바이트 보조 평면 문자)를 /complete 까지 프로브하는 것을 필수 증거로 한다. 자동 회귀 테스트가 없다는 한계는 VERIFY 에 적는다",
+      "[선점 가능성 — 외부 신원 연결 설계] 애플은 릴레이 주소(@privaterelay.appleid.com)를 줄 수 있고 이는 애플 계정 소유자의 것이라 다른 사람의 이메일을 선점하는 수단이 아니다. 선점 경로는 (1) email_verified 의 잘못된 true 판정(위 RC-1) — 시나리오로 막는다, (2) 애플이 검증했다고 한 이메일로 소셜 가입을 먼저 끝내 그 이메일의 정당한 사용자를 막는 것 — ADR-0020 이 수용한 잔여 위험과 같은 부류, 이메일 인증 도입 시 해소. 이메일 가입 계정(email_verified=false)에는 자동 연결하지 않는다는 ADR-0020 정책이 애플에도 그대로 적용됨을 시나리오로 확인한다",
+      "[테스트 전략 2b] 외부 호출은 하지 않는다. (a) Client Secret: 테스트가 만든 EC P-256 키 쌍으로 생성 → 공개 키로 서명·헤더·클레임 검증, MutableClock 으로 iat/exp. (b) 토큰 교환: JDK 내장 HttpServer(새 의존성 없음)를 토큰 엔드포인트로 세워 요청 본문의 client_secret 이 위 JWT 인지 확인 — tokenUri 를 테스트에서 바꿀 수 있어야 한다. (c) 콜백: 기존 테스트처럼 FakeOAuth2User + OAuth2AuthenticationToken(registrationId=apple) 으로 성공 핸들러를 직접 실행하고 MockHttpServletRequest 의 POST 파라미터에 user 를 넣는다. (d) 필터 체인을 실제로 타는 POST 콜백(state 대조·JWKS id_token 검증)은 가짜 JwtDecoderFactory/토큰 응답 클라이언트 빈으로 검증할지 2b 에서 범위를 정한다",
+      "[문서 어긋남 — 이 태스크 범위 밖] user-authentication.md §1-3 '계정 연결 정책' 문장은 ADR-0020 이전 내용(이메일 가입 계정에도 연결)이고, tasks.json 의 TASK-011 AC 문구도 어긋난다. Phase 5 회고에서 갱신 후보로 올린다",
+      "[시나리오 규모] 환경변수 변형 × email_verified 변형(13+) × 이름 변형(user 없음·정상·한 필드·JSON 오류·제어문자·100/101자) × 판정 분기(재로그인·자동 연결·가입 대기·미검증 대상) 로 8~12건 기준선을 넘는다 — 표로 묶고 묶은 근거를 CP-2.2 decisions 에 남기고 2a 에서 사용자에게 알린다",
+      "[보안 — 구현 주의] 개인 키·Client Secret·user 원문을 로그와 예외 메시지에 싣지 않는다. Client Secret 은 요청마다 만들거나 짧은 TTL 로 캐시하고, 키 교체는 환경변수 변경 + 재기동으로 한다(키 로테이션 자동화는 범위 밖)"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 22
+    }
+  },
+
+  "acceptance_criteria": [
+    "애플 Client Secret이 ES256으로 서명된 JWT로 생성되어 토큰 교환 요청에 쓰인다",
+    "애플 최초 로그인 콜백에서만 전달되는 이름 정보가 users 행 생성 시 반영된다",
+    "애플 로그인도 TASK-011의 자동 연결/역할 선택(pendingToken) 흐름을 동일하게 따른다"
+  ],
+
+  "test_hints": {
+    "framework": "JUnit 5 + Spring Boot Test (@SpringBootTest + MockMvc, H2 MODE=PostgreSQL) + AssertJ(SoftAssertions)",
+    "command": "cd backend && export JAVA_HOME=/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home && ./gradlew test",
+    "mock_strategy": "애플 서버를 호출하지 않는다. Client Secret 은 테스트가 만든 EC P-256 키 쌍과 MutableClock 으로 검증하고, 토큰 교환 요청 본문은 JDK 내장 HttpServer 로 확인한다. 콜백은 FakeOAuth2User(id_token 클레임 맵) + OAuth2AuthenticationToken(registrationId=apple) 으로 OAuth2LoginSuccessHandler 를 직접 실행하고 MockHttpServletRequest 의 POST 파라미터 user 로 이름을 넣는다. 설정 변형은 SocialProviderConfigTest 처럼 SpringApplicationBuilder 로 앱을 띄워 확인한다",
+    "test_strategy": "H2 는 운영(PostgreSQL)과 다르지만 이 태스크는 SQL·마이그레이션·제약을 바꾸지 않는다(PostgreSQL 통합 테스트를 만들지 않는 사유는 unresolved 참고). Phase 4 에서 실제 PostgreSQL 로 앱을 띄워 애플 이름 경계(100자, 4바이트 문자)를 /api/auth/social/complete 까지 프로브하는 것을 필수 증거로 하고, 자동 회귀 테스트가 없다는 한계를 VERIFY 에 적는다"
+  }
+}
