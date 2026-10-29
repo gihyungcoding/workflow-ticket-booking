@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-29T00:00:00Z
-summary: "[Phase 4 검증 완료 — WARN, HITL#3 대기] 269/269·tsc·build·린트 오류 0·아키텍처 error 0. 실제 백엔드(PostgreSQL)+개발 서버+Chrome 으로 화면 상태 11개 확인. 코드 리뷰 correctness 결함 0. 경고: 로그인 CSRF(S-1, 백엔드·ADR 범위), R-1 미확인, M15 수동 확인."
+summary: "[Phase 4 완료 — WARN, HITL#3 예외 승인(S-1·R-1·M15)] 269/269·tsc·build·린트 오류 0·아키텍처 error 0. 실제 백엔드(PostgreSQL)+개발 서버+Chrome 으로 화면 상태 11개 확인. 코드 리뷰 correctness 결함 0. 경고: 로그인 CSRF(S-1, 백엔드·ADR 범위), R-1 미확인, M15 수동 확인."
 
 next_steps:
-  - "HITL#3 — 승인/예외 승인/롤백. 예외 승인이면 S-1·R-1·M15 를 exceptions 에 남기고 verified_commit 기록"
+  - "Phase 5 — wf-reflect. 후속 태스크 후보: S-1(백엔드 state 바인딩/일회용 코드 + ADR-0021 갱신), ADR-0021 fragment 전환(+referrer 메타), R-1"
   - "Phase 5 회고 후보: S-1 후속 태스크(state 바인딩 또는 일회용 코드 교환 + ADR, ADR-0021 갱신), ADR-0021 fragment 전환(+referrer 메타), R-1, wf-develop: 변이 생존 시 '필요 없는 코드 제거' 가 효과적이었음(started ref), 시나리오: 대기 중 부수 효과(주소 정리)도 단언 대상으로"
 
 decisions:

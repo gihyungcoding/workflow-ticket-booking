@@ -2,7 +2,7 @@
 task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
 phase: "4"
-phase_name: "Phase 4 - Verify (WARN, HITL#3 대기)"
+phase_name: "Phase 4 완료 (HITL#3 예외 승인, 5 진입 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-29
