@@ -2,7 +2,7 @@
 task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
 phase: "2a"
-phase_name: "Phase 2a - Scenario (작성 완료, 독립검증 전)"
+phase_name: "Phase 2a 완료 (HITL#1 승인, 2b 진입 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-29

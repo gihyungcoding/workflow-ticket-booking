@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-29T00:00:00Z
-summary: "[Phase 2a 독립검증 통과, HITL#1 대기] 시나리오 14건(happy 4 / error 6 / boundary 3 / regression 1), AC 5/5 매핑. 독립검증 2회(1회차 V11 fail → 경계 보강, 2회차 pass·경고 2건 반영). 상태 표(feature §2-5) 전 행 대조 완료."
+summary: "[Phase 2a 완료 — HITL#1 승인] 시나리오 14건(happy 4 / error 6 / boundary 3 / regression 1), AC 5/5 매핑. 독립검증 2회(1회차 V11 fail → 경계 보강, 2회차 pass·경고 2건 반영). 상태 표(feature §2-5) 전 행 대조 완료."
 
 next_steps:
-  - "HITL#1 — 제가 정한 값 7개·새 문구·14건(12건 초과)·Phase 4 로 미룬 프록시 확인을 요약에 명시. 승인되면 generate_red_trigger=true, 게이트 스크립트 확인 후 커밋, Phase 2b(wf-red)"
+  - "Phase 2b — wf-red. 시나리오 14건 1:1 테스트(함수명에 SC-ID), 프론트라 컴파일 스켈레톤은 TS 파일 신설분만(SocialLoginButtons·OAuthRedirectPage·RoleSelectionPage·completeSocialSignUp 는 던지는 스텁). 제공자 실제 로그인·vite 프록시는 테스트 밖(Phase 4)"
 
 decisions:
   - decision: "새로 쓴다(기존 시나리오 확장 아님). 정책이 바뀐 롤백이 아니라 전수 대조 대상 없음"
