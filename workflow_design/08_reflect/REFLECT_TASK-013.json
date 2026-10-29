@@ -1,0 +1,174 @@
+{
+  "task_id": "TASK-013",
+  "keep": [
+    {
+      "what": "Phase 1 에서 백엔드 소스를 직접 읽어 응답 계약을 확인한 뒤 설계했다 — feature 문서의 문장을 믿지 않았다",
+      "evidence": "콜백은 token 만 주고 user 를 주지 않아 fetchMe 호출이 필요하고, 취소·실패는 /login?error=social 로 오며, /complete 의 오류 code 가 셋(PENDING_SIGNUP_EXPIRED·두 409)임을 PLAN 단계에서 확정(CP-1.3). Phase 4 의 실제 서버 응답이 PLAN 과 어긋난 곳이 없었다"
+    },
+    {
+      "what": "coverage-policy §2-1 의 '서버 응답 code 분기'·'에러 상태 재제출 시 꺼짐'·'비동기 결과를 상태에 적용하는 곳' 행을 시나리오에 그대로 적용했다",
+      "evidence": "SC-03·09·10·13 으로 대본 → Green 변이 검증에서 늦은 응답 적용(M3·M4)·push 이동(M6·M14)·409 매핑(M8) 변이가 모두 테스트에 걸렸다(변이 16회 중 13건 사망, 나머지는 아래 Keep 3·Problem 3)"
+    },
+    {
+      "what": "변이가 살아남으면 테스트를 늘리기 전에 '필요 없는 코드인지'부터 의심했다",
+      "evidence": "중복 요청 방지 ref(started) 변이 M2 가 생존 → 제거해도 어떤 테스트도 실패하지 않아 코드를 지웠다(DEV refactoring). TASK-012 Keep 의 반복 적용"
+    },
+    {
+      "what": "Phase 4 에서 모의 서버 대신 실제 백엔드(PostgreSQL)와 브라우저로 상태를 만들었다 — 서버가 내는 실제 401·409 와 실제 가입 완료까지",
+      "evidence": "VERIFY screens 11개 PASS. 요청을 지연시켜 '처리 중'·'제출 중'과 대기 중 주소(M15)를 포착했다. 자동 테스트가 못 지키는 M15 를 수동으로 메웠다"
+    }
+  ],
+  "problem": [
+    {
+      "what": "독립검증 1회차가 경계값 누락으로 fail(V11 5건) — 12건에서 14건으로 늘었다",
+      "evidence": "VALIDATION_TASK-013.json 1회차: pendingToken 공백만, token 이 빈 값이고 pendingToken 이 유효한 조합, 늦은 응답 종류(5xx·네트워크·비 JSON)의 일부만 대본, 이미 로그인한 재콜백, name 이 숫자인 페이로드. 쿼리 필드를 하나씩 보고 '두 파라미터의 조합'과 '응답 종류 전수'를 표로 열거하지 않았다",
+      "phase": "2a"
+    },
+    {
+      "what": "승인된 테스트를 고쳐야 했다(SC-06 둘째 클릭) — TASK-010 SC-12 와 같은 유형이 반복됐다",
+      "evidence": "DEV test_modifications. 비활성 버튼을 두 번 누르는 시나리오는 user-event 가 pointer-events: none 으로 거부한다는 것을 2b 에서 알 수 있었다. 또 StrictMode 에서 두 요청에 같은 Response 객체를 주는 하네스가 구현의 첫 응답 처리와 맞물려 실패를 만들었고(원인 파악에 한 라운드), 최종 구현은 타이밍 덕에 통과한다 — 하네스 결함이 가려져 있다",
+      "phase": 3
+    },
+    {
+      "what": "PLAN 의 입력 제약 중 하나(콜백이 읽은 즉시 주소에서 토큰 지우기)가 시나리오 Then 에 옮겨지지 않아 테스트가 지키지 못했다",
+      "evidence": "변이 M15 생존(DEV mutation_check.survived). 독립검증 V8(입출력 대응)은 pass 였다 — 제약 항목별 대조가 없었다. Phase 4 수동 확인으로 메웠다(VERIFY R-2)",
+      "phase": "2a"
+    },
+    {
+      "what": "자동 보안 리뷰가 Phase 3 커밋 뒤에야 로그인 CSRF 를 지적했다 — ADR-0021 을 쓸 때 검토되지 않은 위협",
+      "evidence": "VERIFY security.automated_review_finding S-1. ADR-0021 은 pendingToken 가로채기만 감수 항목으로 적었고 '공격자가 만든 링크를 피해자가 여는' 경우는 다루지 않았다. fragment 로 바꿔도 풀리지 않는다. 이 태스크에서 못 고치는 결함이 WARN 예외 승인으로 남았다",
+      "phase": 4
+    },
+    {
+      "what": "검증 환경 정리 중 광범위 pkill 이 자동 분류기에 거부돼 한 번 더 명령을 나눠야 했다",
+      "evidence": "CP-4.2 decisions. 띄운 서버·컨테이너의 PID·이름을 기록해 두지 않았다",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "비활성 버튼을 다시 누르는 시나리오는 처음부터 userEvent.setup({pointerEventsCheck:0}) 로 쓰고, 붙들어 둔 응답은 요청마다 새 Response 를 만든다(같은 요청이 둘 나가도 본문은 한 번만 읽힌다)",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "PLAN design.inputs[].constraints 의 각 항목이 어느 시나리오 Then 에서 단언되는지 대조한다. 단언이 없는 제약은 시나리오를 추가하거나 'Phase 4 수동 증거' 로 명시한다",
+      "target": ".claude/skills/wf-scenario/SKILL.md"
+    },
+    {
+      "what": "여러 파라미터로 분기하는 입력(쿼리 token·pendingToken 등)은 각 파라미터의 빈·공백·유효 값의 모든 조합을 한 표로 대본다",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    },
+    {
+      "what": "인증 수단(토큰·코드)을 URL 로 전달하는 결정은 '공격자가 만든 링크를 피해자가 열면' 을 검토 항목에 넣는다(로그인 CSRF, 브라우저 바인딩)",
+      "target": ".claude/skills/adr/SKILL.md"
+    },
+    {
+      "what": "지연으로 포착해야 하는 상태는 페이지 안에서 fetch 를 지연 래퍼로 감싸고 SPA 이동(pushState + popstate)으로 진입해 그 사이 주소·DOM 을 읽는다. 띄운 서버·컨테이너는 PID·이름을 기록해 그것만 종료한다",
+      "target": ".claude/skills/wf-verify/references/screen-verification.md"
+    }
+  ],
+  "insights": [
+    "URL 로 받은 자격(토큰)의 안전은 받는 쪽이 얼마나 잘 지우느냐보다 '로그인을 시작한 브라우저와 묶였는가'로 갈린다. 지우기·fragment 는 노출을 줄일 뿐 링크 위조(로그인 CSRF)를 막지 못한다",
+    "테스트가 지키는 것과 PLAN 이 요구한 것은 다르다. 제약이 시나리오 Then 에 없으면 변이 검증이 그 구멍을 보여 주고, 없는 단언은 Phase 4 수동 증거로 명시해야 한다",
+    "개발 모드 이중 실행(StrictMode)에서 화면 이탈 판정은 취소 플래그가 아니라 마운트 여부(ref)가 맞다. 첫 실행의 응답을 버리면 로그인이 안 됐다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "백엔드 소스에서 계약 확인, unresolved 12건 중 6건은 2a 확정으로 넘김"
+    },
+    "2a": {
+      "retries": 1,
+      "note": "독립검증 1회차 V11 fail(경계 5건) → 보강 후 2회차 pass. 시나리오 12→14건(복잡 기준선 초과, 사용자에게 알림)"
+    },
+    "2b": {
+      "retries": 0,
+      "note": "테스트 14개 정의(93케이스), 91 실패 + SC-14 회귀 already_passing, 컴파일 스켈레톤 없음"
+    },
+    "3": {
+      "retries": 0,
+      "note": "처음 연결 뒤 실패 3건(StrictMode 1·비활성 재클릭 2) → 구현 수정 1, 승인 테스트 1건 수정(사용자 승인). 변이 16회 중 13건 사망, M1·M2 는 중복 가드(started) 때문에 생존했다가 가드 제거 뒤 해소, M15 만 생존"
+    },
+    "4": {
+      "retries": 0,
+      "note": "WARN — 로그인 CSRF(S-1)·R-1 미확인·M15 수동 확인, 예외 승인"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "소셜 로그인 콜백으로 받은 토큰을 로그인을 시작한 브라우저에 묶는다(state/nonce 바인딩 또는 일회용 코드 교환)",
+      "why_broader": "모든 소셜 제공자 로그인이 같은 핸들러를 쓰고, ADR-0021(fragment)과 ADR-0015(localStorage 저장)에 걸친 결정이다. 로그인 CSRF 는 fragment 로 바꿔도 남는다",
+      "evidence": "VERIFY_TASK-013.json S-1, CP-4.2 decisions",
+      "suggested_title": "소셜 로그인 콜백을 시작한 브라우저에 묶는다 (ADR-0021 갱신)"
+    },
+    {
+      "decision": "비동기 응답을 화면에 적용할 때 '화면 이탈'은 마운트 ref, '세션 변경'은 세대로 판정한다",
+      "why_broader": "AuthProvider(ADR-0018 세대)와 OAuthRedirectPage·RoleSelectionPage(마운트 ref)가 서로 다른 장치를 쓴다. 다음 비동기 화면이 같은 선택을 해야 한다",
+      "evidence": "CP-3.4 decisions(StrictMode 에서 cancelled 플래그가 첫 응답을 버림)",
+      "suggested_title": "비동기 응답 적용 가드 — 마운트 ref 와 세션 세대 (ADR-0018 보완)"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "ADR-0021(채택됨)은 토큰을 URL fragment 로 넘기라고 하는데 백엔드 핸들러와 프론트 콜백은 모두 query 를 쓴다. 사용자가 query 기준으로 진행하기로 결정했다(2026-10-29)",
+      "where": "backend/.../OAuth2LoginSuccessHandler.java, frontend/src/pages/OAuthRedirectPage.tsx(parseCallback 한 곳), docs/decisions/ADR-0021",
+      "found_how": "Phase 1 조사·사용자 결정",
+      "suggestion": "후속 태스크가 백엔드와 프론트를 함께 fragment 로 바꾼다(프론트는 parseCallback 한 함수와 주소 정리 한 곳). S-1 ADR 과 한 묶음으로 다루면 두 번 건드리지 않는다"
+    },
+    {
+      "what": "user-authentication.md §4 흐름·§3 API 명세의 리다이렉트 형식이 ADR-0021 과 같은 이유로 어긋난다",
+      "where": "docs/product/features/user-authentication.md",
+      "found_how": "출처 문서 로드",
+      "suggestion": "ADR-0021 전환 태스크에서 문서도 갱신"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 3 하네스 가정",
+      "change": "비활성 버튼을 다시 누르는 시나리오는 처음부터 userEvent.setup({pointerEventsCheck:0}) 로 쓰고, 붙들어 둔 응답은 요청마다 새 Response 를 만든다(StrictMode 로 같은 요청이 둘 나가도 본문은 한 번만 읽힌다)",
+      "evidence": "TASK-013 SC-06 승인 테스트 수정(DEV test_modifications), StrictMode 하네스가 같은 Response 를 공유해 실패 원인을 찾는 데 한 라운드 — TASK-010 SC-12 와 같은 유형의 반복",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-scenario/SKILL.md",
+      "section": "Step 2 시나리오 작성",
+      "change": "PLAN design.inputs[].constraints 의 각 항목이 어느 시나리오 Then 에서 단언되는지 대조한다. 단언이 없는 제약은 시나리오를 추가하거나 'Phase 4 수동 증거' 로 CP-2.2 decisions 에 명시한다",
+      "evidence": "TASK-013 변이 M15 생존 — 주소 정리 제약이 시나리오에 없어 테스트가 못 지켰다",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§2-1",
+      "change": "'여러 파라미터로 분기하는 입력' 행 추가 — 각 파라미터의 빈·공백·유효 값의 모든 조합(한쪽 빈 + 다른 쪽 유효, 둘 다 값, 둘 다 없음)을 한 표로",
+      "evidence": "TASK-013 독립검증 1회차 V11 fail — token 빈 값 + pendingToken 유효 조합 누락",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/adr/SKILL.md",
+      "section": "§1 검토 항목",
+      "change": "인증 수단(토큰·코드)을 URL 로 전달하는 결정은 '공격자가 만든 링크를 피해자가 열면'(로그인 CSRF, 브라우저 바인딩)을 검토 항목에 넣는다",
+      "evidence": "TASK-013 S-1 — ADR-0021 이 pendingToken 가로채기만 다루고 로그인 CSRF 는 검토하지 않았다",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-verify/references/screen-verification.md",
+      "section": "상태를 실제로 만들어 본다",
+      "change": "지연으로 포착해야 하는 상태는 페이지 안에서 fetch 를 지연 래퍼로 감싸고 SPA 이동(pushState + popstate)으로 진입해 그 사이 주소·DOM 을 읽는다. 띄운 서버·컨테이너는 PID·이름을 기록해 그것만 종료한다(광범위 pkill 은 분류기가 거부)",
+      "evidence": "TASK-013 Phase 4 — 처리 중·제출 중·대기 중 주소(M15)를 이 방법으로 포착, 정리 때 pkill 거부",
+      "status": "pending",
+      "recurring": 1
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  }
+}
