@@ -95,6 +95,10 @@ flow: F2
 
 `CP-2.2_canonical-scenarios.md` 저장.
 
+**feature 문서에 상태 표가 있으면 한 행씩 대조한다.** 「상태별로 무엇이 보이나」 표의 각 행이
+어느 시나리오의 `covers` 에 걸리는지 확인한다. 대응이 없는 상태는 시나리오를 추가하거나,
+문서에서 뺀다고 `CP-2.2` 의 `decisions` 에 적는다.
+
 ### Step 3 — JSON 파생
 
 MD를 읽어 `SCENARIO_<ID>.json` 을 만든다. **MD가 SoT다** — JSON을 고치고 MD를 두면 안 된다.
@@ -160,6 +164,11 @@ TASK-001 의 시나리오를 검증해주세요.
 변종과 `not_probed` 변종을 **전부** 이번에 시나리오로 가져온다(`not_probed` 는 Phase 3 의
 테스트가 프로브한다). 증상 하나만 추가해 돌려보내면 같은 뿌리의 다음
 변종 때문에 이 단계를 다시 거친다 (→ `wf-verify/references/root-cause-sweep.md`).
+
+**정책·정의가 바뀐 롤백이면** 바뀐 개념(예: 자동 연결 대상 계정)을 쓰는 **기존 시나리오 전부**의
+Given·Then 을 Grep 으로 대조해 같이 고친다. 새로 쓰는 시나리오만 맞추면 옛 정의를 전제한 시나리오가
+승인된 채 남고, Green 에서 하나가 실패해 HITL#1·#2 를 다시 받게 된다 (→ TASK-011 SC-05). 대조한
+키워드와 고친 시나리오를 `CP-2.2` 의 `decisions` 에 적는다.
 
 `CP-2.2` 를 갱신한다 — 검증 결과 원문은 `VALIDATION_<ID>.json` 에 있으므로 `summary` 한 줄과
 반영하기로 한 경고만 `decisions` 에 적는다.

@@ -111,16 +111,18 @@
       "section": "Step 4 (Phase 4 FAIL 로 들어왔다면)",
       "change": "정책·정의가 바뀐 롤백이면 바뀐 개념(예: 연결 대상 계정)을 쓰는 모든 기존 시나리오의 Given·Then 을 Grep 으로 대조하고 결과를 CP-2.2 decisions 에 적는다",
       "evidence": "TASK-011 SC-05 Given 이 ADR-0020 과 충돌한 채 Red 승인 → Green 에서 발견",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "f4910e7"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 1.5 / Step 4 unresolved",
       "change": "이메일 등 외부 신원으로 계정을 동일시·연결하는 설계는 선점 가능성('누가 그 신원을 먼저 가질 수 있는가')을 unresolved 에 적고 관련 ADR 의 위협을 확인한다",
       "evidence": "TASK-011 Phase 4 RC-1 — ADR-0014 자동 연결이 계정 선점 경로",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "f4910e7"
     },
     {
       "target": ".claude/skills/wf-verify/references/evidence-integrity.md",

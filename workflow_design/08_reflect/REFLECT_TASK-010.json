@@ -169,8 +169,9 @@
       "section": "Step 2 — 시나리오 작성",
       "change": "feature 문서의 '상태별로 무엇이 보이나' 표를 한 행씩 시나리오 covers 와 대조한다. 대응이 없는 상태는 시나리오를 추가하거나 문서에서 뺀다고 CP-2.2 decisions 에 적는다",
       "evidence": "TASK-010 — §2-5 '제출 중 — 로딩 표시' 가 시나리오에서 빠져 Phase 4 WARN",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "f4910e7"
     }
   ],
   "completion_report": {
