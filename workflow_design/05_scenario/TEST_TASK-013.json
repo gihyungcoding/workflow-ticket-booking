@@ -141,6 +141,6 @@
     "note": "프로브 테스트는 만들지 않았다. 하네스는 프레임워크 계층(Router·AuthProvider·MUI)을 실제로 통과시키므로 직접 주입 테스트가 아니다"
   },
   "human_review": {
-    "approved": false
+    "approved": true
   }
 }

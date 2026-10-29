@@ -2,7 +2,7 @@
 task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
 phase: "2b"
-phase_name: "Phase 2b - Red (테스트 작성 완료, HITL#2 대기)"
+phase_name: "Phase 2b 완료 (HITL#2 승인, 3 진입 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-10-29

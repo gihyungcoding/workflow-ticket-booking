@@ -1,10 +1,9 @@
 ---
 status: ACTIVE
 saved_at: 2026-10-29T00:00:00Z
-summary: "[Phase 2b Red 작성 완료 — HITL#2 대기] 테스트 14개 정의(케이스 93) → 91 실패(기능 없음) + 2 already_passing(SC-14 회귀). 기존 176/176 통과. 컴파일 스켈레톤 없음(App 경유 렌더·fetch 응답만 사용). tsc·oxlint 통과."
+summary: "[Phase 2b 완료 — HITL#2 승인] 테스트 14개 정의(케이스 93) → 91 실패(기능 없음) + 2 already_passing(SC-14 회귀). 기존 176/176 통과. 컴파일 스켈레톤 없음(App 경유 렌더·fetch 응답만 사용). tsc·oxlint 통과."
 
 next_steps:
-  - "HITL#2 — already_passing(SC-14)과 harness_probe.not_verified 를 요약에 밝히고 승인받는다. 승인되면 TEST_TASK-013.json 의 human_review.approved=true, 테스트 커밋(test(TASK-013))"
   - "Phase 3 — wf-develop. 구현 순서: auth.ts completeSocialSignUp → SocialLoginButtons → LoginPage·SignUpPage·messages → OAuthRedirectPage(쿼리 한 번 읽기) → RoleSelectionPage → App 라우트 → vite.config 프록시. 승인된 테스트는 고치지 않는다"
   - "Green 직후 변이 검증(StrictMode 빼기·복원 가드 제거·pendingToken 을 URL 에 남기기·replace→push·중복 제출 가드 제거)으로 가짜 통과를 점검"
 
