@@ -1,0 +1,350 @@
+{
+  "task_id": "TASK-013",
+  "route": "Frontend",
+  "route_reason": "소셜 로그인 버튼·콜백 라우트(/oauth2/redirect)·역할 선택 화면이 모두 화면·클라이언트 상태 범위. 백엔드(TASK-011·012)는 develop 에 머지돼 있고 변경하지 않는다. 판정(자동 연결·가입 대기·토큰 검증)은 서버가 하고 프론트는 받은 값을 처리·표시만 한다",
+  "design": {
+    "inputs": [
+      {
+        "name": "소셜 버튼 클릭",
+        "type": "provider ∈ kakao|naver|google|apple",
+        "source": "SocialLoginButtons (로그인·회원가입 화면)",
+        "constraints": [
+          "네 제공자 버튼을 모두 보인다. 각각 {VITE_API_BASE_URL}/oauth2/authorization/{provider} 로 브라우저가 이동한다(전체 페이지 이동 — fetch 아님)",
+          "주소는 api/http.ts 의 apiUrl 로 만든다. 배포 주소를 코드에 쓰지 않는다(DEPLOY-001)",
+          "개발 환경은 Vite 프록시가 /oauth2/authorization 만 백엔드로 보낸다 — /oauth2/redirect 는 프론트 라우트라 프록시하면 안 된다"
+        ]
+      },
+      {
+        "name": "콜백 URL 의 쿼리",
+        "type": "token | pendingToken: str (둘 중 하나)",
+        "source": "백엔드 OAuth2LoginSuccessHandler 가 302 로 보낸 /oauth2/redirect?token=… 또는 ?pendingToken=… (query — 사용자 결정 2026-10-29, ADR-0021 fragment 전환은 후속)",
+        "constraints": [
+          "token 과 pendingToken 중 **공백을 뺀 값이 비어 있지 않은 것이 정확히 하나**일 때만 정상이다. token 이면 로그인 처리 / pendingToken 이면 역할 선택으로 보낸다. 값이 빈 문자열·공백만인 쪽은 없는 것으로 본다(예: `?token=&pendingToken=x` 는 pendingToken 만 있는 것)",
+          "둘 다 없음(쿼리 없음·모르는 파라미터만·빈/공백만)·둘 다 비어 있지 않음은 정상 응답이 아니다 — 실패(F5)로 처리한다(백엔드는 이 경우를 만들지 않는다)",
+          "읽은 즉시 주소창에서 토큰 쿼리를 지운다(history.replace) — 접근 로그·Referer·히스토리 노출을 줄이는 ADR-0021 의 완화를 query 에서도 적용한다",
+          "StrictMode 가 효과를 두 번 실행하므로 쿼리는 첫 렌더에서 한 번만 읽어 보관한다 — 두 번째 실행이 이미 지워진 주소를 읽어 '파라미터 없음' 으로 오판하면 안 된다",
+          "파싱은 한 함수에 모은다 — ADR-0021 로 query→fragment 가 바뀔 때 수정 지점이 한 곳이다"
+        ]
+      },
+      {
+        "name": "로그인 화면의 error 쿼리",
+        "type": "error=social",
+        "source": "백엔드 OAuth2LoginFailureHandler 가 인증 취소·실패 시 보내는 /login?error=social",
+        "constraints": [
+          "error=social 이면 '로그인이 취소되었거나 실패했습니다' 배너를 보인다(feature §2-5)",
+          "그 밖의 error 값·없음은 배너 없음"
+        ]
+      },
+      {
+        "name": "역할 선택 입력",
+        "type": "role ∈ AUDIENCE|ORGANIZER",
+        "source": "RoleSelectionPage 라디오",
+        "constraints": [
+          "필수 선택 — 미선택이면 제출하지 않고 인라인 오류(가입 화면과 같은 문구 '역할을 선택해 주세요')",
+          "제출 중에는 버튼 비활성화·중복 제출 방지(feature §2-5)",
+          "pendingToken 은 화면 안에서 입력받지 않는다 — 콜백 페이지가 이동하면서 넘긴 값만 쓴다"
+        ]
+      },
+      {
+        "name": "pendingToken 전달",
+        "type": "pendingToken: str",
+        "source": "OAuthRedirectPage → RoleSelectionPage (라우터 location.state)",
+        "constraints": [
+          "URL 에 남기지 않는다(state)",
+          "state 가 없으면(직접 진입·상태 소실) 역할 선택을 열지 않고 로그인 화면으로 보낸다 — [2a 확정] 안내 문구 여부"
+        ]
+      },
+      {
+        "name": "POST /api/auth/social/complete 응답(외부 서버 응답)",
+        "type": "200 LoginResponse{accessToken,tokenType,expiresInSeconds,user{id,email,name,role}} | 401 PENDING_SIGNUP_EXPIRED | 409 EMAIL_ALREADY_EXISTS | 409 SOCIAL_ACCOUNT_ALREADY_LINKED | 400 | 쓰기 가드 403 | 네트워크 오류",
+        "source": "백엔드 AuthController.completeSocialSignUp / AuthExceptionHandler (소스에서 확인)",
+        "constraints": [
+          "성공은 본문의 accessToken(비어 있지 않은 문자열)과 user(name 비어 있지 않음)가 있을 때만 — 상태 200 이어도 본문이 틀리면 실패(login() 과 같은 규칙)",
+          "code 는 body.code 문자열로만 판정한다(상태만 보지 않는다) — 같은 401 에 다른 code, 빈 바디, 비 JSON 이 올 수 있다",
+          "PENDING_SIGNUP_EXPIRED 만 만료 안내(AC4). 그 밖의 실패는 일반 실패 안내 + 재시도 가능 [2a 확정 — 409 두 종류에 전용 문구를 줄지]"
+        ]
+      },
+      {
+        "name": "GET /api/auth/me 응답(외부 서버 응답)",
+        "type": "200 UserResponse | 401 | 그 밖",
+        "source": "token 콜백에서 사용자 정보를 얻으려고 fetchMe(token) 호출 (콜백은 토큰만 주고 user 를 주지 않는다)",
+        "constraints": [
+          "성공이면 auth.login(token, user) 후 홈으로 — 본문이 틀리면 fetchMe 가 던진다",
+          "401(TokenRejectedError)·그 밖의 오류·형식 오류는 로그인하지 못한 것으로 보고 로그인 화면으로 보낸다. 토큰은 저장하지 않는다 [2a 확정 — 이때 배너 문구]"
+        ]
+      },
+      {
+        "name": "pendingToken 페이로드(표시용)",
+        "type": "JWT payload{email,name,provider,providerUserId,emailVerified,typ,exp}",
+        "source": "RoleSelectionPage 가 안내 문구(이메일·이름)를 위해 base64url 로 디코드",
+        "constraints": [
+          "서명을 검증하지 않는다 — 표시 전용이며 신원 판단에 쓰지 않는다(서버가 /complete 에서 검증)",
+          "디코드 실패·email/name 이 문자열이 아님·형식 이상이면 이메일·이름 없는 일반 안내로 대체하고 화면은 계속 동작한다",
+          "name 은 UTF-8(한글·4바이트 문자) 디코드가 맞아야 한다(atob 만 쓰면 깨진다). 값은 React 텍스트로만 렌더한다(HTML 로 넣지 않는다)"
+        ]
+      },
+      {
+        "name": "저장된 토큰 복원 응답(외부 서버 응답)",
+        "type": "200 UserResponse | 401 | 그 밖",
+        "source": "AuthProvider 가 앱 시작 때 보내는 GET /api/auth/me (이미 구현 — TASK-010, ADR-0018)",
+        "constraints": [
+          "이 태스크의 새 로그인 경로(콜백 token·역할 제출)가 끝난 뒤 도착한 복원 응답은 상태·토큰 어디에도 영향을 주지 않는다 — 늦은 401 이 방금 저장한 새 토큰을 지우면 안 된다",
+          "새 코드는 auth.login() 만 거쳐 로그인한다 — 직접 localStorage 를 쓰면 세대 규칙을 우회한다"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "소셜 버튼 4개",
+        "type": "UI",
+        "description": "로그인·회원가입 화면 모두 이메일 폼 아래 '또는' 구분선 다음 한 줄(feature §2-4). 브랜드 색을 쓰지 않는 중립 버튼 — 색 리터럴은 theme 밖에 둘 수 없고(DESIGN-002) 채도는 「예매가능」 하나라는 design.md §2 에 따른다"
+      },
+      {
+        "name": "콜백 처리 중 화면",
+        "type": "UI",
+        "description": "스피너만, 사용자 입력 없음(feature §2-5)"
+      },
+      {
+        "name": "로그인 상태 + 홈 이동",
+        "type": "상태 변경 + 라우팅",
+        "description": "token 콜백 성공 시 localStorage 토큰 저장·AuthContext 사용자 설정 후 '/' 로 replace 이동. 소셜 로그인은 이전 화면(from)을 잃으므로 홈으로 간다(AC2)"
+      },
+      {
+        "name": "역할 선택 화면",
+        "type": "UI",
+        "description": "안내 문구(이메일·이름) + 역할 라디오 + 계속하기 버튼. 제출 중·만료 오류 상태(feature §2-5)"
+      },
+      {
+        "name": "로그인 처리 + 홈 이동(역할 제출 성공)",
+        "type": "상태 변경 + 라우팅",
+        "description": "completeSocialSignUp 성공 시 auth.login(accessToken,user) 후 '/' (feature §2-5 '회원가입/역할선택 성공은 홈으로')"
+      },
+      {
+        "name": "만료 안내 + 로그인 화면 이동 버튼",
+        "type": "UI",
+        "description": "'로그인 정보가 만료되었습니다. 다시 로그인해 주세요' + 로그인 화면으로 이동 버튼(AC4, feature §2-5)"
+      },
+      {
+        "name": "인증 실패 배너",
+        "type": "UI",
+        "description": "/login?error=social 에서 '로그인이 취소되었거나 실패했습니다'(AC5). 콜백의 비정상 응답도 같은 경로로 모은다"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "소셜 버튼 노출·이동",
+        "steps": [
+          "LoginPage·SignUpPage 가 SocialLoginButtons 를 렌더",
+          "카카오·네이버·구글·애플 버튼 각각 apiUrl('/oauth2/authorization/{provider}') 로 이동(링크)"
+        ],
+        "covers": [
+          "로그인/회원가입 화면에 카카오/네이버/구글/애플 버튼이 보이고 각각 /oauth2/authorization/{provider}로 이동한다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "콜백 token 즉시 로그인",
+        "steps": [
+          "/oauth2/redirect 렌더 — 스피너",
+          "첫 렌더에서 쿼리를 읽어 보관하고 주소창에서 지움",
+          "token 이면 fetchMe(token)",
+          "성공 시 auth.login(token,user) 후 '/' replace 이동",
+          "실패 시 F5"
+        ],
+        "covers": [
+          "콜백 리다이렉트(/oauth2/redirect)에서 token 쿼리가 오면 즉시 로그인 처리 후 홈으로 이동한다"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "콜백 pendingToken → 역할 선택 → 가입 완료",
+        "steps": [
+          "pendingToken 이면 쿼리를 지우고 /oauth2/role 로 replace 이동(state 로 pendingToken 전달)",
+          "역할 선택 화면이 페이로드에서 이메일·이름 안내를 표시",
+          "역할을 고르고 제출 — 제출 중 비활성",
+          "completeSocialSignUp 성공 시 auth.login 후 '/' 이동"
+        ],
+        "covers": [
+          "콜백 리다이렉트에서 pendingToken 쿼리가 오면 역할 선택 화면으로 이동하고, 역할 제출 후 로그인 처리된다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "pendingToken 만료",
+        "steps": [
+          "제출 응답이 401 PENDING_SIGNUP_EXPIRED",
+          "만료 안내 + 로그인 화면으로 이동 버튼 표시",
+          "버튼으로 /login 이동"
+        ],
+        "covers": [
+          "pendingToken 만료 오류 응답을 받으면 안내 메시지와 함께 로그인 화면으로 이동할 수 있다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "제공자 취소·실패 또는 비정상 콜백",
+        "steps": [
+          "백엔드가 /login?error=social 로 보냄 → LoginPage 가 배너 표시",
+          "또는 콜백 페이지가 token·pendingToken 없음/둘 다/빈 값/fetchMe 실패를 만나면 /login?error=social 로 replace 이동 [2a 확정]"
+        ],
+        "covers": [
+          "제공자 인증을 사용자가 취소하거나 실패하면 로그인 화면으로 돌아와 오류 메시지를 보여준다"
+        ]
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "Frontend (React)",
+    "note": "API 호출은 api/auth.ts, 로그인 상태는 auth/AuthContext.tsx(login()·ADR-0018 세대), 화면은 pages/·components/. 자동 연결·가입 대기·토큰 검증의 판정은 서버 — 프론트는 URL 쿼리와 응답을 처리·표시하고 pendingToken 페이로드는 표시용으로만 읽는다 (architecture.md §2). 새 계층·컴포넌트 없음",
+    "constraints_applied": [
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003",
+      "DEPLOY-001"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0002",
+    "ADR-0007",
+    "ADR-0008",
+    "ADR-0012",
+    "ADR-0015",
+    "ADR-0016",
+    "ADR-0018",
+    "ADR-0019",
+    "ADR-0020",
+    "ADR-0021"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "frontend/src/api/auth.ts",
+        "change": "completeSocialSignUp(pendingToken, role) 추가 — POST /api/auth/social/complete, 성공 본문 검증은 login() 과 같은 규칙, 오류는 throwIfApiError 로 ApiError(code). PENDING_SIGNUP_EXPIRED 상수. pendingToken 페이로드 표시용 디코더"
+      },
+      {
+        "path": "frontend/src/pages/LoginPage.tsx",
+        "change": "이메일 폼 아래 '또는' 구분선 + SocialLoginButtons, ?error=social 이면 실패 배너"
+      },
+      {
+        "path": "frontend/src/pages/SignUpPage.tsx",
+        "change": "가입 폼 아래 '또는' 구분선 + SocialLoginButtons"
+      },
+      {
+        "path": "frontend/src/App.tsx",
+        "change": "/oauth2/redirect 와 역할 선택 라우트 추가"
+      },
+      {
+        "path": "frontend/src/auth/messages.ts",
+        "change": "소셜 관련 문구(취소·실패 배너, 만료 안내, 일반 실패)를 AUTH_MESSAGES 에 추가 — 문구 정본은 SCENARIO_TASK-013.md"
+      },
+      {
+        "path": "frontend/vite.config.ts",
+        "change": "개발 프록시에 '/oauth2/authorization' 추가(백엔드로). /oauth2/redirect 는 프론트 라우트이므로 제외"
+      },
+      {
+        "path": "frontend/src/components/SocialLoginButtons.tsx",
+        "change": "4개 제공자 버튼. apiUrl 로 href 를 만든다",
+        "new": true
+      },
+      {
+        "path": "frontend/src/pages/OAuthRedirectPage.tsx",
+        "change": "/oauth2/redirect 콜백 — 쿼리 한 번 읽기·지우기, token/pendingToken/실패 분기",
+        "new": true
+      },
+      {
+        "path": "frontend/src/pages/RoleSelectionPage.tsx",
+        "change": "역할 선택 화면 — 안내 문구, 라디오, 제출·만료·일반 실패",
+        "new": true
+      }
+    ],
+    "reusable": [
+      {
+        "path": "frontend/src/api/auth.ts",
+        "symbol": "fetchMe",
+        "note": "token 콜백이 사용자 정보를 얻는 데 쓴다. 401 은 TokenRejectedError"
+      },
+      {
+        "path": "frontend/src/api/auth.ts",
+        "symbol": "login",
+        "note": "completeSocialSignUp 의 성공 본문 검증(accessToken·user) 규칙을 같게 한다 — isAuthUser 재사용"
+      },
+      {
+        "path": "frontend/src/auth/AuthContext.tsx",
+        "symbol": "useAuth",
+        "note": "auth.login(token,user) 가 토큰 저장·세대 증가(ADR-0018)·복원 대기 해제를 모두 한다 — 새로 저장하지 말 것"
+      },
+      {
+        "path": "frontend/src/api/http.ts",
+        "symbol": "apiUrl",
+        "note": "버튼 주소를 만든다. 쓰기 메서드는 request() 가 X-Write-Key 를 붙인다 — /complete POST 도 이것을 거쳐야 가드를 통과한다"
+      },
+      {
+        "path": "frontend/src/api/http.ts",
+        "symbol": "request",
+        "note": "completeSocialSignUp 의 fetch"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "ApiError",
+        "note": "code 를 가진 오류 — 새로 만들지 말고 import"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "throwIfApiError",
+        "note": "실패 응답을 ApiError(code) 로 바꾼다"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "isWriteKeyRejected",
+        "note": "쓰기 가드 거절 판정"
+      },
+      {
+        "path": "frontend/src/auth/messages.ts",
+        "symbol": "AUTH_MESSAGES",
+        "note": "loginFailed 등 기존 문구 재사용"
+      },
+      {
+        "path": "frontend/src/pages/SignUpPage.tsx",
+        "symbol": "SignUpPage",
+        "note": "역할 라디오(관객/주최자 FormControl·RadioGroup) 마크업 패턴"
+      }
+    ],
+    "existing_tests": [
+      "frontend/src/auth/AuthScreens.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/src/api/http.test.ts"
+    ],
+    "unresolved": [
+      "[결정됨 사용자 2026-10-29] 토큰은 query(?token=) 기준으로 만든다. ADR-0021(fragment, 채택됨)과 어긋나므로 후속 태스크가 백엔드 핸들러와 프론트 파싱을 함께 바꾼다. 이 태스크는 파싱을 한 함수에 모으고 읽은 즉시 주소창에서 지워 전환 비용과 노출을 줄인다",
+      "[2a 확정] 콜백 실패 처리: 파라미터 없음·둘 다 있음·빈 값·fetchMe 실패를 모두 /login?error=social(같은 배너)로 모을지, fetchMe 실패에만 일반 로그인 실패 문구(AUTH_MESSAGES.loginFailed)를 쓸지",
+      "[2a 확정] /complete 의 409(EMAIL_ALREADY_EXISTS·SOCIAL_ACCOUNT_ALREADY_LINKED)·400·쓰기 가드·네트워크 오류 문구 — AC 는 만료만 정한다. 최소안: 일반 실패 문구 + 재시도(입력 유지). 409 에 전용 문구를 줄지는 사용자 판단",
+      "[2a 확정] 역할 선택 라우트 경로(제안 /oauth2/role)와 state 소실 시 동작(제안: 안내 없이 /login 으로 replace)",
+      "[2a 확정] 콜백 처리 중 사용자가 뒤로 가기·새로고침: 새로고침하면 쿼리가 이미 지워져 있어 실패로 처리된다(제안: 허용)",
+      "[2a 확정] 로그인 배너 error=social 은 표시 뒤 주소에서 지울지(제안: 지우지 않는다 — 새로고침해도 같은 안내)",
+      "[2a 확정] 이미 로그인한 사용자가 /oauth2/redirect·역할 선택에 오면(제안: 콜백은 새 토큰으로 덮어쓰고, 역할 선택은 state 가 있으면 그대로 진행)",
+      "[열린 위험 R-1, 이 태스크 범위 밖] TASK-012 인계: 인가 요청 state 가 HttpSession 에 있고 JSESSIONID 에 SameSite/Secure 가 없어 애플 form_post 교차 사이트 콜백이 실제 브라우저에서 실패할 수 있다. 이 태스크가 소셜 로그인을 브라우저로 처음 확인하는 지점 — Phase 4 에서 실제 브라우저로 가능한 만큼 확인하고 결과를 기록한다(고치지 않는다)",
+      "[Phase 4 필수 증거] 화면 확인(references/screen-verification.md): 앱을 띄워 상태(콜백 처리 중·역할 선택 기본/제출 중/만료·로그인 실패 배너)를 실제로 만든다. 제공자 실제 로그인은 자격이 없으면 불가 — 그 경우 백엔드를 띄우고 콜백 주소를 직접 열어 token/pendingToken/실패를 재현하고 한계를 기록한다(WARN 후보)",
+      "[디자인] 제공자 브랜드 색(카카오 노랑·네이버 초록 등)은 색 리터럴 제약(DESIGN-002)과 design.md §2 에 어긋나 쓰지 않는다. 중립(outlined) 버튼 + 제공자 이름 텍스트. 치수는 theme spacing 만(DESIGN-003). 버튼 텍스트에 → 금지(design.md §6)",
+      "[해당 없음] 운영 DB 엔진 통합 테스트·외부 신원 선점 가능성 지침은 프론트 전용 태스크라 적용되지 않는다. pendingToken 가로채기 위험은 ADR-0021 '감수하는 것' 에 이미 기록됨",
+      "[개발 환경] /oauth2/authorization 프록시 추가 외에 로컬에서 4개 제공자를 실제로 돌리려면 제공자 콘솔 등록·환경변수(FRONTEND_BASE_URL 등)가 필요하다 — 이 태스크 밖"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 16
+    }
+  },
+  "acceptance_criteria": [
+    "로그인/회원가입 화면에 카카오/네이버/구글/애플 버튼이 보이고 각각 /oauth2/authorization/{provider}로 이동한다",
+    "콜백 리다이렉트(/oauth2/redirect)에서 token 쿼리가 오면 즉시 로그인 처리 후 홈으로 이동한다",
+    "콜백 리다이렉트에서 pendingToken 쿼리가 오면 역할 선택 화면으로 이동하고, 역할 제출 후 로그인 처리된다",
+    "pendingToken 만료 오류 응답을 받으면 안내 메시지와 함께 로그인 화면으로 이동할 수 있다",
+    "제공자 인증을 사용자가 취소하거나 실패하면 로그인 화면으로 돌아와 오류 메시지를 보여준다"
+  ],
+  "test_hints": {
+    "framework": "vitest + @testing-library/react + user-event (jsdom)",
+    "command": "cd frontend && PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" npm test",
+    "mock_strategy": "기존 AuthScreens.test.tsx 관례 — 서버는 두지 않고 globalThis.fetch(상태·본문)만 대체해 api/ 이하는 실제로 통과시킨다. 콜백은 MemoryRouter initialEntries 로 /oauth2/redirect?token=… 를 주고 StrictMode 로도 렌더해 두 번째 효과 실행을 검증한다. 주소창 정리는 location 이 아니라 라우터 location 으로 확인한다. pendingToken 은 실제 base64url JWT 모양(한글·4바이트 문자 이름 포함)으로 만든다. 만료·409·빈 바디·비 JSON 은 fetch 응답 변형으로 만든다. 버튼 이동은 링크의 href 속성을 단언한다(jsdom 은 페이지 이동을 하지 않는다)"
+  }
+}

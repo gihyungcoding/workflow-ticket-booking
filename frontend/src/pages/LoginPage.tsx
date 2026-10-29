@@ -5,11 +5,12 @@ import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { INVALID_CREDENTIALS, login } from '../api/auth'
 import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected } from '../api/performances'
 import { useAuth } from '../auth/AuthContext'
 import { AUTH_MESSAGES } from '../auth/messages'
+import { SocialLoginButtons } from '../components/SocialLoginButtons'
 
 // 앱 안의 경로만 믿는다 — 외부 주소·프로토콜 상대 주소·스킴·로그인/가입 순환은 홈으로.
 function safeDestination(from: unknown): string {
@@ -24,6 +25,7 @@ export function LoginPage() {
   const auth = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -64,6 +66,7 @@ export function LoginPage() {
   return (
     <Stack component="form" noValidate spacing={2} onSubmit={handleSubmit}>
       <Typography variant="h5">로그인</Typography>
+      {searchParams.get('error') === 'social' && <Alert severity="error">{AUTH_MESSAGES.socialFailed}</Alert>}
       {serverError && <Alert severity="error">{serverError}</Alert>}
       <TextField
         label="이메일"
@@ -86,6 +89,7 @@ export function LoginPage() {
       <Button type="submit" variant="contained" disabled={submitting}>
         로그인
       </Button>
+      <SocialLoginButtons />
     </Stack>
   )
 }
