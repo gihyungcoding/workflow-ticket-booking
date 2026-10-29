@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-29T00:00:00Z
 summary: "[Phase 1 완료] route Frontend. flows F1~F5 — AC 5개를 하나씩 덮는다(F1=AC1, F2=AC2, F3=AC3, F4=AC4, F5=AC5). 변경 대상 9건(기존 6·신규 3), 재사용 10. 백엔드 응답 계약은 소스에서 확인(콜백은 token/pendingToken 쿼리만, 사용자 정보는 fetchMe 로, /complete 는 LoginResponse·401 PENDING_SIGNUP_EXPIRED·409 두 종류). 토큰은 query 기준(사용자 결정). unresolved 12건 중 2a 확정 필요 6건. check_plan 통과."
 

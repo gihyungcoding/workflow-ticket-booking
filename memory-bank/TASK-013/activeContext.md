@@ -1,9 +1,9 @@
 ---
 task_id: TASK-013
 title: "소셜 로그인 버튼·역할 선택·콜백 처리"
-phase: "4"
-phase_name: "Phase 4 완료 (HITL#3 예외 승인, 5 진입 대기)"
-status: ACTIVE
+phase: "5"
+phase_name: "Phase 5 완료 (HITL#4 승인, 태스크 종료)"
+status: DONE
 track: standard
 created_at: 2026-10-29
 last_updated: 2026-10-29
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-013-social-login-frontend"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-013.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-013.md"
@@ -21,6 +21,7 @@ artifacts:
   red: "workflow_design/05_scenario/TEST_TASK-013.json"
   dev: "workflow_design/06_dev/DEV_TASK-013.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-013.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-013.json"
 ---
 
 ## 지금 무엇을 하고 있나

@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-29T00:00:00Z
 summary: "[Phase 3 완료] 269/269 통과(대상 93케이스 + 기존 176). 변경 6 + 신규 3. tsc·build 통과, 린트 새 경고 0. 변이 15건 중 14 사망·M2 코드 제거·M15 생존(Phase 4 수동 확인). 승인 테스트 1건 수정(SC-06 둘째 클릭, 사용자 승인)."
 

@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-29T00:00:00Z
-summary: "[Phase 5 회고 작성 — HITL#4 대기] Keep 4 / Problem 5 / Try 5. 재시도: Phase 2a 1회(독립검증 V11). ADR 후보 2건, drift 2건, 규칙 제안 5건(screen-verification.md 는 TASK-010 #1 과 합쳐 반복 1)."
+summary: "[Phase 5 완료 — HITL#4 승인(승인하고 종료)] Keep 4 / Problem 5 / Try 5. 재시도: Phase 2a 1회(독립검증 V11). ADR 후보 2건, drift 2건, 규칙 제안 5건(screen-verification.md 는 TASK-010 #1 과 합쳐 반복 1)."
 
 next_steps:
-  - "HITL#4 승인 후 completion_report.approved_by_human=true, CP-5.2 ARCHIVED, activeContext DONE, rebuild_memory_bank_index(tasks.json done), 커밋, /wf-ship 안내"
+  - "/wf-ship 으로 머지 준비(PR 생성, 머지는 사람이). 후속 태스크 후보: S-1(백엔드 state 바인딩 + ADR-0021 갱신 + fragment 전환 + referrer 메타), R-1, user-authentication.md 갱신"
   - "후속 태스크 후보: S-1(백엔드 state 바인딩/일회용 코드 + ADR-0021 갱신 + fragment 전환 + referrer 메타), R-1(애플 세션 쿠키), user-authentication.md 갱신"
 
 decisions:

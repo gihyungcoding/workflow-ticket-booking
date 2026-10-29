@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-29T00:00:00Z
 summary: "[Phase 4 완료 — WARN, HITL#3 예외 승인(S-1·R-1·M15)] 269/269·tsc·build·린트 오류 0·아키텍처 error 0. 실제 백엔드(PostgreSQL)+개발 서버+Chrome 으로 화면 상태 11개 확인. 코드 리뷰 correctness 결함 0. 경고: 로그인 CSRF(S-1, 백엔드·ADR 범위), R-1 미확인, M15 수동 확인."
 

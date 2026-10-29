@@ -718,7 +718,7 @@
       "TASK-011",
       "TASK-012"
     ],
-    "status": "in_progress",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",

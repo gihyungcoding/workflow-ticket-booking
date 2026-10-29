@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-29T00:00:00Z
 summary: "[Phase 2b 완료 — HITL#2 승인] 테스트 14개 정의(케이스 93) → 91 실패(기능 없음) + 2 already_passing(SC-14 회귀). 기존 176/176 통과. 컴파일 스켈레톤 없음(App 경유 렌더·fetch 응답만 사용). tsc·oxlint 통과."
 

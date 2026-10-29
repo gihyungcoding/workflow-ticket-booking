@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-10-29T00:00:00Z
 summary: "[Phase 2a 완료 — HITL#1 승인] 시나리오 14건(happy 4 / error 6 / boundary 3 / regression 1), AC 5/5 매핑. 독립검증 2회(1회차 V11 fail → 경계 보강, 2회차 pass·경고 2건 반영). 상태 표(feature §2-5) 전 행 대조 완료."
 
