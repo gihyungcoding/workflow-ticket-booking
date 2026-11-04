@@ -182,7 +182,18 @@
     "mock_strategy": "모킹 없음. 실제 H2 + 리포지토리, 마이그레이션만 PostgreSQL 컨테이너. 클래스 레벨 @Transactional 없음, 행 수·handle 은 리포지토리/JdbcTemplate 로 새로 읽음"
   },
   "human_review": {
-    "approved": false,
+    "approved": true,
+    "approved_at": "2026-11-05",
+    "method": "AskUserQuestion — 시나리오+Red 통합 재승인(HITL#1·2, Phase 4 롤백 후)",
+    "answer": "승인, V11 은 이번 범위 밖",
+    "warnings_accepted": [
+      "V5·V7 SC-16 내부 검증 직접 호출",
+      "V6 Then 안 후속 호출",
+      "V9 SC-16·SC-09/14 중복"
+    ],
+    "out_of_scope": [
+      "V11 base64url 마지막 글자 미사용 비트로 만든 같은 토큰의 다른 표기 — 별도 태스크 후보(회고)"
+    ],
     "previous": {
       "approved": true,
       "approved_at": "2026-11-04",

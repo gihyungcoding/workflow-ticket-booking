@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-04T16:00:00Z
-summary: "Phase 4 롤백 재작업 Red — SC-15·SC-16 신규, SC-09·14 행 확장. 164 중 4 실패(구현 없음), 이미 통과하는 행은 변이 M1~M3 로 검증. 통합 승인 대기."
+summary: "롤백 재작업 Red 16건 — 통합 재승인 완료(2026-11-05). V11 은 범위 밖(별도 태스크 후보)."
 
 next_steps:
-  - "HITL#1·2 재승인 (시나리오 16건 + Red) — 경고 5건 판단 포함"
+  - "Phase 3 — 압축 형식 검사를 verifyAccessToken·verifyPendingToken 공통 지점으로, 페이로드 중복 키 거부"
 
 decisions:
   - decision: "컴파일 스켈레톤 없이 HTTP·JDBC 수준에서만 단언"

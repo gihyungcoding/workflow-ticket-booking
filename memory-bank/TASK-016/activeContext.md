@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "2b"
-phase_name: "Phase 2b - Red (Phase 4 롤백 재작업)"
+phase: "3"
+phase_name: "Phase 3 - Green (Phase 4 롤백 재작업)"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -26,7 +26,7 @@ TASK-016 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 8h �
 
 ## 다음 한 걸음
 
-Phase 4 FAIL(RC-2) → 사용자 결정으로 시나리오 롤백(RETRY_SCENARIO 1). AC8(토큰 압축 형식) 추가. SC-15(HTTP /me)·SC-16(검증 함수 직접) 을 써서 독립검증 → Red → 공통 지점 수정 → 재검증.
+롤백 재작업 Red 재승인 완료(CP-2.5). Phase 3: 공통 형식 검사(access·pending) + 중복 키 거부 → 전체 스위트 → 자체 리뷰 → Phase 4 재검증(RC-2 인계). V11(미사용 비트 표기)은 범위 밖 — 회고에 별도 태스크 후보로.
 
 ## 알아둬야 할 것
 
