@@ -27,7 +27,7 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객
 
 - **UI 라이브러리**: MUI (Material UI) — 근거 ADR-0002
 - **디자인 정본**: `docs/product/design.md` · `design-tokens.css`
-- **시안**: 없음 — 화면 명세는 feature 문서 §5
+- **시안**: `out/screens/*.html` (흐름 `out/index.html`, 요구사항 `out/prd.md`) — 근거 ADR-0022. 화면은 시안과 같아야 한다
 
 ---
 
