@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2a"
+phase_name: "Phase 2a - Scenario"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-016-user-handle-pending-info"
 
-last_checkpoint: null
+last_checkpoint: "CP-1.3"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-016.json"
 ---
@@ -26,9 +26,7 @@ TASK-016 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 8h �
 
 ## 다음 한 걸음
 
-`wf-plan` 스킬로 Phase 1 설계를 한다. 출발점은 `docs/product/features/booking-ux-01-auth.md`
-§3(데이터·API 명세)·§6(구현 참고), `AuthService.signUp()`·`completeSocialSignUp()`,
-`JwtTokenProvider.verifyPendingToken()`.
+Phase 1 완료(CP-1.3). `wf-scenario` 로 Phase 2a 시나리오를 설계한다 — PLAN 의 flows F1~F6, unresolved #1·#3·#4.
 
 ## 알아둬야 할 것
 
