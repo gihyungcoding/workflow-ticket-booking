@@ -13,7 +13,7 @@
 - **테스트**: backend `./gradlew test` · frontend `npm test` (vitest)
 - **린트**: backend `./gradlew spotlessCheck` (`spotlessApply` 로 자동 수정) · frontend `npm run lint` (oxlint)
 - **빌드**: backend `./gradlew build` · frontend `npm run build`
-- **리뷰 지시 (JPA)**: Phase 4 에서 `code-reviewer` 를 호출할 때, 테스트 클래스가 클래스 레벨
+- **리뷰 지시 (JPA)**: Phase 3 자체 리뷰와 Phase 4 에서 `code-reviewer` 를 호출할 때, 테스트 클래스가 클래스 레벨
   `@Transactional` 이면 프롬프트에 **"UPDATE 경로처럼 dirty checking 으로 커밋이 지연되는
   곳은 비트랜잭션 프로브나 `flush` 로 실제 DB 반영 여부를 확인해달라"** 를 포함한다.
   반영뿐 아니라 **거부 경로의 "DB 변경 없음" 단언도 비트랜잭션으로 확인**하게 하고,
