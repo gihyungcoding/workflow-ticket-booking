@@ -113,7 +113,7 @@
           "getMe → toResponse 가 handle 포함"
         ],
         "covers": [
-          "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 이메일 `harin.kim@kakao.com` 이면 `harin.kim` 이다"
+          "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다"
         ]
       },
       {

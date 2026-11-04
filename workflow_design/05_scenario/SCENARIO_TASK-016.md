@@ -30,11 +30,12 @@
 - **And** 뽑힌 값이 (0, 7302) 이다
 - **When** `harin.kim@kakao.com` / 이름 `김하린` / 역할 `AUDIENCE` 로 `POST /api/auth/signup` 을 호출한다
 - **Then** 201 이고 응답의 `handle` 은 `wave7302` 다
-- **And** 그 계정으로 로그인한 토큰으로 `GET /api/auth/me` 를 호출하면 `handle` 이 `wave7302` 다
+- **And** 같은 이메일·비밀번호로 `POST /api/auth/login` 을 하면 응답 `user.handle` 이 `wave7302` 다
+- **And** 그 응답의 accessToken 으로 `GET /api/auth/me` 를 호출하면 `handle` 이 `wave7302` 다
 - **And** `users` 를 새로 읽으면 그 행의 `handle` 이 `wave7302` 다
 
 covers: 이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다
-flow: F1, F2
+flow: F1
 
 ## SC-02 (happy) 단어 번호와 숫자의 경계에서도 형식이 맞다
 
@@ -92,8 +93,6 @@ flow: F1
 | (0, 7302) 9번, 그다음 (1, 1) | 201, `handle` = `star0001` (10번째 뽑기는 아직 시도 안에 든다) |
 | (0, 7302) 10번 | 503 `HANDLE_GENERATION_FAILED`, `users` 행 수 그대로, `new@example.com` 행 없음 |
 
-- **And** 503 다음에 뽑힌 값이 (1, 1) 이면 같은 이메일로 다시 가입할 수 있다 (201)
-
 covers: 뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다
 flow: F1
 
@@ -115,11 +114,11 @@ PostgreSQL 컨테이너에서 Flyway 를 V4 까지 적용한 뒤 V5 를 적용�
 - **Given** V4 까지 적용된 `users` 에 아래 표의 회원이 있다
 - **When** V5 를 적용한다
 - **Then** 표의 모든 행의 `handle` 이 NULL 이 아니고 `^[a-z]{3,6}[0-9]{4}$` 에 맞는다
-- **And** 숫자를 뗀 단어가 `HandleGenerator` 의 단어 목록(규약 표) 안에 있다
+- **And** 숫자를 뗀 단어가 규약 표의 단어 목록 안에 있다
 - **And** `handle` 값이 서로 모두 다르다
 - **And** 어떤 `handle` 도 그 회원 이메일의 `@` 앞부분과 같지 않다
 - **And** 이어서 `handle` 없이 `users` 에 INSERT 하면 NOT NULL 위반으로 실패한다
-- **And** 이미 있는 `handle` 로 INSERT 하면 UNIQUE 위반(`ux_users_handle`)으로 실패한다
+- **And** 이미 있는 `handle` 로 INSERT 하면 UNIQUE 위반으로 실패한다
 
 | 이메일 | 비밀번호 해시 | email_verified |
 |---|---|---|
@@ -159,7 +158,7 @@ flow: F5
 - **And** 표의 모든 행에서 응답의 `code` 와 `message` 가 같다 (만료와 위조를 구분해 알리지 않는다)
 - **And** `users`·`social_accounts` 행 수가 그대로다
 
-| 토큰 상태 |
+| 토큰 상태 (아래 「서명은 맞지만」 행은 올바른 키로 서명했고 다른 클레임은 유효하다) |
 |---|
 | 만료 정각 (T + 300초에 호출) |
 | 만료 후 (T + 301초) |
@@ -167,9 +166,19 @@ flow: F5
 | 페이로드를 바꿈 (이메일 변조, 서명 그대로) |
 | 형식이 깨짐 (임의 문자열 `abc`) |
 | accessToken (`typ=access`) 을 보냄 |
-| 필수 클레임 `email` 누락 |
-| `emailVerified` 가 불리언이 아님 (문자열 `"true"`) |
-| 서명은 맞지만 이름에 NUL 문자 |
+| 서명은 맞지만 `typ` 없음 |
+| 서명은 맞지만 `exp` 없음 / `exp` 가 숫자가 아님 (문자열 `"later"`) |
+| 서명은 맞지만 `email` 누락 / `null` |
+| 서명은 맞지만 `name` 누락 / `null` |
+| 서명은 맞지만 `provider` 누락 / `null` / 빈 문자열 |
+| 서명은 맞지만 `provider` 가 정의 밖 (`FOO`) / 소문자 (`kakao`) |
+| 서명은 맞지만 `emailVerified` 누락 / `null` / 문자열 `"true"` / 문자열 `"TRUE"` / 숫자 `1` |
+| 서명은 맞지만 `email` 에 NUL 문자 / 짝 없는 서로게이트(`\ud800`) |
+| 서명은 맞지만 `name` 에 NUL 문자 / 짝 없는 서로게이트(`\ud800`) |
+| 서명은 맞지만 `email` 이 정규화 후 256자 (최대 255 + 1) |
+| 서명은 맞지만 `name` 이 101자 (최대 100 + 1) |
+
+- **And** 어느 행에서도 응답 본문에 토큰 안의 이메일·이름 값이 나오지 않는다
 
 covers: 만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다
 flow: F6
@@ -188,8 +197,8 @@ flow: F6
 | `pendingToken` 이 문자열이 아님: 숫자 / 객체 / 배열 / 불리언 |
 | 본문이 비어 있음 / JSON 이 아님 |
 
-covers: 만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다
-flow: F6
+covers: `POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다
+flow: F5
 
 ## SC-11 (regression) 이메일 중복 가입은 여전히 409 이다
 
@@ -197,8 +206,24 @@ flow: F6
 - **When** 같은 이메일(대문자 `HARIN.KIM@KAKAO.COM` 포함)로 이메일 가입한다
 - **Then** 409 `EMAIL_ALREADY_EXISTS` 이고 `users` 행 수가 그대로다
 
-covers: 뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다
+covers: 이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다
 flow: F1
+
+## SC-12 (error) 소셜 가입 완료에서도 10번 연속 겹치면 503 이고 아무것도 만들지 않는다
+
+- **Given** 유효한 pendingToken(제공자 `KAKAO`, 이메일 `harin.kim@kakao.com`)이 있다
+- **And** 아이디 `wave7302` 인 회원이 이미 있고 `users`·`social_accounts` 행 수를 기록했다
+- **And** 다음 가입에서 뽑힌 값이 아래 표와 같다
+- **When** 역할 `AUDIENCE` 로 `POST /api/auth/social/complete` 를 호출한다
+- **Then** 결과가 표와 같다
+
+| 뽑힌 값 | 결과 |
+|---|---|
+| (0, 7302) 9번, 그다음 (1, 1) | 200, `user.handle` = `star0001` |
+| (0, 7302) 10번 | 503 `HANDLE_GENERATION_FAILED`, `users`·`social_accounts` 행 수 그대로 |
+
+covers: 소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다; 뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다
+flow: F3
 
 ---
 
