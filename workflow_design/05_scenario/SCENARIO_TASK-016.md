@@ -20,7 +20,7 @@
 | 이메일·이름 | 아이디 생성에 쓰지 않는다 |
 | 겹침 | 이미 있는 아이디가 뽑히면 다시 뽑는다. 10번째 뽑기까지 모두 겹치면 실패 |
 | 실패 응답 | 503 `{"code":"HANDLE_GENERATION_FAILED", ...}` |
-| pendingToken | HS256, `typ=pending`, 발급 시각 + 300초 만료(그 정각부터 만료) — 기존 규약(TASK-011) |
+| pendingToken | HS256, `typ=pending`, 발급 시각 + 300초 만료(그 정각부터 만료) — 기존 규약(TASK-011). 클레임 타입·규칙은 PLAN `design.claim_schema` |
 | 대기 정보 응답 | 200 `{"provider":"KAKAO","email":"…","name":"…","expiresAt":"<ISO-8601 UTC>"}` |
 | 오류 코드 | `PENDING_SIGNUP_EXPIRED`(401) · `INVALID_REQUEST`(400) · `EMAIL_ALREADY_EXISTS`(409) · `HANDLE_GENERATION_FAILED`(503) |
 
@@ -145,16 +145,19 @@ flow: F4
 
 ## SC-08 (happy) 소셜 가입 대기 정보를 돌려준다
 
-- **Given** 시각 T 에 발급한 유효한 pendingToken(제공자 `KAKAO`, 이메일 `harin.kim@kakao.com`, 이름 `김하린`)이 있다
+- **Given** 시각 T 에 발급한 유효한 pendingToken(제공자는 표의 값, 이메일 `harin.kim@kakao.com`, 이름 `김하린`)이 있다
 - **And** `users`·`social_accounts` 의 현재 행 수를 기록했다
 - **When** 아래 표의 시각에 `POST /api/auth/social/pending` 을 `{"pendingToken": "<토큰>"}` 으로 호출한다
-- **Then** 200 이고 본문이 `{"provider":"KAKAO","email":"harin.kim@kakao.com","name":"김하린","expiresAt":"<T+300초>"}` 다
+- **Then** 200 이고 본문이 `{"provider":"<표의 제공자>","email":"harin.kim@kakao.com","name":"김하린","expiresAt":"<T+300초, 초 단위 ISO-8601 UTC>"}` 다
 - **And** `users`·`social_accounts` 행 수가 그대로다
 
-| 호출 시각 |
-|---|
-| T (발급 직후) |
-| T + 299초 (만료 1초 전) |
+| 제공자 | 호출 시각 |
+|---|---|
+| `KAKAO` | T (발급 직후 — exp 가 now+300초와 같다) |
+| `KAKAO` | T + 299초 (만료 1초 전) |
+| `NAVER` | T |
+| `GOOGLE` | T |
+| `APPLE` | T |
 
 covers: `POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다
 flow: F5
@@ -181,19 +184,19 @@ flow: F5
 | 요청 문자열에 NUL 문자 / 짝 없는 서로게이트(`\ud800`) 가 섞임 |
 | accessToken (`typ=access`) 을 보냄 |
 
-**서명은 맞지만 클레임이 규칙 밖** (올바른 키로 서명했고, 표의 클레임 하나만 바꾸고 나머지는 유효하다)
+**서명은 맞지만 클레임이 규칙 밖** — 기준은 PLAN `design.claim_schema`. 올바른 키로 서명했고, 표의 클레임 하나만 바꾸고 나머지는 유효하다.
 
-| 클레임 | 누락 | `null` | 빈 문자열 | 공백만 | 비문자열 (숫자 `1` · 객체 `{}` · 배열 `[]` · 불리언 `true`) | NUL 포함 | 짝 없는 서로게이트 | 최대 길이 + 1 | 그 밖 |
+| 클레임 (규칙) | 누락 | `null` | 빈 문자열 | 공백만 | 타입 다름 | NUL 포함 | 짝 없는 서로게이트 | 길이·범위 밖 | 형식·열거 밖 |
 |---|---|---|---|---|---|---|---|---|---|
-| `email` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 정규화 후 256자 | `@` 없음 · `@` 두 개 · 서식 문자(`\u200b`) 포함 |
-| `name` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 101자 | — |
-| `provider` | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | — | 정의 밖 `FOO` · 소문자 `kakao` |
-| `providerUserId` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 256자 | — |
-| `emailVerified` | ✓ | ✓ | — | — | 문자열 `"true"` · `"TRUE"` · 숫자 `1` | — | — | — | — |
-| `exp` | ✓ | — | — | — | 문자열 `"later"` | — | — | — | — |
-| `typ` | ✓ | — | — | — | — | — | — | — | `access` |
+| `typ` (문자열, 정확히 `pending`) | ✓ | ✓ | ✓ | ✓ | 숫자 `1` · 객체 `{}` · 배열 `[]` · 불리언 `true` | `pend\u0000ing` | `pending\ud800` | 해당 없음 — 값이 하나로 정해져 있다 | `access` · `PENDING` |
+| `exp` (정수 초, now < exp ≤ now+300초) | ✓ | ✓ | `""` | `"   "` | 문자열 `"later"` · 객체 `{}` · 배열 `[]` · 불리언 `true` | 해당 없음 — 숫자 | 해당 없음 — 숫자 | 소수 `T+120.5` · `T+301` (먼 미래) · `9.3e18` (Instant 범위 초과) | 해당 없음 |
+| `email` (문자열, 정규화 후 1~255자 이메일) | ✓ | ✓ | ✓ | ✓ | 숫자 `1` · 객체 `{}` · 배열 `[]` · 불리언 `true` | ✓ | ✓ | 정규화 후 256자 | `@` 없음 · `@` 두 개 · 서식 문자 `\u200b` 포함 |
+| `name` (문자열, 1~100자) | ✓ | ✓ | ✓ | ✓ | 숫자 `1` · 객체 `{}` · 배열 `[]` · 불리언 `true` | ✓ | ✓ | 101자 | 해당 없음 — 형식 규칙이 없다 |
+| `provider` (문자열, `KAKAO` `NAVER` `GOOGLE` `APPLE`) | ✓ | ✓ | ✓ | ✓ | 숫자 `1` · 객체 `{}` · 배열 `[]` · 불리언 `true` | `KAKAO\u0000` | `KAKAO\ud800` | 해당 없음 — 열거값 | 정의 밖 `FOO` · 소문자 `kakao` |
+| `providerUserId` (문자열, 1~255자) | ✓ | ✓ | ✓ | ✓ | 숫자 `1` · 객체 `{}` · 배열 `[]` · 불리언 `true` | ✓ | ✓ | 256자 | 해당 없음 — 형식 규칙이 없다 |
+| `emailVerified` (JSON 불리언) | ✓ | ✓ | `""` | `"  "` | 문자열 `"true"` · `"TRUE"` · 숫자 `1` · `0` · 객체 `{}` · 배열 `[]` | 해당 없음 — 불리언 | 해당 없음 — 불리언 | 해당 없음 | 해당 없음 |
 
-✓ 칸마다 한 번씩 호출한다. `—` 는 그 클레임에 해당하지 않는 칸이다.
+✓ 와 값이 적힌 칸마다 한 번씩 호출한다 (값이 여러 개면 값마다). 「해당 없음」은 그 칸이 그 클레임의 타입에 없는 경우다.
 
 - **And** 어느 행에서도 응답 본문에 토큰 안의 이메일·이름 값이 나오지 않는다
 

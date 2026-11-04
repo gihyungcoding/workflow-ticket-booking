@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-04T14:00:00Z
-summary: "SCENARIO_TASK-016 13건(happy 8 · error 4 · regression 1). 2회차 V11 FAIL → 클레임 × 이상값 전수 매트릭스로 재작성, 3회차 검증 대기."
+summary: "Phase 1 롤백(claim_schema 확정) 후 재작성 — 13건, SC-09 를 claim_schema 7클레임 × 9열로, SC-08 제공자 4종. 롤백 후 1회차 검증 대기."
 
 next_steps:
   - "scenario-validator 독립검증"
@@ -33,3 +33,10 @@ attempts:
     fail: ["V11 — providerUserId 클레임 행 전무, email·name 빈 값·공백·형식 불량·비문자열, provider 비문자열, 요청 문자열 자체의 NUL·서로게이트·길이 상한, /social/complete 경계를 다루지 않는 근거 미기재"]
     fix: "SC-09 를 「토큰 자체 8행」 + 「클레임 7개 × 이상값 9종 매트릭스」로 재작성 — 지적된 칸만이 아니라 모든 클레임에 같은 열을 대봄. 요청 문자열 길이 상한은 두지 않는다고 Plan inputs 에 명시. /social/complete 와 마이그레이션 재시도는 「쓰지 않은 것」에 근거 기재. 경고 반영: SC-07 빈 테이블을 SC-13 으로 분리(V6), SQL 표현 추상화(V7), Plan inputs 낡은 문구 정정(V8), SC-11 에 handle 불변 단언(V10)"
 ---
+
+## 롤백 (2026-11-04)
+
+3회차 V11 FAIL(exp·typ·emailVerified 잔여 칸) → 재시도 상한 초과 → 사용자 결정으로 Phase 1 롤백(ROLLBACK_PLAN 1/2).
+PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다시 썼다. 검증 회차는 롤백 후 1회차부터 다시 센다.
+3회차 경고 반영: JSON 파생에서 꼬리 절 흡수·순서 어긋남 수정(V1), SC-08 제공자 4종(V11 참고 provider 매핑).
+보류: V5·V6·V9 (Then 안 추가 확인, 재시도 경로 중복) — 2b 통합 HITL 에서 사람이 판단.
