@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-016-user-handle-pending-info"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-016.json"
 ---
@@ -26,7 +26,7 @@ TASK-016 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 8h �
 
 ## 다음 한 걸음
 
-Phase 2a 독립검증 PASS(CP-2.2). `wf-red` 로 Red 테스트를 쓰고 시나리오+Red 통합 승인을 받는다. 마이그레이션 테스트는 Testcontainers(PostgreSQL) 의존성 추가가 필요하다.
+시나리오+Red 승인 완료(CP-2.5). `wf-develop` 로 Green — 하네스 계약(RandomGenerator 주입, nextInt(32)→nextInt(10000)), claim_schema 강화, SC-14 의 토큰 끝 NUL·서로게이트 허용 결함 수정.
 
 ## 알아둬야 할 것
 

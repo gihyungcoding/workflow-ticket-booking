@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-04T16:00:00Z
-summary: "Red 테스트 14건 작성·실행 — 새 14건 전부 실패(구현 없음), 기존 146건 통과. 인벤토리 14==14. 시나리오+Red 통합 승인 대기."
+summary: "Red 14건 — 시나리오+Red 통합 승인 완료(HITL#1·2, 2026-11-04). 경고 V6·V9 는 그대로 수용."
 
 next_steps:
-  - "HITL#1·2 통합 승인 (AskUserQuestion)"
+  - "Phase 3 — wf-develop 로 Green 구현 (하네스 계약 준수, SC-14 기존 결함 포함)"
 
 decisions:
   - decision: "컴파일 스켈레톤 없이 HTTP·JDBC 수준에서만 단언"

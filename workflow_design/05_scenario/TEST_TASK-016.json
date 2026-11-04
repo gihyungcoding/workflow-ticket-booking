@@ -158,6 +158,13 @@
     "mock_strategy": "모킹 없음. 실제 H2 + 리포지토리, 마이그레이션만 PostgreSQL 컨테이너. 클래스 레벨 @Transactional 없음, 행 수·handle 은 리포지토리/JdbcTemplate 로 새로 읽음"
   },
   "human_review": {
-    "approved": false
+    "approved": true,
+    "approved_at": "2026-11-04",
+    "method": "AskUserQuestion — 시나리오+Red 통합 승인(HITL#1·2)",
+    "answer": "승인",
+    "warnings_accepted": [
+      "V6 Then 안 후속 호출",
+      "V9 재시도 경로 중복"
+    ]
   }
 }

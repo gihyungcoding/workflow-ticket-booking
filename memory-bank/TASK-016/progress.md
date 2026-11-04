@@ -4,8 +4,8 @@
 |---|---|---|---|
 | 1 Plan | ✅ 완료 (롤백 1회 반영) | CP-1.3 | flows 6 · AC 7 · claim_schema |
 | 2a Scenario | ✅ 완료 | CP-2.2 | 14건 · 롤백 1회 후 PASS |
-| 2b Red | 🔄 진행 중 | — | |
-| 3 Green | ⬜ 대기 | — | |
+| 2b Red | ✅ 승인 | CP-2.5 | 14 Red · 기존 146 통과 |
+| 3 Green | 🔄 진행 중 | — | |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 
