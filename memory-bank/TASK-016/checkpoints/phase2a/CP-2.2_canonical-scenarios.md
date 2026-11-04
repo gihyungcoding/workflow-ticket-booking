@@ -59,3 +59,9 @@ PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다�
 ## Phase 4 롤백 (2026-11-04, RETRY_SCENARIO 1)
 - RC-2 변종 전부를 가져옴: HTTP 로 닿는 접미(=, ==, ~) → SC-15, 검증 함수 직접(나머지 접미·서명 마디 NUL·4마디) → SC-16. not_reproduced 변종(페이로드 마디 NUL)은 서명 불일치로 이미 거부 — SC-16 에 넣지 않음
 - AC8 추가(토큰 압축 형식). 기존 시나리오는 accessToken 을 다루지 않아 대조할 옛 정의가 없다
+
+### Phase 4 롤백 후 1회차 — FAIL (V11)
+- 검증자 응답에 후행 쉼표가 있어 JSON 으로 파싱되지 않는다 — 가공 금지 규칙대로 원문 그대로 저장(다음 회차가 덮어쓴다)
+- 빠진 칸: 중복 exp/typ, 페이로드 마디 NUL, pendingToken 끝 문자·4마디의 실제 입구
+- 반영: SC-09 토큰 자체 표에 끝 =·~·!, 4마디, 마디 NUL(페이로드·서명), 중복 키 3행 (SC-14 가 같은 표로 /complete 입구도), SC-15 에 t.abc, SC-16 에 페이로드 NUL·중복 키. PLAN: accessToken 입력·401 UNAUTHORIZED 출력·claim_schema.token_format(중복 키 거부)
+- 경고 반영: SC-16 Then 을 「검증 결과가 비어 있다」로 명확화(V5·V7). 보류: V6·V9

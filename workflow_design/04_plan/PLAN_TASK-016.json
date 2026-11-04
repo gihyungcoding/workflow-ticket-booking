@@ -57,6 +57,14 @@
         "constraints": [
           "단어 인덱스 0..31, 숫자 0..9999"
         ]
+      },
+      {
+        "name": "accessToken",
+        "type": "String",
+        "source": "Authorization: Bearer 헤더 (기존 JwtAuthenticationFilter → JwtTokenProvider.verifyAccessToken)",
+        "constraints": [
+          "(롤백 추가) 압축 JWS 형식(base64url 세 마디)만, 페이로드에 중복 키 없음 — pendingToken 과 같은 공통 검사"
+        ]
       }
     ],
     "outputs": [
@@ -89,6 +97,11 @@
         "name": "users.handle 컬럼",
         "type": "VARCHAR(30) NOT NULL UNIQUE",
         "description": "V5 마이그레이션. 기존 회원 전원이 같은 형식·같은 단어 목록으로 겹치지 않는 handle 을 갖는다"
+      },
+      {
+        "name": "401 UNAUTHORIZED",
+        "type": "error",
+        "description": "(롤백 추가) 형식 밖 accessToken 으로 GET /api/auth/me 등 인증이 필요한 요청 — 기존 오류 코드 재사용"
       }
     ],
     "flows": [
@@ -234,7 +247,8 @@
         "최대 길이+1 / 범위 밖",
         "형식·열거 밖"
       ],
-      "note": "시나리오는 claims × anomaly_columns 의 해당 칸을 전부 대본다. 해당하지 않는 칸은 사유를 적는다. 지금 코드에서 exp 의 소수·먼 미래 거부와 typ 의 비문자열 처리는 확인되지 않았다 — Phase 3 에서 규칙대로 막는다"
+      "note": "시나리오는 claims × anomaly_columns 의 해당 칸을 전부 대본다. 해당하지 않는 칸은 사유를 적는다. 지금 코드에서 exp 의 소수·먼 미래 거부와 typ 의 비문자열 처리는 확인되지 않았다 — Phase 3 에서 규칙대로 막는다",
+      "token_format": "(롤백 추가, accessToken·pendingToken 공통) 디코딩 전에: base64url 세 마디만 허용(끝에 붙은 문자·마디 안에 섞인 문자·네 마디 거부), 페이로드 JSON 에 같은 키가 두 번 있으면 거부"
     }
   },
   "architecture_refs": {

@@ -189,6 +189,10 @@ flow: F5
 | 형식이 깨짐 (임의 문자열 `abc`) |
 | 8,192자 임의 문자열 (길이 상한은 두지 않는다 — 저장하지 않고 서명 검증에서 거부된다) |
 | 요청 문자열에 NUL 문자 / 짝 없는 서로게이트(`\ud800`) 가 섞임 |
+| 끝에 `=` / `~` / `!` 를 붙임 |
+| 마디가 넷 (끝에 `.abc`) |
+| 페이로드 마디 가운데에 NUL 삽입 / 서명 마디 가운데에 NUL 삽입 |
+| 서명은 맞지만 페이로드에 같은 키가 두 번: `exp` (정수, 정수) / `exp` (`null`, 정수) / `typ` (`"pending"`, `"pending"`) |
 
 **서명은 맞지만 클레임이 규칙 밖** — 기준은 PLAN `design.claim_schema`. 올바른 키로 서명했고, 표의 클레임 하나만 바꾸고 나머지는 유효하다.
 
@@ -280,6 +284,7 @@ Phase 4 검증에서 추가(RC-2). 아래 표기는 Authorization 헤더 형식 
 | `t=` | 401 `UNAUTHORIZED` |
 | `t==` | 401 `UNAUTHORIZED` |
 | `t~` | 401 `UNAUTHORIZED` |
+| `t.abc` (마디가 넷) | 401 `UNAUTHORIZED` |
 
 covers: accessToken·pendingToken 은 JWS 압축 형식(base64url 세 마디) 밖의 문자가 끝에 붙거나 마디 안에 섞이면 거부한다 — 같은 토큰의 다른 문자열 표기로 인증되지 않는다
 flow: F7
@@ -287,18 +292,20 @@ flow: F7
 ## SC-16 (error) 토큰 검증은 형식 밖 문자가 붙거나 섞인 토큰을 받지 않는다
 
 헤더 형식 검사가 먼저 막는 문자도, 토큰 검증 자체가 받지 않아야 한다(다른 입구가 생겨도 같은 결과). accessToken 과
-pendingToken 이 같은 규칙이다.
+pendingToken 이 같은 규칙이다. 관찰 대상은 토큰 검증의 결과(확인된 사용자 id / 대기 정보가 있는가)다 — accessToken 은 HTTP 로
+닿지 않는 값이 있어 검증 결과로 본다. pendingToken 의 같은 값들은 SC-09·SC-14 가 실제 입구로도 확인한다.
 
 - **Given** 정상 accessToken `a`(사용자 id 확인됨)와 정상 pendingToken `p`(대기 정보 확인됨)가 있다
 - **When** 토큰 검증에 아래 표의 값을 넣는다 (accessToken 은 `a`, pendingToken 은 `p` 로 각각)
-- **Then** 「그대로」 행만 확인되고, 나머지 모든 행은 확인되지 않는다 (accessToken 은 사용자 없음, pendingToken 은 대기 정보 없음)
+- **Then** 「그대로」 행만 검증 결과가 있고(accessToken 은 그 사용자 id, pendingToken 은 그 대기 정보), 나머지 모든 행은 검증 결과가 비어 있다
 
 | 넣는 값 |
 |---|
 | 그대로 |
 | 끝에 `=` / `==` / `~` / `!` / 공백 / LF / NUL / `é` / 짝 없는 서로게이트(`\ud800`) |
-| 서명 마디 가운데에 NUL 삽입 |
+| 서명 마디 가운데에 NUL 삽입 / 페이로드 마디 가운데에 NUL 삽입 |
 | 마디가 넷 (끝에 `.abc`) |
+| 서명은 맞지만 페이로드에 같은 키가 두 번: `exp` (정수, 정수) / `typ` (같은 값 두 번) |
 
 covers: accessToken·pendingToken 은 JWS 압축 형식(base64url 세 마디) 밖의 문자가 끝에 붙거나 마디 안에 섞이면 거부한다 — 같은 토큰의 다른 문자열 표기로 인증되지 않는다
 flow: F7
