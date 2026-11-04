@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-04T14:00:00Z
-summary: "SCENARIO_TASK-016 12건(happy 7 · error 4 · regression 1). 1회차 V11 FAIL → 클레임 경계 전수·소셜 10회 실패 추가 후 2회차 검증 대기."
+summary: "SCENARIO_TASK-016 13건(happy 8 · error 4 · regression 1). 2회차 V11 FAIL → 클레임 × 이상값 전수 매트릭스로 재작성, 3회차 검증 대기."
 
 next_steps:
   - "scenario-validator 독립검증"
@@ -28,4 +28,8 @@ attempts:
     result: FAIL
     fail: ["V11 — pendingToken 클레임 경계(provider 정의 밖·대소문자, name/email/provider/emailVerified/exp 누락·null, email·name NUL·서로게이트·길이+1, emailVerified 표기 변형), 소셜 가입(F3) 10회 실패 경로"]
     fix: "SC-09 표 17행으로 전수 확장 + 응답에 토큰 값 미노출 단언, SC-12 신규(소셜 10회 실패). 같은 종류 대조: /social/complete 의 클레임 거부는 TASK-011 SC-10 이 이미 덮는다"
+  - round: 2
+    result: FAIL
+    fail: ["V11 — providerUserId 클레임 행 전무, email·name 빈 값·공백·형식 불량·비문자열, provider 비문자열, 요청 문자열 자체의 NUL·서로게이트·길이 상한, /social/complete 경계를 다루지 않는 근거 미기재"]
+    fix: "SC-09 를 「토큰 자체 8행」 + 「클레임 7개 × 이상값 9종 매트릭스」로 재작성 — 지적된 칸만이 아니라 모든 클레임에 같은 열을 대봄. 요청 문자열 길이 상한은 두지 않는다고 Plan inputs 에 명시. /social/complete 와 마이그레이션 재시도는 「쓰지 않은 것」에 근거 기재. 경고 반영: SC-07 빈 테이블을 SC-13 으로 분리(V6), SQL 표현 추상화(V7), Plan inputs 낡은 문구 정정(V8), SC-11 에 handle 불변 단언(V10)"
 ---

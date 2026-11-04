@@ -18,7 +18,9 @@
         "source": "POST /api/auth/social/pending 요청 본문 (신규)",
         "constraints": [
           "@NotBlank · StrictStringDeserializer (CompleteSocialSignUpRequest 와 같은 규칙)",
-          "서명·만료·typ=pending·필수 클레임은 JwtTokenProvider.verifyPendingToken 이 판정"
+          "서명·만료·typ=pending·필수 클레임은 JwtTokenProvider.verifyPendingToken 이 판정",
+          "클레임 email·name·provider·providerUserId·emailVerified·exp·typ 는 verifyPendingToken·SocialInputRules 규칙(이메일 정규화 후 255자·형식, 이름 100자, providerUserId 255자, provider 는 SocialProvider 이름, emailVerified 는 불리언) — 어긋나면 401",
+          "요청 문자열 길이 상한은 두지 않는다 — 저장하지 않고 서명 검증에서 거부된다"
         ]
       },
       {
@@ -26,7 +28,8 @@
         "type": "String",
         "source": "POST /api/auth/social/complete 요청 본문 (기존)",
         "constraints": [
-          "완료 시 이메일(pending.email)로 아이디 생성"
+          "완료 시 아이디는 F1 과 같은 무작위 규칙으로 만든다 — pending.email 은 아이디에 쓰지 않는다",
+          "만료·위조·클레임 규칙은 기존 verifyPendingToken (TASK-011 테스트가 지킴)"
         ]
       },
       {
