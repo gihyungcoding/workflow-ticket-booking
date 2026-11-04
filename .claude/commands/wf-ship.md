@@ -1,11 +1,10 @@
 ---
-description: 태스크를 기준 브랜치로 보낸다 — 최종 검사 후 PR 생성·머지
+description: 태스크를 머지 준비 상태로 만든다 — 최종 검사 후 푸시·PR 생성
 argument-hint: "[TASK-ID]"
 ---
 
 Phase 5까지 끝난 태스크를 기준 브랜치로 보낼 준비를 한다.
-최종 검사를 모두 통과하면 PR 을 만들고 **직접 머지한다** (CLAUDE.md 절대 규칙 9).
-검사가 하나라도 실패하면 머지하지 않는다.
+최종 검사를 모두 통과하면 푸시하고 PR 을 만든다. **머지는 하지 않는다** — 사람이 병합한다 (CLAUDE.md 절대 규칙 9).
 
 ## 1. 대상 결정
 
@@ -153,12 +152,12 @@ Ship 완료 — TASK-001
   브랜치  feature/task-001-store-search-permission → develop
   PR      #42  https://github.com/org/repo/pull/42
 
-머지  완료 (gh pr merge --merge --delete-branch) — 기준 브랜치에서 git pull
+머지는 리뷰 후 직접 하세요. 머지된 뒤 릴리스에 포함됩니다.
 ```
 
 ## 하지 않는 것
 
-- ❌ **검사 실패 상태에서 머지** — 사람이 승인하지 않은 코드가 나간다
+- ❌ **머지 실행** — 리뷰를 거쳐 사람이 한다
 - ❌ 테스트 재실행 — Phase 3·4에서 이미 했고 결과가 산출물에 있다
 - ❌ 신선도 실패 우회
 - ❌ `--force` 푸시
