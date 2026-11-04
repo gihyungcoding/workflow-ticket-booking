@@ -22,6 +22,11 @@ attempts:
     escalated_from: RETRY_SCENARIO
     reason: "2a 독립검증 3회 V11 FAIL — 클레임 스키마 부재로 대조 기준이 없었다"
     fix: "design.claim_schema 추가 (클레임 7개 × 이상값 열 9종). 사용자 결정으로 롤백"
+  - round: 2
+    type: ROLLBACK_PLAN
+    escalated_from: RETRY_SCENARIO
+    reason: "Phase 4 FAIL(RC-2) 후 2a 3회 V11 FAIL — exp 정수 범위 초과, 요청 문자열 변형의 실제 입구"
+    fix: "claim_schema.exp 에 Instant·long 범위 규칙, claim_schema.request_string 추가. 마지막 롤백(2/2) — 다음은 ESCALATE"
 ---
 
 ## 요약

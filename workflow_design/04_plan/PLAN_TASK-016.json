@@ -209,7 +209,7 @@
         {
           "claim": "exp",
           "json_type": "number (JSON 정수 표기만 — 120.0·1.2e9 같은 소수·지수 표기와 숫자 문자열은 거부)",
-          "rule": "now < exp ≤ now + 300초. 누락·null·비숫자(문자열·객체·배열·불리언)·소수·now+300초를 넘는 먼 미래·0·음수·Instant 범위 초과(양·음)는 거부. 응답 expiresAt 은 이 값을 초 단위 ISO-8601 UTC 로 내보낸다"
+          "rule": "now < exp ≤ now + 300초. 누락·null·비숫자(문자열·객체·배열·불리언)·소수·now+300초를 넘는 먼 미래·0·음수·Instant 범위 초과(양·음)는 거부. 응답 expiresAt 은 이 값을 초 단위 ISO-8601 UTC 로 내보낸다. JSON 정수 표기라도 java.time.Instant 범위(epoch 초 -31557014167219200 ~ 31556889864403199)나 long 범위를 넘으면 500 이 아니라 401 로 거부"
         },
         {
           "claim": "email",
@@ -249,7 +249,8 @@
         "형식·열거 밖"
       ],
       "note": "시나리오는 claims × anomaly_columns 의 해당 칸을 전부 대본다. 해당하지 않는 칸은 사유를 적는다. 지금 코드에서 exp 의 소수·먼 미래 거부와 typ 의 비문자열 처리는 확인되지 않았다 — Phase 3 에서 규칙대로 막는다",
-      "token_format": "(롤백 추가, accessToken·pendingToken 공통) 디코딩 전에: base64url 세 마디만 허용(끝에 붙은 문자·마디 안에 섞인 문자·네 마디 거부), 페이로드 JSON 에 같은 키가 두 번 있으면 거부"
+      "token_format": "(롤백 추가, accessToken·pendingToken 공통) 디코딩 전에: base64url 세 마디만 허용(끝에 붙은 문자·마디 안에 섞인 문자·네 마디 거부), 페이로드 JSON 에 같은 키가 두 번 있으면 거부",
+      "request_string": "요청 본문의 pendingToken 문자열은 변환 없이(trim 등 없음) 그대로 검증한다. 끝·앞에 붙은 문자(=, ==, ~, !, 공백, LF, é, NUL, 서로게이트)는 실제 입구(/social/pending·/social/complete)에서 401 — 내부 직접 호출만으로 대신하지 않는다"
     }
   },
   "architecture_refs": {
@@ -409,14 +410,26 @@
     "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --tests '*Handle*' --tests '*PendingSignup*' --tests 'AuthApiTest' --tests 'SocialCompleteApiTest'",
     "mock_strategy": "API 통합 테스트는 실제 H2 + 리포지토리(모킹 없음). 클래스 레벨 @Transactional 을 두지 않고 DB 확인은 리포지토리로 새로 읽는다(SocialCompleteApiTest 관례 · CLAUDE.md 리뷰 지시). 만료 경계는 MutableClock. 마이그레이션은 운영 엔진(PostgreSQL)에서만. 난수원은 고정 순서 RandomGenerator 를 @TestConfiguration 으로 주입(재시도·10회 실패를 결정적으로)"
   },
-  "reject": {
-    "type": "ROLLBACK_PLAN",
-    "escalated_from": "RETRY_SCENARIO",
-    "attempt": 1,
-    "reason_code": "COVERAGE_INSUFFICIENT",
-    "reason": "Phase 2a 독립검증 3회 연속 V11 FAIL — 회차마다 pendingToken 클레임의 다른 칸이 지적됨. 원인: Plan 이 클레임 스키마(타입·규칙)를 정하지 않고 'verifyPendingToken 이 판정'으로만 적어 대조 기준이 없었다",
-    "fixed": "design.claim_schema 추가 — 클레임 7개의 JSON 타입·규칙과 이상값 열 9종",
-    "date": "2026-11-04",
-    "decided_by": "사용자 (AskUserQuestion: Phase 1 로 롤백)"
-  }
+  "reject_history": [
+    {
+      "type": "ROLLBACK_PLAN",
+      "escalated_from": "RETRY_SCENARIO",
+      "attempt": 1,
+      "reason_code": "COVERAGE_INSUFFICIENT",
+      "reason": "Phase 2a 독립검증 3회 연속 V11 FAIL — 회차마다 pendingToken 클레임의 다른 칸이 지적됨. 원인: Plan 이 클레임 스키마(타입·규칙)를 정하지 않고 'verifyPendingToken 이 판정'으로만 적어 대조 기준이 없었다",
+      "fixed": "design.claim_schema 추가 — 클레임 7개의 JSON 타입·규칙과 이상값 열 9종",
+      "date": "2026-11-04",
+      "decided_by": "사용자 (AskUserQuestion: Phase 1 로 롤백)"
+    },
+    {
+      "type": "ROLLBACK_PLAN",
+      "escalated_from": "RETRY_SCENARIO",
+      "attempt": 2,
+      "reason_code": "COVERAGE_INSUFFICIENT",
+      "reason": "Phase 4 롤백 후 2a 독립검증 3회 V11 FAIL — 마지막 회차 잔여: exp 정수 표기의 Instant·long 범위 초과, pendingToken 요청 문자열 변형의 실제 입구",
+      "fixed": "claim_schema.exp 범위 규칙, claim_schema.request_string 추가",
+      "date": "2026-11-04",
+      "decided_by": "사용자 (AskUserQuestion: Phase 1 롤백 마지막 2/2)"
+    }
+  ]
 }

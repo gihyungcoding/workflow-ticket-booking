@@ -71,3 +71,8 @@ PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다�
 - 반영: SC-09 exp 행(숫자 문자열·120.0·지수)과 email 256자 칸(İ), PLAN claim_schema.exp = JSON 정수 표기만. Bearer 헤더 형식은 기존 TASK-009 AuthApiTest 가 지킨다고 「쓰지 않은 것」·PLAN 에 명시. SC-15 「그 회원」을 id·email 로 명확화(V5)
 - 같은 종류 대조: 숫자 클레임은 exp 뿐, 소문자화로 길이가 바뀌는 문자열은 email 뿐(name·providerUserId 는 정규화하지 않음)
 - 보류: V6·V7·V9 — 2b 통합 HITL 에서 판단
+
+### Phase 4 롤백 후 3회차 — FAIL (V11) → Phase 1 롤백 2/2 (사용자 결정)
+- 잔여: exp 정수 표기 Instant·long 범위 초과, pendingToken 요청 문자열 변형(==·공백·LF·é)의 실제 입구
+- 반영: PLAN claim_schema.exp 범위·request_string, SC-09 토큰 자체 행(끝 =·==·~·!·공백·LF·é, 앞 공백)과 exp 범위 초과 정수 4값. SC-14 가 같은 표를 /complete 입구에 적용 → SC-16 notes 의 「SC-09·SC-14 가 실제 입구로도 확인」이 사실이 됨
+- 검증 회차는 롤백 후 1회차부터. 이번 롤백이 마지막 — 다음 상한 초과는 ESCALATE
