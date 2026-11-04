@@ -9,8 +9,7 @@
         "type": "String",
         "source": "POST /api/auth/signup 요청 본문 (기존)",
         "constraints": [
-          "정규화(trim·소문자) 후 아이디 원천으로 쓴다",
-          "@ 앞부분이 아이디 후보"
+          "아이디 생성에 쓰지 않는다 — 이메일과 무관해야 한다(개인정보: 공유되는 아이디로 이메일을 추측할 수 없게)"
         ]
       },
       {
@@ -46,13 +45,21 @@
         "constraints": [
           "pendingToken 만료 판정과 expiresAt 은 주입된 Clock 기준"
         ]
+      },
+      {
+        "name": "RandomGenerator",
+        "type": "java.util.random.RandomGenerator",
+        "source": "주입 빈 (운영 SecureRandom, 테스트는 고정 순서)",
+        "constraints": [
+          "단어 인덱스 0..31, 숫자 0..9999"
+        ]
       }
     ],
     "outputs": [
       {
         "name": "UserResponse.handle",
         "type": "String",
-        "description": "POST /signup(201)·GET /me·LoginResponse.user 에 실린다. 규칙: 이메일 @ 앞부분 소문자 → [a-z0-9._] 밖 제거 → 3자 미만이면 'user' → 접미사 포함 전체 20자 이하 → 겹치면 2,3,… 접미사"
+        "description": "POST /signup(201)·GET /me·LoginResponse.user. 형식 ^[a-z]{3,6}[0-9]{4}$ = 단어 목록(32개) 하나 + 0 채운 숫자 4자리"
       },
       {
         "name": "PendingSignupResponse",
@@ -65,6 +72,11 @@
         "description": "만료·위조·용도 다름·클레임 누락 pendingToken. users·social_accounts 변화 없음 (기존 예외·핸들러 재사용)"
       },
       {
+        "name": "503 HANDLE_GENERATION_FAILED",
+        "type": "error",
+        "description": "10번 연속 이미 있는 아이디가 뽑힘. users 행 생기지 않음"
+      },
+      {
         "name": "400",
         "type": "error",
         "description": "pendingToken 이 비었거나 문자열이 아님 (Bean Validation, 기존 규약)"
@@ -72,7 +84,7 @@
       {
         "name": "users.handle 컬럼",
         "type": "VARCHAR(30) NOT NULL UNIQUE",
-        "description": "V5 마이그레이션. 기존 회원 전원이 겹치지 않는 handle 을 갖는다"
+        "description": "V5 마이그레이션. 기존 회원 전원이 같은 형식·같은 단어 목록으로 겹치지 않는 handle 을 갖는다"
       }
     ],
     "flows": [
@@ -80,16 +92,17 @@
         "id": "F1",
         "name": "이메일 가입 시 아이디 생성",
         "steps": [
-          "signUp 이 이메일 정규화",
-          "HandleGenerator 가 @ 앞부분으로 후보 생성(허용 문자만, 3자 미만이면 user, 20자 이하)",
-          "UserRepository.existsByHandle 로 겹치면 2,3,… 접미사(접미사 포함 20자 이하가 되도록 원천을 자름)",
-          "User(handle) 저장",
+          "signUp 이 이메일 정규화·검증 (기존)",
+          "HandleGenerator 가 난수원으로 단어+숫자 4자리 후보 생성",
+          "UserRepository.existsByHandle 로 겹치면 다시 뽑기(최대 10회)",
+          "10회 모두 겹치면 HandleGenerationFailedException → 503",
+          "User(handle) 저장, UNIQUE 위반 원인이 handle 이면 이메일 중복으로 오보하지 않는다",
           "UserResponse 에 handle"
         ],
         "covers": [
-          "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 이메일 `harin.kim@kakao.com` 이면 `harin.kim` 이다",
-          "같은 앞부분의 두 번째 가입자는 `harin.kim2` 를 받는다",
-          "허용 밖 문자는 지워지고 20자를 넘지 않으며, 3자 미만이면 `user` 기반으로 만든다"
+          "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다",
+          "아이디는 단어 목록과 숫자로만 만들어지고 이메일·이름 값이 생성에 쓰이지 않는다 (같은 난수 순서면 이메일이 달라도 같은 아이디가 나온다)",
+          "뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다"
         ]
       },
       {
@@ -108,7 +121,7 @@
         "name": "소셜 최초 가입 완료 시 아이디 생성",
         "steps": [
           "completeSocialSignUp 이 pendingToken 검증",
-          "pending.email 로 F1 과 같은 생성 규칙",
+          "F1 과 같은 생성 규칙 (pending.email 은 쓰지 않는다)",
           "User(handle) 저장 + social_accounts 저장(같은 트랜잭션)",
           "LoginResponse.user.handle"
         ],
@@ -121,12 +134,11 @@
         "name": "기존 회원 아이디 채우기(마이그레이션)",
         "steps": [
           "V5: handle 컬럼 추가(NULL 허용)",
-          "기존 행마다 같은 규칙으로 원천 계산, 같은 원천은 id 순으로 2,3,… 접미사",
-          "이미 다른 행의 원천과 같아지는 접미사 결과는 다음 번호로",
+          "PL/pgSQL 루프로 행마다 같은 단어 목록 + 숫자 4자리를 random() 으로 뽑고, 이미 있으면 다시",
           "NOT NULL 설정 + UNIQUE 인덱스 ux_users_handle"
         ],
         "covers": [
-          "마이그레이션 뒤 기존 회원 전원이 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE)"
+          "마이그레이션 뒤 기존 회원 전원이 같은 형식의 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE, 단어는 Java 목록 안)"
         ]
       },
       {
@@ -188,7 +200,7 @@
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerator.java",
-        "change": "이메일 → 아이디 후보·접미사 규칙 (UserRepository.existsByHandle 사용)",
+        "change": "단어 목록·난수원으로 아이디 후보 생성, 겹치면 재시도 최대 10회",
         "new": true
       },
       {
@@ -224,6 +236,20 @@
       {
         "path": "backend/build.gradle",
         "change": "마이그레이션 검증용 Testcontainers(PostgreSQL) 테스트 의존성 — unresolved #1 결정에 따름"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerationFailedException.java",
+        "change": "10회 실패",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+        "change": "HandleGenerationFailedException → 503 HANDLE_GENERATION_FAILED"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/HandleRandomConfig.java",
+        "change": "RandomGenerator 빈(SecureRandom)",
+        "new": true
       }
     ],
     "reusable": [
@@ -266,11 +292,11 @@
       "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java"
     ],
     "unresolved": [
-      "#1 테스트 DB 와 운영 DB 가 다르다 — 테스트는 Flyway 를 끄고 H2 create-drop 으로 돈다(src/test/resources/application.properties). V5 의 기존 회원 채우기는 PostgreSQL 문법(regexp_replace·split_part·윈도 함수)이라 H2 로 검증할 수 없다. 전략: AC5 는 Testcontainers PostgreSQL 위에서 Flyway 를 V4 까지 올리고 기존 회원을 심은 뒤 V5 를 적용해 확인하는 테스트 1개로 검증한다(Docker 29.5.2 확인). 나머지 테스트는 H2 그대로 — ADR-0006 의 전면 전환은 좌석 선점(흐름 4)에서",
-      "#2 아이디는 이메일(외부 신원)에서 파생된다 — 선점 가능성: 먼저 가입한 사람이 'harin.kim' 을 가진다. 아이디는 인증 근거가 아니라 표 받을 사람을 고르는 표시용 키이므로 계정 연결 위협은 아니다. 다만 흐름 5(양도)에서 받는 사람 확인 화면(이름 함께 표시)이 필요하다 — 흐름 5 문서에 넘긴다",
-      "#3 동시 가입으로 같은 아이디가 경합하면 UNIQUE(ux_users_handle) 위반이 난다. 기존 signUp 은 UNIQUE 위반(23505)을 모두 '이메일 중복' 으로 보는데, handle 위반을 이메일 중복 409 로 오보하면 안 된다. 제약 이름으로 구분한다. 재시도(문서 §3-2 '한 번 더 시도')는 AC 밖이고 결정적 테스트가 어렵다 — 이번 범위는 '오보하지 않는다'까지, 재시도 여부는 Phase 3 에서 트랜잭션 경계를 보고 판단(signUp 은 단일 INSERT 라 트랜잭션 밖 재시도 가능)",
-      "#4 AC3 의 '20자를 넘지 않는다' 는 접미사 포함 전체 길이로 해석한다 (원천을 20-접미사길이로 자름). 문서 §3-2 와 일치시키려면 문서 문구를 Phase 4 에서 고친다",
-      "#5 handle 이 LoginResponse.user 에도 실린다 — UserResponse 를 공유하므로 자연히 생기는 변화이고 범위 확장이 아니다. 프론트 api/auth.ts 의 응답 파싱이 알 수 없는 필드에 엄격한지 확인 필요(TASK-018 범위)"
+      "#1 테스트 DB 와 운영 DB 가 다르다 — 테스트는 Flyway 를 끄고 H2 create-drop 으로 돈다(src/test/resources/application.properties). V5 의 기존 회원 채우기는 PostgreSQL 문법(PL/pgSQL DO 블록·random())이라 H2 로 검증할 수 없다. 전략: AC5 는 Testcontainers PostgreSQL 위에서 Flyway 를 V4 까지 올리고 기존 회원을 심은 뒤 V5 를 적용해 확인하는 테스트 1개로 검증한다(Docker 29.5.2 확인). 나머지 테스트는 H2 그대로 — ADR-0006 의 전면 전환은 좌석 선점(흐름 4)에서",
+      "#2 (해소 2026-11-04) 아이디를 이메일 앞부분에서 파생하면 공유된 아이디로 이메일을 추측할 수 있다(보안 리뷰 지적) — 사용자 결정으로 이메일과 무관한 「단어+숫자 4자리」 무작위 생성으로 바꿨다. 문서 §3-2·§8, AC 1~3·5 갱신",
+      "#3 동시 가입으로 같은 아이디가 경합하면 UNIQUE(ux_users_handle) 위반이 난다. 기존 signUp 은 UNIQUE 위반(23505)을 모두 '이메일 중복' 으로 보는데, handle 위반을 이메일 중복 409 로 오보하면 안 된다. 제약 이름으로 구분한다. 경합으로 인한 재시도는 결정적 테스트가 어렵다 — 이번 범위는 '오보하지 않는다'까지(존재 확인 재시도는 AC3)",
+      "#5 handle 이 LoginResponse.user 에도 실린다 — UserResponse 를 공유하므로 자연히 생기는 변화이고 범위 확장이 아니다. 프론트 api/auth.ts 의 응답 파싱이 알 수 없는 필드에 엄격한지 확인 필요(TASK-018 범위)",
+      "#4 단어 목록이 Java(HandleGenerator)와 V5 SQL 두 곳에 있다 — 마이그레이션 테스트가 생성된 단어가 Java 목록 안인지 대조한다"
     ],
     "exploration": {
       "method": "inline",
@@ -279,17 +305,17 @@
     }
   },
   "acceptance_criteria": [
-    "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 이메일 `harin.kim@kakao.com` 이면 `harin.kim` 이다",
-    "같은 앞부분의 두 번째 가입자는 `harin.kim2` 를 받는다",
-    "허용 밖 문자는 지워지고 20자를 넘지 않으며, 3자 미만이면 `user` 기반으로 만든다",
+    "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다",
+    "아이디는 단어 목록과 숫자로만 만들어지고 이메일·이름 값이 생성에 쓰이지 않는다 (같은 난수 순서면 이메일이 달라도 같은 아이디가 나온다)",
+    "뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다",
     "소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다",
-    "마이그레이션 뒤 기존 회원 전원이 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE)",
+    "마이그레이션 뒤 기존 회원 전원이 같은 형식의 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE, 단어는 Java 목록 안)",
     "`POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다",
     "만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다"
   ],
   "test_hints": {
     "framework": "JUnit 5 + Spring Boot Test + MockMvc (기존 AuthApiTest 관례), 마이그레이션은 Testcontainers PostgreSQL + Flyway",
     "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --tests '*Handle*' --tests '*PendingSignup*' --tests 'AuthApiTest' --tests 'SocialCompleteApiTest'",
-    "mock_strategy": "API 통합 테스트는 실제 H2 + 리포지토리(모킹 없음). 클래스 레벨 @Transactional 을 두지 않고 DB 확인은 리포지토리로 새로 읽는다(SocialCompleteApiTest 관례 · CLAUDE.md 리뷰 지시). 만료 경계는 MutableClock. 마이그레이션은 운영 엔진(PostgreSQL)에서만"
+    "mock_strategy": "API 통합 테스트는 실제 H2 + 리포지토리(모킹 없음). 클래스 레벨 @Transactional 을 두지 않고 DB 확인은 리포지토리로 새로 읽는다(SocialCompleteApiTest 관례 · CLAUDE.md 리뷰 지시). 만료 경계는 MutableClock. 마이그레이션은 운영 엔진(PostgreSQL)에서만. 난수원은 고정 순서 RandomGenerator 를 @TestConfiguration 으로 주입(재시도·10회 실패를 결정적으로)"
   }
 }

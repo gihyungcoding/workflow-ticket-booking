@@ -870,7 +870,7 @@
   {
     "id": "TASK-016",
     "title": "티켓온 아이디·소셜 가입 대기 정보 API",
-    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 1(booking-ux-01)은 이미 동작하는 로그인·가입·소셜 로그인(TASK-009~013)을 시안대로 바꾸고, 시안에 적힌 화면 규칙을 실제 기능으로 만든다. users.handle 을 추가해 이메일 앞부분으로 자동 생성하고(겹치면 숫자 접미사, 기존 회원은 마이그레이션으로 채움), 가입·me 응답에 handle 을 싣는다. pendingToken 의 제공자·이메일·이름·만료 시각을 돌려주는 POST /api/auth/social/pending 을 만든다. 포함하지 않음: 아이디 변경, 아이디로 회원 찾기(흐름 5), 휴대폰 번호.",
+    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 1(booking-ux-01)은 이미 동작하는 로그인·가입·소셜 로그인(TASK-009~013)을 시안대로 바꾸고, 시안에 적힌 화면 규칙을 실제 기능으로 만든다. users.handle 을 추가해 이메일과 무관한 「단어 + 숫자 4자리」로 무작위 생성하고(겹치면 다시 뽑기, 10회 실패 시 503, 기존 회원은 마이그레이션으로 채움), 가입·me 응답에 handle 을 싣는다. pendingToken 의 제공자·이메일·이름·만료 시각을 돌려주는 POST /api/auth/social/pending 을 만든다. 포함하지 않음: 아이디 변경, 아이디로 회원 찾기(흐름 5), 휴대폰 번호.",
     "primary_category": "Backend",
     "sub_categories": [],
     "reason_primary": "마이그레이션·도메인·인증 API 변경은 백엔드 범위",
@@ -884,11 +884,11 @@
       },
       "risk": "medium",
       "acceptance_criteria": [
-        "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 이메일 `harin.kim@kakao.com` 이면 `harin.kim` 이다",
-        "같은 앞부분의 두 번째 가입자는 `harin.kim2` 를 받는다",
-        "허용 밖 문자는 지워지고 20자를 넘지 않으며, 3자 미만이면 `user` 기반으로 만든다",
+        "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다",
+        "아이디는 단어 목록과 숫자로만 만들어지고 이메일·이름 값이 생성에 쓰이지 않는다 (같은 난수 순서면 이메일이 달라도 같은 아이디가 나온다)",
+        "뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다",
         "소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다",
-        "마이그레이션 뒤 기존 회원 전원이 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE)",
+        "마이그레이션 뒤 기존 회원 전원이 같은 형식의 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE, 단어는 Java 목록 안)",
         "`POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다",
         "만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다"
       ],
