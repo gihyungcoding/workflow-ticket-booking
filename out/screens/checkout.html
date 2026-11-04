@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>4/4 확인 · 결제 수단</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .step { display: flex; flex-direction: column; gap: var(--stack-s); margin: 0 var(--page-x); }
+  .step-names { font-size: var(--fs-sub); color: var(--c-text-3); }
+  .pick .row { padding-left: var(--stack-m); padding-right: var(--stack-m); border: 1px solid var(--c-line); border-radius: var(--r-m); width: 100%; text-align: left; }
+  .pick .row + .row { margin-top: var(--stack-s); }
+  .pick .row[aria-checked="true"] { border-color: var(--c-brand-line); }
+  .pick .row[aria-checked="true"] .row-title { color: var(--c-brand-text); }
+  .pick .row .row-trail svg { visibility: hidden; }
+  .pick .row[aria-checked="true"] .row-trail svg { visibility: visible; color: var(--c-brand-line); }
+  .sum { display: flex; justify-content: space-between; align-items: baseline; gap: var(--stack-s); }
+</style>
+</head>
+<body class="has-cta">
+<!-- 정책: 카드·네이버페이·카카오페이는 추가 비용 없이 붙일 수 있을 때만 노출(PRD 5-3 조건부) -->
+<header class="appbar"><a class="appbar-btn" href="seat.html" aria-label="뒤로 — 좌석 선택"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><h1 class="appbar-title">예매 확인</h1><span></span></header>
+<main class="page">
+  <div class="step">
+    <div class="progress" role="progressbar" aria-label="예매 4단계 중 4단계" aria-valuenow="4" aria-valuemax="4"><span class="is-on"></span><span class="is-on"></span><span class="is-on"></span><span class="is-on"></span></div>
+    <p class="step-names">회차 · 구역 · 좌석 · <span class="num">4/4 확인</span></p>
+  </div>
+
+  <section class="block">
+    <p class="h2">남은 시간 <span class="num">7분</span></p>
+    <p class="block-note">그동안 이 3자리는 다른 관객이 고를 수 없어요. 폰이 잠겨도 시간은 그대로예요.</p>
+  </section>
+
+  <section class="block is-list">
+    <div class="row"><span class="thumb"><img src="../assets/photos/luminous-stage.jpg" alt="루미너스 콘서트 무대"></span>
+      <div class="row-main"><p class="row-title">루미너스 콘서트 〈WAVELENGTH〉 서울</p><p class="row-sub">1회 12월 19일(토) 오후 6:00 · 고척스카이돔</p></div></div>
+    <div class="row"><span class="row-art"><img src="../assets/fluent/ticket.svg" alt=""></span>
+      <div class="row-main"><p class="row-sub">좌석</p><p class="row-title">플로어 F1구역 C열 14·15·16번</p></div></div>
+    <div class="row"><div class="row-main"><div class="sum"><p class="row-sub">150,000원 × 3장</p><p class="price is-l"><span class="price-now">450,000원</span></p></div></div></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2 class="h2">결제 수단</h2></div>
+    <div class="pick" role="radiogroup" aria-label="결제 수단">
+      <button class="row" role="radio" aria-checked="true"><div class="row-main"><p class="row-title">무통장 입금</p><p class="row-sub">입금 기한 오늘 오후 11:59</p></div><span class="row-trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 12.5 3.5 3.5 7.5-8"/></svg></span></button>
+      <button class="row" role="radio" aria-checked="false"><div class="row-main"><p class="row-title">카드</p></div><span class="row-trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 12.5 3.5 3.5 7.5-8"/></svg></span></button>
+      <button class="row" role="radio" aria-checked="false"><div class="row-main"><p class="row-title">네이버페이</p></div><span class="row-trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 12.5 3.5 3.5 7.5-8"/></svg></span></button>
+      <button class="row" role="radio" aria-checked="false"><div class="row-main"><p class="row-title">카카오페이</p></div><span class="row-trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 12.5 3.5 3.5 7.5-8"/></svg></span></button>
+    </div>
+    <p class="info"><img src="../assets/fluent/calendar.svg" alt=""><span>예약하면 오늘(11월 11일) 오후 11:59까지 입금하면 돼요. 그때까지 자리는 그대로 지켜져요.</span></p>
+  </section>
+</main>
+<div class="cta"><a class="btn primary full" href="booked.html">예약하기</a></div>
+</body></html>

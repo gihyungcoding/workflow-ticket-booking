@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>이메일로 가입 · 오류</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .form { display: flex; flex-direction: column; gap: var(--stack-m); }
+  .login { display: flex; justify-content: center; align-items: center; gap: var(--stack-s); font-size: var(--fs-sub); color: var(--c-text-2); }
+</style>
+</head>
+<body class="plain has-cta">
+<!-- 정책: 비밀번호 8자 이상 72자 이하 — 벗어나면 그 칸 아래 오류 -->
+<!-- 정책: 비밀번호 확인이 다르면 그 칸 아래 '비밀번호가 일치하지 않아요' -->
+<!-- 정책: 이미 가입된 이메일이면 이메일 칸에서 '이미 가입된 이메일이에요. 로그인해 주세요' + 로그인 링크 강조 -->
+<!-- 정책: 이메일·역할은 가입 뒤 바꿀 수 없다 -->
+<header class="appbar"><a class="appbar-btn" href="login.html" aria-label="뒤로 — 로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><span></span><span></span></header>
+<!-- 상태: 이메일 중복 [R1] — 이메일 칸에서 알리고 그 칸 안 링크로 로그인 안내(아래 로그인 줄은 같은 목적이라 뺌). R2·R3 은 같은 칸 is-error 모양 -->
+<main class="page">
+  <header class="hero">
+    <h1 class="title">이메일로 가입</h1>
+    <p class="lead">이메일과 역할은 가입한 뒤에 바꿀 수 없어요</p>
+  </header>
+
+  <form class="form" action="joined.html">
+    <div class="field is-error"><label class="label" for="email">이메일</label><input class="input" id="email" type="email" autocomplete="email" placeholder="이메일 주소" value="minji.jung@gmail.com" aria-invalid="true" aria-describedby="email-msg" autofocus><p class="field-msg" id="email-msg" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>이미 가입된 이메일이에요<a class="hero-more" href="login.html">로그인하기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></p></div>
+    <div class="field"><label class="label" for="pw">비밀번호</label><input class="input" id="pw" type="password" autocomplete="new-password" placeholder="비밀번호" aria-describedby="pw-help"><p class="block-note" id="pw-help">8자 이상 72자 이하로 정해요</p></div>
+    <div class="field"><label class="label" for="pw2">비밀번호 확인</label><input class="input" id="pw2" type="password" autocomplete="new-password" placeholder="한 번 더 입력"></div>
+    <div class="field"><label class="label" for="name">이름</label><input class="input" id="name" autocomplete="name" placeholder="화면에 보일 이름" value="정민지"></div>
+    <div class="field"><p class="label" id="role-label">역할</p>
+      <div class="seg" role="radiogroup" aria-labelledby="role-label">
+        <button type="button" class="seg-item is-selected" role="radio" aria-checked="true">관객</button>
+        <button type="button" class="seg-item" role="radio" aria-checked="false">주최자</button>
+      </div>
+    </div>
+  </form>
+
+</main>
+<div class="cta"><button class="btn primary full" data-stay="이미 가입된 이메일이에요 — 다른 이메일로 바꾸거나 로그인해 주세요">가입하기</button></div>
+</body></html>

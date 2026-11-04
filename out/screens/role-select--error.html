@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>역할 선택 · 처음 가입 · 오류</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .pick .row { padding-left: var(--stack-m); padding-right: var(--stack-m); border: 1px solid var(--c-line); border-radius: var(--r-m); }
+  .pick .row + .row { margin-top: var(--stack-s); }
+  .pick .row[aria-checked="true"] { border-color: var(--c-brand-line); }
+  .pick .row[aria-checked="true"] .row-title { color: var(--c-brand-text); }
+  .pick .row .row-trail svg { visibility: hidden; }
+  .pick .row[aria-checked="true"] .row-trail svg { visibility: visible; color: var(--c-brand-line); }
+  .who { overflow-wrap: anywhere; }
+</style>
+</head>
+<body class="plain has-cta">
+<header class="appbar"><a class="appbar-btn" href="login.html" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><span></span><span></span></header>
+<!-- 상태: pendingToken 만료 [R5] — 5분이 지나 역할 고르기 대신 다시 로그인 -->
+<main class="page">
+  <header class="hero">
+    <p class="eyebrow">카카오로 처음 가입</p>
+    <h1 class="title"><span class="who">harin.kim@kakao.com</span>(김하린) 가입 시간이 지났어요</h1>
+  </header>
+  <div class="field is-error"><span class="label">역할</span>
+    <p class="field-msg" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요</p>
+  </div>
+</main>
+<div class="cta"><a class="btn primary full" href="login.html">다시 로그인하기</a></div>
+</body></html>

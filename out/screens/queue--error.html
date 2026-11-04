@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>대기열 · 1,842번 · 오류</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .q-label { font-size: var(--fs-sub); font-weight: 600; color: var(--c-text-2); }
+  .q-rank { font-size: calc(var(--fs-title) * 2); font-weight: var(--fw-title); line-height: 1.1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--c-text-1); }
+  .q-rank small { font-size: var(--fs-h2); margin-left: 4px; }
+  .q-stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--stack-s); }
+  .q-stat { display: flex; flex-direction: column; gap: 2px; padding: var(--stack-m); border-radius: var(--r-m); background: var(--c-bg); }
+  .q-stat strong { font-size: var(--fs-h2); font-weight: var(--fw-h2); font-variant-numeric: tabular-nums; color: var(--c-text-1); }
+  .q-stat span { font-size: var(--fs-sub); color: var(--c-text-2); }
+</style>
+</head>
+<body>
+<header class="appbar"><a class="appbar-btn" href="concert.html" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><span></span><span></span></header>
+<!-- 상태: 대기열 순번 끊김 사유 [R11] — 조용히 사라지지 않고 이유와 지금 상태를 순번 자리에서 알린다. 이 폰에서 진행이 멈췄으므로 예상 시간·뒤 인원·차례가 되면 블록은 뺌 -->
+<main class="page">
+  <header class="hero">
+    <p class="eyebrow">루미너스 콘서트 〈WAVELENGTH〉 서울</p>
+    <h1 class="title">순번이 PC로 옮겨졌어요</h1>
+  </header>
+  <section class="block" data-anchor>
+    <div>
+      <p class="q-label">내 순번</p>
+      <p class="q-rank">1,842<small>번</small></p>
+      <p class="field-msg" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>같은 계정으로 PC에서 대기열에 들어와 이 순번이 PC로 옮겨졌어요</p>
+    </div>
+    <p class="info"><img src="../assets/fluent/phone.svg" alt=""><span>한 계정에 순번은 하나예요. 순번은 사라지지 않고 PC에서 그대로 기다려요</span></p>
+    <button class="btn primary full" data-stay="순번 1,842번을 이 폰으로 가져왔어요">이 폰으로 가져오기</button>
+  </section>
+</main>
+</body></html>

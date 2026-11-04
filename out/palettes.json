@@ -1,0 +1,33 @@
+{
+ "default": "seed-yanolja",
+ "options": [
+  {
+   "slug": "seed-yanolja",
+   "name": "야놀자",
+   "brand": "#4154FF",
+   "source": "브랜드 시드(https://www.yanolja.com)",
+   "why": [
+    "라이브러리에 맞는 도메인이 없어 시드로 만듦",
+    "성격(선명,활기)"
+   ]
+  },
+  {
+   "slug": "seed-hwahae",
+   "name": "화해",
+   "brand": "#00A5AA",
+   "source": "브랜드 시드(https://www.hwahae.co.kr)",
+   "why": [
+    "성격(신뢰)"
+   ]
+  },
+  {
+   "slug": "seed-zigzag",
+   "name": "지그재그",
+   "brand": "#F947DB",
+   "source": "브랜드 시드(https://zigzag.kr)",
+   "why": [
+    "성격(활기)"
+   ]
+  }
+ ]
+}

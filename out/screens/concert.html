@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>공연 상세 · 오픈 4분 전</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  /* 기준 시각 카운트다운 — 이 화면에서 가장 큰 글자 */
+  .clock-num { display: block; margin-top: 2px; font-size: calc(var(--fs-title) * 1.75); line-height: 1.12; font-weight: 800; letter-spacing: -0.03em; color: var(--c-brand-text); font-variant-numeric: tabular-nums; }
+  .show { display: flex; flex-direction: column; gap: var(--stack-s); }
+  .show .photo { margin-bottom: var(--stack-s); }
+  .steps { display: flex; flex-direction: column; gap: var(--stack-m); }
+</style>
+</head>
+<body class="plain has-cta">
+<header class="appbar"><a class="appbar-btn" href="home.html" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><span></span><span></span></header>
+<main class="page">
+  <header class="hero">
+    <p class="eyebrow">11월 11일(수) 오후 6:00 예매 오픈</p>
+    <h1 class="title">오픈까지 <span class="clock-num" role="timer" aria-label="오픈까지 4분 32초">4분 32초</span></h1>
+    <p class="lead">티켓온 기준 오후 5:55:28 · 폰과 PC가 같은 순간에 열려요</p>
+  </header>
+
+  <section class="show" data-anchor>
+    <div class="photo"><img src="../assets/photos/luminous-stage.jpg" alt="루미너스 콘서트 무대와 조명"></div>
+    <p class="eyebrow">고척스카이돔 · 21,000석</p>
+    <h2 class="h2">루미너스 콘서트 〈WAVELENGTH〉 서울</h2>
+    <p class="price is-l"><span class="price-now">110,000~150,000원</span></p>
+    <p class="info"><img src="../assets/fluent/calendar.svg" alt=""><span>1회 12월 19일(토) 오후 6:00 · 2회 12월 20일(일) 오후 5:00</span></p>
+    <p class="info"><img src="../assets/fluent/ticket.svg" alt=""><span>1인 최대 4장</span></p>
+  </section>
+
+  <section class="steps">
+    <h2 class="h2">열리면 이 순서로 골라요</h2>
+    <ol class="timeline">
+      <li class="tl-item"><p class="tl-date">1 · 회차</p><div class="tl-body"><p>회차와 매수를 함께 골라요</p></div></li>
+      <li class="tl-item"><p class="tl-date">2 · 구역</p><div class="tl-body"><p>고른 매수만큼 붙어 남은 곳을 구역마다 보여 줘요</p></div></li>
+      <li class="tl-item"><p class="tl-date">3 · 좌석</p><div class="tl-body"><p>시작 자리 하나를 누르면 옆자리까지 한 번에 잡혀요</p></div></li>
+      <li class="tl-item"><p class="tl-date">4 · 확인</p><div class="tl-body"><p>7분 안에 확인하고 무통장 입금으로 예약해요</p></div></li>
+    </ol>
+    <a class="row" href="zone-map.html"><span class="row-art"><img src="../assets/fluent/pin.svg" alt=""></span>
+      <div class="row-main"><p class="row-title">구역 위치 보기</p><p class="row-sub">F1 무대 바로 앞 → F4 맨 뒤</p></div>
+      <span class="row-trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+  </section>
+
+  <p class="block-note">오픈 5분 전부터는 가벼운 대기 화면이라 사람이 몰려도 이 화면에 들어올 수 있어요.</p>
+</main>
+<div class="cta"><a class="btn primary full" href="queue.html" aria-disabled="true">예매하기 · 오후 6:00에 열려요</a></div>
+</body></html>
