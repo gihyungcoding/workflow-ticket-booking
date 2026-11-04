@@ -64,7 +64,7 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객
 | 3 Green | `wf-develop` | `06_dev/DEV_<ID>.json` | — |
 | 4 Verify | `wf-verify` | `07_verify/VERIFY_<ID>.json` | **HITL #3** |
 | 5 Reflect | `wf-reflect` | `08_reflect/REFLECT_<ID>.json` | **HITL #4** — 비동기, `/wf-retro` 에서 모아 받음 |
-| Ship | `/wf-ship` | PR | 머지는 사람이 |
+| Ship | `/wf-ship` | PR → 머지 | — (사전 검사 통과 시 직접 머지) |
 
 전체 흐름·게이트·상태 전이는 `wf-orchestrator` 스킬이 관장한다.
 단계를 건너뛰거나 순서를 바꾸지 않는다.
@@ -115,7 +115,9 @@ Frontend 태스크의 `sub_categories` 에 쓸 수 있는 값: `audience`(관객
    Phase 3·4 중에 제약 파일·린트 설정·승인된 테스트를 고치면 훅이 사람에게 묻는다.
 8. **승인 이후 코드를 고치지 않는다.** Phase 4 승인은 특정 커밋에 대한 것이다.
    고쳐야 하면 Phase 4를 다시 거친다 — `/wf-ship` 이 대조해서 막는다.
-9. **머지·푸시·배포를 대신 실행하지 않는다.** 준비하고 명령을 제시하되 사람이 실행한다.
+9. **푸시·머지는 직접 실행하되, 배포는 대신 실행하지 않는다.** (2026-11-04 사용자 결정)
+   머지는 `/wf-ship` 사전 검사(HITL 승인 커밋 대조 포함)를 통과한 PR 만 한다.
+   `--force` 푸시, 보호 브랜치 직접 푸시, 실패한 검사 우회는 하지 않는다.
 
 ---
 
