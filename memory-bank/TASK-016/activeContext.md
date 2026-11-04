@@ -6,14 +6,14 @@ phase_name: "Phase 2b - Red (Phase 4 롤백 재작업)"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
-last_updated: 2026-11-04
+last_updated: 2026-11-05
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-016-user-handle-pending-info"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-016.json"
 ---

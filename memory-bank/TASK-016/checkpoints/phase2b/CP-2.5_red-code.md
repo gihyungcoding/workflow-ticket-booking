@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-04T16:00:00Z
-summary: "Red 14건 — 시나리오+Red 통합 승인 완료(HITL#1·2, 2026-11-04). 경고 V6·V9 는 그대로 수용."
+summary: "Phase 4 롤백 재작업 Red — SC-15·SC-16 신규, SC-09·14 행 확장. 164 중 4 실패(구현 없음), 이미 통과하는 행은 변이 M1~M3 로 검증. 통합 승인 대기."
 
 next_steps:
-  - "Phase 3 — wf-develop 로 Green 구현 (하네스 계약 준수, SC-14 기존 결함 포함)"
+  - "HITL#1·2 재승인 (시나리오 16건 + Red) — 경고 5건 판단 포함"
 
 decisions:
   - decision: "컴파일 스켈레톤 없이 HTTP·JDBC 수준에서만 단언"
@@ -20,3 +20,8 @@ attempts:
   - round: 2
     result: "Red 확인 — 14/14 실패, 기존 146 통과. SC-14 에서 기존 결함 발견: 토큰 끝 NUL·서로게이트 허용"
 ---
+
+## Phase 4 롤백 재작업 (2026-11-05)
+- 새 테스트: TokenFormatApiTest(SC-15), JwtTokenFormatTest(SC-16), PendingSignupApiTest SC-09·14 행 확장. 도우미: PendingTokenTestHelper.signedJson·rawJson·insertIntoSegment
+- Red: 4 실패 — accessToken 형식 검사 없음(SC-15·16), 중복 키 거부 없음(SC-09·14)
+- 변이 M1~M3 로 이미 통과하는 행이 실제 가드를 지킴을 확인, 원복 확인

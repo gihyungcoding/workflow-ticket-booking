@@ -4,7 +4,9 @@
   "test_files": [
     "backend/src/test/java/com/example/ticket_booking/api/UserHandleApiTest.java",
     "backend/src/test/java/com/example/ticket_booking/api/PendingSignupApiTest.java",
-    "backend/src/test/java/com/example/ticket_booking/repository/UsersHandleMigrationTest.java"
+    "backend/src/test/java/com/example/ticket_booking/repository/UsersHandleMigrationTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/TokenFormatApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/JwtTokenFormatTest.java"
   ],
   "support_files": [
     "backend/src/test/java/com/example/ticket_booking/support/SequenceRandom.java",
@@ -83,14 +85,22 @@
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/PendingSignupApiTest.java",
       "test_function": "test_sc09_만료_위조된_pendingToken_으로_대기_정보를_조회하면_401_이다",
       "status": "red",
-      "failure": "97건 — /social/pending 이 없어 code UNAUTHORIZED"
+      "failure": "97건 — /social/pending 이 없어 code UNAUTHORIZED",
+      "rework": {
+        "status": "red",
+        "failure": "새 행 중 '중복 키 exp (null, 정수)' 가 200 으로 통과 — 중복 키 거부 미구현. 나머지 새 행(끝·앞 문자, 마디 NUL, exp 표기·범위)은 기존 구현으로 이미 거부 → 변이 검증 M1~M3"
+      }
     },
     {
       "scenario_id": "SC-14",
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/PendingSignupApiTest.java",
       "test_function": "test_sc14_가입_완료도_같은_클레임_규칙으로_거부하고_아무것도_만들지_않는다",
       "status": "red",
-      "failure": "4행이 401 이 아님 — exp 소수(T+120.5)·먼 미래(T+301)는 200 으로 가입됨(새 규칙 미구현), 요청 문자열 끝 NUL·짝 없는 서로게이트도 200 으로 가입됨(기존 결함 — 지금 /social/complete 가 토큰 뒤에 붙은 문자를 무시한다). 나머지 행은 기존 검증이 이미 거부"
+      "failure": "4행이 401 이 아님 — exp 소수(T+120.5)·먼 미래(T+301)는 200 으로 가입됨(새 규칙 미구현), 요청 문자열 끝 NUL·짝 없는 서로게이트도 200 으로 가입됨(기존 결함 — 지금 /social/complete 가 토큰 뒤에 붙은 문자를 무시한다). 나머지 행은 기존 검증이 이미 거부",
+      "rework": {
+        "status": "red",
+        "failure": "새 행 중 '중복 키 exp (null, 정수)' 가 200 으로 통과 — 중복 키 거부 미구현. 나머지 새 행(끝·앞 문자, 마디 NUL, exp 표기·범위)은 기존 구현으로 이미 거부 → 변이 검증 M1~M3"
+      }
     },
     {
       "scenario_id": "SC-10",
@@ -112,6 +122,20 @@
       "test_function": "test_sc12_소셜_가입_완료에서도_10번_연속_겹치면_503_이고_아무것도_만들지_않는다",
       "status": "red",
       "failure": "시드 회원 handle null"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/TokenFormatApiTest.java",
+      "test_function": "test_sc15_정상_accessToken_의_다른_문자열_표기로는_인증되지_않는다",
+      "status": "red",
+      "failure": "t= / t== / t~ 가 200 (accessToken 형식 검사 없음). t.abc 는 이미 401"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/JwtTokenFormatTest.java",
+      "test_function": "test_sc16_토큰_검증은_형식_밖_문자가_붙거나_섞인_토큰을_받지_않는다",
+      "status": "red",
+      "failure": "access 끝 문자 9종·서명 마디 NUL 10건이 사용자 id 로 확인됨. pending 쪽 행은 이미 비어 있음(변이 M1 로 확인)"
     }
   ],
   "red_result": {
@@ -123,10 +147,10 @@
     "note": "새 테스트 14건 전부 실패, 기존 146건 통과. 실패 원인은 모두 '구현 없음'(handle·V5·/social/pending·새 클레임 규칙) 과 SC-14 의 기존 결함 2행"
   },
   "inventory_check": {
-    "scenarios": 14,
-    "test_functions": 14,
+    "scenarios": 16,
+    "test_functions": 16,
     "match": true,
-    "method": "grep 'void test_sc' 3개 파일 == jq '.scenarios|length'"
+    "method": "grep 'void test_sc' 5개 파일 == jq '.scenarios|length'"
   },
   "harness_contract": {
     "random": "아이디 1회 뽑기 = nextInt(32)(단어 번호) 후 nextInt(10000)(숫자). RandomGenerator 타입 빈으로 주입받는다 — 테스트는 @Primary SequenceRandom 으로 대체. 계약 밖 호출·값 부족은 IllegalStateException",
@@ -158,13 +182,56 @@
     "mock_strategy": "모킹 없음. 실제 H2 + 리포지토리, 마이그레이션만 PostgreSQL 컨테이너. 클래스 레벨 @Transactional 없음, 행 수·handle 은 리포지토리/JdbcTemplate 로 새로 읽음"
   },
   "human_review": {
-    "approved": true,
-    "approved_at": "2026-11-04",
-    "method": "AskUserQuestion — 시나리오+Red 통합 승인(HITL#1·2)",
-    "answer": "승인",
-    "warnings_accepted": [
-      "V6 Then 안 후속 호출",
-      "V9 재시도 경로 중복"
-    ]
+    "approved": false,
+    "previous": {
+      "approved": true,
+      "approved_at": "2026-11-04",
+      "method": "AskUserQuestion — 시나리오+Red 통합 승인(HITL#1·2)",
+      "answer": "승인",
+      "warnings_accepted": [
+        "V6 Then 안 후속 호출",
+        "V9 재시도 경로 중복"
+      ]
+    }
+  },
+  "red_retry": {
+    "reason": "Phase 4 FAIL RC-2 → 시나리오 롤백 후 재작업 (구현이 이미 있어 일부 행은 처음부터 통과)",
+    "red_result": {
+      "command": "cd backend && ./gradlew test --continue",
+      "total": 164,
+      "failed": 4,
+      "passed": 160,
+      "failing": [
+        "SC-09",
+        "SC-14",
+        "SC-15",
+        "SC-16"
+      ],
+      "existing_tests_still_passing": true
+    },
+    "mutation_check": [
+      {
+        "id": "M1",
+        "mutation": "verifyPendingToken 의 COMPACT_JWS 검사를 false 로",
+        "diff_verified": "git diff --stat: 1 file changed",
+        "failed": "SC-09·SC-14 끝 문자 7종·앞 공백·서명 마디 NUL·요청 문자열 NUL/서로게이트, SC-16 pending 끝 문자 9종·서명 마디 NUL",
+        "restored": true
+      },
+      {
+        "id": "M2",
+        "mutation": "hasWholeSecondsExp 검사 제거",
+        "diff_verified": "git diff --stat: 1 file changed",
+        "failed": "SC-09·SC-14 exp 소수·정수값 소수 표기·지수 표기",
+        "restored": true
+      },
+      {
+        "id": "M3",
+        "mutation": "exp ≤ now+300 상한 검사를 false 로",
+        "diff_verified": "git diff --stat: 1 file changed",
+        "failed": "SC-09·SC-14 exp T+301·Instant 최소-1",
+        "restored": true
+      }
+    ],
+    "note": "exp Instant 최대+1·long 초과 양·음 행은 M3 에서도 거부됨 — 디코더 변환 단계에서 거부된다(500 아님, 401 확인). 원복 후 git status 깨끗함"
   }
 }
