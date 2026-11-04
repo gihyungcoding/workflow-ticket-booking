@@ -1,0 +1,250 @@
+{
+  "task_id": "TASK-016",
+  "changed_files": [
+    {
+      "path": "backend/src/main/resources/db/migration/V5__add_users_handle.sql",
+      "change": "handle 컬럼·기존 회원 무작위 채우기(PL/pgSQL)·NOT NULL·UNIQUE ux_users_handle",
+      "lines_changed": 25
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+      "change": "handle 필드·생성자 인자·getter",
+      "lines_changed": 20
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerator.java",
+      "change": "단어 32개 + 숫자 4자리, existsByHandle 재시도 최대 10회",
+      "lines_changed": 46
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerationFailedException.java",
+      "change": "10회 실패·아이디 경합",
+      "lines_changed": 9
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PendingSignupResponse.java",
+      "change": "provider·email·name·expiresAt",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+      "change": "가입·소셜 완료에서 handle 생성, getPendingSignup, UNIQUE 위반 원인 판별(violatesHandleConstraint)",
+      "lines_changed": 69
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/UserResponse.java",
+      "change": "handle 추가",
+      "lines_changed": 2
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "change": "PendingSignup.expiresAt, 압축 JWS 형식·정수 초 exp 사전 검사, exp ≤ now+300 상한",
+      "lines_changed": 48
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/HandleRandomConfig.java",
+      "change": "RandomGenerator 빈(SecureRandom)",
+      "lines_changed": 16
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+      "change": "/api/auth/social/pending permitAll",
+      "lines_changed": 3
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+      "change": "POST /social/pending",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+      "change": "503 HANDLE_GENERATION_FAILED",
+      "lines_changed": 12
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/PendingSignupRequest.java",
+      "change": "@NotBlank + StrictStringDeserializer",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+      "change": "existsByHandle",
+      "lines_changed": 2
+    },
+    {
+      "path": "backend/build.gradle",
+      "change": "Testcontainers PostgreSQL·JUnit 테스트 의존성 (Red 커밋)",
+      "lines_changed": 3
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PendingSignupExpiredException.java",
+      "symbol": "PendingSignupExpiredException"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/StrictStringDeserializer.java",
+      "symbol": "StrictStringDeserializer"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+      "symbol": "verifyPendingToken"
+    },
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/PendingTokenTestHelper.java",
+      "symbol": "validClaims·signedClaims (+signedRaw 추가)"
+    },
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+      "symbol": "MutableClock"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --continue",
+    "total": 162,
+    "passed": 162,
+    "failed": 0,
+    "target_tests_passed": 14,
+    "note": "대상 14(Red 승인분) + 자체 리뷰 추가 2(AuthServiceUniqueViolationTest) + 기존 146"
+  },
+  "lint": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0
+  },
+  "architecture_check": {
+    "command": "python3 scripts/check_architecture.py",
+    "errors": 0,
+    "warnings": 3,
+    "note": "경고 3건은 기존 프론트 DESIGN-003 (이 태스크와 무관)"
+  },
+  "refactoring": [
+    {
+      "what": "하지 않음",
+      "why": "생성·판별 로직이 각 한 곳(HandleGenerator, violatesHandleConstraint, verifyPendingToken)에 모여 있고 중복이 없다"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "#1 V5 검증 수단 (H2 로 불가)",
+      "how": "Testcontainers PostgreSQL 16 + Flyway V4→V5 (UsersHandleMigrationTest)",
+      "fact": "Docker 29.5.2 에서 SC-07·SC-13 통과",
+      "impact": "없음 — 계획대로"
+    },
+    {
+      "item": "#3 아이디 UNIQUE 경합을 이메일 중복으로 오보",
+      "how": "Testcontainers 프로브로 실제 PostgreSQL 메시지 확보, H2 메시지 확인, AuthServiceUniqueViolationTest",
+      "fact": "메시지에 입력값·SQL 이 섞인다 — 첫 줄 VALUES 앞의 제약 표시로만 판별. 경합 시 503(재시도 가능)",
+      "impact": "문서 §3-2 의 '경합 시 한 번 더 시도' 대신 503 으로 알린다 — 재시도는 클라이언트 몫. Phase 4 에서 문서 문구 정정 필요"
+    },
+    {
+      "item": "#4 단어 목록이 Java·SQL 두 곳",
+      "how": "UsersHandleMigrationTest 가 생성 아이디의 단어를 규약 표 목록과 대조, HandleGenerator.WORDS 와 V5 배열을 눈으로 대조",
+      "fact": "32개 동일·같은 순서",
+      "impact": "없음"
+    },
+    {
+      "item": "#5 exp 소수·먼 미래·typ 비문자열",
+      "how": "코드 확인 + SC-09·SC-14 Red→Green",
+      "fact": "Nimbus 가 소수 exp 를 잘라 읽어 통과시켰다 → 페이로드 원문에서 정수 여부 확인, now+300 상한 추가. typ 비문자열은 기존 typeValidator 가 이미 거부",
+      "impact": "없음"
+    },
+    {
+      "item": "#6 /social/complete 거부 범위 확대",
+      "how": "SC-14 + 기존 SocialCompleteApiTest 전부 통과",
+      "fact": "정상 발급 토큰은 영향 없음. 토큰 끝 NUL·서로게이트를 받아들이던 기존 결함이 함께 막혔다",
+      "impact": "없음"
+    }
+  ],
+  "test_modifications": [
+    {
+      "files": [
+        "backend/src/test/java/com/example/ticket_booking/config/OAuth2SocialLoginCallbackTest.java",
+        "backend/src/test/java/com/example/ticket_booking/config/AppleLoginCallbackTest.java",
+        "backend/src/test/java/com/example/ticket_booking/config/AppleEmailVerifiedFlowTest.java",
+        "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java"
+      ],
+      "scenario": "TASK-009/011/012 의 준비 코드(Given)",
+      "change": "new User(...) 에 fixtureHandle(email) 인자 추가 — 단언 변경 없음",
+      "reason": "users.handle NOT NULL·UNIQUE (엔티티와 V5 일치)",
+      "approval": "AskUserQuestion 2026-11-04 '준비 코드에 아이디 인자만 추가'"
+    },
+    {
+      "files": [
+        "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java"
+      ],
+      "scenario": "TASK-009 SC-01·SC-10 응답 키 단언",
+      "change": "containsExactlyInAnyOrder 에 \"handle\" 추가 — 비밀번호 키 부재 단언은 그대로",
+      "reason": "TASK-016 AC1(응답에 handle)과 상충",
+      "approval": "AskUserQuestion 2026-11-04 'handle 추가 승인'"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/UserFixtures.java",
+      "why": "기존 테스트 준비 코드용 아이디 자리 채움 (test_modifications 와 함께)"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java (압축 형식 사전 검사)",
+      "why": "SC-14 Red 에서 드러난 기존 결함(토큰 끝 문자 허용)을 pendingToken 검증 한 곳에서 막음. accessToken 검증(verifyAccessToken)에는 적용하지 않았다 — Phase 4 에서 같은 부류 여부 검토 필요"
+    }
+  ],
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체 develop...HEAD (HEAD 9f55c41)",
+        "findings": 2,
+        "tests_added": [
+          "backend/src/test/java/com/example/ticket_booking/service/AuthServiceUniqueViolationTest.java (2 테스트 × 5행)"
+        ],
+        "fix_commit": "be0c4c9"
+      },
+      {
+        "n": 2,
+        "scope": "수정 커밋 9f55c41...HEAD · 같은 카테고리(입력이 섞인 DB 메시지 판정) develop...HEAD 전수",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null
+      }
+    ],
+    "root_causes": [
+      {
+        "id": "RC-1",
+        "summary": "UNIQUE 위반 원인을 DB 메시지 전체 문자열 부분일치로 판별해, 메시지에 섞여 들어오는 사용자 입력값이 판정에 영향을 준다",
+        "found_in_round": 1,
+        "status": "fixed",
+        "fix_locus": "common",
+        "sites": [
+          "backend/src/main/java/com/example/ticket_booking/service/AuthService.java#violatesHandleConstraint"
+        ],
+        "variants": [
+          {
+            "case": "H2 이메일 ux_users_handle@x.com 경쟁",
+            "origin": "found",
+            "probe": "reproduced"
+          },
+          {
+            "case": "PostgreSQL 같은 경쟁 (세부 정보 줄에 값)",
+            "origin": "predicted",
+            "probe": "reproduced"
+          },
+          {
+            "case": "completeSocialSignUp 경로",
+            "origin": "predicted",
+            "probe": "reproduced"
+          }
+        ]
+      }
+    ],
+    "unresolved": [],
+    "deferred": [
+      {
+        "from": "round 1 [test]",
+        "what": "handle 위반 → 503 / email 위반 → 409 분기 테스트 부재",
+        "status": "해소 — AuthServiceUniqueViolationTest 추가"
+      }
+    ]
+  }
+}
