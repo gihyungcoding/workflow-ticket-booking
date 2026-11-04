@@ -260,7 +260,7 @@
       {
         "path": "backend/src/main/resources/db/migration/V5__add_users_handle.sql",
         "change": "handle 컬럼 추가·기존 회원 채우기·NOT NULL·UNIQUE",
-        "new": true
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/domain/User.java",
@@ -269,7 +269,7 @@
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerator.java",
         "change": "단어 목록·난수원으로 아이디 후보 생성, 겹치면 재시도 최대 10회",
-        "new": true
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
@@ -282,7 +282,7 @@
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/PendingSignupResponse.java",
         "change": "provider·email·name·expiresAt",
-        "new": true
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
@@ -295,7 +295,7 @@
       {
         "path": "backend/src/main/java/com/example/ticket_booking/api/dto/PendingSignupRequest.java",
         "change": "@NotBlank + StrictStringDeserializer pendingToken",
-        "new": true
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
@@ -308,7 +308,7 @@
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerationFailedException.java",
         "change": "10회 실패",
-        "new": true
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
@@ -317,7 +317,11 @@
       {
         "path": "backend/src/main/java/com/example/ticket_booking/config/HandleRandomConfig.java",
         "change": "RandomGenerator 빈(SecureRandom)",
-        "new": true
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "change": "(롤백) 압축 JWS 형식 사전 검사를 verifyAccessToken·verifyPendingToken 공통 지점으로"
       }
     ],
     "reusable": [
