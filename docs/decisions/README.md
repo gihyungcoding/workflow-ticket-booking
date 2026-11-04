@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-10-26 · 총 21건
+마지막 재생성: 2026-11-04 · 총 25건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -26,6 +26,10 @@
 | [ADR-0018](ADR-0018-client-session-generation.md) | 클라이언트 세션 상태는 세대로 직렬화하고, 늦게 온 복원 응답은 버린다 | 채택됨 | 2026-10-22 |
 | [ADR-0019](ADR-0019-string-input-validation-server-canonical.md) | 문자열 입력 검증은 서버가 정본이고, 제어문자는 거부하며 이메일 외에는 정규화하지 않는다 | 채택됨 | 2026-10-22 |
 | [ADR-0021](ADR-0021-social-login-token-via-url-fragment.md) | 소셜 로그인 토큰은 URL fragment 로 프론트에 넘긴다 | 채택됨 | 2026-10-26 |
+| [ADR-0022](ADR-0022-design-source-from-out-mockups.md) | 디자인 정본을 `out/` 시안으로 바꾸고, 토큰 값은 `out/tokens.css` 를 그대로 옮긴다 | 채택됨 | 2026-11-04 |
+| [ADR-0023](ADR-0023-queue-in-redis-seat-hold-in-db.md) | 대기열 순번은 Redis 에 두고, 좌석 선점은 계속 DB 트랜잭션으로 처리한다 | 채택됨 | 2026-11-04 |
+| [ADR-0024](ADR-0024-countdown-by-server-clock-offset.md) | 오픈 카운트다운은 서버 시각과의 차이(오프셋)로 계산하고, 오픈 판정은 서버만 한다 | 채택됨 | 2026-11-04 |
+| [ADR-0025](ADR-0025-bank-transfer-only-with-internal-confirm-api.md) | 결제는 무통장 입금만 두고, 입금 확인은 쓰기 키로 보호한 내부 API 로 처리한다 | 채택됨 | 2026-11-04 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다 | 2026-10-14 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로 대체됨) | 2026-10-14 |
 | [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) | 자동 연결은 이메일 소유가 확인된 계정에만 한다 | 채택됨 (ADR-0014 의 "이메일이 같으면 이메일 가입 계정에도 연결" 부분을 대체) | 2026-10-23 |
