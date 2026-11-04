@@ -25,9 +25,11 @@
 
 | Task | 범위 | 산출물 | 포함하지 않음 | 선행 | 추정 | 태스크 ID |
 |---|---|---|---|---|---|---|
-| A. 백엔드 — 티켓온 아이디·소셜 가입 대기 정보 | `users.handle` 추가·자동 생성(기존 회원 채우기 포함), 사용자 응답에 `handle`, pendingToken 의 제공자·이메일·이름·만료 시각을 돌려주는 조회 API | `V5__add_users_handle.sql`, `HandleGenerator`, `UserResponse.handle`, `POST /api/auth/social/pending` | 아이디 변경, 아이디로 회원 찾기(흐름 5), 휴대폰 번호 | — | 8h | |
-| B. 프론트 — 디자인 토큰 교체·공통 부품 | `design-tokens.css` 값으로 MUI 테마 재작성, Pretendard 로드, 모바일 한 열 레이아웃, 시안 부품의 React 컴포넌트, 배지 문구를 design.md §5 로 | `theme/tokens.ts`·`theme/index.ts`, `components/ui/*`(AppBar·Page·Block·Row·Badge·CtaBar·Field·Toast·Sheet) | 화면별 재배치(목록·상세는 흐름 2), 다크 모드, 주최자 화면 재디자인 | — | 12h | |
-| C. 프론트 — 인증 화면 5종을 시안대로 | 로그인·가입·콜백·역할 선택·가입 완료(신규) 화면과 그 오류 상태 3종, 화면 정책(5분 만료·아이디 복사·실패 안내·자동 로그인) | `LoginPage`·`SignUpPage`·`OAuthRedirectPage`·`RoleSelectionPage` 재작성, `JoinedPage`(신규), `/joined` 라우트, `AUTH_MESSAGES` 해요체 | 아이디·비밀번호 찾기, 홈 화면(흐름 2) | A, B | 12h | |
+| A. 백엔드 — 티켓온 아이디·소셜 가입 대기 정보 | `users.handle` 추가·자동 생성(기존 회원 채우기 포함), 사용자 응답에 `handle`, pendingToken 의 제공자·이메일·이름·만료 시각을 돌려주는 조회 API | `V5__add_users_handle.sql`, `HandleGenerator`, `UserResponse.handle`, `POST /api/auth/social/pending` | 아이디 변경, 아이디로 회원 찾기(흐름 5), 휴대폰 번호 | — | 8h | TASK-016 |
+| B. 프론트 — 디자인 토큰 교체·공통 부품 | `design-tokens.css` 값으로 MUI 테마 재작성, Pretendard 로드, 모바일 한 열 레이아웃, 시안 부품의 React 컴포넌트, 배지 문구를 design.md §5 로 | `theme/tokens.ts`·`theme/index.ts`, `components/ui/*`(AppBar·Page·Block·Row·Badge·CtaBar·Field·Toast·Sheet) | 화면별 재배치(목록·상세는 흐름 2), 다크 모드, 주최자 화면 재디자인 | — | 12h | TASK-017 |
+| C. 프론트 — 인증 화면 5종을 시안대로 | 로그인·가입·콜백·역할 선택·가입 완료(신규) 화면과 그 오류 상태 3종, 화면 정책(5분 만료·아이디 복사·실패 안내·자동 로그인) | `LoginPage`·`SignUpPage`·`OAuthRedirectPage`·`RoleSelectionPage` 재작성, `JoinedPage`(신규), `/joined` 라우트, `AUTH_MESSAGES` 해요체 | 아이디·비밀번호 찾기, 홈 화면(흐름 2) | A, B | 12h | TASK-018 |
+
+[태스크 생성 2026-11-04]
 
 **분리 이유**: 테마·공통 부품(B)은 다섯 흐름이 모두 쓰는 바탕이라 인증 화면(C)과 따로 검증한다.
 아이디 필드(A)는 마이그레이션이 있는 백엔드 변경이라 화면과 다른 행이다.
