@@ -121,6 +121,46 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 | `VITE_WRITE_KEY` | 위 `WRITE_API_KEY` 와 같은 값 | 번들에 노출됨 (§5) |
 | `NODE_VERSION` | `22` | §4-3 |
 
+### 6-1. 소셜 로그인 (선택)  `사람`
+
+**이 절은 소셜 로그인을 켤 때만 한다.** 제공자 환경변수가 하나도 없으면 서버는 이메일 인증만으로 기동하고,
+위 §6 표만으로 §7 스모크가 성립한다. 근거는 `SocialLoginConfig.java`(ADR-0013) — 이 절의 이름·규칙은 거기서 읽었다.
+
+**백엔드 (Render) — 공통**
+
+| 이름 | 값 | 비고 |
+|---|---|---|
+| `FRONTEND_BASE_URL` | `https://<Pages 이름>.pages.dev` | 제공자를 **하나라도** 켜면 필수 — 없거나 형식이 틀리면 **기동 실패**. `http`/`https` 만, 사용자 정보·쿼리·`#` 불가, 끝 `/` 는 제거됨 |
+| `JWT_SECRET` | 32바이트 이상 | 비었거나 짧으면 기동 실패 (`SecurityConfig`) |
+
+**백엔드 (Render) — 제공자별.** 제공자는 아래 값이 **전부** 있을 때만 등록된다. 하나라도 비면 그 제공자는 조용히 빠지고(기동은 된다) 버튼을 누르면 404 가 난다.
+
+| 제공자 | 환경변수 | 콜백 URI (콘솔에 등록) | 요청 범위 |
+|---|---|---|---|
+| 카카오 | `KAKAO_CLIENT_ID` · `KAKAO_CLIENT_SECRET` | `https://<Render 이름>.onrender.com/login/oauth2/code/kakao` | 닉네임, 이메일 |
+| 네이버 | `NAVER_CLIENT_ID` · `NAVER_CLIENT_SECRET` | `https://<Render 이름>.onrender.com/login/oauth2/code/naver` | 이름, 이메일 |
+| 구글 | `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` | `https://<Render 이름>.onrender.com/login/oauth2/code/google` | profile, email |
+| 애플 | `APPLE_CLIENT_ID`(Services ID) · `APPLE_TEAM_ID` · `APPLE_KEY_ID` · `APPLE_PRIVATE_KEY` | `https://<Render 이름>.onrender.com/login/oauth2/code/apple` | name, email |
+
+`*_CLIENT_SECRET`·`APPLE_PRIVATE_KEY` 는 비밀이다 — 저장소에 커밋하지 않는다. 애플은 고정 비밀번호가 아니라 `.p8` 키로 서명한 JWT 를 쓰므로 `APPLE_PRIVATE_KEY` 에 그 키를 넣는다.
+
+**프론트 (Pages)** — 추가할 변수는 없다. 소셜 버튼은 §6 의 `VITE_API_BASE_URL` 로 이동한다.
+
+**제공자 콘솔에서 할 일 (사람)** — 메뉴 이름은 확인한 것이 아니라 바뀌었을 수 있다.
+
+- [ ] 카카오: 카카오 로그인 활성화, Client Secret 발급·사용 설정, Redirect URI 등록, 동의항목(닉네임·이메일) 설정. 이메일은 비즈 앱 전환이 필요할 수 있다
+- [ ] 네이버: 네이버 로그인 API 추가, 제공 정보에 이름·이메일, Callback URL 등록
+- [ ] 구글: OAuth 클라이언트 ID(웹 애플리케이션) 생성, 승인된 리디렉션 URI 등록, 동의 화면 설정
+- [ ] 애플: Services ID 와 Return URL 등록, `.p8` 키 발급. **Apple Developer Program(유료)과 공개 HTTPS 도메인이 필요하다** — §2 의 "카드 없이, 과금 없이" 와 맞지 않으므로 애플은 나중으로 미뤄도 된다
+
+**확인하지 못한 것**
+
+- [ ] **프록시 헤더.** 콜백 주소는 요청에서 `{baseUrl}/login/oauth2/code/{id}` 로 만들어지는데 `server.forward-headers-strategy` 설정이 코드에 없다. Render 는 TLS 를 앞단에서 끝내므로 `http://…` 로 만들어져 제공자가 `redirect_uri_mismatch` 로 거부할 수 있다. 그러면 `SERVER_FORWARD_HEADERS_STRATEGY=framework` 를 시험한다 — **Render 에서 돌려 본 적 없다.** 처음에는 구글이나 카카오 하나만 연결해 이것부터 확인한다
+- [ ] 실제 제공자 왕복(인가 → 콜백 → 로그인)은 어떤 제공자로도 끝까지 확인하지 못했다. 카카오는 더미 클라이언트로 인가 주소 이동(302)까지만 확인했다 (TASK-013 R-1)
+- [ ] 애플 `form_post` 콜백에서 세션 쿠키가 전달되는지 확인하지 못했다 (TASK-013 R-1)
+- [ ] 로그인 CSRF — 콜백이 URL 의 토큰을 로그인을 시작한 브라우저에 묶지 않는다. 공개 서비스로 열기 전에 처리한다 (TASK-013 S-1, 후속 태스크)
+- [ ] 설정하지 않은 제공자의 버튼도 화면에는 보이고 누르면 404 가 난다. 쓰지 않을 제공자를 숨기는 일은 아직 없다
+
 ## 7. 스모크 테스트  `에이전트`
 
 주소를 변수로 두고 순서대로 실행한다. 각 줄의 **기대값과 다르면 거기서 멈추고 §9 에 적는다.**
