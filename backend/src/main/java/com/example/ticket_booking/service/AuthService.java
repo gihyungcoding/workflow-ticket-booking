@@ -246,16 +246,21 @@ public class AuthService {
   }
 
   /**
-   * 위반한 제약이 아이디인가. 메시지 전체에서 "handle" 을 찾으면 안 된다 — H2 는 실행한 INSERT 문(컬럼 목록에 handle 이 있다)을 메시지에 붙인다.
-   * 위반 대상만 가리키는 부분으로 본다: PostgreSQL 은 제약 이름(ux_users_handle), H2 는 「ON PUBLIC.USERS(HANDLE」.
+   * 위반한 제약이 아이디인가. 메시지에는 사용자가 넣은 값과 실행한 SQL 이 섞여 들어오므로(PostgreSQL 은 둘째 줄의 Key (email)=(…), H2 는
+   * VALUES 뒤의 값과 INSERT 문) 위반한 제약을 가리키는 앞부분만 본다 — 첫 줄에서 「 VALUES 」 앞까지. 거기서 PostgreSQL 은 제약
+   * 이름(ux_users_handle), H2 는 「ON public.users(handle」 로 가른다.
    */
   private static boolean violatesHandleConstraint(DataIntegrityViolationException exception) {
     String message = NestedExceptionUtils.getMostSpecificCause(exception).getMessage();
     if (message == null) {
       return false;
     }
-    String lower = message.toLowerCase(Locale.ROOT);
-    return lower.contains("ux_users_handle") || lower.contains("users(handle");
+    String target = message.lines().findFirst().orElse("").toLowerCase(Locale.ROOT);
+    int values = target.indexOf(" values ");
+    if (values >= 0) {
+      target = target.substring(0, values);
+    }
+    return target.contains("\"ux_users_handle\"") || target.contains("users(handle");
   }
 
   private static String normalize(String email) {
