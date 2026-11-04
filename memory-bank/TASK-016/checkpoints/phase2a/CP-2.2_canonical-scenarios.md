@@ -65,3 +65,9 @@ PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다�
 - 빠진 칸: 중복 exp/typ, 페이로드 마디 NUL, pendingToken 끝 문자·4마디의 실제 입구
 - 반영: SC-09 토큰 자체 표에 끝 =·~·!, 4마디, 마디 NUL(페이로드·서명), 중복 키 3행 (SC-14 가 같은 표로 /complete 입구도), SC-15 에 t.abc, SC-16 에 페이로드 NUL·중복 키. PLAN: accessToken 입력·401 UNAUTHORIZED 출력·claim_schema.token_format(중복 키 거부)
 - 경고 반영: SC-16 Then 을 「검증 결과가 비어 있다」로 명확화(V5·V7). 보류: V6·V9
+
+### Phase 4 롤백 후 2회차 — FAIL (V11)
+- 빠진 칸: exp 숫자 문자열·정수값 소수·지수 표기, email 의 İ 소문자 확장, Bearer 헤더 형식
+- 반영: SC-09 exp 행(숫자 문자열·120.0·지수)과 email 256자 칸(İ), PLAN claim_schema.exp = JSON 정수 표기만. Bearer 헤더 형식은 기존 TASK-009 AuthApiTest 가 지킨다고 「쓰지 않은 것」·PLAN 에 명시. SC-15 「그 회원」을 id·email 로 명확화(V5)
+- 같은 종류 대조: 숫자 클레임은 exp 뿐, 소문자화로 길이가 바뀌는 문자열은 email 뿐(name·providerUserId 는 정규화하지 않음)
+- 보류: V6·V7·V9 — 2b 통합 HITL 에서 판단

@@ -63,7 +63,8 @@
         "type": "String",
         "source": "Authorization: Bearer 헤더 (기존 JwtAuthenticationFilter → JwtTokenProvider.verifyAccessToken)",
         "constraints": [
-          "(롤백 추가) 압축 JWS 형식(base64url 세 마디)만, 페이로드에 중복 키 없음 — pendingToken 과 같은 공통 검사"
+          "(롤백 추가) 압축 JWS 형식(base64url 세 마디)만, 페이로드에 중복 키 없음 — pendingToken 과 같은 공통 검사",
+          "Authorization 헤더 파싱(부재·빈 값·Bearer 대소문자)은 기존 JwtAuthenticationFilter 동작 — TASK-009 AuthApiTest SC-10·11 이 지킨다"
         ]
       }
     ],
@@ -207,7 +208,7 @@
         },
         {
           "claim": "exp",
-          "json_type": "number (정수 초)",
+          "json_type": "number (JSON 정수 표기만 — 120.0·1.2e9 같은 소수·지수 표기와 숫자 문자열은 거부)",
           "rule": "now < exp ≤ now + 300초. 누락·null·비숫자(문자열·객체·배열·불리언)·소수·now+300초를 넘는 먼 미래·0·음수·Instant 범위 초과(양·음)는 거부. 응답 expiresAt 은 이 값을 초 단위 ISO-8601 UTC 로 내보낸다"
         },
         {
