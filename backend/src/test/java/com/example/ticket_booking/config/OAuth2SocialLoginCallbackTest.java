@@ -6,6 +6,7 @@ import static com.example.ticket_booking.support.AuthTestHelper.login;
 import static com.example.ticket_booking.support.AuthTestHelper.payloadOf;
 import static com.example.ticket_booking.support.AuthTestHelper.postJson;
 import static com.example.ticket_booking.support.PendingTokenTestHelper.queryOf;
+import static com.example.ticket_booking.support.UserFixtures.fixtureHandle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
@@ -106,12 +107,13 @@ class OAuth2SocialLoginCallbackTest {
   }
 
   private User saveEmailUser(String email, UserRole role, String name) {
-    return userRepository.save(new User(email, passwordEncoder.encode(PASSWORD), name, role));
+    return userRepository.save(
+        new User(email, passwordEncoder.encode(PASSWORD), name, role, fixtureHandle(email)));
   }
 
   /** 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 — 비밀번호 해시가 없고 email_verified=true (자동 연결 대상). */
   private User saveVerifiedSocialUser(String email, UserRole role, String name) {
-    return userRepository.save(new User(email, null, name, role, true));
+    return userRepository.save(new User(email, null, name, role, true, fixtureHandle(email)));
   }
 
   private static String emailOf(int length) {
