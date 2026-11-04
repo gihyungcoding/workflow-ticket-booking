@@ -45,3 +45,9 @@ PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다�
 - 빠진 칸: exp 의 0·음수·음의 Instant 범위 초과 → SC-09 exp 행과 PLAN claim_schema.exp 규칙에 추가. 같은 종류 대조: 숫자 클레임은 exp 하나뿐
 - 경고 반영: 토큰 자체 표의 `typ=access` 행 삭제(클레임 표와 중복, V9), PLAN inputs 에 쓰기 가드 적용 명시(V8), SC-08 에 정규화 후 255자 이메일 허용 단언(V11 참고)
 - 보류: V5·V6·V7 — 2b 통합 HITL 에서 사람이 판단
+
+### 롤백 후 2회차 — FAIL (V11)
+- 빠진 칸: email 형식(@ 앞·뒤 빔, 내부 공백·NBSP), 정규화 전후 길이·동일성, /social/complete 입구의 새 클레임 규칙
+- 반영: SC-09 email 칸 확장, SC-08 정규화 표, SC-14 신규(가입 완료 입구 = SC-09 표 전 칸). 같은 종류 대조: 클레임 검증 입구는 두 곳(/pending·/complete)뿐
+- 경고 반영: SC-07 의 random() 비결정 단언 삭제(V5)
+- 보류: V6·V9 — 2b 통합 HITL 에서 사람이 판단
