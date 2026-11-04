@@ -16,7 +16,12 @@ decisions:
   - decision: "(2026-11-04 변경) 아이디는 이메일과 무관한 「단어 32개 중 하나 + 숫자 4자리」 무작위 생성, 10회 겹치면 503"
     rationale: "보안 리뷰가 이메일 파생 아이디의 이메일 추측 위험을 지적 — 사용자가 1안(무관한 자동 아이디) 선택. 문서 §3-2·§8, AC 갱신"
 
-attempts: []
+attempts:
+  - round: 1
+    type: ROLLBACK_PLAN
+    escalated_from: RETRY_SCENARIO
+    reason: "2a 독립검증 3회 V11 FAIL — 클레임 스키마 부재로 대조 기준이 없었다"
+    fix: "design.claim_schema 추가 (클레임 7개 × 이상값 열 9종). 사용자 결정으로 롤백"
 ---
 
 ## 요약

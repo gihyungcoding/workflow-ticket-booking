@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "2a"
-phase_name: "Phase 2a - Scenario"
+phase: "1"
+phase_name: "Phase 1 - Plan (롤백 1회)"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -26,7 +26,7 @@ TASK-016 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 8h �
 
 ## 다음 한 걸음
 
-Phase 1 완료(CP-1.3). `wf-scenario` 로 Phase 2a 시나리오를 설계한다 — PLAN 의 flows F1~F6, unresolved #1·#3·#4.
+2a 독립검증 3회 초과로 Phase 1 롤백(ROLLBACK_PLAN 1/2). PLAN 에 claim_schema 를 추가했다 — 다음은 2a 에서 SC-09 를 claim_schema 기준으로 다시 쓰고 검증 회차를 새로 시작한다.
 
 ## 알아둬야 할 것
 

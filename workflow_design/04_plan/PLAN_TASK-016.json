@@ -67,7 +67,7 @@
       {
         "name": "PendingSignupResponse",
         "type": "{provider, email, name, expiresAt}",
-        "description": "POST /api/auth/social/pending 200. provider 는 SocialProvider 이름(KAKAO 등), expiresAt 은 ISO-8601 Instant"
+        "description": "POST /api/auth/social/pending 200. provider 는 SocialProvider 이름(KAKAO 등), expiresAt 은 ISO-8601 Instant. expiresAt 은 claim_schema.exp 를 초 단위로"
       },
       {
         "name": "401 PENDING_SIGNUP_EXPIRED",
@@ -170,7 +170,59 @@
           "만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다"
         ]
       }
-    ]
+    ],
+    "claim_schema": {
+      "applies_to": "pendingToken (POST /api/auth/social/pending 이 새로 응답에 내보내는 값의 원천). 서명이 맞아도 아래 규칙 중 하나라도 어긋나면 401 PENDING_SIGNUP_EXPIRED — 400·500 이 되지 않는다",
+      "claims": [
+        {
+          "claim": "typ",
+          "json_type": "string",
+          "rule": "정확히 \"pending\" (대소문자 구분). 누락·null·빈 문자열·공백만·다른 값(access)·비문자열은 거부"
+        },
+        {
+          "claim": "exp",
+          "json_type": "number (정수 초)",
+          "rule": "now < exp ≤ now + 300초. 누락·null·비숫자(문자열·객체·배열·불리언)·소수·now+300초를 넘는 먼 미래(범위 초과 포함)는 거부. 응답 expiresAt 은 이 값을 초 단위 ISO-8601 UTC 로 내보낸다"
+        },
+        {
+          "claim": "email",
+          "json_type": "string",
+          "rule": "SocialInputRules.email — trim·소문자 후 1~255자, @ 정확히 하나·앞뒤 비어 있지 않음, 공백류·서식 문자·제어문자(NUL)·짝 없는 서로게이트 없음"
+        },
+        {
+          "claim": "name",
+          "json_type": "string",
+          "rule": "SocialInputRules.name — 공백만 아님, 1~100자, 제어문자·짝 없는 서로게이트 없음"
+        },
+        {
+          "claim": "provider",
+          "json_type": "string",
+          "rule": "SocialProvider 이름과 정확히 일치(KAKAO·NAVER·GOOGLE·APPLE, 대문자). 그 밖은 거부"
+        },
+        {
+          "claim": "providerUserId",
+          "json_type": "string",
+          "rule": "SocialInputRules.providerUserId — 공백만 아님, 1~255자, 제어문자·짝 없는 서로게이트 없음"
+        },
+        {
+          "claim": "emailVerified",
+          "json_type": "boolean",
+          "rule": "JSON 불리언만. 누락·null·문자열(\"true\"·\"TRUE\"·빈 문자열)·숫자·객체·배열은 거부"
+        }
+      ],
+      "anomaly_columns": [
+        "누락",
+        "null",
+        "빈 문자열",
+        "공백만",
+        "비문자열·타입 다름(숫자·객체·배열·불리언·문자열)",
+        "NUL",
+        "짝 없는 서로게이트",
+        "최대 길이+1 / 범위 밖",
+        "형식·열거 밖"
+      ],
+      "note": "시나리오는 claims × anomaly_columns 의 해당 칸을 전부 대본다. 해당하지 않는 칸은 사유를 적는다. 지금 코드에서 exp 의 소수·먼 미래 거부와 typ 의 비문자열 처리는 확인되지 않았다 — Phase 3 에서 규칙대로 막는다"
+    }
   },
   "architecture_refs": {
     "layer": "Service (HandleGenerator·AuthService) / Repository (existsByHandle) / API (AuthController·PendingSignupRequest)",
@@ -299,7 +351,8 @@
       "#2 (해소 2026-11-04) 아이디를 이메일 앞부분에서 파생하면 공유된 아이디로 이메일을 추측할 수 있다(보안 리뷰 지적) — 사용자 결정으로 이메일과 무관한 「단어+숫자 4자리」 무작위 생성으로 바꿨다. 문서 §3-2·§8, AC 1~3·5 갱신",
       "#3 동시 가입으로 같은 아이디가 경합하면 UNIQUE(ux_users_handle) 위반이 난다. 기존 signUp 은 UNIQUE 위반(23505)을 모두 '이메일 중복' 으로 보는데, handle 위반을 이메일 중복 409 로 오보하면 안 된다. 제약 이름으로 구분한다. 경합으로 인한 재시도는 결정적 테스트가 어렵다 — 이번 범위는 '오보하지 않는다'까지(존재 확인 재시도는 AC3)",
       "#5 handle 이 LoginResponse.user 에도 실린다 — UserResponse 를 공유하므로 자연히 생기는 변화이고 범위 확장이 아니다. 프론트 api/auth.ts 의 응답 파싱이 알 수 없는 필드에 엄격한지 확인 필요(TASK-018 범위)",
-      "#4 단어 목록이 Java(HandleGenerator)와 V5 SQL 두 곳에 있다 — 마이그레이션 테스트가 생성된 단어가 Java 목록 안인지 대조한다"
+      "#4 단어 목록이 Java(HandleGenerator)와 V5 SQL 두 곳에 있다 — 마이그레이션 테스트가 생성된 단어가 Java 목록 안인지 대조한다",
+      "#5 (롤백 2026-11-04) exp 소수·먼 미래 거부, typ 비문자열 처리는 현재 JwtTokenProvider 에서 확인되지 않았다 — claim_schema 대로 Phase 3 에서 막는다 (notExpiredValidator 에 상한 추가 등)"
     ],
     "exploration": {
       "method": "inline",
@@ -320,5 +373,15 @@
     "framework": "JUnit 5 + Spring Boot Test + MockMvc (기존 AuthApiTest 관례), 마이그레이션은 Testcontainers PostgreSQL + Flyway",
     "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --tests '*Handle*' --tests '*PendingSignup*' --tests 'AuthApiTest' --tests 'SocialCompleteApiTest'",
     "mock_strategy": "API 통합 테스트는 실제 H2 + 리포지토리(모킹 없음). 클래스 레벨 @Transactional 을 두지 않고 DB 확인은 리포지토리로 새로 읽는다(SocialCompleteApiTest 관례 · CLAUDE.md 리뷰 지시). 만료 경계는 MutableClock. 마이그레이션은 운영 엔진(PostgreSQL)에서만. 난수원은 고정 순서 RandomGenerator 를 @TestConfiguration 으로 주입(재시도·10회 실패를 결정적으로)"
+  },
+  "reject": {
+    "type": "ROLLBACK_PLAN",
+    "escalated_from": "RETRY_SCENARIO",
+    "attempt": 1,
+    "reason_code": "COVERAGE_INSUFFICIENT",
+    "reason": "Phase 2a 독립검증 3회 연속 V11 FAIL — 회차마다 pendingToken 클레임의 다른 칸이 지적됨. 원인: Plan 이 클레임 스키마(타입·규칙)를 정하지 않고 'verifyPendingToken 이 판정'으로만 적어 대조 기준이 없었다",
+    "fixed": "design.claim_schema 추가 — 클레임 7개의 JSON 타입·규칙과 이상값 열 9종",
+    "date": "2026-11-04",
+    "decided_by": "사용자 (AskUserQuestion: Phase 1 로 롤백)"
   }
 }
