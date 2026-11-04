@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "4"
-phase_name: "Phase 4 - Verify"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (Phase 4 롤백)"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -26,7 +26,7 @@ TASK-016 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 8h �
 
 ## 다음 한 걸음
 
-Green 완료(CP-3.4). `wf-verify` 로 Phase 4 — AC 7건 증거, 아키텍처 제약, code-reviewer(이전 RC-1 인계), deferred 2건(accessToken 형식 검사, 문서 §3-2 문구).
+Phase 4 FAIL(RC-2) → 사용자 결정으로 시나리오 롤백(RETRY_SCENARIO 1). AC8(토큰 압축 형식) 추가. SC-15(HTTP /me)·SC-16(검증 함수 직접) 을 써서 독립검증 → Red → 공통 지점 수정 → 재검증.
 
 ## 알아둬야 할 것
 
