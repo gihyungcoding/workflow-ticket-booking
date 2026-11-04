@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "1"
-phase_name: "Phase 1 - Plan (롤백 1회)"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-016-user-handle-pending-info"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-016.json"
 ---
@@ -26,7 +26,7 @@ TASK-016 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 8h �
 
 ## 다음 한 걸음
 
-2a 독립검증 3회 초과로 Phase 1 롤백(ROLLBACK_PLAN 1/2). PLAN 에 claim_schema 를 추가했다 — 다음은 2a 에서 SC-09 를 claim_schema 기준으로 다시 쓰고 검증 회차를 새로 시작한다.
+Phase 2a 독립검증 PASS(CP-2.2). `wf-red` 로 Red 테스트를 쓰고 시나리오+Red 통합 승인을 받는다. 마이그레이션 테스트는 Testcontainers(PostgreSQL) 의존성 추가가 필요하다.
 
 ## 알아둬야 할 것
 

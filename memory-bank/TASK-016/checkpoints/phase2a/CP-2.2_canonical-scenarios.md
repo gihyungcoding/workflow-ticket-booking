@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-04T14:00:00Z
-summary: "Phase 1 롤백(claim_schema 확정) 후 재작성 — 13건, SC-09 를 claim_schema 7클레임 × 9열로, SC-08 제공자 4종. 롤백 후 1회차 검증 대기."
+summary: "SCENARIO_TASK-016 14건(happy 8 · error 5 · regression 1) 독립검증 PASS (롤백 후 3회차, 경고 2: V6·V9 — 2b 통합 HITL 에서 판단)."
 
 next_steps:
-  - "scenario-validator 독립검증"
+  - "Phase 2b — wf-red 로 Red 테스트 작성 후 시나리오+Red 통합 승인(HITL#1·2)"
 
 decisions:
   - decision: "새로 작성 (기존 시나리오 확장 아님)"
@@ -51,3 +51,7 @@ PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다�
 - 반영: SC-09 email 칸 확장, SC-08 정규화 표, SC-14 신규(가입 완료 입구 = SC-09 표 전 칸). 같은 종류 대조: 클레임 검증 입구는 두 곳(/pending·/complete)뿐
 - 경고 반영: SC-07 의 random() 비결정 단언 삭제(V5)
 - 보류: V6·V9 — 2b 통합 HITL 에서 사람이 판단
+
+### 롤백 후 3회차 — PASS
+- 경고(보류, 통합 HITL 요약에 올림): V6 Then 안의 후속 호출(SC-01·06·07·08·13), V9 재시도 경로 중복(SC-04/05, SC-06/12)
+- 회차 요약: 롤백 전 3회 FAIL(V11) → Phase 1 롤백(claim_schema) → 롤백 후 1·2회 FAIL(V11) → 3회 PASS
