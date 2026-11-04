@@ -40,3 +40,8 @@ attempts:
 PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다시 썼다. 검증 회차는 롤백 후 1회차부터 다시 센다.
 3회차 경고 반영: JSON 파생에서 꼬리 절 흡수·순서 어긋남 수정(V1), SC-08 제공자 4종(V11 참고 provider 매핑).
 보류: V5·V6·V9 (Then 안 추가 확인, 재시도 경로 중복) — 2b 통합 HITL 에서 사람이 판단.
+
+### 롤백 후 1회차 — FAIL (V11)
+- 빠진 칸: exp 의 0·음수·음의 Instant 범위 초과 → SC-09 exp 행과 PLAN claim_schema.exp 규칙에 추가. 같은 종류 대조: 숫자 클레임은 exp 하나뿐
+- 경고 반영: 토큰 자체 표의 `typ=access` 행 삭제(클레임 표와 중복, V9), PLAN inputs 에 쓰기 가드 적용 명시(V8), SC-08 에 정규화 후 255자 이메일 허용 단언(V11 참고)
+- 보류: V5·V6·V7 — 2b 통합 HITL 에서 사람이 판단
