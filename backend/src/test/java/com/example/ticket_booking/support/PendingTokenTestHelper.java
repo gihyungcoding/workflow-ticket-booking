@@ -73,6 +73,28 @@ public final class PendingTokenTestHelper {
     }
   }
 
+  /**
+   * 클레임 값을 변환하지 않고 그대로 JSON 에 넣어 서명한다 (TASK-016 claim_schema). {@link #signedClaims} 와 달리 {@code
+   * null} 은 JSON null 로 남고, {@code exp}·{@code iat} 도 문자열·소수·객체처럼 규칙 밖의 값을 그대로 쓸 수 있다. {@link
+   * Instant} 는 epoch 초 정수로 바꾼다. 값이 {@link #ABSENT} 면 그 클레임을 넣지 않는다.
+   */
+  public static String signedRaw(String secret, Map<String, Object> claims) {
+    Map<String, Object> raw = new LinkedHashMap<>();
+    for (Map.Entry<String, Object> entry : claims.entrySet()) {
+      Object value = entry.getValue();
+      if (value == ABSENT) continue;
+      raw.put(entry.getKey(), value instanceof Instant instant ? instant.getEpochSecond() : value);
+    }
+    try {
+      String json = escapeLoneSurrogates(AuthTestHelper.OBJECT_MAPPER.writeValueAsString(raw));
+      JWSObject jws = new JWSObject(new JWSHeader(JWSAlgorithm.HS256), new Payload(json));
+      jws.sign(new MACSigner(secret.getBytes(StandardCharsets.UTF_8)));
+      return jws.serialize();
+    } catch (JOSEException exception) {
+      throw new IllegalStateException(exception);
+    }
+  }
+
   private static String escapeLoneSurrogates(String json) {
     StringBuilder out = new StringBuilder();
     for (int i = 0; i < json.length(); i++) {
