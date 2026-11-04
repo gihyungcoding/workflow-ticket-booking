@@ -1,0 +1,97 @@
+[
+ {
+  "slot": "luminous-stage",
+  "screens": [
+   "home",
+   "concert",
+   "booking",
+   "booked"
+  ],
+  "what": "대형 실내 돔 공연장 콘서트 무대, 조명과 객석 관객 뒷모습(얼굴 없이)",
+  "ratio": "4:3",
+  "kind": "photo",
+  "queries": [
+   "돔 콘서트 무대 조명 관객",
+   "arena concert stage lights crowd back view"
+  ]
+ },
+ {
+  "slot": "jazz-night",
+  "screens": [
+   "home"
+  ],
+  "what": "어두운 실내 무대에서 색소폰·더블베이스 재즈 공연",
+  "ratio": "4:3",
+  "kind": "photo",
+  "queries": [
+   "재즈 공연 무대 색소폰",
+   "jazz concert stage saxophone"
+  ]
+ },
+ {
+  "slot": "musical-garden",
+  "screens": [
+   "home"
+  ],
+  "what": "뮤지컬 극장 무대, 붉은 객석과 조명이 비친 무대",
+  "ratio": "4:3",
+  "kind": "photo",
+  "queries": [
+   "뮤지컬 극장 무대 객석",
+   "musical theater stage red seats"
+  ]
+ },
+ {
+  "slot": "jazz-fest",
+  "screens": [
+   "my-bookings",
+   "booking-sj"
+  ],
+  "what": "야외 가을 재즈 페스티벌 무대와 잔디 관객",
+  "ratio": "4:3",
+  "kind": "photo",
+  "queries": [
+   "야외 재즈 페스티벌 잔디",
+   "outdoor jazz festival lawn stage"
+  ]
+ },
+ {
+  "slot": "sori-band",
+  "screens": [
+   "home"
+  ],
+  "what": "작은 라이브 클럽 무대의 인디 밴드 공연, 기타와 조명",
+  "ratio": "4:3",
+  "kind": "photo",
+  "queries": [
+   "라이브 클럽 인디 밴드 공연",
+   "indie band live club stage guitar"
+  ]
+ },
+ {
+  "slot": "winter-classic",
+  "screens": [
+   "home"
+  ],
+  "what": "작은 콘서트홀 무대 위 그랜드 피아노",
+  "ratio": "4:3",
+  "kind": "photo",
+  "queries": [
+   "콘서트홀 그랜드 피아노 무대",
+   "grand piano concert hall stage"
+  ]
+ },
+ {
+  "slot": "nutcracker",
+  "screens": [
+   "home"
+  ],
+  "what": "발레 무대, 무용수 실루엣과 무대 조명(얼굴 작게)",
+  "ratio": "4:3",
+  "kind": "photo",
+  "queries": [
+   "발레 공연 무대 호두까기",
+   "nutcracker ballet stage performance"
+  ]
+ }
+]

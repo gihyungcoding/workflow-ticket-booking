@@ -56,7 +56,7 @@ Foundation 은 이 스킬이 관장하지 않는다. `/wf-init`, `/wf-feature`, 
 | 3 | `wf-develop` | 테스트를 통과시키는 최소 구현을 하고 리팩토링한다 |
 | 4 | `wf-verify` | 증거 기반으로 완료를 판정한다 |
 | 5 | `wf-reflect` | 회고하고 태스크를 닫는다 |
-| Ship | `/wf-ship` | 최종 검사 후 PR 을 만든다 (머지는 사람이) |
+| Ship | `/wf-ship` | 최종 검사 후 PR 을 만들고 머지한다 |
 
 ---
 

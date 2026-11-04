@@ -1,0 +1,374 @@
+{
+ "core": "일행 대표 예매자 민지가 오픈 순간 기기 시계·대기열 튕김·한 자리씩 고르기에 지지 않고 앞 구역 연석을 한 번에 잡는다 — 그 전에 가입·로그인은 걸림돌이 되지 않는다",
+ "items": [
+  {
+   "id": "FR-1",
+   "name": "기준 시각 카운트다운",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "core — 같은 출발선",
+   "ask": false
+  },
+  {
+   "id": "FR-2",
+   "name": "모든 기기 동시 활성화",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "core — 공정성",
+   "ask": false
+  },
+  {
+   "id": "FR-3",
+   "name": "예매 단계 미리 보기",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "상세에 4단계 줄 하나",
+   "why": "오픈 순간 판단 시간을 줄인다",
+   "ask": false
+  },
+  {
+   "id": "FR-4",
+   "name": "세부 구역 위치 미리 보기",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "상세에서 여는 시트",
+   "why": "F1이 앞이라는 걸 미리 알아야 0초 뒤 바로 고른다",
+   "ask": false
+  },
+  {
+   "id": "FR-5",
+   "name": "오픈 직전 진입 보장",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "화면 정책으로",
+   "why": "진입 실패는 바로 탈락",
+   "ask": false
+  },
+  {
+   "id": "FR-6",
+   "name": "대기 순번·앞뒤 인원",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "core",
+   "ask": false
+  },
+  {
+   "id": "FR-7",
+   "name": "순번 줄어드는 것 보기",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "기다릴지 판단",
+   "ask": false
+  },
+  {
+   "id": "FR-8",
+   "name": "잠금·전환 뒤 순번 유지",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "돌아온 모습을 별도 화면으로",
+   "why": "core — 성공 기준",
+   "ask": false
+  },
+  {
+   "id": "FR-9",
+   "name": "순번이 끊긴 이유 안내",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "1차는 정책 문구, 화면은 max에서",
+   "why": "드문 예외라 상태 화면",
+   "ask": false
+  },
+  {
+   "id": "FR-10",
+   "name": "여러 좌석 한 번에 선점",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "core",
+   "ask": false
+  },
+  {
+   "id": "FR-11",
+   "name": "매수만큼 연석 남은 구역 보기",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "매수를 회차 단계에서 먼저 받는다",
+   "why": "core — 놓침의 원인",
+   "ask": false
+  },
+  {
+   "id": "FR-12",
+   "name": "연석 한 번에 잡기",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "시작 자리 하나를 누르면 매수만큼 이어 잡힘 · 그 사이 뺏기면 같은 자리에서 근처 연석을 바로 보여 준다(상태 화면은 max)",
+   "why": "core — 성공 기준",
+   "ask": false
+  },
+  {
+   "id": "FR-13",
+   "name": "좌석 상태 실시간 반영",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "이선좌 반복 방지(리뷰 불만 A4)",
+   "ask": false
+  },
+  {
+   "id": "FR-14",
+   "name": "선점 좌석 잠금",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "확인 단계 7분, 폰 잠금에도 시간 유지, 무통장 예약 뒤엔 입금 기한까지 유지",
+   "why": "중복 판매 금지",
+   "ask": false
+  },
+  {
+   "id": "FR-15",
+   "name": "무통장 입금 예약",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "기본 결제 수단",
+   "ask": false
+  },
+  {
+   "id": "FR-16",
+   "name": "입금 확인 → 확정",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "알림 대신 열면 보이는 '예매 확정' 배지",
+   "why": "묻지 않아도 안다 — 반대 의견(알림 요청)은 받지 않음: 새 알림을 만들기보다 입금 안내 화면과 내 예매에서 상태가 바로 보이게",
+   "ask": false
+  },
+  {
+   "id": "FR-17",
+   "name": "기한 지나면 자동 취소",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "결과 화면 정책 문구",
+   "why": "기한을 놓치지 않게",
+   "ask": false
+  },
+  {
+   "id": "FR-18",
+   "name": "카드·간편결제",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "결제 수단에 함께 그리고 노출 조건을 정책에",
+   "why": "PRD 자체가 조건부",
+   "ask": false
+  },
+  {
+   "id": "FR-19",
+   "name": "무료 취소",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "입금 대기에서도 취소 가능, 기한 지난 뒤 수수료가 붙는다는 정책 문구",
+   "why": "서준의 성공한 순간",
+   "ask": false
+  },
+  {
+   "id": "FR-20",
+   "name": "양도",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "아이디로 받는 사람 지정",
+   "why": "일행 표 정리",
+   "ask": false
+  },
+  {
+   "id": "H1",
+   "name": "오픈 알림 설정",
+   "source": "하네스",
+   "verdict": "cut",
+   "how": "",
+   "why": "오픈 시각은 다들 알고, 미리 알림은 폰 기본 알람·캘린더가 이미 한다 — 반대 의견 있었지만 core 밖",
+   "ask": false
+  },
+  {
+   "id": "H2",
+   "name": "자동 좌석 배정(구역만 고르면 시스템이 연석 배정)",
+   "source": "하네스",
+   "verdict": "cut",
+   "how": "",
+   "why": "자리를 직접 보고 고르고 싶은 숙련 관객에게 통제감을 뺏는다 — 시작 자리를 누르는 방식으로 충분",
+   "ask": false
+  },
+  {
+   "id": "M1",
+   "name": "하단 탭바 5칸",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "탭바 없이 홈에서 내 예매로 들어간다",
+   "why": "목적지가 홈·내 예매 둘뿐(검색·카테고리·마이페이지는 범위 밖) — 탭바 대신 홈에서 내 예매로",
+   "ask": false
+  },
+  {
+   "id": "M2",
+   "name": "홈 맨 위 검색창 + 장르 격자",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "",
+   "why": "검색은 부록 B가 범위 밖으로 뒀다. 장르 격자 대신 상태 칩(부록 B)으로 걸러 본다",
+   "ask": false
+  },
+  {
+   "id": "M3",
+   "name": "인기 랭킹 목록",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "",
+   "why": "core와 무관한 탐색 기능",
+   "ask": false
+  },
+  {
+   "id": "M4",
+   "name": "목록 위 장르 탭·필터 칩",
+   "source": "시장",
+   "verdict": "lighten",
+   "how": "장르 탭 대신 상태 필터 칩(전체·예정·예매 가능·매진·마감·취소)",
+   "why": "부록 B가 상태 필터를 요구 — 관례의 칩 모양은 따른다",
+   "ask": false
+  },
+  {
+   "id": "M5",
+   "name": "티켓 오픈 일정 모음",
+   "source": "시장",
+   "verdict": "keep",
+   "how": "홈 맨 위에 오늘 열리는 공연 한 줄, 그 아래 공연 목록",
+   "why": "민지가 앱을 여는 이유가 오픈",
+   "ask": false
+  },
+  {
+   "id": "M6",
+   "name": "할인 전용 목록",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "",
+   "why": "판촉은 이 서비스가 하지 않는다",
+   "ask": false
+  },
+  {
+   "id": "M7",
+   "name": "모바일 티켓 발권",
+   "source": "시장",
+   "verdict": "later",
+   "how": "",
+   "why": "입장은 공연일 문제 — 이번 범위는 예매까지",
+   "ask": false
+  },
+  {
+   "id": "K1",
+   "name": "선착순 특가 코너",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "",
+   "why": "core와 무관, 판촉 없음",
+   "ask": false
+  },
+  {
+   "id": "K2",
+   "name": "실시간 예매 순위",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "",
+   "why": "어떤 사람의 성공한 순간에도 닿지 않는다",
+   "ask": false
+  },
+  {
+   "id": "K3",
+   "name": "오픈 전 알림",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "",
+   "why": "H1과 같은 이유",
+   "ask": false
+  },
+  {
+   "id": "K4",
+   "name": "관람 후기",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "",
+   "why": "인기 공연은 후기로 고르지 않는다 — 이미 갈 사람이 온다",
+   "ask": false
+  },
+  {
+   "id": "H3",
+   "name": "여러 예매 한꺼번에 취소",
+   "source": "하네스",
+   "verdict": "cut",
+   "how": "",
+   "why": "1인 최대 4장이라 예매가 몇 건 안 된다 — 하나씩 취소로 충분",
+   "ask": false
+  },
+  {
+   "id": "A-로그인",
+   "name": "이메일·소셜 로그인",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "소셜 4종은 '또는' 아래 한 줄",
+   "why": "하린의 가입 마찰을 줄인다",
+   "ask": false
+  },
+  {
+   "id": "A-가입",
+   "name": "이메일 회원가입",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "",
+   "why": "소셜 계정이 없는 사람",
+   "ask": false
+  },
+  {
+   "id": "A-역할선택",
+   "name": "소셜 첫 가입 역할 선택",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "어떤 계정으로 가입 중인지를 맨 위에",
+   "why": "부록 A — 역할 없는 계정 방지",
+   "ask": false
+  },
+  {
+   "id": "A-콜백",
+   "name": "소셜 로그인 확인 중 화면",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "입력 없는 짧은 화면",
+   "why": "부록 A 화면 목록",
+   "ask": false
+  },
+  {
+   "id": "B-목록",
+   "name": "공연 목록·상태 배지·상태 필터",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "홈 자체를 목록으로",
+   "why": "부록 B — 문의 없이 예매 가능 여부 확인",
+   "ask": false
+  },
+  {
+   "id": "B-상세",
+   "name": "공연 상세 + 상태",
+   "source": "PRD",
+   "verdict": "keep",
+   "how": "본문의 오픈 전 상세와 하나로 합침",
+   "why": "같은 화면",
+   "ask": false
+  },
+  {
+   "id": "H4",
+   "name": "가입 완료 화면(아이디 복사)",
+   "source": "하네스",
+   "verdict": "keep",
+   "how": "부록 A는 가입 성공 시 홈으로 바로 보내지만, 결과 화면 한 장에서 아이디를 복사하게 한다",
+   "why": "하린의 성공한 순간이 '아이디를 민지에게 보낼 때' — 양도를 받으려면 아이디가 필요",
+   "ask": false
+  }
+ ]
+}

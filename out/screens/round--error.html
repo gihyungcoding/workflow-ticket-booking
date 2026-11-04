@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>1/4 회차 · 매수 · 오류</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .step { display: flex; flex-direction: column; gap: var(--stack-s); }
+  .step-names { font-size: var(--fs-sub); color: var(--c-text-3); }
+  .pick .row { padding-left: var(--stack-m); padding-right: var(--stack-m); border: 1px solid var(--c-line); border-radius: var(--r-m); }
+  .pick .row + .row { margin-top: var(--stack-s); }
+  .pick .row[aria-checked="true"] { border-color: var(--c-brand-line); }
+  .pick .row[aria-checked="true"] .row-title { color: var(--c-brand-text); }
+  .pick .row .row-trail svg { visibility: hidden; }
+  .pick .row[aria-checked="true"] .row-trail svg { visibility: visible; color: var(--c-brand-line); }
+  .seg-item:disabled { color: var(--c-text-disabled); }
+  .field.is-error .seg { box-shadow: inset 0 0 0 1px var(--c-danger); }
+</style>
+</head>
+<body class="plain has-cta">
+<header class="appbar"><a class="appbar-btn" href="concert.html" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><h1 class="appbar-title">회차·매수</h1><span></span></header>
+<main class="page">
+  <div class="step">
+    <div class="progress" role="progressbar" aria-label="예매 4단계 중 1단계" aria-valuenow="1" aria-valuemax="4"><span class="is-on"></span><span></span><span></span><span></span></div>
+    <p class="step-names"><span class="num">1/4 회차</span> · 구역 · 좌석 · 확인</p>
+  </div>
+  <div class="field"><span class="label">회차</span>
+    <div class="pick" role="radiogroup" aria-label="회차">
+      <button class="row" role="radio" aria-checked="true"><span class="row-date">12/19<br>토</span><div class="row-main"><p class="row-title">1회 · 오후 6:00</p><p class="row-sub">12월 19일(토) · 고척스카이돔</p></div><span class="row-trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 12.5 3.5 3.5 7.5-8"/></svg></span></button>
+      <button class="row" role="radio" aria-checked="false"><span class="row-date">12/20<br>일</span><div class="row-main"><p class="row-title">2회 · 오후 5:00</p><p class="row-sub">12월 20일(일) · 고척스카이돔</p></div><span class="row-trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 12.5 3.5 3.5 7.5-8"/></svg></span></button>
+    </div>
+  </div>
+  <div class="field is-error"><span class="label">매수 · 1인 최대 4장</span>
+    <div class="seg" role="radiogroup" aria-label="매수"><button class="seg-item" role="radio" aria-checked="false">1장</button><button class="seg-item is-selected" role="radio" aria-checked="true">2장</button><button class="seg-item" role="radio" aria-checked="false" disabled>3장</button><button class="seg-item" role="radio" aria-checked="false" disabled>4장</button></div>
+    <p class="field-msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>이 공연은 이미 2장을 예매해서 2장까지 고를 수 있어요</p>
+    <p class="info"><img src="../assets/fluent/ticket.svg" alt=""><span>다음 단계에서 2자리가 붙어 남은 구역만 보여 드려요</span></p>
+  </div>
+</main>
+<div class="cta"><a class="btn primary full" href="zone.html">2장으로 다음</a></div>
+</body></html>

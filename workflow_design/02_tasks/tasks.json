@@ -866,5 +866,219 @@
       "sections": [],
       "sections_with_ranges": []
     }
+  },
+  {
+    "id": "TASK-016",
+    "title": "티켓온 아이디·소셜 가입 대기 정보 API",
+    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 1(booking-ux-01)은 이미 동작하는 로그인·가입·소셜 로그인(TASK-009~013)을 시안대로 바꾸고, 시안에 적힌 화면 규칙을 실제 기능으로 만든다. users.handle 을 추가해 이메일 앞부분으로 자동 생성하고(겹치면 숫자 접미사, 기존 회원은 마이그레이션으로 채움), 가입·me 응답에 handle 을 싣는다. pendingToken 의 제공자·이메일·이름·만료 시각을 돌려주는 POST /api/auth/social/pending 을 만든다. 포함하지 않음: 아이디 변경, 아이디로 회원 찾기(흐름 5), 휴대폰 번호.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "마이그레이션·도메인·인증 API 변경은 백엔드 범위",
+    "priority": "High",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 8
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 이메일 `harin.kim@kakao.com` 이면 `harin.kim` 이다",
+        "같은 앞부분의 두 번째 가입자는 `harin.kim2` 를 받는다",
+        "허용 밖 문자는 지워지고 20자를 넘지 않으며, 3자 미만이면 `user` 기반으로 만든다",
+        "소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다",
+        "마이그레이션 뒤 기존 회원 전원이 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE)",
+        "`POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다",
+        "만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/resources/db/migration/V5__add_users_handle.sql",
+          "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+          "backend/src/main/java/com/example/ticket_booking/service/HandleGenerator.java",
+          "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+          "backend/src/main/java/com/example/ticket_booking/service/UserResponse.java",
+          "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+          "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 3,
+        "risk_score": 3,
+        "total_score": 48.0,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/booking-ux-01-auth.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task A"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-017",
+    "title": "디자인 토큰 교체·공통 부품",
+    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 1(booking-ux-01)은 이미 동작하는 로그인·가입·소셜 로그인(TASK-009~013)을 시안대로 바꾸고, 시안에 적힌 화면 규칙을 실제 기능으로 만든다. docs/product/design-tokens.css(값의 출처 out/tokens.css) 로 MUI 테마를 다시 만들고 Pretendard 를 로드한다. 375px 한 열 레이아웃과 시안 부품(AppBar·Page·Block·Row·Badge·CtaBar·Field·Toast·Sheet)을 React 컴포넌트로 만들고, 상태 배지를 design.md §5 의 6가지 뜻으로 바꾼다. 새 색·새 여백 값을 만들지 않는다. 포함하지 않음: 화면별 재배치(목록·상세는 흐름 2), 다크 모드, 주최자 화면 재디자인.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience",
+      "organizer"
+    ],
+    "reason_primary": "테마·공통 UI 컴포넌트는 프론트 범위",
+    "priority": "High",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 12
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "`frontend/src/theme/tokens.ts` 의 값이 `docs/product/design-tokens.css` 와 하나도 다르지 않다 (테스트로 대조)",
+        "테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)",
+        "Pretendard 가 실제로 로드된다 (`document.fonts` 확인 또는 네트워크 요청)",
+        "375px 폭에서 가로 스크롤이 없고, 넓은 화면에서는 가운데 한 열로 보인다",
+        "상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)",
+        "`data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다",
+        "기존 화면(목록·상세·공연 등록·수정) 테스트가 새 배지 문구로 고친 뒤 모두 통과한다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/theme/tokens.ts",
+          "frontend/src/theme/index.ts",
+          "frontend/src/components/ui/",
+          "frontend/src/components/StatusBadge.tsx",
+          "frontend/src/components/AppHeader.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60.0,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/booking-ux-01-auth.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task B"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-018",
+    "title": "인증 화면 5종을 시안대로",
+    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 1(booking-ux-01)은 이미 동작하는 로그인·가입·소셜 로그인(TASK-009~013)을 시안대로 바꾸고, 시안에 적힌 화면 규칙을 실제 기능으로 만든다. 로그인·가입·OAuth 콜백·역할 선택·가입 완료(신규) 화면과 오류 상태 3종(login--error·signup--error·role-select--error)을 out/screens 시안대로 만든다. 화면 규칙: 역할 선택 5분 만료(화면에 머물러도 만료 상태로 전환), 가입 뒤 자동 로그인 → 가입 완료, 아이디 복사 토스트, 소셜 실패 안내, 이메일 중복 시 칸 안 로그인 링크. 문구는 해요체(시안). 포함하지 않음: 아이디·비밀번호 찾기, 홈 화면(흐름 2).",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience",
+      "organizer"
+    ],
+    "reason_primary": "인증 화면·라우트·클라이언트 검증은 프론트 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-016",
+      "TASK-017"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 12
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "로그인 401 이면 두 칸이 함께 오류 표시되고 \"이메일 또는 비밀번호가 올바르지 않아요\" 가 나온다",
+        "`/login?error=social` 이면 맨 위에 \"로그인이 취소됐거나 실패했어요\" 가 나온다",
+        "로그인 성공 시 원래 가려던 화면으로 돌아간다 (기존 동작 유지)",
+        "비밀번호가 8자 미만이거나 72자 초과면 비밀번호 칸 아래 안내가 오류로 바뀌고 제출되지 않는다",
+        "비밀번호 확인이 다르면 \"비밀번호가 일치하지 않아요\" 가 그 칸 아래 나온다",
+        "가입 409 이면 이메일 칸 아래 \"이미 가입된 이메일이에요\" 와 로그인 링크가 나오고, 아래 \"이미 계정이 있나요?\" 줄이 사라진다",
+        "가입에 성공하면 자동으로 로그인되어 `/joined` 로 가고 \"이메일 · 관객\" 과 내 아이디가 보인다",
+        "소셜 버튼을 누른 뒤 콜백 화면에 \"카카오 계정을 확인하고 있어요\" 처럼 그 제공자 이름이 나온다",
+        "역할 선택 화면에 \"카카오로 처음 가입\" 과 \"<이메일> (<이름>)으로 가입하고 있어요\" 가 나온다",
+        "역할 선택 화면을 연 채 `expiresAt` 이 지나면 만료 상태(가입 시간이 지났어요 + 다시 로그인하기)로 바뀐다 (가짜 타이머로 확인)",
+        "대기 정보 조회나 계속하기가 401 `PENDING_SIGNUP_EXPIRED` 면 같은 만료 상태가 된다",
+        "역할을 고르고 계속하기를 누르면 `/joined` 로 가고 \"카카오 · 관객\" 과 내 아이디가 보인다",
+        "가입 완료 화면의 아이디 복사를 누르면 클립보드에 아이디가 들어가고 토스트 \"아이디를 복사했어요 — 일행에게 붙여넣어 보내세요\" 가 나온다",
+        "시작하기를 누르면 홈(`/`)으로 간다",
+        "제출 중에는 주 버튼을 다시 누를 수 없다",
+        "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/components/SocialLoginButtons.tsx",
+          "frontend/src/pages/LoginPage.tsx",
+          "frontend/src/pages/SignUpPage.tsx",
+          "frontend/src/pages/OAuthRedirectPage.tsx",
+          "frontend/src/pages/RoleSelectionPage.tsx",
+          "frontend/src/pages/JoinedPage.tsx",
+          "frontend/src/auth/messages.ts",
+          "frontend/src/api/auth.ts",
+          "frontend/src/App.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60.0,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/booking-ux-01-auth.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task C"
+        }
+      ]
+    }
   }
 ]

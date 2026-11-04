@@ -1,0 +1,965 @@
+{
+ "groups": [
+  "처음 들어올 때 — 로그인·가입",
+  "공연 찾기와 오픈 전 — 같은 시계로 기다린다",
+  "대기열 — 순번은 지켜진다",
+  "예매 4단계 — 매수 먼저, 연석은 한 번에",
+  "예매 뒤 — 입금·확정·정리"
+ ],
+ "story": {
+  "headline": "가입은 <em>버튼 한 번</em>, 오픈은 <em>같은 시계</em>, 일행 자리는 <em>한 번에</em>",
+  "summary": "쓰던 소셜 계정으로 들어와 공연 상태를 한눈에 보고, 모든 기기가 같은 순간에 열리는 예매에서 순번을 지키며 매수만큼 붙은 자리를 한 번에 잡는다.",
+  "ideas": [
+   {
+    "title": "기준 시각 카운트다운",
+    "desc": "어느 기기에서 보든 같은 순간에 0이 되고 같은 순간에 버튼이 켜진다."
+   },
+   {
+    "title": "매수를 먼저",
+    "desc": "회차와 함께 몇 장인지 먼저 받아 구역 단계에서 'n연석 남은 곳'을 보여 준다."
+   },
+   {
+    "title": "연석 한 번에 잡기",
+    "desc": "시작 좌석 하나를 누르면 옆으로 매수만큼 이어진 자리가 함께 잡힌다."
+   },
+   {
+    "title": "돌아와도 그 순번",
+    "desc": "폰 잠금·앱 전환 뒤 돌아오면 순번이 그대로 이어진다."
+   }
+  ]
+ },
+ "avatar_style": "people",
+ "photo_centric": false,
+ "promos": [],
+ "badges": {
+  "예매 가능": "is-brand",
+  "예정": "is-info",
+  "매진": "is-danger",
+  "마감": "",
+  "입금 대기": "is-warning",
+  "예매 확정": "is-success"
+ },
+ "people": [
+  {
+   "name": "정민지 — 일행 대표 예매자",
+   "who": "29세 한국 여성 회사원, 퇴근길 밖에서 폰으로 일행 3명 표를 혼자 잡는다",
+   "why": "루미너스 고척돔 콘서트 예매가 오늘 오후 6시에 열린다",
+   "feels": "초조함 — 기기 시계 하나도 의심한다",
+   "wants": [
+    {
+     "q": "지금 카운트다운이 진짜 오픈 시각과 맞나",
+     "at": [
+      "concert"
+     ]
+    },
+    {
+     "q": "열리면 어떤 순서로 고르고, 앞 구역은 어디인가",
+     "at": [
+      "concert",
+      "zone-map"
+     ]
+    },
+    {
+     "q": "내 순번이 살아 있나, 얼마나 남았나",
+     "at": [
+      "queue",
+      "queue-back"
+     ]
+    },
+    {
+     "q": "3자리가 붙어 남은 구역은 어디인가",
+     "at": [
+      "zone",
+      "seat"
+     ]
+    },
+    {
+     "q": "언제까지 얼마를 어디로 보내면 확정되나",
+     "at": [
+      "booked",
+      "booking"
+     ]
+    }
+   ],
+   "win": "F1에서 3연석을 한 번에 잡고 입금 기한과 계좌가 한눈에 보일 때",
+   "screens": [
+    "login",
+    "home",
+    "concert",
+    "zone-map",
+    "queue",
+    "queue-back",
+    "round",
+    "zone",
+    "seat",
+    "checkout",
+    "booked",
+    "booking",
+    "transfer"
+   ],
+   "core": true
+  },
+  {
+   "name": "박서준 — 같이 도전하는 일행",
+   "who": "31세 한국 남성, 같은 시각 집에서 PC로 따로 2장을 잡는다",
+   "why": "민지가 실패할 때를 대비해 따로 예매에 도전한다",
+   "feels": "민지가 성공하면 내 표를 손해 없이 빨리 정리해야 한다는 부담",
+   "wants": [
+    {
+     "q": "정리할 표는 어떤 것이고 언제까지 무료로 취소되나",
+     "at": [
+      "my-bookings",
+      "booking-sj"
+     ]
+    },
+    {
+     "q": "취소하면 돈과 좌석은 어떻게 되나",
+     "at": [
+      "cancel-sheet",
+      "cancelled"
+     ]
+    }
+   ],
+   "win": "남는 2장을 무료 취소 기간 안에 손해 없이 정리했을 때",
+   "screens": [
+    "home",
+    "my-bookings",
+    "booking-sj",
+    "cancel-sheet",
+    "cancelled"
+   ],
+   "core": false
+  },
+  {
+   "name": "김하린 — 처음 가입하는 일행",
+   "who": "28세 한국 여성, 티켓온을 처음 쓴다. 민지에게 표를 받으려고 폰에서 카카오로 가입한다",
+   "why": "민지가 표 한 장을 넘겨주려면 티켓온 회원이어야 한다",
+   "feels": "귀찮음 — 가입이 길면 미룬다",
+   "wants": [
+    {
+     "q": "가입이 금방 끝나나, 쓰던 계정으로 되나",
+     "at": [
+      "login",
+      "signup"
+     ]
+    },
+    {
+     "q": "지금 어떤 계정으로 가입 중인가",
+     "at": [
+      "role-select"
+     ]
+    },
+    {
+     "q": "가입하면 아이디를 어디서 보나",
+     "at": [
+      "joined"
+     ]
+    }
+   ],
+   "win": "카카오 버튼 한 번과 역할 선택 한 번으로 가입이 끝나고 아이디를 민지에게 보낼 때",
+   "screens": [
+    "login",
+    "oauth-callback",
+    "role-select",
+    "joined",
+    "signup"
+   ],
+   "core": false
+  }
+ ],
+ "screens": [
+  {
+   "id": "login",
+   "file": "screens/login.html",
+   "title": "로그인",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "이메일이나 쓰던 소셜 계정으로 바로 들어온다",
+   "policies": [
+    "틀리면 '이메일 또는 비밀번호가 올바르지 않아요' — 어느 쪽이 틀렸는지 알려 주지 않는다",
+    "소셜 로그인이 취소·실패하면 이 화면으로 돌아와 위에 안내",
+    "아이디·비밀번호 찾기는 이번 범위 밖"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "oauth-callback",
+     "label": "소셜 버튼"
+    },
+    {
+     "to": "signup",
+     "label": "계정이 없으면"
+    },
+    {
+     "to": "home",
+     "label": "이메일로 로그인"
+    }
+   ],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "login--error",
+   "file": "screens/login--error.html",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "title": "로그인 · 오류",
+   "purpose": "자격 증명 오류",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "login",
+   "state": "error",
+   "rules": [
+    "R4"
+   ],
+   "policies": [
+    "[R4] 자격 증명 오류"
+   ]
+  },
+  {
+   "id": "oauth-callback",
+   "file": "screens/oauth-callback.html",
+   "title": "카카오 로그인 확인 중",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "소셜 계정을 확인하는 짧은 순간 — 입력 없음",
+   "policies": [
+    "처음 온 소셜 계정이면 역할 선택으로, 이미 있는 계정이면 바로 이전 화면으로",
+    "같은 이메일의 확인된 계정이 있으면 자동으로 이어 준다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "role-select",
+     "label": "처음 온 계정"
+    },
+    {
+     "to": "home",
+     "label": "이미 있는 계정"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "role-select",
+   "file": "screens/role-select.html",
+   "title": "역할 선택 · 처음 가입",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "어떤 계정으로 가입 중인지 보고 역할만 고른다",
+   "policies": [
+    "5분 안에 고르지 않으면 만료 — 다시 로그인",
+    "가입 뒤 역할은 바꿀 수 없다",
+    "주최자를 고르면 주최자 화면으로(이번 시안 범위 밖)"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "role-select--error",
+   "file": "screens/role-select--error.html",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "title": "역할 선택 · 처음 가입 · 오류",
+   "purpose": "pendingToken 만료",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "role-select",
+   "state": "error",
+   "rules": [
+    "R5"
+   ],
+   "policies": [
+    "[R5] pendingToken 만료"
+   ]
+  },
+  {
+   "id": "joined",
+   "file": "screens/joined.html",
+   "title": "가입 완료",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "가입이 끝났고 내 아이디가 무엇인지 안다",
+   "policies": [
+    "아이디는 눌러서 복사 — 일행에게 보내 표를 받는다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "signup",
+   "file": "screens/signup.html",
+   "title": "이메일로 가입",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "이메일·비밀번호·이름·역할로 계정을 만든다",
+   "policies": [
+    "비밀번호 8자 이상 72자 이하",
+    "이미 가입된 이메일이면 그 칸에서 알리고 로그인으로 안내",
+    "이메일·역할은 가입 뒤 바꿀 수 없다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "login",
+     "label": "이미 계정이 있으면"
+    }
+   ],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "signup--error",
+   "file": "screens/signup--error.html",
+   "group": "처음 들어올 때 — 로그인·가입",
+   "title": "이메일로 가입 · 오류",
+   "purpose": "이메일 중복 · 비밀번호 불일치 · 비밀번호 길이 정책",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "signup",
+   "state": "error",
+   "rules": [
+    "R1",
+    "R2",
+    "R3"
+   ],
+   "policies": [
+    "[R1] 이메일 중복",
+    "[R2] 비밀번호 불일치",
+    "[R3] 비밀번호 길이 정책"
+   ]
+  },
+  {
+   "id": "home",
+   "file": "screens/home.html",
+   "title": "홈 · 공연 목록",
+   "group": "공연 찾기와 오픈 전 — 같은 시계로 기다린다",
+   "kind": "home",
+   "archetype": "진열형",
+   "role": "everyone",
+   "purpose": "지금 열려 있는 공연과 곧 열릴 공연을 상태로 본다",
+   "policies": [
+    "공연 시작이 가까운 순, 지난 공연은 보이지 않는다",
+    "상태(예정·예매 가능·매진·마감·취소)는 시각과 남은 좌석으로 정해진다",
+    "텍스트 검색은 이번 범위 밖 — 상태 칩으로만 걸러 본다, 20개씩"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "tabs": [],
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "concert",
+   "file": "screens/concert.html",
+   "title": "공연 상세 · 오픈 4분 전",
+   "group": "공연 찾기와 오픈 전 — 같은 시계로 기다린다",
+   "kind": "detail",
+   "archetype": "대상형",
+   "archetype_why": "시장 상세 majority 없음 — 예매할지 결정하는 화면이라 대상형",
+   "role": "everyone",
+   "purpose": "기준 시각 카운트다운과 예매 단계를 미리 본다",
+   "policies": [
+    "카운트다운은 기기 시계가 아니라 티켓온 기준 시각 — 모든 기기에서 같은 순간 0",
+    "0초 전에는 예매하기가 꺼져 있고 0초에 모든 기기에서 동시에 켜진다",
+    "오픈 5분 전부터는 가벼운 대기 화면으로 들어와 트래픽이 몰려도 진입이 막히지 않는다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "zone-map",
+     "label": "구역 위치 보기"
+    },
+    {
+     "to": "queue",
+     "label": "0초에 예매하기"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "zone-map",
+   "file": "screens/zone-map.html",
+   "title": "구역 위치 미리 보기",
+   "group": "공연 찾기와 오픈 전 — 같은 시계로 기다린다",
+   "kind": "sheet",
+   "over": "concert",
+   "role": "everyone",
+   "purpose": "F1~F4가 무대에서 어디쯤인지 오픈 전에 안다",
+   "policies": [
+    "F1 무대 바로 앞 → F4 맨 뒤 순서",
+    "확대된 배치도로 시작하지 않는다 — 전체가 한 화면에"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "queue",
+   "file": "screens/queue.html",
+   "title": "대기열 · 3,127번",
+   "group": "대기열 — 순번은 지켜진다",
+   "kind": "detail",
+   "archetype": "진행 추적형",
+   "archetype_why": "순번이 줄어드는 진행을 지켜보는 화면",
+   "role": "everyone",
+   "purpose": "내 순번과 앞뒤 인원, 줄어드는 속도를 본다",
+   "policies": [
+    "폰 잠금·앱 전환·잠깐의 끊김에도 순번 유지",
+    "순번이 끊기면 조용히 사라지지 않고 이유와 지금 상태를 이 화면에 알린다",
+    "새로고침·뒤로 가기를 눌러도 순번이 그대로"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "queue--error",
+   "file": "screens/queue--error.html",
+   "group": "대기열 — 순번은 지켜진다",
+   "title": "대기열 · 3,127번 · 오류",
+   "purpose": "대기열 순번 끊김 사유",
+   "role": "everyone",
+   "kind": "detail",
+   "state_of": "queue",
+   "state": "error",
+   "rules": [
+    "R11"
+   ],
+   "policies": [
+    "[R11] 대기열 순번 끊김 사유"
+   ]
+  },
+  {
+   "id": "queue-back",
+   "file": "screens/queue-back.html",
+   "title": "대기열 · 잠금 해제 후 1,842번",
+   "group": "대기열 — 순번은 지켜진다",
+   "kind": "detail",
+   "archetype": "진행 추적형",
+   "archetype_why": "같은 대기열의 돌아온 뒤 모습",
+   "role": "everyone",
+   "purpose": "돌아와도 순번이 그대로라는 걸 바로 안다",
+   "policies": [
+    "돌아온 순간 '순번 그대로' 안내를 한 번 보여 준다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "round",
+     "label": "내 차례가 되면"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "round",
+   "file": "screens/round.html",
+   "title": "1/4 회차 · 매수",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "회차와 몇 장인지를 먼저 정한다",
+   "policies": [
+    "1인 최대 4장",
+    "매수를 알아야 다음 단계에서 그만큼 붙은 자리만 보여 줄 수 있다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "round--error",
+   "file": "screens/round--error.html",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "title": "1/4 회차 · 매수 · 오류",
+   "purpose": "오류 모습",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "round",
+   "state": "error"
+  },
+  {
+   "id": "zone",
+   "file": "screens/zone.html",
+   "title": "2/4 구역 · 3연석 남은 곳",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "kind": "list",
+   "archetype": "행 목록",
+   "archetype_why": "시장 목록 majority는 순위지만, 여기선 인기 순서가 아니라 무대와의 거리·남은 연석으로 고른다",
+   "role": "everyone",
+   "purpose": "3자리가 붙어 남은 구역을 앞에서부터 본다",
+   "policies": [
+    "남은 연석 수는 실시간에 가깝게 바뀐다",
+    "3연석이 없는 구역은 흐리게 — 누를 수 없다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "seat",
+   "file": "screens/seat.html",
+   "title": "3/4 좌석 · F1구역",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "시작 자리 하나로 3연석을 한 번에 잡는다",
+   "policies": [
+    "선점됨·판매됨 자리는 누를 수 없다",
+    "누른 순간 그 사이 누가 먼저 잡았으면 같은 자리에서 근처 3연석을 바로 보여 준다",
+    "뒤로 가면 구역 단계로 — 처음으로 돌아가지 않는다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "seat--error",
+   "file": "screens/seat--error.html",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "title": "3/4 좌석 · F1구역 · 오류",
+   "purpose": "사라진 좌석 선택",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "seat",
+   "state": "error",
+   "rules": [
+    "R8"
+   ],
+   "policies": [
+    "[R8] 사라진 좌석 선택"
+   ]
+  },
+  {
+   "id": "checkout",
+   "file": "screens/checkout.html",
+   "title": "4/4 확인 · 결제 수단",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "잡은 자리와 금액을 확인하고 결제 수단을 고른다",
+   "policies": [
+    "잡은 자리는 7분 동안 다른 관객이 고를 수 없다 — 폰이 잠겨도 시간은 그대로",
+    "무통장 입금으로 예약하면 입금 기한(오후 11:59)까지 자리 유지",
+    "카드·네이버페이·카카오페이는 추가 비용 없이 붙일 수 있을 때만 노출"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "checkout--error",
+   "file": "screens/checkout--error.html",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "title": "4/4 확인 · 결제 수단 · 오류",
+   "purpose": "오류 모습",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "checkout",
+   "state": "error"
+  },
+  {
+   "id": "booked",
+   "file": "screens/booked.html",
+   "title": "예약 완료 · 입금 안내",
+   "group": "예매 4단계 — 매수 먼저, 연석은 한 번에",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "얼마를 언제까지 어디로 보내면 확정되는지",
+   "policies": [
+    "기한까지 입금하지 않으면 자동 취소되고 좌석은 다시 판매",
+    "계좌번호는 눌러서 복사"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "booking",
+   "file": "screens/booking.html",
+   "title": "예매 상세 · 민지 F1 3장 확정",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "kind": "detail",
+   "archetype": "진행 추적형",
+   "archetype_why": "예약 → 입금 확인 → 확정 진행을 확인하는 화면",
+   "role": "everyone",
+   "purpose": "입금이 확인돼 예매가 확정됐는지 본다",
+   "policies": [
+    "입금이 확인되면 '예매 확정'으로 바뀐다(알림 없이도 열면 보인다)",
+    "양도는 예매 확정 뒤부터, 취소는 입금 전에도 된다",
+    "취소는 서준의 예매 상세(booking-sj)와 같은 흐름"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "transfer",
+     "label": "일행에게 1장 넘기기"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "transfer",
+   "file": "screens/transfer.html",
+   "title": "양도 · 하린에게 1장",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "표 한 장을 일행의 티켓온 계정으로 넘긴다",
+   "policies": [
+    "받는 사람은 티켓온 아이디나 휴대폰 번호로 찾는다",
+    "보내면 받는 사람의 내 예매에 바로 들어간다",
+    "공연 하루 전까지 되돌릴 수 있다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": true,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error",
+    "done"
+   ]
+  },
+  {
+   "id": "transfer--error",
+   "file": "screens/transfer--error.html",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "title": "양도 · 하린에게 1장 · 오류",
+   "purpose": "오류 모습",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "transfer",
+   "state": "error"
+  },
+  {
+   "id": "transfer--done",
+   "file": "screens/transfer--done.html",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "title": "양도 · 하린에게 1장 · 보낸 뒤",
+   "purpose": "보낸 뒤 모습",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "transfer",
+   "state": "done"
+  },
+  {
+   "id": "my-bookings",
+   "file": "screens/my-bookings.html",
+   "title": "내 예매 · 서준",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "kind": "list",
+   "archetype": "행 목록",
+   "archetype_why": "내 예매는 인기 순이 아니라 날짜·상태로 본다",
+   "role": "everyone",
+   "purpose": "정리할 표와 무료 취소 기한을 본다",
+   "policies": [
+    "다가오는 공연이 위, 지난 공연은 아래",
+    "무료 취소 기한은 행에 바로 보인다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "booking-sj",
+   "file": "screens/booking-sj.html",
+   "title": "예매 상세 · 서준 F3 2장",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "kind": "detail",
+   "archetype": "진행 추적형",
+   "archetype_why": "같은 예매 상세 화면, 취소할 사람의 모습",
+   "role": "everyone",
+   "purpose": "무료 취소가 되는지 보고 취소를 시작한다",
+   "policies": [
+    "무료 취소는 12월 12일(토) 오후 11:59까지 — 입금 대기 상태에서도 취소 가능",
+    "기한이 지나면 취소 수수료가 붙는다(수수료율은 열린 질문)"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "cancel-sheet",
+     "label": "예매 취소"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "cancel-sheet",
+   "file": "screens/cancel-sheet.html",
+   "title": "취소 한 번 더 확인",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "kind": "sheet",
+   "over": "booking-sj",
+   "role": "everyone",
+   "purpose": "되돌릴 수 없다는 것과 환불 금액을 확인한다",
+   "policies": [
+    "취소하면 되돌릴 수 없고 좌석은 바로 다시 판매",
+    "환불은 입금 계좌로 3영업일 안에"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "cancelled",
+   "file": "screens/cancelled.html",
+   "title": "취소 완료",
+   "group": "예매 뒤 — 입금·확정·정리",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "취소됐고 돈이 언제 돌아오는지 안다",
+   "policies": [
+    "환불 300,000원 · 3영업일 안에"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  }
+ ],
+ "prd_coverage": {
+  "FR-1": [
+   "concert"
+  ],
+  "FR-2": [
+   "concert"
+  ],
+  "FR-3": [
+   "concert"
+  ],
+  "FR-4": [
+   "zone-map",
+   "zone"
+  ],
+  "FR-5": [
+   "concert"
+  ],
+  "FR-6": [
+   "queue"
+  ],
+  "FR-7": [
+   "queue"
+  ],
+  "FR-8": [
+   "queue-back"
+  ],
+  "FR-9": [
+   "queue"
+  ],
+  "FR-10": [
+   "seat"
+  ],
+  "FR-11": [
+   "round",
+   "zone"
+  ],
+  "FR-12": [
+   "seat"
+  ],
+  "FR-13": [
+   "zone",
+   "seat"
+  ],
+  "FR-14": [
+   "checkout"
+  ],
+  "FR-15": [
+   "checkout",
+   "booked"
+  ],
+  "FR-16": [
+   "booking"
+  ],
+  "FR-17": [
+   "booked"
+  ],
+  "FR-18": [
+   "checkout"
+  ],
+  "FR-19": [
+   "booking-sj",
+   "cancel-sheet",
+   "cancelled"
+  ],
+  "FR-20": [
+   "transfer"
+  ],
+  "US1": [
+   "concert"
+  ],
+  "US2": [
+   "queue",
+   "queue-back"
+  ],
+  "US3": [
+   "round",
+   "zone",
+   "seat"
+  ],
+  "US4": [
+   "concert",
+   "zone-map"
+  ],
+  "A-가입": [
+   "signup",
+   "joined"
+  ],
+  "A-로그인": [
+   "login"
+  ],
+  "A-역할선택": [
+   "role-select"
+  ],
+  "A-콜백": [
+   "oauth-callback"
+  ],
+  "B-목록": [
+   "home"
+  ],
+  "B-상세": [
+   "concert"
+  ]
+ },
+ "stage": "max",
+ "pending_states": 0
+}

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>구역 선택</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+.step { display: flex; flex-direction: column; gap: var(--stack-s); margin: 0 var(--page-x); }
+.step-names { font-size: var(--fs-sub); color: var(--c-text-3); }
+/* 무대 거리 표시 — 위 막대가 무대, 아래 네 칸이 F1~F4. 이 구역 칸만 브랜드 색 */
+.zone-pos { flex: none; width: 44px; height: 44px; display: grid; place-items: center; }
+.zone-pos svg { width: 32px; height: 40px; }
+.zone-pos .zp-stage { fill: var(--c-text-1); }
+.zone-pos .zp-cell { fill: var(--c-line); }
+.zone-pos .zp-cell.is-here { fill: var(--c-brand); }
+.zone-count { font-size: var(--fs-strong); font-weight: 700; color: var(--c-brand-text); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<header class="appbar"><a class="appbar-btn" href="round.html" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><p class="appbar-title">구역 선택</p><span></span></header>
+<main class="page">
+  <div class="step">
+    <div class="progress" role="progressbar" aria-label="예매 4단계 중 2단계" aria-valuenow="2" aria-valuemax="4"><span class="is-on"></span><span class="is-on"></span><span></span><span></span></div>
+    <p class="step-names">회차 · <span class="num">2/4 구역</span> · 좌석 · 확인</p>
+  </div>
+  <header class="hero">
+    <p class="eyebrow">1회 12월 19일(토) · 3장</p>
+    <h1 class="title">3연석이 남은 곳, 무대에서 가까운 순서예요</h1>
+  </header>
+
+  <section class="block is-list" data-anchor>
+    <div class="block-head"><h2 class="h2">플로어</h2><p class="row-sub">150,000원</p></div>
+    <a class="row" href="seat.html">
+      <span class="zone-pos"><svg viewBox="0 0 32 40" aria-hidden="true"><rect class="zp-stage" x="2" y="0" width="28" height="4" rx="2"/><rect class="zp-cell is-here" x="6" y="8" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="16" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="24" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="32" width="20" height="6" rx="2"/></svg></span>
+      <div class="row-main"><p class="row-title">F1구역</p><p class="row-sub">무대 바로 앞</p></div>
+      <span class="row-trail"><span class="zone-count">12곳</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+    </a>
+    <a class="row" href="seat.html">
+      <span class="zone-pos"><svg viewBox="0 0 32 40" aria-hidden="true"><rect class="zp-stage" x="2" y="0" width="28" height="4" rx="2"/><rect class="zp-cell" x="6" y="8" width="20" height="6" rx="2"/><rect class="zp-cell is-here" x="6" y="16" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="24" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="32" width="20" height="6" rx="2"/></svg></span>
+      <div class="row-main"><p class="row-title">F2구역</p><p class="row-sub">무대에서 두 번째 줄</p></div>
+      <span class="row-trail"><span class="zone-count">40곳</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+    </a>
+    <a class="row" href="seat.html">
+      <span class="zone-pos"><svg viewBox="0 0 32 40" aria-hidden="true"><rect class="zp-stage" x="2" y="0" width="28" height="4" rx="2"/><rect class="zp-cell" x="6" y="8" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="16" width="20" height="6" rx="2"/><rect class="zp-cell is-here" x="6" y="24" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="32" width="20" height="6" rx="2"/></svg></span>
+      <div class="row-main"><p class="row-title">F3구역</p><p class="row-sub">무대에서 세 번째 줄</p></div>
+      <span class="row-trail"><span class="zone-count">85곳</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+    </a>
+    <a class="row" href="seat.html">
+      <span class="zone-pos"><svg viewBox="0 0 32 40" aria-hidden="true"><rect class="zp-stage" x="2" y="0" width="28" height="4" rx="2"/><rect class="zp-cell" x="6" y="8" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="16" width="20" height="6" rx="2"/><rect class="zp-cell" x="6" y="24" width="20" height="6" rx="2"/><rect class="zp-cell is-here" x="6" y="32" width="20" height="6" rx="2"/></svg></span>
+      <div class="row-main"><p class="row-title">F4구역</p><p class="row-sub">플로어 맨 뒤</p></div>
+      <span class="row-trail"><span class="zone-count">120곳</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+    </a>
+    <p class="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2"/><path d="M18.5 3v3h-3M5.5 21v-3h3"/></svg><span>남은 곳 수는 지금도 바뀌고 있어요.</span></p>
+  </section>
+
+  <section class="block is-list">
+    <div class="block-head"><h2 class="h2">지정석</h2></div>
+    <div class="row"><div class="row-main"><p class="row-title">1층 지정석</p><p class="row-sub">132,000원</p></div></div>
+    <div class="row"><div class="row-main"><p class="row-title">2층 지정석</p><p class="row-sub">110,000원</p></div></div>
+  </section>
+</main>
+</body></html>
