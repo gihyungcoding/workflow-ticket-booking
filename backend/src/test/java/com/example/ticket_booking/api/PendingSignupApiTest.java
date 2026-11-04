@@ -160,6 +160,45 @@ class PendingSignupApiTest {
     rows.add(new RejectRow("8,192자 임의 문자열", () -> quoted("a".repeat(8192)), T));
     rows.add(new RejectRow("요청 문자열에 NUL", () -> quoted(valid + "\u0000"), T));
     rows.add(new RejectRow("요청 문자열에 짝 없는 서로게이트", () -> "\"" + valid + "\\ud800\"", T));
+    for (String suffix : List.of("=", "==", "~", "!", " ", "\n", "é")) {
+      rows.add(
+          new RejectRow(
+              "끝에 " + suffix.replace("\n", "LF").replace(" ", "공백"),
+              () -> quoted(valid + suffix),
+              T));
+    }
+    rows.add(new RejectRow("앞에 공백", () -> quoted(" " + valid), T));
+    rows.add(new RejectRow("마디가 넷 (.abc)", () -> quoted(valid + ".abc"), T));
+    rows.add(
+        new RejectRow(
+            "페이로드 마디 가운데 NUL",
+            () -> quoted(PendingTokenTestHelper.insertIntoSegment(valid, 1, "\u0000")),
+            T));
+    rows.add(
+        new RejectRow(
+            "서명 마디 가운데 NUL",
+            () -> quoted(PendingTokenTestHelper.insertIntoSegment(valid, 2, "\u0000")),
+            T));
+    long expSeconds = T.plusSeconds(300).getEpochSecond();
+    String body = PendingTokenTestHelper.rawJson(claims("KAKAO")).substring(1);
+    rows.add(
+        new RejectRow(
+            "중복 키 exp (정수, 정수)",
+            () ->
+                quoted(
+                    PendingTokenTestHelper.signedJson(
+                        secret, "{\"exp\":" + (expSeconds - 10) + "," + body)),
+            T));
+    rows.add(
+        new RejectRow(
+            "중복 키 exp (null, 정수)",
+            () -> quoted(PendingTokenTestHelper.signedJson(secret, "{\"exp\":null," + body)),
+            T));
+    rows.add(
+        new RejectRow(
+            "중복 키 typ (pending, pending)",
+            () -> quoted(PendingTokenTestHelper.signedJson(secret, "{\"typ\":\"pending\"," + body)),
+            T));
 
     // 클레임 × 이상값 (PLAN design.claim_schema)
     Object[] typeVariants = {1, Map.of(), List.of(), true};
@@ -192,11 +231,28 @@ class PendingSignupApiTest {
     claimRows(rows, "exp", "0", 0L);
     claimRows(rows, "exp", "음수 -1", -1L);
     claimRows(rows, "exp", "Instant 범위 초과 (음)", -9.3e18);
+    claimRows(rows, "exp", "숫자 문자열", String.valueOf(t + 120));
+    // JSON 숫자 표기를 그대로 남기려고 BigDecimal 로 쓴다 — "1762850220.0" / "1.76285022E+9"
+    claimRows(
+        rows,
+        "exp",
+        "정수값 소수 표기 T+120.0",
+        new java.math.BigDecimal(java.math.BigInteger.valueOf((t + 120) * 10), 1));
+    claimRows(
+        rows,
+        "exp",
+        "지수 표기 T+120",
+        new java.math.BigDecimal(java.math.BigInteger.valueOf((t + 120) / 10), -1));
+    claimRows(rows, "exp", "정수 Instant 최대+1", 31556889864403200L);
+    claimRows(rows, "exp", "정수 Instant 최소-1", -31557014167219201L);
+    claimRows(rows, "exp", "long 초과 양", new java.math.BigInteger("99999999999999999999"));
+    claimRows(rows, "exp", "long 초과 음", new java.math.BigInteger("-99999999999999999999"));
 
     claimRows(rows, "email", "NUL", "harin\u0000kim@kakao.com");
     claimRows(rows, "email", "짝 없는 서로게이트", "harin\ud800kim@kakao.com");
     claimRows(rows, "email", "정규화 후 256자 (소문자)", "a".repeat(244) + "@example.com");
     claimRows(rows, "email", "정규화 후 256자 (대문자 섞음)", "A".repeat(244) + "@EXAMPLE.com");
+    claimRows(rows, "email", "원문 255자 + İ 소문자 확장 256자", "İ" + "a".repeat(242) + "@example.com");
     claimRows(rows, "email", "@ 없음", "harin.kimkakao.com");
     claimRows(rows, "email", "@ 두 개", "harin@kim@kakao.com");
     claimRows(rows, "email", "@ 앞이 빔", "@a.com");
