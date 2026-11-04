@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (Phase 1 롤백 2/2 후)"
+phase: "2b"
+phase_name: "Phase 2b - Red (Phase 4 롤백 재작업)"
 status: ACTIVE
 track: light
 created_at: 2026-11-04

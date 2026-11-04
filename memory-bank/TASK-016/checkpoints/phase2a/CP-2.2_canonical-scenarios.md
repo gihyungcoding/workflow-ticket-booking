@@ -1,7 +1,7 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-04T14:00:00Z
-summary: "Phase 4 롤백(RC-2) — SC-15(HTTP /me 접미 =·==·~)·SC-16(검증 함수 직접, access·pending 공통) 추가, 16건. 롤백 후 독립검증 대기."
+summary: "16건 독립검증 PASS (Phase 1 롤백 2/2 후 1회차, 경고 5) — RC-2 변종 전부 이관."
 
 next_steps:
   - "Phase 2b — wf-red 로 Red 테스트 작성 후 시나리오+Red 통합 승인(HITL#1·2)"
@@ -76,3 +76,6 @@ PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다�
 - 잔여: exp 정수 표기 Instant·long 범위 초과, pendingToken 요청 문자열 변형(==·공백·LF·é)의 실제 입구
 - 반영: PLAN claim_schema.exp 범위·request_string, SC-09 토큰 자체 행(끝 =·==·~·!·공백·LF·é, 앞 공백)과 exp 범위 초과 정수 4값. SC-14 가 같은 표를 /complete 입구에 적용 → SC-16 notes 의 「SC-09·SC-14 가 실제 입구로도 확인」이 사실이 됨
 - 검증 회차는 롤백 후 1회차부터. 이번 롤백이 마지막 — 다음 상한 초과는 ESCALATE
+
+### Phase 1 롤백 2/2 후 1회차 — PASS
+- 경고 5(통합 HITL 에서 판단): V5·V7 SC-16 내부 호출, V6 Then 안 추가 호출, V9 중복, V11 마디 중간 보이는 문자(=·~)와 base64url 미사용 비트 변경(「같은 토큰의 다른 표기」)
