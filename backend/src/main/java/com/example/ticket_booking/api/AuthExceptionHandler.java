@@ -2,6 +2,7 @@ package com.example.ticket_booking.api;
 
 import com.example.ticket_booking.api.dto.ErrorResponse;
 import com.example.ticket_booking.service.EmailAlreadyExistsException;
+import com.example.ticket_booking.service.HandleGenerationFailedException;
 import com.example.ticket_booking.service.InvalidCredentialsException;
 import com.example.ticket_booking.service.PendingSignupExpiredException;
 import com.example.ticket_booking.service.SocialAccountAlreadyLinkedException;
@@ -12,8 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * 인증 API 의 409·401 만 담당한다(소셜 가입 완료 포함). 요청 검증 실패(400)는 전역인 PerformanceExceptionHandler 가 이미 같은 형식으로
- * 처리한다.
+ * 인증 API 의 409·401·503 만 담당한다(소셜 가입 완료 포함). 요청 검증 실패(400)는 전역인 PerformanceExceptionHandler 가 이미 같은
+ * 형식으로 처리한다.
  */
 @RestControllerAdvice
 public class AuthExceptionHandler {
@@ -50,5 +51,12 @@ public class AuthExceptionHandler {
       PendingSignupExpiredException exception) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(new ErrorResponse("PENDING_SIGNUP_EXPIRED", exception.getMessage()));
+  }
+
+  @ExceptionHandler(HandleGenerationFailedException.class)
+  public ResponseEntity<ErrorResponse> handleHandleGenerationFailed(
+      HandleGenerationFailedException exception) {
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(new ErrorResponse("HANDLE_GENERATION_FAILED", exception.getMessage()));
   }
 }

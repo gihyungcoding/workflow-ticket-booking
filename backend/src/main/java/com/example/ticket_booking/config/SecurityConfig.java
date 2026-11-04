@@ -72,7 +72,8 @@ public class SecurityConfig {
                         "/api/performances/**",
                         "/api/auth/signup",
                         "/api/auth/login",
-                        "/api/auth/social/complete")
+                        "/api/auth/social/complete",
+                        "/api/auth/social/pending")
                     .permitAll()
                     // 소셜 로그인 시작·콜백 경로. 제공자가 등록되지 않은 경로가 401 이 아니라 404 로 떨어지게 열어 둔다
                     .requestMatchers("/oauth2/**", "/login/oauth2/**")
