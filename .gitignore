@@ -38,3 +38,8 @@ build/
 *~
 .idea/
 .vscode/
+
+# k-style-ui-ux 시안 생성 중간물 (out/ 의 정본이 아니다)
+out/.cands/
+out/.build_brief.md
+out/.shots/
