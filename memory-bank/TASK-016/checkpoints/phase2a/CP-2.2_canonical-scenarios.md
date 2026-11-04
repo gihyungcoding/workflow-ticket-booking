@@ -1,7 +1,7 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-04T14:00:00Z
-summary: "SCENARIO_TASK-016 14건(happy 8 · error 5 · regression 1) 독립검증 PASS (롤백 후 3회차, 경고 2: V6·V9 — 2b 통합 HITL 에서 판단)."
+summary: "Phase 4 롤백(RC-2) — SC-15(HTTP /me 접미 =·==·~)·SC-16(검증 함수 직접, access·pending 공통) 추가, 16건. 롤백 후 독립검증 대기."
 
 next_steps:
   - "Phase 2b — wf-red 로 Red 테스트 작성 후 시나리오+Red 통합 승인(HITL#1·2)"
@@ -55,3 +55,7 @@ PLAN `design.claim_schema` 를 기준으로 SC-09 클레임 매트릭스를 다�
 ### 롤백 후 3회차 — PASS
 - 경고(보류, 통합 HITL 요약에 올림): V6 Then 안의 후속 호출(SC-01·06·07·08·13), V9 재시도 경로 중복(SC-04/05, SC-06/12)
 - 회차 요약: 롤백 전 3회 FAIL(V11) → Phase 1 롤백(claim_schema) → 롤백 후 1·2회 FAIL(V11) → 3회 PASS
+
+## Phase 4 롤백 (2026-11-04, RETRY_SCENARIO 1)
+- RC-2 변종 전부를 가져옴: HTTP 로 닿는 접미(=, ==, ~) → SC-15, 검증 함수 직접(나머지 접미·서명 마디 NUL·4마디) → SC-16. not_reproduced 변종(페이로드 마디 NUL)은 서명 불일치로 이미 거부 — SC-16 에 넣지 않음
+- AC8 추가(토큰 압축 형식). 기존 시나리오는 accessToken 을 다루지 않아 대조할 옛 정의가 없다

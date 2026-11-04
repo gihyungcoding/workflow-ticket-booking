@@ -266,6 +266,43 @@ flow: F1
 covers: 소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다; 뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다
 flow: F3
 
+## SC-15 (error) 정상 accessToken 의 다른 문자열 표기로는 인증되지 않는다
+
+Phase 4 검증에서 추가(RC-2). 아래 표기는 Authorization 헤더 형식 검사를 통과해 토큰 검증까지 닿는다.
+
+- **Given** 이메일 가입한 회원의 정상 accessToken `t` 가 있다
+- **When** `GET /api/auth/me` 를 `Authorization: Bearer <표의 값>` 으로 호출한다
+- **Then** 결과가 표와 같다
+
+| 헤더의 토큰 | 결과 |
+|---|---|
+| `t` (그대로) | 200, 그 회원 |
+| `t=` | 401 `UNAUTHORIZED` |
+| `t==` | 401 `UNAUTHORIZED` |
+| `t~` | 401 `UNAUTHORIZED` |
+
+covers: accessToken·pendingToken 은 JWS 압축 형식(base64url 세 마디) 밖의 문자가 끝에 붙거나 마디 안에 섞이면 거부한다 — 같은 토큰의 다른 문자열 표기로 인증되지 않는다
+flow: F7
+
+## SC-16 (error) 토큰 검증은 형식 밖 문자가 붙거나 섞인 토큰을 받지 않는다
+
+헤더 형식 검사가 먼저 막는 문자도, 토큰 검증 자체가 받지 않아야 한다(다른 입구가 생겨도 같은 결과). accessToken 과
+pendingToken 이 같은 규칙이다.
+
+- **Given** 정상 accessToken `a`(사용자 id 확인됨)와 정상 pendingToken `p`(대기 정보 확인됨)가 있다
+- **When** 토큰 검증에 아래 표의 값을 넣는다 (accessToken 은 `a`, pendingToken 은 `p` 로 각각)
+- **Then** 「그대로」 행만 확인되고, 나머지 모든 행은 확인되지 않는다 (accessToken 은 사용자 없음, pendingToken 은 대기 정보 없음)
+
+| 넣는 값 |
+|---|
+| 그대로 |
+| 끝에 `=` / `==` / `~` / `!` / 공백 / LF / NUL / `é` / 짝 없는 서로게이트(`\ud800`) |
+| 서명 마디 가운데에 NUL 삽입 |
+| 마디가 넷 (끝에 `.abc`) |
+
+covers: accessToken·pendingToken 은 JWS 압축 형식(base64url 세 마디) 밖의 문자가 끝에 붙거나 마디 안에 섞이면 거부한다 — 같은 토큰의 다른 문자열 표기로 인증되지 않는다
+flow: F7
+
 ---
 
 ## 시나리오로 쓰지 않은 것
