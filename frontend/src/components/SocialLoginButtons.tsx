@@ -3,7 +3,7 @@ import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import { apiUrl } from '../api/http'
 
-// 브랜드 색은 쓰지 않는다 — 색 리터럴은 테마 밖에 둘 수 없고 채도는 「예매가능」 하나다 (design.md §2).
+// 공급자 브랜드 색(카카오 노랑 등)은 쓰지 않는다 — 색 리터럴은 테마 밖에 둘 수 없다 (DESIGN-002). 버튼 모양은 시안대로 TASK-018 에서.
 const PROVIDERS = [
   { id: 'kakao', label: '카카오' },
   { id: 'naver', label: '네이버' },

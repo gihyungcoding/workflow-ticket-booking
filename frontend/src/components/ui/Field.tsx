@@ -10,7 +10,7 @@ export interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 /** 시안 .field·.label·.input·.field-msg — 오류는 색만으로 전하지 않고 아이콘·문구를 함께 */
-export function Field({ label, error, id, ...inputProps }: FieldProps) {
+export function Field({ label, error, id, 'aria-describedby': describedBy, 'aria-invalid': ariaInvalid, ...inputProps }: FieldProps) {
   const autoId = useId()
   const inputId = id ?? autoId
   const messageId = `${inputId}-error`
@@ -30,9 +30,10 @@ export function Field({ label, error, id, ...inputProps }: FieldProps) {
       <Box
         component="input"
         id={inputId}
-        aria-invalid={hasError ? true : undefined}
-        aria-describedby={hasError ? messageId : undefined}
         {...inputProps}
+        // 오류 연결은 호출부의 값에 덮이지 않는다 — 호출부 설명(describedby)은 뒤에 이어 붙인다
+        aria-invalid={hasError ? true : ariaInvalid}
+        aria-describedby={[hasError ? messageId : null, describedBy].filter(Boolean).join(' ') || undefined}
         sx={{
           height: token('--h-btn'),
           padding: `0 ${token('--stack-m')}`,

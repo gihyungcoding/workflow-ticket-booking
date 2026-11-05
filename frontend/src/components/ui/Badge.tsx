@@ -22,7 +22,7 @@ const TONE: Record<BadgeTone, [TokenName, TokenName]> = {
 }
 
 export function Badge({ tone, children }: BadgeProps) {
-  if (children == null || (typeof children === 'string' && isBlank(children))) return null
+  if (children == null || typeof children === 'boolean' || (typeof children === 'string' && isBlank(children))) return null
   const [background, color] = TONE[tone]
   return (
     <Box
