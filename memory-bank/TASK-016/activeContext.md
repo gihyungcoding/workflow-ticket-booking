@@ -14,6 +14,11 @@ target_repo: "."
 branch: "feature/task-016-user-handle-pending-info"
 
 last_checkpoint: "CP-5.2"
+pull_request:
+  number: 31
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/31"
+  base: develop
+  opened_at: 2026-11-05
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-016.json"
 ---
