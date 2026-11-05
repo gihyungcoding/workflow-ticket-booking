@@ -14,6 +14,12 @@ target_repo: "."
 branch: "feature/task-017-design-tokens-ui-kit"
 
 last_checkpoint: "CP-5.2"
+pull_request:
+  number: 33
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/33"
+  base: develop
+  opened_at: 2026-11-05
+report: "https://claude.ai/artifact/HNhKp8pBEmy4ZK2pjndmmN"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-017.json"
 ---
