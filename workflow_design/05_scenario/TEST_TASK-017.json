@@ -292,8 +292,17 @@
     "compensation": "2b 끝 HITL#1·2 에서 시나리오 전체를 Red 테스트와 함께 사람이 승인"
   },
   "human_review": {
-    "approved": false,
-    "previous": "2026-11-05 1차 승인(게이트 예외 포함) — 롤백으로 재승인 필요"
+    "approved": true,
+    "previous": "2026-11-05 1차 승인(게이트 예외 포함) — 롤백으로 재승인 필요",
+    "approved_at": "2026-11-05",
+    "method": "AskUserQuestion — 롤백 시나리오 23건 + Red 통합 재승인",
+    "answer": "승인",
+    "warnings_accepted": [
+      "V5 화면 확인 사각지대",
+      "V6",
+      "V7",
+      "V9"
+    ]
   },
   "red_retry": {
     "reason": "Phase 4 1회차 FAIL → ROLLBACK_SCENARIO(1회) → 2a 재검증 2회차 PASS",

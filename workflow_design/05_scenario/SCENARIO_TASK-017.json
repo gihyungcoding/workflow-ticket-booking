@@ -656,7 +656,7 @@
     ]
   },
   "human_input": {
-    "generate_red_trigger": false
+    "generate_red_trigger": true
   },
   "source_of_truth": "SCENARIO_TASK-017.md — JSON 은 파생물 (MD 순서, '---' 뒤 제외). 표는 table, 설명은 notes, 규약 표는 conventions_table",
   "gate_exception": {
