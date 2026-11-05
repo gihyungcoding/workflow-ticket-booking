@@ -226,7 +226,8 @@
           "prop": "children(문구)",
           "type": "string | null | undefined",
           "rules": [
-            "무효 → 그리지 않는다"
+            "무효 → 그리지 않는다",
+            "긴 문구: 배지는 design.md §5 의 짧은 문구 전용 부품이라 길이 한도를 두지 않고 줄도 바꾸지 않는다(white-space: nowrap) — 부모 폭을 넘지 않게 max-width 100% + 말줄임(text-overflow: ellipsis)"
           ]
         },
         {
@@ -252,7 +253,8 @@
           "rules": [
             "유효 → 오류 모양(테두리·바탕 위험색) + 아이콘(aria-hidden) + aria-invalid=true + aria-describedby→문구",
             "무효 → 오류 모양·아이콘·aria-invalid·aria-describedby 모두 없다",
-            "유효↔무효 전환 시 위 상태가 따라 바뀐다"
+            "유효↔무효 전환 시 위 상태가 따라 바뀐다",
+            "긴 문구: 길이 한도 없음, 줄을 바꿔 칸 폭 안에 머문다(overflow-wrap: anywhere)"
           ]
         },
         {
@@ -260,7 +262,8 @@
           "prop": "label",
           "type": "string",
           "rules": [
-            "입력과 label 이 연결된다(getByLabelText 로 찾힌다)"
+            "입력과 label 이 연결된다",
+            "무효(빈·공백만·null·undefined)는 호출부 결함 — 컴포넌트는 예외 없이 입력을 그리고, label 이 비어도 입력의 접근 이름이 빈 채로 남지 않게 aria-label 로 placeholder 를 쓰지 않는다(빈 label 요소를 그리지 않는다)"
           ]
         },
         {
@@ -296,7 +299,9 @@
           "prop": "title",
           "type": "string | undefined",
           "rules": [
-            "h1 로 가운데. 없으면 빈 제목 영역(레이아웃 유지)"
+            "h1 로 가운데",
+            "무효(빈·공백만·undefined) → 빈 제목 영역(h1 은 있되 글자 없음), 레이아웃 유지",
+            "긴 제목: 길이 한도 없음, 줄을 바꿔 가운데 칸 안에 머문다(시안 .appbar-title text-wrap: balance) — 좌우 버튼 칸을 침범하지 않는다"
           ]
         },
         {

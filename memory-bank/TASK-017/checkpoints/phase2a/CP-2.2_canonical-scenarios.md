@@ -37,3 +37,7 @@ attempts:
     result: FAIL
     fail: ["V11 — Toast·Field 유효↔무효 전환 10칸"]
     fix: "SC-17: 무효 4값 × 두 방향 × Toast·Field = 16행 전수. 경고 반영: SC-13 에 공연 등록·App 첫 화면·createAppTheme 호출, 문구 '표의 모든 화면'(V10). 보류: V5·V6·V7, 시나리오 17건(복잡 기준선 초과)은 2b 통합 HITL 에서 알림"
+  - round: "롤백 후 2"
+    result: FAIL
+    fail: ["V11 — Field.label 무효, Field.error·AppBar.title·Badge 긴 문구, AppBar.title 빈·공백"]
+    fix: "PLAN prop_schema 에 길이 규칙(Field.error 줄바꿈, AppBar.title 줄바꿈·버튼 칸 불침범, Badge nowrap+말줄임)과 label·title 무효 규칙. SC-18 추가. SC-13 App 행 기대값을 구체 문구로(V5). 같은 종류 대조: 사람이 넣는 문구 prop 은 Toast.message·Field.label·Field.error·AppBar.title·Badge.children·CtaBar label — CtaBar label 은 고정 문구라 시안 문구만"

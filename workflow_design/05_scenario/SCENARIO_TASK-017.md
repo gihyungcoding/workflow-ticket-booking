@@ -201,7 +201,7 @@ flow: F4
 | 공연 상세 | OPEN 공연 하나 | `예매 가능` 배지 하나, 옛 문구 없음, 공연명이 보인다 |
 | 공연 수정 | 주최자 소유 UPCOMING 공연 하나 | `예정` 배지 하나, 옛 문구 없음 |
 | 공연 등록 | (조회 없음) | 등록 폼 제목이 보이고 배지는 없다 |
-| 앱 전체 (`App`, 첫 경로 `/`) | 공연 목록 빈 응답 | 첫 화면이 그려진다 (기존 App 테스트의 첫 화면 기대 그대로) |
+| 앱 전체 (`App`, 첫 경로 `/`) | 공연 목록 빈 응답 | 빈 목록 문구 `예정된 공연이 없습니다` 가 보인다 |
 
 - **And** 표의 모든 화면에서 렌더 중 예외가 없다
 - **And** 테마는 기존 이름 `createAppTheme()` 로 만들어진다 (main.tsx 와 같은 호출)
@@ -306,6 +306,29 @@ PLAN `prop_schema` 의 「무효 = 빈 문자열·공백만·null·undefined」 
 
 covers: `data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다; 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)
 flow: F2, F6
+
+## SC-18 (error) 문구가 비었거나 길어도 부품이 칸을 벗어나지 않는다
+
+PLAN `prop_schema` 의 길이·빈 값 규칙 중 SC-14~17 이 덮지 않은 칸이다. 행마다 새로 그린다.
+
+- **Given** 새 테마를 적용했다
+- **When** 아래 표의 값으로 부품을 그린다
+- **Then** 결과가 표와 같고 어느 행에서도 예외가 없다
+
+| 부품 | 값 | 결과 |
+|---|---|---|
+| Field | label `` | 입력이 그려지고 빈 label 요소가 없다 |
+| Field | label 공백만 | 위와 같다 |
+| Field | label `null` | 위와 같다 |
+| Field | label `undefined` | 위와 같다 |
+| Field | 오류 문구 300자(공백 없음) | 오류 문구가 다 보이고 그 문구의 overflow-wrap 이 anywhere · (화면 확인) 375px 에서 가로 넘침 없음 |
+| AppBar | 제목 `` | h1 이 있고 글자가 비어 있다, 뒤로 버튼 자리는 그대로 |
+| AppBar | 제목 공백만 | 위와 같다 |
+| AppBar | 제목 60자 | 제목 글자가 다 있고 h1 의 white-space 가 nowrap 이 아니다 · (화면 확인) 375px 에서 제목이 두 줄로 바뀌고 좌우 버튼 칸(각 44px)을 침범하지 않는다 |
+| Badge | 문구 40자 (tone neutral) | 배지의 white-space 가 nowrap, max-width 가 100%, text-overflow 가 ellipsis · (화면 확인) 375px 에서 가로 넘침 없음 |
+
+covers: 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0); 375px 폭에서 가로 스크롤이 없고, 넓은 화면에서는 가운데 한 열로 보인다
+flow: F2, F4
 
 ---
 
