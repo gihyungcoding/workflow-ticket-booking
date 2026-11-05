@@ -117,32 +117,36 @@
       "section": "§2 디자인 정본",
       "change": "시안 CSS 의 맥락 의존 선언 목록을 prop_schema 에 옮기고 규약 표는 변수로 적는다",
       "evidence": "TASK-017 VERIFY 1회차 RC-1",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "5f2a3b0"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",
       "section": "Step 2 기존 테스트 기대값",
       "change": "옛 기대값 Grep 범위를 frontend 전체·원문 문자열로, 새 문구의 같은 화면 글자 충돌 Grep 추가",
       "evidence": "index.html.test.ts 누락, '공연 취소'·'마감' 충돌 3건",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "5f2a3b0"
     },
     {
       "target": ".claude/skills/wf-scenario/SKILL.md",
       "section": "Step 3 JSON 파생",
       "change": "롤백·수정 시 JSON 전체(규약 표·notes 포함)를 MD 에서 재생성",
       "evidence": "롤백 검증 1회차 V1 FAIL",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "5f2a3b0"
     },
     {
       "target": ".claude/skills/wf-verify/references/screen-verification.md",
       "section": "상태를 실제로 만들어 본다",
       "change": "375px 는 같은 출처 iframe 으로 innerWidth 확인, 미사용 부품은 Vite 모듈 직접 렌더",
       "evidence": "resize_window 후 innerWidth 2320",
-      "status": "pending",
-      "recurring": 2
+      "status": "applied",
+      "recurring": 2,
+      "applied_in": "5f2a3b0"
     }
   ],
   "handoff_to_TASK-018": [
@@ -152,6 +156,8 @@
     "상태 배지와 '공연 취소' 버튼이 같은 말(수정 화면) — 화면 재배치 때"
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-05T08:20:14Z",
+    "reviewed_in": "batch"
   }
 }

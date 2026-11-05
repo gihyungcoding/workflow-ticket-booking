@@ -140,8 +140,9 @@
       "section": "not_reproduced 검사",
       "change": "not_reproduced 의 evidence 에 테스트 식별자(경로 또는 클래스#메서드)가 있는지 확인한다. 현재는 비어 있지만 않으면 통과한다",
       "evidence": "TASK-009 RC-1 U+FFFE 변종 — HTTP 프로브 문자열만으로 게이트 통과",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "5f2a3b0"
     }
   ],
   "completion_report": {
