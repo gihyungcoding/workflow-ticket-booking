@@ -93,7 +93,10 @@ describe('TASK-017 기존 화면 회귀', () => {
     // 공연 등록 — 조회 없음, 배지 없음
     const register = renderAt('/performances/new', '/performances/new', <PerformanceRegisterPage />)
     expect(screen.getByText('공연 등록')).toBeInTheDocument()
-    for (const label of ['예매 가능', '예정', '매진', '마감', '공연 취소']) expect(screen.queryByText(label)).toBeNull()
+    // 입력칸 이름(label "마감")은 배지가 아니므로 찾는 범위에서 뺀다
+    for (const label of ['예매 가능', '예정', '매진', '마감', '공연 취소']) {
+      expect(screen.queryByText(label, { ignore: 'label, script, style' }), label).toBeNull()
+    }
     register.unmount()
 
     // 앱 전체 — 첫 경로, 빈 목록

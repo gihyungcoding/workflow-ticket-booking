@@ -136,7 +136,8 @@ describe('PerformanceEditPage', () => {
     await vi.waitFor(() => expect(cancelPerformance).toHaveBeenCalledWith('5'))
 
     // 화면의 상태 표시 영역에 "공연 취소" 텍스트가 표시된다 (TASK-017: design.md §5 문구)
-    expect(await screen.findByText('공연 취소')).toBeInTheDocument()
+    // 같은 글자의 「공연 취소」 버튼은 상태 표시가 아니므로 찾는 범위에서 뺀다
+    expect(await screen.findByText('공연 취소', { ignore: 'button, script, style' })).toBeInTheDocument()
 
     // 취소 응답에 sections가 없어도 기존에 표시되던 좌석 구성 요약은 사라지지 않는다
     // (Phase 4 검증에서 실물로 발견된 결함 — 회귀 방지)
@@ -189,7 +190,7 @@ describe('PerformanceEditPage', () => {
 
     // Then
     // 취소가 성공하면 남아 있던 저장 실패 배너가 사라진다(사용자가 취소 실패로 오인하지 않도록)
-    await screen.findByText('공연 취소')
+    await screen.findByText('공연 취소', { ignore: 'button, script, style' })
     expect(screen.queryByText('저장하지 못했습니다. 다시 시도해 주세요')).not.toBeInTheDocument()
   })
 

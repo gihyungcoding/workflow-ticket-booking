@@ -13,8 +13,9 @@ describe('index.html', () => {
     // When
     // 그 문서의 <html> 태그·<title>·<link> 목록을 확인한다
     const linkTags = html.match(/<link\b[^>]*>/g) ?? []
+    // TASK-017: 서체가 Pretendard 한 가지로 바뀌어 Google Fonts 대신 Pretendard CSS 를 본다 (design.md §4, ADR-0022)
     const fontLink = linkTags.find(
-      (tag) => tag.includes('fonts.googleapis.com') && tag.includes('rel="stylesheet"'),
+      (tag) => tag.includes('orioncactus/pretendard') && tag.includes('rel="stylesheet"'),
     )
 
     // Then
@@ -24,11 +25,11 @@ describe('index.html', () => {
     // <title> 내용이 'frontend' 가 아니다
     expect(html).not.toContain('<title>frontend</title>')
 
-    // fonts.googleapis.com 을 가리키는 <link rel="stylesheet"> 가 있다
+    // Pretendard CSS 를 가리키는 <link rel="stylesheet"> 가 있다
     expect(fontLink).toBeDefined()
     expect(fontLink).toContain('rel="stylesheet"')
 
-    // 그 <link> 의 href 에 display=swap 이 포함된다
-    expect(fontLink).toContain('display=swap')
+    // 그 <link> 는 정적 서브셋이 아닌 전체 정적 CSS 다 (font-display:swap 은 그 CSS 안에 선언돼 있다 — URL 로는 확인할 수 없다)
+    expect(fontLink).toContain('/dist/web/static/pretendard.min.css')
   })
 })
