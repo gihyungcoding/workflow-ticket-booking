@@ -1,0 +1,325 @@
+{
+  "task_id": "TASK-017",
+  "route": "Frontend",
+  "route_reason": "테마·전역 스타일·공통 UI 컴포넌트·서체 로드가 모두 프론트 범위. 백엔드 변경 없음",
+  "design": {
+    "inputs": [
+      {
+        "name": "디자인 토큰",
+        "type": "CSS 사용자 정의 속성 값",
+        "source": "docs/product/design-tokens.css (값의 출처 out/tokens.css)",
+        "constraints": [
+          ":root 54개 값과 .text-large 6쌍(글자 크기 등)을 하나도 바꾸지 않고 tokens.ts 로 옮긴다",
+          "새 색·새 여백 값을 만들지 않는다"
+        ]
+      },
+      {
+        "name": "부품 모양",
+        "type": "CSS 규칙",
+        "source": "out/components.css (appbar·page·block·row·badge·btn·cta·field·input·field-msg·toast·sheet)",
+        "constraints": [
+          "부품이 쓰는 토큰 밖 고정 치수(터치 44px·배지 높이 24px·행 간격 4px 등)는 components.css 에 적힌 값만, 출처를 적어 tokens.ts 의 부품 치수로 둔다"
+        ]
+      },
+      {
+        "name": "배지 뜻",
+        "type": "enum",
+        "source": "docs/product/design.md §5",
+        "constraints": [
+          "예매 가능 is-brand · 예정 is-info · 매진 is-danger · 마감/공연 취소 기본(회색) · 입금 대기 is-warning · 예매 확정 is-success — 6가지 뜻만"
+        ]
+      },
+      {
+        "name": "PerformanceStatus",
+        "type": "'UPCOMING'|'OPEN'|'SOLD_OUT'|'CLOSED'|'CANCELLED'",
+        "source": "frontend/src/api/performances.ts (백엔드 PerformanceStatus 계산값)",
+        "constraints": [
+          "다섯 값 모두 배지 뜻 하나에 대응"
+        ]
+      },
+      {
+        "name": "토스트 문구",
+        "type": "string",
+        "source": "호출하는 화면 (시안 data-stay 문구)",
+        "constraints": [
+          "띄운 뒤 스스로 사라진다"
+        ]
+      },
+      {
+        "name": "화면 폭",
+        "type": "px",
+        "source": "브라우저",
+        "constraints": [
+          "375px 에서 가로 스크롤 없음, 넓은 화면에서는 가운데 한 열"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "tokens.ts",
+        "type": "TS 상수",
+        "description": "design-tokens.css 와 1:1 (이름·값). 테스트가 CSS 파일을 읽어 대조"
+      },
+      {
+        "name": "MUI 테마",
+        "type": "Theme",
+        "description": "palette(brand·danger·success·warning·info·text·background)·typography(Pretendard, 크기 6단)·shape(r-m)·shadows(1·2단)를 tokens.ts 에서"
+      },
+      {
+        "name": "전역 토큰 CSS 변수",
+        "type": "GlobalStyles",
+        "description": ":root 에 --c-*·--fs-*·--page-x 등 같은 이름의 CSS 변수를 tokens.ts 에서 주입 — 부품이 out/components.css 와 같은 var() 를 쓴다. body 바탕·서체·자간·한국어 줄바꿈"
+      },
+      {
+        "name": "공통 부품",
+        "type": "React 컴포넌트",
+        "description": "AppBar(뒤로·제목·오른쪽) · Page · Block(+head·note·is-list) · Row(lead·main·title·sub·trail) · Badge(tone 6) · CtaBar(하단 고정, 주 버튼) · Field(label·input·msg·is-error) · Toast(문구, 자동 사라짐) · Sheet(바텀시트)"
+      },
+      {
+        "name": "StatusBadge",
+        "type": "React 컴포넌트",
+        "description": "PerformanceStatus → Badge(뜻·문구) — 예매 가능·예정·매진·마감·공연 취소"
+      },
+      {
+        "name": "Pretendard 로드",
+        "type": "HTML <link>",
+        "description": "index.html 의 Google Fonts(Noto Serif KR·IBM Plex Sans KR) 를 Pretendard 1.3.9(out/tokens.css 와 같은 CDN) 로 교체"
+      },
+      {
+        "name": "앱 한 열 레이아웃",
+        "type": "CSS",
+        "description": "#root 가운데 정렬, 최대 폭은 시안 뷰포트(375px), 가로 넘침 없음"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "토큰 정본 일치",
+        "steps": [
+          "design-tokens.css 의 :root·.text-large 선언을 읽는다",
+          "tokens.ts 의 같은 이름 값과 하나씩 대조",
+          "하나라도 다르거나 빠지면 실패"
+        ],
+        "covers": [
+          "`frontend/src/theme/tokens.ts` 의 값이 `docs/product/design-tokens.css` 와 하나도 다르지 않다 (테스트로 대조)"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "테마 밖 값 없음",
+        "steps": [
+          "색은 tokens.ts·theme/ 안에만",
+          "부품은 var(--토큰) 또는 테마 값만 쓴다",
+          "check_architecture.py DESIGN-001·002 error 0, 003 신규 위반 0"
+        ],
+        "covers": [
+          "테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "서체 로드",
+        "steps": [
+          "index.html 이 Pretendard 스타일시트를 불러온다",
+          "앱을 띄워 document.fonts 에 Pretendard 가 loaded 로 있다(네트워크 요청 확인)"
+        ],
+        "covers": [
+          "Pretendard 가 실제로 로드된다 (`document.fonts` 확인 또는 네트워크 요청)"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "모바일 한 열",
+        "steps": [
+          "375px 뷰포트로 띄운다 → documentElement.scrollWidth ≤ 375",
+          "1280px 로 띄운다 → 내용 열이 가운데, 최대 폭 375px"
+        ],
+        "covers": [
+          "375px 폭에서 가로 스크롤이 없고, 넓은 화면에서는 가운데 한 열로 보인다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "상태 배지",
+        "steps": [
+          "Badge 는 tone 6가지(brand·info·danger·warning·success·neutral)만 받는다",
+          "StatusBadge: OPEN→예매 가능(brand) UPCOMING→예정(info) SOLD_OUT→매진(danger) CLOSED→마감(neutral) CANCELLED→공연 취소(neutral)",
+          "입금 대기(warning)·예매 확정(success)은 Badge tone 으로 제공(예매 모델은 흐름 4·5)"
+        ],
+        "covers": [
+          "상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "토스트",
+        "steps": [
+          "Toast 를 문구와 함께 연다 → role=status 로 문구가 보인다",
+          "정해진 시간이 지나면 스스로 사라진다(가짜 타이머)",
+          "prefers-reduced-motion 이면 전환 효과 없이"
+        ],
+        "covers": [
+          "`data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "기존 화면 회귀",
+        "steps": [
+          "목록·상세·공연 등록·수정 화면 테스트의 배지 문구 단언을 새 문구로(승인된 테스트 수정 — 2b 통합 승인에서 함께)",
+          "theme/index.test.tsx 의 옛 토큰 값 단언을 새 토큰으로(같음)",
+          "npm test 전부 통과"
+        ],
+        "covers": [
+          "기존 화면(목록·상세·공연 등록·수정) 테스트가 새 배지 문구로 고친 뒤 모두 통과한다"
+        ]
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "Frontend (theme/, components/ui/)",
+    "note": "토큰은 theme 안에만(DESIGN-002 제외 경로 frontend/src/theme/**). 화면 코드는 테마·CSS 변수만 참조(design.md §3)",
+    "constraints_applied": [
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0002",
+    "ADR-0007",
+    "ADR-0011",
+    "ADR-0022"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "frontend/src/theme/tokens.ts",
+        "change": "design-tokens.css 전체 미러로 재작성 + 부품 치수(출처 out/components.css)"
+      },
+      {
+        "path": "frontend/src/theme/index.ts",
+        "change": "새 토큰으로 MUI 테마 재작성(그림자 없음·명조 제거)"
+      },
+      {
+        "path": "frontend/src/theme/GlobalTokens.tsx",
+        "change": ":root CSS 변수 주입 + body 기본 스타일 + #root 한 열",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/AppBar.tsx",
+        "change": "시안 .appbar",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Page.tsx",
+        "change": "시안 .page (+ CTA 여백)",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Block.tsx",
+        "change": "시안 .block·.block-head·.block-note",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Row.tsx",
+        "change": "시안 .row·row-main·row-title·row-sub·row-trail",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Badge.tsx",
+        "change": "시안 .badge tone 6",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/CtaBar.tsx",
+        "change": "시안 .cta + .btn.primary.full",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Field.tsx",
+        "change": "시안 .field·.input·.field-msg·is-error",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Toast.tsx",
+        "change": "시안 .toast — 자동 사라짐",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Sheet.tsx",
+        "change": "시안 .sheet",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/index.ts",
+        "change": "묶음 export",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/StatusBadge.tsx",
+        "change": "Badge 로 교체, 문구 design.md §5"
+      },
+      {
+        "path": "frontend/src/main.tsx",
+        "change": "GlobalTokens 적용"
+      },
+      {
+        "path": "frontend/index.html",
+        "change": "Pretendard 로 서체 교체"
+      },
+      {
+        "path": "frontend/src/components/SocialLoginButtons.tsx",
+        "change": "옛 디자인 방향(채도 하나) 주석만 정정"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "frontend/src/theme/index.ts",
+        "symbol": "createAppTheme",
+        "note": "테마 생성 함수 이름·export 를 유지 — main.tsx·테스트가 쓴다"
+      },
+      {
+        "path": "frontend/src/components/StatusBadge.tsx",
+        "symbol": "StatusBadge",
+        "note": "목록·상세가 이미 쓴다 — props 유지"
+      }
+    ],
+    "existing_tests": [
+      "frontend/src/theme/index.test.tsx",
+      "frontend/src/components/StatusBadge.test.tsx",
+      "frontend/src/pages/PerformanceListPage.test.tsx",
+      "frontend/src/pages/PerformanceDetailPage.test.tsx",
+      "frontend/src/pages/PerformanceEditPage.test.tsx",
+      "frontend/src/App.test.tsx"
+    ],
+    "unresolved": [
+      "#1 승인된 테스트의 옛 기대값: theme/index.test.tsx(TASK-003, 옛 토큰 값·명조·그림자 없음·배지 2px), StatusBadge.test.tsx·PerformanceList/Detail/EditPage.test.tsx(옛 배지 문구 예매가능·예매예정·예매마감·공연취소). AC 1·5·7 과 상충 — 2b 에서 새 기대값으로 바꾸고 통합 승인(HITL#1·2)에서 함께 승인받는다. 단언 수는 줄이지 않는다",
+      "#2 부품의 고정 치수(44px 터치·24px 배지 높이·4px 행 간격·20px 아이콘 등)는 design-tokens.css 에 없고 out/components.css 에만 있다 — 새 값이 아니라 시안 값이므로 tokens.ts 에 '부품 치수(출처 out/components.css 줄 번호)' 로 옮긴다. 이 값들이 tokens.css 정본에도 있어야 하는지는 사용자 확인 후보",
+      "#3 한 열 최대 폭 375px 는 토큰이 아니라 시안 화면의 뷰포트(meta viewport width=375) 값이다 — 같은 방식으로 부품 치수에 둔다",
+      "#4 토스트가 사라지기까지의 시간은 시안에 없다(전환 .2s 만 있다) — 동작 값이라 디자인 토큰이 아니다. 2초 반으로 정하고 Toast 의 prop 기본값으로 둔다(시나리오에 고정)",
+      "#5 AppHeader(로그인/로그아웃 줄)는 문서 §6 에 '시안 .appbar 로 교체'가 있으나 이 태스크 AC 에 없고 화면 배치를 바꾼다 — AppBar 부품만 만들고 화면 교체는 TASK-018·흐름 2 에서. AppHeader 는 새 테마만 적용",
+      "#6 시안 components.css 의 --c-fill·--c-track 은 tokens 가 아니라 부품 파생 변수(흰 바탕 안에서 회색) — GlobalTokens 에서 같은 규칙으로 정의",
+      "#7 기존 화면(목록·상세·등록·수정)은 MUI 기본 부품을 쓰므로 새 테마만으로 색·서체가 바뀐다. 재배치는 범위 밖 — 화면 확인은 깨지지 않는지(가로 넘침·대비)만 본다"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 8
+    }
+  },
+  "acceptance_criteria": [
+    "`frontend/src/theme/tokens.ts` 의 값이 `docs/product/design-tokens.css` 와 하나도 다르지 않다 (테스트로 대조)",
+    "테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)",
+    "Pretendard 가 실제로 로드된다 (`document.fonts` 확인 또는 네트워크 요청)",
+    "375px 폭에서 가로 스크롤이 없고, 넓은 화면에서는 가운데 한 열로 보인다",
+    "상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)",
+    "`data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다",
+    "기존 화면(목록·상세·공연 등록·수정) 테스트가 새 배지 문구로 고친 뒤 모두 통과한다"
+  ],
+  "test_hints": {
+    "framework": "Vitest + Testing Library + jsdom (ADR-0007)",
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npm test",
+    "mock_strategy": "토큰 대조는 node fs 로 docs/product/design-tokens.css 를 읽어 파싱. 토스트는 vi.useFakeTimers. 서체 로드·375px 가로 넘침·가운데 정렬은 jsdom 이 레이아웃을 계산하지 않아 Phase 4 화면 확인(브라우저)으로 증거를 남긴다 — 시나리오에 '화면 확인' 으로 표시"
+  }
+}
