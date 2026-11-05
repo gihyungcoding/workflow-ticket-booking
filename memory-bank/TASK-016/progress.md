@@ -3,11 +3,11 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 (롤백 1회 반영) | CP-1.3 | flows 6 · AC 7 · claim_schema |
-| 2a Scenario | ✅ 완료 | CP-2.2 | 14건 · 롤백 1회 후 PASS |
-| 2b Red | ✅ 승인 | CP-2.5 | 14 Red · 기존 146 통과 |
-| 3 Green | ✅ 완료 | CP-3.4 | 162/162 · 자체 리뷰 2R |
-| 4 Verify | 🔄 진행 중 | — | |
-| 5 Reflect | ⬜ 대기 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.2 | 16건 · 롤백 2회 · Phase 4 롤백 1회 |
+| 2b Red | ✅ 재승인 | CP-2.5 | 변이 M1~M5 |
+| 3 Green | ✅ 완료 | CP-3.4 | 164/164 · 자체 리뷰 4R |
+| 4 Verify | ✅ 예외 승인 | CP-4.2 | 1회차 FAIL(RC-2) → 2회차 WARN |
+| 5 Reflect | 🔄 진행 중 | — | |
 
 ## 완료 조건
 

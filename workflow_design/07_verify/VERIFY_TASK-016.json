@@ -330,9 +330,11 @@
     "other": "RC-2 해소 — access·pending 공통 형식 검사. 남은 관찰: 서명된 access 토큰 sub·exp 표기 느슨함(이슈어 전용), V11 범위 밖"
   },
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "4a1b68789057377d38a7be895fc6c6218963a055",
+    "verified_at": "2026-11-05T00:00:00Z",
+    "method": "AskUserQuestion — HITL#3",
+    "answer": "예외 승인"
   },
   "observations": [
     {
@@ -341,6 +343,20 @@
       "probe": "reproduced",
       "evidence": "scratchpad Probe: 서명이 맞으면 통과한다. 이슈어만 만들 수 있어 위조 경로가 아니므로 관찰로만 남김",
       "note": "리뷰어가 RC-2 변종 목록에 'reproduced' 로 적었으나 리뷰어 스스로 '이슈어만 만들 수 있어 위조 경로가 아니므로 관찰로만 남김'이라고 판정 — 형식 사전 검사 누락(RC-2)과 뿌리가 다르므로 결함 변종에서 분리해 여기에 둔다. HITL#3 요약에 공개"
+    }
+  ],
+  "exceptions": [
+    {
+      "item": "V11 base64url 마지막 글자 미사용 비트 표기",
+      "reason": "사용자 결정으로 범위 밖 — 회고에 별도 태스크 후보"
+    },
+    {
+      "item": "서명된 accessToken 의 sub·exp 표기 느슨함 (관찰, RC-2 변종에서 분리)",
+      "reason": "서버 키가 있어야 만들 수 있어 위조 경로 아님"
+    },
+    {
+      "item": "AuthServiceUniqueViolationTest 의 PG 메시지는 프로브에서 옮긴 문자열",
+      "reason": "실제 DB 위반은 일으키지 않음 — H2 는 리뷰어 프로브로 재확인"
     }
   ]
 }

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "4"
-phase_name: "Phase 4 - Verify (2회차)"
+phase: "5"
+phase_name: "Phase 5 - Reflect"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-016-user-handle-pending-info"
 
-last_checkpoint: "CP-3.4"
+last_checkpoint: "CP-4.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-016.json"
 ---
@@ -26,7 +26,7 @@ TASK-016 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 8h �
 
 ## 다음 한 걸음
 
-롤백 재작업 Red 재승인 완료(CP-2.5). Phase 3: 공통 형식 검사(access·pending) + 중복 키 거부 → 전체 스위트 → 자체 리뷰 → Phase 4 재검증(RC-2 인계). V11(미사용 비트 표기)은 범위 밖 — 회고에 별도 태스크 후보로.
+Phase 4 예외 승인(verified_commit 4a1b687). `wf-reflect` 로 회고 — 주요 소재: 2a 독립검증이 회차마다 새 칸을 지적한 패턴(롤백 2회), Phase 4 RC-2(공통 지점 누락), V11 별도 태스크 후보.
 
 ## 알아둬야 할 것
 
