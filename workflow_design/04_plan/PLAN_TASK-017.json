@@ -42,7 +42,11 @@
         "type": "string",
         "source": "호출하는 화면 (시안 data-stay 문구)",
         "constraints": [
-          "띄운 뒤 스스로 사라진다"
+          "띄운 뒤 2,500ms 에 스스로 사라지고 닫힘 콜백(onClose)을 한 번 부른다",
+          "빈 문구·공백만이면 띄우지 않는다",
+          "길이 한도는 두지 않는다 — 긴 문구는 줄을 바꿔 375px 안에 머문다(overflow-wrap: anywhere, 시안 body 규칙)",
+          "사라지기 전에 언마운트되면 타이머를 정리하고 콜백을 부르지 않는다",
+          "표시 중 문구가 바뀌면 2,500ms 를 새로 센다"
         ]
       },
       {
@@ -51,6 +55,15 @@
         "source": "브라우저",
         "constraints": [
           "375px 에서 가로 스크롤 없음, 넓은 화면에서는 가운데 한 열"
+        ]
+      },
+      {
+        "name": "Field 오류 상태",
+        "type": "{error?: string}",
+        "source": "호출하는 폼",
+        "constraints": [
+          "오류 문구가 있으면 is-error 모양 + aria-invalid=true + aria-describedby → 문구",
+          "오류 문구가 비었거나 없으면 오류 모양·aria 속성 모두 없다(빈 문구로 aria-describedby 를 걸지 않는다)"
         ]
       }
     ],
@@ -73,7 +86,7 @@
       {
         "name": "공통 부품",
         "type": "React 컴포넌트",
-        "description": "AppBar(뒤로·제목·오른쪽) · Page · Block(+head·note·is-list) · Row(lead·main·title·sub·trail) · Badge(tone 6) · CtaBar(하단 고정, 주 버튼) · Field(label·input·msg·is-error) · Toast(문구, 자동 사라짐) · Sheet(바텀시트)"
+        "description": "AppBar(뒤로·제목·오른쪽) · Page · Block(+head·note·is-list) · Row(lead·main·title·sub·trail) · Badge(tone 6) · CtaBar(하단 고정, 주 버튼) · Field(label·input·msg·is-error) · Toast(문구, 자동 사라짐) · Sheet(바텀시트). 콜백: AppBar onBack, Toast onClose, Sheet onClose. Sheet 는 open=false 면 그리지 않는다"
       },
       {
         "name": "StatusBadge",
