@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-05T05:00:00Z
-summary: "Red 18건(17 Red · 1 already_passing 가드) + 기존 테스트 기대값 교체 5파일. 순차 287 중 24 실패(의도), 병렬은 등록 화면 5건 시간 초과 추가. 통합 승인 대기."
+summary: "Red 18건·기존 테스트 기대값 교체 — 통합 승인 완료(2026-11-05, 게이트 예외 포함)."
 
 next_steps:
-  - "HITL#1·2 — 시나리오 전체(게이트 예외) + Red + 기존 테스트 기대값 교체 승인"
+  - "Phase 3 — 토큰·테마·GlobalTokens·부품 9종·StatusBadge·index.html 구현, 병렬 시간 초과 원인 확인"
 
 decisions:
   - decision: "부품 스켈레톤은 props 인터페이스 + notImplemented() 한 줄"
