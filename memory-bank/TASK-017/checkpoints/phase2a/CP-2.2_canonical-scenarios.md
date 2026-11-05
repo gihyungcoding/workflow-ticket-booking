@@ -33,3 +33,7 @@ attempts:
     result: FAIL → Phase 1 롤백 1/2 (사용자 결정)
     fail: ["V11 — StatusBadge·Toast·Field null/undefined, Toast 빈→유효, Sheet 닫힌 뒤·언마운트 뒤 Esc"]
     fix: "PLAN design.prop_schema. SC-05·07 을 표(정의 밖·빈·null·undefined)로, SC-13 에 공연 수정 화면, SC-16(prop_schema 잔여 칸 전수: Toast 무효→유효·같은 문구 재렌더·onClose 없음, Field null/undefined→유효·label, Sheet 닫힌 뒤/언마운트 뒤 Esc·onClose 없음, AppBar onBack/title 없음, CtaBar disabled, Badge 빈 문구). 검증 회차는 롤백 후 1회차부터"
+  - round: "롤백 후 1"
+    result: FAIL
+    fail: ["V11 — Toast·Field 유효↔무효 전환 10칸"]
+    fix: "SC-17: 무효 4값 × 두 방향 × Toast·Field = 16행 전수. 경고 반영: SC-13 에 공연 등록·App 첫 화면·createAppTheme 호출, 문구 '표의 모든 화면'(V10). 보류: V5·V6·V7, 시나리오 17건(복잡 기준선 초과)은 2b 통합 HITL 에서 알림"
