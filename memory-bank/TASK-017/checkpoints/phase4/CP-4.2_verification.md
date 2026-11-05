@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-05T14:00:00Z
-summary: "Phase 4 2회차 WARN — RC-1 해소, 경고 2(앱바 긴 제목 높이 넘침·Sheet --c-track). HITL#3 대기. (1회차: FAIL — 뿌리 1 · 변종 5 (재현 2). 배지 잘림·neutral 배지 투명·토스트 클릭 막힘. 롤백 대상 사용자 결정 대기."
+summary: "Phase 4 2회차 WARN — RC-1 해소, 경고 2(앱바 긴 제목 높이 넘침·Sheet --c-track). HITL#3 예외 승인(2026-11-05). (1회차: FAIL — 뿌리 1 · 변종 5 (재현 2). 배지 잘림·neutral 배지 투명·토스트 클릭 막힘. 롤백 대상 사용자 결정 대기."
 
 next_steps:
   - "롤백 — neutral 배지 기대값(#F1F2F6)이 승인된 시나리오 규약 표에 박혀 있어 2a 에서 바꿔야 한다. 변종 5개 전부를 시나리오로"

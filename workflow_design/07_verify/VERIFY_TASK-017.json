@@ -364,8 +364,19 @@
   ],
   "overdue_promotions": 0,
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
-  }
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "66b9acfa8ac3d4296bf4222c63b00c3a9de27105",
+    "verified_at": "2026-11-05",
+    "method": "AskUserQuestion '예외 승인'"
+  },
+  "exceptions": [
+    {
+      "what": "60자 앱바 제목이 56px 앱바 밖으로 넘침",
+      "handoff": "TASK-018 — 시안 확인 후 줄 수 제한 결정"
+    },
+    {
+      "what": "Sheet --c-track 미정의",
+      "handoff": "TASK-018 — 세그먼트 도입 시"
+    }
+  ]
 }
