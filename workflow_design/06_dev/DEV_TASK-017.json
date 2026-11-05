@@ -43,11 +43,10 @@
   "test_status": "green",
   "test_result": {
     "command": "cd frontend && npx vitest run",
-    "total": 287,
-    "passed": 287,
+    "total": 292,
+    "passed": 292,
     "failed": 0,
-    "target_tests_passed": 18,
-    "note": "병렬 실행 시간 초과(Red 때 5건)는 구현 후 재현되지 않음 — 스켈레톤 예외 출력 부하로 판단"
+    "target_tests_passed": 23
   },
   "lint": {
     "command": "npm run lint",
@@ -148,18 +147,38 @@
         "tests_added": [],
         "fix_commit": "3290e80",
         "note": "[design] Field describedby 덮어쓰기·[test] Badge 불리언 children 을 싸게 고침(커밋 3290e80)"
+      },
+      {
+        "n": 2,
+        "scope": "수정 커밋 cc58a5b...HEAD · RC-1 부류 전수",
+        "findings": 1,
+        "correctness": 1,
+        "tests_added": [],
+        "fix_commit": null,
+        "note": "Paper 오버라이드 변이 시 SC-19 실패 확인(리뷰어 프로브)"
       }
     ],
-    "root_causes": [],
-    "unresolved": [],
+    "root_causes": [
+      {
+        "id": "RC-1",
+        "variants_after_round2": {
+          "Sheet --c-track 미정의": "later, 코드 비교 확인 — 사용 부품 없음",
+          "Paper 오버라이드 부작용": "not_reproduced",
+          "Badge flexShrink 0 vs max-width 말줄임": "not_probed — Phase 4 브라우저"
+        }
+      }
+    ],
+    "unresolved": [
+      {
+        "what": "[correctness 경미] Sheet 가 --c-track 을 재정의하지 않음(시안 .sheet 는 둘 다)",
+        "why_not_fixed": "--c-track 을 쓰는 부품(세그먼트)이 없어 관찰 불가, 시나리오 밖 동작 — 2b/2a 규칙상 여기서 만들지 않음",
+        "to": "TASK-018 (세그먼트 도입 시) — Phase 4·사용자에게 알림"
+      }
+    ],
     "deferred": [
       {
         "what": "#root 375px 로 기존 화면이 데스크톱에서도 좁아짐",
         "to": "Phase 4 화면 확인·HITL#3 알림"
-      },
-      {
-        "what": "AppBar 좌우 칸 시안 minmax(48px,auto) vs 구현 44px",
-        "to": "Phase 4"
       },
       {
         "what": "새 부품 중 운영 경로 사용은 Badge 뿐 — 화면 적용은 TASK-018",
@@ -168,7 +187,45 @@
       {
         "what": "Field 오류 아이콘 18px·1px 테두리 — components.css .field-msg svg 18px·.input 1px 로 시안 값",
         "to": "정보"
+      },
+      {
+        "what": "색 틴트 Alert·MUI AppBar 안에 배지/입력이 오면 흰 면 가정이 틀림",
+        "to": "정보 — 사용처 없음"
       }
     ]
-  }
+  },
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-1",
+      "variants": [
+        "neutral 배지 바탕(SC-19)",
+        "MuiPaper 면 --c-fill(SC-19 Card)",
+        "배지 수축(SC-20)",
+        "토스트 pointer-events(SC-21)",
+        "앱바 minmax 48px(SC-22)",
+        "Row lead·Field var(--c-fill)(SC-23, 이미 구현 — 변이 검증)"
+      ],
+      "tests": [
+        "SC-03",
+        "SC-04",
+        "SC-19",
+        "SC-20",
+        "SC-21",
+        "SC-22",
+        "SC-23"
+      ],
+      "fix_locus": "per_site",
+      "sites": [
+        "components/ui/Badge.tsx",
+        "components/ui/Toast.tsx",
+        "components/ui/AppBar.tsx",
+        "theme/index.ts (MuiPaper root)",
+        "theme/tokens.ts (componentSizes.appbarSide)"
+      ],
+      "commits": [
+        "f862a1a",
+        "0809f71"
+      ]
+    }
+  ]
 }

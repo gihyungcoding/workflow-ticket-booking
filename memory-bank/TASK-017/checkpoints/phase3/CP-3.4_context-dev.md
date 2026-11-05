@@ -20,3 +20,5 @@ attempts:
   - round: 1
     result: "구현 후 4건 실패(테스트 측 결함) → 승인 후 테스트 수정 → 287 통과"
 ---
+
+<!-- 롤백 2회차 Green: 292/292, 자체 리뷰 2라운드 correctness 1(Sheet --c-track, 관찰 불가·시나리오 밖 → unresolved, TASK-018) -->
