@@ -1,8 +1,8 @@
 ---
 task_id: TASK-016
 title: "티켓온 아이디·소셜 가입 대기 정보 API"
-phase: "3"
-phase_name: "Phase 3 - Green (Phase 4 롤백 재작업)"
+phase: "4"
+phase_name: "Phase 4 - Verify (2회차)"
 status: ACTIVE
 track: light
 created_at: 2026-11-04
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-016-user-handle-pending-info"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-016.json"
 ---

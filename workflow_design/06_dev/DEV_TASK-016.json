@@ -38,7 +38,7 @@
     },
     {
       "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
-      "change": "PendingSignup.expiresAt, 압축 JWS 형식·정수 초 exp 사전 검사, exp ≤ now+300 상한",
+      "change": "PendingSignup.expiresAt, 압축 JWS 형식·정수 초 exp 사전 검사, exp ≤ now+300 상한; (롤백) readPayload 공통 형식 검사(압축 JWS·중복 키 없는 JSON 객체)를 verifyAccessToken·verifyPendingToken 이 함께 사용",
       "lines_changed": 48
     },
     {
@@ -102,11 +102,11 @@
   "test_status": "green",
   "test_result": {
     "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --continue",
-    "total": 162,
-    "passed": 162,
+    "total": 164,
+    "passed": 164,
     "failed": 0,
-    "target_tests_passed": 14,
-    "note": "대상 14(Red 승인분) + 자체 리뷰 추가 2(AuthServiceUniqueViolationTest) + 기존 146"
+    "target_tests_passed": 16,
+    "note": "승인 시나리오 16 + 자체 리뷰 추가 2(AuthServiceUniqueViolationTest) + 기존 146"
   },
   "lint": {
     "command": "cd backend && ./gradlew spotlessCheck",
@@ -184,10 +184,6 @@
     {
       "path": "backend/src/test/java/com/example/ticket_booking/support/UserFixtures.java",
       "why": "기존 테스트 준비 코드용 아이디 자리 채움 (test_modifications 와 함께)"
-    },
-    {
-      "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java (압축 형식 사전 검사)",
-      "why": "SC-14 Red 에서 드러난 기존 결함(토큰 끝 문자 허용)을 pendingToken 검증 한 곳에서 막음. accessToken 검증(verifyAccessToken)에는 적용하지 않았다 — Phase 4 에서 같은 부류 여부 검토 필요"
     }
   ],
   "pre_review": {
@@ -207,6 +203,14 @@
         "findings": 0,
         "tests_added": [],
         "fix_commit": null
+      },
+      {
+        "n": 3,
+        "scope": "Phase 4 롤백 수정 58135a6...HEAD + 재작업 테스트 b5385be...HEAD + 같은 부류 develop...HEAD",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null,
+        "note": "RC-2 닫힘. 변이 M4·M5 리뷰어가 사본에서 확인"
       }
     ],
     "root_causes": [
@@ -236,6 +240,16 @@
             "probe": "reproduced"
           }
         ]
+      },
+      {
+        "id": "RC-2",
+        "summary": "형식 사전 검사를 verifyPendingToken 한 곳에만 넣어 verifyAccessToken 이 열려 있었다",
+        "found_in_round": "Phase 4 (round 3)",
+        "status": "fixed",
+        "fix_locus": "common",
+        "sites": [
+          "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java#readPayload"
+        ]
       }
     ],
     "unresolved": [],
@@ -244,7 +258,34 @@
         "from": "round 1 [test]",
         "what": "handle 위반 → 503 / email 위반 → 409 분기 테스트 부재",
         "status": "해소 — AuthServiceUniqueViolationTest 추가"
+      },
+      {
+        "from": "사용자 결정(HITL#1·2 재승인)",
+        "what": "V11 base64url 마지막 글자 미사용 비트 표기 — 범위 밖, 회고에 별도 태스크 후보",
+        "status": "deferred"
       }
     ]
-  }
+  },
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-2",
+      "variants": [
+        "accessToken 끝 =·==·~ (HTTP)",
+        "끝 NUL·LF·공백·!·é·서로게이트",
+        "서명 마디 NUL",
+        "페이로드 마디 NUL",
+        "pendingToken 변형·중복 exp/typ"
+      ],
+      "tests": [
+        "TokenFormatApiTest#test_sc15",
+        "JwtTokenFormatTest#test_sc16",
+        "PendingSignupApiTest#test_sc09·test_sc14 (행 확장)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java#readPayload"
+      ],
+      "fix_commit": "115d0c7"
+    }
+  ]
 }

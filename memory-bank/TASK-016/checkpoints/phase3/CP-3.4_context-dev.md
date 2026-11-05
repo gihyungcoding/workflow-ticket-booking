@@ -1,10 +1,10 @@
 ---
 status: ARCHIVED
 saved_at: 2026-11-04T18:00:00Z
-summary: "Green 162/162 (대상 14 + 자체 리뷰 추가 2 + 기존 146), spotless 0, 자체 리뷰 2라운드(RC-1 수정, 미해결 0)."
+summary: "롤백 재작업 Green 164/164, spotless 0, 자체 리뷰 3라운드(RC-2 공통 지점 수정 확인, 결함 0)."
 
 next_steps:
-  - "Phase 4 — wf-verify 로 검증 (deferred: accessToken 압축 형식 검사 미적용 검토, 문서 §3-2 경합 문구 정정)"
+  - "Phase 4 재검증 — RC-1·RC-2 인계, V11 은 범위 밖"
 
 decisions:
   - decision: "구현 순서: V5·엔티티 → HandleGenerator → AuthService → 대기 정보 API → JwtTokenProvider 강화"
@@ -22,3 +22,7 @@ attempts:
   - round: 2
     result: "자체 리뷰 1라운드 RC-1 → 테스트 먼저 실패 확인 후 수정, 2라운드 결함 없음"
 ---
+
+## Phase 4 롤백 재작업 (2026-11-05)
+- readPayload 공통 형식 검사(압축 JWS + 중복 키 없는 JSON 객체) — access·pending 함께 (115d0c7)
+- 164/164, 자체 리뷰 결함 0, 변이 M4·M5 확인

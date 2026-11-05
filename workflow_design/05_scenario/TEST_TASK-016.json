@@ -241,6 +241,20 @@
         "diff_verified": "git diff --stat: 1 file changed",
         "failed": "SC-09·SC-14 exp T+301·Instant 최소-1",
         "restored": true
+      },
+      {
+        "id": "M4",
+        "mutation": "verifyAccessToken 의 readPayload 가드를 if (false) 로",
+        "failed": "TokenFormatApiTest.test_sc15, JwtTokenFormatTest.test_sc16",
+        "restored": true,
+        "by": "Phase 3 자체 리뷰어 — 저장소 밖 git archive 사본에서"
+      },
+      {
+        "id": "M5",
+        "mutation": "PAYLOAD_READER 의 STRICT_DUPLICATE_DETECTION 제거",
+        "failed": "PendingSignupApiTest.test_sc09, test_sc14",
+        "restored": true,
+        "by": "Phase 3 자체 리뷰어 — 저장소 밖 git archive 사본에서"
       }
     ],
     "note": "exp Instant 최대+1·long 초과 양·음 행은 M3 에서도 거부됨 — 디코더 변환 단계에서 거부된다(500 아님, 401 확인). 원복 후 git status 깨끗함"
