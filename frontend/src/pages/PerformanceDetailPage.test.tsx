@@ -58,11 +58,11 @@ describe('PerformanceDetailPage', () => {
     expect(screen.getByText(new Date(performance.closeAt).toLocaleString(), { exact: false })).toBeInTheDocument()
     expect(screen.getByText('37석', { exact: false })).toBeInTheDocument()
 
-    // '예매가능' 상태 배지가 보인다
-    expect(screen.getByText('예매가능')).toBeInTheDocument()
+    // '예매 가능' 상태 배지가 보인다 (TASK-017: design.md §5 문구)
+    expect(screen.getByText('예매 가능')).toBeInTheDocument()
   })
 
-  test('SC-03 (happy) 상세 화면의 공연명에 Noto Serif KR이 적용된다', async () => {
+  test('SC-03 (happy) 상세 화면의 공연명과 본문에 Pretendard 가 적용된다', async () => {
     // Given
     // PerformanceDetailPage 가 공연 1건("재즈의 밤")을 렌더한다
     const performance: Performance = {
@@ -85,11 +85,11 @@ describe('PerformanceDetailPage', () => {
     const venueEl = screen.getByText('OO홀')
 
     // Then
-    // 그 요소의 font-family 에 'Noto Serif KR' 이 포함된다
-    expect(getComputedStyle(titleEl).fontFamily).toContain('Noto Serif KR')
+    // 그 요소의 font-family 에 'Pretendard' 가 포함된다 (TASK-017: 서체는 Pretendard 한 가지 — design.md §4)
+    expect(getComputedStyle(titleEl).fontFamily).toContain('Pretendard')
 
-    // 같은 화면의 장소 텍스트 요소의 font-family 는 'IBM Plex Sans KR' 이다('Noto Serif KR' 이 아니다)
-    expect(getComputedStyle(venueEl).fontFamily).toContain('IBM Plex Sans KR')
+    // 같은 화면의 장소 텍스트 요소도 'Pretendard' 이고 옛 명조('Noto Serif KR')가 아니다
+    expect(getComputedStyle(venueEl).fontFamily).toContain('Pretendard')
     expect(getComputedStyle(venueEl).fontFamily).not.toContain('Noto Serif KR')
   })
 

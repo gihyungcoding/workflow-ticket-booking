@@ -1,0 +1,242 @@
+{
+  "task_id": "TASK-017",
+  "supersedes": "SCENARIO_TASK-017.json",
+  "test_files": [
+    "frontend/src/theme/task017.theme.test.tsx",
+    "frontend/src/task017.static.test.ts",
+    "frontend/src/components/ui/task017.ui.test.tsx",
+    "frontend/src/pages/task017.regression.test.tsx"
+  ],
+  "support_files": [
+    "frontend/src/test/task017.tsx",
+    "frontend/src/theme/task017.expected.ts (기대 색값 — theme/ 안, DESIGN-002)"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_file": "frontend/src/theme/task017.theme.test.tsx",
+      "test_function": "TASK-017 SC-01 (happy) tokens.ts 의 값이 design-tokens.css 와 하나도 다르지 않다",
+      "status": "red",
+      "failure": "tokens.ts 에 designTokens·textLargeTokens 없음 (expected undefined to be defined)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_file": "frontend/src/theme/task017.theme.test.tsx",
+      "test_function": "TASK-017 SC-02 (happy) 테마가 토큰 값으로 만들어진다",
+      "status": "red",
+      "failure": "primary.main #1976D2 (MUI 기본) ≠ #4154FF"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-03 (happy) 공연 상태 배지가 design.md §5 의 뜻·문구·색으로 나온다",
+      "status": "red",
+      "failure": "옛 문구 — 예매 가능 없음"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-04 (happy) Badge 의 tone 여섯 가지가 서로 다른 색이다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-05 (error) 알 수 없는 상태값이면 배지를 그리지 않는다",
+      "status": "red",
+      "failure": "옛 StatusBadge 가 정의 밖 값에도 빈 Chip 을 그림"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-06 (happy) 토스트가 문구를 띄우고 스스로 사라진다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-07 (error) 빈 문구로는 토스트가 뜨지 않는다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-08 (happy) 움직임 줄이기 설정이면 토스트에 전환 효과가 없다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-09 (happy) 공통 부품이 토큰 값으로 그려진다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_file": "frontend/src/task017.static.test.ts",
+      "test_function": "TASK-017 SC-10 (happy) 테마 밖 색·매직 치수가 없다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "가드 시나리오 — DESIGN-001·002 위반 0·DESIGN-003 기존 3건은 변경 전에도 참. Green 에서 부품·테마가 이 상태를 깨지 않는지를 지킨다. Red 작성 중 실제로 테스트 파일의 색 리터럴(DESIGN-002)을 잡아 고쳤다"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_file": "frontend/src/task017.static.test.ts",
+      "test_function": "TASK-017 SC-11 (happy) Pretendard 를 불러오고 옛 서체를 불러오지 않는다",
+      "status": "red",
+      "failure": "index.html 이 Google Fonts(Noto Serif KR·IBM Plex) 를 불러옴"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_file": "frontend/src/theme/task017.theme.test.tsx",
+      "test_function": "TASK-017 SC-12 (happy) 앱은 375px 한 열로 가운데 놓인다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_file": "frontend/src/pages/task017.regression.test.tsx",
+      "test_function": "TASK-017 SC-13 (regression) 기존 화면이 새 테마에서 깨지지 않고 새 배지 문구로 나온다",
+      "status": "red",
+      "failure": "목록에 예매 가능 없음(옛 문구)"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-14 (happy) 토스트 타이머는 문구가 바뀌면 새로 세고, 사라지기 전에 닫히면 정리된다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-15 (happy) 켜졌던 오류·시트가 꺼지면 흔적이 남지 않는다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-16 (error) 부품 prop 의 경계값과 전환·정리가 PLAN prop_schema 대로다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-17 (error) 토스트 문구와 Field 오류의 유효↔무효 전환은 방향과 값마다 같은 규칙이다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    },
+    {
+      "scenario_id": "SC-18",
+      "test_file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "test_function": "TASK-017 SC-18 (error) 문구가 비었거나 길어도 부품이 칸을 벗어나지 않는다",
+      "status": "red",
+      "failure": "UnsupportedOperation: TASK-017 Red skeleton"
+    }
+  ],
+  "red_result": {
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npx vitest run",
+    "parallel": {
+      "total": 287,
+      "failed": 29,
+      "passed": 258,
+      "note": "병렬 실행에서 기존 PerformanceRegisterPage 3건·WriteKeyRejected 2건이 5초 시간 초과 — 단독·순차 실행에서는 통과(변경 전 코드에서도 단독 통과). 테스트가 늘어 병렬 부하로 생긴 것"
+    },
+    "sequential": {
+      "command": "npx vitest run --no-file-parallelism",
+      "total": 287,
+      "failed": 24,
+      "breakdown": "TASK-017 새 테스트 17(Red) + 기대값을 바꾼 기존 테스트 7(Red)"
+    },
+    "existing_tests_still_passing": true,
+    "typecheck": "tsc -b --noEmit exit 0",
+    "lint": "npm run lint error 0"
+  },
+  "inventory_check": {
+    "scenarios": 18,
+    "test_functions": 18,
+    "match": true,
+    "method": "grep \"test('TASK-017 SC-\" 고유 18 == jq '.scenarios|length'"
+  },
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/components/ui/AppBar.tsx",
+      "frontend/src/components/ui/Page.tsx",
+      "frontend/src/components/ui/Block.tsx",
+      "frontend/src/components/ui/Row.tsx",
+      "frontend/src/components/ui/Badge.tsx",
+      "frontend/src/components/ui/CtaBar.tsx",
+      "frontend/src/components/ui/Field.tsx",
+      "frontend/src/components/ui/Toast.tsx",
+      "frontend/src/components/ui/Sheet.tsx",
+      "frontend/src/components/ui/index.ts",
+      "frontend/src/components/ui/skeleton.ts",
+      "frontend/src/theme/GlobalTokens.tsx"
+    ],
+    "contents": "props 인터페이스·시그니처만, 본문은 notImplemented() 한 줄(UnsupportedOperation)",
+    "purity_check": "새 부품을 그리는 실패는 전부 UnsupportedOperation. StatusBadge·테마·tokens.ts 는 기존 구현이라 단언 실패"
+  },
+  "existing_test_modifications": [
+    {
+      "file": "frontend/src/theme/index.test.tsx",
+      "scenario": "TASK-003 SC-01×2",
+      "change": "옛 토큰 기대값(#0E6E52·#F7F8F9·#1A2027·#5A6570·radius 2·그림자 없음·명조 행간·Chip 2px·Card #D3D8DC) → 새 토큰(#1A8347·#F1F2F6·#FEFEFE·#1A1C28·#4C4F66·radius 12·shadow-1·h1 1.36/h2 1.4/body1 1.55/body2 1.5·Chip 6px·Card #E5E6ED·textSecondary #4C4F66)",
+      "assertion_count": "줄지 않음 (12→12, 3→3)"
+    },
+    {
+      "file": "frontend/src/components/StatusBadge.test.tsx",
+      "scenario": "TASK-002 SC-04",
+      "change": "예매예정·예매가능·예매마감·공연취소 → 예정·예매 가능·마감·공연 취소",
+      "assertion_count": "같음"
+    },
+    {
+      "file": "frontend/src/pages/PerformanceListPage.test.tsx",
+      "scenario": "TASK-002 SC-01·TASK-003 SC-02",
+      "change": "배지 예매가능 → 예매 가능, 공연명 서체 Noto Serif KR → Pretendard(장소도 Pretendard·명조 아님)",
+      "assertion_count": "같음"
+    },
+    {
+      "file": "frontend/src/pages/PerformanceDetailPage.test.tsx",
+      "scenario": "TASK-002 SC-02·TASK-003 SC-03",
+      "change": "위와 같음",
+      "assertion_count": "같음"
+    },
+    {
+      "file": "frontend/src/pages/PerformanceEditPage.test.tsx",
+      "scenario": "TASK-005",
+      "change": "공연취소 → 공연 취소 (2곳)",
+      "assertion_count": "같음"
+    }
+  ],
+  "harness_contract": {
+    "components": "AppBar(title,onBack) header(banner)+h1+button[aria-label=뒤로] · Block section · Row [data-row] · Badge span(빈 문구면 아무것도 안 그림) · CtaBar button · Field(label,error,…input) label+input, 오류 문구 요소 [data-field-error] id 를 aria-describedby 로, svg[aria-hidden] · Toast role=status · Sheet role=dialog + [data-testid=sheet-backdrop] · GlobalTokens(:root·body·#root 스타일)",
+    "tokens": "tokens.ts 가 designTokens(:root 이름→값)·textLargeTokens 를 내보낸다"
+  },
+  "harness_probe": {
+    "verified": [
+      "jsdom getComputedStyle 이 emotion 스타일의 색·치수를 계산(기존 theme 테스트와 같은 방식)",
+      "check_architecture.py --json 을 테스트에서 실행 가능(python3, 저장소 루트)"
+    ],
+    "not_verified": [
+      "GlobalStyles 가 #root·body 에 적용된 계산 스타일을 jsdom 이 돌려주는지 — Green 에서 확인",
+      "병렬 실행 시간 초과(등록 화면 테스트 5건) — Phase 3 에서 원인 확인"
+    ]
+  },
+  "gate_exception": {
+    "gate": "Phase 2a EXIT — validator overall.pass == true",
+    "decided_by": "사용자 (AskUserQuestion 2026-11-05: '두 칸 채우고 게이트 예외로 Red 진행')",
+    "reason": "독립검증이 회차마다 새 칸을 찾아 수렴하지 않음 (롤백 전 3회·Phase 1 롤백 1회·롤백 후 3회·예외 4회차 모두 V11 FAIL, 빈칸 5→10→5→1→2)",
+    "last_validation": "VALIDATION_TASK-017.json (예외 4회차, FAIL — Field.label 긴 값·Toast 지속 시간 prop)",
+    "fix_after_last_validation": "Toast 지속 시간을 고정 상수로 확정(prop 없음 → 칸 소멸), SC-18 에 label 100자 행 — 검증자 재호출 없음",
+    "compensation": "2b 끝 HITL#1·2 에서 시나리오 전체를 Red 테스트와 함께 사람이 승인"
+  },
+  "human_review": {
+    "approved": false
+  }
+}

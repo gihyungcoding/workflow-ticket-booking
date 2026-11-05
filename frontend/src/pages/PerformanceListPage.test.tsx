@@ -75,14 +75,14 @@ describe('PerformanceListPage', () => {
     expect(within(jazzCard!).getByText('OO홀', { exact: false })).toBeInTheDocument()
     expect(within(galaCard!).getByText('XX아트홀', { exact: false })).toBeInTheDocument()
 
-    // 제목이 "재즈의 밤"인 카드에는 "예매가능" 배지가 보인다
-    expect(within(jazzCard!).getByText('예매가능')).toBeInTheDocument()
+    // 제목이 "재즈의 밤"인 카드에는 "예매 가능" 배지가 보인다 (TASK-017: design.md §5 문구)
+    expect(within(jazzCard!).getByText('예매 가능')).toBeInTheDocument()
 
     // 제목이 "클래식 갈라"인 카드에는 "매진" 배지가 보인다
     expect(within(galaCard!).getByText('매진')).toBeInTheDocument()
   })
 
-  test('SC-02 (happy) 목록 카드의 공연명에 Noto Serif KR이 적용된다', async () => {
+  test('SC-02 (happy) 목록 카드의 공연명과 본문에 Pretendard 가 적용된다', async () => {
     // Given
     // PerformanceListPage 가 공연 1건("재즈의 밤")을 렌더한다
     const response: PerformanceListResponse = {
@@ -112,11 +112,11 @@ describe('PerformanceListPage', () => {
     const venueEl = screen.getByText('OO홀', { exact: false })
 
     // Then
-    // 그 요소의 font-family 에 'Noto Serif KR' 이 포함된다
-    expect(getComputedStyle(titleEl).fontFamily).toContain('Noto Serif KR')
+    // 그 요소의 font-family 에 'Pretendard' 가 포함된다 (TASK-017: 서체는 Pretendard 한 가지 — design.md §4)
+    expect(getComputedStyle(titleEl).fontFamily).toContain('Pretendard')
 
-    // 같은 카드의 장소 텍스트 요소의 font-family 는 'IBM Plex Sans KR' 이다('Noto Serif KR' 이 아니다)
-    expect(getComputedStyle(venueEl).fontFamily).toContain('IBM Plex Sans KR')
+    // 같은 카드의 장소 텍스트 요소도 'Pretendard' 이고 옛 명조('Noto Serif KR')가 아니다
+    expect(getComputedStyle(venueEl).fontFamily).toContain('Pretendard')
     expect(getComputedStyle(venueEl).fontFamily).not.toContain('Noto Serif KR')
   })
 

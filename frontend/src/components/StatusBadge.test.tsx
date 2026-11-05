@@ -19,10 +19,10 @@ describe('StatusBadge', () => {
     )
 
     // Then
-    expect(screen.getByText('예매예정')).toBeInTheDocument()
-    expect(screen.getByText('예매가능')).toBeInTheDocument()
+    expect(screen.getByText('예정')).toBeInTheDocument()
+    expect(screen.getByText('예매 가능')).toBeInTheDocument()
     expect(screen.getByText('매진')).toBeInTheDocument()
-    expect(screen.getByText('예매마감')).toBeInTheDocument()
-    expect(screen.getByText('공연취소')).toBeInTheDocument()
+    expect(screen.getByText('마감')).toBeInTheDocument()
+    expect(screen.getByText('공연 취소')).toBeInTheDocument()
   })
 })
