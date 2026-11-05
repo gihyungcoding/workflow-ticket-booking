@@ -118,7 +118,7 @@ export function px(name: TokenName): number {
  */
 export const componentSizes = {
   touch: '44px', // .appbar-btn·.row-lead 44px (components.css 37·62행)
-  appbarSide: '48px', // .appbar grid-template-columns minmax(48px, auto) (35행)
+  appbarSide: '48px', // .appbar grid-template-columns minmax(48px, auto) (34행)
   badgeHeight: '24px', // .badge height (76행)
   rowGap: '4px', // .row-main gap (66행)
   iconSmall: '20px', // .btn svg·.row-trail svg (70·88행)
