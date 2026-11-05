@@ -80,7 +80,7 @@ flow: F5
 
 - **Given** 서버가 정의 밖 상태 `POSTPONED` 를 돌려줬다
 - **When** 그 값으로 StatusBadge 를 그린다
-- **Then** 렌더가 예외 없이 끝나고 그린 영역이 비어 있다
+- **Then** 렌더가 예외 없이 끝나고 그린 영역이 비어 있다 (PLAN inputs PerformanceStatus 의 정의 밖 값 규칙)
 
 covers: 상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)
 flow: F5
@@ -101,6 +101,7 @@ flow: F6
 - **Given** 가짜 타이머를 켰다
 - **When** 문구 `` 또는 공백만(`   `)으로 Toast 를 연다
 - **Then** role=status 영역에 보이는 문구가 없다
+- **And** 5,000ms 가 지나도 닫힘 콜백이 불리지 않는다
 
 covers: `data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다
 flow: F6
@@ -132,6 +133,7 @@ flow: F6
 | Field 오류 문구 | 글자색 · 아이콘 있음 | `#E1292F` · 문구 앞에 아이콘 |
 | Sheet | 모서리 | 20px 20px 0 0 |
 
+- **And** Field 오류 문구 앞에 장식 아이콘(`aria-hidden="true"` 인 svg)이 있다
 - **And** Field 입력은 오류일 때 `aria-invalid="true"` 이고 오류 문구와 `aria-describedby` 로 이어진다
 - **And** AppBar 뒤로 버튼은 `aria-label="뒤로"` 이고 누르면 뒤로 가기 콜백이 한 번 불린다
 
@@ -171,13 +173,18 @@ flow: F3
 covers: 375px 폭에서 가로 스크롤이 없고, 넓은 화면에서는 가운데 한 열로 보인다
 flow: F4
 
-## SC-13 (regression) 기존 공연 목록·상세 화면이 새 배지 문구로 나온다
+## SC-13 (regression) 기존 공연 목록·상세 화면이 새 테마에서 새 배지 문구로 나온다
 
-- **Given** 공연 API 가 상태별 공연 다섯 개(OPEN·UPCOMING·SOLD_OUT·CLOSED·CANCELLED)를 돌려준다
-- **When** 공연 목록 화면을 그린다
-- **Then** `예매 가능` `예정` `매진` `마감` `공연 취소` 배지가 각각 하나씩 있다
-- **And** 옛 문구는 없다
-- **And** 기존 목록·상세·공연 등록·수정 화면 테스트가 옛 배지 문구·옛 토큰 값 단언을 새 값으로 바꾼 뒤 모두 통과한다 (단언 수는 줄지 않는다)
+- **Given** 공연 API 가 아래 표의 응답을 돌려준다 (기존 화면·기존 호출부 그대로 — `createAppTheme`, `<StatusBadge status=… />`)
+- **When** 표의 화면을 새 테마로 그린다
+- **Then** 결과가 표와 같다
+
+| 화면 | 응답 | 결과 |
+|---|---|---|
+| 공연 목록 | 상태별 공연 다섯 개(OPEN·UPCOMING·SOLD_OUT·CLOSED·CANCELLED) | `예매 가능` `예정` `매진` `마감` `공연 취소` 배지가 각각 하나씩, 옛 문구 없음 |
+| 공연 상세 | OPEN 공연 하나 | `예매 가능` 배지 하나, 옛 문구 없음, 공연명이 보인다 |
+
+- **And** 두 화면 모두 렌더 중 예외가 없다
 
 covers: 기존 화면(목록·상세·공연 등록·수정) 테스트가 새 배지 문구로 고친 뒤 모두 통과한다
 flow: F7
@@ -193,6 +200,8 @@ flow: F7
 | 문구 A 로 연다 → 2,000ms → 문구 B 로 바꾼다 → 2,499ms | 문구 B 가 보이고 닫힘 콜백은 불리지 않았다 |
 | 위에 이어 1ms 더 (문구 B 로 바꾼 뒤 2,500ms) | 사라지고 닫힘 콜백이 한 번 불린다 |
 | 문구 A 로 연다 → 1,000ms → 언마운트 → 5,000ms | 닫힘 콜백이 불리지 않고 남은 타이머가 없다 |
+| 문구 A 로 연다 → 1,000ms → 문구를 `` 로 바꾼다 | 즉시 사라지고 닫힘 콜백이 한 번 불린다 · 그 뒤 5,000ms 가 지나도 더 불리지 않는다 |
+| 문구 A 로 연다 → 1,000ms → 문구를 공백만(`   `)으로 바꾼다 | 위와 같다 |
 | 길이 300자의 공백 없는 문구로 연다 | 문구가 줄을 바꿔 보인다 (토스트의 overflow-wrap 이 anywhere) · (화면 확인) 375px 에서 가로 넘침 없음 |
 
 covers: `data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다
@@ -208,7 +217,11 @@ flow: F6
 |---|---|---|
 | Field | 오류 문구 `이메일을 입력해 주세요` → 오류 없음 | 오류 문구 없음, `aria-invalid` 없음, `aria-describedby` 없음, 입력 테두리가 오류색이 아님 |
 | Field | 오류 문구 `` (빈 문자열) | 오류 모양 아님, `aria-invalid` 없음, `aria-describedby` 없음 |
+| Field | 오류 문구 공백만(`   `) | 위와 같다 |
 | Sheet | open → 닫힘 | 시트가 화면에 없다 |
+
+- **And** 열린 Sheet 의 배경을 누르면 닫힘 콜백이 한 번 불리고, Esc 를 누르면 한 번 더 불린다 (합 2번)
+- **And** 시트 안쪽을 누르면 닫힘 콜백이 불리지 않는다
 
 covers: 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)
 flow: F2
@@ -217,6 +230,10 @@ flow: F2
 
 ## 시나리오로 쓰지 않은 것
 
+- **기존 테스트의 옛 기대값 교체** — 옛 배지 문구·옛 토큰 값을 단언하던 기존 테스트(theme/index.test.tsx, StatusBadge.test.tsx,
+  PerformanceList·Detail·EditPage.test.tsx)는 2b 에서 새 기대값으로 바꾸고 통합 승인(HITL#1·2)에서 함께 승인받는다(PLAN unresolved #1).
+  시나리오의 관찰 대상이 아니라 Red 작업 항목이다
+- **(화면 확인) 의 증거** — Phase 4 에서 브라우저(375px·1280px)로 띄워 `document.fonts`·`scrollWidth`·열 여백 값을 VERIFY `screens` 에 기록한다
 - **화면 재배치(목록·상세를 시안 구조로)** — 흐름 2. 이 태스크는 새 테마로 색·서체가 바뀌는 것까지
 - **AppHeader 교체** — AC 밖(PLAN unresolved #5). AppBar 부품만 SC-09 에서 확인
 - **입금 대기·예매 확정 배지를 쓰는 화면** — 예매 모델이 흐름 4·5. 이 태스크는 Badge tone 만(SC-04)

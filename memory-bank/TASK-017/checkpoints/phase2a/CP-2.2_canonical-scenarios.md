@@ -25,3 +25,7 @@ attempts:
     fail: ["V11 — Toast 언마운트 정리·문구 변경 재시작·긴 문구, Field 오류 꺼짐·빈 문구"]
     fix: "SC-14(토스트 타이머·긴 문구), SC-15(Field 오류 꺼짐·빈 문구 + 같은 종류인 Sheet 닫힘). PLAN inputs 에 토스트·Field 오류 제약"
 ---
+  - round: 2
+    result: FAIL
+    fail: ["V11 — Field 오류 공백만, 토스트 표시 중 빈 문구 전환, 빈 문구의 onClose"]
+    fix: "SC-07 에 onClose 미호출, SC-14 에 빈 문구·공백 전환 2행, SC-15 에 Field 공백만·Sheet 배경/Esc/안쪽 클릭. 경고 반영: PLAN 에 정의 밖 상태값·Sheet 닫기 규칙(V8), SC-13 을 목록+상세 표로·메타 Then 제거(V5·V10), Field 아이콘 aria-hidden 단언(V5), 기존 테스트 기대값 교체·화면 확인 증거 방법을 「쓰지 않은 것」에(V5). 같은 종류 대조: 켬→꺼짐 부품은 Field·Toast·Sheet 셋"

@@ -34,7 +34,8 @@
         "type": "'UPCOMING'|'OPEN'|'SOLD_OUT'|'CLOSED'|'CANCELLED'",
         "source": "frontend/src/api/performances.ts (백엔드 PerformanceStatus 계산값)",
         "constraints": [
-          "다섯 값 모두 배지 뜻 하나에 대응"
+          "다섯 값 모두 배지 뜻 하나에 대응",
+          "정의 밖 값(서버가 새 상태를 내려보낼 때)이면 배지를 그리지 않고 예외도 내지 않는다"
         ]
       },
       {
@@ -46,7 +47,9 @@
           "빈 문구·공백만이면 띄우지 않는다",
           "길이 한도는 두지 않는다 — 긴 문구는 줄을 바꿔 375px 안에 머문다(overflow-wrap: anywhere, 시안 body 규칙)",
           "사라지기 전에 언마운트되면 타이머를 정리하고 콜백을 부르지 않는다",
-          "표시 중 문구가 바뀌면 2,500ms 를 새로 센다"
+          "표시 중 문구가 바뀌면 2,500ms 를 새로 센다",
+          "빈 문구·공백만으로 열면 onClose 를 부르지 않는다(타이머를 시작하지 않는다)",
+          "표시 중 문구가 빈 문구·공백으로 바뀌면 즉시 사라지고 타이머를 정리하며 onClose 를 한 번 부른다"
         ]
       },
       {
@@ -63,7 +66,16 @@
         "source": "호출하는 폼",
         "constraints": [
           "오류 문구가 있으면 is-error 모양 + aria-invalid=true + aria-describedby → 문구",
-          "오류 문구가 비었거나 없으면 오류 모양·aria 속성 모두 없다(빈 문구로 aria-describedby 를 걸지 않는다)"
+          "오류 문구가 없거나 빈 문자열·공백만이면 오류 모양·aria 속성 모두 없다(토스트와 같은 규칙)"
+        ]
+      },
+      {
+        "name": "Sheet 닫기 동작",
+        "type": "사용자 동작",
+        "source": "사용자",
+        "constraints": [
+          "배경(오버레이)을 누르거나 Esc 를 누르면 onClose 를 한 번 부른다",
+          "시트 안쪽을 누르면 부르지 않는다"
         ]
       }
     ],
@@ -179,6 +191,7 @@
         "id": "F7",
         "name": "기존 화면 회귀",
         "steps": [
+          "createAppTheme 이름·export 와 StatusBadge 의 status prop 을 유지한다(기존 호출부 그대로)",
           "목록·상세·공연 등록·수정 화면 테스트의 배지 문구 단언을 새 문구로(승인된 테스트 수정 — 2b 통합 승인에서 함께)",
           "theme/index.test.tsx 의 옛 토큰 값 단언을 새 토큰으로(같음)",
           "npm test 전부 통과"
