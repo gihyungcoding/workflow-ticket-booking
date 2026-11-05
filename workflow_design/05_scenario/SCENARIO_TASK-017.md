@@ -13,7 +13,7 @@ Row · Badge · CtaBar · Field · Toast · Sheet), `frontend/src/components/Sta
 | 토큰 정본 | `docs/product/design-tokens.css` 의 `:root` 선언 전부와 `.text-large` 선언 전부 |
 | 배지 뜻 (design.md §5) | OPEN → `예매 가능` · brand / UPCOMING → `예정` · info / SOLD_OUT → `매진` · danger / CLOSED → `마감` · neutral / CANCELLED → `공연 취소` · neutral / (Badge 로만) `입금 대기` · warning / `예매 확정` · success |
 | 배지 색 (tone → 바탕 / 글자) | brand → `#EBEDFE` / `#4154FF` · info → `#F0EEFE` / `#6647FF` · danger → `#FCEFF0` / `#D61E24` · warning → `#FBF4E5` / `#916500` · success → `#E7F4ED` / `#187B43` · neutral → `#F1F2F6` / `#4C4F66` (시안의 배지는 흰 블록·행 위에 놓여 --c-fill 이 --c-bg 가 된다) |
-| 토스트 | role=status, 2,500ms 뒤 사라진다 |
+| 토스트 | role=status, 2,500ms 뒤 사라진다 (Toast 내부 고정 — 지속 시간 prop 없음) |
 | 한 열 최대 폭 | 375px (시안 뷰포트) |
 | 서체 | Pretendard 1.3.9 (`cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css`) |
 
@@ -322,6 +322,7 @@ PLAN `prop_schema` 의 길이·빈 값 규칙 중 SC-14~17 이 덮지 않은 칸
 | Field | label 공백만 | 위와 같다 |
 | Field | label `null` | 위와 같다 |
 | Field | label `undefined` | 위와 같다 |
+| Field | label 100자(공백 없음) | label 글자가 다 보이고 그 label 의 overflow-wrap 이 anywhere · (화면 확인) 375px 에서 가로 넘침 없음 |
 | Field | 오류 문구 300자(공백 없음) | 오류 문구가 다 보이고 그 문구의 overflow-wrap 이 anywhere · (화면 확인) 375px 에서 가로 넘침 없음 |
 | AppBar | 제목 `` | h1 이 있고 글자가 비어 있다, 뒤로 버튼 자리는 그대로 |
 | AppBar | 제목 공백만 | 위와 같다 |

@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-05T02:30:00Z
-summary: "Phase 1 롤백 1/2(prop_schema) 후 16건. 롤백 후 1회차 검증 대기."
+summary: "18건 — 독립검증 수렴 안 됨, 사용자 게이트 예외로 2b 진행 (SCENARIO json gate_exception)."
 
 next_steps:
-  - "scenario-validator 독립검증"
+  - "Phase 2b — Red, 기존 테스트 기대값 교체, HITL#1·2 에서 시나리오 전체 승인"
 
 decisions:
   - decision: "새로 작성"
@@ -44,3 +44,6 @@ attempts:
   - round: "롤백 후 3"
     result: FAIL (missing 1칸 — StatusBadge 공백만)
     fix: "SC-05 표에 공백만 행. 사용자 예외 승인(2026-11-05, AskUserQuestion: '예외 승인 — 한 칸 채우고 4회차 검증')으로 재시도 상한 초과 후 같은 Phase 에서 4회차 — PLAN 변경 없음"
+  - round: "예외 4"
+    result: FAIL (Field.label 긴 값, Toast 지속 시간 prop)
+    fix: "Toast 지속 시간 고정 상수 확정, SC-18 label 100자. 사용자 게이트 예외(2026-11-05) — 검증자 재호출 없이 2b. 보상: HITL#1·2 에서 시나리오 전체 승인"
