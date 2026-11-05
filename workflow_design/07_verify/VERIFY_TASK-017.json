@@ -1,18 +1,122 @@
 {
   "task_id": "TASK-017",
-  "status": "FAIL",
-  "verified_head": "c888f0a",
-  "status_reason": "화면 확인에서 상태 배지가 글자 2자도 못 보이게 잘림(재현), neutral 배지가 회색 바탕과 같은 색(재현), 토스트가 아래 클릭을 막음(코드 확인) — 셋 다 jsdom 이 계산하지 못하는 레이아웃·맥락 CSS",
+  "round": 2,
+  "status": "WARN",
+  "verified_head": "bc7bae6",
+  "status_reason": "1회차 RC-1 변종 모두 해소(브라우저 확인). 경고 2: 60자 앱바 제목이 56px 앱바 밖으로 넘쳐 아래 내용을 덮음(시나리오 문구는 충족), Sheet --c-track 미정의(사용 부품 없음 → TASK-018)",
+  "previous_rounds": [
+    {
+      "round": 1,
+      "status": "FAIL",
+      "verified_head": "c888f0a",
+      "root_causes": [
+        {
+          "id": "RC-1",
+          "summary": "시안의 레이아웃·맥락 의존 CSS(var(--c-fill), pointer-events:none, flex 안 배지 수축)를 jsdom 이 계산할 수 있는 고정값·단언으로만 옮겨, 테스트가 실제 렌더링을 검증하지 못한다",
+          "found_in_round": 2,
+          "resolved": false,
+          "variants": [
+            {
+              "case": "배지가 flex 행 안에서 줄어 짧은 문구도 말줄임(목록·상세)",
+              "origin": "found",
+              "probe": "reproduced",
+              "evidence": "브라우저 375px — '예…' 표시, flexShrink 1"
+            },
+            {
+              "case": "neutral 배지 배경 == 회색 페이지 바탕(상세·수정)",
+              "origin": "found",
+              "probe": "reproduced",
+              "evidence": "상세 CLOSED: badge bg rgb(241,242,246) == body bg"
+            },
+            {
+              "case": "토스트가 2.5초 동안 아래 클릭을 막음",
+              "origin": "found",
+              "probe": "not_probed",
+              "reason": "화면에 토스트 사용처 없음, 코드에 pointer-events 없음 확인"
+            },
+            {
+              "case": "AppBar 좌우 칸 44px 고정 — 텍스트 버튼이 오면 제목으로 넘침",
+              "origin": "predicted",
+              "probe": "not_probed",
+              "reason": "사용처 없음"
+            },
+            {
+              "case": "Row lead·Field 바탕 var(--c-fill) 이 Block·Sheet 안에서 회색이 되는지",
+              "origin": "predicted",
+              "probe": "not_probed",
+              "reason": "jsdom CSS 변수 미계산, 코드상 재정의 확인"
+            }
+          ]
+        }
+      ],
+      "human_review": {
+        "decision": "REJECT",
+        "reject": {
+          "type": "ROLLBACK_SCENARIO",
+          "reason_code": "SCENARIO_GAP",
+          "attempt": 1,
+          "chosen_by": "AskUserQuestion 2026-11-05 '시나리오로 롤백'",
+          "note": "neutral 기대값이 승인된 규약 표에 박혀 있어 2a 에서 수정. RC-1 변종 5개 전부 시나리오로"
+        },
+        "verified_commit": null,
+        "verified_at": null
+      },
+      "screens": [
+        {
+          "name": "공연 목록",
+          "state": "기본(5상태)",
+          "verdict": "FAIL",
+          "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 375px 열, 배지 색 정확, 그러나 배지 글자가 말줄임으로 잘림(Badge maxWidth 100%+overflow hidden 이 flex 행에서 줄어듦, flex-shrink 1)"
+        },
+        {
+          "name": "공연 목록",
+          "state": "빈 목록",
+          "verdict": "PASS",
+          "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — '예정된 공연이 없습니다'"
+        },
+        {
+          "name": "공연 목록",
+          "state": "오류",
+          "verdict": "PASS",
+          "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 오류 알림 + 다시 시도"
+        },
+        {
+          "name": "공연 상세",
+          "state": "OPEN",
+          "verdict": "FAIL",
+          "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 배지 '예…' 로 잘림"
+        },
+        {
+          "name": "공연 상세",
+          "state": "CLOSED",
+          "verdict": "FAIL",
+          "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — '마감' 배지 배경 rgb(241,242,246) == body 배경, 배지 모양 없음"
+        },
+        {
+          "name": "공연 수정",
+          "state": "CANCELLED",
+          "verdict": "PASS",
+          "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 새 테마 입력칸·브랜드 버튼, 넘침 없음 (상태 배지와 '공연 취소' 버튼이 같은 말 — 범위 밖, 회고)"
+        },
+        {
+          "name": "공연 등록",
+          "state": "기본",
+          "verdict": "PASS",
+          "evidence": "넘침 0, lang ko, title '공연 예매'"
+        }
+      ]
+    }
+  ],
   "evidence": {
     "tests": {
       "command": "cd frontend && npx vitest run",
       "exit_code": 0,
-      "summary": "18 files, 287 passed"
+      "summary": "18 files, 292 passed"
     },
     "lint": {
       "command": "npm run lint",
       "exit_code": 0,
-      "summary": "error 0, 기존 파일 경고 4"
+      "summary": "error 0"
     },
     "typecheck": {
       "command": "npx tsc -b --noEmit",
@@ -21,101 +125,88 @@
     "build": {
       "command": "npm run build",
       "exit_code": 0,
-      "summary": "성공 (청크 크기 경고만)"
+      "summary": "built in 182ms"
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "44 files changed, 3607 insertions(+), 120 deletions(-)"
+      "summary": "46 files changed, 4341 insertions(+), 120 deletions(-)"
     }
   },
   "acceptance_criteria": [
     {
-      "criterion": "AC 토큰이 design-tokens.css 와 같다",
+      "criterion": "tokens.ts 가 design-tokens.css 와 같다",
       "verdict": "PASS",
-      "evidence": "SC-01 통과"
+      "evidence": "SC-01"
     },
     {
-      "criterion": "AC 테마·서체 Pretendard",
+      "criterion": "테마 밖 색·매직 치수 없음",
       "verdict": "PASS",
-      "evidence": "SC-02·SC-11 통과, 브라우저에서 document.fonts Pretendard loaded 2, body font Pretendard"
+      "evidence": "check_architecture error 0, DESIGN-002 통과, DESIGN-003 기존 3건"
     },
     {
-      "criterion": "AC 상태 배지 문구·색이 design.md §5 대로",
-      "verdict": "FAIL",
-      "evidence": "색값은 맞으나(브라우저 계산 rgb 5종 확인) 목록·상세에서 배지가 '예…' '매…' 로 잘려 문구를 읽을 수 없음. 상세의 '마감' 배지는 배경이 body 와 같은 #F1F2F6 이라 모양이 없음"
-    },
-    {
-      "criterion": "AC 공통 부품 9종",
-      "verdict": "FAIL",
-      "evidence": "Toast 에 시안 .toast 의 pointer-events:none 누락 — 떠 있는 2.5초 동안 아래 버튼이 눌리지 않음(코드 확인, 미프로브). 나머지 부품 테스트 통과"
-    },
-    {
-      "criterion": "AC 375px 한 열",
+      "criterion": "Pretendard 실제 로드",
       "verdict": "PASS",
-      "evidence": "브라우저 #root 폭 375, 등록 화면 #root 밖으로 넘치는 요소 0"
+      "evidence": "1회차 브라우저 document.fonts loaded 2 (index.html 변경 없음), SC-11"
     },
     {
-      "criterion": "AC 기존 화면 회귀 없음",
-      "verdict": "FAIL",
-      "evidence": "배지 잘림이 목록·상세 기존 화면에서 발생"
-    },
-    {
-      "criterion": "AC 테마 밖 색 없음",
+      "criterion": "375px 가로 스크롤 없음·넓은 화면 가운데",
       "verdict": "PASS",
-      "evidence": "DESIGN-002 위반 0"
+      "evidence": "375px iframe 목록·상세·수정·부품 하네스 scrollWidth == 뷰포트, #root 375 가운데(1회차)"
+    },
+    {
+      "criterion": "상태 배지 design.md §5",
+      "verdict": "PASS",
+      "evidence": "목록 5종 문구 전부 보임(scrollWidth≤clientWidth), 회색 배지: 상세·수정에서 흰(254) on 회색(241), 목록 카드·Block 안 회색(241) on 흰(254)"
+    },
+    {
+      "criterion": "토스트 문구·자동 사라짐",
+      "verdict": "PASS",
+      "evidence": "SC-06·14·16·17 통과, 브라우저 pointer-events none — elementFromPoint 가 토스트 아래 요소(H1)"
+    },
+    {
+      "criterion": "기존 화면 테스트 통과",
+      "verdict": "PASS",
+      "evidence": "292/292"
     }
   ],
   "screens": [
     {
       "name": "공연 목록",
       "state": "기본(5상태)",
-      "verdict": "FAIL",
-      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 375px 열, 배지 색 정확, 그러나 배지 글자가 말줄임으로 잘림(Badge maxWidth 100%+overflow hidden 이 flex 행에서 줄어듦, flex-shrink 1)"
+      "verdict": "PASS",
+      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java. 375px iframe(실제 뷰포트 375) — 배지 5종 잘림 없음, 회색 배지 바탕 241 / 카드 254"
     },
     {
       "name": "공연 목록",
       "state": "빈 목록",
       "verdict": "PASS",
-      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — '예정된 공연이 없습니다'"
+      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java. 375px iframe(실제 뷰포트 375) — '예정된 공연이 없습니다'"
     },
     {
       "name": "공연 목록",
       "state": "오류",
       "verdict": "PASS",
-      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 오류 알림 + 다시 시도"
+      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java. 375px iframe(실제 뷰포트 375) — '목록을 불러오지 못했습니다' + 다시 시도"
     },
     {
       "name": "공연 상세",
-      "state": "OPEN",
-      "verdict": "FAIL",
-      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 배지 '예…' 로 잘림"
-    },
-    {
-      "name": "공연 상세",
-      "state": "CLOSED",
-      "verdict": "FAIL",
-      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — '마감' 배지 배경 rgb(241,242,246) == body 배경, 배지 모양 없음"
+      "state": "OPEN·CLOSED·CANCELLED",
+      "verdict": "PASS",
+      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java. 375px iframe(실제 뷰포트 375) — 배지 잘림 없음, 회색 배지 254 on 페이지 241"
     },
     {
       "name": "공연 수정",
       "state": "CANCELLED",
       "verdict": "PASS",
-      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java (8080 은 다른 프로젝트가 점유해 18080 에 띄움) — 새 테마 입력칸·브랜드 버튼, 넘침 없음 (상태 배지와 '공연 취소' 버튼이 같은 말 — 범위 밖, 회고)"
+      "evidence": "모의 서버 검증 — 스키마 출처: backend/.../service/PerformanceResponse.java·PerformanceListResponse.java·SectionSummaryResponse.java. 375px iframe(실제 뷰포트 375) — 상태 배지 보임, 넘침 없음"
     },
     {
-      "name": "공연 등록",
-      "state": "기본",
-      "verdict": "PASS",
-      "evidence": "넘침 0, lang ko, title '공연 예매'"
+      "name": "공통 부품 하네스",
+      "state": "Block·Row·Field·Toast·CtaBar·AppBar",
+      "verdict": "WARN",
+      "evidence": "Vite 모듈을 375px iframe 에 직접 렌더 — Block 254 / Row lead·입력 241, 오류 문구 300자 오른쪽 끝 335(칸 안), 40자 배지 칸 안(box-sizing border-box), 앱바 칸 48/263/48·뒤로 44px·제목 왼쪽 56 > 버튼 오른쪽 52. 그러나 60자 제목이 4줄(96px)로 56px 앱바 밖으로 넘쳐 아래 블록을 덮음"
     }
   ],
-  "quality_floor": {
-    "lang": "ko",
-    "title": "공연 예매",
-    "font_loaded": true,
-    "focus_visible": "CtaBar focus-visible 정의(화면 미사용)",
-    "reduced_motion": "Toast useMediaQuery"
-  },
   "architecture": {
     "command": "python3 scripts/check_architecture.py --json",
     "error_count": 0,
@@ -126,7 +217,7 @@
       {
         "id": "DESIGN-003",
         "severity": "warn",
-        "detail": "기존 3 페이지 그대로(변경 전부터)"
+        "detail": "기존 3 페이지(변경 전부터)"
       }
     ],
     "prose_coverage": [
@@ -143,9 +234,9 @@
     ]
   },
   "regression": {
-    "full_suite": "287/287 passed",
+    "full_suite": "292/292 passed",
     "callers_checked": true,
-    "note": "StatusBadge 호출부 목록·상세·수정 — 배지 잘림 영향"
+    "note": "StatusBadge 호출부 3곳(목록·상세·수정), MuiPaper 오버라이드는 CSS 변수 2개만 — Alert·Dialog 안에 --c-fill 소비 부품 없음(리뷰어)"
   },
   "scope_deviations": [
     {
@@ -172,6 +263,24 @@
           "[design] AppBar 좌우 칸 44px 고정 vs 시안 minmax(48px,auto)",
           "[design] #root 375px 로 기존 화면 데스크톱 폭 축소(의도, HITL 알림)"
         ]
+      },
+      {
+        "n": 3,
+        "phase": 3,
+        "correctness": 1,
+        "findings": [
+          "Sheet --c-track 미정의(경미, 관찰 불가 → unresolved)"
+        ]
+      },
+      {
+        "n": 4,
+        "phase": 4,
+        "correctness": 0,
+        "findings": [
+          "결함 없음",
+          "[관찰] Badge box-sizing — 리뷰어 독립 프로브에서 긴 문구 16px 넘침, 앱 실렌더에선 border-box 로 넘침 없음(브라우저 확인)",
+          "Sheet --c-track 판단 타당, TASK-018 인수 항목으로"
+        ]
       }
     ]
   },
@@ -179,38 +288,50 @@
     {
       "id": "RC-1",
       "summary": "시안의 레이아웃·맥락 의존 CSS(var(--c-fill), pointer-events:none, flex 안 배지 수축)를 jsdom 이 계산할 수 있는 고정값·단언으로만 옮겨, 테스트가 실제 렌더링을 검증하지 못한다",
-      "found_in_round": 2,
-      "resolved": false,
+      "found_in_round": 1,
+      "resolved": true,
       "variants": [
         {
           "case": "배지가 flex 행 안에서 줄어 짧은 문구도 말줄임(목록·상세)",
           "origin": "found",
-          "probe": "reproduced",
-          "evidence": "브라우저 375px — '예…' 표시, flexShrink 1"
+          "probe": "not_reproduced",
+          "evidence": "2회차 브라우저 375px — 5종 scrollWidth≤clientWidth"
         },
         {
           "case": "neutral 배지 배경 == 회색 페이지 바탕(상세·수정)",
           "origin": "found",
-          "probe": "reproduced",
-          "evidence": "상세 CLOSED: badge bg rgb(241,242,246) == body bg"
+          "probe": "not_reproduced",
+          "evidence": "상세 CLOSED 배지 254 on 241"
         },
         {
           "case": "토스트가 2.5초 동안 아래 클릭을 막음",
           "origin": "found",
-          "probe": "not_probed",
-          "reason": "화면에 토스트 사용처 없음, 코드에 pointer-events 없음 확인"
+          "probe": "not_reproduced",
+          "evidence": "하네스 elementFromPoint 가 토스트 아래 H1"
         },
         {
           "case": "AppBar 좌우 칸 44px 고정 — 텍스트 버튼이 오면 제목으로 넘침",
           "origin": "predicted",
-          "probe": "not_probed",
-          "reason": "사용처 없음"
+          "probe": "not_reproduced",
+          "evidence": "계산된 칸 48px 263px 48px"
         },
         {
           "case": "Row lead·Field 바탕 var(--c-fill) 이 Block·Sheet 안에서 회색이 되는지",
           "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "Block 안 lead·입력 241"
+        },
+        {
+          "case": "MuiPaper 면에서 --c-fill 미정의",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "목록 카드 안 회색 배지 241 on 254"
+        },
+        {
+          "case": "Sheet 가 --c-track 을 재정의하지 않음",
+          "origin": "later",
           "probe": "not_probed",
-          "reason": "jsdom CSS 변수 미계산, 코드상 재정의 확인"
+          "reason": "--c-track 소비 부품 없음 — TASK-018 세그먼트 도입 시 인수 항목"
         }
       ]
     }
@@ -222,16 +343,28 @@
     "logging": "해당 없음",
     "external_resource": "Pretendard CSS 를 cdn.jsdelivr.net 에서 버전 고정(v1.3.9)으로 로드"
   },
+  "warnings": [
+    {
+      "what": "60자 앱바 제목이 4줄(96px)로 56px 앱바 밖으로 넘쳐 아래 내용을 덮음",
+      "scenario": "SC-18 문구('두 줄로 바뀌고 버튼 칸을 침범하지 않는다')는 충족 — 높이 넘침은 시나리오가 다루지 않음. 시안 .appbar 도 높이 56 고정",
+      "suggest": "TASK-018 에서 앱바 제목을 쓰는 화면 시안 확인 후 줄 수 제한(말줄임) 여부 결정"
+    },
+    {
+      "what": "Sheet --c-track 미정의",
+      "suggest": "TASK-018 인수"
+    },
+    {
+      "what": "#root 375px 로 기존 화면이 데스크톱에서도 375px 한 열",
+      "suggest": "계획대로(SC-12) — 알림"
+    },
+    {
+      "what": "화면 확인은 모의 서버 — 실제 백엔드 연동은 확인 못함",
+      "suggest": "8080 을 다른 프로젝트가 점유"
+    }
+  ],
   "overdue_promotions": 0,
   "human_review": {
-    "decision": "REJECT",
-    "reject": {
-      "type": "ROLLBACK_SCENARIO",
-      "reason_code": "SCENARIO_GAP",
-      "attempt": 1,
-      "chosen_by": "AskUserQuestion 2026-11-05 '시나리오로 롤백'",
-      "note": "neutral 기대값이 승인된 규약 표에 박혀 있어 2a 에서 수정. RC-1 변종 5개 전부 시나리오로"
-    },
+    "decision": null,
     "verified_commit": null,
     "verified_at": null
   }
