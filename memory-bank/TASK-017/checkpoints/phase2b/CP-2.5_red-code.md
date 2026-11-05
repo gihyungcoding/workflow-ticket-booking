@@ -18,3 +18,4 @@ attempts:
   - round: 1
     result: "SC-10 이 테스트 파일 색 리터럴로 실패 → theme/ 로 이동, tsc node 타입 오류 → 동적 import"
 ---
+<!-- 2026-11-05 롤백 Red: SC-03·04 기대값 교체, SC-19~23 추가. 6 Red · SC-23 already_passing(변이 검증 2건). 재승인 대기 -->

@@ -10,7 +10,16 @@ export const TONE_COLORS: Record<ExpectedTone, [string, string]> = {
   danger: ['#FCEFF0', '#D61E24'],
   warning: ['#FBF4E5', '#916500'],
   success: ['#E7F4ED', '#187B43'],
-  neutral: ['#F1F2F6', '#4C4F66'],
+  // neutral 바탕은 놓인 면의 채움색을 따른다(SC-19) — jsdom 은 var() 를 계산하지 않아 선언 그대로 읽힌다
+  neutral: ['var(--c-fill)', '#4C4F66'],
+}
+
+/** 면이 정의하는 채움색 --c-fill (SC-19 면 표) */
+export const SURFACE_FILL = {
+  page: '#FEFEFE',
+  block: '#F1F2F6',
+  sheet: '#F1F2F6',
+  card: '#F1F2F6',
 }
 
 export const EXPECTED = {
@@ -26,6 +35,7 @@ export const EXPECTED = {
 
 /** '#4154FF' → jsdom 의 계산된 색 표기 'rgb(65, 84, 255)' */
 export function computedColor(hex: string): string {
+  if (!hex.startsWith('#')) return hex
   const value = hex.replace('#', '')
   const n = (i: number) => parseInt(value.slice(i, i + 2), 16)
   return `rgb(${n(0)}, ${n(2)}, ${n(4)})`

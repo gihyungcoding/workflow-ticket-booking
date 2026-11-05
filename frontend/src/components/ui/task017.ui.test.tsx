@@ -1,9 +1,11 @@
 import { act, fireEvent, screen } from '@testing-library/react'
 import { StatusBadge } from '../StatusBadge'
+import Card from '@mui/material/Card'
 import { AppBar, Badge, Block, CtaBar, Field, Row, Sheet, Toast } from './index'
+import { GlobalTokens } from '../../theme/GlobalTokens'
 import type { BadgeTone } from './index'
 import { mockMatchMedia, renderWithTheme } from '../../test/task017'
-import { EXPECTED, TONE_COLORS, computedColor } from '../../theme/task017.expected'
+import { EXPECTED, SURFACE_FILL, TONE_COLORS, computedColor } from '../../theme/task017.expected'
 
 // SoT: workflow_design/05_scenario/SCENARIO_TASK-017.md — 규약 표의 배지 색·토스트 2,500ms
 
@@ -85,12 +87,14 @@ describe('TASK-017 배지', () => {
         ))}
       </>,
     )
-    const pairs = rows.map(([tone, label]) => {
-      const colors = badgeColors(label)
-      expect(colors, tone).toEqual(TONE_COLORS[tone].map(computedColor))
-      return colors.join('/')
-    })
-    expect(new Set(pairs).size).toBe(6)
+    for (const [tone, label] of rows) {
+      expect(badgeColors(label), tone).toEqual(TONE_COLORS[tone].map(computedColor))
+    }
+    // neutral 을 뺀 다섯 쌍이 서로 다르고, neutral 글자색은 다섯 글자색과 모두 다르다 (neutral 바탕의 실제 색은 SC-19)
+    const others = rows.filter(([tone]) => tone !== 'neutral').map(([, label]) => badgeColors(label))
+    expect(new Set(others.map((pair) => pair.join('/'))).size).toBe(5)
+    const neutralText = badgeColors('마감')[1]
+    for (const [, text] of others) expect(text).not.toBe(neutralText)
   })
 
   test('TASK-017 SC-05 (error) 알 수 없는 상태값이면 배지를 그리지 않는다', () => {
@@ -445,5 +449,80 @@ describe('TASK-017 공통 부품', () => {
     expect(badge.whiteSpace).toBe('nowrap')
     expect(badge.maxWidth).toBe('100%')
     expect(badge.textOverflow).toBe('ellipsis')
+  })
+})
+
+describe('TASK-017 면에 따른 모양 (Phase 4 RC-1)', () => {
+  function fillOf(element: Element) {
+    return getComputedStyle(element).getPropertyValue('--c-fill').trim().toUpperCase()
+  }
+
+  test('TASK-017 SC-19 (happy) 회색 배지는 놓인 면과 다른 색이라 모양이 보인다', () => {
+    const rows: [string, (badge: React.ReactElement) => React.ReactElement, () => Element, string, string][] = [
+      ['페이지', (b) => <><GlobalTokens />{b}</>, () => document.body, EXPECTED.bg, SURFACE_FILL.page],
+      ['Block', (b) => <Block>{b}</Block>, () => document.querySelector('section')!, EXPECTED.surface, SURFACE_FILL.block],
+      ['Sheet', (b) => <Sheet open>{b}</Sheet>, () => screen.getByRole('dialog'), EXPECTED.surface, SURFACE_FILL.sheet],
+      ['Card', (b) => <Card>{b}</Card>, () => document.querySelector('.MuiCard-root')!, EXPECTED.surface, SURFACE_FILL.card],
+    ]
+    for (const [name, wrap, surfaceOf, surfaceBg, fill] of rows) {
+      const { unmount } = renderWithTheme(wrap(<Badge tone="neutral">마감</Badge>))
+      expect(badgeColors('마감'), name).toEqual(TONE_COLORS.neutral.map(computedColor))
+      const surface = surfaceOf()
+      expect(fillOf(surface), name).toBe(fill)
+      expect(getComputedStyle(surface).backgroundColor, name).toBe(computedColor(surfaceBg))
+      expect(computedColor(fill), name).not.toBe(computedColor(surfaceBg))
+      unmount()
+    }
+  })
+
+  test('TASK-017 SC-20 (error) 좁은 줄에 놓여도 짧은 배지 문구는 잘리지 않는다', () => {
+    const longTitle = '가'.repeat(60)
+    const rows: [string, React.ReactElement][] = [
+      ['예매 가능', <StatusBadge status="OPEN" />],
+      ['공연 취소', <StatusBadge status="CANCELLED" />],
+      ['가'.repeat(40), <Badge tone="neutral">{'가'.repeat(40)}</Badge>],
+    ]
+    for (const [text, badge] of rows) {
+      const { unmount } = renderWithTheme(
+        <div style={{ display: 'flex' }}>
+          <span>{longTitle}</span>
+          {badge}
+        </div>,
+      )
+      const style = getComputedStyle(screen.getByText(text))
+      expect(style.flexShrink, text).toBe('0')
+      expect(style.maxWidth, text).toBe('100%')
+      expect(style.textOverflow, text).toBe('ellipsis')
+      unmount()
+    }
+  })
+
+  test('TASK-017 SC-21 (happy) 토스트가 떠 있어도 아래 화면을 누를 수 있다', () => {
+    renderWithTheme(<Toast message={A} />)
+    expect(getComputedStyle(screen.getByRole('status')).pointerEvents).toBe('none')
+  })
+
+  test('TASK-017 SC-22 (happy) 앱바 좌우 칸은 시안처럼 최소 48px 이고 내용만큼 늘어난다', () => {
+    renderWithTheme(<AppBar title="예매 확인" onBack={() => {}} />)
+    expect(getComputedStyle(screen.getByRole('banner')).gridTemplateColumns).toBe('minmax(48px, auto) 1fr minmax(48px, auto)')
+    const back = screen.getByRole('button', { name: '뒤로' })
+    expect(getComputedStyle(back).width).toBe('44px')
+    expect(getComputedStyle(back).height).toBe('44px')
+  })
+
+  test('TASK-017 SC-23 (happy) 행 앞 아이콘 칸과 입력칸의 회색 바탕도 놓인 면을 따른다', () => {
+    const row = renderWithTheme(
+      <Block>
+        <Row lead={<span data-testid="lead-icon" />} title="행 제목" />
+      </Block>,
+    )
+    expect(getComputedStyle(screen.getByTestId('lead-icon').parentElement!).backgroundColor).toBe('var(--c-fill)')
+    row.unmount()
+    renderWithTheme(
+      <Block>
+        <Field label="이메일" />
+      </Block>,
+    )
+    expect(getComputedStyle(input('이메일')).backgroundColor).toBe('var(--c-fill)')
   })
 })
