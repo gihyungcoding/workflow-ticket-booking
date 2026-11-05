@@ -47,3 +47,6 @@ attempts:
   - round: "예외 4"
     result: FAIL (Field.label 긴 값, Toast 지속 시간 prop)
     fix: "Toast 지속 시간 고정 상수 확정, SC-18 label 100자. 사용자 게이트 예외(2026-11-05) — 검증자 재호출 없이 2b. 보상: HITL#1·2 에서 시나리오 전체 승인"
+
+<!-- 2026-11-05 Phase 4 FAIL 롤백 (ROLLBACK_SCENARIO 1회) -->
+rollback_note: "VERIFY RC-1 변종 5개를 시나리오로 — SC-19(neutral 바탕 면 의존)·SC-20(배지 수축)·SC-21(토스트 pointer-events)·SC-22(AppBar minmax 48px), Row/Field var(--c-fill) 는 SC-19 경로로 흡수. 기존 SC-03·04 neutral 기대값과 SC-18 AppBar 44px 를 같이 고침(Grep: neutral·F1F2F6·44px). jsdom 은 var() 를 계산하지 않고 정의한 요소의 --c-fill 은 읽힘(프로브) — 실제 색은 (화면 확인)."

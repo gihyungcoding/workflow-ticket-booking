@@ -224,7 +224,14 @@
   },
   "overdue_promotions": 0,
   "human_review": {
-    "decision": null,
+    "decision": "REJECT",
+    "reject": {
+      "type": "ROLLBACK_SCENARIO",
+      "reason_code": "SCENARIO_GAP",
+      "attempt": 1,
+      "chosen_by": "AskUserQuestion 2026-11-05 '시나리오로 롤백'",
+      "note": "neutral 기대값이 승인된 규약 표에 박혀 있어 2a 에서 수정. RC-1 변종 5개 전부 시나리오로"
+    },
     "verified_commit": null,
     "verified_at": null
   }

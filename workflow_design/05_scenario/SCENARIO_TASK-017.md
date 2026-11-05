@@ -12,7 +12,9 @@ Row · Badge · CtaBar · Field · Toast · Sheet), `frontend/src/components/Sta
 |---|---|
 | 토큰 정본 | `docs/product/design-tokens.css` 의 `:root` 선언 전부와 `.text-large` 선언 전부 |
 | 배지 뜻 (design.md §5) | OPEN → `예매 가능` · brand / UPCOMING → `예정` · info / SOLD_OUT → `매진` · danger / CLOSED → `마감` · neutral / CANCELLED → `공연 취소` · neutral / (Badge 로만) `입금 대기` · warning / `예매 확정` · success |
-| 배지 색 (tone → 바탕 / 글자) | brand → `#EBEDFE` / `#4154FF` · info → `#F0EEFE` / `#6647FF` · danger → `#FCEFF0` / `#D61E24` · warning → `#FBF4E5` / `#916500` · success → `#E7F4ED` / `#187B43` · neutral → `#F1F2F6` / `#4C4F66` (시안의 배지는 흰 블록·행 위에 놓여 --c-fill 이 --c-bg 가 된다) |
+| 배지 색 (tone → 바탕 / 글자) | brand → `#EBEDFE` / `#4154FF` · info → `#F0EEFE` / `#6647FF` · danger → `#FCEFF0` / `#D61E24` · warning → `#FBF4E5` / `#916500` · success → `#E7F4ED` / `#187B43` · neutral → 바탕은 **놓인 면의 채움색** `var(--c-fill)` / 글자 `#4C4F66` (시안 `.badge`). 회색 페이지(body) 위에서 `#FEFEFE`, 흰 면(Block·Sheet·MUI Card/Paper) 안에서 `#F1F2F6` — SC-19 |
+| 면별 채움색 `--c-fill` | body `#FEFEFE` · Block `#F1F2F6` · Sheet `#F1F2F6` · MUI Paper(Card) `#F1F2F6` (jsdom 은 `var()` 를 계산하지 않는다 — 면이 정의한 `--c-fill` 값과 배지가 그 변수를 쓰는지를 따로 본다) |
+| 부품 치수 (시안 components.css) | AppBar 좌우 칸 `minmax(48px, auto)` · 터치 44px · 배지 높이 24px |
 | 토스트 | role=status, 2,500ms 뒤 사라진다 (Toast 내부 고정 — 지속 시간 prop 없음) |
 | 한 열 최대 폭 | 375px (시안 뷰포트) |
 | 서체 | Pretendard 1.3.9 (`cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css`) |
@@ -51,7 +53,7 @@ flow: F1, F2
 
 - **Given** 새 테마를 적용했다
 - **When** 아래 표의 상태로 StatusBadge 를 그린다
-- **Then** 문구와 바탕색·글자색이 표와 같다
+- **Then** 문구와 글자색이 표와 같고, 바탕색은 규약 표의 tone 바탕이다 (neutral 은 `var(--c-fill)` — 면에 따른 실제 색은 SC-19)
 
 | 상태 | 문구 | tone |
 |---|---|---|
@@ -70,7 +72,7 @@ flow: F5
 
 - **Given** 새 테마를 적용했다
 - **When** Badge 를 tone 별로 그린다 — brand `예매 가능` · info `예정` · danger `매진` · neutral `마감` · warning `입금 대기` · success `예매 확정`
-- **Then** 각 배지의 바탕색·글자색이 규약 표와 같다
+- **Then** 각 배지의 바탕색·글자색이 규약 표와 같다 (neutral 바탕은 `var(--c-fill)`)
 - **And** 여섯 배지의 (바탕, 글자) 쌍이 서로 모두 다르다 — 한 색은 한 뜻
 
 covers: 상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)
@@ -326,11 +328,73 @@ PLAN `prop_schema` 의 길이·빈 값 규칙 중 SC-14~17 이 덮지 않은 칸
 | Field | 오류 문구 300자(공백 없음) | 오류 문구가 다 보이고 그 문구의 overflow-wrap 이 anywhere · (화면 확인) 375px 에서 가로 넘침 없음 |
 | AppBar | 제목 `` | h1 이 있고 글자가 비어 있다, 뒤로 버튼 자리는 그대로 |
 | AppBar | 제목 공백만 | 위와 같다 |
-| AppBar | 제목 60자 | 제목 글자가 다 있고 h1 의 white-space 가 nowrap 이 아니다 · (화면 확인) 375px 에서 제목이 두 줄로 바뀌고 좌우 버튼 칸(각 44px)을 침범하지 않는다 |
+| AppBar | 제목 60자 | 제목 글자가 다 있고 h1 의 white-space 가 nowrap 이 아니다 · (화면 확인) 375px 에서 제목이 두 줄로 바뀌고 좌우 버튼 칸(최소 48px)을 침범하지 않는다 |
 | Badge | 문구 40자 (tone neutral) | 배지의 white-space 가 nowrap, max-width 가 100%, text-overflow 가 ellipsis · (화면 확인) 375px 에서 가로 넘침 없음 |
 
 covers: 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0); 375px 폭에서 가로 스크롤이 없고, 넓은 화면에서는 가운데 한 열로 보인다
 flow: F2, F4
+
+## SC-19 (happy) 회색 배지는 놓인 면과 다른 색이라 모양이 보인다
+
+Phase 4 1회차에서 상세 화면의 `마감` 배지가 회색 페이지와 같은 색이 되어 모양이 사라졌다(VERIFY RC-1). 시안 `.badge` 는
+바탕을 `--c-fill` 로 받아 면에 따라 바뀐다. 행마다 새로 그린다.
+
+- **Given** 새 테마와 전역 토큰 스타일(GlobalTokens)을 적용했다
+- **When** neutral 배지 `마감` 을 아래 표의 면 위에 그린다
+- **Then** 배지의 바탕은 `var(--c-fill)` 이고 글자는 `#4C4F66` 이다
+- **And** 그 면이 정의한 `--c-fill` 값이 표와 같고, 면 자신의 바탕색과 다르다
+- **And** (화면 확인) 375px 상세 화면(CLOSED)과 목록 카드에서 `마감` 배지의 계산된 바탕색이 바로 아래 면의 바탕색과 다르다
+
+| 면 | 면 바탕 | 면의 `--c-fill` |
+|---|---|---|
+| 페이지(body, GlobalTokens) | `#F1F2F6` | `#FEFEFE` |
+| Block | `#FEFEFE` | `#F1F2F6` |
+| Sheet | `#FEFEFE` | `#F1F2F6` |
+| MUI Card (variant outlined, 기존 목록 카드) | `#FEFEFE` | `#F1F2F6` |
+
+covers: 상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)
+flow: F5
+
+## SC-20 (error) 좁은 줄에 놓여도 짧은 배지 문구는 잘리지 않는다
+
+Phase 4 1회차에서 목록·상세의 배지가 공연명과 한 줄(flex)에 놓이자 줄어들어 `예…` 로 잘렸다(VERIFY RC-1).
+
+- **Given** 새 테마를 적용했고, 가로로 나란한 줄(display flex) 안에 공백 없는 긴 제목(60자)과 배지를 함께 둔다
+- **When** 아래 표의 배지를 그린다
+- **Then** 배지는 줄어들지 않는다 (flex-shrink 0)
+- **And** 40자 배지는 여전히 SC-18 대로 칸 폭(max-width 100%)에서 말줄임한다
+- **And** (화면 확인) 375px 목록·상세에서 `예매 가능`·`공연 취소` 배지 문구가 잘리지 않는다 (배지의 scrollWidth ≤ clientWidth)
+
+| 배지 |
+|---|
+| StatusBadge OPEN (`예매 가능`) |
+| StatusBadge CANCELLED (`공연 취소`) |
+| Badge neutral 40자 |
+
+covers: 상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색); 기존 화면(목록·상세·공연 등록·수정) 테스트가 새 배지 문구로 고친 뒤 모두 통과한다
+flow: F5, F7
+
+## SC-21 (happy) 토스트가 떠 있어도 아래 화면을 누를 수 있다
+
+시안 `.toast` 는 `pointer-events: none` 이다 — 안내만 하고 누르는 것을 가리지 않는다(VERIFY RC-1).
+
+- **Given** 새 테마를 적용했다
+- **When** 문구 `아이디를 복사했어요` 로 토스트를 띄운다
+- **Then** 토스트 요소의 pointer-events 가 `none` 이다
+- **And** (화면 확인) 토스트가 덮은 위치의 버튼을 누르면 그 버튼이 눌린다 (`document.elementFromPoint` 가 토스트가 아니라 아래 버튼)
+
+covers: `data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다
+flow: F6
+
+## SC-22 (happy) 앱바 좌우 칸은 시안처럼 최소 48px 이고 내용만큼 늘어난다
+
+- **Given** 새 테마를 적용했다
+- **When** AppBar 를 제목 `예매 확인`, 뒤로 버튼과 함께 그린다
+- **Then** 앱바 칸 나눔(grid-template-columns)이 `minmax(48px, auto) 1fr minmax(48px, auto)` 이다
+- **And** 뒤로 버튼은 여전히 44px × 44px 이다 (SC-09)
+
+covers: 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)
+flow: F2
 
 ---
 
@@ -342,4 +406,5 @@ flow: F2, F4
 - **(화면 확인) 의 증거** — Phase 4 에서 브라우저(375px·1280px)로 띄워 `document.fonts`·`scrollWidth`·열 여백 값을 VERIFY `screens` 에 기록한다
 - **화면 재배치(목록·상세를 시안 구조로)** — 흐름 2. 이 태스크는 새 테마로 색·서체가 바뀌는 것까지
 - **AppHeader 교체** — AC 밖(PLAN unresolved #5). AppBar 부품만 SC-09 에서 확인
+- **Row lead·Field 비오류 바탕의 `var(--c-fill)`** — Block·Sheet 가 `--c-fill` 을 다시 정의하는 것은 SC-19 가 본다. 부품마다 같은 변수를 쓰는지는 SC-19 와 같은 경로라 따로 두지 않는다(VERIFY RC-1 변종 5)
 - **입금 대기·예매 확정 배지를 쓰는 화면** — 예매 모델이 흐름 4·5. 이 태스크는 Badge tone 만(SC-04)
