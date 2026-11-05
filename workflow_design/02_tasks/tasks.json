@@ -876,7 +876,7 @@
     "reason_primary": "마이그레이션·도메인·인증 API 변경은 백엔드 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "todo",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",

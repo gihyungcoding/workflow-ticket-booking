@@ -1,0 +1,171 @@
+{
+  "task_id": "TASK-016",
+  "keep": [
+    {
+      "what": "보안 리뷰 지적을 Phase 2a 전에 사용자에게 올려 설계를 바꿨다",
+      "evidence": "이메일 앞부분 아이디의 이메일 추측 위험 → 사용자 결정으로 '단어+숫자 4자리' 무작위 생성(013d641). 구현 전에 바뀌어 재작업이 없었다"
+    },
+    {
+      "what": "이미 통과하는 Red 행은 변이 검증으로 가짜 통과가 아님을 증명했다",
+      "evidence": "롤백 재작업에서 M1~M3(직접)·M4~M5(리뷰어) — 가드마다 해당 행이 실패함을 확인 (TEST_TASK-016.json red_retry.mutation_check)"
+    },
+    {
+      "what": "실제 DB 메시지를 Testcontainers 프로브로 확보해 단위 테스트에 옮겼다",
+      "evidence": "RC-1 의 PostgreSQL 변종(세부 정보 줄에 입력값)을 predicted → reproduced 로 바꾼 근거"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Phase 2a 독립검증이 회차마다 새 칸을 지적해 롤백이 3번 났다",
+      "evidence": "롤백 전 3회 FAIL → Phase 1 롤백 1, Phase 4 후 3회 FAIL → Phase 1 롤백 2. 모두 V11. 근본 원인: PLAN 이 입력 스키마(pendingToken 클레임 타입·규칙)를 표로 정하지 않아 대조 기준이 없었다",
+      "phase": "2a"
+    },
+    {
+      "what": "공유 검증 함수의 한 호출부에만 방어를 넣어 Phase 4 에서 FAIL",
+      "evidence": "RC-2 — 형식 사전 검사를 verifyPendingToken 에만 넣고 verifyAccessToken 은 열어 둠. Phase 3 자체 리뷰 1·2라운드가 '같은 부류' 를 DB 메시지 판정에만 좁혀 보고 토큰 검증 쪽은 묻지 않았다",
+      "phase": "3/4"
+    },
+    {
+      "what": "기존 승인 테스트 수정과 응답 형태 변경을 Phase 1 에서 예상하지 못했다",
+      "evidence": "users.handle NOT NULL 로 기존 테스트 7곳 준비 코드, AuthApiTest 응답 키 단언 2곳을 Phase 3 에서 승인받아 고침 (test_modifications 2건)",
+      "phase": "1"
+    },
+    {
+      "what": "검증자 응답을 저장할 때 일부(v11_matrix)를 빠뜨렸다가 다시 넣었고, 커밋 하나가 메시지와 내용이 달랐다",
+      "evidence": "롤백 2/2 후 VALIDATION 저장 누락 → 재저장, 1957829 커밋 메시지 정정(amend)",
+      "phase": "2a"
+    }
+  ],
+  "try": [
+    {
+      "what": "외부 토큰·JSON 을 입력으로 받는 태스크는 Phase 1 에서 입력 스키마 표(필드·JSON 타입·규칙)를 PLAN 에 필수로 둔다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "coverage-policy §2-1 에 '같은 필드 × 이상값 열' 매트릭스를 1차 작성에서 한 번에 채우는 방법과, 정수 필드의 표기 변형(숫자 문자열·정수값 소수·지수·정수 표기 범위 초과) 행을 추가한다",
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md"
+    },
+    {
+      "what": "자체 리뷰 2라운드의 '같은 카테고리 전수' 지시에 '이번에 추가한 방어 코드가 공유 함수의 모든 호출부에 걸리는가' 를 넣는다",
+      "target": ".claude/skills/wf-develop/SKILL.md"
+    },
+    {
+      "what": "Phase 1 에서 NOT NULL 컬럼 추가·응답 DTO 필드 추가가 있으면 기존 테스트의 엔티티 생성·응답 키 단언을 Grep 해 unresolved 에 적는다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    }
+  ],
+  "insights": [
+    "독립검증이 회차마다 새 칸을 찾는 것은 시나리오 작성자의 부주의보다 '대조할 정본 표가 없다'는 신호다 — 롤백으로 정본 표(claim_schema)를 만든 뒤에야 수렴했다",
+    "방어 코드는 증상이 난 호출부가 아니라 그 값이 지나는 공통 지점에 둬야 한다 — RC-1·RC-2 모두 같은 교훈이었다",
+    "공유되는 식별자(아이디)는 개인정보 파생 여부를 설계 단계에서 따져야 한다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 2,
+      "note": "2a 상한 초과로 롤백 2회 — claim_schema, exp 범위·request_string 추가"
+    },
+    "2a": {
+      "retries": 10,
+      "note": "독립검증 FAIL 9회(모두 V11) + PASS 2회. 롤백 전 3, 롤백1 후 2, Phase 4 후 3, 롤백2 후 0"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "하네스 결함 1(@Primary 빈 2개). 재작업 Red 재승인 1"
+    },
+    "3": {
+      "retries": 1,
+      "note": "기존 테스트 3건 실패 → SC-13 H2 메시지 오판 수정, 승인 2건(준비 코드·응답 키). 자체 리뷰 RC-1 수정"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1회차 FAIL(RC-2) → 시나리오 롤백 → 2회차 WARN 예외 승인"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "공유 식별자(티켓온 아이디)는 이메일·이름 등 개인정보에서 파생하지 않고 무작위로 만든다",
+      "why_broader": "흐름 5 양도의 수신자 검색, 이후 공개 프로필 등 공유되는 모든 식별자에 같은 원칙이 필요하다",
+      "evidence": "CP-1.3 decisions (2026-11-04 변경), 요구사항 §8",
+      "suggested_title": "공유 식별자는 개인정보에서 파생하지 않는다"
+    },
+    {
+      "decision": "토큰 검증은 디코더 앞단의 공통 형식 검사(압축 JWS·중복 키 없는 JSON)를 거친다",
+      "why_broader": "앞으로 추가될 토큰 종류(대기열 입장권 등)도 같은 디코더 성질의 영향을 받는다",
+      "evidence": "VERIFY RC-2, JwtTokenProvider#readPayload",
+      "suggested_title": "JWT 검증 전 공통 형식 검사"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "ADR-0023 이 약속한 'Redis 클라이언트 타입은 repository 에만' 제약이 아직 constraints.yaml 에 없다",
+      "where": "docs/architecture/constraints.yaml",
+      "found_how": "Phase 4 산문 대조 중 ADR 검사 가능한 제약 절 확인",
+      "suggestion": "흐름 3(대기열) 문서 작성 시 추가 — ADR 에 그렇게 적혀 있다"
+    },
+    {
+      "what": "Service 가 DB 벤더 메시지 형식(PostgreSQL 제약 이름·H2 인덱스 표기)을 해석한다",
+      "where": "backend/.../service/AuthService.java#violatesHandleConstraint",
+      "found_how": "Phase 4 prose_coverage 관찰",
+      "suggestion": "제약 이름 판별을 Repository 로 옮기거나 예외를 문서화"
+    },
+    {
+      "what": "architecture.md §2 의 Service·domain 「하지 않는 것」 일부가 미인코딩",
+      "where": "docs/architecture/constraints.yaml",
+      "found_how": "VERIFY architecture.prose_coverage",
+      "suggestion": "Service 의 servlet/http 타입 import 금지 제약 검토"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 4 구조 정규화",
+      "change": "외부 토큰·JSON 입력이 있으면 입력 스키마 표(필드·JSON 타입·규칙·이상값 열)를 design 에 필수로 둔다",
+      "evidence": "TASK-016 2a 독립검증 V11 FAIL 9회, 롤백 2회 — claim_schema 를 만든 뒤 수렴",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-scenario/references/coverage-policy.md",
+      "section": "§2-1",
+      "change": "정수 필드 표기 변형 행(숫자 문자열·정수값 소수·지수·정수 표기 범위 초과)과 '요청 문자열 변형은 실제 입구로' 행 추가",
+      "evidence": "TASK-016 롤백 후 2·3회차 V11",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-develop/SKILL.md",
+      "section": "Step 5.5 자체 리뷰",
+      "change": "2라운드 '같은 카테고리 전수'에 '새 방어 코드가 공유 함수의 모든 호출부를 덮는가' 를 명시",
+      "evidence": "TASK-016 RC-2 — 자체 리뷰가 놓치고 Phase 4 에서 FAIL",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 2 코드베이스 조사",
+      "change": "NOT NULL 컬럼·응답 필드 추가 시 기존 테스트의 엔티티 생성·응답 키 단언을 Grep 해 unresolved 에 적는다",
+      "evidence": "TASK-016 Phase 3 승인된 테스트 수정 2건",
+      "status": "pending",
+      "recurring": 1
+    }
+  ],
+  "out_of_scope_followups": [
+    {
+      "what": "base64url 마지막 글자 미사용 비트로 만든 같은 토큰의 다른 표기(V11)",
+      "source": "HITL#1·2 재승인 결정",
+      "suggestion": "별도 태스크 — 디코드 후 재인코딩 비교"
+    },
+    {
+      "what": "서명된 accessToken 의 sub·exp 표기 느슨함",
+      "source": "VERIFY observations",
+      "suggestion": "V11 과 함께 검토"
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  }
+}
