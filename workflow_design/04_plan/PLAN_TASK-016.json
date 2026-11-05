@@ -1,0 +1,435 @@
+{
+  "task_id": "TASK-016",
+  "route": "Backend",
+  "route_reason": "아이디 생성 규칙·가입 트랜잭션·pendingToken 검증·마이그레이션이 모두 서버 범위. 화면은 TASK-018",
+  "design": {
+    "inputs": [
+      {
+        "name": "email",
+        "type": "String",
+        "source": "POST /api/auth/signup 요청 본문 (기존)",
+        "constraints": [
+          "아이디 생성에 쓰지 않는다 — 이메일과 무관해야 한다(개인정보: 공유되는 아이디로 이메일을 추측할 수 없게)"
+        ]
+      },
+      {
+        "name": "pendingToken",
+        "type": "String",
+        "source": "POST /api/auth/social/pending 요청 본문 (신규)",
+        "constraints": [
+          "@NotBlank · StrictStringDeserializer (CompleteSocialSignUpRequest 와 같은 규칙)",
+          "서명·만료·typ=pending·필수 클레임은 JwtTokenProvider.verifyPendingToken 이 판정",
+          "클레임 email·name·provider·providerUserId·emailVerified·exp·typ 는 verifyPendingToken·SocialInputRules 규칙(이메일 정규화 후 255자·형식, 이름 100자, providerUserId 255자, provider 는 SocialProvider 이름, emailVerified 는 불리언) — 어긋나면 401",
+          "요청 문자열 길이 상한은 두지 않는다 — 저장하지 않고 서명 검증에서 거부된다",
+          "쓰기 가드: WRITE_GUARD_ENABLED=true 면 다른 POST 와 같이 X-Write-Key 가 필요하다 — 이 엔드포인트에 예외를 두지 않는다(기존 WriteGuardFilter, 시나리오 대상 아님)"
+        ]
+      },
+      {
+        "name": "pendingToken",
+        "type": "String",
+        "source": "POST /api/auth/social/complete 요청 본문 (기존)",
+        "constraints": [
+          "완료 시 아이디는 F1 과 같은 무작위 규칙으로 만든다 — pending.email 은 아이디에 쓰지 않는다",
+          "만료·위조·클레임 규칙은 기존 verifyPendingToken (TASK-011 테스트가 지킴)"
+        ]
+      },
+      {
+        "name": "기존 users 행",
+        "type": "DB 행",
+        "source": "V5 마이그레이션 실행 시점의 users 테이블",
+        "constraints": [
+          "handle 이 없다",
+          "email 은 이미 소문자 정규화돼 있다"
+        ]
+      },
+      {
+        "name": "Clock",
+        "type": "java.time.Clock",
+        "source": "주입 (ADR-0005)",
+        "constraints": [
+          "pendingToken 만료 판정과 expiresAt 은 주입된 Clock 기준"
+        ]
+      },
+      {
+        "name": "RandomGenerator",
+        "type": "java.util.random.RandomGenerator",
+        "source": "주입 빈 (운영 SecureRandom, 테스트는 고정 순서)",
+        "constraints": [
+          "단어 인덱스 0..31, 숫자 0..9999"
+        ]
+      },
+      {
+        "name": "accessToken",
+        "type": "String",
+        "source": "Authorization: Bearer 헤더 (기존 JwtAuthenticationFilter → JwtTokenProvider.verifyAccessToken)",
+        "constraints": [
+          "(롤백 추가) 압축 JWS 형식(base64url 세 마디)만, 페이로드에 중복 키 없음 — pendingToken 과 같은 공통 검사",
+          "Authorization 헤더 파싱(부재·빈 값·Bearer 대소문자)은 기존 JwtAuthenticationFilter 동작 — TASK-009 AuthApiTest SC-10·11 이 지킨다"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "UserResponse.handle",
+        "type": "String",
+        "description": "POST /signup(201)·GET /me·LoginResponse.user. 형식 ^[a-z]{3,6}[0-9]{4}$ = 단어 목록(32개) 하나 + 0 채운 숫자 4자리"
+      },
+      {
+        "name": "PendingSignupResponse",
+        "type": "{provider, email, name, expiresAt}",
+        "description": "POST /api/auth/social/pending 200. provider 는 SocialProvider 이름(KAKAO 등), expiresAt 은 ISO-8601 Instant. expiresAt 은 claim_schema.exp 를 초 단위로"
+      },
+      {
+        "name": "401 PENDING_SIGNUP_EXPIRED",
+        "type": "error",
+        "description": "만료·위조·용도 다름·클레임 누락 pendingToken. users·social_accounts 변화 없음 (기존 예외·핸들러 재사용)"
+      },
+      {
+        "name": "503 HANDLE_GENERATION_FAILED",
+        "type": "error",
+        "description": "10번 연속 이미 있는 아이디가 뽑힘. users 행 생기지 않음"
+      },
+      {
+        "name": "400",
+        "type": "error",
+        "description": "pendingToken 이 비었거나 문자열이 아님 (Bean Validation, 기존 규약)"
+      },
+      {
+        "name": "users.handle 컬럼",
+        "type": "VARCHAR(30) NOT NULL UNIQUE",
+        "description": "V5 마이그레이션. 기존 회원 전원이 같은 형식·같은 단어 목록으로 겹치지 않는 handle 을 갖는다"
+      },
+      {
+        "name": "401 UNAUTHORIZED",
+        "type": "error",
+        "description": "(롤백 추가) 형식 밖 accessToken 으로 GET /api/auth/me 등 인증이 필요한 요청 — 기존 오류 코드 재사용"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "이메일 가입 시 아이디 생성",
+        "steps": [
+          "signUp 이 이메일 정규화·검증 (기존)",
+          "HandleGenerator 가 난수원으로 단어+숫자 4자리 후보 생성",
+          "UserRepository.existsByHandle 로 겹치면 다시 뽑기(최대 10회)",
+          "10회 모두 겹치면 HandleGenerationFailedException → 503",
+          "User(handle) 저장, UNIQUE 위반 원인이 handle 이면 이메일 중복으로 오보하지 않는다",
+          "UserResponse 에 handle"
+        ],
+        "covers": [
+          "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다",
+          "아이디는 단어 목록과 숫자로만 만들어지고 이메일·이름 값이 생성에 쓰이지 않는다 (같은 난수 순서면 이메일이 달라도 같은 아이디가 나온다)",
+          "뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "내 정보 조회",
+        "steps": [
+          "GET /api/auth/me",
+          "getMe → toResponse 가 handle 포함"
+        ],
+        "covers": [
+          "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "소셜 최초 가입 완료 시 아이디 생성",
+        "steps": [
+          "completeSocialSignUp 이 pendingToken 검증",
+          "F1 과 같은 생성 규칙 (pending.email 은 쓰지 않는다)",
+          "User(handle) 저장 + social_accounts 저장(같은 트랜잭션)",
+          "LoginResponse.user.handle"
+        ],
+        "covers": [
+          "소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "기존 회원 아이디 채우기(마이그레이션)",
+        "steps": [
+          "V5: handle 컬럼 추가(NULL 허용)",
+          "PL/pgSQL 루프로 행마다 같은 단어 목록 + 숫자 4자리를 random() 으로 뽑고, 이미 있으면 다시",
+          "NOT NULL 설정 + UNIQUE 인덱스 ux_users_handle"
+        ],
+        "covers": [
+          "마이그레이션 뒤 기존 회원 전원이 같은 형식의 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE, 단어는 Java 목록 안)"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "소셜 가입 대기 정보 조회",
+        "steps": [
+          "POST /api/auth/social/pending {pendingToken}",
+          "@Valid PendingSignupRequest",
+          "AuthService.getPendingSignup → JwtTokenProvider.verifyPendingToken (만료 시각 포함 PendingSignup)",
+          "PendingSignupResponse 반환 — DB 를 읽지도 쓰지도 않는다"
+        ],
+        "covers": [
+          "`POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "만료·위조 pendingToken 거부 (대기 정보 조회·가입 완료 두 입구)",
+        "steps": [
+          "claim_schema 규칙은 verifyPendingToken 한 곳에 있고 /social/pending·/social/complete 가 함께 쓴다 — 새 규칙(exp 상한·소수·범위, typ 타입)으로 /social/complete 도 더 엄격해진다",
+          "verifyPendingToken 이 Optional.empty",
+          "PendingSignupExpiredException",
+          "AuthExceptionHandler → 401 PENDING_SIGNUP_EXPIRED",
+          "users·social_accounts 행 수 변화 없음"
+        ],
+        "covers": [
+          "만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "토큰 문자열 형식 검증 (accessToken·pendingToken 공통)",
+        "steps": [
+          "디코더에 넘기기 전에 토큰이 base64url 세 마디(압축 JWS)인지 본다 — 두 verify 가 공유하는 한 지점",
+          "형식 밖이면 accessToken 은 인증되지 않음(401 UNAUTHORIZED), pendingToken 은 401 PENDING_SIGNUP_EXPIRED"
+        ],
+        "covers": [
+          "accessToken·pendingToken 은 JWS 압축 형식(base64url 세 마디) 밖의 문자가 끝에 붙거나 마디 안에 섞이면 거부한다 — 같은 토큰의 다른 문자열 표기로 인증되지 않는다"
+        ]
+      }
+    ],
+    "claim_schema": {
+      "applies_to": "pendingToken (POST /api/auth/social/pending 이 새로 응답에 내보내는 값의 원천). 서명이 맞아도 아래 규칙 중 하나라도 어긋나면 401 PENDING_SIGNUP_EXPIRED — 400·500 이 되지 않는다",
+      "claims": [
+        {
+          "claim": "typ",
+          "json_type": "string",
+          "rule": "정확히 \"pending\" (대소문자 구분). 누락·null·빈 문자열·공백만·다른 값(access)·비문자열은 거부"
+        },
+        {
+          "claim": "exp",
+          "json_type": "number (JSON 정수 표기만 — 120.0·1.2e9 같은 소수·지수 표기와 숫자 문자열은 거부)",
+          "rule": "now < exp ≤ now + 300초. 누락·null·비숫자(문자열·객체·배열·불리언)·소수·now+300초를 넘는 먼 미래·0·음수·Instant 범위 초과(양·음)는 거부. 응답 expiresAt 은 이 값을 초 단위 ISO-8601 UTC 로 내보낸다. JSON 정수 표기라도 java.time.Instant 범위(epoch 초 -31557014167219200 ~ 31556889864403199)나 long 범위를 넘으면 500 이 아니라 401 로 거부"
+        },
+        {
+          "claim": "email",
+          "json_type": "string",
+          "rule": "SocialInputRules.email — trim·소문자 후 1~255자, @ 정확히 하나·앞뒤 비어 있지 않음, 공백류·서식 문자·제어문자(NUL)·짝 없는 서로게이트 없음"
+        },
+        {
+          "claim": "name",
+          "json_type": "string",
+          "rule": "SocialInputRules.name — 공백만 아님, 1~100자, 제어문자·짝 없는 서로게이트 없음"
+        },
+        {
+          "claim": "provider",
+          "json_type": "string",
+          "rule": "SocialProvider 이름과 정확히 일치(KAKAO·NAVER·GOOGLE·APPLE, 대문자). 그 밖은 거부"
+        },
+        {
+          "claim": "providerUserId",
+          "json_type": "string",
+          "rule": "SocialInputRules.providerUserId — 공백만 아님, 1~255자, 제어문자·짝 없는 서로게이트 없음"
+        },
+        {
+          "claim": "emailVerified",
+          "json_type": "boolean",
+          "rule": "JSON 불리언만. 누락·null·문자열(\"true\"·\"TRUE\"·빈 문자열)·숫자·객체·배열은 거부"
+        }
+      ],
+      "anomaly_columns": [
+        "누락",
+        "null",
+        "빈 문자열",
+        "공백만",
+        "비문자열·타입 다름(숫자·객체·배열·불리언·문자열)",
+        "NUL",
+        "짝 없는 서로게이트",
+        "최대 길이+1 / 범위 밖",
+        "형식·열거 밖"
+      ],
+      "note": "시나리오는 claims × anomaly_columns 의 해당 칸을 전부 대본다. 해당하지 않는 칸은 사유를 적는다. 지금 코드에서 exp 의 소수·먼 미래 거부와 typ 의 비문자열 처리는 확인되지 않았다 — Phase 3 에서 규칙대로 막는다",
+      "token_format": "(롤백 추가, accessToken·pendingToken 공통) 디코딩 전에: base64url 세 마디만 허용(끝에 붙은 문자·마디 안에 섞인 문자·네 마디 거부), 페이로드 JSON 에 같은 키가 두 번 있으면 거부",
+      "request_string": "요청 본문의 pendingToken 문자열은 변환 없이(trim 등 없음) 그대로 검증한다. 끝·앞에 붙은 문자(=, ==, ~, !, 공백, LF, é, NUL, 서로게이트)는 실제 입구(/social/pending·/social/complete)에서 401 — 내부 직접 호출만으로 대신하지 않는다"
+    }
+  },
+  "architecture_refs": {
+    "layer": "Service (HandleGenerator·AuthService) / Repository (existsByHandle) / API (AuthController·PendingSignupRequest)",
+    "note": "아이디 규칙은 도메인 판단이라 Service. 존재 확인 쿼리는 Repository 가 소유(ARCH-003). 응답 DTO 는 service 패키지 소유(architecture.md §2). 새 계층·컴포넌트 없음",
+    "constraints_applied": [
+      "ARCH-001",
+      "ARCH-003",
+      "ARCH-004"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0003",
+    "ADR-0005",
+    "ADR-0006",
+    "ADR-0010",
+    "ADR-0019",
+    "ADR-0021",
+    "ADR-0022"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "backend/src/main/resources/db/migration/V5__add_users_handle.sql",
+        "change": "handle 컬럼 추가·기존 회원 채우기·NOT NULL·UNIQUE",
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+        "change": "handle 필드(@Column nullable=false unique length=30) + 생성자 인자 + getter — 테스트 스키마가 애노테이션에서 만들어지므로 V5 와 맞춘다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerator.java",
+        "change": "단어 목록·난수원으로 아이디 후보 생성, 겹치면 재시도 최대 10회",
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+        "change": "signUp·completeSocialSignUp 에서 handle 생성, getPendingSignup 신규, toResponse 에 handle"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/UserResponse.java",
+        "change": "handle 추가"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PendingSignupResponse.java",
+        "change": "provider·email·name·expiresAt",
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "change": "PendingSignup 에 expiresAt 추가 (jwt.getExpiresAt())"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+        "change": "POST /social/pending"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/PendingSignupRequest.java",
+        "change": "@NotBlank + StrictStringDeserializer pendingToken",
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+        "change": "existsByHandle(String)"
+      },
+      {
+        "path": "backend/build.gradle",
+        "change": "마이그레이션 검증용 Testcontainers(PostgreSQL) 테스트 의존성 — unresolved #1 결정에 따름"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/HandleGenerationFailedException.java",
+        "change": "10회 실패",
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+        "change": "HandleGenerationFailedException → 503 HANDLE_GENERATION_FAILED"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/HandleRandomConfig.java",
+        "change": "RandomGenerator 빈(SecureRandom)",
+        "created_in": "Phase 3 (be0c4c9 이전 커밋) — 롤백 후에는 기존 파일"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "change": "(롤백) 압축 JWS 형식 사전 검사를 verifyAccessToken·verifyPendingToken 공통 지점으로"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PendingSignupExpiredException.java",
+        "symbol": "PendingSignupExpiredException",
+        "note": "만료·위조 → 401 PENDING_SIGNUP_EXPIRED 매핑이 AuthExceptionHandler 에 이미 있다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/StrictStringDeserializer.java",
+        "symbol": "StrictStringDeserializer",
+        "note": "pendingToken 문자열 강제 — CompleteSocialSignUpRequest 와 같은 규칙"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java",
+        "symbol": "verifyPendingToken",
+        "note": "서명·만료(exp 경계 포함)·클레임 검증을 새로 만들지 않는다"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/PendingTokenTestHelper.java",
+        "symbol": "PendingTokenTestHelper.valid / signedClaims",
+        "note": "유효·위조·만료 토큰 생성"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+        "symbol": "MutableClock",
+        "note": "만료 경계"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/AuthTestHelper.java",
+        "symbol": "AuthTestHelper",
+        "note": "가입·로그인 헬퍼"
+      }
+    ],
+    "existing_tests": [
+      "backend/src/test/java/com/example/ticket_booking/api/AuthApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/SocialCompleteApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/service/AuthServiceSignUpFailureTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardSocialCompleteTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java"
+    ],
+    "unresolved": [
+      "#1 테스트 DB 와 운영 DB 가 다르다 — 테스트는 Flyway 를 끄고 H2 create-drop 으로 돈다(src/test/resources/application.properties). V5 의 기존 회원 채우기는 PostgreSQL 문법(PL/pgSQL DO 블록·random())이라 H2 로 검증할 수 없다. 전략: AC5 는 Testcontainers PostgreSQL 위에서 Flyway 를 V4 까지 올리고 기존 회원을 심은 뒤 V5 를 적용해 확인하는 테스트 1개로 검증한다(Docker 29.5.2 확인). 나머지 테스트는 H2 그대로 — ADR-0006 의 전면 전환은 좌석 선점(흐름 4)에서",
+      "#2 (해소 2026-11-04) 아이디를 이메일 앞부분에서 파생하면 공유된 아이디로 이메일을 추측할 수 있다(보안 리뷰 지적) — 사용자 결정으로 이메일과 무관한 「단어+숫자 4자리」 무작위 생성으로 바꿨다. 문서 §3-2·§8, AC 1~3·5 갱신",
+      "#3 동시 가입으로 같은 아이디가 경합하면 UNIQUE(ux_users_handle) 위반이 난다. 기존 signUp 은 UNIQUE 위반(23505)을 모두 '이메일 중복' 으로 보는데, handle 위반을 이메일 중복 409 로 오보하면 안 된다. 제약 이름으로 구분한다. 경합으로 인한 재시도는 결정적 테스트가 어렵다 — 이번 범위는 '오보하지 않는다'까지(존재 확인 재시도는 AC3)",
+      "#5 handle 이 LoginResponse.user 에도 실린다 — UserResponse 를 공유하므로 자연히 생기는 변화이고 범위 확장이 아니다. 프론트 api/auth.ts 의 응답 파싱이 알 수 없는 필드에 엄격한지 확인 필요(TASK-018 범위)",
+      "#4 단어 목록이 Java(HandleGenerator)와 V5 SQL 두 곳에 있다 — 마이그레이션 테스트가 생성된 단어가 Java 목록 안인지 대조한다",
+      "#5 (롤백 2026-11-04) exp 소수·먼 미래 거부, typ 비문자열 처리는 현재 JwtTokenProvider 에서 확인되지 않았다 — claim_schema 대로 Phase 3 에서 막는다 (notExpiredValidator 에 상한 추가 등)",
+      "#6 claim_schema 강화가 기존 /social/complete 의 거부 범위를 넓힌다 — 정상 발급 토큰(정수 exp = iat+300, typ=pending)은 영향 없음. SC-14 가 두 번째 입구를 지킨다",
+      "#7 (Phase 4 롤백 2026-11-04) RC-2 — 형식 사전 검사를 verifyPendingToken 에만 넣어 verifyAccessToken 이 열려 있었다. 공통 지점으로 옮긴다. JwtAuthenticationFilter 정규식은 =·==·~ 접미를 통과시킨다"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 9
+    }
+  },
+  "acceptance_criteria": [
+    "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다",
+    "아이디는 단어 목록과 숫자로만 만들어지고 이메일·이름 값이 생성에 쓰이지 않는다 (같은 난수 순서면 이메일이 달라도 같은 아이디가 나온다)",
+    "뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다",
+    "소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다",
+    "마이그레이션 뒤 기존 회원 전원이 같은 형식의 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE, 단어는 Java 목록 안)",
+    "`POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다",
+    "만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다",
+    "accessToken·pendingToken 은 JWS 압축 형식(base64url 세 마디) 밖의 문자가 끝에 붙거나 마디 안에 섞이면 거부한다 — 같은 토큰의 다른 문자열 표기로 인증되지 않는다"
+  ],
+  "test_hints": {
+    "framework": "JUnit 5 + Spring Boot Test + MockMvc (기존 AuthApiTest 관례), 마이그레이션은 Testcontainers PostgreSQL + Flyway",
+    "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --tests '*Handle*' --tests '*PendingSignup*' --tests 'AuthApiTest' --tests 'SocialCompleteApiTest'",
+    "mock_strategy": "API 통합 테스트는 실제 H2 + 리포지토리(모킹 없음). 클래스 레벨 @Transactional 을 두지 않고 DB 확인은 리포지토리로 새로 읽는다(SocialCompleteApiTest 관례 · CLAUDE.md 리뷰 지시). 만료 경계는 MutableClock. 마이그레이션은 운영 엔진(PostgreSQL)에서만. 난수원은 고정 순서 RandomGenerator 를 @TestConfiguration 으로 주입(재시도·10회 실패를 결정적으로)"
+  },
+  "reject_history": [
+    {
+      "type": "ROLLBACK_PLAN",
+      "escalated_from": "RETRY_SCENARIO",
+      "attempt": 1,
+      "reason_code": "COVERAGE_INSUFFICIENT",
+      "reason": "Phase 2a 독립검증 3회 연속 V11 FAIL — 회차마다 pendingToken 클레임의 다른 칸이 지적됨. 원인: Plan 이 클레임 스키마(타입·규칙)를 정하지 않고 'verifyPendingToken 이 판정'으로만 적어 대조 기준이 없었다",
+      "fixed": "design.claim_schema 추가 — 클레임 7개의 JSON 타입·규칙과 이상값 열 9종",
+      "date": "2026-11-04",
+      "decided_by": "사용자 (AskUserQuestion: Phase 1 로 롤백)"
+    },
+    {
+      "type": "ROLLBACK_PLAN",
+      "escalated_from": "RETRY_SCENARIO",
+      "attempt": 2,
+      "reason_code": "COVERAGE_INSUFFICIENT",
+      "reason": "Phase 4 롤백 후 2a 독립검증 3회 V11 FAIL — 마지막 회차 잔여: exp 정수 표기의 Instant·long 범위 초과, pendingToken 요청 문자열 변형의 실제 입구",
+      "fixed": "claim_schema.exp 범위 규칙, claim_schema.request_string 추가",
+      "date": "2026-11-04",
+      "decided_by": "사용자 (AskUserQuestion: Phase 1 롤백 마지막 2/2)"
+    }
+  ]
+}

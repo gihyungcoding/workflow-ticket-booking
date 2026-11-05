@@ -73,6 +73,61 @@ public final class PendingTokenTestHelper {
     }
   }
 
+  /**
+   * 클레임 값을 변환하지 않고 그대로 JSON 에 넣어 서명한다 (TASK-016 claim_schema). {@link #signedClaims} 와 달리 {@code
+   * null} 은 JSON null 로 남고, {@code exp}·{@code iat} 도 문자열·소수·객체처럼 규칙 밖의 값을 그대로 쓸 수 있다. {@link
+   * Instant} 는 epoch 초 정수로 바꾼다. 값이 {@link #ABSENT} 면 그 클레임을 넣지 않는다.
+   */
+  public static String signedRaw(String secret, Map<String, Object> claims) {
+    Map<String, Object> raw = new LinkedHashMap<>();
+    for (Map.Entry<String, Object> entry : claims.entrySet()) {
+      Object value = entry.getValue();
+      if (value == ABSENT) continue;
+      raw.put(entry.getKey(), value instanceof Instant instant ? instant.getEpochSecond() : value);
+    }
+    try {
+      String json = escapeLoneSurrogates(AuthTestHelper.OBJECT_MAPPER.writeValueAsString(raw));
+      JWSObject jws = new JWSObject(new JWSHeader(JWSAlgorithm.HS256), new Payload(json));
+      jws.sign(new MACSigner(secret.getBytes(StandardCharsets.UTF_8)));
+      return jws.serialize();
+    } catch (JOSEException exception) {
+      throw new IllegalStateException(exception);
+    }
+  }
+
+  /** 페이로드 JSON 문자열을 그대로 서명한다 — 같은 키가 두 번 들어간 페이로드처럼 맵으로 만들 수 없는 입력용 (TASK-016 SC-09·SC-16). */
+  public static String signedJson(String secret, String payloadJson) {
+    try {
+      JWSObject jws =
+          new JWSObject(
+              new JWSHeader(JWSAlgorithm.HS256), new Payload(escapeLoneSurrogates(payloadJson)));
+      jws.sign(new MACSigner(secret.getBytes(StandardCharsets.UTF_8)));
+      return jws.serialize();
+    } catch (JOSEException exception) {
+      throw new IllegalStateException(exception);
+    }
+  }
+
+  /** 클레임 맵의 JSON 원문 — {@link #signedRaw} 와 같은 변환(Instant → epoch 초, ABSENT 제외). */
+  public static String rawJson(Map<String, Object> claims) {
+    Map<String, Object> raw = new LinkedHashMap<>();
+    for (Map.Entry<String, Object> entry : claims.entrySet()) {
+      Object value = entry.getValue();
+      if (value == ABSENT) continue;
+      raw.put(entry.getKey(), value instanceof Instant instant ? instant.getEpochSecond() : value);
+    }
+    return AuthTestHelper.OBJECT_MAPPER.writeValueAsString(raw);
+  }
+
+  /** 서명 마디 / 페이로드 마디 가운데에 문자를 끼운다. */
+  public static String insertIntoSegment(String token, int segment, String inserted) {
+    String[] parts = token.split("\\.", -1);
+    String target = parts[segment];
+    int middle = target.length() / 2;
+    parts[segment] = target.substring(0, middle) + inserted + target.substring(middle);
+    return String.join(".", parts);
+  }
+
   private static String escapeLoneSurrogates(String json) {
     StringBuilder out = new StringBuilder();
     for (int i = 0; i < json.length(); i++) {

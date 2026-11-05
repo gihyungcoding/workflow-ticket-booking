@@ -2,9 +2,11 @@ package com.example.ticket_booking.api;
 
 import com.example.ticket_booking.api.dto.CompleteSocialSignUpRequest;
 import com.example.ticket_booking.api.dto.LoginRequest;
+import com.example.ticket_booking.api.dto.PendingSignupRequest;
 import com.example.ticket_booking.api.dto.SignUpRequest;
 import com.example.ticket_booking.service.AuthService;
 import com.example.ticket_booking.service.LoginResponse;
+import com.example.ticket_booking.service.PendingSignupResponse;
 import com.example.ticket_booking.service.UserResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -48,6 +50,12 @@ public class AuthController {
   public LoginResponse completeSocialSignUp(
       @Valid @RequestBody CompleteSocialSignUpRequest request) {
     return authService.completeSocialSignUp(request.pendingToken(), request.role());
+  }
+
+  /** 소셜 가입 대기 정보 — 역할 선택 화면이 어느 계정으로 가입 중인지와 만료 시각을 보여 준다. 토큰이 쿼리에 남지 않게 POST 다(ADR-0021). */
+  @PostMapping("/social/pending")
+  public PendingSignupResponse pendingSignup(@Valid @RequestBody PendingSignupRequest request) {
+    return authService.getPendingSignup(request.pendingToken());
   }
 
   /** 보안 체인이 토큰을 검증해 principal(사용자 id)을 넣어 둔다 — 인증 없이는 여기까지 오지 않는다. */

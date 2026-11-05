@@ -14,6 +14,7 @@ import static com.example.ticket_booking.support.PendingTokenTestHelper.NAME;
 import static com.example.ticket_booking.support.PendingTokenTestHelper.PENDING_SECONDS;
 import static com.example.ticket_booking.support.PendingTokenTestHelper.PROVIDER;
 import static com.example.ticket_booking.support.PendingTokenTestHelper.PROVIDER_USER_ID;
+import static com.example.ticket_booking.support.UserFixtures.fixtureHandle;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.ticket_booking.domain.SocialAccount;
@@ -122,7 +123,12 @@ class SocialCompleteApiTest {
 
   private User saveEmailUser(String email) {
     return userRepository.save(
-        new User(email, passwordEncoder.encode(PASSWORD), "홍길동", UserRole.AUDIENCE));
+        new User(
+            email,
+            passwordEncoder.encode(PASSWORD),
+            "홍길동",
+            UserRole.AUDIENCE,
+            fixtureHandle(email)));
   }
 
   // ---------- SC-09 ----------
@@ -555,7 +561,7 @@ class SocialCompleteApiTest {
   @Test
   void test_sc15_비밀번호가_없는_소셜_전용_계정으로_이메일_로그인하면_401_이다() throws Exception {
     // Given 소셜 전용 사용자(new@example.com, 비밀번호 해시 없음)가 있다
-    userRepository.save(new User(EMAIL, null, NAME, UserRole.AUDIENCE));
+    userRepository.save(new User(EMAIL, null, NAME, UserRole.AUDIENCE, fixtureHandle(EMAIL)));
     // And 비교용으로 이메일 가입 사용자의 틀린 비밀번호 로그인과 존재하지 않는 이메일 로그인의 응답을 받아 둔다
     saveEmailUser("e@example.com");
     MvcResult wrongPassword = login(mockMvc, "e@example.com", "wrong-password-1");

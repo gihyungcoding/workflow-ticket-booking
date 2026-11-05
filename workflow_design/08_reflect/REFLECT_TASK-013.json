@@ -164,8 +164,9 @@
       "section": "상태를 실제로 만들어 본다",
       "change": "지연으로 포착해야 하는 상태는 페이지 안에서 fetch 를 지연 래퍼로 감싸고 SPA 이동(pushState + popstate)으로 진입해 그 사이 주소·DOM 을 읽는다. 띄운 서버·컨테이너는 PID·이름을 기록해 그것만 종료한다(광범위 pkill 은 분류기가 거부)",
       "evidence": "TASK-013 Phase 4 — 처리 중·제출 중·대기 중 주소(M15)를 이 방법으로 포착, 정리 때 pkill 거부",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "fb53f1a"
     }
   ],
   "completion_report": {

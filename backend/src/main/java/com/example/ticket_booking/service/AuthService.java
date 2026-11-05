@@ -7,6 +7,7 @@ import com.example.ticket_booking.domain.UserRole;
 import com.example.ticket_booking.repository.SocialAccountRepository;
 import com.example.ticket_booking.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.Locale;
 import java.util.Optional;
@@ -30,17 +31,20 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
   private final SocialAccountRepository socialAccountRepository;
+  private final HandleGenerator handleGenerator;
 
   @Autowired
   public AuthService(
       UserRepository userRepository,
       PasswordEncoder passwordEncoder,
       JwtTokenProvider jwtTokenProvider,
-      SocialAccountRepository socialAccountRepository) {
+      SocialAccountRepository socialAccountRepository,
+      HandleGenerator handleGenerator) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtTokenProvider = jwtTokenProvider;
     this.socialAccountRepository = socialAccountRepository;
+    this.handleGenerator = handleGenerator;
   }
 
   /** 이메일 가입·로그인만 쓰는 단위 테스트용 — 소셜 메서드는 socialAccountRepository 가 있어야 동작한다. */
@@ -48,7 +52,12 @@ public class AuthService {
       UserRepository userRepository,
       PasswordEncoder passwordEncoder,
       JwtTokenProvider jwtTokenProvider) {
-    this(userRepository, passwordEncoder, jwtTokenProvider, null);
+    this(
+        userRepository,
+        passwordEncoder,
+        jwtTokenProvider,
+        null,
+        new HandleGenerator(userRepository, new SecureRandom()));
   }
 
   @Transactional
@@ -67,10 +76,11 @@ public class AuthService {
     if (userRepository.existsByEmail(normalizedEmail)) {
       throw new EmailAlreadyExistsException();
     }
+    String handle = handleGenerator.generate();
     try {
       User saved =
           userRepository.saveAndFlush(
-              new User(normalizedEmail, passwordEncoder.encode(password), name, role));
+              new User(normalizedEmail, passwordEncoder.encode(password), name, role, handle));
       return toResponse(saved);
     } catch (DataIntegrityViolationException exception) {
       // existsByEmail 확인과 INSERT 사이에 같은 이메일이 먼저 들어온 경우(UNIQUE 제약, SQLState 23505).
@@ -78,7 +88,7 @@ public class AuthService {
       if (!isUniqueViolation(exception)) {
         throw exception;
       }
-      throw new EmailAlreadyExistsException();
+      throw uniqueViolationOnInsert(exception);
     }
   }
 
@@ -96,6 +106,16 @@ public class AuthService {
             .filter(found -> passwordEncoder.matches(password, found.getPasswordHash()))
             .orElseThrow(InvalidCredentialsException::new);
     return toLoginResponse(user);
+  }
+
+  /** pendingToken 의 제공자·이메일·이름·만료 시각. DB 를 읽지도 쓰지도 않는다 — 토큰이 무효면 가입 완료와 같은 401 이다. */
+  public PendingSignupResponse getPendingSignup(String pendingToken) {
+    JwtTokenProvider.PendingSignup pending =
+        jwtTokenProvider
+            .verifyPendingToken(pendingToken)
+            .orElseThrow(PendingSignupExpiredException::new);
+    return new PendingSignupResponse(
+        pending.provider(), pending.email(), pending.name(), pending.expiresAt());
   }
 
   @Transactional(readOnly = true)
@@ -168,17 +188,19 @@ public class AuthService {
         .isPresent()) {
       throw new SocialAccountAlreadyLinkedException();
     }
+    String handle = handleGenerator.generate();
     User user;
     try {
       user =
           userRepository.saveAndFlush(
-              new User(pending.email(), null, pending.name(), role, pending.emailVerified()));
+              new User(
+                  pending.email(), null, pending.name(), role, pending.emailVerified(), handle));
     } catch (DataIntegrityViolationException exception) {
-      // 존재 확인과 INSERT 사이에 같은 이메일이 먼저 들어왔다(동시 요청)
+      // 존재 확인과 INSERT 사이에 같은 이메일(또는 같은 아이디)이 먼저 들어왔다(동시 요청)
       if (!isUniqueViolation(exception)) {
         throw exception;
       }
-      throw new EmailAlreadyExistsException();
+      throw uniqueViolationOnInsert(exception);
     }
     try {
       socialAccountRepository.saveAndFlush(
@@ -211,6 +233,36 @@ public class AuthService {
         && "23505".equals(sql.getSQLState());
   }
 
+  /**
+   * users INSERT 의 UNIQUE 위반을 원인별 예외로 바꾼다. 아이디 확인과 INSERT 사이에 같은 아이디가 먼저 들어온 경우를 이메일 중복(409)으로 오보하지
+   * 않는다 — 위반한 제약이 handle 이면 다시 시도할 수 있는 503 이다.
+   */
+  private static RuntimeException uniqueViolationOnInsert(
+      DataIntegrityViolationException exception) {
+    if (violatesHandleConstraint(exception)) {
+      return new HandleGenerationFailedException();
+    }
+    return new EmailAlreadyExistsException();
+  }
+
+  /**
+   * 위반한 제약이 아이디인가. 메시지에는 사용자가 넣은 값과 실행한 SQL 이 섞여 들어오므로(PostgreSQL 은 둘째 줄의 Key (email)=(…), H2 는
+   * VALUES 뒤의 값과 INSERT 문) 위반한 제약을 가리키는 앞부분만 본다 — 첫 줄에서 「 VALUES 」 앞까지. 거기서 PostgreSQL 은 제약
+   * 이름(ux_users_handle), H2 는 「ON public.users(handle」 로 가른다.
+   */
+  private static boolean violatesHandleConstraint(DataIntegrityViolationException exception) {
+    String message = NestedExceptionUtils.getMostSpecificCause(exception).getMessage();
+    if (message == null) {
+      return false;
+    }
+    String target = message.lines().findFirst().orElse("").toLowerCase(Locale.ROOT);
+    int values = target.indexOf(" values ");
+    if (values >= 0) {
+      target = target.substring(0, values);
+    }
+    return target.contains("\"ux_users_handle\"") || target.contains("users(handle");
+  }
+
   private static String normalize(String email) {
     return email.trim().toLowerCase(Locale.ROOT);
   }
@@ -220,6 +272,7 @@ public class AuthService {
   }
 
   private static UserResponse toResponse(User user) {
-    return new UserResponse(user.getId(), user.getEmail(), user.getName(), user.getRole());
+    return new UserResponse(
+        user.getId(), user.getEmail(), user.getName(), user.getRole(), user.getHandle());
   }
 }

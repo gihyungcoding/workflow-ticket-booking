@@ -5,6 +5,7 @@ import static com.example.ticket_booking.support.AuthTestHelper.json;
 import static com.example.ticket_booking.support.AuthTestHelper.payloadOf;
 import static com.example.ticket_booking.support.AuthTestHelper.postJson;
 import static com.example.ticket_booking.support.PendingTokenTestHelper.queryOf;
+import static com.example.ticket_booking.support.UserFixtures.fixtureHandle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
@@ -99,7 +100,7 @@ class AppleLoginCallbackTest {
 
   /** 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 — 비밀번호 해시가 없고 email_verified=true (자동 연결 대상). */
   private User saveVerifiedSocialUser(String email, UserRole role, String name) {
-    return userRepository.save(new User(email, null, name, role, true));
+    return userRepository.save(new User(email, null, name, role, true, fixtureHandle(email)));
   }
 
   private String callback(
@@ -543,7 +544,15 @@ class AppleLoginCallbackTest {
   @Test
   void test_sc07_이미_연결된_애플_계정은_이메일이_바뀌거나_미검증이어도_같은_사용자로_로그인하고_이름은_바뀌지_않는다() throws Exception {
     // Given 사용자 B(b@example.com, 원래이름)가 있고 social_accounts 에 (APPLE, a-9, B) 가 있다
-    User b = userRepository.save(new User("b@example.com", null, "원래이름", UserRole.AUDIENCE, true));
+    User b =
+        userRepository.save(
+            new User(
+                "b@example.com",
+                null,
+                "원래이름",
+                UserRole.AUDIENCE,
+                true,
+                fixtureHandle("b@example.com")));
     socialAccountRepository.save(new SocialAccount(b.getId(), SocialProvider.APPLE, "a-9"));
     Counts before = counts();
     // And 애플이 {sub:a-9, email:other@example.com, email_verified:"false"} 를 돌려줬다
