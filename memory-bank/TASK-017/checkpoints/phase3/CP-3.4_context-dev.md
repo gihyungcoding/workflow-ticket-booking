@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-05T13:10:00Z
 summary: "Green 287/287 · lint error 0 · DESIGN-002 통과 · 자체 리뷰 1라운드 correctness 0. 승인받아 테스트 3파일 수정."
 

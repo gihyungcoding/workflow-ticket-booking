@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-05T14:00:00Z
 summary: "Phase 4 2회차 WARN — RC-1 해소, 경고 2(앱바 긴 제목 높이 넘침·Sheet --c-track). HITL#3 예외 승인(2026-11-05). (1회차: FAIL — 뿌리 1 · 변종 5 (재현 2). 배지 잘림·neutral 배지 투명·토스트 클릭 막힘. 롤백 대상 사용자 결정 대기."
 

@@ -945,7 +945,7 @@
     "reason_primary": "테마·공통 UI 컴포넌트는 프론트 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "todo",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",

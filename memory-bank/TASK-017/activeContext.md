@@ -3,7 +3,7 @@ task_id: TASK-017
 title: "디자인 토큰 교체·공통 부품"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: ACTIVE
+status: DONE
 track: standard
 created_at: 2026-11-05
 last_updated: 2026-11-05
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-017-design-tokens-ui-kit"
 
-last_checkpoint: "CP-4.2"
+last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-017.json"
 ---

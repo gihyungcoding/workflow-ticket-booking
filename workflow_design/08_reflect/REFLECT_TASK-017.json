@@ -1,0 +1,157 @@
+{
+  "task_id": "TASK-017",
+  "keep": [
+    {
+      "what": "Phase 4 에서 화면을 실제로 띄워 상태별로 측정했다",
+      "evidence": "테스트 287/287·리뷰 correctness 0 인 상태에서 브라우저가 배지 잘림·회색 배지 투명을 재현(VERIFY 1회차) — jsdom 이 못 보는 결함은 화면 확인만 잡았다"
+    },
+    {
+      "what": "테스트를 쓰기 전에 jsdom 이 무엇을 읽는지 던지는 프로브로 확인했다",
+      "evidence": "var() 미계산·정의 요소의 --c-fill 은 읽힘·flex-shrink/pointer-events 선언은 읽힘 → SC-19~23 의 관찰 방법을 그 결과로 정함(검증자 V5 요청도 프로브로 답함)"
+    },
+    {
+      "what": "이미 통과하는 롤백 Red 를 변이로 증명했다",
+      "evidence": "SC-23 — Row·Field 바탕을 고정색으로 바꾸면 각각 실패, git diff 로 변이 확인 후 원복"
+    }
+  ],
+  "problem": [
+    {
+      "what": "시나리오 규약 표가 시안의 '맥락 의존 값'을 고정값으로 박았다",
+      "evidence": "neutral 배지 바탕 #F1F2F6(시안은 var(--c-fill)) — 규약 표 옆에 '시안의 배지는 흰 블록 위에 놓여 --c-fill 이 --c-bg 가 된다'고 적고도 고정값을 기대값으로 씀. 2a 4회·게이트 예외·HITL 을 다 통과해 Phase 4 FAIL 로 돌아옴",
+      "phase": "1·2a"
+    },
+    {
+      "what": "2b 에서 옛 기대값을 가진 승인 테스트를 다 찾지 못했다",
+      "evidence": "frontend/index.html.test.ts(Google Fonts·display=swap)가 src 밖이라 Grep 에서 빠짐 — Phase 3 에서 발견해 승인 테스트 수정 HITL 1회 추가",
+      "phase": "2b"
+    },
+    {
+      "what": "새 문구가 같은 화면의 다른 글자와 겹치는지 보지 않았다",
+      "evidence": "'공연 취소' 배지 = '공연 취소' 버튼, '마감' 배지 = '마감' 입력칸 이름 → findByText 다중 일치 3건",
+      "phase": "2b"
+    },
+    {
+      "what": "시나리오 검증이 수렴하지 않았다",
+      "evidence": "1차 2a 4회 FAIL 후 게이트 예외, 롤백 2a 도 1회 FAIL(규약 표 JSON 미갱신) — MD 를 고치고 JSON 은 시나리오만 옮김",
+      "phase": "2a"
+    },
+    {
+      "what": "창 크기 조절이 실제 뷰포트를 바꾸지 않았다",
+      "evidence": "resize_window 375 후 innerWidth 2320 — 1회차는 #root 폭만 375 였고, 2회차에 375px iframe 으로 바꿔서야 실제 뷰포트로 측정",
+      "phase": "4"
+    }
+  ],
+  "try": [
+    {
+      "what": "시안 CSS 를 옮기는 Frontend 태스크는 PLAN 에 '맥락 의존 선언'(var(--…) 로 받는 값·pointer-events·flex 축 규칙·minmax)을 따로 뽑아 prop_schema 에 적고, 시나리오 규약 표에는 그 값을 고정값이 아니라 변수로 적는다",
+      "target": ".claude/skills/wf-plan/references/design-checks.md"
+    },
+    {
+      "what": "옛 기대값 Grep 은 src 만이 아니라 frontend 전체(*.test.*)와 바뀌는 문자열 원문(예: fonts.googleapis.com)으로 하고, 새 화면 문구는 같은 화면의 버튼·label 글자와 겹치는지 함께 Grep 한다",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "롤백으로 MD 를 고치면 JSON 은 시나리오만이 아니라 규약 표·notes 까지 MD 에서 다시 생성한다(부분 패치 금지)",
+      "target": ".claude/skills/wf-scenario/SKILL.md"
+    },
+    {
+      "what": "375px 확인은 창 크기 조절이 아니라 같은 출처의 375px iframe 에 띄워 innerWidth 를 먼저 확인한다. 화면에 아직 안 쓰인 부품은 Vite 모듈(main.tsx 의 ?v= 경로 그대로)을 iframe 에 직접 렌더해 본다",
+      "target": ".claude/skills/wf-verify/references/screen-verification.md"
+    }
+  ],
+  "insights": [
+    "jsdom 테스트는 '선언이 맞다'까지만 증명한다. 시안이 맥락(놓인 면·줄 안 배치)에 따라 달라지는 값은 시나리오에 (화면 확인) 으로 명시해야 Phase 4 가 빠뜨리지 않는다",
+    "시나리오 규약 표의 값은 테스트 기대값으로 그대로 흘러간다 — 표가 틀리면 검증자·HITL·Green 을 모두 통과한다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 1,
+      "note": "ROLLBACK_PLAN 1회(시나리오 검증 3회 초과)"
+    },
+    "2a": {
+      "retries": 5,
+      "note": "1차 4회 FAIL(V11 칸 누락 반복) → 게이트 예외(사용자). 롤백 후 1회 FAIL(V1 JSON 규약 표) → 2회차 PASS"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "롤백 Red 재승인. 1차 Red 에서 옛 기대값 1파일·문구 충돌 3건 누락"
+    },
+    "3": {
+      "retries": 1,
+      "note": "승인 테스트 수정 HITL 1회(3파일 4건), 자체 리뷰 3라운드(Sheet --c-track unresolved)"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1회차 FAIL(RC-1 재현 2) → 시나리오 롤백 → 2회차 WARN 예외 승인"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "공통 부품 스타일은 tokens.ts 값을 sx 에 직접 넣고, 놓인 면에 따라 바뀌는 값(--c-fill·--c-track)만 CSS 변수로 둔다. 면(body·Block·Sheet·MUI Paper)이 변수를 정의한다",
+      "why_broader": "TASK-018 이후 모든 화면·부품이 따르는 스타일 규칙이고 jsdom 테스트 가능성과 직결된다",
+      "evidence": "CP-3.4 decisions, VERIFY RC-1",
+      "suggested_title": "부품 스타일 값 주입 방식 — 토큰 직접 + 맥락 변수"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "App.tsx 의 Container maxWidth sm(600px)이 #root 375px 안에서 의미가 없어졌다",
+      "where": "frontend/src/App.tsx",
+      "found_how": "Phase 4 리뷰 [design]",
+      "suggestion": "흐름 2 화면 재배치 때 Page 부품으로 교체"
+    },
+    {
+      "what": "DESIGN-003(warn) 에 promote_after 가 없다 — 기존 3 페이지 위반이 계속 남음",
+      "where": "docs/architecture/constraints.yaml",
+      "found_how": "check_architecture warn 3",
+      "suggestion": "흐름 2 목록 재설계 태스크 ID 를 promote_after 로"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-plan/references/design-checks.md",
+      "section": "§2 디자인 정본",
+      "change": "시안 CSS 의 맥락 의존 선언 목록을 prop_schema 에 옮기고 규약 표는 변수로 적는다",
+      "evidence": "TASK-017 VERIFY 1회차 RC-1",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 2 기존 테스트 기대값",
+      "change": "옛 기대값 Grep 범위를 frontend 전체·원문 문자열로, 새 문구의 같은 화면 글자 충돌 Grep 추가",
+      "evidence": "index.html.test.ts 누락, '공연 취소'·'마감' 충돌 3건",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-scenario/SKILL.md",
+      "section": "Step 3 JSON 파생",
+      "change": "롤백·수정 시 JSON 전체(규약 표·notes 포함)를 MD 에서 재생성",
+      "evidence": "롤백 검증 1회차 V1 FAIL",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-verify/references/screen-verification.md",
+      "section": "상태를 실제로 만들어 본다",
+      "change": "375px 는 같은 출처 iframe 으로 innerWidth 확인, 미사용 부품은 Vite 모듈 직접 렌더",
+      "evidence": "resize_window 후 innerWidth 2320",
+      "status": "pending",
+      "recurring": 2
+    }
+  ],
+  "handoff_to_TASK-018": [
+    "앱바 긴 제목 높이 넘침 — 시안 확인 후 줄 수 제한",
+    "Sheet --c-track 정의(세그먼트 도입 시)",
+    "Badge 에 사용자 입력 문구가 오면 box-sizing·말줄임 재확인",
+    "상태 배지와 '공연 취소' 버튼이 같은 말(수정 화면) — 화면 재배치 때"
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  }
+}
