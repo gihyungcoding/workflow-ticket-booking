@@ -73,7 +73,7 @@ flow: F5
 - **Given** 새 테마를 적용했다
 - **When** Badge 를 tone 별로 그린다 — brand `예매 가능` · info `예정` · danger `매진` · neutral `마감` · warning `입금 대기` · success `예매 확정`
 - **Then** 각 배지의 바탕색·글자색이 규약 표와 같다 (neutral 바탕은 `var(--c-fill)`)
-- **And** 여섯 배지의 (바탕, 글자) 쌍이 서로 모두 다르다 — 한 색은 한 뜻
+- **And** neutral 을 뺀 다섯 배지의 (바탕, 글자) 쌍이 서로 모두 다르고, neutral 의 글자색(`#4C4F66`)은 다섯 배지의 글자색과 모두 다르다 — 한 색은 한 뜻 (neutral 바탕의 실제 색은 SC-19)
 
 covers: 상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)
 flow: F5
@@ -342,7 +342,7 @@ Phase 4 1회차에서 상세 화면의 `마감` 배지가 회색 페이지와 �
 - **Given** 새 테마와 전역 토큰 스타일(GlobalTokens)을 적용했다
 - **When** neutral 배지 `마감` 을 아래 표의 면 위에 그린다
 - **Then** 배지의 바탕은 `var(--c-fill)` 이고 글자는 `#4C4F66` 이다
-- **And** 그 면이 정의한 `--c-fill` 값이 표와 같고, 면 자신의 바탕색과 다르다
+- **And** 면 요소의 계산된 스타일에서 읽은 사용자 속성 `--c-fill` 값이 표와 같고, 같은 요소의 계산된 바탕색(표의 「면 바탕」)과 다르다
 - **And** (화면 확인) 375px 상세 화면(CLOSED)과 목록 카드에서 `마감` 배지의 계산된 바탕색이 바로 아래 면의 바탕색과 다르다
 
 | 면 | 면 바탕 | 면의 `--c-fill` |
@@ -396,6 +396,24 @@ flow: F6
 covers: 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)
 flow: F2
 
+## SC-23 (happy) 행 앞 아이콘 칸과 입력칸의 회색 바탕도 놓인 면을 따른다
+
+VERIFY RC-1 변종 5. SC-19 는 배지만 본다 — 행 앞 아이콘 칸(Row lead)과 오류 없는 입력칸(Field)이 바탕을 고정값으로 쓰면
+SC-19 를 통과한 채 흰 블록 안에서 사라진다(시안 `.row-lead`·`.input` 은 `var(--c-fill)`). 행마다 새로 그린다.
+
+- **Given** 새 테마와 전역 토큰 스타일을 적용했다
+- **When** 아래 표의 부품을 Block 안에 그린다
+- **Then** 그 요소의 바탕은 `var(--c-fill)` 이다 (면별 실제 색은 SC-19 의 면 표를 따른다)
+- **And** (화면 확인) Block 안의 그 요소 바탕이 `#F1F2F6` 로 계산되어 Block 바탕 `#FEFEFE` 와 다르다
+
+| 부품 | 요소 |
+|---|---|
+| Row (lead 있음) | 행 앞 아이콘 칸 |
+| Field (오류 없음, label `이메일`) | 입력칸 |
+
+covers: 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)
+flow: F2
+
 ---
 
 ## 시나리오로 쓰지 않은 것
@@ -406,5 +424,4 @@ flow: F2
 - **(화면 확인) 의 증거** — Phase 4 에서 브라우저(375px·1280px)로 띄워 `document.fonts`·`scrollWidth`·열 여백 값을 VERIFY `screens` 에 기록한다
 - **화면 재배치(목록·상세를 시안 구조로)** — 흐름 2. 이 태스크는 새 테마로 색·서체가 바뀌는 것까지
 - **AppHeader 교체** — AC 밖(PLAN unresolved #5). AppBar 부품만 SC-09 에서 확인
-- **Row lead·Field 비오류 바탕의 `var(--c-fill)`** — Block·Sheet 가 `--c-fill` 을 다시 정의하는 것은 SC-19 가 본다. 부품마다 같은 변수를 쓰는지는 SC-19 와 같은 경로라 따로 두지 않는다(VERIFY RC-1 변종 5)
 - **입금 대기·예매 확정 배지를 쓰는 화면** — 예매 모델이 흐름 4·5. 이 태스크는 Badge tone 만(SC-04)

@@ -91,7 +91,7 @@
       ],
       "then": [
         "각 배지의 바탕색·글자색이 규약 표와 같다 (neutral 바탕은 `var(--c-fill)`)",
-        "여섯 배지의 (바탕, 글자) 쌍이 서로 모두 다르다 — 한 색은 한 뜻"
+        "neutral 을 뺀 다섯 배지의 (바탕, 글자) 쌍이 서로 모두 다르고, neutral 의 글자색(`#4C4F66`)은 다섯 배지의 글자색과 모두 다르다 — 한 색은 한 뜻 (neutral 바탕의 실제 색은 SC-19)"
       ],
       "table": [],
       "covers": [
@@ -509,7 +509,7 @@
       ],
       "then": [
         "배지의 바탕은 `var(--c-fill)` 이고 글자는 `#4C4F66` 이다",
-        "그 면이 정의한 `--c-fill` 값이 표와 같고, 면 자신의 바탕색과 다르다",
+        "면 요소의 계산된 스타일에서 읽은 사용자 속성 `--c-fill` 값이 표와 같고, 같은 요소의 계산된 바탕색(표의 「면 바탕」)과 다르다",
         "(화면 확인) 375px 상세 화면(CLOSED)과 목록 카드에서 `마감` 배지의 계산된 바탕색이 바로 아래 면의 바탕색과 다르다"
       ],
       "table": [
@@ -594,6 +594,32 @@
       ],
       "flow": "F2",
       "origin": "VERIFY RC-1"
+    },
+    {
+      "id": "SC-23",
+      "type": "happy",
+      "title": "행 앞 아이콘 칸과 입력칸의 회색 바탕도 놓인 면을 따른다",
+      "given": [
+        "새 테마와 전역 토큰 스타일을 적용했다"
+      ],
+      "when": [
+        "아래 표의 부품을 Block 안에 그린다"
+      ],
+      "then": [
+        "그 요소의 바탕은 `var(--c-fill)` 이다 (면별 실제 색은 SC-19 의 면 표를 따른다)",
+        "(화면 확인) Block 안의 그 요소 바탕이 `#F1F2F6` 로 계산되어 Block 바탕 `#FEFEFE` 와 다르다"
+      ],
+      "table": [
+        "| 부품 | 요소 |",
+        "|---|---|",
+        "| Row (lead 있음) | 행 앞 아이콘 칸 |",
+        "| Field (오류 없음, label `이메일`) | 입력칸 |"
+      ],
+      "covers": [
+        "테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)"
+      ],
+      "flow": "F2",
+      "origin": "VERIFY RC-1 변종 5"
     }
   ],
   "conventions_table": [
@@ -601,7 +627,9 @@
     "|---|---|",
     "| 토큰 정본 | `docs/product/design-tokens.css` 의 `:root` 선언 전부와 `.text-large` 선언 전부 |",
     "| 배지 뜻 (design.md §5) | OPEN → `예매 가능` · brand / UPCOMING → `예정` · info / SOLD_OUT → `매진` · danger / CLOSED → `마감` · neutral / CANCELLED → `공연 취소` · neutral / (Badge 로만) `입금 대기` · warning / `예매 확정` · success |",
-    "| 배지 색 (tone → 바탕 / 글자) | brand → `#EBEDFE` / `#4154FF` · info → `#F0EEFE` / `#6647FF` · danger → `#FCEFF0` / `#D61E24` · warning → `#FBF4E5` / `#916500` · success → `#E7F4ED` / `#187B43` · neutral → `#F1F2F6` / `#4C4F66` (시안의 배지는 흰 블록·행 위에 놓여 --c-fill 이 --c-bg 가 된다) |",
+    "| 배지 색 (tone → 바탕 / 글자) | brand → `#EBEDFE` / `#4154FF` · info → `#F0EEFE` / `#6647FF` · danger → `#FCEFF0` / `#D61E24` · warning → `#FBF4E5` / `#916500` · success → `#E7F4ED` / `#187B43` · neutral → 바탕은 **놓인 면의 채움색** `var(--c-fill)` / 글자 `#4C4F66` (시안 `.badge`). 회색 페이지(body) 위에서 `#FEFEFE`, 흰 면(Block·Sheet·MUI Card/Paper) 안에서 `#F1F2F6` — SC-19 |",
+    "| 면별 채움색 `--c-fill` | body `#FEFEFE` · Block `#F1F2F6` · Sheet `#F1F2F6` · MUI Paper(Card) `#F1F2F6` (jsdom 은 `var()` 를 계산하지 않는다 — 면이 정의한 `--c-fill` 값과 배지가 그 변수를 쓰는지를 따로 본다) |",
+    "| 부품 치수 (시안 components.css) | AppBar 좌우 칸 `minmax(48px, auto)` · 터치 44px · 배지 높이 24px |",
     "| 토스트 | role=status, 2,500ms 뒤 사라진다 (Toast 내부 고정 — 지속 시간 prop 없음) |",
     "| 한 열 최대 폭 | 375px (시안 뷰포트) |",
     "| 서체 | Pretendard 1.3.9 (`cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css`) |"
@@ -649,7 +677,7 @@
       "배지 수축(SC-20, 재현)",
       "토스트 클릭 막힘(SC-21)",
       "AppBar 칸(SC-22)",
-      "Row/Field var(--c-fill)(SC-19 경로로 흡수 — 시나리오로 쓰지 않은 것에 사유)"
+      "Row/Field var(--c-fill)(SC-23)"
     ],
     "changed_existing": [
       "SC-03·SC-04 neutral 바탕 기대값 #F1F2F6 → var(--c-fill)",

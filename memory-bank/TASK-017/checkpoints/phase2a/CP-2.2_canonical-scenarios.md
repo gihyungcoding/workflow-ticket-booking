@@ -50,3 +50,4 @@ attempts:
 
 <!-- 2026-11-05 Phase 4 FAIL 롤백 (ROLLBACK_SCENARIO 1회) -->
 rollback_note: "VERIFY RC-1 변종 5개를 시나리오로 — SC-19(neutral 바탕 면 의존)·SC-20(배지 수축)·SC-21(토스트 pointer-events)·SC-22(AppBar minmax 48px), Row/Field var(--c-fill) 는 SC-19 경로로 흡수. 기존 SC-03·04 neutral 기대값과 SC-18 AppBar 44px 를 같이 고침(Grep: neutral·F1F2F6·44px). jsdom 은 var() 를 계산하지 않고 정의한 요소의 --c-fill 은 읽힘(프로브) — 실제 색은 (화면 확인)."
+rollback_validation_1: "FAIL(V1 JSON 규약 표가 롤백 전) — 규약 표 재생성, V10 반영(SC-23 Row lead·Field var(--c-fill)), V5 반영(SC-19 관찰 방법·SC-04 neutral 비교), V8 반영(PLAN prop_schema·unresolved #8). V6·V7·V9 는 보류 — 앞 회차부터의 표 구동·CSS 관찰 구조(게이트 예외 때 사람이 받은 경고)."

@@ -218,7 +218,8 @@
           "prop": "tone",
           "type": "'brand'|'info'|'danger'|'warning'|'success'|'neutral'",
           "rules": [
-            "여섯 값만(TS 타입). 정의 밖은 컴파일 단계에서 막힌다"
+            "여섯 값만(TS 타입). 정의 밖은 컴파일 단계에서 막힌다",
+            "neutral 바탕은 놓인 면의 채움색 var(--c-fill) — 시안 .badge (RC-1)"
           ]
         },
         {
@@ -227,7 +228,8 @@
           "type": "string | null | undefined",
           "rules": [
             "무효 → 그리지 않는다",
-            "긴 문구: 배지는 design.md §5 의 짧은 문구 전용 부품이라 길이 한도를 두지 않고 줄도 바꾸지 않는다(white-space: nowrap) — 부모 폭을 넘지 않게 max-width 100% + 말줄임(text-overflow: ellipsis)"
+            "긴 문구: 배지는 design.md §5 의 짧은 문구 전용 부품이라 길이 한도를 두지 않고 줄도 바꾸지 않는다(white-space: nowrap) — 부모 폭을 넘지 않게 max-width 100% + 말줄임(text-overflow: ellipsis)",
+            "가로 줄(flex) 안에서 줄어들지 않는다(flex-shrink 0) — 짧은 문구는 잘리지 않고, 칸보다 긴 문구만 max-width 100% 에서 말줄임 (2026-11-05 Phase 4 RC-1)"
           ]
         },
         {
@@ -244,7 +246,8 @@
             "사라지기 전 언마운트 → 타이머 정리, onClose 없음",
             "onClose 를 주지 않아도 예외 없이 사라진다",
             "긴 문구 → 줄을 바꿔 375px 안",
-            "표시 시간은 2,500ms 고정 — 지속 시간 prop 은 없다"
+            "표시 시간은 2,500ms 고정 — 지속 시간 prop 은 없다",
+            "화면 클릭을 가리지 않는다 — pointer-events none (시안 .toast, RC-1)"
           ]
         },
         {
@@ -293,7 +296,8 @@
           "type": "() => void | undefined",
           "rules": [
             "있으면 aria-label='뒤로' 버튼, 누르면 1회",
-            "없으면 뒤로 버튼을 그리지 않는다(제목 위치는 그대로 가운데)"
+            "없으면 뒤로 버튼을 그리지 않는다(제목 위치는 그대로 가운데)",
+            "좌우 칸은 minmax(48px, auto) — 시안 .appbar (RC-1)"
           ]
         },
         {
@@ -313,6 +317,14 @@
           "rules": [
             "true → 버튼 disabled, 누름 무시, 비활성 색(--c-disabled-bg·--c-text-disabled)",
             "false/undefined → 주 버튼 색, 누르면 onClick 1회"
+          ]
+        },
+        {
+          "component": "면(Surface)",
+          "prop": "(모양)",
+          "type": "-",
+          "rules": [
+            "채움색 --c-fill: body #FEFEFE, Block·Sheet·MUI Paper(Card) #F1F2F6 — Badge·Row lead·Field 입력이 이 변수를 바탕으로 쓴다 (시안 components.css body·.block·.sheet, RC-1)"
           ]
         }
       ]
@@ -341,7 +353,7 @@
       },
       {
         "path": "frontend/src/theme/index.ts",
-        "change": "새 토큰으로 MUI 테마 재작성(그림자 없음·명조 제거)"
+        "change": "새 토큰으로 MUI 테마 재작성(그림자 없음·명조 제거) · MuiPaper 에 --c-fill"
       },
       {
         "path": "frontend/src/theme/GlobalTokens.tsx",
@@ -442,7 +454,8 @@
       "#4 (확정 2026-11-05) 토스트가 사라지기까지 2,500ms 는 Toast 내부 고정 상수다 — prop 으로 열지 않는다(호출부가 바꿀 수 없다). 동작 값이라 디자인 토큰이 아니다",
       "#5 AppHeader(로그인/로그아웃 줄)는 문서 §6 에 '시안 .appbar 로 교체'가 있으나 이 태스크 AC 에 없고 화면 배치를 바꾼다 — AppBar 부품만 만들고 화면 교체는 TASK-018·흐름 2 에서. AppHeader 는 새 테마만 적용",
       "#6 시안 components.css 의 --c-fill·--c-track 은 tokens 가 아니라 부품 파생 변수(흰 바탕 안에서 회색) — GlobalTokens 에서 같은 규칙으로 정의",
-      "#7 기존 화면(목록·상세·등록·수정)은 MUI 기본 부품을 쓰므로 새 테마만으로 색·서체가 바뀐다. 재배치는 범위 밖 — 화면 확인은 깨지지 않는지(가로 넘침·대비)만 본다"
+      "#7 기존 화면(목록·상세·등록·수정)은 MUI 기본 부품을 쓰므로 새 테마만으로 색·서체가 바뀐다. 재배치는 범위 밖 — 화면 확인은 깨지지 않는지(가로 넘침·대비)만 본다",
+      "#8 (2026-11-05 Phase 4 FAIL 롤백) 시안의 맥락 CSS — --c-fill 면 의존·배지 수축·토스트 pointer-events·앱바 minmax 48px 를 prop_schema 에 추가. jsdom 은 var() 를 계산하지 않는다 → 실제 색은 Phase 4 화면 확인. MUI Card 를 쓰는 기존 목록 카드도 면(--c-fill #F1F2F6) — 테마 MuiPaper 에서 정의"
     ],
     "exploration": {
       "method": "inline",
