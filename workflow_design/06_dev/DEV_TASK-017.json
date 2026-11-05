@@ -1,0 +1,174 @@
+{
+  "task_id": "TASK-017",
+  "changed_files": [
+    {
+      "path": "frontend/src/theme/tokens.ts",
+      "change": "design-tokens.css 전체 미러(designTokens·textLargeTokens) + 부품 치수(componentSizes, 출처 components.css) + TOAST_DURATION_MS"
+    },
+    {
+      "path": "frontend/src/theme/index.ts",
+      "change": "새 토큰으로 MUI 테마 재작성 — primary #4154FF·Pretendard·r-m 12·그림자 2단계"
+    },
+    {
+      "path": "frontend/src/theme/GlobalTokens.tsx",
+      "change": ":root 변수·body 기본·#root 375px 한 열"
+    },
+    {
+      "path": "frontend/src/components/ui/*",
+      "change": "AppBar·Page·Block·Row·Badge·CtaBar·Field·Toast·Sheet + text.ts(isBlank)"
+    },
+    {
+      "path": "frontend/src/components/StatusBadge.tsx",
+      "change": "Badge 로 교체, design.md §5 문구, 정의 밖 값은 그리지 않음"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "change": "GlobalTokens 적용"
+    },
+    {
+      "path": "frontend/index.html",
+      "change": "Google Fonts → Pretendard"
+    },
+    {
+      "path": "frontend/src/components/SocialLoginButtons.tsx",
+      "change": "옛 디자인 방향 주석 정정"
+    }
+  ],
+  "reused": [
+    {
+      "path": "@mui/material",
+      "symbol": "Box·GlobalStyles·useMediaQuery"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && npx vitest run",
+    "total": 287,
+    "passed": 287,
+    "failed": 0,
+    "target_tests_passed": 18,
+    "note": "병렬 실행 시간 초과(Red 때 5건)는 구현 후 재현되지 않음 — 스켈레톤 예외 출력 부하로 판단"
+  },
+  "lint": {
+    "command": "npm run lint",
+    "errors": 0,
+    "warnings": "기존 파일 경고만(set-state-in-effect 3·only-export-components 1) — Toast 경고는 렌더 중 상태 조정으로 제거"
+  },
+  "typecheck": {
+    "command": "npx tsc -b --noEmit",
+    "exit_code": 0
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py",
+    "DESIGN-001": "pass",
+    "DESIGN-002": "pass",
+    "DESIGN-003": "warn — 기존 3 페이지 그대로"
+  },
+  "refactoring": [
+    {
+      "what": "Toast 닫힘 상태를 effect 안 setState 대신 렌더 중 조정(prevText/expired)",
+      "why": "react(set-state-in-effect) 경고 제거, 재렌더 연쇄 방지"
+    },
+    {
+      "what": "무효 문구 판정을 text.ts isBlank 하나로",
+      "why": "Field·Toast·Badge 가 같은 규칙(prop_schema)을 쓴다"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "#1 승인된 테스트 옛 기대값",
+      "how": "2b 에서 5파일 교체 + Phase 3 에서 놓친 index.html.test.ts 발견",
+      "fact": "TASK-003 SC-05 가 Google Fonts·display=swap 을 단언 — 2b 인벤토리 누락",
+      "impact": "사용자 승인 후 기대값 교체(test_modifications)"
+    },
+    {
+      "item": "#2·#3 부품 고정 치수·375px",
+      "how": "components.css 줄 번호 대조",
+      "fact": "44/24/4/20px·375px 는 시안 값",
+      "impact": "tokens.ts componentSizes 에 출처와 함께"
+    },
+    {
+      "item": "#4 토스트 2,500ms",
+      "how": "PLAN 확정",
+      "fact": "Toast 내부 상수, prop 없음",
+      "impact": "없음"
+    },
+    {
+      "item": "#5 AppHeader 교체",
+      "how": "범위 확인",
+      "fact": "AC 밖",
+      "impact": "AppBar 부품만, 화면 적용은 TASK-018"
+    },
+    {
+      "item": "#6 --c-fill·--c-track",
+      "how": "components.css body·.block",
+      "fact": "부품 파생 변수",
+      "impact": "GlobalTokens body·Block·Sheet 에 같은 규칙"
+    },
+    {
+      "item": "#7 기존 화면",
+      "how": "테스트 전체 통과",
+      "fact": "MUI 기본 부품이 새 테마로 바뀜. 375px 한 열로 좁아짐(App Container sm 무력화)",
+      "impact": "Phase 4 화면 확인에서 가로 넘침 확인"
+    }
+  ],
+  "test_modifications": [
+    {
+      "file": "frontend/index.html.test.ts",
+      "scenario": "TASK-003 SC-05",
+      "reason": "Pretendard 로 바꾼 AC 와 상충 — Google Fonts 링크·display=swap → Pretendard 정적 CSS 링크(swap 은 CSS 안에 9곳, curl 확인)",
+      "approval": "AskUserQuestion 2026-11-05 '표대로 수정'"
+    },
+    {
+      "file": "frontend/src/pages/PerformanceEditPage.test.tsx",
+      "scenario": "TASK-005 SC-09·REGRESSION",
+      "reason": "상태 문구 '공연 취소' 가 같은 글자 버튼과 겹침 — findByText 에 ignore 'button' (관찰 범위만, 단언 동일). 변이(옛 문구) 시 2건 실패 확인",
+      "approval": "같은 질문"
+    },
+    {
+      "file": "frontend/src/pages/task017.regression.test.tsx",
+      "scenario": "TASK-017 SC-13",
+      "reason": "등록 화면 '배지 없음' 확인이 입력칸 이름 '마감' 을 잡음 — ignore 'label' (관찰 범위만)",
+      "approval": "같은 질문"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "frontend/src/pages/PerformanceDetailPage.tsx, PerformanceListPage.tsx",
+      "why": "공연명 명조 sx(fontDisplay) 제거 — tokens.ts 에서 옛 서체 토큰이 사라짐(서체 한 가지, design.md §4)"
+    }
+  ],
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체 develop...HEAD",
+        "findings": 0,
+        "correctness": 0,
+        "tests_added": [],
+        "fix_commit": "3290e80",
+        "note": "[design] Field describedby 덮어쓰기·[test] Badge 불리언 children 을 싸게 고침(커밋 3290e80)"
+      }
+    ],
+    "root_causes": [],
+    "unresolved": [],
+    "deferred": [
+      {
+        "what": "#root 375px 로 기존 화면이 데스크톱에서도 좁아짐",
+        "to": "Phase 4 화면 확인·HITL#3 알림"
+      },
+      {
+        "what": "AppBar 좌우 칸 시안 minmax(48px,auto) vs 구현 44px",
+        "to": "Phase 4"
+      },
+      {
+        "what": "새 부품 중 운영 경로 사용은 Badge 뿐 — 화면 적용은 TASK-018",
+        "to": "정보"
+      },
+      {
+        "what": "Field 오류 아이콘 18px·1px 테두리 — components.css .field-msg svg 18px·.input 1px 로 시안 값",
+        "to": "정보"
+      }
+    ]
+  }
+}

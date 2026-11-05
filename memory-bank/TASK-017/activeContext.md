@@ -1,8 +1,8 @@
 ---
 task_id: TASK-017
 title: "디자인 토큰 교체·공통 부품"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 track: standard
 created_at: 2026-11-05
@@ -13,7 +13,7 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-017-design-tokens-ui-kit"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-017.json"
 ---

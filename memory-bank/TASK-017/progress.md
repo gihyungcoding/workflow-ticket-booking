@@ -5,8 +5,8 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | flows 7 · AC 7 |
 | 2a Scenario | ⚠ 게이트 예외 | CP-2.2 | 18건 · 롤백 1회 · 검증 수렴 안 됨 |
 | 2b Red | ✅ 승인 | CP-2.5 | 17 Red · 1 가드 · 기존 7 교체 |
-| 3 Green | 🔄 진행 중 | — | |
-| 4 Verify | ⬜ 대기 | — | |
+| 3 Green | ✅ 완료 | CP-3.4 | 287/287 · 자체 리뷰 correctness 0 |
+| 4 Verify | 🔄 진행 중 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건
