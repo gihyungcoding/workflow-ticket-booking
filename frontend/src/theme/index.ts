@@ -52,6 +52,11 @@ export function createAppTheme(): Theme {
       },
       MuiPaper: {
         styleOverrides: {
+          // 흰 면 안의 채움 부품(배지·입력)은 회색 — 시안 .block 과 같은 규칙
+          root: {
+            '--c-fill': token('--c-bg'),
+            '--c-track': token('--c-bg'),
+          },
           outlined: {
             borderColor: token('--c-line'),
           },

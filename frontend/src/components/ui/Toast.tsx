@@ -67,6 +67,8 @@ export function Toast({ message, onClose }: ToastProps) {
         lineHeight: Number(token('--lh-body')),
         boxShadow: token('--shadow-2'),
         overflowWrap: 'anywhere',
+        // 안내만 한다 — 아래 화면을 누르는 것을 가리지 않는다 (시안 .toast)
+        pointerEvents: 'none',
         transition: reduceMotion ? 'none' : 'opacity .2s, transform .2s',
       }}
     >

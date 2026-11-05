@@ -17,7 +17,7 @@ export function AppBar({ title, onBack }: AppBarProps) {
         zIndex: 5,
         height: token('--h-appbar'),
         display: 'grid',
-        gridTemplateColumns: `${componentSizes.touch} 1fr ${componentSizes.touch}`,
+        gridTemplateColumns: `minmax(${componentSizes.appbarSide}, auto) 1fr minmax(${componentSizes.appbarSide}, auto)`,
         alignItems: 'center',
         padding: `0 ${token('--stack-s')}`,
         backgroundColor: token('--c-bg'),
