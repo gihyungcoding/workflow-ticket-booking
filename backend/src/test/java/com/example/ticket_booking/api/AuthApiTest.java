@@ -148,10 +148,11 @@ class AuthApiTest {
       soft.assertThat(result.getResponse().getStatus()).as(label + " 상태").isEqualTo(201);
       if (result.getResponse().getStatus() == 201) {
         Map<String, Object> body = bodyAsMap(result);
-        // And 응답 본문의 키는 정확히 id, email, name, role 이다 (비밀번호 관련 키 없음)
+        // And 응답 본문의 키는 정확히 id, email, name, role, handle 이다 (비밀번호 관련 키 없음)
+        // — handle 은 TASK-016 AC1 로 추가됐다
         soft.assertThat(body.keySet())
             .as(label + " 키")
-            .containsExactlyInAnyOrder("id", "email", "name", "role");
+            .containsExactlyInAnyOrder("id", "email", "name", "role", "handle");
         // And email 은 기대값, role 은 요청값, id 는 숫자다
         soft.assertThat(body.get("email")).as(label + " email").isEqualTo(row.expectedEmail());
         soft.assertThat(body.get("role")).as(label + " role").isEqualTo(row.role());
@@ -566,10 +567,10 @@ class AuthApiTest {
       soft.assertThat(result.getResponse().getStatus()).as(label + " 상태").isEqualTo(200);
       if (result.getResponse().getStatus() == 200) {
         Map<String, Object> body = bodyAsMap(result);
-        // And 본문은 {id, email, name, role} 이고 로그인 응답의 user 와 같다
+        // And 본문은 {id, email, name, role, handle} 이고 로그인 응답의 user 와 같다 — handle 은 TASK-016 AC1
         soft.assertThat(body.keySet())
             .as(label + " 키")
-            .containsExactlyInAnyOrder("id", "email", "name", "role");
+            .containsExactlyInAnyOrder("id", "email", "name", "role", "handle");
         soft.assertThat(body).as(label + " 본문").isEqualTo(loginUser);
         // And 비밀번호 관련 키가 없다
         soft.assertThat(hasPasswordKey(body)).as(label + " 비밀번호 키").isFalse();

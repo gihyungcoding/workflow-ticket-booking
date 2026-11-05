@@ -6,8 +6,10 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -24,6 +26,10 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * accessToken 을 HS256 으로 발급·검증한다 (ADR-0012). 시각은 주입된 Clock 으로만 판단한다(ADR-0005) — 만료 허용 오차(skew)는 0
@@ -36,6 +42,17 @@ public class JwtTokenProvider {
   private static final String TYPE_ACCESS = "access";
   private static final String TYPE_PENDING = "pending";
   private static final int MIN_SECRET_BYTES = 32;
+
+  /**
+   * JWS 압축 직렬화 — base64url 세 마디. 디코더는 마디 안의 base64url 밖 문자(NUL·짝 없는 서로게이트·= 등)를 건너뛰고 읽어서, 정상 토큰 뒤에
+   * 문자를 붙여도 통과했다(TASK-016 SC-14·RC-2). 디코더에 넘기기 전에 형식을 먼저 본다 — accessToken·pendingToken 공통.
+   */
+  private static final Pattern COMPACT_JWS =
+      Pattern.compile("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
+
+  /** 페이로드에 같은 키가 두 번 있으면 읽기에서 실패한다 — 파서마다 어느 쪽 값을 쓰는지가 달라 판정이 갈리는 것을 막는다. */
+  private static final ObjectMapper PAYLOAD_READER =
+      JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
 
   private final JwtEncoder encoder;
   private final JwtDecoder decoder;
@@ -95,6 +112,9 @@ public class JwtTokenProvider {
 
   /** 서명·만료·용도(typ=access)가 모두 유효하면 사용자 id 를, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. */
   public Optional<Long> verifyAccessToken(String token) {
+    if (readPayload(token) == null) {
+      return Optional.empty();
+    }
     try {
       Jwt jwt = decoder.decode(token);
       return Optional.of(Long.parseLong(jwt.getSubject()));
@@ -103,13 +123,14 @@ public class JwtTokenProvider {
     }
   }
 
-  /** pendingToken 이 담는 값. */
+  /** pendingToken 이 담는 값. expiresAt 은 역할 선택 화면이 남은 시간을 보여 주는 데 쓴다. */
   public record PendingSignup(
       String email,
       String name,
       SocialProvider provider,
       String providerUserId,
-      boolean emailVerified) {}
+      boolean emailVerified,
+      Instant expiresAt) {}
 
   /** typ=pending, 발급 시각 + 5분 만료의 토큰을 발급한다. sub 가 없어 사용자 토큰으로 오인될 여지가 없다. */
   public String issuePendingToken(
@@ -139,8 +160,17 @@ public class JwtTokenProvider {
    * 같은 규칙(SocialInputRules)을 다시 거친다 — 키가 새거나 발급 쪽에 결함이 있어도 규칙 밖의 값이 DB 에 닿지 않는다.
    */
   public Optional<PendingSignup> verifyPendingToken(String token) {
+    JsonNode payload = readPayload(token);
+    if (payload == null || !hasWholeSecondsExp(payload)) {
+      return Optional.empty();
+    }
     try {
       Jwt jwt = pendingDecoder.decode(token);
+      // 이 서버가 발급하는 pendingToken 의 만료는 발급 + 5분이다. 그보다 먼 만료는 발급 쪽 결함이나 위조로 보고 거부한다(claim_schema.exp)
+      Instant expiresAt = jwt.getExpiresAt();
+      if (expiresAt.isAfter(clock.instant().plusSeconds(PENDING_TOKEN_SECONDS))) {
+        return Optional.empty();
+      }
       Map<String, Object> claims = jwt.getClaims();
       String email = SocialInputRules.email(claims.get("email"));
       String name = SocialInputRules.name(claims.get("name"));
@@ -155,10 +185,41 @@ public class JwtTokenProvider {
       }
       return Optional.of(
           new PendingSignup(
-              email, name, SocialProvider.valueOf(provider), providerUserId, emailVerified));
+              email,
+              name,
+              SocialProvider.valueOf(provider),
+              providerUserId,
+              emailVerified,
+              expiresAt));
     } catch (JwtException | IllegalArgumentException exception) {
       return Optional.empty();
     }
+  }
+
+  /**
+   * 디코더에 넘기기 전의 공통 형식 검사 — 압축 JWS 세 마디이고 페이로드가 중복 키 없는 JSON 객체면 그 페이로드를, 아니면 null 을 돌려준다.
+   * accessToken 과 pendingToken 이 같은 지점을 지나야 한쪽에만 구멍이 남지 않는다(TASK-016 RC-2).
+   */
+  private static JsonNode readPayload(String token) {
+    if (token == null || !COMPACT_JWS.matcher(token).matches()) {
+      return null;
+    }
+    try {
+      String payload = token.substring(token.indexOf('.') + 1, token.lastIndexOf('.'));
+      JsonNode node = PAYLOAD_READER.readTree(Base64.getUrlDecoder().decode(payload));
+      return node != null && node.isObject() ? node : null;
+    } catch (RuntimeException unreadable) {
+      return null;
+    }
+  }
+
+  /**
+   * exp 가 정수 초인지 페이로드 원문에서 본다. 디코더는 소수(120.5)를 정수로 잘라 읽고, long 범위를 넘는 값도 다른 값으로 바꿔 읽어서 변환 뒤에는 구별할 수
+   * 없다.
+   */
+  private static boolean hasWholeSecondsExp(JsonNode payload) {
+    JsonNode exp = payload.get("exp");
+    return exp != null && exp.isIntegralNumber() && exp.canConvertToLong();
   }
 
   /**

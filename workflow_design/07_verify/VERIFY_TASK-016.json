@@ -1,0 +1,362 @@
+{
+  "task_id": "TASK-016",
+  "round": 2,
+  "status": "WARN",
+  "status_reason": "AC 8/8 PASS·결함 0. WARN: (1) V11 미사용 비트 표기는 사용자 결정으로 범위 밖 (2) 서명된 accessToken 의 sub·exp 표기 느슨함은 관찰(서버 키 필요, 위조 경로 아님) (3) AuthServiceUniqueViolationTest 의 PG 메시지는 Testcontainers 프로브에서 옮긴 문자열 — 실제 DB 위반을 일으키지는 않음",
+  "previous_rounds": [
+    {
+      "round": 1,
+      "status": "FAIL",
+      "reason": "code-reviewer [correctness] RC-2 — 형식 사전 검사를 verifyPendingToken 한 곳에만 넣어 verifyAccessToken 이 같은 부류(토큰 끝 문자 허용)로 열려 있다. 재현된 변종 3",
+      "decision": "ROLLBACK_SCENARIO"
+    }
+  ],
+  "evidence": {
+    "tests": {
+      "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --continue",
+      "exit_code": 0,
+      "summary": "164 tests, 0 failed (79.0s)"
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "통과"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "46 files changed, 4647 insertions(+), 50 deletions(-) (워크플로우 산출물 포함)"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "이메일 가입 응답과 `GET /api/auth/me` 응답에 `handle` 이 있고, 단어 목록의 단어 하나 + 숫자 4자리(`^[a-z]{3,6}[0-9]{4}$`) 형식이다",
+      "verdict": "PASS",
+      "evidence": "SC-01(가입·로그인·me·DB handle=wave7302), SC-02(경계 5행 형식) 통과"
+    },
+    {
+      "criterion": "아이디는 단어 목록과 숫자로만 만들어지고 이메일·이름 값이 생성에 쓰이지 않는다 (같은 난수 순서면 이메일이 달라도 같은 아이디가 나온다)",
+      "verdict": "PASS",
+      "evidence": "SC-03(이메일·이름 달라도 같은 뽑힌 값 → star0123) 통과"
+    },
+    {
+      "criterion": "뽑은 아이디가 이미 있으면 다시 뽑아 겹치지 않는 아이디를 주고, 10번 연속 겹치면 가입이 503 `HANDLE_GENERATION_FAILED` 로 실패하며 `users` 행이 생기지 않는다",
+      "verdict": "PASS",
+      "evidence": "SC-04(재시도), SC-05(9회 후 성공·10회 503·행 없음), SC-12(소셜 동일), SC-11(회귀) 통과 + AuthServiceUniqueViolationTest(경합 오보 방지)"
+    },
+    {
+      "criterion": "소셜 최초 가입(`/social/complete`)으로 만든 회원도 `handle` 을 받는다",
+      "verdict": "PASS",
+      "evidence": "SC-06(소셜 완료 handle stage0077, me 동일), SC-12 통과"
+    },
+    {
+      "criterion": "마이그레이션 뒤 기존 회원 전원이 같은 형식의 겹치지 않는 `handle` 을 갖는다 (NOT NULL·UNIQUE, 단어는 Java 목록 안)",
+      "verdict": "PASS",
+      "evidence": "SC-07·SC-13(Testcontainers PostgreSQL 16, V4→V5: NOT NULL·형식·단어 목록·UNIQUE·빈 테이블) 통과"
+    },
+    {
+      "criterion": "`POST /api/auth/social/pending` 이 유효한 토큰에 제공자·이메일·이름·만료 시각을 돌려준다",
+      "verdict": "PASS",
+      "evidence": "SC-08(제공자 4종·만료 1초 전·정규화) 통과"
+    },
+    {
+      "criterion": "만료·위조 토큰이면 401 `PENDING_SIGNUP_EXPIRED` 이고 DB 변화가 없다",
+      "verdict": "PASS",
+      "evidence": "SC-09(토큰 자체 8행 + claim_schema 매트릭스 401·메시지 동일·값 미노출·행 무변화), SC-10(400), SC-14(가입 완료 동일 401) 통과"
+    },
+    {
+      "criterion": "accessToken·pendingToken 은 JWS 압축 형식(base64url 세 마디) 밖의 문자가 끝에 붙거나 마디 안에 섞이면 거부한다 — 같은 토큰의 다른 문자열 표기로 인증되지 않는다",
+      "verdict": "PASS",
+      "evidence": "SC-15(TokenFormatApiTest: t=·t==·t~·t.abc → 401, 그대로 200), SC-16(JwtTokenFormatTest: access·pending 형식 밖 전부 empty), SC-09·14 행 확장 통과. 변이 M1~M5 로 가드별 실패 확인"
+    }
+  ],
+  "screens": [],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "exit_code": 0,
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 281,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend PerformanceDetailPage.tsx:37, PerformanceEditPage.tsx:104, PerformanceListPage.tsx:46 — 기존 코드, 이 태스크 변경 아님"
+      }
+    ],
+    "overdue_promotions": [],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "API: DB 접근",
+        "constraint": "ARCH-001",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: HTTP 관심사",
+        "constraint": "ARCH-002 (Controller 호출만)",
+        "state": "⚠ 미인코딩 — servlet·http 타입 import 금지는 없음"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용",
+        "constraint": "ARCH-003",
+        "state": "✓ (단 AuthService.violatesHandleConstraint 가 DB 벤더 메시지 형식을 해석한다 — 타입이 아니라 지식 누출, 관찰로 기록)"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP·트랜잭션 제어",
+        "constraint": null,
+        "state": "⚠ 미인코딩"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "Frontend: 도메인 규칙",
+        "constraint": null,
+        "state": "검사 불가"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "164/164 passed",
+    "callers_checked": true,
+    "callers": "verifyAccessToken → JwtAuthenticationFilter 1곳, verifyPendingToken → AuthService 2곳, 디코더 직접 호출은 JwtTokenProvider 안에만 (리뷰어 Grep)"
+  },
+  "scope_deviations": [
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/UserFixtures.java",
+      "why": "기존 테스트 준비 코드용 아이디 자리 채움 (test_modifications 와 함께)"
+    }
+  ],
+  "code_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "phase": 3,
+        "scope": "develop...HEAD",
+        "findings": 2,
+        "root_causes": [
+          "RC-1"
+        ]
+      },
+      {
+        "n": 2,
+        "phase": 3,
+        "scope": "9f55c41...HEAD + 같은 부류 전수",
+        "findings": 0
+      },
+      {
+        "n": 3,
+        "phase": 4,
+        "scope": "develop...HEAD 전체 + pre_review 인계",
+        "findings": 2,
+        "findings_detail": [
+          {
+            "category": "correctness",
+            "where": "backend/.../config/JwtTokenProvider.java verifyAccessToken",
+            "summary": "accessToken 끝에 base64url 밖 문자(=, ==, ~ 는 HTTP 헤더로 도달)를 붙여도 인증 통과 — 형식 검사가 verifyPendingToken 에만 있다"
+          },
+          {
+            "category": "test",
+            "where": "AuthServiceUniqueViolationTest",
+            "summary": "가짜 통과 아님. 실제 DB 위반을 일으키지는 않음(알아둘 점)"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "phase": 3,
+        "scope": "수정 58135a6...HEAD + 재작업 테스트 + 같은 부류",
+        "findings": 0
+      },
+      {
+        "n": 5,
+        "phase": 4,
+        "scope": "develop...HEAD 전체 + 수정 커밋 115d0c7",
+        "findings": 0,
+        "observations": [
+          "V11 범위 밖(사용자 결정)",
+          "서명된 accessToken sub·exp 표기 느슨함(+7·07·120.5·BOM, sub -7) — 이슈어만 만들 수 있음",
+          "violatesHandleConstraint 가 DB 벤더 메시지 형식을 앎",
+          "handle 경합 시 재시도 없이 503 — 설계 의도"
+        ]
+      }
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "UNIQUE 위반 원인을 DB 메시지 전체 문자열 부분일치로 판별해, 메시지에 섞여 들어오는 사용자 입력값이 판정에 영향을 준다",
+      "found_in_round": 1,
+      "status": "fixed",
+      "variants": [
+        {
+          "case": "H2 이메일 ux_users_handle@x.com 경쟁",
+          "origin": "found",
+          "probe": "reproduced",
+          "fixed_by": "be0c4c9",
+          "evidence": "AuthServiceUniqueViolationTest",
+          "resolved": true
+        },
+        {
+          "case": "PostgreSQL 같은 경쟁 (세부 정보 줄에 값)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "fixed_by": "be0c4c9",
+          "evidence": "AuthServiceUniqueViolationTest",
+          "resolved": true
+        },
+        {
+          "case": "completeSocialSignUp 경로",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "fixed_by": "be0c4c9",
+          "evidence": "AuthServiceUniqueViolationTest#소셜_가입_완료_INSERT_의_UNIQUE_위반은_위반한_제약으로만_가른다",
+          "resolved": true
+        },
+        {
+          "case": "Phase 4 재검토: 수정 후 이메일 값에 users(handle / ux_users_handle 포함, 영문·한글 PG 로캘, H2",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "AuthServiceUniqueViolationTest#이메일_가입_INSERT_의_UNIQUE_위반은_위반한_제약으로만_가른다 (5행)"
+        },
+        {
+          "case": "실제 H2 가 내는 메시지 형식에서 판정이 어긋남 (손으로 쓴 메시지가 실제와 다를 가능성)",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "scratchpad H2 프로브: handle 위반·email 위반·둘 다 겹침 3건이 첫 줄 ' VALUES ' 앞 'ON PUBLIC.USERS(HANDLE' 로 정확히 갈림"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "Nimbus 디코더가 JWS 마디 안의 base64url 밖 문자를 건너뛰고 읽는데, 형식 사전 검사를 공통 지점이 아니라 verifyPendingToken 한 호출부에만 넣어 verifyAccessToken 이 열려 있다",
+      "found_in_round": 3,
+      "status": "fixed",
+      "variants": [
+        {
+          "case": "accessToken 뒤에 = / == / ~ 붙임 (JwtAuthenticationFilter 정규식을 통과해 HTTP 로 도달)",
+          "origin": "found",
+          "probe": "reproduced",
+          "evidence": "TokenFormatApiTest#test_sc15",
+          "resolved": true,
+          "fixed_by": "115d0c7"
+        },
+        {
+          "case": "accessToken 뒤에 NUL·LF·공백·!·é·짝 없는 서로게이트 (provider 직접 호출)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "evidence": "JwtTokenFormatTest#test_sc16",
+          "resolved": true,
+          "fixed_by": "115d0c7"
+        },
+        {
+          "case": "accessToken 서명 마디 중간에 NUL 삽입",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "evidence": "JwtTokenFormatTest#test_sc16 (서명 마디 가운데 NUL)",
+          "resolved": true,
+          "fixed_by": "115d0c7"
+        },
+        {
+          "case": "accessToken 페이로드 마디 중간에 NUL 삽입",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "JwtTokenFormatTest#test_sc16 (페이로드 마디 가운데 NUL)"
+        },
+        {
+          "case": "pendingToken 같은 변형 전부 (끝 문자·4마디·중복 exp/typ·소수 exp)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PendingSignupApiTest#test_sc09·test_sc14 행 확장, JwtTokenFormatTest#test_sc16"
+        },
+        {
+          "case": "access 토큰 끝에 =, ==, ~, 마디 추가 (이전 라운드 재현 3건)",
+          "origin": "found",
+          "probe": "not_reproduced",
+          "fixed_by": "115d0c7",
+          "evidence": "readPayload 가 공통 앞단. TokenFormatApiTest, JwtTokenFormatTest 가 통과하고 프로브로도 재확인"
+        },
+        {
+          "case": "서명은 맞고 페이로드에 중복 키",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "scratchpad Probe: 중첩 객체 중복 키 포함 empty"
+        },
+        {
+          "case": "페이로드 뒤에 JSON 이 더 붙거나 잡문자",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "scratchpad Probe: empty (Nimbus 가 거부)"
+        },
+        {
+          "case": "헤더 중복 alg / crit 확장",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "scratchpad Probe: empty"
+        },
+        {
+          "case": "끝에 줄바꿈 (정규식 $ 앵커 우회)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "matches() 전체 일치 + JwtTokenFormatTest 의 LF 행"
+        },
+        {
+          "case": "형식 검사를 우회하는 다른 입구 (디코더 직접 호출)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "Grep: decode 호출은 JwtTokenProvider 안에만, 호출자는 JwtAuthenticationFilter 와 AuthService 두 곳"
+        },
+        {
+          "case": "base64url 마지막 글자의 미사용 비트 표기 (V11)",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "사용자가 범위 밖으로 결정"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "pendingToken: Bean Validation(@NotBlank·StrictString) + claim_schema 전수 검증. 아이디는 서버가 생성(입력 아님)",
+    "authorization": "/api/auth/social/pending permitAll — 토큰 보유자에게 그 토큰의 내용만 돌려주고 DB 를 읽지 않는다. 쓰기 가드는 다른 POST 와 동일",
+    "secrets": "해당 없음 (하드코딩된 키 없음, 테스트 JWT_SECRET 은 테스트 전용)",
+    "logging": "해당 없음 (새 로그 없음)",
+    "other": "RC-2 해소 — access·pending 공통 형식 검사. 남은 관찰: 서명된 access 토큰 sub·exp 표기 느슨함(이슈어 전용), V11 범위 밖"
+  },
+  "human_review": {
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "4a1b68789057377d38a7be895fc6c6218963a055",
+    "verified_at": "2026-11-05T00:00:00Z",
+    "method": "AskUserQuestion — HITL#3",
+    "answer": "예외 승인"
+  },
+  "observations": [
+    {
+      "case": "서명된 access 토큰의 sub·exp 표기 느슨함 (+7, 07, 120.5, BOM)",
+      "origin": "predicted",
+      "probe": "reproduced",
+      "evidence": "scratchpad Probe: 서명이 맞으면 통과한다. 이슈어만 만들 수 있어 위조 경로가 아니므로 관찰로만 남김",
+      "note": "리뷰어가 RC-2 변종 목록에 'reproduced' 로 적었으나 리뷰어 스스로 '이슈어만 만들 수 있어 위조 경로가 아니므로 관찰로만 남김'이라고 판정 — 형식 사전 검사 누락(RC-2)과 뿌리가 다르므로 결함 변종에서 분리해 여기에 둔다. HITL#3 요약에 공개"
+    }
+  ],
+  "exceptions": [
+    {
+      "item": "V11 base64url 마지막 글자 미사용 비트 표기",
+      "reason": "사용자 결정으로 범위 밖 — 회고에 별도 태스크 후보"
+    },
+    {
+      "item": "서명된 accessToken 의 sub·exp 표기 느슨함 (관찰, RC-2 변종에서 분리)",
+      "reason": "서버 키가 있어야 만들 수 있어 위조 경로 아님"
+    },
+    {
+      "item": "AuthServiceUniqueViolationTest 의 PG 메시지는 프로브에서 옮긴 문자열",
+      "reason": "실제 DB 위반은 일으키지 않음 — H2 는 리뷰어 프로브로 재확인"
+    }
+  ]
+}

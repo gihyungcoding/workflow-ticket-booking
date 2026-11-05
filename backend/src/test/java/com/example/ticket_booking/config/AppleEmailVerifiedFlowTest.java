@@ -2,6 +2,7 @@ package com.example.ticket_booking.config;
 
 import static com.example.ticket_booking.support.AuthTestHelper.payloadOf;
 import static com.example.ticket_booking.support.PendingTokenTestHelper.queryOf;
+import static com.example.ticket_booking.support.UserFixtures.fixtureHandle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -110,7 +111,15 @@ class AppleEmailVerifiedFlowTest {
   void test_rc1_운영_경로를_거친_뒤에도_email_verified_는_불리언_true_또는_정확히_문자열_true_일_때만_검증됨이다()
       throws Exception {
     // Given 제공자가 검증한 이메일로 소셜 가입을 끝낸 사용자 A(full@example.com, email_verified=true)가 있다
-    User a = userRepository.save(new User("full@example.com", null, "기존", UserRole.AUDIENCE, true));
+    User a =
+        userRepository.save(
+            new User(
+                "full@example.com",
+                null,
+                "기존",
+                UserRole.AUDIENCE,
+                true,
+                fixtureHandle("full@example.com")));
     List<Row> rows =
         List.of(
             new Row("불리언 true", true, true),

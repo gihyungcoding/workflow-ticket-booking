@@ -41,23 +41,33 @@ public class User {
   @Column(name = "email_verified", nullable = false)
   private boolean emailVerified;
 
+  /** 티켓온 아이디 — 일행에게 공유하는 값. 이메일과 무관한 무작위 「단어 + 숫자 4자리」이고 가입 뒤 바뀌지 않는다(V5, HandleGenerator). */
+  @Column(name = "handle", nullable = false, unique = true, length = 30)
+  private String handle;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
   protected User() {}
 
-  public User(String email, String passwordHash, String name, UserRole role) {
+  public User(String email, String passwordHash, String name, UserRole role, String handle) {
     this.email = email;
     this.passwordHash = passwordHash;
     this.name = name;
     this.role = role;
+    this.handle = handle;
   }
 
   /** 이메일 소유가 확인된 계정인가 — 소셜 가입 완료 시 제공자의 emailVerified 를 저장한다. */
   public User(
-      String email, String passwordHash, String name, UserRole role, boolean emailVerified) {
-    this(email, passwordHash, name, role);
+      String email,
+      String passwordHash,
+      String name,
+      UserRole role,
+      boolean emailVerified,
+      String handle) {
+    this(email, passwordHash, name, role, handle);
     this.emailVerified = emailVerified;
   }
 
@@ -83,6 +93,10 @@ public class User {
 
   public UserRole getRole() {
     return role;
+  }
+
+  public String getHandle() {
+    return handle;
   }
 
   public Instant getCreatedAt() {

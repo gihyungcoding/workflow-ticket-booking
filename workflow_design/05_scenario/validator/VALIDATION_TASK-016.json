@@ -1,0 +1,529 @@
+{
+  "task_id": "TASK-016",
+  "checks": [
+    {
+      "id": "V1",
+      "name": "MD ↔ JSON 일치",
+      "verdict": "pass",
+      "detail": "시나리오 16건(SC-01~SC-16)의 ID·순서·type·flow·covers 가 MD 와 JSON 에서 같다. Given/When/Then 문장도 일치한다. SC-08 의 표 두 개는 JSON table 에 이어 붙었고, MD 의 'And' 줄은 JSON then 에 들어 있다. 이는 source_of_truth 규칙대로다. 「시나리오로 쓰지 않은 것」 절은 JSON 에서 제외됐다. 이 절은 규칙상 제외 대상이다."
+    },
+    {
+      "id": "V2",
+      "name": "개수 하한",
+      "verdict": "pass",
+      "detail": "전체 16건이다. happy 는 SC-01·02·03·04·06·07·08·13 으로 8건, error 는 SC-05·09·10·12·14·15·16 으로 7건, regression 은 SC-11 로 1건이다."
+    },
+    {
+      "id": "V3",
+      "name": "acceptance_criteria 커버리지",
+      "verdict": "pass",
+      "detail": "기준 8건을 직접 대조했다. 기준1→SC-01·02·11. 기준2→SC-03. 기준3→SC-04·05·12. 기준4→SC-06·12. 기준5→SC-07·13. 기준6→SC-08·10. 기준7→SC-09·14. 기준8→SC-15·16. coverage.uncovered 는 []이고 total 8, covered 8 이 실제와 맞다. 참고로 SC-11 의 covers 는 기준1 이지만 본문은 409 회귀다. 매핑은 어색하지만 기준1 은 SC-01·02 가 덮는다."
+    },
+    {
+      "id": "V4",
+      "name": "flow 대응",
+      "verdict": "pass",
+      "detail": "사용된 flow 는 F1·F3·F4·F5·F6·F7 이고 모두 Plan design.flows 에 있다. F2(내 정보 조회)는 어떤 시나리오의 flow 값으로도 쓰이지 않는다. 다만 SC-01 이 GET /me 를 F1 아래에서 확인하므로 F2 의 covers 는 덮인다."
+    },
+    {
+      "id": "V5",
+      "name": "Then 관찰 가능성",
+      "verdict": "warn",
+      "detail": "SC-16 의 Then '나머지 모든 행은 검증 결과가 비어 있다'는 HTTP 입구 밖에서 내부 검증기를 직접 호출해야만 관찰된다. 노트도 이를 인정한다. SC-07 의 '제약 위반으로 실패한다'는 어떤 예외·오류인지 정하지 않아 단언이 느슨하다. SC-05·SC-12 의 'users 행 수 그대로' 같은 DB 단언은 관찰 가능하다."
+    },
+    {
+      "id": "V6",
+      "name": "When 단일성",
+      "verdict": "warn",
+      "detail": "SC-01 의 Then 안에 'login 을 하면…', 'GET /me 를 호출하면…' 이 And 로 들어 있어 실질적으로 When 이 3개다(signup, login, me). SC-06 도 complete 뒤에 GET /me 를 호출한다. SC-08 은 When(표의 시각에 호출)과 별개로 '이메일 클레임이 정규화 표의 값이면' 이라는 다른 Given 의 호출을 Then 에 붙였다. SC-07 은 Then 에 '이어서 회원을 저장하면 실패' 라는 두 번째 동작이 있다."
+    },
+    {
+      "id": "V7",
+      "name": "구현 누출",
+      "verdict": "warn",
+      "detail": "SC-16 의 When '토큰 검증에 값을 넣는다'는 내부 검증기 호출을 가리키고 Then 도 '검증 결과가 있다/비어 있다'로 구현 경계를 단언한다. SC-07 의 'V5 를 적용한다'·'Flyway'는 마이그레이션 시나리오라 불가피하다. SC-15·SC-09 의 HTTP 단언은 문제 없다."
+    },
+    {
+      "id": "V8",
+      "name": "입출력 대응",
+      "verdict": "pass",
+      "detail": "모든 시나리오가 Plan inputs(email·pendingToken·기존 users 행·Clock·RandomGenerator·accessToken)와 outputs(handle·PendingSignupResponse·401·503·400·UNAUTHORIZED) 범위 안이다. SC-14·SC-16 이 쓰는 /social/complete 와 accessToken 도 Plan inputs 에 있다."
+    },
+    {
+      "id": "V9",
+      "name": "중복",
+      "verdict": "warn",
+      "detail": "SC-16 의 pendingToken 절반은 SC-09·SC-14 의 끝 문자·4마디·중복 키·마디 중간 NUL 행과 같은 verifyPendingToken 경로다. 시나리오 노트도 중복을 인정한다. accessToken 쪽은 SC-15(HTTP 로 닿는 =,==,~,.abc)와 SC-16 이 같은 verifyAccessToken 경로를 일부 겹쳐 탄다. SC-16 은 내부 직접 호출이라는 점에서 구분되므로 치명적이지는 않다."
+    },
+    {
+      "id": "V10",
+      "name": "회귀 누락",
+      "verdict": "pass",
+      "detail": "기존 파일(AuthService·UserResponse·JwtTokenProvider·AuthController)을 수정하는 태스크이고 regression 시나리오 SC-11(이메일 409·기존 handle 불변)이 있다. 기존 로그인·내 정보 흐름은 SC-01 이, 정상 pendingToken 의 /social/complete 는 SC-06 이, 정상 accessToken 인증은 SC-15 의 't 그대로 200' 행이 지킨다."
+    },
+    {
+      "id": "V11",
+      "name": "입력 경계값",
+      "verdict": "warn",
+      "detail": "행렬을 필드×흐름×§2-1 행으로 끝까지 채웠다. Plan 이 규칙으로 명시한 칸은 전부 covered 이거나 사유가 있는 n/a 라서 fail 로 판정하지는 않았다. 다만 RC-2 의 같은 부류에서 경계에 있는 칸 둘을 warn 으로 남긴다. (1) 마디 안에 섞이는 '화면에 보이는' 문자다. accessToken 의 마디 중간 =·~ 는 헤더 정규식을 통과해 HTTP 로 닿는다. 그런데 SC-15 는 끝에 붙이는 경우만, SC-09·SC-16 은 마디 중간에 NUL 만 대표로 넣는다. Plan 기준8 은 '마디 안에 섞이면 거부'를 명시하지만 request_string 은 앞뒤 문자만 실제 입구에서 확인하도록 좁혀 놓았다. (2) 'base64url 로는 유효하지만 같은 바이트로 디코딩되는 다른 표기', 즉 서명·페이로드 마지막 글자의 미사용 비트를 바꾼 토큰이다. 'same token 의 다른 문자열 표기'라는 기준8 의 문구에 해당하는데 시나리오에 없다. 두 칸은 verify RC-2 변종 목록에는 없고 predicted 수준이다. 작성자는 판단해 달라는 의미로 둔다."
+    },
+    {
+      "id": "RC2",
+      "name": "참고: VERIFY RC-2 변종 이관 확인",
+      "verdict": "pass",
+      "detail": "RC-2 변종 5개를 모두 시나리오가 가져왔다. 변종1(accessToken 끝에 =,==,~ 를 HTTP 로)은 SC-15 로 덮는다. 변종2(NUL·LF·공백·!·é·서로게이트를 끝에 붙임)는 SC-16 이다. 변종3(서명 마디 중간 NUL)과 변종4(페이로드 마디 중간 NUL)도 SC-16 이다. 변종5(pendingToken 의 같은 변형과 중복 exp/typ·소수 exp)는 SC-09·SC-14·SC-16 이 덮는다. accessToken 의 중복 키도 SC-16 이 포함한다."
+    }
+  ],
+  "v11_matrix": [
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F5 /social/pending",
+      "row": "문자열 빈 값·공백만",
+      "state": "covered",
+      "by": [
+        "SC-10"
+      ]
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F5",
+      "row": "필수 필드 누락·null",
+      "state": "covered",
+      "by": [
+        "SC-10"
+      ]
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F5",
+      "row": "비문자열(숫자·객체·배열·불리언)",
+      "state": "covered",
+      "by": [
+        "SC-10"
+      ]
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F5",
+      "row": "본문 비어 있음·JSON 아님",
+      "state": "covered",
+      "by": [
+        "SC-10"
+      ]
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F5",
+      "row": "문자열 최대 길이+1",
+      "state": "n/a",
+      "reason": "Plan 이 길이 상한을 두지 않기로 명시. SC-09 의 8,192자 행이 서명 단계 거부를 확인"
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F5/F6",
+      "row": "NUL·짝 없는 서로게이트",
+      "state": "covered",
+      "by": [
+        "SC-09"
+      ]
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F5/F6",
+      "row": "끝·앞 문자 변형(=,==,~,!,공백,LF,é)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-16"
+      ]
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F6 /social/complete",
+      "row": "클레임·토큰 형식 변형 전체",
+      "state": "covered",
+      "by": [
+        "SC-14"
+      ]
+    },
+    {
+      "field": "pendingToken(요청)",
+      "flow": "F6 /social/complete",
+      "row": "요청 본문 형식(400)",
+      "state": "n/a",
+      "reason": "변경 없는 기존 입력, TASK-011 SC-11 이 지킴 — 시나리오 문서에 사유 명시"
+    },
+    {
+      "field": "pendingToken(토큰 구조)",
+      "flow": "F6/F7",
+      "row": "마디 넷·끝 문자·중복 키(exp·typ)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14",
+        "SC-16"
+      ]
+    },
+    {
+      "field": "pendingToken(토큰 구조)",
+      "flow": "F6/F7",
+      "row": "마디 중간 NUL (페이로드·서명)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14",
+        "SC-16"
+      ]
+    },
+    {
+      "field": "pendingToken(토큰 구조)",
+      "flow": "F7",
+      "row": "마디 중간에 보이는 문자(=·~·! 등)",
+      "state": "missing",
+      "reason": "NUL 이 대표. Plan request_string 은 앞뒤 문자만 요구하므로 경고 수준"
+    },
+    {
+      "field": "pendingToken(토큰 구조)",
+      "flow": "F7",
+      "row": "표기 변형 — base64url 마지막 글자 미사용 비트 변경",
+      "state": "missing",
+      "reason": "기준8 '같은 토큰의 다른 문자열 표기'에 해당하나 시나리오에 없음. 경고 수준"
+    },
+    {
+      "field": "typ",
+      "flow": "F6",
+      "row": "누락·null·빈·공백만",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "typ",
+      "flow": "F6",
+      "row": "타입 다름(숫자·객체·배열·불리언)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "typ",
+      "flow": "F6",
+      "row": "NUL·짝 없는 서로게이트",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "typ",
+      "flow": "F6",
+      "row": "열거 밖(access·PENDING)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "typ",
+      "flow": "F6",
+      "row": "길이 상한",
+      "state": "n/a",
+      "reason": "값이 하나로 정해져 있음"
+    },
+    {
+      "field": "exp",
+      "flow": "F6",
+      "row": "누락·null·빈·공백만·타입 다름",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "exp",
+      "flow": "F6",
+      "row": "소수·정수값의 소수 표기·지수 표기",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "exp",
+      "flow": "F6",
+      "row": "상한+1(T+301)·0·음수",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "exp",
+      "flow": "F6",
+      "row": "Instant·long 범위 초과(양·음)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "exp",
+      "flow": "F5/F6",
+      "row": "now==exp 경계 (두 입구)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "exp",
+      "flow": "F5",
+      "row": "exp==now+300 (유효 상한) 와 만료 1초 전",
+      "state": "covered",
+      "by": [
+        "SC-08"
+      ]
+    },
+    {
+      "field": "exp",
+      "flow": "F6",
+      "row": "NUL·서로게이트",
+      "state": "n/a",
+      "reason": "숫자 타입에는 없음"
+    },
+    {
+      "field": "email",
+      "flow": "F5/F6",
+      "row": "누락·null·빈·공백만·타입 다름·NUL·서로게이트",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "email",
+      "flow": "F5/F6",
+      "row": "정규화 후 256자(3가지 변형)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "email",
+      "flow": "F5/F6",
+      "row": "형식 밖(@ 없음·두 개·앞뒤 빔·내부 공백·NBSP·서식 문자)",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "email",
+      "flow": "F5",
+      "row": "정규화(trim·대문자)·255자 최대 유효값",
+      "state": "covered",
+      "by": [
+        "SC-08"
+      ]
+    },
+    {
+      "field": "name",
+      "flow": "F5/F6",
+      "row": "누락·null·빈·공백만·타입 다름·NUL·서로게이트·101자",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "name",
+      "flow": "F6",
+      "row": "형식·열거 밖",
+      "state": "n/a",
+      "reason": "형식 규칙 없음(Plan)"
+    },
+    {
+      "field": "provider",
+      "flow": "F5/F6",
+      "row": "누락·null·빈·공백만·타입 다름·NUL·서로게이트",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "provider",
+      "flow": "F6",
+      "row": "정의 밖 FOO·소문자 kakao",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "provider",
+      "flow": "F5",
+      "row": "정의된 값 각각(KAKAO·NAVER·GOOGLE·APPLE)",
+      "state": "covered",
+      "by": [
+        "SC-08"
+      ]
+    },
+    {
+      "field": "providerUserId",
+      "flow": "F5/F6",
+      "row": "누락·null·빈·공백만·타입 다름·NUL·서로게이트·256자",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "emailVerified",
+      "flow": "F5/F6",
+      "row": "누락·null·빈 문자열·공백만·문자열 true/TRUE·숫자·객체·배열",
+      "state": "covered",
+      "by": [
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "accessToken",
+      "flow": "F7 GET /me",
+      "row": "끝 =·==·~ 붙임, 마디 넷 (HTTP 입구)",
+      "state": "covered",
+      "by": [
+        "SC-15"
+      ]
+    },
+    {
+      "field": "accessToken",
+      "flow": "F7",
+      "row": "끝에 !·공백·LF·NUL·é·서로게이트, 마디 중간 NUL, 중복 exp·typ",
+      "state": "covered",
+      "by": [
+        "SC-16"
+      ]
+    },
+    {
+      "field": "accessToken",
+      "flow": "F7",
+      "row": "마디 중간에 HTTP 로 닿는 문자(=·~)",
+      "state": "missing",
+      "reason": "SC-15 는 끝에만 붙이고 SC-16 은 NUL 만 사용. 경고 수준"
+    },
+    {
+      "field": "accessToken",
+      "flow": "F7",
+      "row": "표기 변형 — 마지막 글자 미사용 비트 변경",
+      "state": "missing",
+      "reason": "경고 수준"
+    },
+    {
+      "field": "accessToken",
+      "flow": "F2/기존",
+      "row": "Authorization 헤더 부재·빈 값·Bearer 대소문자·접두 일치",
+      "state": "n/a",
+      "reason": "Plan 이 TASK-009 AuthApiTest SC-10·11 에 위임했고 시나리오 문서에도 사유 명시"
+    },
+    {
+      "field": "email(가입)",
+      "flow": "F1",
+      "row": "handle 생성에 불사용 / 정규화 중복",
+      "state": "covered",
+      "by": [
+        "SC-03",
+        "SC-11"
+      ]
+    },
+    {
+      "field": "email(가입)",
+      "flow": "F1",
+      "row": "문자열 필드 전수(NUL 등)·길이",
+      "state": "n/a",
+      "reason": "변경 없는 기존 입력(TASK-009 가 지킴), 이 태스크의 새 입력 아님"
+    },
+    {
+      "field": "RandomGenerator",
+      "flow": "F1/F3",
+      "row": "단어 인덱스 0·31, 숫자 0·9999, 0 채움",
+      "state": "covered",
+      "by": [
+        "SC-02"
+      ]
+    },
+    {
+      "field": "RandomGenerator",
+      "flow": "F1/F3",
+      "row": "겹침 9번 후 성공 / 10번 실패",
+      "state": "covered",
+      "by": [
+        "SC-04",
+        "SC-05",
+        "SC-12"
+      ]
+    },
+    {
+      "field": "Clock",
+      "flow": "F5/F6",
+      "row": "now==경계, 같은 비교를 하는 입구마다",
+      "state": "covered",
+      "by": [
+        "SC-08",
+        "SC-09",
+        "SC-14"
+      ]
+    },
+    {
+      "field": "기존 users 행",
+      "flow": "F4",
+      "row": "소셜(비밀번호 해시 없음)·단어 닮은 이메일·짧은 로컬·비ASCII 이메일",
+      "state": "covered",
+      "by": [
+        "SC-07"
+      ]
+    },
+    {
+      "field": "기존 users 행",
+      "flow": "F4",
+      "row": "빈 테이블",
+      "state": "covered",
+      "by": [
+        "SC-13"
+      ]
+    },
+    {
+      "field": "기존 users 행",
+      "flow": "F4",
+      "row": "마이그레이션 중 무작위 충돌 재시도",
+      "state": "n/a",
+      "reason": "32만 공간으로 결정적 재현 불가 — 시나리오 문서에 사유 명시, Phase 4 리뷰로 위임"
+    }
+  ],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 5,
+    "summary": "구조·커버리지·flow 대응은 충족한다. 기준 8건 모두 대응되고, VERIFY RC-2 의 변종 5개를 SC-15·SC-16 이 전부 가져왔다. 경고는 5건이다. (1) V5: SC-16 은 내부 검증기 직접 호출로만 관찰되고, SC-07 의 '제약 위반' 단언이 느슨하다. (2) V6: SC-01·SC-06 의 Then 에 login·GET /me 호출이 섞여 When 이 여럿이고, SC-07·SC-08 도 Then 에 별개 동작이 붙었다. (3) V7: SC-16 의 When·Then 이 내부 검증 경계를 가리킨다. (4) V9: SC-16 이 SC-09·SC-14 및 SC-15 와 일부 겹친다. (5) V11: 마디 안에 섞이는 보이는 문자(=·~ 등, accessToken 은 HTTP 로 닿음)와 base64url 마지막 글자 미사용 비트 변경이라는 '같은 토큰의 다른 문자열 표기'가 시나리오에 없다. Plan 이 명시한 칸은 아니어서 fail 로 올리지 않았다. 다만 Phase 4 가 같은 부류로 다시 FAIL 날 수 있는 위험이 있으니 사람이 판단해야 한다."
+  }
+}
