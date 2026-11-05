@@ -41,3 +41,6 @@ attempts:
     result: FAIL
     fail: ["V11 — Field.label 무효, Field.error·AppBar.title·Badge 긴 문구, AppBar.title 빈·공백"]
     fix: "PLAN prop_schema 에 길이 규칙(Field.error 줄바꿈, AppBar.title 줄바꿈·버튼 칸 불침범, Badge nowrap+말줄임)과 label·title 무효 규칙. SC-18 추가. SC-13 App 행 기대값을 구체 문구로(V5). 같은 종류 대조: 사람이 넣는 문구 prop 은 Toast.message·Field.label·Field.error·AppBar.title·Badge.children·CtaBar label — CtaBar label 은 고정 문구라 시안 문구만"
+  - round: "롤백 후 3"
+    result: FAIL (missing 1칸 — StatusBadge 공백만)
+    fix: "SC-05 표에 공백만 행. 사용자 예외 승인(2026-11-05, AskUserQuestion: '예외 승인 — 한 칸 채우고 4회차 검증')으로 재시도 상한 초과 후 같은 Phase 에서 4회차 — PLAN 변경 없음"

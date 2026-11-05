@@ -85,6 +85,7 @@ flow: F5
 |---|
 | 정의 밖 `POSTPONED` |
 | 빈 문자열 `` |
+| 공백만 `   ` |
 | `null` |
 | `undefined` |
 
