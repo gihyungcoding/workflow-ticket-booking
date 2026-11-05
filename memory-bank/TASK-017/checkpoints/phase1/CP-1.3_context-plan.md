@@ -14,5 +14,10 @@ decisions:
   - decision: "AppHeader 교체는 범위 밖(AC 에 없음) — AppBar 부품만"
     rationale: "MUST 6 범위 확장 금지"
 
-attempts: []
+attempts:
+  - round: 1
+    type: ROLLBACK_PLAN
+    escalated_from: RETRY_SCENARIO
+    reason: "2a 3회 V11 FAIL — prop 스키마 표 부재"
+    fix: "design.prop_schema (부품 7종 × prop 경계 규칙)"
 ---

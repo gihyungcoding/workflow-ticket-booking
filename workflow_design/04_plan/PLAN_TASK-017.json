@@ -200,7 +200,116 @@
           "기존 화면(목록·상세·공연 등록·수정) 테스트가 새 배지 문구로 고친 뒤 모두 통과한다"
         ]
       }
-    ]
+    ],
+    "prop_schema": {
+      "note": "부품이 받는 값마다 타입과 경계 처리. 시나리오는 이 표의 칸을 전부 대본다. '무효' = 빈 문자열·공백만·null·undefined",
+      "components": [
+        {
+          "component": "StatusBadge",
+          "prop": "status",
+          "type": "PerformanceStatus | string | null | undefined",
+          "rules": [
+            "다섯 값 → design.md §5 뜻·문구·tone",
+            "정의 밖 문자열·무효 → 아무것도 그리지 않고 예외도 내지 않는다"
+          ]
+        },
+        {
+          "component": "Badge",
+          "prop": "tone",
+          "type": "'brand'|'info'|'danger'|'warning'|'success'|'neutral'",
+          "rules": [
+            "여섯 값만(TS 타입). 정의 밖은 컴파일 단계에서 막힌다"
+          ]
+        },
+        {
+          "component": "Badge",
+          "prop": "children(문구)",
+          "type": "string | null | undefined",
+          "rules": [
+            "무효 → 그리지 않는다"
+          ]
+        },
+        {
+          "component": "Toast",
+          "prop": "message",
+          "type": "string | null | undefined",
+          "rules": [
+            "유효 → 표시하고 2,500ms 뒤 사라지며 onClose 1회",
+            "무효 → 표시하지 않고 타이머도 onClose 도 없다",
+            "유효→다른 유효 → 문구 교체, 2,500ms 새로 센다",
+            "유효→같은 문구로 다시 렌더 → 타이머를 다시 시작하지 않는다",
+            "유효→무효 → 즉시 사라지고 타이머 정리, onClose 1회",
+            "무효→유효 → 표시, 2,500ms 뒤 사라지고 onClose 1회",
+            "사라지기 전 언마운트 → 타이머 정리, onClose 없음",
+            "onClose 를 주지 않아도 예외 없이 사라진다",
+            "긴 문구 → 줄을 바꿔 375px 안"
+          ]
+        },
+        {
+          "component": "Field",
+          "prop": "error",
+          "type": "string | null | undefined",
+          "rules": [
+            "유효 → 오류 모양(테두리·바탕 위험색) + 아이콘(aria-hidden) + aria-invalid=true + aria-describedby→문구",
+            "무효 → 오류 모양·아이콘·aria-invalid·aria-describedby 모두 없다",
+            "유효↔무효 전환 시 위 상태가 따라 바뀐다"
+          ]
+        },
+        {
+          "component": "Field",
+          "prop": "label",
+          "type": "string",
+          "rules": [
+            "입력과 label 이 연결된다(getByLabelText 로 찾힌다)"
+          ]
+        },
+        {
+          "component": "Sheet",
+          "prop": "open",
+          "type": "boolean",
+          "rules": [
+            "true → 그린다, false → 그리지 않는다"
+          ]
+        },
+        {
+          "component": "Sheet",
+          "prop": "onClose",
+          "type": "() => void | undefined",
+          "rules": [
+            "열린 상태에서 배경 누름·Esc → 1회씩",
+            "시트 안쪽 누름 → 0회",
+            "닫힌 뒤(open=false)·언마운트 뒤 Esc → 0회 (리스너 정리)",
+            "onClose 를 주지 않으면 배경·Esc 에 예외 없음"
+          ]
+        },
+        {
+          "component": "AppBar",
+          "prop": "onBack",
+          "type": "() => void | undefined",
+          "rules": [
+            "있으면 aria-label='뒤로' 버튼, 누르면 1회",
+            "없으면 뒤로 버튼을 그리지 않는다(제목 위치는 그대로 가운데)"
+          ]
+        },
+        {
+          "component": "AppBar",
+          "prop": "title",
+          "type": "string | undefined",
+          "rules": [
+            "h1 로 가운데. 없으면 빈 제목 영역(레이아웃 유지)"
+          ]
+        },
+        {
+          "component": "CtaBar",
+          "prop": "disabled",
+          "type": "boolean | undefined",
+          "rules": [
+            "true → 버튼 disabled, 누름 무시, 비활성 색(--c-disabled-bg·--c-text-disabled)",
+            "false/undefined → 주 버튼 색, 누르면 onClick 1회"
+          ]
+        }
+      ]
+    }
   },
   "architecture_refs": {
     "layer": "Frontend (theme/, components/ui/)",
@@ -347,5 +456,15 @@
     "framework": "Vitest + Testing Library + jsdom (ADR-0007)",
     "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npm test",
     "mock_strategy": "토큰 대조는 node fs 로 docs/product/design-tokens.css 를 읽어 파싱. 토스트는 vi.useFakeTimers. 서체 로드·375px 가로 넘침·가운데 정렬은 jsdom 이 레이아웃을 계산하지 않아 Phase 4 화면 확인(브라우저)으로 증거를 남긴다 — 시나리오에 '화면 확인' 으로 표시"
+  },
+  "reject": {
+    "type": "ROLLBACK_PLAN",
+    "escalated_from": "RETRY_SCENARIO",
+    "attempt": 1,
+    "reason_code": "COVERAGE_INSUFFICIENT",
+    "reason": "2a 독립검증 3회 V11 FAIL — 회차마다 부품 prop 의 다른 칸(null·undefined·전환·정리)이 지적됨. 원인: PLAN 에 부품 prop 스키마 표가 없었다",
+    "fixed": "design.prop_schema 추가",
+    "date": "2026-11-05",
+    "decided_by": "사용자 (AskUserQuestion: Phase 1 롤백 1/2)"
   }
 }

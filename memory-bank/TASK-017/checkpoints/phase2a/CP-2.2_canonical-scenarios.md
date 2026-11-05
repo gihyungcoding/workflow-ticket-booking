@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-05T02:30:00Z
-summary: "SCENARIO_TASK-017 15건. 1회차 V11 FAIL → SC-14·15 추가, 2회차 검증 대기."
+summary: "Phase 1 롤백 1/2(prop_schema) 후 16건. 롤백 후 1회차 검증 대기."
 
 next_steps:
   - "scenario-validator 독립검증"
@@ -29,3 +29,7 @@ attempts:
     result: FAIL
     fail: ["V11 — Field 오류 공백만, 토스트 표시 중 빈 문구 전환, 빈 문구의 onClose"]
     fix: "SC-07 에 onClose 미호출, SC-14 에 빈 문구·공백 전환 2행, SC-15 에 Field 공백만·Sheet 배경/Esc/안쪽 클릭. 경고 반영: PLAN 에 정의 밖 상태값·Sheet 닫기 규칙(V8), SC-13 을 목록+상세 표로·메타 Then 제거(V5·V10), Field 아이콘 aria-hidden 단언(V5), 기존 테스트 기대값 교체·화면 확인 증거 방법을 「쓰지 않은 것」에(V5). 같은 종류 대조: 켬→꺼짐 부품은 Field·Toast·Sheet 셋"
+  - round: 3
+    result: FAIL → Phase 1 롤백 1/2 (사용자 결정)
+    fail: ["V11 — StatusBadge·Toast·Field null/undefined, Toast 빈→유효, Sheet 닫힌 뒤·언마운트 뒤 Esc"]
+    fix: "PLAN design.prop_schema. SC-05·07 을 표(정의 밖·빈·null·undefined)로, SC-13 에 공연 수정 화면, SC-16(prop_schema 잔여 칸 전수: Toast 무효→유효·같은 문구 재렌더·onClose 없음, Field null/undefined→유효·label, Sheet 닫힌 뒤/언마운트 뒤 Esc·onClose 없음, AppBar onBack/title 없음, CtaBar disabled, Badge 빈 문구). 검증 회차는 롤백 후 1회차부터"

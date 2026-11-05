@@ -78,8 +78,16 @@ flow: F5
 
 ## SC-05 (error) 알 수 없는 상태값이면 배지를 그리지 않는다
 
-- **Given** 서버가 정의 밖 상태 `POSTPONED` 를 돌려줬다
-- **When** 그 값으로 StatusBadge 를 그린다
+- **Given** 서버가 아래 표의 상태값을 돌려줬다
+- **When** 그 값으로 StatusBadge 를 그린다 (행마다)
+
+| 상태값 |
+|---|
+| 정의 밖 `POSTPONED` |
+| 빈 문자열 `` |
+| `null` |
+| `undefined` |
+
 - **Then** 렌더가 예외 없이 끝나고 그린 영역이 비어 있다 (PLAN inputs PerformanceStatus 의 정의 밖 값 규칙)
 
 covers: 상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색)
@@ -99,7 +107,15 @@ flow: F6
 ## SC-07 (error) 빈 문구로는 토스트가 뜨지 않는다
 
 - **Given** 가짜 타이머를 켰다
-- **When** 문구 `` 또는 공백만(`   `)으로 Toast 를 연다
+- **When** 아래 표의 문구로 Toast 를 연다 (행마다)
+
+| 문구 |
+|---|
+| `` (빈 문자열) |
+| 공백만 `   ` |
+| `null` |
+| `undefined` |
+
 - **Then** role=status 영역에 보이는 문구가 없다
 - **And** 5,000ms 가 지나도 닫힘 콜백이 불리지 않는다
 
@@ -183,6 +199,7 @@ flow: F4
 |---|---|---|
 | 공연 목록 | 상태별 공연 다섯 개(OPEN·UPCOMING·SOLD_OUT·CLOSED·CANCELLED) | `예매 가능` `예정` `매진` `마감` `공연 취소` 배지가 각각 하나씩, 옛 문구 없음 |
 | 공연 상세 | OPEN 공연 하나 | `예매 가능` 배지 하나, 옛 문구 없음, 공연명이 보인다 |
+| 공연 수정 | 주최자 소유 UPCOMING 공연 하나 | `예정` 배지 하나, 옛 문구 없음 |
 
 - **And** 두 화면 모두 렌더 중 예외가 없다
 
@@ -225,6 +242,36 @@ flow: F6
 
 covers: 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)
 flow: F2
+
+## SC-16 (error) 부품 prop 의 경계값과 전환·정리가 PLAN prop_schema 대로다
+
+PLAN `design.prop_schema` 의 칸 중 SC-03~SC-15 가 덮지 않은 것을 모두 대본다. 행마다 새로 그린다.
+
+- **Given** 새 테마를 적용했고 가짜 타이머를 켰다
+- **When** 아래 표의 부품·입력·동작을 실행한다
+- **Then** 결과가 표와 같다
+
+| 부품 | 입력·동작 | 결과 |
+|---|---|---|
+| Toast | 빈 문구로 연다 → 1,000ms → 문구 A 로 바꾼다 → 2,499ms | 문구 A 가 보이고 닫힘 콜백 0회 |
+| Toast | 위에 이어 1ms 더 | 사라지고 닫힘 콜백 1회 |
+| Toast | `null` 로 연다 → 문구 A 로 바꾼다 → 2,500ms | 사라지고 닫힘 콜백 1회 |
+| Toast | 문구 A 로 연다 → 2,000ms → 같은 문구 A 로 다시 그린다 → 500ms | 사라지고 닫힘 콜백 1회 (타이머를 다시 시작하지 않았다) |
+| Toast | 닫힘 콜백 없이 문구 A 로 연다 → 2,500ms | 예외 없이 사라진다 |
+| Field | 오류 `null` | 오류 모양·아이콘·`aria-invalid`·`aria-describedby` 없음 |
+| Field | 오류 `undefined` → 오류 `이메일을 입력해 주세요` | 오류 모양·아이콘·`aria-invalid="true"`·`aria-describedby` 가 생긴다 |
+| Field | label `이메일` | 그 label 로 입력이 찾힌다 |
+| Sheet | 열고 닫힘 콜백을 준 뒤 닫는다(open=false) → Esc | 닫힘 콜백 0회 |
+| Sheet | 열고 닫힘 콜백을 준 뒤 언마운트 → Esc | 닫힘 콜백 0회 |
+| Sheet | 닫힘 콜백 없이 열고 → 배경 누름 → Esc | 예외 없음 |
+| AppBar | 뒤로 콜백 없이 제목 `예매 확인` | 뒤로 버튼이 없고 제목이 h1 으로 있다 |
+| AppBar | 제목 없이 뒤로 콜백만 | 뒤로 버튼이 있고 h1 의 글자가 비어 있다 |
+| CtaBar | disabled 로 `가입하기` → 누른다 | 버튼이 disabled, 클릭 콜백 0회, 바탕 `#E5E6ED`·글자 `#9E9FA4` |
+| CtaBar | disabled 없이 `가입하기` → 누른다 | 클릭 콜백 1회 |
+| Badge | 문구 `` / 공백만 / `null` / `undefined` (tone brand) | 배지를 그리지 않는다 |
+
+covers: `data-stay` 에 해당하는 토스트 부품이 문구를 띄우고 스스로 사라진다; 상태 배지가 design.md §5 의 6가지 뜻·문구·클래스로만 나온다 (예매 가능·예정·매진·마감·입금 대기·예매 확정, 공연 취소는 마감과 같은 회색); 테마 밖 색상 리터럴·매직 치수가 없다 (`check_architecture.py` DESIGN-001·002 통과, 003 위반 신규 0)
+flow: F2, F5, F6
 
 ---
 
