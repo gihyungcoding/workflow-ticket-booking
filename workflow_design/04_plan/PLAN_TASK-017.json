@@ -68,7 +68,7 @@
       {
         "name": "전역 토큰 CSS 변수",
         "type": "GlobalStyles",
-        "description": ":root 에 --c-*·--fs-*·--page-x 등 같은 이름의 CSS 변수를 tokens.ts 에서 주입 — 부품이 out/components.css 와 같은 var() 를 쓴다. body 바탕·서체·자간·한국어 줄바꿈"
+        "description": ":root 에 같은 이름의 CSS 변수를 tokens.ts 에서 주입(시안 HTML·브라우저 디버깅과 대조용) + body 바탕·서체·자간·한국어 줄바꿈 + #root 한 열. 부품 자체는 테마의 실제 값(theme.tokens)으로 그린다 — jsdom 이 var() 를 계산하지 않아 테스트가 구체 값을 확인할 수 있게"
       },
       {
         "name": "공통 부품",
