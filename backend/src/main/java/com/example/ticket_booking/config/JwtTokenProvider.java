@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -43,13 +44,15 @@ public class JwtTokenProvider {
   private static final int MIN_SECRET_BYTES = 32;
 
   /**
-   * JWS 압축 직렬화 — base64url 세 마디. 디코더는 마디 안의 base64url 밖 문자(NUL·짝 없는 서로게이트 등)를 건너뛰고 읽어서, 정상 토큰 뒤에
-   * 문자를 붙여도 통과했다(TASK-016 SC-14). 디코더에 넘기기 전에 형식을 먼저 본다.
+   * JWS 압축 직렬화 — base64url 세 마디. 디코더는 마디 안의 base64url 밖 문자(NUL·짝 없는 서로게이트·= 등)를 건너뛰고 읽어서, 정상 토큰 뒤에
+   * 문자를 붙여도 통과했다(TASK-016 SC-14·RC-2). 디코더에 넘기기 전에 형식을 먼저 본다 — accessToken·pendingToken 공통.
    */
   private static final Pattern COMPACT_JWS =
       Pattern.compile("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
 
-  private static final ObjectMapper PAYLOAD_READER = JsonMapper.builder().build();
+  /** 페이로드에 같은 키가 두 번 있으면 읽기에서 실패한다 — 파서마다 어느 쪽 값을 쓰는지가 달라 판정이 갈리는 것을 막는다. */
+  private static final ObjectMapper PAYLOAD_READER =
+      JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
 
   private final JwtEncoder encoder;
   private final JwtDecoder decoder;
@@ -109,6 +112,9 @@ public class JwtTokenProvider {
 
   /** 서명·만료·용도(typ=access)가 모두 유효하면 사용자 id 를, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. */
   public Optional<Long> verifyAccessToken(String token) {
+    if (readPayload(token) == null) {
+      return Optional.empty();
+    }
     try {
       Jwt jwt = decoder.decode(token);
       return Optional.of(Long.parseLong(jwt.getSubject()));
@@ -154,7 +160,8 @@ public class JwtTokenProvider {
    * 같은 규칙(SocialInputRules)을 다시 거친다 — 키가 새거나 발급 쪽에 결함이 있어도 규칙 밖의 값이 DB 에 닿지 않는다.
    */
   public Optional<PendingSignup> verifyPendingToken(String token) {
-    if (token == null || !COMPACT_JWS.matcher(token).matches() || !hasWholeSecondsExp(token)) {
+    JsonNode payload = readPayload(token);
+    if (payload == null || !hasWholeSecondsExp(payload)) {
       return Optional.empty();
     }
     try {
@@ -190,17 +197,29 @@ public class JwtTokenProvider {
   }
 
   /**
-   * exp 가 정수 초인지 페이로드 원문에서 본다. 디코더는 소수(120.5)를 정수로 잘라 읽고, long 범위를 넘는 값도 다른 값으로 바꿔 읽어서 변환 뒤에는 구별할 수
-   * 없다. 페이로드를 읽지 못하면 false — 디코더에 넘기지 않고 거부한다.
+   * 디코더에 넘기기 전의 공통 형식 검사 — 압축 JWS 세 마디이고 페이로드가 중복 키 없는 JSON 객체면 그 페이로드를, 아니면 null 을 돌려준다.
+   * accessToken 과 pendingToken 이 같은 지점을 지나야 한쪽에만 구멍이 남지 않는다(TASK-016 RC-2).
    */
-  private static boolean hasWholeSecondsExp(String token) {
+  private static JsonNode readPayload(String token) {
+    if (token == null || !COMPACT_JWS.matcher(token).matches()) {
+      return null;
+    }
     try {
       String payload = token.substring(token.indexOf('.') + 1, token.lastIndexOf('.'));
-      JsonNode exp = PAYLOAD_READER.readTree(Base64.getUrlDecoder().decode(payload)).get("exp");
-      return exp != null && exp.isIntegralNumber() && exp.canConvertToLong();
+      JsonNode node = PAYLOAD_READER.readTree(Base64.getUrlDecoder().decode(payload));
+      return node != null && node.isObject() ? node : null;
     } catch (RuntimeException unreadable) {
-      return false;
+      return null;
     }
+  }
+
+  /**
+   * exp 가 정수 초인지 페이로드 원문에서 본다. 디코더는 소수(120.5)를 정수로 잘라 읽고, long 범위를 넘는 값도 다른 값으로 바꿔 읽어서 변환 뒤에는 구별할 수
+   * 없다.
+   */
+  private static boolean hasWholeSecondsExp(JsonNode payload) {
+    JsonNode exp = payload.get("exp");
+    return exp != null && exp.isIntegralNumber() && exp.canConvertToLong();
   }
 
   /**
