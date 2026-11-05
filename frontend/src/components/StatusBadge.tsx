@@ -1,23 +1,18 @@
-import Chip from '@mui/material/Chip'
-import type { ChipProps } from '@mui/material/Chip'
 import type { PerformanceStatus } from '../api/performances'
+import { Badge } from './ui'
+import type { BadgeTone } from './ui'
 
-const STATUS_LABEL: Record<PerformanceStatus, string> = {
-  UPCOMING: '예매예정',
-  OPEN: '예매가능',
-  SOLD_OUT: '매진',
-  CLOSED: '예매마감',
-  CANCELLED: '공연취소',
-}
-
-const STATUS_COLOR: Record<PerformanceStatus, ChipProps['color']> = {
-  UPCOMING: 'info',
-  OPEN: 'success',
-  SOLD_OUT: 'warning',
-  CLOSED: 'default',
-  CANCELLED: 'error',
+// 같은 뜻은 어느 화면에서나 같은 말·같은 색 (design.md §5)
+const STATUS_BADGE: Record<PerformanceStatus, [string, BadgeTone]> = {
+  OPEN: ['예매 가능', 'brand'],
+  UPCOMING: ['예정', 'info'],
+  SOLD_OUT: ['매진', 'danger'],
+  CLOSED: ['마감', 'neutral'],
+  CANCELLED: ['공연 취소', 'neutral'],
 }
 
 export function StatusBadge({ status }: { status: PerformanceStatus }) {
-  return <Chip label={STATUS_LABEL[status]} color={STATUS_COLOR[status]} size="small" />
+  const badge = Object.hasOwn(STATUS_BADGE, status) ? STATUS_BADGE[status] : undefined
+  if (!badge) return null
+  return <Badge tone={badge[1]}>{badge[0]}</Badge>
 }
