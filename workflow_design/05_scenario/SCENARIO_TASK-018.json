@@ -221,13 +221,18 @@
             "요청 본문 `email` 은 `a@b.com`, `password` 는 `pass\\u0000word` 그대로"
           ],
           [
+            "`a\\u0000@b.com` (NUL)",
+            "`password1`",
+            "본문 `email` 이 `a\\u0000@b.com` 그대로"
+          ],
+          [
             "`a\\uDC00@b.com` (짝 없는 서로게이트)",
             "`\\uD800abcdefgh`",
             "본문 두 값이 그대로"
           ],
           [
-            "`café@b.com` (NFD)",
-            "`é` × 40 (80 유닛)",
+            "`cafe\\u0301@b.com` (NFD, 조합 기호 사용)",
+            "`e` + `\\u0301`(조합 기호) 쌍 × 40 (80 유닛)",
             "본문 두 값이 그대로 — 정규화·길이 검사 없음"
           ]
         ]
@@ -361,7 +366,7 @@
       ],
       "flow": "F3",
       "notes": [
-        "경계 안쪽 짝: 비밀번호 `pass1234`(8자)·`a` × 72·`é` × 36(72 유닛), 이메일 255자, 이름 `가` × 100 은 오류가 없고 요청을 보낸다."
+        "경계 안쪽 짝: 비밀번호 `pass1234`(8자)·`a` × 72·`e` + `\\u0301`(조합 기호) 쌍 × 36(72 유닛), 이메일 `a` × 249 + `@b.com`(255자), 이름 `가` × 100 은 오류가 없고 요청을 보낸다."
       ],
       "table": {
         "columns": [
@@ -382,7 +387,7 @@
           ],
           [
             "이메일",
-            "`a` × 248 + `@b.com` (256자)",
+            "`a` × 250 + `@b.com` (256자)",
             "`이메일은 255자 이하로 입력해 주세요`"
           ],
           [
@@ -407,7 +412,7 @@
           ],
           [
             "비밀번호(확인도 같은 값)",
-            "`é` × 37 (74 유닛)",
+            "`e` + `\\u0301`(조합 기호) 쌍 × 37 (74 유닛 — 사전 조합형 `\\u00E9` 아님)",
             "`8자 이상 72자 이하로 정해요` (오류) — 정규화하지 않고 유닛으로 센다"
           ],
           [
@@ -497,7 +502,7 @@
           ],
           [
             "이메일",
-            "`café@b.com` (NFD)",
+            "`cafe\\u0301@b.com` (NFD)",
             "그대로"
           ],
           [
@@ -512,7 +517,7 @@
           ],
           [
             "비밀번호·확인",
-            "`é` × 36 (72 유닛)",
+            "`e` + `\\u0301`(조합 기호) 쌍 × 36 (72 유닛)",
             "그대로"
           ],
           [
@@ -527,8 +532,8 @@
           ],
           [
             "이름",
-            "`하ᅡ` 형태의 NFD 한글 `하린`",
-            "그대로"
+            "`\\u1112\\u1161\\u1105\\u1175\\u11AB` (조합 자모로 쓴 「하린」, NFD)",
+            "그대로 — NFC 로 바꾸지 않는다"
           ]
         ]
       }
@@ -631,6 +636,9 @@
         "가입에 성공하면 자동으로 로그인되어 `/joined` 로 가고 \"이메일 · 관객\" 과 내 아이디가 보인다"
       ],
       "flow": "F3",
+      "notes": [
+        "비밀번호가 `\" pass word1 \"`(앞뒤·안쪽 공백)이어도 login 본문의 `password` 는 그 값 그대로다."
+      ],
       "table": {
         "columns": [
           "고른 역할",
@@ -817,6 +825,9 @@
         "제출 중에는 주 버튼을 다시 누를 수 없다"
       ],
       "flow": "F1",
+      "notes": [
+        "로그인·가입 화면에서 칸 안에서 Enter 로 두 번 제출해도 요청은 한 번이다."
+      ],
       "table": {
         "columns": [
           "화면",
@@ -1160,7 +1171,7 @@
             "200, `name` 없음 · `null` · `{}` · `\"\"` · `\"   \"` (행마다)"
           ],
           [
-            "200, `expiresAt` 없음 · `null` · `1762850400` (숫자) · `\"내일\"` (시각 아님) (행마다)"
+            "200, `expiresAt` 없음 · `null` · `1762850400` (숫자) · `\"내일\"` (시각 아님) · `\"2026-11-11T08:40:00\"` (오프셋 없음 — 로컬 시각으로 읽지 않는다) (행마다)"
           ],
           [
             "200 빈 본문"
@@ -1248,6 +1259,11 @@
             "`2026-11-11T08:30:00Z` (이미 지남)",
             "0ms",
             "만료 (바로)"
+          ],
+          [
+            "`2026-12-11T08:35:00Z` (30일 뒤 — 타이머 한도 2^31-1ms 초과)",
+            "0ms / 24.9일",
+            "역할 선택 / 역할 선택 (바로 만료되지 않는다)"
           ]
         ]
       }
@@ -1622,6 +1638,10 @@
             "윗줄 `카카오 · 관객` · `네이버 · 관객` · `구글 · 관객` · `애플 · 관객`"
           ],
           [
+            "로그인(`role:\"ORGANIZER\"`), state `{via:\"email\"}`",
+            "윗줄 `이메일 · 주최자`"
+          ],
+          [
             "로그인, state 없음 (새로고침)",
             "윗줄 `관객`"
           ],
@@ -1767,6 +1787,85 @@
         "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
       ],
       "flow": "F9"
+    },
+    {
+      "id": "SC-35",
+      "type": "error",
+      "title": "로그인·가입 완료·복원 응답의 본문이 규칙에 맞지 않으면 성공으로 보지 않는다",
+      "given": [
+        "표의 요청에 서버가 200 과 정상 본문(SC-04 본문)에서 **표의 필드만 바꾼** 본문을 준다"
+      ],
+      "when": [
+        "그 요청을 일으키는 동작을 한다 — 로그인(`로그인하기`) · 이메일 가입(`가입하기`, 가입 201 뒤 자동 로그인) · 역할 선택(`관객` → `계속하기`) · 저장된 토큰 `tok-1` 로 `/joined` 열기(`/api/auth/me` 복원)"
+      ],
+      "then": [
+        "흐름마다 아래 실패 결과가 되고 `localStorage.accessToken` 은 새 값으로 바뀌지 않는다"
+      ],
+      "covers": [
+        "로그인 401 이면 두 칸이 함께 오류 표시되고 \"이메일 또는 비밀번호가 올바르지 않아요\" 가 나온다",
+        "역할을 고르고 계속하기를 누르면 `/joined` 로 가고 \"카카오 · 관객\" 과 내 아이디가 보인다"
+      ],
+      "flow": "F1",
+      "notes": [
+        "짝 — 정상 값은 네 흐름 모두 성공한다: `user.role` 이 `\"AUDIENCE\"`·`\"ORGANIZER\"` 각각, `user.email` 이 `\"\"`(빈 문자열도 문자열 — 기존 규칙)이면 성공(F1 경로 `/`, F3·F7 경로 `/joined`, F8 아이디 표시)."
+      ],
+      "table": {
+        "columns": [
+          "흐름",
+          "요청",
+          "실패 결과"
+        ],
+        "rows": [
+          [
+            "F1 로그인",
+            "`/api/auth/login`",
+            "맨 위 `로그인하지 못했어요. 잠시 후 다시 시도해 주세요`, 경로 `/login`"
+          ],
+          [
+            "F3 가입 뒤 자동 로그인",
+            "`/api/auth/login`",
+            "경로 `/login`, 맨 위 `가입은 끝났어요. 로그인해 주세요` (SC-14)"
+          ],
+          [
+            "F7 역할 선택",
+            "`/api/auth/social/complete`",
+            "`가입을 끝내지 못했어요. 잠시 후 다시 시도해 주세요`, 경로 `/oauth2/role`"
+          ],
+          [
+            "F8 복원",
+            "`/api/auth/me` (본문이 곧 `user`)",
+            "경로 `/login` (비로그인) — `accessToken` 행은 해당 없음"
+          ],
+          [
+            "바꾼 필드",
+            "값 (행마다)"
+          ],
+          [
+            "`accessToken`",
+            "없음 · `null` · `42` · `\"\"` · `\"   \"`"
+          ],
+          [
+            "`user`",
+            "없음 · `null`"
+          ],
+          [
+            "`user.name`",
+            "없음 · `null` · `7` · `\"\"` · `\"   \"`"
+          ],
+          [
+            "`user.email`",
+            "없음 · `null` · `7`"
+          ],
+          [
+            "`user.role`",
+            "없음 · `null` · `1` · `\"ADMIN\"` (정의 밖) · `\"audience\"` (소문자)"
+          ],
+          [
+            "`user.handle`",
+            "없음 · `null` · `7302` · `\"\"` · `\"   \"`"
+          ]
+        ]
+      }
     }
   ],
   "coverage_matrix": [
@@ -2181,34 +2280,6 @@
       "by": [
         "SC-17",
         "SC-18"
-      ]
-    },
-    {
-      "cell": "social_provider@F8:required.missing",
-      "state": "covered",
-      "by": [
-        "SC-31"
-      ]
-    },
-    {
-      "cell": "social_provider@F8:required.null",
-      "state": "covered",
-      "by": [
-        "SC-31"
-      ]
-    },
-    {
-      "cell": "social_provider@F8:enum.undefined",
-      "state": "covered",
-      "by": [
-        "SC-31"
-      ]
-    },
-    {
-      "cell": "social_provider@F8:enum.each",
-      "state": "covered",
-      "by": [
-        "SC-31"
       ]
     },
     {
@@ -2712,35 +2783,40 @@
       "cell": "user_handle@F3:required.missing",
       "state": "covered",
       "by": [
-        "SC-14"
+        "SC-14",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F3:required.null",
       "state": "covered",
       "by": [
-        "SC-14"
+        "SC-14",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F3:json_field.wrong_type",
       "state": "covered",
       "by": [
-        "SC-14"
+        "SC-14",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F3:string.empty",
       "state": "covered",
       "by": [
-        "SC-14"
+        "SC-14",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F3:string.blank",
       "state": "covered",
       "by": [
-        "SC-14"
+        "SC-14",
+        "SC-35"
       ]
     },
     {
@@ -2752,35 +2828,40 @@
       "cell": "user_handle@F7:required.missing",
       "state": "covered",
       "by": [
-        "SC-26"
+        "SC-26",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F7:required.null",
       "state": "covered",
       "by": [
-        "SC-26"
+        "SC-26",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F7:json_field.wrong_type",
       "state": "covered",
       "by": [
-        "SC-26"
+        "SC-26",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F7:string.empty",
       "state": "covered",
       "by": [
-        "SC-26"
+        "SC-26",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F7:string.blank",
       "state": "covered",
       "by": [
-        "SC-26"
+        "SC-26",
+        "SC-35"
       ]
     },
     {
@@ -2792,35 +2873,40 @@
       "cell": "user_handle@F8:required.missing",
       "state": "covered",
       "by": [
-        "SC-31"
+        "SC-31",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F8:required.null",
       "state": "covered",
       "by": [
-        "SC-31"
+        "SC-31",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F8:json_field.wrong_type",
       "state": "covered",
       "by": [
-        "SC-31"
+        "SC-31",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F8:string.empty",
       "state": "covered",
       "by": [
-        "SC-31"
+        "SC-31",
+        "SC-35"
       ]
     },
     {
       "cell": "user_handle@F8:string.blank",
       "state": "covered",
       "by": [
-        "SC-31"
+        "SC-31",
+        "SC-35"
       ]
     },
     {
@@ -2865,6 +2951,586 @@
       "cell": "field_help@F3:string.max+1",
       "state": "n/a",
       "reason": "PLAN inputs Field.help 에 길이 상한이 없다 — 자르지 않는 것은 SC-33 마지막 행, 넘침은 SC-34 화면 확인"
+    },
+    {
+      "cell": "user_handle@F1:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-03",
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_handle@F1:required.null",
+      "state": "covered",
+      "by": [
+        "SC-03",
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_handle@F1:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-03",
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_handle@F1:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-03",
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_handle@F1:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-03",
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_handle@F1:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — handle 은 '비지 않은 문자열' 만 요구하고 길이 상한이 없다 (서버 형식 ^[a-z]{3,6}[0-9]{4}$, TASK-016)"
+    },
+    {
+      "cell": "via@F8:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-31"
+      ]
+    },
+    {
+      "cell": "via@F8:required.null",
+      "state": "covered",
+      "by": [
+        "SC-31"
+      ]
+    },
+    {
+      "cell": "via@F8:enum.undefined",
+      "state": "covered",
+      "by": [
+        "SC-31"
+      ]
+    },
+    {
+      "cell": "via@F8:enum.each",
+      "state": "covered",
+      "by": [
+        "SC-31"
+      ]
+    },
+    {
+      "cell": "access_token@F1:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F1:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F1:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F1:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F1:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F1:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — 응답 값에 길이 상한이 없다(공백만이 아닌 문자열만 요구)"
+    },
+    {
+      "cell": "access_token@F3:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F3:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F3:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F3:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F3:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F3:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — 응답 값에 길이 상한이 없다(공백만이 아닌 문자열만 요구)"
+    },
+    {
+      "cell": "access_token@F7:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F7:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F7:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F7:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F7:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "access_token@F7:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — 응답 값에 길이 상한이 없다(공백만이 아닌 문자열만 요구)"
+    },
+    {
+      "cell": "user_name@F1:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F1:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F1:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F1:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F1:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F1:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — 응답 값에 길이 상한이 없다(공백만이 아닌 문자열만 요구)"
+    },
+    {
+      "cell": "user_email@F1:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F1:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F1:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F1:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F1:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F1:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F1:enum.undefined",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F3:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F3:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F3:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F3:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F3:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F3:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — 응답 값에 길이 상한이 없다(공백만이 아닌 문자열만 요구)"
+    },
+    {
+      "cell": "user_email@F3:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F3:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F3:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F3:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F3:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F3:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F3:enum.undefined",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F7:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F7:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F7:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F7:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F7:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F7:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — 응답 값에 길이 상한이 없다(공백만이 아닌 문자열만 요구)"
+    },
+    {
+      "cell": "user_email@F7:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F7:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F7:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F7:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F7:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F7:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F7:enum.undefined",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F8:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F8:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F8:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F8:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F8:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_name@F8:string.max+1",
+      "state": "n/a",
+      "reason": "PLAN inputs — 응답 값에 길이 상한이 없다(공백만이 아닌 문자열만 요구)"
+    },
+    {
+      "cell": "user_email@F8:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F8:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_email@F8:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F8:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F8:required.null",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F8:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F8:enum.undefined",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F1:enum.each",
+      "state": "covered",
+      "by": [
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F3:enum.each",
+      "state": "covered",
+      "by": [
+        "SC-13",
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F7:enum.each",
+      "state": "covered",
+      "by": [
+        "SC-25",
+        "SC-35"
+      ]
+    },
+    {
+      "cell": "user_role@F8:enum.each",
+      "state": "covered",
+      "by": [
+        "SC-31",
+        "SC-35"
+      ]
     }
   ],
   "coverage": {

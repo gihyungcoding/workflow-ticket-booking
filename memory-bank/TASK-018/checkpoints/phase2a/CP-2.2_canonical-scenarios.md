@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-06T09:00:00Z
-summary: "SCENARIO_TASK-018 34건(happy 14·error 13·boundary 5·regression 2), AC 16/16, 입력 경계 162/162 1차 작성에서 판정. 독립검증 전."
+summary: "SCENARIO_TASK-018 35건, AC 16/16, 입력 경계 242/242. 1회차 V11 FAIL(false_cover 2·plan_gap 2) 수정 후 2회차 검증 대기."
 
 next_steps:
-  - "scenario-validator 1회차"
+  - "scenario-validator 2회차 — 1회차 판정 원문을 붙인다"
 
 decisions:
   - decision: "새로 쓴다 — TASK-010·013 시나리오는 확장하지 않고, 옛 기대값을 단언하는 기존 테스트는 2b 에서 새 기대값으로 바꾼다"
@@ -18,5 +18,14 @@ decisions:
   - decision: "user_handle·pending_email/name·field_help 의 max+1 은 n/a — PLAN 에 길이 상한 없음"
     rationale: "상한이 없는 값에 상한+1 칸은 의미가 없다"
 
-attempts: []
+  - decision: "1회차 plan_gap 으로 PLAN input_fields 보완 — via·access_token·user_name·user_email·user_role 추가, user_handle 에 F1, social_provider 는 F4 만"
+    rationale: "분류 보완이라 ROLLBACK_PLAN 으로 세지 않는다 (reject-state-machine §3)"
+  - decision: "1회차 경고 중 반영 — V5 조합 문자 표기를 \\u 이스케이프로, V12 ①30일 뒤 expiresAt(타이머 한도) ②오프셋 없는 시각은 실패 ④Enter 이중 제출 ⑦공백 포함 비밀번호 자동 로그인을 표 행으로. 보류 — V4 flow 대응·V6 When 분리·V7 구현 누출·V9 중복 행·V12 ③⑤⑥ (HITL 에서 판단)"
+    rationale: "경고는 재검증 사유가 아니다. 테스트가 달라지는 것만 반영"
+
+attempts:
+  - round: 1
+    outcome: "V11 FAIL — false_cover 2 (email@F1 NUL 행 없음, SC-09 이메일 '256자' 가 실제 254자), plan_gap 2 (via, 응답 accessToken·user.name·email·role)"
+    back_to: "2a Step 2"
+    fix: "SC-05 이메일 NUL 행, SC-09 a×250+@b.com, PLAN input_fields 에 via·access_token·user_name·user_email·user_role 추가(social_provider 는 F4 만), SC-35 신설(응답 본문 규칙 × F1·F3·F7·F8), 칸 162→242"
 ---
