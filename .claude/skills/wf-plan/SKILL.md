@@ -41,6 +41,7 @@ description: >-
 
 - `workflow_design/04_plan/PLAN_<ID>.json` 존재, JSON 파싱 성공
 - `design.inputs`, `design.outputs`, `design.flows` 모두 비어 있지 않음
+- `design.input_fields` 가 있음 — 필드마다 `flows`·`kinds` (입력이 없으면 `[]` + 사유)
 - `route ∈ {Backend, Frontend, Database}`
 - **`check_plan.py` exit 0** — 기존 파일은 실재, 새 파일은 `new: true` 이고 아직 없음,
   `reusable`·`existing_tests` 실재. 조사 결과를 요약으로 받았어도 이것으로 확인한다
@@ -249,22 +250,43 @@ FAIL 로 돌아오는 부류다.
   있는가"(선점 가능성)를 `unresolved` 에 적고, 참조한 ADR 이 그 위협을 다루는지 확인한다.
   다루지 않으면 Phase 2a 전에 사용자에게 알린다 (→ TASK-011 의 자동 연결이 계정 선점 경로였다)
 
-**외부에서 들어오는 값도 `design.inputs` 다.** 사용자 입력만 적으면 시나리오가 그것만 덮는다.
+**외부에서 들어오는 값도 입력이다.** 사용자 입력만 적으면 시나리오가 그것만 덮는다. 외부 서비스
+응답(토큰 엔드포인트·userinfo·JWKS·콜백 쿼리)은 `source: "외부 서버 응답"` 으로 `design.inputs` 에
+넣는다 (→ TASK-012 독립검증 1회차 — 토큰 응답 변형·콜백 `code` 누락).
 
-- **외부 서비스 응답**(토큰 엔드포인트·userinfo·JWKS·콜백 쿼리)은 `source: "외부 서버 응답"` 으로
-  `design.inputs` 에 넣는다. 그래야 coverage-policy §2-1 「서버 응답으로 분기하는 로직」 행이
-  대조 대상이 된다 (→ TASK-012 독립검증 1회차 — 토큰 응답 변형·콜백 `code` 누락)
-- **외부 토큰·JSON 을 입력으로 받으면** `design.input_schema` 에 입력 스키마 표를 **필수로** 둔다.
-  필드마다 JSON 타입·규칙·이상값 열(누락·null·다른 타입·빈 값·범위 밖·표기 변형)을 채운다.
-  시나리오는 이 표의 칸을 그대로 옮긴다 — 표 없이 쓰면 독립검증이 회차마다 새 칸을 지적한다
-  (→ TASK-016 V11 FAIL 9회, `claim_schema` 를 만든 뒤에야 수렴)
+#### 입력 필드 표 — `design.input_fields` (필수)
 
-  ```jsonc
-  "input_schema": [
-    { "field": "exp", "json_type": "number(정수)", "rule": "현재 이후",
-      "anomalies": ["누락", "null", "문자열 \"1700000000\"", "1.7e9", "소수 1700000000.5", "2^63 초과"] }
-  ]
-  ```
+**Phase 2a 가 덮을 칸은 여기서 정해진다.** 입력 필드마다 흐름과 종류(`kinds`)를 고르면
+`scripts/coverage_matrix.py` 가 `coverage-policy.md` §2-1 의 칸으로 펼치고, 2a 게이트가 빠진 칸을
+기계로 센다. 예전에는 독립검증자가 회차마다 칸을 새로 찾았고, 같은 경계를 다른 이름으로 적으며
+옆 칸을 하나씩 새로 지적했다 — 2a 재시도가 전체 재시도의 45% 였고 TASK-016 은 V11 로만 9번
+FAIL 했다. 칸이 고정되면 그 루프가 생기지 않는다.
+
+```bash
+python3 scripts/coverage_matrix.py --kinds        # 고를 수 있는 종류와 칸
+```
+
+```jsonc
+"input_fields": [
+  { "field": "email",    "flows": ["F1", "F2"], "kinds": ["required", "string", "string_stored"], "max": 255 },
+  { "field": "password", "flows": ["F1"],       "kinds": ["required", "string", "string_stored"], "max": 72 },
+  { "field": "role",     "flows": ["F1"],       "kinds": ["required", "enum"] },
+  { "field": "exp",      "flows": ["F5"],       "kinds": ["required", "json_field", "integer_notation", "datetime"],
+    "note": "토큰 클레임 — Instant 로 받는다" }
+]
+```
+
+- **필드 단위로** 적는다 — `design.inputs` 의 「가입 폼 입력」처럼 묶인 항목을 필드로 푼다
+- 같은 필드가 여러 흐름에 쓰이면 `flows` 에 모두 적는다 — 칸이 흐름마다 생긴다
+  (가입에서 덮고 로그인에서 빠뜨리는 일이 반복됐다)
+- **해당할 수 있는 종류는 다 고른다.** 해당하지 않는 칸은 2a 에서 `n/a` + 사유로 닫으면 된다.
+  종류를 빠뜨리면 칸 자체가 생기지 않고, 독립검증자가 PLAN 결함으로 되돌린다 — 그때 한 번에
+  전부 고친다
+- 외부 토큰·JSON 을 받으면 필드마다 `json_field`, 숫자면 `integer_notation`, 요청 문자열이면
+  `opaque` 를 고른다 (→ TASK-016 `claim_schema`)
+- 입력이 없는 태스크는 `"input_fields": []` 와 `"input_fields_none_reason"` 을 적는다
+
+`check_plan.py` 가 종류 이름·흐름 ID 를 확인한다.
 
 ### Step 5 — 저장
 

@@ -320,7 +320,8 @@ Phase 2a·2b — TASK-001    시나리오 + Red 승인
   SC-06  기존 전체 조회는 그대로 동작한다           → test_sc06   already_passing — 이 태스크가 안 바꾸는 경로
   ...
 
-독립검증  PASS (2회차) — 1회차 V11: keyword 공백만 누락 → SC-04 추가
+입력 경계 칸 24 — covered 19 · n/a 5 (사유는 SCENARIO json coverage_matrix)
+독립검증  PASS (2회차) — 1회차 V11 false_cover: keyword 공백만을 SC-03 이 쓰지 않음 → SC-04 추가
   경고 반영 1 · 보류 1 — SC-04 Then "캐시에 저장된다" 관찰 불가 (보류 사유: …)
 인벤토리  시나리오 6 == 테스트 함수 6 ✓    기존 테스트 12개 계속 통과 ✓
 
