@@ -13,24 +13,19 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-018-auth-screens-redesign"
 
-last_checkpoint: null
-artifacts: {}
+last_checkpoint: "CP-1.3"
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-018.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-TASK-018 워크플로우를 시작했다. 아직 Plan 이 없다. (estimate 12h → standard 트랙)
-기준: develop `628c54a` (PR #35 입력 경계 행렬 머지 뒤). 흐름 1(booking-ux-01) 세 번째 태스크 —
-선행 TASK-016(아이디·대기 정보 API)·TASK-017(토큰·공통 부품) 모두 머지됨.
-골격 확인: backend `./gradlew test` exit 0 · frontend `npm test` 단독 실행 통과
-(전체 실행에서 PerformanceRegisterPage·WriteKeyRejected 가 부하(load 17) 로 5초 타임아웃 3~5건 —
-단독 12/12 통과, 이 태스크와 무관).
+Phase 1 완료 — PLAN_TASK-018.json (flows 9 · AC 16 · input_fields 20 → 칸 162).
+사용자 결정 2건: 자동 로그인 실패 → /login + 안내, 인증 화면에서 AppHeader 숨김.
 
 ## 다음 한 걸음
 
-`wf-plan` 으로 Phase 1. 출발점: `docs/product/features/booking-ux-01-auth.md` §1-3·§2·§4·§5 Task C,
-시안 `out/screens/{login,login--error,signup,signup--error,oauth-callback,role-select,role-select--error,joined}.html`,
-기존 `frontend/src/pages/{Login,SignUp,OAuthRedirect,RoleSelection}Page.tsx`, `components/ui/*`(TASK-017).
+`wf-scenario` 로 Phase 2a. `python3 scripts/coverage_matrix.py --task-id TASK-018 --skeleton` 으로 칸을 1차에 전부 닫는다.
 
 ## 알아둬야 할 것
 
