@@ -1,8 +1,8 @@
 ---
 task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-06
@@ -13,19 +13,19 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-018-auth-screens-redesign"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-018.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-018.md"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 완료 — PLAN_TASK-018.json (flows 9 · AC 16 · input_fields 20 → 칸 162).
-사용자 결정 2건: 자동 로그인 실패 → /login + 안내, 인증 화면에서 AppHeader 숨김.
+Phase 2a 통과 — 시나리오 35건, 칸 242/242, 독립검증 2회차 PASS(1회차 V11: false_cover 2·plan_gap 2).
 
 ## 다음 한 걸음
 
-`wf-scenario` 로 Phase 2a. `python3 scripts/coverage_matrix.py --task-id TASK-018 --skeleton` 으로 칸을 1차에 전부 닫는다.
+`wf-red` 로 Phase 2b. 새 테스트 + 기존 AuthScreens·SocialLoginScreens 옛 기대값 교체, 끝에서 HITL#1·2.
 
 ## 알아둬야 할 것
 

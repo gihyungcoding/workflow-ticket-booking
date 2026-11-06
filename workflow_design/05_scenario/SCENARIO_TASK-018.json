@@ -137,6 +137,10 @@
             "`/`"
           ],
           [
+            "`42` (숫자) · `{pathname:\"/x\"}` (객체) (행마다)",
+            "`/`"
+          ],
+          [
             "`/performances/7?tab=seat#top`",
             "`/performances/7?tab=seat#top`"
           ],
@@ -1658,8 +1662,8 @@
             "경로 `/login`"
           ],
           [
-            "저장된 토큰을 복원하는 중 (`/api/auth/me` 응답 대기)",
-            "아이디·`/login` 이동 없음. 응답 200(`handle:\"wave7302\"`)이 오면 `wave7302`"
+            "저장된 토큰을 복원하는 중 (`/api/auth/me` 응답 대기), state `{via:\"email\"}`",
+            "아이디·`/login` 이동 없음. 응답 200(`handle:\"wave7302\"`)이 오면 `wave7302` 와 윗줄 `이메일 · 관객` (state 유지)"
           ],
           [
             "복원 응답 200 인데 `handle` 없음 · `null` · `\"\"` · `\"   \"` · 숫자 (행마다)",
@@ -1809,63 +1813,69 @@
       "notes": [
         "짝 — 정상 값은 네 흐름 모두 성공한다: `user.role` 이 `\"AUDIENCE\"`·`\"ORGANIZER\"` 각각, `user.email` 이 `\"\"`(빈 문자열도 문자열 — 기존 규칙)이면 성공(F1 경로 `/`, F3·F7 경로 `/joined`, F8 아이디 표시)."
       ],
-      "table": {
-        "columns": [
-          "흐름",
-          "요청",
-          "실패 결과"
-        ],
-        "rows": [
-          [
-            "F1 로그인",
-            "`/api/auth/login`",
-            "맨 위 `로그인하지 못했어요. 잠시 후 다시 시도해 주세요`, 경로 `/login`"
+      "tables": [
+        {
+          "columns": [
+            "흐름",
+            "요청",
+            "실패 결과"
           ],
-          [
-            "F3 가입 뒤 자동 로그인",
-            "`/api/auth/login`",
-            "경로 `/login`, 맨 위 `가입은 끝났어요. 로그인해 주세요` (SC-14)"
-          ],
-          [
-            "F7 역할 선택",
-            "`/api/auth/social/complete`",
-            "`가입을 끝내지 못했어요. 잠시 후 다시 시도해 주세요`, 경로 `/oauth2/role`"
-          ],
-          [
-            "F8 복원",
-            "`/api/auth/me` (본문이 곧 `user`)",
-            "경로 `/login` (비로그인) — `accessToken` 행은 해당 없음"
-          ],
-          [
+          "rows": [
+            [
+              "F1 로그인",
+              "`/api/auth/login`",
+              "맨 위 `로그인하지 못했어요. 잠시 후 다시 시도해 주세요`, 경로 `/login`"
+            ],
+            [
+              "F3 가입 뒤 자동 로그인",
+              "`/api/auth/login`",
+              "경로 `/login`, 맨 위 `가입은 끝났어요. 로그인해 주세요` (SC-14)"
+            ],
+            [
+              "F7 역할 선택",
+              "`/api/auth/social/complete`",
+              "`가입을 끝내지 못했어요. 잠시 후 다시 시도해 주세요`, 경로 `/oauth2/role`"
+            ],
+            [
+              "F8 복원",
+              "`/api/auth/me` (본문이 곧 `user`)",
+              "경로 `/login` (비로그인) — `accessToken` 행은 해당 없음"
+            ]
+          ]
+        },
+        {
+          "columns": [
             "바꾼 필드",
             "값 (행마다)"
           ],
-          [
-            "`accessToken`",
-            "없음 · `null` · `42` · `\"\"` · `\"   \"`"
-          ],
-          [
-            "`user`",
-            "없음 · `null`"
-          ],
-          [
-            "`user.name`",
-            "없음 · `null` · `7` · `\"\"` · `\"   \"`"
-          ],
-          [
-            "`user.email`",
-            "없음 · `null` · `7`"
-          ],
-          [
-            "`user.role`",
-            "없음 · `null` · `1` · `\"ADMIN\"` (정의 밖) · `\"audience\"` (소문자)"
-          ],
-          [
-            "`user.handle`",
-            "없음 · `null` · `7302` · `\"\"` · `\"   \"`"
+          "rows": [
+            [
+              "`accessToken`",
+              "없음 · `null` · `42` · `\"\"` · `\"   \"`"
+            ],
+            [
+              "`user`",
+              "없음 · `null`"
+            ],
+            [
+              "`user.name`",
+              "없음 · `null` · `7` · `\"\"` · `\"   \"`"
+            ],
+            [
+              "`user.email`",
+              "없음 · `null` · `7`"
+            ],
+            [
+              "`user.role`",
+              "없음 · `null` · `1` · `\"ADMIN\"` (정의 밖) · `\"audience\"` (소문자)"
+            ],
+            [
+              "`user.handle`",
+              "없음 · `null` · `7302` · `\"\"` · `\"   \"`"
+            ]
           ]
-        ]
-      }
+        }
+      ]
     }
   ],
   "coverage_matrix": [
