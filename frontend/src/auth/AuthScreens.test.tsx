@@ -12,23 +12,25 @@ import { AuthProvider } from './AuthContext'
 // 서버는 두지 않는다 — fetch 응답(상태·본문)만 대체하고 그 위의 코드는 실제로 통과시킨다.
 // 표로 묶은 시나리오는 test.each 한 줄(= 시나리오 한 건)이고 행마다 케이스가 하나씩 돈다.
 
+// TASK-018 에서 해요체(시안 문구)로 바뀌었다 — SCENARIO_TASK-018.md 「화면 문구」 가 정본
 const MSG = {
-  mismatch: '비밀번호가 일치하지 않습니다',
-  signupFail: '가입하지 못했습니다. 잠시 후 다시 시도해 주세요',
-  loginFail: '로그인하지 못했습니다. 잠시 후 다시 시도해 주세요',
-  badCredentials: '이메일 또는 비밀번호가 올바르지 않습니다',
+  mismatch: '비밀번호가 일치하지 않아요',
+  signupFail: '가입하지 못했어요. 잠시 후 다시 시도해 주세요',
+  loginFail: '로그인하지 못했어요. 잠시 후 다시 시도해 주세요',
+  badCredentials: '이메일 또는 비밀번호가 올바르지 않아요',
   emailRequired: '이메일을 입력해 주세요',
   passwordRequired: '비밀번호를 입력해 주세요',
   confirmRequired: '비밀번호를 한 번 더 입력해 주세요',
   nameRequired: '이름을 입력해 주세요',
-  roleRequired: '역할을 선택해 주세요',
-  pwMin: '비밀번호는 8자 이상이어야 합니다',
-  pwMax: '비밀번호는 72자 이하여야 합니다',
-  nameMax: '이름은 100자 이하여야 합니다',
-  emailMax: '이메일은 255자 이하여야 합니다',
+  roleRequired: '역할을 골라 주세요',
+  // 길이 위반은 비밀번호 칸 아래 안내 문구 자리가 오류로 바뀐다 (TASK-018)
+  pwMin: '8자 이상 72자 이하로 정해요',
+  pwMax: '8자 이상 72자 이하로 정해요',
+  nameMax: '이름은 100자 이하로 입력해 주세요',
+  emailMax: '이메일은 255자 이하로 입력해 주세요',
 }
 // 링크가 문장 안에 들어가므로 앞부분만 본다.
-const DUP = /이미 가입된 이메일입니다\./
+const DUP = /이미 가입된 이메일이에요/
 const ALL_ERRORS = [...Object.values(MSG), DUP, WRITE_REJECTED_MESSAGE]
 
 const performance = {
@@ -43,7 +45,7 @@ const performance = {
   status: 'UPCOMING',
   sections: [{ grade: 'VIP', price: 120000, seatCount: 20 }],
 }
-const USER = { id: 1, email: 'hong@example.com', name: '홍길동', role: 'AUDIENCE' }
+const USER = { id: 1, email: 'hong@example.com', name: '홍길동', role: 'AUDIENCE', handle: 'wave7302' }
 const LOGIN_RESP = { accessToken: 'tok-1', tokenType: 'Bearer', expiresInSeconds: 86400, user: USER }
 const SIGNUP_RESP = { id: 1, email: 'hong@example.com', name: '홍길동', role: 'ORGANIZER' }
 
@@ -180,9 +182,11 @@ const NUL = '\u0000'
 const LONE = '\ud800'
 const emailOf = (len: number) => 'a'.repeat(len - '@example.com'.length) + '@example.com'
 
+// 비밀번호 안내 문구(pwMin·pwMax)는 오류가 아닐 때도 칸 아래 보인다 — 오류 표시는 data-field-error 로 본다 (TASK-018)
 function expectNoErrorTexts() {
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-  for (const m of ALL_ERRORS) expect(screen.queryByText(m)).not.toBeInTheDocument()
+  expect(document.querySelectorAll('[data-field-error]')).toHaveLength(0)
+  for (const m of ALL_ERRORS) if (m !== MSG.pwMin) expect(screen.queryByText(m)).not.toBeInTheDocument()
 }
 
 beforeEach(() => {
@@ -228,7 +232,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     // Then
     expect(screen.getByLabelText(LABEL.email)).toBeInTheDocument()
     expect(screen.getByLabelText(LABEL.password)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '로그인하기' })).toBeInTheDocument()
     expectNoErrorTexts()
     // And
     expect(screen.getByLabelText(LABEL.email)).toHaveFocus()
@@ -237,7 +241,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
   test.each([
     { role: '주최자' as const, code: 'ORGANIZER' },
     { role: '관객' as const, code: 'AUDIENCE' },
-  ])('SC-03 (happy) 가입에 성공하면 역할($role→$code) 포함해 요청하고 로그인 화면으로 이동한다', async ({ role, code }) => {
+  ])('SC-03 (happy) 가입에 성공하면 역할($role→$code) 포함해 요청하고 자동 로그인해 가입 완료 화면으로 이동한다', async ({ role, code }) => {
     // Given 올바르게 입력했고 서버가 201 로 응답한다
     stubServer()
     renderAt('/signup')
@@ -255,11 +259,11 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
       name: '홍길동',
       role: code,
     })
-    // And /login 으로 이동
-    await waitFor(() => expect(where()).toBe('/login'))
-    expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument()
-    // And 가입은 로그인이 아니다
-    expect(token()).toBeNull()
+    // And 같은 자격 증명으로 로그인해 /joined 로 이동 (TASK-018 — 가입 → 자동 로그인 → 가입 완료)
+    await waitFor(() => expect(where()).toBe('/joined'))
+    expect(bodyOf(callsTo('POST /api/auth/login')[0])).toEqual({ email: 'hong@example.com', password: 'password1!' })
+    expect(screen.getByText('wave7302')).toBeInTheDocument()
+    expect(token()).toBe('tok-1')
   })
 
   test('SC-04 (error) 비밀번호 확인이 다르면 제출 전에 인라인 오류를 보인다', async () => {
@@ -367,7 +371,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     else fillLogin(row.login)
 
     // When
-    await clickButton(row.screen === '가입' ? '가입하기' : '로그인')
+    await clickButton(row.screen === '가입' ? '가입하기' : '로그인하기')
 
     if (row.pass) {
       // 경계 통과: 요청이 간다
@@ -451,7 +455,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
       fillLogin({ [field]: input })
 
       // When
-      await clickButton('로그인')
+      await clickButton('로그인하기')
 
       // Then
       await waitFor(() => expect(callsTo('POST /api/auth/login')).toHaveLength(1))
@@ -474,8 +478,8 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     // Then 전용 문구 + 그 안의 로그인 링크
     expect(await screen.findByText(DUP)).toBeInTheDocument()
     const link = screen
-      .getAllByRole('link', { name: '로그인' })
-      .find((a) => a.parentElement?.textContent?.includes('이미 가입된 이메일입니다.'))
+      .getAllByRole('link', { name: '로그인하기' })
+      .find((a) => a.parentElement?.textContent?.includes('이미 가입된 이메일이에요'))
     expect(link).toBeDefined()
     expect(link).toHaveAttribute('href', '/login')
     // And 입력값 유지
@@ -569,7 +573,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
 
   test.each([
     { screen: '가입' as const, path: '/signup', button: '가입하기', key: 'POST /api/auth/signup' },
-    { screen: '로그인' as const, path: '/login', button: '로그인', key: 'POST /api/auth/login' },
+    { screen: '로그인' as const, path: '/login', button: '로그인하기', key: 'POST /api/auth/login' },
   ])('SC-12 (boundary) 제출 중에는 버튼이 비활성이고 중복 요청이 가지 않는다 — $screen', async (row) => {
     // Given 올바르게 채운 폼, 응답은 아직 오지 않는다
     const pending = deferred()
@@ -600,7 +604,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     fillLogin()
 
     // When
-    await clickButton('로그인')
+    await clickButton('로그인하기')
 
     // Then 요청 본문
     await waitFor(() => expect(callsTo('POST /api/auth/login')).toHaveLength(1))
@@ -634,7 +638,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     fillLogin()
 
     // When
-    await clickButton('로그인')
+    await clickButton('로그인하기')
 
     // Then
     await waitFor(() => expect(callsTo('POST /api/auth/login')).toHaveLength(1))
@@ -654,7 +658,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     fillLogin({ password })
 
     // When
-    await clickButton('로그인')
+    await clickButton('로그인하기')
 
     // Then 요청이 가고 고정 문구, 서버 message 는 나오지 않는다
     expect(await screen.findByText(MSG.badCredentials)).toBeInTheDocument()
@@ -713,7 +717,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     fillLogin()
 
     // When
-    await clickButton('로그인')
+    await clickButton('로그인하기')
 
     // Then 표의 문구, 자격 증명 실패 문구는 없다
     expect(await screen.findByText(row.message)).toBeInTheDocument()
@@ -776,7 +780,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
   test.each(SC19_ROWS)('SC-19 (boundary) 서버 오류 문구는 재제출을 시작하면 지워지고 새 오류로 바뀐다 — $label', async (row) => {
     // Given 첫 오류가 보이고, 다음 응답은 아직 오지 않는다
     const key = row.screen === '가입' ? 'POST /api/auth/signup' : 'POST /api/auth/login'
-    const button = row.screen === '가입' ? '가입하기' : '로그인'
+    const button = row.screen === '가입' ? '가입하기' : '로그인하기'
     const second = deferred()
     let count = 0
     stubServer({ [key]: (init) => (++count === 1 ? row.first(init) : second.promise) })
@@ -796,7 +800,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     if (row.nextText) {
       expect(await screen.findByText(row.nextText)).toBeInTheDocument()
     } else {
-      await waitFor(() => expect(where()).toBe('/login'))
+      await waitFor(() => expect(where()).toBe('/joined'))
     }
     expect(screen.queryByText(row.firstText)).not.toBeInTheDocument()
   })
@@ -845,7 +849,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
   })
 
   test.each([
-    { link: '로그인', path: '/login', button: '로그인' },
+    { link: '로그인', path: '/login', button: '로그인하기' },
     { link: '가입', path: '/signup', button: '가입하기' },
   ])('SC-22 (happy) 비로그인 헤더의 링크가 로그인·가입 화면으로 이어진다 — $link', async ({ link, path, button }) => {
     // Given
@@ -958,7 +962,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     })
 
     // When
-    await clickButton('로그인')
+    await clickButton('로그인하기')
 
     // Then 이전 화면(없으면 홈)으로 이동
     await waitFor(() => expect(where()).toBe('/'))
@@ -992,7 +996,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     // And /login, /signup 은 공연 조회를 하지 않는다
     calls.length = 0
     renderAt('/login')
-    expect(await screen.findByRole('button', { name: '로그인' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '로그인하기' })).toBeInTheDocument()
     cleanup()
     renderAt('/signup')
     expect(await screen.findByRole('button', { name: '가입하기' })).toBeInTheDocument()
@@ -1045,15 +1049,15 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     await clickButton('가입하기')
     await screen.findByText(DUP)
     const link = screen
-      .getAllByRole('link', { name: '로그인' })
-      .find((a) => a.parentElement?.textContent?.includes('이미 가입된 이메일입니다.'))!
+      .getAllByRole('link', { name: '로그인하기' })
+      .find((a) => a.parentElement?.textContent?.includes('이미 가입된 이메일이에요'))!
 
     // When
     await userEvent.click(link)
 
     // Then
     await waitFor(() => expect(where()).toBe('/login'))
-    expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '로그인하기' })).toBeInTheDocument()
   })
 
   test.each([
@@ -1069,11 +1073,11 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     // When
     await clickButton('가입하기')
 
-    // Then
-    await waitFor(() => expect(where()).toBe('/login'))
-    // And 실패 문구 없음, 토큰 없음
+    // Then 201 이면 성공 — 자동 로그인해 /joined (TASK-018)
+    await waitFor(() => expect(where()).toBe('/joined'))
+    // And 실패 문구 없음, 자동 로그인의 토큰
     expect(screen.queryByText(MSG.signupFail)).not.toBeInTheDocument()
-    expect(token()).toBeNull()
+    expect(token()).toBe('tok-1')
   })
 
   test.each([
@@ -1102,7 +1106,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     const v = fillLogin(row.input)
 
     // When
-    await clickButton('로그인')
+    await clickButton('로그인하기')
 
     // Then 요청이 가고 본문이 입력과 정확히 같다
     await waitFor(() => expect(callsTo('POST /api/auth/login')).toHaveLength(1))
@@ -1117,7 +1121,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     accessToken: 'tok-new',
     tokenType: 'Bearer',
     expiresInSeconds: 86400,
-    user: { id: 2, email: 'kim@example.com', name: '김철수', role: 'AUDIENCE' },
+    user: { id: 2, email: 'kim@example.com', name: '김철수', role: 'AUDIENCE', handle: 'echo0042' },
   }
   const LATE_RESTORE: { label: string; settle: (d: ReturnType<typeof deferred>) => void }[] = [
     { label: '200 + 홍길동', settle: (d) => d.resolve(res(200, USER)) },
@@ -1140,7 +1144,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     stubServer({ 'GET /api/auth/me': () => me.promise, 'POST /api/auth/login': () => res(200, B_LOGIN) })
     renderAt('/login')
     fillLogin({ email: 'kim@example.com' })
-    await clickButton('로그인')
+    await clickButton('로그인하기')
     return me
   }
 

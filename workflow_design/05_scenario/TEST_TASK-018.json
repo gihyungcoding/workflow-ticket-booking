@@ -1,0 +1,439 @@
+{
+  "task_id": "TASK-018",
+  "supersedes": "SCENARIO_TASK-018.json",
+  "test_files": [
+    "frontend/src/auth/task018.auth.test.tsx"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "SC-01 (happy) 로그인 화면은 시안의 요소를 보인다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"heading\" and name \"쓰던 계정으로 바로 들어와요\"",
+      "rows": {
+        "failed": 1,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "SC-02 (error) 로그인 401 INVALID_CREDENTIALS 면 두 칸이 함께 오류가 된다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 1,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "SC-03 (error) 로그인 응답이 판정 코드가 아니면 일반 실패 문구를 보인다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 11,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "SC-04 (happy) 로그인에 성공하면 원래 가려던 화면으로 돌아간다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 12,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "SC-05 (error) 로그인 칸이 비면 요청하지 않고, 값은 바꾸지 않고 보낸다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 8,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "SC-06 (error) 로그인 오류는 다시 제출하면 사라진다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 2,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "SC-07 (happy) `?error=social` 일 때만 맨 위에 소셜 실패 안내가 나온다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 로그인이 취소됐거나 실패했어요. This could be because the text is broken up by multiple elements. In this",
+      "rows": {
+        "failed": 1,
+        "passed": 5
+      }
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "SC-08 (happy) 가입 화면은 시안의 요소를 보인다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"heading\" and name \"이메일로 가입\"",
+      "rows": {
+        "failed": 1,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "SC-09 (error) 가입 칸이 규칙을 벗어나면 그 칸 아래 오류가 나오고 요청하지 않는다",
+      "status": "red",
+      "failure": "AssertionError: expected '이메일은 255자 이하여야 합니다' to contain '이메일은 255자 이하로 입력해 주세요'",
+      "rows": {
+        "failed": 14,
+        "passed": 7
+      }
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "SC-10 (happy) 가입 값은 바꾸지 않고 보낸다 (이메일 앞뒤 공백만 걷는다)",
+      "status": "already_passing",
+      "failure": null,
+      "rows": {
+        "passed": 10
+      },
+      "note": "가입 요청 본문을 바꾸지 않고 보내는 것은 TASK-010 부터 있던 동작 — 이 태스크가 바꾸지 않는 경로라 구조적으로 Red 불가. Green 에서 가입 폼을 다시 쓰는 동안 이 동작이 깨지지 않는지를 지킨다"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "SC-11 (error) 이미 가입된 이메일이면 이메일 칸에서 알리고 로그인 링크를 준다",
+      "status": "red",
+      "failure": "AssertionError: expected false to be true // Object.is equality",
+      "rows": {
+        "failed": 1,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "SC-12 (error) 가입 응답이 201 도 중복도 아니면 일반 실패 문구를 보인다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 가입하지 못했어요. 잠시 후 다시 시도해 주세요. This could be because the text is broken up by multiple elements. In this case, you ",
+      "rows": {
+        "failed": 6,
+        "passed": 1
+      }
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "SC-13 (happy) 가입에 성공하면 같은 자격 증명으로 로그인해 가입 완료 화면으로 간다",
+      "status": "red",
+      "failure": "AssertionError: expected [] to have a length of 1 but got +0",
+      "rows": {
+        "failed": 3,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_function": "SC-14 (error) 가입 뒤 자동 로그인이 실패하면 로그인 화면에서 안내한다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 가입은 끝났어요. 로그인해 주세요. This could be because the text is broken up by multiple elements. In th",
+      "rows": {
+        "failed": 11,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_function": "SC-15 (boundary) 화면을 떠난 뒤 온 응답은 쓰지 않고, 사이에 바뀐 세션은 성공 응답이 덮는다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 10,
+        "passed": 1
+      }
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_function": "SC-16 (happy) 제출 중에는 주 버튼을 다시 누를 수 없다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 3,
+        "passed": 2
+      }
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_function": "SC-17 (happy) 소셜 버튼을 누르면 제공자를 기록하고 인가 주소로 간다",
+      "status": "red",
+      "failure": "AssertionError: expected null to be 'kakao' // Object.is equality",
+      "rows": {
+        "failed": 5,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-18",
+      "test_function": "SC-18 (happy) 콜백 화면은 기록된 제공자 이름으로 확인 중임을 알린다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 카카오 계정을 확인하고 있어요. This could be because the text is broken up by multiple elements. In this case, you can provid",
+      "rows": {
+        "failed": 9,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_function": "SC-19 (regression) 콜백의 토큰 처리는 바뀌지 않는다",
+      "status": "already_passing",
+      "failure": null,
+      "rows": {
+        "passed": 4
+      },
+      "note": "콜백 토큰 처리(token→/, pendingToken→/oauth2/role, 이상→/login?error=social)는 TASK-013 동작 그대로 — 회귀 시나리오"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_function": "SC-20 (happy) 역할 선택 화면은 서버의 대기 정보로 어느 계정으로 가입 중인지 보인다",
+      "status": "red",
+      "failure": "Error: Unable to find role=\"progressbar\" and name \"가입 정보를 불러오고 있어요\"",
+      "rows": {
+        "failed": 4,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_function": "SC-21 (error) pendingToken 이 없으면 역할 선택을 열지 않고, 있으면 바꾸지 않고 보낸다",
+      "status": "red",
+      "failure": "AssertionError: expected [] to have a length of 1 but got +0",
+      "rows": {
+        "failed": 6,
+        "passed": 5
+      }
+    },
+    {
+      "scenario_id": "SC-22",
+      "test_function": "SC-22 (error) 대기 정보가 올바르지 않거나 가져오지 못하면 실패 안내와 다시 시도를 보인다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 가입 정보를 불러오지 못했어요. This could be because the text is broken up by multiple elements. In this case, you can provid",
+      "rows": {
+        "failed": 28,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-23",
+      "test_function": "SC-23 (boundary) 화면에 머물러 있어도 expiresAt 이 되는 순간 만료 상태로 바뀐다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"heading\" and name \"가입 시간이 지났어요\"",
+      "rows": {
+        "failed": 5,
+        "passed": 2
+      }
+    },
+    {
+      "scenario_id": "SC-24",
+      "test_function": "SC-24 (error) 서버가 PENDING_SIGNUP_EXPIRED 로 답하면 같은 만료 상태가 된다",
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"가입 시간이 지났어요\"",
+      "rows": {
+        "failed": 8,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-25",
+      "test_function": "SC-25 (happy) 역할을 고르고 계속하면 가입 완료 화면으로 간다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 역할을 골라 주세요. This could be because the text is broken up by multiple elements. In this case, you can provide a fu",
+      "rows": {
+        "failed": 4,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-26",
+      "test_function": "SC-26 (error) 가입 완료 요청이 실패하면 문구를 보이고, 다시 누르면 사라진다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 이미 가입된 계정이에요. This could be because the text is broken up by multiple elements. In this case, you can provide a ",
+      "rows": {
+        "failed": 12,
+        "passed": 1
+      }
+    },
+    {
+      "scenario_id": "SC-27",
+      "test_function": "SC-27 (boundary) 역할 선택의 늦은 응답 — 떠난 뒤엔 쓰지 않고, 가는 중엔 만료를 서버에 맡긴다",
+      "status": "red",
+      "failure": "AssertionError: expected 0 to be greater than or equal to 1",
+      "rows": {
+        "failed": 6,
+        "passed": 5
+      }
+    },
+    {
+      "scenario_id": "SC-28",
+      "test_function": "SC-28 (happy) 가입 완료 화면에서 아이디를 복사하면 토스트가 나온다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: wave7302. This could be because the text is broken up by multiple elements. In this case, you can provide a func",
+      "rows": {
+        "failed": 1,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-29",
+      "test_function": "SC-29 (error) 복사하지 못하면 아이디를 선택해 두고 길게 눌러 복사하라고 안내한다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: wave7302. This could be because the text is broken up by multiple elements. In this case, you can provide a func",
+      "rows": {
+        "failed": 5,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-30",
+      "test_function": "SC-30 (happy) 시작하기를 누르면 홈으로 간다",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: wave7302. This could be because the text is broken up by multiple elements. In this case, you can provide a func",
+      "rows": {
+        "failed": 1,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-31",
+      "test_function": "SC-31 (boundary) 가입 완료 화면의 윗줄과 접근 조건",
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: wave7302. This could be because the text is broken up by multiple elements. In this case, you can provide a func",
+      "rows": {
+        "failed": 18,
+        "passed": 0
+      }
+    },
+    {
+      "scenario_id": "SC-32",
+      "test_function": "SC-32 (regression) 전역 헤더는 인증 화면에서만 사라진다",
+      "status": "red",
+      "failure": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).not.toBeInTheDocument()\u001b[22m",
+      "rows": {
+        "failed": 5,
+        "passed": 2
+      }
+    },
+    {
+      "scenario_id": "SC-33",
+      "test_function": "SC-33 (boundary) 공용 Field 의 안내 자리는 오류가 나면 같은 자리가 오류로 바뀐다",
+      "status": "red",
+      "failure": "AssertionError: expected [] to have a length of 1 but got +0",
+      "rows": {
+        "failed": 2,
+        "passed": 4
+      }
+    },
+    {
+      "scenario_id": "SC-34",
+      "test_function": "SC-34 (happy) 다섯 화면과 오류 상태 3종을 375px 로 시안과 나란히 비교한다 (Phase 4 화면 확인)",
+      "status": "manual_phase4",
+      "failure": null,
+      "note": "test.todo — 375px 시안 대조 캡처는 Phase 4 브라우저 증거 (PLAN #13). 단위 테스트로 단언할 수 없다"
+    },
+    {
+      "scenario_id": "SC-35",
+      "test_function": "SC-35 (error) 로그인·가입 완료·복원 응답의 본문이 규칙에 맞지 않으면 성공으로 보지 않는다",
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"로그인하기\"",
+      "rows": {
+        "failed": 107,
+        "passed": 0
+      }
+    }
+  ],
+  "red_result": {
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npx vitest run --no-file-parallelism",
+    "total": 653,
+    "failed": 469,
+    "passed": 183,
+    "todo": 1,
+    "by_file": {
+      "src/auth/AuthScreens.test.tsx": {
+        "passed": 45,
+        "failed": 88
+      },
+      "src/auth/SocialLoginScreens.test.tsx": {
+        "failed": 70,
+        "passed": 23
+      },
+      "src/auth/task018.auth.test.tsx": {
+        "failed": 311,
+        "passed": 49,
+        "todo": 1
+      }
+    },
+    "other_files": "그 밖의 15개 파일은 모두 통과 (순차 실행). 병렬 실행에서는 PerformanceRegisterPage·WriteKeyRejected 가 부하로 5초 시간 초과할 수 있다 — develop 에서도 같은 현상(CP-1.3 이전 확인)",
+    "existing_tests_still_passing": true,
+    "typecheck": "tsc -b --noEmit exit 0",
+    "lint": "npm run lint error 0"
+  },
+  "inventory_check": {
+    "scenarios": 35,
+    "test_functions": 35,
+    "match": true,
+    "note": "표 시나리오는 test.each 한 줄 = 시나리오 한 건. SC-34 는 test.todo"
+  },
+  "existing_test_modifications": [
+    {
+      "file": "frontend/src/auth/AuthScreens.test.tsx",
+      "from": "TASK-010",
+      "changes": [
+        "MSG 문구를 해요체로 (SCENARIO_TASK-018 화면 문구) — 비밀번호 길이 두 문구는 안내 문구 '8자 이상 72자 이하로 정해요' 하나로",
+        "DUP 정규식 '이미 가입된 이메일이에요', 중복 링크 이름 '로그인' → '로그인하기'",
+        "로그인 버튼 '로그인' → '로그인하기' (전 화면)",
+        "USER·B_LOGIN 픽스처에 handle 추가 (응답 규칙 6)",
+        "expectNoErrorTexts — 비밀번호 안내가 기본으로 보이므로 그 문구는 빼고 [data-field-error] 0 을 더 본다",
+        "SC-03·SC-19(쓰기 거부→201)·SC-31: 가입 성공 뒤 /login·토큰 없음 → 자동 로그인 뒤 /joined·tok-1 (SC-03 은 login 본문·아이디 단언 추가)"
+      ],
+      "assertions_removed": 0
+    },
+    {
+      "file": "frontend/src/auth/SocialLoginScreens.test.tsx",
+      "from": "TASK-013",
+      "changes": [
+        "MSG 문구를 해요체로, generic(토큰 디코드 실패 안내) → guide(서버 대기 정보 제목)",
+        "USER·OLD_USER·COMPLETE_USER 에 handle, 가짜 서버에 POST /api/auth/social/pending 기본 응답",
+        "역할 행 이름이 '관객 공연을 찾고 예매해요' 라 roleRadio 를 접두 정규식으로",
+        "SC-01: /signup 두 행은 소셜 묶음이 없음을 단언 (시안 signup — 제가 정한 값 13)",
+        "SC-02: progressbar 이름 '로그인 처리 중' → 문구 '소셜 계정을 확인하고 있어요' + progressbar",
+        "SC-03·SC-13 expectLoggedOutHeader: 인증 화면에 헤더가 없으므로 '로그아웃·이름 없음' 으로 (제가 정한 값 12)",
+        "SC-04: 제목 '거의 다 됐어요'+디코드 안내 → 서버 대기 정보 제목, '요청 없음' → 대기 정보 요청만",
+        "SC-05: 페이로드별 디코드 안내 13행 → 페이로드와 무관하게 서버 안내 + 토큰을 그대로 보냈는지 (행 수 유지)",
+        "SC-06·SC-10: 완료 뒤 / → /joined, 헤더 이름 대신 '카카오 · <역할>'·아이디",
+        "SC-07: '요청 없음' → complete 요청 없음",
+        "SC-08: 버튼 '로그인 화면으로' → '다시 로그인하기'",
+        "SC-09·SC-10: alert textContent toBe → toContain (409 문구 안에 링크 '로그인하기')",
+        "SC-13: 헤더 '가입' 링크 클릭 → 앱 밖 이동 버튼 (인증 화면에 헤더 없음)",
+        "SC-14: 가입은 signup → login 두 요청, /joined·tok-1"
+      ],
+      "assertions_removed": 0,
+      "note": "SC-05 의 의미가 바뀐다 — 토큰 디코드 안내(TASK-013 결정)는 TASK-018 에서 서버 조회로 대체되어 없어진다"
+    }
+  ],
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/components/ui/Field.tsx"
+    ],
+    "contents": "FieldProps 에 help?: string | null 시그니처만 — 받아서 쓰지 않는다(_help). 그리는 것은 Phase 3",
+    "purity_check": "SC-33 help 행 실패(안내 줄 없음), 오류·빈 안내 행은 기존 동작으로 통과"
+  },
+  "testing_preferences": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "mock_strategy": "fetch 를 메서드+경로 별로 스텁(요청마다 새 Response). 만료·토스트는 vi.useFakeTimers(+Date). 클립보드는 navigator.clipboard 대체. 저장소 막힘은 Storage.prototype 스파이. 앱 밖 이동·세션 변경은 테스트용 버튼(Outside)"
+  },
+  "human_review": {
+    "approved": false
+  }
+}

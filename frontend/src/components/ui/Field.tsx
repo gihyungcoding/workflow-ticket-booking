@@ -7,10 +7,13 @@ import { isBlank } from './text'
 export interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'children'> {
   label?: string | null
   error?: string | null
+  /** 칸 아래 안내 — 오류가 나면 같은 자리가 오류로 바뀐다 (TASK-018) */
+  help?: string | null
 }
 
 /** 시안 .field·.label·.input·.field-msg — 오류는 색만으로 전하지 않고 아이콘·문구를 함께 */
-export function Field({ label, error, id, 'aria-describedby': describedBy, 'aria-invalid': ariaInvalid, ...inputProps }: FieldProps) {
+// TASK-018 Red 스켈레톤 — help 는 아직 그리지 않는다(Phase 3)
+export function Field({ label, error, help: _help, id, 'aria-describedby': describedBy, 'aria-invalid': ariaInvalid, ...inputProps }: FieldProps) {
   const autoId = useId()
   const inputId = id ?? autoId
   const messageId = `${inputId}-error`

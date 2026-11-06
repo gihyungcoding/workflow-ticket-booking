@@ -13,19 +13,20 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-018-auth-screens-redesign"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-018.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-018.md"
+  test: "workflow_design/05_scenario/TEST_TASK-018.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a 통과 — 시나리오 35건, 칸 242/242, 독립검증 2회차 PASS(1회차 V11: false_cover 2·plan_gap 2).
+Phase 2b Red 작성 완료 — 새 테스트 35건(red 32·already_passing 2·수동 1), 기존 인증 테스트 2파일 기대값 교체.
 
 ## 다음 한 걸음
 
-`wf-red` 로 Phase 2b. 새 테스트 + 기존 AuthScreens·SocialLoginScreens 옛 기대값 교체, 끝에서 HITL#1·2.
+HITL#1·2 통합 승인 대기. 승인되면 Phase 3 (wf-develop).
 
 ## 알아둬야 할 것
 

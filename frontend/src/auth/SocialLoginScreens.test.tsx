@@ -12,14 +12,16 @@ import { AuthProvider } from './AuthContext'
 // 표로 묶은 시나리오는 test.each 한 줄(= 시나리오 한 건)이고 행마다 케이스가 하나씩 돈다.
 // 앱 전체(App)를 MemoryRouter 로 렌더한다 — 새 모듈을 직접 import 하지 않으므로 컴파일 스켈레톤이 필요 없다.
 
+// TASK-018 에서 해요체(시안 문구)로 바뀌었다 — SCENARIO_TASK-018.md 「화면 문구」 가 정본
 const MSG = {
-  banner: '로그인이 취소되었거나 실패했습니다',
-  expired: '로그인 정보가 만료되었습니다. 다시 로그인해 주세요',
-  completeFail: '가입을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요',
-  alreadyJoined: '이미 가입된 계정입니다. 로그인해 주세요',
+  banner: '로그인이 취소됐거나 실패했어요',
+  expired: '5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요',
+  completeFail: '가입을 끝내지 못했어요. 잠시 후 다시 시도해 주세요',
+  alreadyJoined: '이미 가입된 계정이에요',
   writeRejected: '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요',
-  roleRequired: '역할을 선택해 주세요',
-  generic: '소셜 계정으로 가입합니다',
+  roleRequired: '역할을 골라 주세요',
+  // 역할 선택 안내는 토큰 디코드가 아니라 서버의 대기 정보에서 온다 (TASK-018)
+  guide: 'hong@gmail.com(홍길동)으로 가입하고 있어요',
 }
 const PROVIDERS = [
   { name: '카카오', id: 'kakao' },
@@ -40,10 +42,10 @@ const performance = {
   status: 'UPCOMING',
   sections: [{ grade: 'VIP', price: 120000, seatCount: 20 }],
 }
-const USER = { id: 1, email: 'hong@example.com', name: '홍길동', role: 'AUDIENCE' }
-const OLD_USER = { id: 9, email: 'old@example.com', name: '옛사용자', role: 'AUDIENCE' }
+const USER = { id: 1, email: 'hong@example.com', name: '홍길동', role: 'AUDIENCE', handle: 'wave7302' }
+const OLD_USER = { id: 9, email: 'old@example.com', name: '옛사용자', role: 'AUDIENCE', handle: 'note0009' }
 const LOGIN_RESP = { accessToken: 'tok-1', tokenType: 'Bearer', expiresInSeconds: 86400, user: USER }
-const COMPLETE_USER = { id: 2, email: 'hong@gmail.com', name: '홍길동', role: 'AUDIENCE' }
+const COMPLETE_USER = { id: 2, email: 'hong@gmail.com', name: '홍길동', role: 'AUDIENCE', handle: 'aria0042' }
 const completeResp = (accessToken: string, role: 'AUDIENCE' | 'ORGANIZER' = 'AUDIENCE') => ({
   accessToken,
   tokenType: 'Bearer',
@@ -77,6 +79,9 @@ function stubServer(routes: Record<string, Responder> = {}) {
     'GET /api/performances': () => res(200, { content: [performance], page: 0, size: 20, totalElements: 1 }),
     'POST /api/auth/signup': () => res(201, { id: 1, email: 'hong@example.com', name: '홍길동', role: 'ORGANIZER' }),
     'POST /api/auth/login': () => res(200, LOGIN_RESP),
+    // 역할 선택 화면의 대기 정보 (TASK-018)
+    'POST /api/auth/social/pending': () =>
+      res(200, { provider: 'KAKAO', email: 'hong@gmail.com', name: '홍길동', expiresAt: new Date(Date.now() + 300_000).toISOString() }),
     ...routes,
   }
   vi.stubGlobal(
@@ -200,17 +205,19 @@ const pendingToken = (payload: unknown = PENDING_PAYLOAD) =>
 const PT = pendingToken()
 const callbackWith = (t: string) => `/oauth2/redirect?pendingToken=${encodeURIComponent(t)}`
 
-const roleRadio = (name: '관객' | '주최자') => screen.getByRole('radio', { name })
+// 역할 행의 이름은 제목 + 설명이다 (TASK-018 시안 role-select)
+const roleRadio = (name: '관객' | '주최자') => screen.getByRole('radio', { name: new RegExp(`^${name}`) })
 
 // 콜백으로 역할 선택 화면에 도착한다.
-async function arriveAtRoleSelection(t: string = PT) {
-  renderAt(callbackWith(t))
+async function arriveAtRoleSelection(t: string = PT, navTo?: string) {
+  renderEntries([callbackWith(t)], { navTo })
   await screen.findByRole('button', { name: '계속하기' })
 }
 
+// 인증 화면에서는 전역 헤더를 그리지 않는다 (TASK-018) — 로그인되지 않았음만 본다.
 function expectLoggedOutHeader() {
-  expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '가입' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument()
+  expect(screen.queryByText('홍길동')).not.toBeInTheDocument()
 }
 
 beforeEach(() => {
@@ -236,7 +243,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
     { label: '/signup · 연속 슬래시', path: '/signup', env: 'https://api.example.test//', base: 'https://api.example.test' },
   ]
   test.each(BUTTON_ROWS)(
-    'SC-01 (happy) 로그인·가입 화면에 소셜 버튼 네 개가 보이고 각각 인가 주소로 이동한다 — $label',
+    'SC-01 (happy) 로그인 화면에 소셜 버튼 네 개가 보이고 각각 인가 주소로 이동한다(가입 화면에는 없다) — $label',
     ({ path, env, base }) => {
       // Given 로그인하지 않았고 VITE_API_BASE_URL 은 표의 값이다
       stubServer()
@@ -244,6 +251,14 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
 
       // When 표의 화면을 연다
       renderAt(path)
+
+      // 가입 화면에는 소셜 버튼이 없다 — 시안 signup (TASK-018)
+      if (path === '/signup') {
+        expect(screen.queryByRole('group', { name: '소셜 로그인' })).not.toBeInTheDocument()
+        expect(screen.getByLabelText(/^이메일/)).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: '가입하기' })).toBeInTheDocument()
+        return
+      }
 
       // Then 소셜 로그인 묶음 안에 네 링크가 이 순서로 있다
       const group = screen.getByRole('group', { name: '소셜 로그인' })
@@ -257,7 +272,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       expect(screen.getByText('또는')).toBeInTheDocument()
       // And 이메일 폼의 입력란·제출 버튼은 그대로 있다
       expect(screen.getByLabelText(/^이메일/)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: path === '/login' ? '로그인' : '가입하기' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '로그인하기' })).toBeInTheDocument()
     },
   )
 
@@ -296,8 +311,9 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
         renderEntries(['/login', callback], { strict: row.strict })
       }
 
-      // Then 응답을 기다리는 동안 스피너가 보이고 입력란·역할 라디오는 없다
-      expect(await screen.findByRole('progressbar', { name: '로그인 처리 중' })).toBeInTheDocument()
+      // Then 응답을 기다리는 동안 진행 표시와 확인 중 문구가 보이고 입력란·역할 라디오는 없다 (TASK-018 문구)
+      expect(await screen.findByText('소셜 계정을 확인하고 있어요')).toBeInTheDocument()
+      expect(screen.getByRole('progressbar')).toBeInTheDocument()
       expect(screen.queryAllByRole('textbox')).toHaveLength(0)
       expect(screen.queryAllByRole('radio')).toHaveLength(0)
       // And GET /api/auth/me 가 디코드된 토큰으로 간다
@@ -379,10 +395,9 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       // When 콜백을 표의 방식·쿼리로 연다
       renderEntries(['/login', `/oauth2/redirect${query(PT)}`], { strict })
 
-      // Then /oauth2/role 로 이동하고 제목과 안내가 보인다
+      // Then /oauth2/role 로 이동하고 서버의 대기 정보로 제목이 보인다 (TASK-018)
       await waitFor(() => expect(where()).toBe('/oauth2/role'))
-      expect(screen.getByRole('heading', { name: '거의 다 됐어요' })).toBeInTheDocument()
-      expect(screen.getByText('홍길동님, hong@gmail.com 으로 가입합니다')).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: MSG.guide })).toBeInTheDocument()
       // And 역할 라디오는 둘 다 선택되어 있지 않고 계속하기 버튼이 있다
       expect(roleRadio('관객')).not.toBeChecked()
       expect(roleRadio('주최자')).not.toBeChecked()
@@ -390,8 +405,9 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       // And 주소 어디에도 pendingToken 이 남지 않는다
       expect(decodeURIComponent(where() ?? '')).not.toContain(PT)
       expect(where()).not.toContain('pendingToken')
-      // And 서버로 어떤 요청도 가지 않고 토큰이 없다
-      expect(calls).toHaveLength(0)
+      // And 서버로는 대기 정보 요청만 가고 토큰이 없다 (TASK-018)
+      // StrictMode 는 효과를 두 번 돌릴 수 있다 — 종류만 본다
+      expect(new Set(calls.map((c) => c.key))).toEqual(new Set(['POST /api/auth/social/pending']))
       expect(token()).toBeNull()
       // And 뒤로 가기로 콜백 주소에 돌아가지 않는다
       await goBack()
@@ -401,13 +417,11 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
   )
 
   // ---------- SC-05 ----------
-  const PAYLOAD_ROWS: { label: string; token: () => string; guide: string; noBold?: boolean }[] = [
-    { label: '한글 이름', token: () => pendingToken(), guide: '홍길동님, hong@gmail.com 으로 가입합니다' },
-    {
-      label: '4바이트 문자 이름',
-      token: () => pendingToken({ email: 'hong@gmail.com', name: '😀길동' }),
-      guide: '😀길동님, hong@gmail.com 으로 가입합니다',
-    },
+  // TASK-018: 안내는 토큰을 디코드하지 않고 서버의 대기 정보(POST /api/auth/social/pending)로 보인다.
+  // 페이로드가 어떻든 화면은 같은 안내를 보이고, 토큰은 바꾸지 않고 서버에 보낸다.
+  const PAYLOAD_ROWS: { label: string; token: () => string }[] = [
+    { label: '한글 이름', token: () => pendingToken() },
+    { label: '4바이트 문자 이름', token: () => pendingToken({ email: 'hong@gmail.com', name: '😀길동' }) },
     {
       label: 'base64url 의 - _ 포함',
       token: () => {
@@ -416,41 +430,38 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
         expect(t.split('.')[1]).toMatch(/[-_]/)
         return t
       },
-      guide: 'ÿÿÿ님, a+b@example.com 으로 가입합니다',
     },
-    {
-      label: 'HTML 형태 이름',
-      token: () => pendingToken({ email: 'hong@gmail.com', name: '<b>길동</b>' }),
-      guide: '<b>길동</b>님, hong@gmail.com 으로 가입합니다',
-      noBold: true,
-    },
-    { label: 'email 누락', token: () => pendingToken({ name: '홍길동' }), guide: MSG.generic },
-    { label: 'name 누락', token: () => pendingToken({ email: 'hong@gmail.com' }), guide: MSG.generic },
-    { label: 'name 빈 문자열', token: () => pendingToken({ email: 'hong@gmail.com', name: '' }), guide: MSG.generic },
-    { label: 'name 숫자', token: () => pendingToken({ email: 'hong@gmail.com', name: 123 }), guide: MSG.generic },
-    { label: 'email 숫자', token: () => pendingToken({ email: 123, name: '홍길동' }), guide: MSG.generic },
-    { label: '페이로드가 JSON 아님', token: () => pendingToken('not-json'), guide: MSG.generic },
-    { label: '페이로드가 JSON 배열', token: () => pendingToken('["a","b"]'), guide: MSG.generic },
-    { label: 'base64 깨짐', token: () => 'aaa.!!!.ccc', guide: MSG.generic },
-    { label: '점 없는 임의 문자열', token: () => 'pt-opaque', guide: MSG.generic },
+    { label: 'HTML 형태 이름', token: () => pendingToken({ email: 'hong@gmail.com', name: '<b>길동</b>' }) },
+    { label: 'email 누락', token: () => pendingToken({ name: '홍길동' }) },
+    { label: 'name 누락', token: () => pendingToken({ email: 'hong@gmail.com' }) },
+    { label: 'name 빈 문자열', token: () => pendingToken({ email: 'hong@gmail.com', name: '' }) },
+    { label: 'name 숫자', token: () => pendingToken({ email: 'hong@gmail.com', name: 123 }) },
+    { label: 'email 숫자', token: () => pendingToken({ email: 123, name: '홍길동' }) },
+    { label: '페이로드가 JSON 아님', token: () => pendingToken('not-json') },
+    { label: '페이로드가 JSON 배열', token: () => pendingToken('["a","b"]') },
+    { label: 'base64 깨짐', token: () => 'aaa.!!!.ccc' },
+    { label: '점 없는 임의 문자열', token: () => 'pt-opaque' },
   ]
   test.each(PAYLOAD_ROWS)(
-    'SC-05 (boundary) pendingToken 페이로드가 달라도 역할 선택은 동작하고 안내 문구만 바뀐다 — $label',
-    async ({ token: makeToken, guide, noBold }) => {
+    'SC-05 (boundary) pendingToken 페이로드와 무관하게 안내는 서버의 대기 정보로 보인다 — $label',
+    async ({ token: makeToken }) => {
       // Given 로그인하지 않았고 표의 토큰으로 역할 선택 화면에 도착한다
       stubServer()
+      const t = makeToken()
 
       // When 역할 선택 화면이 열린다
-      await arriveAtRoleSelection(makeToken())
+      await arriveAtRoleSelection(t)
 
-      // Then 안내 문구가 표의 값이다
-      expect(screen.getByText(guide)).toBeInTheDocument()
+      // Then 안내는 서버 응답의 이메일·이름이다
+      expect(screen.getByRole('heading', { name: MSG.guide })).toBeInTheDocument()
+      // And 토큰은 그대로 서버에 보냈다
+      expect(bodyOf(callsTo('POST /api/auth/social/pending')[0])).toEqual({ pendingToken: t })
       // And 라디오와 계속하기 버튼이 있다
       expect(roleRadio('관객')).toBeInTheDocument()
       expect(roleRadio('주최자')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '계속하기' })).toBeInTheDocument()
-      // And 이름·이메일은 글자 그대로 보이고 HTML 로 해석되지 않는다
-      if (noBold) expect(document.querySelector('b')).toBeNull()
+      // And 토큰 안의 HTML 은 어디에도 그려지지 않는다
+      expect(document.querySelector('b')).toBeNull()
     },
   )
 
@@ -459,7 +470,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
     { label: '관객', radio: '관객' as const, role: 'AUDIENCE' as const },
     { label: '주최자', radio: '주최자' as const, role: 'ORGANIZER' as const },
   ])(
-    'SC-06 (happy) 역할을 골라 제출하면 가입을 완료하고 로그인해 홈으로 이동한다 — $label',
+    'SC-06 (happy) 역할을 골라 제출하면 가입을 완료하고 로그인해 가입 완료 화면으로 이동한다 — $label',
     async ({ radio, role }) => {
       // Given 역할 선택 화면에 pendingToken 으로 도착했고, 표의 역할을 골랐다
       const held = deferred()
@@ -480,10 +491,10 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       // And 응답이 오면 토큰이 저장된다
       held.resolve(res(200, completeResp('tok-2', role)))
       await waitFor(() => expect(token()).toBe('tok-2'))
-      // And 홈으로 이동하고 헤더에 홍길동과 로그아웃이 보인다
-      await waitFor(() => expect(where()).toBe('/'))
-      expect(await screen.findByText('홍길동')).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+      // And 가입 완료 화면으로 이동하고 경로·역할과 아이디가 보인다 (TASK-018)
+      await waitFor(() => expect(where()).toBe('/joined'))
+      expect(screen.getByText(`카카오 · ${radio}`)).toBeInTheDocument()
+      expect(screen.getByText('aria0042')).toBeInTheDocument()
     },
   )
 
@@ -498,8 +509,8 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
 
     // Then 역할 선택 아래에 오류가 보인다
     expect(screen.getByText(MSG.roleRequired)).toBeInTheDocument()
-    // And 서버로 어떤 요청도 가지 않고 /oauth2/role 에 머문다
-    expect(calls).toHaveLength(0)
+    // And 가입 완료 요청은 가지 않고 /oauth2/role 에 머문다 (대기 정보 요청만 있다 — TASK-018)
+    expect(callsTo('POST /api/auth/social/complete')).toHaveLength(0)
     expect(where()).toBe('/oauth2/role')
     // And 역할 라디오 하나를 고르면 오류가 사라진다
     await userEvent.click(roleRadio('관객'))
@@ -518,16 +529,16 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
     // When 계속하기를 누른다
     await clickButton('계속하기')
 
-    // Then 만료 안내와 버튼이 보인다
+    // Then 만료 안내와 버튼이 보인다 (TASK-018 시안 role-select--error)
     expect(await screen.findByText(MSG.expired)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '로그인 화면으로' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '다시 로그인하기' })).toBeInTheDocument()
     // And 더 제출할 수 없다
     expect(screen.queryByRole('button', { name: '계속하기' })).not.toBeInTheDocument()
     expect(screen.queryAllByRole('radio')).toHaveLength(0)
     // And 토큰이 없다
     expect(token()).toBeNull()
     // And 버튼을 누르면 /login 으로 이동하고 배너는 없다
-    await clickButton('로그인 화면으로')
+    await clickButton('다시 로그인하기')
     expect(where()).toBe('/login')
     expect(screen.queryByText(MSG.banner)).not.toBeInTheDocument()
   })
@@ -568,7 +579,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
 
       // Then 표의 문구가 보이고 만료 안내는 보이지 않는다
       const alert = await screen.findByRole('alert')
-      expect(alert.textContent).toBe(message)
+      expect(alert.textContent).toContain(message)
       expect(screen.queryByText(MSG.expired)).not.toBeInTheDocument()
       // And 주최자가 선택된 채 계속하기가 다시 활성이다
       expect(roleRadio('주최자')).toBeChecked()
@@ -580,7 +591,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       const links = within(alert).queryAllByRole('link')
       if (link) {
         expect(links).toHaveLength(1)
-        expect(links[0].textContent).toBe('로그인')
+        expect(links[0].textContent).toBe('로그인하기')
         expect(links[0].getAttribute('href')).toBe('/login')
       } else {
         expect(links).toHaveLength(0)
@@ -604,7 +615,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       await arriveAtRoleSelection()
       await userEvent.click(roleRadio('관객'))
       await clickButton('계속하기')
-      expect((await screen.findByRole('alert')).textContent).toBe(gone)
+      expect((await screen.findByRole('alert')).textContent).toContain(gone)
 
       // When 계속하기를 다시 누른다
       await clickButton('계속하기')
@@ -612,10 +623,10 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       // Then 응답을 기다리는 동안 이전 실패 문구가 보이지 않는다
       await waitFor(() => expect(callsTo('POST /api/auth/social/complete')).toHaveLength(2))
       expect(screen.queryByText(gone)).not.toBeInTheDocument()
-      // And 응답이 오면 토큰이 저장되고 홈으로 이동한다
+      // And 응답이 오면 토큰이 저장되고 가입 완료 화면으로 이동한다 (TASK-018)
       held.resolve(res(200, completeResp('tok-3')))
       await waitFor(() => expect(token()).toBe('tok-3'))
-      await waitFor(() => expect(where()).toBe('/'))
+      await waitFor(() => expect(where()).toBe('/joined'))
     },
   )
 
@@ -642,7 +653,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       // And 폼·소셜 링크가 있고 주소의 쿼리가 지워지지 않는다
       expect(screen.getByLabelText(/^이메일/)).toBeInTheDocument()
       expect(screen.getByLabelText(/^비밀번호/)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '로그인하기' })).toBeInTheDocument()
       expect(within(screen.getByRole('group', { name: '소셜 로그인' })).getAllByRole('link')).toHaveLength(4)
       expect(where()).toBe(`/login${query}`)
     },
@@ -708,28 +719,29 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
 
       if (kind === 'callback-nav') {
         // Given 콜백의 사용자 조회가 진행 중이고, 사용자가 헤더의 가입 링크로 /signup 에 갔다
+        // 인증 화면에는 전역 헤더가 없다 (TASK-018) — 앱 밖의 이동으로 /signup 에 간다
         stubServer({ 'GET /api/auth/me': () => held.promise })
-        renderAt('/oauth2/redirect?token=tok-1')
-        await screen.findByRole('progressbar', { name: '로그인 처리 중' })
-        await userEvent.click(screen.getByRole('link', { name: '가입' }))
+        renderEntries(['/oauth2/redirect?token=tok-1'], { navTo: '/signup' })
+        await screen.findByRole('progressbar')
+        await clickButton('테스트용 이동')
         expect(where()).toBe('/signup')
         settleLate(held, late, USER)
       } else if (kind === 'callback-back') {
         // Given 콜백의 사용자 조회가 진행 중이고, 사용자가 브라우저 뒤로 가기로 이전 화면에 갔다
         stubServer({ 'GET /api/auth/me': () => held.promise })
         renderEntries(['/', '/oauth2/redirect?token=tok-1'])
-        await screen.findByRole('progressbar', { name: '로그인 처리 중' })
+        await screen.findByRole('progressbar')
         await goBack()
         expect(where()).toBe('/')
         settleLate(held, late, USER)
       } else {
         // Given 역할 선택의 가입 완료가 진행 중이고, 사용자가 헤더의 가입 링크로 /signup 에 갔다
         stubServer({ 'POST /api/auth/social/complete': () => held.promise })
-        await arriveAtRoleSelection()
+        await arriveAtRoleSelection(PT, '/signup')
         await userEvent.click(roleRadio('관객'))
         await clickButton('계속하기')
         await waitFor(() => expect(callsTo('POST /api/auth/social/complete')).toHaveLength(1))
-        await userEvent.click(screen.getByRole('link', { name: '가입' }))
+        await clickButton('테스트용 이동')
         expect(where()).toBe('/signup')
         settleLate(held, late, completeResp('tok-2'))
       }
@@ -748,13 +760,22 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
   )
 
   // ---------- SC-14 ----------
+  // TASK-018: 로그인 버튼은 '로그인하기', 가입은 자동 로그인 뒤 /joined 로 간다
   const REGRESSION_ROWS = [
-    { label: '/login 로그인', path: '/login', submit: '로그인', key: 'POST /api/auth/login', after: '/', stored: 'tok-1' },
-    { label: '/signup 가입하기', path: '/signup', submit: '가입하기', key: 'POST /api/auth/signup', after: '/login', stored: null },
+    { label: '/login 로그인', path: '/login', submit: '로그인하기', key: 'POST /api/auth/login', keys: ['POST /api/auth/login'], after: '/', stored: 'tok-1' },
+    {
+      label: '/signup 가입하기',
+      path: '/signup',
+      submit: '가입하기',
+      key: 'POST /api/auth/signup',
+      keys: ['POST /api/auth/signup', 'POST /api/auth/login'],
+      after: '/joined',
+      stored: 'tok-1',
+    },
   ]
   test.each(REGRESSION_ROWS)(
     'SC-14 (regression) 소셜 버튼이 있어도 이메일 로그인·가입은 그대로 동작한다 — $label',
-    async ({ path, submit, key, after, stored }) => {
+    async ({ path, submit, key, keys, after, stored }) => {
       // Given 표의 화면에서 올바른 값을 모두 입력했고 서버가 성공으로 응답한다
       stubServer()
       renderAt(path)
@@ -771,7 +792,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
 
       // Then 표의 요청이 한 번만 가고 다른 인증 경로·인가 주소로는 가지 않는다
       await waitFor(() => expect(callsTo(key)).toHaveLength(1))
-      expect(authCalls().map((c) => c.key)).toEqual([key])
+      await waitFor(() => expect(authCalls().map((c) => c.key)).toEqual(keys))
       expect(calls.filter((c) => c.key.includes('/oauth2/authorization/'))).toHaveLength(0)
       // And 표의 이동 결과
       await waitFor(() => expect(where()).toBe(after))
