@@ -1,12 +1,12 @@
 ---
 task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-06
-last_updated: 2026-11-06
+last_updated: 2026-11-09
 
 primary_category: Frontend
 sub_categories: [audience, organizer]
@@ -26,7 +26,7 @@ Phase 2b Red 작성 완료 — 새 테스트 35건(red 32·already_passing 2·�
 
 ## 다음 한 걸음
 
-HITL#1·2 통합 승인 대기. 승인되면 Phase 3 (wf-develop).
+HITL#1·2 승인됨(2026-11-09). Phase 3 (wf-develop) — Red 469건을 Green 으로.
 
 ## 알아둬야 할 것
 

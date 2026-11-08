@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-06T11:00:00Z
-summary: "Red — 새 테스트 35건(시나리오 1:1, 행 361) 중 red 32·already_passing 2(SC-10·SC-19)·Phase 4 수동 1(SC-34). 기존 AuthScreens·SocialLoginScreens 옛 기대값 교체(단언 삭제 0). 통합 승인(HITL#1·2) 대기."
+summary: "Red — 새 테스트 35건(시나리오 1:1, 행 361) 중 red 32·already_passing 2(SC-10·SC-19)·Phase 4 수동 1(SC-34). 기존 AuthScreens·SocialLoginScreens 옛 기대값 교체(단언 삭제 0). 통합 승인(HITL#1·2) 받음 2026-11-09."
 
 next_steps:
-  - "HITL#1·2 통합 승인 — AskUserQuestion"
+  - "Phase 3 — wf-develop (Green)"
 
 decisions:
   - decision: "새 테스트는 frontend/src/auth/task018.auth.test.tsx 한 파일, 앱 전체(App)+MemoryRouter 로 실제 라우트를 지난다"
