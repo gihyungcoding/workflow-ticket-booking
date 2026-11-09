@@ -1,8 +1,8 @@
 ---
 task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
-phase: "3"
-phase_name: "Phase 3 - Green (Phase 4 2회차 롤백 뒤)"
+phase: "4"
+phase_name: "Phase 4 - Verify (3회차 대기)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-06
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 2회차 롤백 → 2a(SC-36~39, 검증 3회차 PASS) → 2b Red 재승인(2026-11-09).
+Phase 3 Green 완료(2회차 롤백 뒤) — 706/706, isOneOf=matchRoutes, 스피너 시안대로, 자체 리뷰 결함 0.
 
 ## 다음 한 걸음
 
-wf-develop — Red 5행: isOneOf 퍼센트 디코딩(라우터 규칙, 깨진 인코딩은 죽지 않게), 콜백 스피너 시안대로. 그 뒤 자체 리뷰 → Phase 4 3회차.
+Phase 4 3회차 (사용자 진행 지시 후) — 리뷰어(이전 RC 이어받기) · 화면 재캡처(콜백 스피너, /%6Cogin) · HITL#3.
 
 ## 알아둬야 할 것
 

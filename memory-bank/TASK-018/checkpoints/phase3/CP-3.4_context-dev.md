@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-09T06:00:00Z
-summary: "롤백 뒤 Green 692/692 (todo 1). RC-2 공통 지점(authPaths.isOneOf)·RC-3 D1~D7 수정, 롤백 자체 리뷰 2라운드(같은 뿌리 safeDestination 추가 수정), 미해결 0."
+summary: "Phase 4 2회차 롤백 뒤 Green 706/706 (todo 1). isOneOf → matchRoutes, 콜백 스피너 시안대로. 자체 리뷰 결함 0, 미해결 0."
 
 next_steps:
-  - "Phase 4 재검증 (2회차) — 바뀐 화면 다시 캡처, 만료 제목 시안 차이는 HITL#3 에서 묻기"
+  - "Phase 4 3회차 — 사용자 진행 지시 대기. 바뀐 화면(콜백 스피너·인코딩 경로) 다시 캡처"
 
 decisions:
   - decision: "구현 순서 — api/auth·문구·제공자 기록 → Field·새 부품 → 화면 5개 → App 라우트"
@@ -26,5 +26,8 @@ decisions:
 attempts:
   - round: 1
     outcome: "Phase 4 1회차 FAIL (RC-2·RC-3) → 롤백"
+    back_to: "phase3"
+  - round: 2
+    outcome: "Phase 4 2회차 FAIL → 2a·2b 재승인 → 구현 (15aff9c)"
     back_to: "phase3"
 ---

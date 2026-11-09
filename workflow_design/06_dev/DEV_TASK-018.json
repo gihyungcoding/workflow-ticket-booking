@@ -138,11 +138,11 @@
   "test_status": "green",
   "test_result": {
     "command": "cd frontend && npx vitest run --no-file-parallelism",
-    "total": 693,
-    "passed": 692,
+    "total": 707,
+    "passed": 706,
     "failed": 0,
     "todo": 1,
-    "note": "롤백 뒤 — task018.rollback.test.tsx 27행 추가"
+    "note": "Phase 4 2회차 롤백 뒤 — SC-36~39 포함, 롤백 임시 테스트는 SC-36~39 로 흡수"
   },
   "typecheck": {
     "command": "npx tsc -b --noEmit",
@@ -322,6 +322,14 @@
         "findings": 0,
         "tests_added": [],
         "fix_commit": null
+      },
+      {
+        "n": 5,
+        "scope": "a07186d...HEAD · isOneOf 호출부·라우터 규칙 전수",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null,
+        "note": "리뷰어 프로브: matchRoutes 결과가 App 라우트 표 매칭과 모든 표기에서 같음. 깨진 인코딩은 예외 없이 null(라우터 경고가 렌더당 한 번 더)"
       }
     ],
     "root_causes": [
@@ -425,6 +433,16 @@
         "what": "오프셋 상한이 ±23:59 (Java ZoneOffset 은 ±18:00)",
         "where": "parseInstant",
         "why": "계산은 정확, 서버가 낼 수 없는 범위"
+      },
+      {
+        "kind": "test",
+        "what": "콜백 progressbar 의 역할·이름 직접 단언 없음",
+        "why": "승인 범위 밖 — SC-38 은 치수·색만"
+      },
+      {
+        "kind": "design",
+        "what": "깨진 퍼센트 인코딩 주소에서 matchRoutes 경고가 렌더마다 한 번 더",
+        "why": "라우터 자체 경고와 같은 내용, 동작 영향 없음"
       }
     ]
   },
@@ -482,6 +500,45 @@
         {
           "case": "만료 화면 제목 안 email(name) — 시안 role-select--error",
           "why": "승인 시나리오 SC-23 이 heading 을 정확히 '가입 시간이 지났어요' 로 단언 — HITL#3 에서 사람에게 묻는다. 지금은 윗줄·이메일(이름) lead 로 표시"
+        }
+      ]
+    },
+    {
+      "root_cause": "RC-2 (later — Phase 4 2회차)",
+      "variants": [
+        "/%6Cogin·/%73ignup — 라우터는 디코딩해 매칭, matchPath 는 아님 (헤더 · 로그인 뒤 순환)"
+      ],
+      "tests": [
+        "frontend/src/auth/task018.auth.test.tsx SC-36·SC-37 (승인 2026-11-09)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "frontend/src/auth/authPaths.ts isOneOf → matchRoutes"
+      ],
+      "commits": [
+        "15aff9c"
+      ]
+    },
+    {
+      "root_cause": "RC-3 (later — Phase 4 2회차)",
+      "variants": [
+        ".wait-spin 테두리 3px·트랙 --c-line·호 --c-brand"
+      ],
+      "tests": [
+        "task018.auth.test.tsx SC-38 콜백 진행 표시"
+      ],
+      "fix_locus": "per_site",
+      "sites": [
+        "frontend/src/pages/OAuthRedirectPage.tsx",
+        "theme/tokens.ts componentSizes.waitSpinBorder"
+      ],
+      "commits": [
+        "15aff9c"
+      ],
+      "not_fixed": [
+        {
+          "case": "만료 화면 제목 안 email(name)",
+          "why": "사용자 결정 2026-11-09 — 지금대로(제가 정한 값 16)"
         }
       ]
     }
