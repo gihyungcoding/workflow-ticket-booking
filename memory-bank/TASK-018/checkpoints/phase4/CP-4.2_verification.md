@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-09T08:00:00Z
-summary: "Phase 4 3회차 WARN — 결함 0, RC-1·2·3 해소. 남은 것: 만료 제목 시안 차이(사용자 결정), 병렬 실행 기존 테스트 부하 실패 1회(무관). HITL#3 대기."
+summary: "Phase 4 3회차 WARN — 결함 0, RC-1·2·3 해소. 남은 것: 만료 제목 시안 차이(사용자 결정), 병렬 실행 기존 테스트 부하 실패 1회(무관). HITL#3 예외 승인 2026-11-09."
 
 next_steps:
-  - "HITL#3 — 승인/예외 승인 시 verified_commit 기록 → Phase 5"
+  - "Phase 5 — wf-reflect (later 변종 7건·2a 회차·입력 경계 행렬 첫 적용 비교)"
 
 decisions:
   - decision: "화면 확인은 DTO 스키마 모의 서버(:18081) + vite(:5175, VITE_API_BASE_URL) + out 정적 서버(:5176), 같은 출처 375px iframe 으로 시안과 나란히"

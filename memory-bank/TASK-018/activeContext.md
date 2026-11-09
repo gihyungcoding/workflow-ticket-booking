@@ -1,8 +1,8 @@
 ---
 task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
-phase: "4"
-phase_name: "Phase 4 - Verify (3회차 대기)"
+phase: "5"
+phase_name: "Phase 5 - Reflect"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-06
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 Green 완료(2회차 롤백 뒤) — 706/706, isOneOf=matchRoutes, 스피너 시안대로, 자체 리뷰 결함 0.
+Phase 4 3회차 WARN → 예외 승인 (verified_commit 1fcfc65).
 
 ## 다음 한 걸음
 
-Phase 4 3회차 (사용자 진행 지시 후) — 리뷰어(이전 RC 이어받기) · 화면 재캡처(콜백 스피너, /%6Cogin) · HITL#3.
+wf-reflect — 회고·태스크 종료, 그 뒤 /wf-ship.
 
 ## 알아둬야 할 것
 

@@ -496,9 +496,10 @@
     "넓은 화면에서 토스트 전체 폭(TASK-017 Toast)"
   ],
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "1fcfc657d085de8b814cb0500a1da136379b9804",
+    "verified_at": "2026-11-09T06:19:26Z",
+    "via": "AskUserQuestion HITL#3"
   },
   "history": [
     {
@@ -529,6 +530,16 @@
         "verified_at": null
       },
       "summary": "RC-2 의 later 변종 재현 — 퍼센트 인코딩 주소(/%6Cogin)를 라우터는 디코딩해 매칭하지만 isOneOf(matchPath)는 아니다. 낮은 심각도이나 [correctness]. RC-3 은 만료 제목 구성(승인 시나리오 충돌) · .wait-spin 두께·트랙만 남음"
+    }
+  ],
+  "exceptions": [
+    {
+      "item": "AC16 — 만료 화면 제목 안 email(name) 이 시안과 다름",
+      "reason": "사용자 결정 2026-11-09 (제가 정한 값 16) — 서버가 처음부터 만료라 이메일을 모를 때와 같은 제목"
+    },
+    {
+      "item": "병렬 실행에서 기존 PerformanceRegisterPage 테스트 부하 시간 초과 1회",
+      "reason": "이번 변경과 무관, 순차 실행 통과 — develop 에서도 같은 현상"
     }
   ]
 }
