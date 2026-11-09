@@ -83,7 +83,8 @@ export function JoinedPage() {
                 // 시안 .id-value — 제목 크기의 1.6배
                 fontSize: `calc(${token('--fs-title')} * 1.6)`,
                 fontWeight: Number(token('--fw-title')),
-                lineHeight: Number(token('--lh-title')),
+                lineHeight: componentSizes.idLineHeight,
+                letterSpacing: componentSizes.titleTracking,
                 overflowWrap: 'anywhere',
                 userSelect: 'all',
               }}

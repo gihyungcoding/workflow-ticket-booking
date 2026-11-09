@@ -42,7 +42,7 @@ export function MoreLink({ to, children }: { to: string; children: ReactNode }) 
       sx={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '2px',
+        gap: componentSizes.moreGap,
         minHeight: componentSizes.touch,
         fontSize: token('--fs-sub'),
         fontWeight: Number(token('--fw-strong')),
@@ -51,7 +51,7 @@ export function MoreLink({ to, children }: { to: string; children: ReactNode }) 
       }}
     >
       {children}
-      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <svg aria-hidden="true" width={componentSizes.moreIcon} height={componentSizes.moreIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 6l6 6-6 6" />
       </svg>
     </Box>

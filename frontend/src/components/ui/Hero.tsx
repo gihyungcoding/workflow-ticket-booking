@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import type { ReactNode } from 'react'
-import { token } from '../../theme/tokens'
+import { componentSizes, token } from '../../theme/tokens'
 
 export interface HeroProps {
   eyebrow?: ReactNode
@@ -24,6 +24,7 @@ export function Hero({ eyebrow, title, lead }: HeroProps) {
           fontSize: token('--fs-title'),
           fontWeight: Number(token('--fw-title')),
           lineHeight: Number(token('--lh-title')),
+          letterSpacing: componentSizes.titleTracking,
           overflowWrap: 'anywhere',
           textWrap: 'balance',
         }}

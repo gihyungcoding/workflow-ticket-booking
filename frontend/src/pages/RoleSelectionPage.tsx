@@ -34,7 +34,8 @@ type View =
   | { kind: 'loading' }
   | { kind: 'failed'; rejected: boolean }
   | { kind: 'ready'; pending: PendingSignup }
-  | { kind: 'expired' }
+  // 화면에 머물다 만료되면 대기 정보를 안다 — 서버가 처음부터 만료라고 하면 모른다
+  | { kind: 'expired'; pending: PendingSignup | null }
 
 type ServerError = 'exists' | 'rejected' | 'failed' | null
 
@@ -79,7 +80,7 @@ export function RoleSelectionPage() {
       })
       .catch((error: unknown) => {
         if (cancelled) return
-        setView(isExpiredError(error) ? { kind: 'expired' } : { kind: 'failed', rejected: isWriteKeyRejected(error) })
+        setView(isExpiredError(error) ? { kind: 'expired', pending: null } : { kind: 'failed', rejected: isWriteKeyRejected(error) })
       })
     return () => {
       cancelled = true
@@ -87,20 +88,21 @@ export function RoleSelectionPage() {
   }, [pendingToken, attempt])
 
   // 화면에 머물러 있어도 expiresAt 이 되는 순간 만료 상태로 — 계속하기가 가는 중이면 판정을 서버에 맡긴다
-  const expiresAt = view.kind === 'ready' ? view.pending.expiresAt : null
+  const ready = view.kind === 'ready' ? view.pending : null
+  const expiresAt = ready?.expiresAt ?? null
   useEffect(() => {
     if (expiresAt === null || submitting) return
     let timer: ReturnType<typeof setTimeout>
     const wait = () => {
       const left = expiresAt - Date.now()
       timer = setTimeout(() => {
-        if (Date.now() >= expiresAt) setView({ kind: 'expired' })
+        if (Date.now() >= expiresAt) setView({ kind: 'expired', pending: ready })
         else wait()
       }, Math.max(0, Math.min(left, MAX_TIMER_MS)))
     }
     wait()
     return () => clearTimeout(timer)
-  }, [expiresAt, submitting])
+  }, [expiresAt, ready, submitting])
 
   if (pendingToken === null) return <Navigate to="/login" replace />
 
@@ -123,7 +125,7 @@ export function RoleSelectionPage() {
       if (!mounted.current) return
       // 서버가 만료라고 하거나, 응답을 기다리는 사이 이미 시간이 지났으면 만료 상태
       if (isExpiredError(error) || Date.now() >= pending.expiresAt) {
-        setView({ kind: 'expired' })
+        setView({ kind: 'expired', pending })
       } else if (isWriteKeyRejected(error)) {
         setServerError('rejected')
       } else if (error instanceof ApiError && (error.code === EMAIL_ALREADY_EXISTS || error.code === SOCIAL_ACCOUNT_ALREADY_LINKED)) {
@@ -142,7 +144,7 @@ export function RoleSelectionPage() {
     void submit()
   }
 
-  const back = <AppBar onBack={() => navigate('/login')} />
+  const back = <AppBar plain onBack={() => navigate('/login')} />
 
   if (view.kind === 'loading') {
     return (
@@ -177,14 +179,25 @@ export function RoleSelectionPage() {
   }
 
   if (view.kind === 'expired') {
-    // 시안 role-select--error — 역할 행 대신 만료 안내와 다시 로그인
+    // 시안 role-select--error — 어느 계정이었는지는 남기고, 역할 행 대신 만료 안내와 다시 로그인
+    const expired = view.pending
     return (
       <>
         {back}
         <Page plain hasCta>
-          <Hero title={AUTH_MESSAGES.expiredTitle} />
-          <Box component="p" role="alert" sx={{ margin: 0, fontSize: token('--fs-sub'), lineHeight: Number(token('--lh-sub')), color: token('--c-danger') }}>
-            {AUTH_MESSAGES.expiredBody}
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Hero
+              eyebrow={expired ? `${providerNameOf(expired.provider)}로 처음 가입` : undefined}
+              title={AUTH_MESSAGES.expiredTitle}
+              lead={expired ? <Box component="span" sx={{ overflowWrap: 'anywhere' }}>{`${expired.email}(${expired.name})`}</Box> : undefined}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
+            <RoleLabel />
+            <Box component="p" role="alert" sx={{ margin: 0, display: 'flex', alignItems: 'center', gap: componentSizes.rowGap, fontSize: token('--fs-sub'), lineHeight: Number(token('--lh-sub')), color: token('--c-danger') }}>
+              <ErrorIcon />
+              {AUTH_MESSAGES.expiredBody}
+            </Box>
           </Box>
         </Page>
         <CtaBar onClick={() => navigate('/login')}>다시 로그인하기</CtaBar>
@@ -218,9 +231,7 @@ export function RoleSelectionPage() {
           />
         </Box>
         <Box component="form" id={FORM_ID} noValidate onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
-          <Box component="span" sx={{ fontSize: token('--fs-sub'), fontWeight: Number(token('--fw-strong')), color: token('--c-text-2') }}>
-            역할
-          </Box>
+          <RoleLabel />
           <Box role="radiogroup" aria-label="역할" aria-describedby={roleError ? roleErrorId : undefined} sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
             {ROLE_ROWS.map((row) => {
               const selected = role === row.value
@@ -249,7 +260,9 @@ export function RoleSelectionPage() {
                     '&:focus-visible': { outline: `2px solid ${token('--c-focus')}`, outlineOffset: '2px' },
                   }}
                 >
-                  <Box component="img" src={row.art} alt="" sx={{ flex: 'none', width: componentSizes.touch, height: componentSizes.touch }} />
+                  <Box component="span" sx={{ flex: 'none', display: 'grid', placeItems: 'center', width: componentSizes.touch, height: componentSizes.touch }}>
+                    <Box component="img" src={row.art} alt="" sx={{ width: componentSizes.rowArt, height: componentSizes.rowArt }} />
+                  </Box>
                   <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: componentSizes.rowGap }}>
                     <Box component="span" sx={{ display: 'block', fontSize: token('--fs-strong'), fontWeight: Number(token('--fw-strong')), color: selected ? token('--c-brand-text') : 'inherit' }}>
                       {row.title}
@@ -269,10 +282,7 @@ export function RoleSelectionPage() {
           </Box>
           {roleError && (
             <Box component="p" id={roleErrorId} data-field-error="" sx={{ margin: 0, display: 'flex', alignItems: 'center', gap: componentSizes.rowGap, fontSize: token('--fs-sub'), color: token('--c-danger') }}>
-              <svg aria-hidden="true" width={componentSizes.iconSmall} height={componentSizes.iconSmall} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}>
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 8v5M12 16h.01" />
-              </svg>
+              <ErrorIcon />
               {roleError}
             </Box>
           )}
@@ -283,5 +293,23 @@ export function RoleSelectionPage() {
         계속하기
       </CtaBar>
     </>
+  )
+}
+
+function RoleLabel() {
+  return (
+    <Box component="span" sx={{ fontSize: token('--fs-sub'), fontWeight: Number(token('--fw-strong')), color: token('--c-text-2') }}>
+      역할
+    </Box>
+  )
+}
+
+// 시안 .field-msg 의 경고 아이콘 — 오류를 색만으로 전하지 않는다
+function ErrorIcon() {
+  return (
+    <svg aria-hidden="true" width={componentSizes.iconSmall} height={componentSizes.iconSmall} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v5M12 16h.01" />
+    </svg>
   )
 }

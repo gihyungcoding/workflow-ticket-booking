@@ -124,6 +124,12 @@ export const componentSizes = {
   iconSmall: '20px', // .btn svg·.row-trail svg (70·88행)
   appMaxWidth: '375px', // 시안 뷰포트 width=375
   waitArt: '72px', // oauth-callback .wait-art 72px (screens/oauth-callback.html)
+  waitSpin: '32px', // oauth-callback .wait-spin 32px
+  rowArt: '36px', // .row-art img 36px (components.css 165행)
+  moreIcon: '18px', // .hero-more svg 18px (47행)
+  moreGap: '2px', // .hero-more gap 2px (46행)
+  titleTracking: '-0.03em', // .title letter-spacing (43행)
+  idLineHeight: '1.15', // joined .id-value line-height (screens/joined.html)
 } as const
 
 /** 토스트가 사라지기까지 — 동작 값(디자인 토큰 아님, PLAN unresolved #4 확정) */

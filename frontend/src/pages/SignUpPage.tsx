@@ -126,7 +126,7 @@ export function SignUpPage() {
 
   return (
     <>
-      <AppBar onBack={() => navigate('/login')} />
+      <AppBar plain onBack={() => navigate('/login')} />
       <Page plain hasCta>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-m') }}>
           {serverError === 'rejected' && <TopNotice>{WRITE_REJECTED_MESSAGE}</TopNotice>}

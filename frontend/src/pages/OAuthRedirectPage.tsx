@@ -73,10 +73,10 @@ export function OAuthRedirectPage() {
     <Page plain>
       <Box sx={{ minHeight: `calc(100vh - ${token('--h-appbar')} * 2)`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: token('--stack-l'), textAlign: 'center' }}>
         <Box component="img" src={idCardArt} alt="" sx={{ width: componentSizes.waitArt, height: componentSizes.waitArt }} />
-        <Box component="h1" sx={{ margin: 0, fontSize: token('--fs-title'), fontWeight: Number(token('--fw-title')), lineHeight: Number(token('--lh-title')), textWrap: 'balance' }}>
+        <Box component="h1" sx={{ margin: 0, fontSize: token('--fs-title'), fontWeight: Number(token('--fw-title')), lineHeight: Number(token('--lh-title')), letterSpacing: componentSizes.titleTracking, textWrap: 'balance' }}>
           {AUTH_MESSAGES.socialChecking(providerName)}
         </Box>
-        <CircularProgress aria-label={AUTH_MESSAGES.socialCheckingProgress} />
+        <CircularProgress size={componentSizes.waitSpin} aria-label={AUTH_MESSAGES.socialCheckingProgress} />
       </Box>
     </Page>
   )

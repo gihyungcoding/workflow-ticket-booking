@@ -4,10 +4,12 @@ import { componentSizes, token } from '../../theme/tokens'
 export interface AppBarProps {
   title?: string
   onBack?: () => void
+  /** 흰 바탕(plain) 화면 위 — 앱바도 흰색 (시안 .plain .appbar) */
+  plain?: boolean
 }
 
 /** 시안 .appbar — 가운데 제목, 왼쪽 뒤로 버튼(onBack 이 있을 때만) */
-export function AppBar({ title, onBack }: AppBarProps) {
+export function AppBar({ title, onBack, plain }: AppBarProps) {
   return (
     <Box
       component="header"
@@ -20,7 +22,7 @@ export function AppBar({ title, onBack }: AppBarProps) {
         gridTemplateColumns: `minmax(${componentSizes.appbarSide}, auto) 1fr minmax(${componentSizes.appbarSide}, auto)`,
         alignItems: 'center',
         padding: `0 ${token('--stack-s')}`,
-        backgroundColor: token('--c-bg'),
+        backgroundColor: token(plain ? '--c-surface' : '--c-bg'),
       }}
     >
       <Box>
