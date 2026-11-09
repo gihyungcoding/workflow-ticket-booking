@@ -14,6 +14,11 @@ target_repo: "."
 branch: "feature/task-018-auth-screens-redesign"
 
 report: "https://claude.ai/artifact/EkQFfXpvUocbGAdm3RjmNz"
+pull_request:
+  number: 36
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/36"
+  base: develop
+  opened_at: 2026-11-09
 last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-018.json"
@@ -30,7 +35,7 @@ TASK-018 완료 — 회고 작성, 승인 대기(/wf-retro).
 
 ## 다음 한 걸음
 
-/wf-ship 으로 푸시·PR. 머지는 사람이.
+PR #36 머지 대기 — 머지는 사람이. 회고 승인은 /wf-retro.
 
 ## 알아둬야 할 것
 
