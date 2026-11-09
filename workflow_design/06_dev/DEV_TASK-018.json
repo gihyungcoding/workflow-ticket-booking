@@ -137,13 +137,12 @@
   ],
   "test_status": "green",
   "test_result": {
-    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npx vitest run --no-file-parallelism",
-    "total": 666,
-    "passed": 665,
+    "command": "cd frontend && npx vitest run --no-file-parallelism",
+    "total": 693,
+    "passed": 692,
     "failed": 0,
     "todo": 1,
-    "target_tests_passed": "task018.auth.test.tsx 360 행(시나리오 34 + SC-34 todo) · AuthScreens 133 · SocialLoginScreens 93 · task018.review 13",
-    "note": "todo 1 은 SC-34 (Phase 4 375px 화면 확인)"
+    "note": "롤백 뒤 — task018.rollback.test.tsx 27행 추가"
   },
   "typecheck": {
     "command": "npx tsc -b --noEmit",
@@ -274,6 +273,14 @@
     {
       "path": "frontend/src/auth/task018.review.test.ts",
       "why": "자체 리뷰 RC-1 변종 테스트 (승인 테스트 아님 — Phase 4 리뷰 대상)"
+    },
+    {
+      "path": "frontend/src/auth/authPaths.ts",
+      "why": "롤백 — 인증 경로 판별 공통 지점(App·LoginPage)"
+    },
+    {
+      "path": "frontend/src/components/ui/AppBar.tsx",
+      "why": "롤백 — plain prop(시안 .plain .appbar)"
     }
   ],
   "design_notes": [
@@ -295,6 +302,23 @@
       {
         "n": 2,
         "scope": "수정 04cfad1...HEAD · 같은 카테고리 전수(시각·외부 문자열 검증, 공유 함수 호출부)",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null
+      },
+      {
+        "n": 3,
+        "scope": "롤백 수정 d5db43c...06c64e1 · 같은 카테고리 전수",
+        "findings": 3,
+        "correctness": 1,
+        "tests_added": [
+          "task018.rollback.test.tsx from 6행 · D4 아이콘 단언"
+        ],
+        "fix_commit": "152e747"
+      },
+      {
+        "n": 4,
+        "scope": "수정 06c64e1...152e747 · isOneOf 호출부 전수",
         "findings": 0,
         "tests_added": [],
         "fix_commit": null
@@ -341,6 +365,45 @@
         "sites": [
           "frontend/src/api/auth.ts parseInstant"
         ]
+      },
+      {
+        "id": "RC-2",
+        "summary": "경로 문자열 정확 일치로 화면을 판별해, 라우터가 같게 보는 표기(끝 슬래시·대소문자)를 놓친다",
+        "variants": [
+          {
+            "case": "App.tsx AUTH_PATHS",
+            "origin": "found",
+            "probe": "reproduced"
+          },
+          {
+            "case": "LoginPage.safeDestination 순환 판정",
+            "origin": "later",
+            "probe": "reproduced",
+            "evidence": "frontend/src/auth/task018.rollback.test.tsx"
+          },
+          {
+            "case": "from 의 쿼리·해시 표기",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "evidence": "frontend/src/auth/task018.rollback.test.tsx"
+          },
+          {
+            "case": "/login/x 하위 경로 오탐",
+            "origin": "predicted",
+            "probe": "not_reproduced",
+            "reason": "matchPath end:true — 리뷰어 직접 실행"
+          },
+          {
+            "case": "/./login·/%6Cogin",
+            "origin": "predicted",
+            "probe": "not_reproduced",
+            "reason": "리뷰어 matchPath 실행 — 매칭 안 됨, 실제 입력 경로 없음"
+          }
+        ],
+        "fix_locus": "common",
+        "sites": [
+          "frontend/src/auth/authPaths.ts"
+        ]
       }
     ],
     "unresolved": [],
@@ -364,5 +427,63 @@
         "why": "계산은 정확, 서버가 낼 수 없는 범위"
       }
     ]
-  }
+  },
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-2",
+      "variants": [
+        "App.tsx 헤더 판별 /login/·/Login·/signup/ 등",
+        "LoginPage.safeDestination 순환 판정 (later — 롤백 자체 리뷰 1라운드)",
+        "쿼리·해시가 붙은 표기"
+      ],
+      "tests": [
+        "frontend/src/auth/task018.rollback.test.tsx (RC-2 describe — 경로 9행 · from 6행 · 비인증 2행)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "frontend/src/auth/authPaths.ts isOneOf (matchPath)",
+        "호출부: App.tsx · LoginPage.tsx safeDestination"
+      ],
+      "commits": [
+        "06c64e1",
+        "152e747"
+      ]
+    },
+    {
+      "root_cause": "RC-3",
+      "variants": [
+        "D1 plain 앱바 흰색",
+        "D2 제목 자간 -0.03em",
+        "D3 역할 일러스트 36px",
+        "D4 만료 상태 대기 정보·역할 라벨·아이콘(18px)",
+        "D5 MoreLink 치수 토큰",
+        "D6 .id-value line-height 1.15 (Phase 4 not_probed → 프로브)",
+        "D7 콜백 스피너 32px (not_probed → 프로브)"
+      ],
+      "tests": [
+        "frontend/src/auth/task018.rollback.test.tsx (RC-3 describe 11행)"
+      ],
+      "fix_locus": "per_site",
+      "sites": [
+        "components/ui/AppBar.tsx",
+        "components/ui/Hero.tsx",
+        "pages/OAuthRedirectPage.tsx",
+        "pages/RoleSelectionPage.tsx",
+        "pages/JoinedPage.tsx",
+        "pages/SignUpPage.tsx",
+        "auth/AuthParts.tsx",
+        "theme/tokens.ts componentSizes(waitSpin·rowArt·moreIcon·moreGap·fieldMsgIcon·titleTracking·idLineHeight)"
+      ],
+      "commits": [
+        "06c64e1",
+        "152e747"
+      ],
+      "not_fixed": [
+        {
+          "case": "만료 화면 제목 안 email(name) — 시안 role-select--error",
+          "why": "승인 시나리오 SC-23 이 heading 을 정확히 '가입 시간이 지났어요' 로 단언 — HITL#3 에서 사람에게 묻는다. 지금은 윗줄·이메일(이름) lead 로 표시"
+        }
+      ]
+    }
+  ]
 }

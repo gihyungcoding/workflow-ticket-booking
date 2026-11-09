@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-09T06:00:00Z
-summary: "Green 665/665 (todo 1 = SC-34 화면 확인), lint error 0, tsc·build 통과. 자체 리뷰 2라운드 — RC-1(달력 밖 시각) 수정, 미해결 0."
+summary: "롤백 뒤 Green 692/692 (todo 1). RC-2 공통 지점(authPaths.isOneOf)·RC-3 D1~D7 수정, 롤백 자체 리뷰 2라운드(같은 뿌리 safeDestination 추가 수정), 미해결 0."
 
 next_steps:
-  - "Phase 4 — wf-verify (SC-34 375px 시안 대조 캡처 포함)"
+  - "Phase 4 재검증 (2회차) — 바뀐 화면 다시 캡처, 만료 제목 시안 차이는 HITL#3 에서 묻기"
 
 decisions:
   - decision: "구현 순서 — api/auth·문구·제공자 기록 → Field·새 부품 → 화면 5개 → App 라우트"
@@ -18,5 +18,13 @@ decisions:
   - decision: "만료 상태 제목은 시안과 달리 '가입 시간이 지났어요' 만 (승인 시나리오 SC-23)"
     rationale: "401 만료에서는 이메일·이름을 모른다"
 
-attempts: []
+  - decision: "롤백 — RC-2 는 auth/authPaths.ts isOneOf 로 공통화(App·LoginPage), RC-3 은 화면별. 시안 값은 componentSizes 에 출처 주석과 함께"
+    rationale: "같은 판별을 위치별로 고치면 빠뜨린 한 곳이 다음 FAIL — 실제로 safeDestination 이 그랬다"
+  - decision: "만료 화면 제목 안 email(name) 은 고치지 않음"
+    rationale: "승인 시나리오 SC-23 과 충돌 — HITL#3 에서 묻는다"
+
+attempts:
+  - round: 1
+    outcome: "Phase 4 1회차 FAIL (RC-2·RC-3) → 롤백"
+    back_to: "phase3"
 ---
