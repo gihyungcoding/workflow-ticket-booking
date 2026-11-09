@@ -533,8 +533,8 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
     { label: '통과: 이름 100자', over: { name: '가'.repeat(100) }, field: null, pass: true },
   ]
   test.each(SC09)('SC-09 (error) 가입 칸이 규칙을 벗어나면 그 칸 아래 오류가 나오고 요청하지 않는다 — $label', async (row) => {
-    // Given 나머지 칸은 유효
-    stubServer()
+    // Given 나머지 칸은 유효 — 통과 행은 가입 응답을 붙들어 둔다(성공하면 화면을 떠나 칸을 볼 수 없다)
+    stubServer(row.pass ? { [SIGNUP]: () => deferred().promise } : {})
     renderAt('/signup')
     fillSignUp(row.over)
 
@@ -1429,7 +1429,10 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
   })
 
   // ---------- SC-28 ~ SC-31 공용 ----------
-  async function arriveAtJoined(state: unknown = { via: 'email' }, me: Responder = () => res(200, USER)) {
+  // state 를 넘기지 않았을 때만 기본값 — undefined 를 넘기면 그대로 '없음' 이다
+  async function arriveAtJoined(...args: [state?: unknown, me?: Responder]) {
+    const state = args.length >= 1 ? args[0] : { via: 'email' }
+    const me = args[1] ?? (() => res(200, USER))
     localStorage.setItem('accessToken', 'tok-1')
     stubServer({ [ME]: me })
     renderAt({ pathname: '/joined', state })

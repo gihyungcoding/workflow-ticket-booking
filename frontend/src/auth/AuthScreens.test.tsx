@@ -374,8 +374,9 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     await clickButton(row.screen === '가입' ? '가입하기' : '로그인하기')
 
     if (row.pass) {
-      // 경계 통과: 요청이 간다
-      await waitFor(() => expect(authCalls()).toHaveLength(1))
+      // 경계 통과: 요청이 간다 — 가입은 성공하면 자동 로그인 요청이 이어지므로 그 화면의 제출 요청만 센다 (TASK-018)
+      const key = row.screen === '가입' ? 'POST /api/auth/signup' : 'POST /api/auth/login'
+      await waitFor(() => expect(callsTo(key)).toHaveLength(1))
       return
     }
     // Then 필드 아래 문구 (+ 필드가 있으면 aria-invalid)
