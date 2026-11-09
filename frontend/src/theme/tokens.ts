@@ -123,6 +123,7 @@ export const componentSizes = {
   rowGap: '4px', // .row-main gap (66행)
   iconSmall: '20px', // .btn svg·.row-trail svg (70·88행)
   appMaxWidth: '375px', // 시안 뷰포트 width=375
+  waitArt: '72px', // oauth-callback .wait-art 72px (screens/oauth-callback.html)
 } as const
 
 /** 토스트가 사라지기까지 — 동작 값(디자인 토큰 아님, PLAN unresolved #4 확정) */

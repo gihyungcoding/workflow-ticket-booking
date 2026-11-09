@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
+import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
-import Stack from '@mui/material/Stack'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { fetchMe } from '../api/auth'
 import { useAuth } from '../auth/AuthContext'
 import { AUTH_MESSAGES } from '../auth/messages'
+import { rememberedProviderName } from '../auth/socialProvider'
+import idCardArt from '../assets/fluent/idcard.svg'
+import { Page } from '../components/ui'
+import { componentSizes, token } from '../theme/tokens'
 
 type Callback = { kind: 'token'; value: string } | { kind: 'pending'; value: string } | { kind: 'invalid' }
 
@@ -27,6 +31,8 @@ export function OAuthRedirectPage() {
   const location = useLocation()
   // 첫 렌더에서 한 번만 읽는다 — 주소를 지운 뒤 개발용 이중 실행이 빈 주소를 읽으면 실패로 오판한다.
   const [callback] = useState(() => parseCallback(location.search))
+  // 소셜 버튼을 누를 때 남긴 제공자 — 없거나 모르면 '소셜 계정'
+  const [providerName] = useState(rememberedProviderName)
 
   // 화면을 떠난 뒤에 도착한 응답은 로그인·이동 어디에도 영향을 주지 않는다 (ADR-0018).
   const mounted = useRef(true)
@@ -62,9 +68,16 @@ export function OAuthRedirectPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callback])
 
+  // 시안 oauth-callback 의 .wait — 일러스트 · 제목 · 진행 표시를 가운데에
   return (
-    <Stack sx={{ alignItems: 'center', py: 4 }}>
-      <CircularProgress aria-label={AUTH_MESSAGES.socialProcessing} />
-    </Stack>
+    <Page plain>
+      <Box sx={{ minHeight: `calc(100vh - ${token('--h-appbar')} * 2)`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: token('--stack-l'), textAlign: 'center' }}>
+        <Box component="img" src={idCardArt} alt="" sx={{ width: componentSizes.waitArt, height: componentSizes.waitArt }} />
+        <Box component="h1" sx={{ margin: 0, fontSize: token('--fs-title'), fontWeight: Number(token('--fw-title')), lineHeight: Number(token('--lh-title')), textWrap: 'balance' }}>
+          {AUTH_MESSAGES.socialChecking(providerName)}
+        </Box>
+        <CircularProgress aria-label={AUTH_MESSAGES.socialCheckingProgress} />
+      </Box>
+    </Page>
   )
 }
