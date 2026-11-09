@@ -5,7 +5,7 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | flows 9 · AC 16 · 칸 162 |
 | 2a Scenario | ✅ 통과 | CP-2.2 | 35건 · 칸 242 · 검증 2회차 PASS |
 | 2b Red | ✅ 승인 | CP-2.5 | 35건 (red 32·통과 2·수동 1) |
-| 3 Green | — | — | |
+| 3 Green | ✅ 완료 | CP-3.4 | 665/665 · 자체 리뷰 2R (RC-1 수정) |
 | 4 Verify | — | — | |
 | 5 Reflect | — | — | |
 

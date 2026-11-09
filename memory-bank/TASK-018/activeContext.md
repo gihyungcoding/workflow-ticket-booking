@@ -1,8 +1,8 @@
 ---
 task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-06
@@ -13,20 +13,21 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-018-auth-screens-redesign"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-018.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-018.md"
   test: "workflow_design/05_scenario/TEST_TASK-018.json"
+  dev: "workflow_design/06_dev/DEV_TASK-018.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b Red 작성 완료 — 새 테스트 35건(red 32·already_passing 2·수동 1), 기존 인증 테스트 2파일 기대값 교체.
+Phase 3 Green 완료 — 665/665(todo 1), 자체 리뷰 2라운드(RC-1 수정·미해결 0), 승인 테스트 관찰 방법 3곳 수정(사용자 승인).
 
 ## 다음 한 걸음
 
-HITL#1·2 승인됨(2026-11-09). Phase 3 (wf-develop) — Red 469건을 Green 으로.
+`wf-verify` 로 Phase 4. SC-34: 다섯 화면 + 오류 3종을 같은 출처 375px iframe 으로 띄워 out/screens 와 나란히 캡처.
 
 ## 알아둬야 할 것
 
