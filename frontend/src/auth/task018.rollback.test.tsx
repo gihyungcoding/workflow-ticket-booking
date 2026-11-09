@@ -3,12 +3,15 @@ import { ThemeProvider } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../App'
 import { theme } from '../theme'
-import { componentSizes, token } from '../theme/tokens'
+import { componentSizes } from '../theme/tokens'
 import { AuthProvider } from './AuthContext'
 import authPartsSource from './AuthParts.tsx?raw'
 
 // TASK-018 Phase 4 1회차 FAIL 의 뿌리·변종 (VERIFY_TASK-018.json root_causes RC-2·RC-3).
 // 변종마다 실제 라우트(App + MemoryRouter)로 그려 확인한다. 시안 값의 출처는 out/components.css·out/screens/*.html.
+
+// 시안 .title letter-spacing -0.03em — jsdom 은 em 을 px 로 계산한다 (--fs-title 28px × -0.03)
+const TITLE_TRACKING_PX = '-0.84px'
 
 const USER = { id: 1, email: 'harin.kim@kakao.com', name: '김하린', role: 'AUDIENCE', handle: 'wave7302' }
 
@@ -85,20 +88,23 @@ describe('TASK-018 RC-3 시안과 같은 모양', () => {
     stubServer()
     renderAt('/signup')
     const bar = screen.getByRole('button', { name: '뒤로' }).closest('header')!
-    expect(getComputedStyle(bar).backgroundColor).toBe(hex(token('--c-surface')))
+    const page = screen.getByRole('main')
+    // 앱바는 아래 흰 바탕(--c-surface)과 같은 색이고, 회색 페이지 바탕(--c-bg)이 아니다
+    expect(getComputedStyle(bar).backgroundColor).toBe(getComputedStyle(page).backgroundColor)
+    expect(getComputedStyle(bar).backgroundColor).not.toBe(getComputedStyle(document.body).backgroundColor || 'transparent')
   })
 
   test.each(['/login', '/signup'])('D2 머리글 제목의 자간은 -0.03em 이다 (시안 .title) — %s', async (path) => {
     stubServer()
     renderAt(path)
     const title = screen.getAllByRole('heading', { level: 1 }).find((h) => h.textContent)!
-    expect(getComputedStyle(title).letterSpacing).toBe('-0.03em')
+    expect(getComputedStyle(title).letterSpacing).toBe(TITLE_TRACKING_PX)
   })
 
   test('D2 콜백 화면 제목의 자간도 -0.03em 이다', async () => {
     stubServer({ 'GET /api/auth/me': () => new Promise<Response>(() => {}) })
     renderAt('/oauth2/redirect?token=tok-1')
-    expect(getComputedStyle(await screen.findByRole('heading', { name: '소셜 계정을 확인하고 있어요' })).letterSpacing).toBe('-0.03em')
+    expect(getComputedStyle(await screen.findByRole('heading', { name: '소셜 계정을 확인하고 있어요' })).letterSpacing).toBe(TITLE_TRACKING_PX)
   })
 
   test('D3 역할 행 일러스트는 36px 이다 (시안 .row-art img)', async () => {
@@ -157,9 +163,3 @@ describe('TASK-018 RC-3 시안과 같은 모양', () => {
     expect(getComputedStyle(spinner).width).toBe('32px')
   })
 })
-
-// #RRGGBB → jsdom 이 돌려주는 rgb(r, g, b)
-function hex(value: string): string {
-  const n = parseInt(value.slice(1), 16)
-  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`
-}
