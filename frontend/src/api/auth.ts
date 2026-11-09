@@ -1,5 +1,7 @@
 import { request } from './http'
 import { throwIfApiError } from './performances'
+import { SOCIAL_PROVIDERS } from '../auth/socialProvider'
+import type { SocialProviderCode } from '../auth/socialProvider'
 
 // 토큰은 localStorage 의 이 키에 저장한다 (ADR-0015).
 export const ACCESS_TOKEN_KEY = 'accessToken'
@@ -11,6 +13,8 @@ export interface AuthUser {
   email: string
   name: string
   role: UserRole
+  // 티켓온 아이디 — 일행에게 보내 표를 받는다 (TASK-016)
+  handle: string
 }
 
 export interface SignUpInput {
@@ -39,10 +43,15 @@ export const INVALID_CREDENTIALS = 'INVALID_CREDENTIALS'
 export const PENDING_SIGNUP_EXPIRED = 'PENDING_SIGNUP_EXPIRED'
 export const SOCIAL_ACCOUNT_ALREADY_LINKED = 'SOCIAL_ACCOUNT_ALREADY_LINKED'
 
+const ROLES: readonly unknown[] = ['AUDIENCE', 'ORGANIZER'] satisfies UserRole[]
+
+const isFilled = (value: unknown): value is string => typeof value === 'string' && value.trim() !== ''
+
+// 사용자 응답 규칙 — 로그인·가입 완료·복원이 같다 (SCENARIO_TASK-018 제가 정한 값 6). 값은 걷지 않고 그대로 쓴다.
 function isAuthUser(value: unknown): value is AuthUser {
   if (typeof value !== 'object' || value === null) return false
   const user = value as Record<string, unknown>
-  return typeof user.name === 'string' && user.name.trim() !== '' && typeof user.email === 'string'
+  return isFilled(user.name) && typeof user.email === 'string' && ROLES.includes(user.role) && isFilled(user.handle)
 }
 
 // 성공 판정은 본문이 아니라 상태 201 로 한다.
@@ -61,7 +70,7 @@ export async function signUp(input: SignUpInput): Promise<void> {
 async function readLoginResult(response: Response): Promise<LoginResult> {
   const body = await response.json().catch(() => null)
   const accessToken = body?.accessToken
-  if (typeof accessToken !== 'string' || accessToken.trim() === '' || !isAuthUser(body?.user)) {
+  if (!isFilled(accessToken) || !isAuthUser(body?.user)) {
     throw new Error('로그인 응답이 올바르지 않습니다')
   }
   return { accessToken, user: body.user }
@@ -92,23 +101,52 @@ export async function completeSocialSignUp(pendingToken: string, role: UserRole)
   return readLoginResult(response)
 }
 
-// 역할 선택 화면의 안내 문구용. 서명은 검증하지 않는다 — 표시 전용이고 신원 판단은 서버가 한다.
-export function readPendingSignup(pendingToken: string): { email: string; name: string } | null {
-  try {
-    const payload = pendingToken.split('.')[1]
-    if (!payload) return null
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
-    const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='))
-    const claims: unknown = JSON.parse(new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0))))
-    if (typeof claims !== 'object' || claims === null || Array.isArray(claims)) return null
-    const { email, name } = claims as Record<string, unknown>
-    if (typeof email !== 'string' || email.trim() === '' || typeof name !== 'string' || name.trim() === '') {
-      return null
-    }
-    return { email, name }
-  } catch {
-    return null
+export interface PendingSignup {
+  provider: SocialProviderCode
+  email: string
+  name: string
+  // 만료 시각(epoch ms) — 화면은 이 순간부터 만료 상태다. 판정은 서버가 최종이다
+  expiresAt: number
+}
+
+// ISO-8601 시각 + 오프셋(Z 또는 ±hh:mm). 오프셋이 없으면 로컬 시각으로 읽히므로 받지 않는다.
+// 소수 초는 Java Instant 처럼 9자리까지 올 수 있다 — 밀리초까지만 쓴다(버림).
+const INSTANT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(?:Z|([+-])(\d{2}):(\d{2}))$/
+
+// Date.parse 는 2월 30일을 3월 2일로, 24:00 을 다음 날로 넘겨 읽는다 — 칸마다 범위를 보고 달력으로 되돌려 대조한다.
+function parseInstant(value: unknown): number | null {
+  if (typeof value !== 'string') return null
+  const m = INSTANT.exec(value)
+  if (!m) return null
+  const [year, month, day, hour, minute, second] = m.slice(1, 7).map(Number)
+  const millis = Number((m[7] ?? '').slice(0, 3).padEnd(3, '0'))
+  const offsetHour = Number(m[9] ?? 0)
+  const offsetMinute = Number(m[10] ?? 0)
+  if (hour > 23 || minute > 59 || second > 59 || offsetHour > 23 || offsetMinute > 59) return null
+  const local = Date.UTC(year, month - 1, day, hour, minute, second, millis)
+  const calendar = new Date(local)
+  if (calendar.getUTCFullYear() !== year || calendar.getUTCMonth() !== month - 1 || calendar.getUTCDate() !== day) return null
+  const sign = m[8] === '-' ? -1 : 1
+  return local - sign * (offsetHour * 60 + offsetMinute) * 60_000
+}
+
+// 소셜 가입 대기 정보 — 토큰이 쿼리에 남지 않게 POST 로 보낸다 (ADR-0021 과 같은 이유).
+export async function fetchPendingSignup(pendingToken: string): Promise<PendingSignup> {
+  const response = await request('/api/auth/social/pending', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pendingToken }),
+  })
+  if (!response.ok) {
+    await throwIfApiError(response)
   }
+  const body = await response.json().catch(() => null)
+  const provider = SOCIAL_PROVIDERS.find((p) => p.code === body?.provider)?.code
+  const expiresAt = parseInstant(body?.expiresAt)
+  if (!provider || !isFilled(body?.email) || !isFilled(body?.name) || expiresAt === null) {
+    throw new Error('가입 대기 정보 응답이 올바르지 않습니다')
+  }
+  return { provider, email: body.email, name: body.name, expiresAt }
 }
 
 export async function fetchMe(accessToken: string): Promise<AuthUser> {

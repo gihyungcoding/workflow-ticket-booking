@@ -1,0 +1,546 @@
+{
+  "task_id": "TASK-018",
+  "changed_files": [
+    {
+      "path": "frontend/src/App.tsx",
+      "change": "인증 화면 5곳에서 전역 AppHeader·Container 를 그리지 않음, /joined 라우트",
+      "lines_changed": 32
+    },
+    {
+      "path": "frontend/src/api/auth.ts",
+      "change": "AuthUser.handle, 사용자 응답 규칙(name·email·role·handle), fetchPendingSignup·parseInstant(오프셋 필수·달력 대조), readPendingSignup 제거",
+      "lines_changed": 74
+    },
+    {
+      "path": "frontend/src/auth/messages.ts",
+      "change": "해요체 문구 정본",
+      "lines_changed": 34
+    },
+    {
+      "path": "frontend/src/auth/socialProvider.ts",
+      "change": "제공자 id·enum·이름, sessionStorage 기록·읽기(막혀도 안 죽음)",
+      "lines_changed": 37,
+      "new": true
+    },
+    {
+      "path": "frontend/src/auth/AuthParts.tsx",
+      "change": "인증 화면 공용 시안 조각 — PrimaryButton·MoreLink·LinkLine·OrDivider·TopNotice",
+      "lines_changed": 93,
+      "new": true
+    },
+    {
+      "path": "frontend/src/components/SocialLoginButtons.tsx",
+      "change": "시안 .social 모양, 누를 때 제공자 기록",
+      "lines_changed": 58
+    },
+    {
+      "path": "frontend/src/components/ui/Field.tsx",
+      "change": "help(안내 자리 → 오류로), errorAction, aria-invalid 만 있는 오류 모양",
+      "lines_changed": 32
+    },
+    {
+      "path": "frontend/src/components/ui/CtaBar.tsx",
+      "change": "form 속성 — 폼 제출 버튼(Enter 제출)",
+      "lines_changed": 7
+    },
+    {
+      "path": "frontend/src/components/ui/Page.tsx",
+      "change": "plain — 흰 바탕 한 장(시안 body.plain)",
+      "lines_changed": 14
+    },
+    {
+      "path": "frontend/src/components/ui/Segmented.tsx",
+      "change": "시안 .seg — radiogroup·오류 연결",
+      "lines_changed": 72,
+      "new": true
+    },
+    {
+      "path": "frontend/src/components/ui/Hero.tsx",
+      "change": "시안 .hero",
+      "lines_changed": 40,
+      "new": true
+    },
+    {
+      "path": "frontend/src/components/ui/Info.tsx",
+      "change": "시안 .info",
+      "lines_changed": 26,
+      "new": true
+    },
+    {
+      "path": "frontend/src/components/ui/index.ts",
+      "change": "새 부품 export",
+      "lines_changed": 3
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.tsx",
+      "change": "시안 login — 401 두 칸 오류, 맨 위 안내(소셜 실패·가입 뒤), mounted·이중 제출 가드",
+      "lines_changed": 121
+    },
+    {
+      "path": "frontend/src/pages/SignUpPage.tsx",
+      "change": "시안 signup — 안내 자리 오류, 409 칸 안 링크, 세그먼트, 하단 CTA, 201 → 자동 로그인 → /joined / 실패 → /login 안내",
+      "lines_changed": 221
+    },
+    {
+      "path": "frontend/src/pages/OAuthRedirectPage.tsx",
+      "change": "'<제공자> 계정을 확인하고 있어요' + 시안 .wait",
+      "lines_changed": 21
+    },
+    {
+      "path": "frontend/src/pages/RoleSelectionPage.tsx",
+      "change": "서버 대기 정보, 로딩·실패(다시 시도)·만료 상태, 만료 타이머(2^31-1 분할, 진행 중엔 서버 판정), 완료 → /joined",
+      "lines_changed": 282
+    },
+    {
+      "path": "frontend/src/pages/JoinedPage.tsx",
+      "change": "가입 완료 — 경로·역할, 아이디, 복사(토스트·실패 시 선택+안내), 시작하기",
+      "lines_changed": 131,
+      "new": true
+    },
+    {
+      "path": "frontend/src/theme/tokens.ts",
+      "change": "componentSizes.waitArt 72px (시안 출처)",
+      "lines_changed": 1
+    },
+    {
+      "path": "frontend/src/assets/fluent/{ticket,clipboard,idcard}.svg, LICENSE.md",
+      "change": "시안 일러스트 복사 (MIT, out/assets/fluent)",
+      "lines_changed": 393,
+      "new": true
+    }
+  ],
+  "reused": [
+    {
+      "path": "frontend/src/components/ui/index.ts",
+      "symbol": "AppBar·Page·Block·CtaBar·Field·Toast"
+    },
+    {
+      "path": "frontend/src/api/auth.ts",
+      "symbol": "login·signUp·completeSocialSignUp — 자동 로그인도 login() 재사용"
+    },
+    {
+      "path": "frontend/src/auth/AuthContext.tsx",
+      "symbol": "useAuth().login/logout — 세대 직렬화(ADR-0018) 그대로"
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.tsx",
+      "symbol": "safeDestination — 그대로"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "ApiError·throwIfApiError·isWriteKeyRejected·WRITE_REJECTED_MESSAGE"
+    },
+    {
+      "path": "frontend/src/theme/tokens.ts",
+      "symbol": "token·componentSizes"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && npx vitest run --no-file-parallelism",
+    "total": 707,
+    "passed": 706,
+    "failed": 0,
+    "todo": 1,
+    "note": "Phase 4 2회차 롤백 뒤 — SC-36~39 포함, 롤백 임시 테스트는 SC-36~39 로 흡수"
+  },
+  "typecheck": {
+    "command": "npx tsc -b --noEmit",
+    "exit_code": 0
+  },
+  "build": {
+    "command": "npm run build",
+    "exit_code": 0,
+    "note": "번들 500kB 초과 경고 — 기존과 같음"
+  },
+  "lint": {
+    "command": "npm run lint",
+    "errors": 0,
+    "warnings": "기존 파일 경고만(AuthContext·task017.ui.test·Performance*Page) — 변경 파일 0"
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py",
+    "error_count": 0,
+    "warn": "DESIGN-003 기존 3건(Performance*Page Skeleton·height) 그대로"
+  },
+  "refactoring": [
+    {
+      "what": "하지 않음 — mounted ref·inFlight ref 패턴이 네 화면에 반복된다",
+      "why": "기존 OAuthRedirectPage·RoleSelectionPage 와 같은 인라인 관례. 공용 훅으로 빼면 AuthContext 의 세대 직렬화와 관례가 갈린다 — 회고 후보"
+    },
+    {
+      "what": "인증 화면 공용 조각을 auth/AuthParts.tsx 로 모음",
+      "why": "네 화면이 같은 시안 클래스(.btn.primary·.hero-more·.or·.join)를 쓴다"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "#2 AuthUser.handle 필수",
+      "how": "isAuthUser 에 handle·role 규칙 추가, 기존 테스트 픽스처 갱신(2b 승인)",
+      "fact": "서버 UserResponse.handle (TASK-016) — 로그인·complete·me 모두",
+      "impact": "없음"
+    },
+    {
+      "item": "#4 자동 로그인 실패 처리",
+      "how": "SignUpPage — /login 으로 state.signedUpEmail 전달, LoginPage 가 이메일 채움·안내",
+      "fact": "사용자 결정대로",
+      "impact": "SC-14·SC-35"
+    },
+    {
+      "item": "#5 인증 화면 헤더 숨김",
+      "how": "App.tsx AUTH_PATHS",
+      "fact": "경로 정확 일치 — /login/ 처럼 끝 슬래시는 라우트도 매칭하지 않음",
+      "impact": "없음"
+    },
+    {
+      "item": "#7 만료 판정 시계",
+      "how": "RoleSelectionPage 타이머 — Date.now() >= expiresAt, 진행 중엔 타이머 해제",
+      "fact": "브라우저 시계 기준. 서버 401 이 최종",
+      "impact": "없음"
+    },
+    {
+      "item": "#8 공용 Field 변경",
+      "how": "help·errorAction 추가",
+      "fact": "task017.ui.test.tsx Field 시나리오 그대로 통과",
+      "impact": "없음"
+    },
+    {
+      "item": "#9 새 값은 토큰에서",
+      "how": "check_architecture.py",
+      "fact": "DESIGN-001·002 통과, 003 신규 0. 시안 72px 은 componentSizes.waitArt 로",
+      "impact": "없음"
+    },
+    {
+      "item": "#10 일러스트 라이선스",
+      "how": "out/assets/fluent/LICENSE.md 확인 후 함께 복사",
+      "fact": "Fluent Emoji MIT (Microsoft)",
+      "impact": "없음"
+    },
+    {
+      "item": "#14 TASK-017 이월 — Sheet --c-track",
+      "how": "theme/GlobalTokens.tsx 확인",
+      "fact": "TASK-017 에서 이미 정의됨(body·Block·Paper). target_files 의 GlobalTokens 는 바꾸지 않음",
+      "impact": "없음"
+    }
+  ],
+  "test_modifications": [
+    {
+      "file": "frontend/src/auth/AuthScreens.test.tsx",
+      "scenario": "TASK-010 SC-07 통과 행 7건",
+      "reason": "가입 성공 뒤 자동 로그인 요청이 이어져 인증 요청 총수가 2 — 그 화면의 제출 요청만 센다. 2b 에서 놓친 충돌",
+      "assertion_changed": false,
+      "approval": "AskUserQuestion 2026-11-09 「고쳐서 진행」",
+      "commit": "06bc987"
+    },
+    {
+      "file": "frontend/src/auth/task018.auth.test.tsx",
+      "scenario": "SC-09 통과 행 5건",
+      "reason": "가입이 성공하면 /joined 로 떠나 칸을 볼 수 없다 — 가입 응답을 붙들어 둔다",
+      "assertion_changed": false,
+      "approval": "같음",
+      "commit": "06bc987"
+    },
+    {
+      "file": "frontend/src/auth/task018.auth.test.tsx",
+      "scenario": "SC-31 state 없음",
+      "reason": "도우미 기본 매개변수가 undefined 를 {via:'email'} 로 덮었다",
+      "assertion_changed": false,
+      "approval": "같음",
+      "commit": "06bc987"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "frontend/src/auth/AuthParts.tsx",
+      "why": "PLAN target 밖 신규 — 인증 화면 공용 시안 조각"
+    },
+    {
+      "path": "frontend/src/components/ui/CtaBar.tsx",
+      "why": "form 속성 추가 — 하단 고정 버튼이 폼 밖에 있어 Enter 제출·type=submit 연결이 필요(SC-16)"
+    },
+    {
+      "path": "frontend/src/components/ui/Page.tsx",
+      "why": "plain 속성 추가 — 시안 body.plain 흰 바탕"
+    },
+    {
+      "path": "frontend/src/theme/tokens.ts",
+      "why": "componentSizes.waitArt — 시안 값(새 값 아님)"
+    },
+    {
+      "path": "frontend/src/assets/fluent/idcard.svg",
+      "why": "PLAN 은 ticket·clipboard 만 — 콜백 시안의 일러스트"
+    },
+    {
+      "path": "frontend/src/auth/task018.review.test.ts",
+      "why": "자체 리뷰 RC-1 변종 테스트 (승인 테스트 아님 — Phase 4 리뷰 대상)"
+    },
+    {
+      "path": "frontend/src/auth/authPaths.ts",
+      "why": "롤백 — 인증 경로 판별 공통 지점(App·LoginPage)"
+    },
+    {
+      "path": "frontend/src/components/ui/AppBar.tsx",
+      "why": "롤백 — plain prop(시안 .plain .appbar)"
+    }
+  ],
+  "design_notes": [
+    "role-select--error 시안은 제목이 '<이메일>(<이름>) 가입 시간이 지났어요' 이지만 승인 시나리오(SC-23)대로 제목 '가입 시간이 지났어요' 만 둔다 — 401 로 만료되면 이메일·이름을 모른다",
+    "로그인 화면의 시안 eyebrow '티켓온' 을 그대로 넣었다"
+  ],
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체 develop...HEAD (04cfad1)",
+        "findings": 3,
+        "correctness": 1,
+        "tests_added": [
+          "frontend/src/auth/task018.review.test.ts (RC-1 변종 13행)"
+        ],
+        "fix_commit": "54222fa"
+      },
+      {
+        "n": 2,
+        "scope": "수정 04cfad1...HEAD · 같은 카테고리 전수(시각·외부 문자열 검증, 공유 함수 호출부)",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null
+      },
+      {
+        "n": 3,
+        "scope": "롤백 수정 d5db43c...06c64e1 · 같은 카테고리 전수",
+        "findings": 3,
+        "correctness": 1,
+        "tests_added": [
+          "task018.rollback.test.tsx from 6행 · D4 아이콘 단언"
+        ],
+        "fix_commit": "152e747"
+      },
+      {
+        "n": 4,
+        "scope": "수정 06c64e1...152e747 · isOneOf 호출부 전수",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null
+      },
+      {
+        "n": 5,
+        "scope": "a07186d...HEAD · isOneOf 호출부·라우터 규칙 전수",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null,
+        "note": "리뷰어 프로브: matchRoutes 결과가 App 라우트 표 매칭과 모든 표기에서 같음. 깨진 인코딩은 예외 없이 null(라우터 경고가 렌더당 한 번 더)"
+      }
+    ],
+    "root_causes": [
+      {
+        "id": "RC-1",
+        "summary": "시각 문자열을 정규식으로 형식만 거르고 Date.parse 의 날짜 롤오버(2월 30일 → 3월 2일)를 막지 않는다",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "expiresAt 이 달력상 없는 날(2026-02-30, 04-31)",
+            "origin": "found",
+            "probe": "reproduced",
+            "evidence": "frontend/src/auth/task018.review.test.ts"
+          },
+          {
+            "case": "expiresAt 이 T24:00:00",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "evidence": "frontend/src/auth/task018.review.test.ts"
+          },
+          {
+            "case": "오프셋 +99:99, +24:00, +09:60, 초 :60",
+            "origin": "predicted",
+            "probe": "not_reproduced",
+            "evidence": "frontend/src/auth/task018.review.test.ts"
+          },
+          {
+            "case": "다른 곳에서 같은 Date.parse 패턴 사용",
+            "origin": "predicted",
+            "probe": "not_reproduced",
+            "reason": "2라운드 Grep: 운영 코드의 Date.parse 는 parseInstant 한 곳. 다른 new Date(...) 는 표시·입력 변환용"
+          },
+          {
+            "case": "연도 0~99 (Date.UTC 의 1900 년대 매핑)",
+            "origin": "predicted",
+            "probe": "not_reproduced",
+            "reason": "getUTCFullYear 대조에서 거부 (코드 추적)"
+          }
+        ],
+        "fix_locus": "common",
+        "sites": [
+          "frontend/src/api/auth.ts parseInstant"
+        ]
+      },
+      {
+        "id": "RC-2",
+        "summary": "경로 문자열 정확 일치로 화면을 판별해, 라우터가 같게 보는 표기(끝 슬래시·대소문자)를 놓친다",
+        "variants": [
+          {
+            "case": "App.tsx AUTH_PATHS",
+            "origin": "found",
+            "probe": "reproduced"
+          },
+          {
+            "case": "LoginPage.safeDestination 순환 판정",
+            "origin": "later",
+            "probe": "reproduced",
+            "evidence": "frontend/src/auth/task018.rollback.test.tsx"
+          },
+          {
+            "case": "from 의 쿼리·해시 표기",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "evidence": "frontend/src/auth/task018.rollback.test.tsx"
+          },
+          {
+            "case": "/login/x 하위 경로 오탐",
+            "origin": "predicted",
+            "probe": "not_reproduced",
+            "reason": "matchPath end:true — 리뷰어 직접 실행"
+          },
+          {
+            "case": "/./login·/%6Cogin",
+            "origin": "predicted",
+            "probe": "not_reproduced",
+            "reason": "리뷰어 matchPath 실행 — 매칭 안 됨, 실제 입력 경로 없음"
+          }
+        ],
+        "fix_locus": "common",
+        "sites": [
+          "frontend/src/auth/authPaths.ts"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "deferred": [
+      {
+        "kind": "a11y",
+        "what": "radio 버튼이 모두 탭 순서에 있고 방향키 이동이 없다(WAI-ARIA radiogroup 관례와 다름)",
+        "where": "Segmented·RoleSelectionPage",
+        "why": "시나리오 요구 없음"
+      },
+      {
+        "kind": "design",
+        "what": "StrictMode 개발 환경에서 콜백 fetchMe 이중 요청",
+        "where": "OAuthRedirectPage",
+        "why": "결과 멱등, 운영 무영향 — 기존 동작"
+      },
+      {
+        "kind": "design",
+        "what": "오프셋 상한이 ±23:59 (Java ZoneOffset 은 ±18:00)",
+        "where": "parseInstant",
+        "why": "계산은 정확, 서버가 낼 수 없는 범위"
+      },
+      {
+        "kind": "test",
+        "what": "콜백 progressbar 의 역할·이름 직접 단언 없음",
+        "why": "승인 범위 밖 — SC-38 은 치수·색만"
+      },
+      {
+        "kind": "design",
+        "what": "깨진 퍼센트 인코딩 주소에서 matchRoutes 경고가 렌더마다 한 번 더",
+        "why": "라우터 자체 경고와 같은 내용, 동작 영향 없음"
+      }
+    ]
+  },
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-2",
+      "variants": [
+        "App.tsx 헤더 판별 /login/·/Login·/signup/ 등",
+        "LoginPage.safeDestination 순환 판정 (later — 롤백 자체 리뷰 1라운드)",
+        "쿼리·해시가 붙은 표기"
+      ],
+      "tests": [
+        "frontend/src/auth/task018.rollback.test.tsx (RC-2 describe — 경로 9행 · from 6행 · 비인증 2행)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "frontend/src/auth/authPaths.ts isOneOf (matchPath)",
+        "호출부: App.tsx · LoginPage.tsx safeDestination"
+      ],
+      "commits": [
+        "06c64e1",
+        "152e747"
+      ]
+    },
+    {
+      "root_cause": "RC-3",
+      "variants": [
+        "D1 plain 앱바 흰색",
+        "D2 제목 자간 -0.03em",
+        "D3 역할 일러스트 36px",
+        "D4 만료 상태 대기 정보·역할 라벨·아이콘(18px)",
+        "D5 MoreLink 치수 토큰",
+        "D6 .id-value line-height 1.15 (Phase 4 not_probed → 프로브)",
+        "D7 콜백 스피너 32px (not_probed → 프로브)"
+      ],
+      "tests": [
+        "frontend/src/auth/task018.rollback.test.tsx (RC-3 describe 11행)"
+      ],
+      "fix_locus": "per_site",
+      "sites": [
+        "components/ui/AppBar.tsx",
+        "components/ui/Hero.tsx",
+        "pages/OAuthRedirectPage.tsx",
+        "pages/RoleSelectionPage.tsx",
+        "pages/JoinedPage.tsx",
+        "pages/SignUpPage.tsx",
+        "auth/AuthParts.tsx",
+        "theme/tokens.ts componentSizes(waitSpin·rowArt·moreIcon·moreGap·fieldMsgIcon·titleTracking·idLineHeight)"
+      ],
+      "commits": [
+        "06c64e1",
+        "152e747"
+      ],
+      "not_fixed": [
+        {
+          "case": "만료 화면 제목 안 email(name) — 시안 role-select--error",
+          "why": "승인 시나리오 SC-23 이 heading 을 정확히 '가입 시간이 지났어요' 로 단언 — HITL#3 에서 사람에게 묻는다. 지금은 윗줄·이메일(이름) lead 로 표시"
+        }
+      ]
+    },
+    {
+      "root_cause": "RC-2 (later — Phase 4 2회차)",
+      "variants": [
+        "/%6Cogin·/%73ignup — 라우터는 디코딩해 매칭, matchPath 는 아님 (헤더 · 로그인 뒤 순환)"
+      ],
+      "tests": [
+        "frontend/src/auth/task018.auth.test.tsx SC-36·SC-37 (승인 2026-11-09)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "frontend/src/auth/authPaths.ts isOneOf → matchRoutes"
+      ],
+      "commits": [
+        "15aff9c"
+      ]
+    },
+    {
+      "root_cause": "RC-3 (later — Phase 4 2회차)",
+      "variants": [
+        ".wait-spin 테두리 3px·트랙 --c-line·호 --c-brand"
+      ],
+      "tests": [
+        "task018.auth.test.tsx SC-38 콜백 진행 표시"
+      ],
+      "fix_locus": "per_site",
+      "sites": [
+        "frontend/src/pages/OAuthRedirectPage.tsx",
+        "theme/tokens.ts componentSizes.waitSpinBorder"
+      ],
+      "commits": [
+        "15aff9c"
+      ],
+      "not_fixed": [
+        {
+          "case": "만료 화면 제목 안 email(name)",
+          "why": "사용자 결정 2026-11-09 — 지금대로(제가 정한 값 16)"
+        }
+      ]
+    }
+  ]
+}

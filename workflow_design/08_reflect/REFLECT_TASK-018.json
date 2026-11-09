@@ -1,0 +1,203 @@
+{
+  "task_id": "TASK-018",
+  "keep": [
+    {
+      "what": "입력 경계 칸을 PLAN 이 정하게 한 것(coverage_matrix) — 2a 가 수렴했다",
+      "evidence": "2a 독립검증 1회차 FAIL(false_cover 2·plan_gap 2) → 2회차 PASS, Phase 4 롤백 뒤 3회차도 한 번에 PASS. 같은 일을 TASK-016 은 V11 FAIL 9회·설계 롤백 2회, TASK-017 은 3회 FAIL·롤백 1회. 2회차부터 '처음 보는 지적은 warn' 규칙으로 회차마다 새 칸이 생기지 않았다"
+    },
+    {
+      "what": "Red 단계에서 기존 승인 테스트 2파일의 옛 기대값을 미리 찾아 함께 바꿨다",
+      "evidence": "AuthScreens·SocialLoginScreens 158건이 2b 에서 새 기대값으로 Red — Phase 3 에서 승인 테스트를 고친 것은 관찰 방법 3곳뿐(단언 불변)"
+    },
+    {
+      "what": "이미 구현된 행은 변이 검증으로 가짜 통과가 아님을 보였다",
+      "evidence": "롤백 Red 에서 M1~M9 변이 9개 모두 해당 SC 가 실패 — 원복 확인. D1 앱바 색 테스트도 변이로 확인"
+    },
+    {
+      "what": "DTO 스키마 모의 서버 + 같은 출처 375px iframe 으로 시안과 나란히 — 실제 상태를 만들어 대조",
+      "evidence": "Phase 4 1회차에 시안 차이 5건·RC-2 를 화면에서 재현, 3회차에 인코딩 경로·스피너 확인. :8080(다른 프로젝트) 무접촉"
+    }
+  ],
+  "problem": [
+    {
+      "what": "시안 대조를 Phase 4 에서야 처음 했다 — 시안 값 차이 7건이 검증에서 FAIL 이 됐다",
+      "evidence": "VERIFY RC-3: 앱바 바탕·제목 자간·일러스트 36px·만료 구성·화살표 치수·아이디 줄 높이·스피너. PLAN·SCENARIO 에 '시안 모양 값' 이 없어 테스트도 없었다. 롤백 2회(Phase 3, Phase 2a)",
+      "phase": 4
+    },
+    {
+      "what": "프레임워크(라우터)의 판별을 흉내 내 같은 뿌리를 세 번 고쳤다",
+      "evidence": "RC-2: 문자열 정확 일치(1회차) → matchPath(끝 슬래시·대소문자만, 2회차 FAIL — 퍼센트 디코딩 누락) → matchRoutes(라우터와 같은 함수). later 변종 3건(safeDestination 순환·퍼센트 인코딩·쿼리 표기)",
+      "phase": 4
+    },
+    {
+      "what": "승인된 Red 테스트에 하네스 결함 3곳 — Phase 3 에서 사람 승인을 한 번 더 받았다",
+      "evidence": "DEV test_modifications: SC-09 통과 행이 성공 뒤 /joined 로 떠나 칸을 못 봄, SC-31 도우미 기본 매개변수가 undefined 를 덮음, AuthScreens SC-07 이 인증 요청 총수를 셈(자동 로그인으로 2)",
+      "phase": 3
+    },
+    {
+      "what": "Phase 4 가 FAIL 2회 — 뿌리 스윕이 첫 라운드에 변종을 다 못 찾았다",
+      "evidence": "check_root_causes: 변종 22 중 later 7. 1회차 리뷰는 경로 판별 호출부(safeDestination)를 함께 보지 않았고, matchPath 의 디코딩 여부를 프로브하지 않았다",
+      "phase": 4
+    }
+  ],
+  "try": [
+    {
+      "what": "Frontend+시안 태스크는 PLAN 에 「시안 모양 값 표」(화면·요소·값·출처 줄)를 둔다 — 화면 <style> 과 components.css 맥락 규칙을 전수",
+      "target": ".claude/skills/wf-plan/references/design-checks.md"
+    },
+    {
+      "what": "Phase 3 자체 리뷰 전에 375px 로 띄워 시안과 나란히 한 번 본다 (Phase 4 의 화면 확인을 앞당김)",
+      "target": ".claude/skills/wf-develop/SKILL.md"
+    },
+    {
+      "what": "경로·URL 로 화면을 판별하는 입력에 kind 를 둔다 — 끝 슬래시·대소문자·퍼센트 인코딩·깨진 인코딩 칸",
+      "target": "scripts/coverage_matrix.py"
+    },
+    {
+      "what": "프레임워크 판별을 흉내 내는 코드는 '그 프레임워크 함수를 그대로 쓰는가' 를 리뷰 지시에 넣는다",
+      "target": ".claude/skills/wf-develop/SKILL.md"
+    },
+    {
+      "what": "Red 의 통과 행·도우미 점검 — 성공 뒤 화면 이동, 기본 매개변수, 요청 총수 세기",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    }
+  ],
+  "insights": [
+    "칸을 고정하니 2a 는 수렴했다. 같은 원리가 시안 대조에는 없었다 — 시안 값도 PLAN 에서 표로 고정해야 Phase 4 에서 처음 발견되지 않는다",
+    "프레임워크의 동작을 다시 구현하면 표기·인코딩 같은 변종이 하나씩 새어 나온다. 같은 함수(matchRoutes)를 쓰는 순간 변종 전체가 사라졌다",
+    "롤백할 때 변종을 시나리오로 옮기는 것(2a)이 테스트만 덧대는 것(3)보다 한 번 더 걸렸지만, 그 뒤 리뷰 두 번이 결함 0 이었다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "사용자 결정 2건(자동 로그인 실패 처리·인증 화면 헤더 숨김). 2a 에서 plan_gap 으로 input_fields 보완 2번(via·응답 필드, route_path·from converted) — ROLLBACK_PLAN 아님"
+    },
+    "2a": {
+      "retries": 2,
+      "note": "1회차 V11 FAIL(false_cover 2·plan_gap 2) → 2회차 PASS. Phase 4 2회차 롤백 뒤 3회차 PASS. 칸 162 → 242 → 246"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "통합 승인 2회(최초, 롤백 SC-36~39). 롤백 Red 는 변이 검증 M1~M9"
+    },
+    "3": {
+      "retries": 2,
+      "note": "자체 리뷰 RC-1(달력 밖 시각) 수정. 승인 테스트 관찰 방법 3곳 수정(사용자 승인). Phase 4 롤백 2회 수정(RC-2·RC-3), 롤백 자체 리뷰에서 safeDestination 같은 뿌리 추가 수정"
+    },
+    "4": {
+      "retries": 2,
+      "note": "1회차 FAIL(RC-2·RC-3 시안 5) → Phase 3. 2회차 FAIL(퍼센트 인코딩) → Phase 2a. 3회차 WARN 예외 승인(만료 제목 시안 차이 — 사용자 결정, 병렬 부하 실패 1회)"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "화면 레이아웃·순환 판별처럼 경로로 화면을 가르는 판별은 라우터와 같은 함수(matchRoutes)로 한 곳에서",
+      "why_broader": "흐름 2~5 의 화면도 레이아웃(헤더·하단 탭)을 경로로 나눈다. 문자열 비교·matchPath 는 표기 변종을 놓쳤다",
+      "evidence": "VERIFY RC-2, auth/authPaths.ts",
+      "suggested_title": "경로 기반 화면 판별은 라우터 매칭 함수로"
+    },
+    {
+      "decision": "시간 제한 화면은 브라우저 시계로 전환하되 요청이 가는 중엔 서버 판정을 기다린다",
+      "why_broader": "흐름 3(대기열)·4(좌석 선점 시간 제한)에도 같은 '화면 타이머 vs 서버 최종 판정' 이 있다. ADR-0024(카운트다운 오프셋)와 관계 정리 필요",
+      "evidence": "CP-1.3 decisions, SCENARIO 제가 정한 값 9, RoleSelectionPage 타이머",
+      "suggested_title": "시간 제한 화면의 클라이언트 타이머와 서버 판정"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "ADR-0021 은 소셜 토큰을 URL fragment 로 넘기라고 하는데 백엔드·프론트 모두 query(?token=) 를 쓴다",
+      "where": "backend/.../config/OAuth2LoginSuccessHandler.java:50-51, frontend/src/pages/OAuthRedirectPage.tsx parseCallback",
+      "found_how": "Phase 1 조사(PLAN #12)",
+      "suggestion": "fragment 전환 태스크를 만들거나 ADR-0021 을 현실에 맞게 개정"
+    },
+    {
+      "what": "공용 AppBar 가 제목이 없어도 빈 h1 을 그린다 — 가입·역할 선택 화면에 h1 이 둘(빈 것 + 머리글)",
+      "where": "frontend/src/components/ui/AppBar.tsx",
+      "found_how": "Phase 4 화면 확인(첫 h1 이 빈 문자열)",
+      "suggestion": "제목이 없으면 h1 을 그리지 않게 — TASK-017 부품 개선"
+    },
+    {
+      "what": "design-tokens.css 에 모션 토큰이 없어 시안 .8s 회전·토스트 2500ms 가 코드 상수로 흩어진다",
+      "where": "OAuthRedirectPage.tsx(.8s), tokens.ts TOAST_DURATION_MS",
+      "found_how": "Phase 4 3회차 리뷰",
+      "suggestion": "모션 토큰을 정본에 둘지 결정"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-plan/references/design-checks.md",
+      "section": "새 절 — 시안 모양 값 표",
+      "change": "Frontend 이고 시안(out/screens)이 있으면 PLAN design 에 '시안 모양 값' 표(화면·상태·요소·값·출처 파일 줄)를 둔다. 화면 <style> 과 components.css 의 맥락 규칙(.plain .appbar 등)을 전수로 옮기고, 2a 는 이 표의 행마다 시나리오(계산된 스타일 단언)를 둔다",
+      "evidence": "TASK-018 Phase 4 1회차 RC-3 — 시안 차이 7건이 PLAN·SCENARIO 에 없어 검증에서 처음 발견, 롤백 2회",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-develop/SKILL.md",
+      "section": "Step 5.5 자체 리뷰 앞",
+      "change": "Frontend+시안 태스크는 자체 리뷰 전에 앱을 띄워 같은 출처 375px iframe 으로 시안과 나란히 본다(screen-verification.md 방식). 차이는 리뷰 소견과 같이 처리",
+      "evidence": "TASK-018 — 화면 대조가 Phase 4 에서 처음 이뤄져 FAIL. 근본 원인 분석 B(실제 환경 확인을 Phase 3 으로)",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-develop/SKILL.md",
+      "section": "Step 5.5 리뷰 프롬프트",
+      "change": "프레임워크의 판별(라우터 매칭·디코더·검증기)을 흉내 내는 코드가 있으면 '프레임워크 함수를 그대로 쓰는가, 아니면 같은 입력 표기(인코딩·대소문자·끝 슬래시)에서 결과가 같은가' 를 프로브하도록 리뷰 지시에 넣는다",
+      "evidence": "TASK-018 RC-2 — 정확 일치 → matchPath → matchRoutes 로 세 번 고침, later 변종 3",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": "scripts/coverage_matrix.py",
+      "section": "KINDS",
+      "change": "kind 'route_path' 추가 — trailing_slash·case·percent_encoded·malformed_encoding 칸. coverage-policy.md §2-1 표에도 같은 행(--check-policy)",
+      "evidence": "TASK-018 — 경로 표기를 converted 로 대신 분류했고 칸이 2개라 표기 변종을 강제하지 못했다. Phase 4 2회차 FAIL(퍼센트 인코딩)",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 2 테스트 작성",
+      "change": "① 성공 행에서 화면이 이동하는 흐름이면 이동 뒤에 이전 화면 요소를 단언하지 않는다(응답을 붙들거나 단언 순서를 바꾼다) ② 표의 '없음(undefined)' 행을 기본 매개변수가 있는 도우미로 넘기지 않는다 ③ 기존 테스트가 '도메인 요청 총수'를 세면 새 연쇄 요청(자동 로그인 등)과 부딪히는지 Grep. ④ 스타일 단언은 em 대신 px(jsdom 계산), 색은 토큰을 칠한 탐침 요소의 계산값과 대조(DESIGN-002)",
+      "evidence": "TASK-018 DEV test_modifications 3건(Phase 3 에서 사람 승인 추가), 롤백 테스트 자간 em·rgb 리터럴로 2번 고침",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-verify/references/screen-verification.md",
+      "section": "상태를 실제로 만들어 본다",
+      "change": "클립보드·권한이 필요한 동작은 iframe 안 프로그램 클릭(사용자 동작 없음)으로 확인하지 않는다 — writeText 가 끝나지 않는다. 최상위 문서에서 실제 클릭으로. 띄운 서버 종료는 PID 를 하나씩 확인해 명시적으로(pkill -P 같은 부모 기준 종료는 권한 분류기가 막는다)",
+      "evidence": "TASK-018 Phase 4 1회차 — iframe 복사 무응답, 서버 종료 명령 거부",
+      "status": "pending",
+      "recurring": 0
+    }
+  ],
+  "handoff": [
+    "흐름 2: AppBar 빈 h1 · 모션 토큰 drift",
+    "만료 화면 제목 시안 차이는 사용자 결정으로 확정 — 시안(out/screens/role-select--error.html)을 고칠지 결정 필요"
+  ],
+  "metrics": {
+    "coverage_cells": 246,
+    "validator_rounds": {
+      "initial": 2,
+      "after_rollback": 1
+    },
+    "phase4_rounds": 3,
+    "root_causes": 3,
+    "variants": 22,
+    "later_variants": 7,
+    "tests": {
+      "total": 707,
+      "passed": 706,
+      "todo": 1
+    }
+  },
+  "completion_report": {
+    "approved_by_human": false
+  }
+}

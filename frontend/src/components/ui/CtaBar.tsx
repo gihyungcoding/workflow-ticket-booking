@@ -6,10 +6,12 @@ export interface CtaBarProps {
   children: ReactNode
   onClick?: () => void
   disabled?: boolean
+  /** 이 폼의 제출 버튼으로 — 칸에서 Enter 로도 제출된다 (TASK-018) */
+  form?: string
 }
 
 /** 시안 .cta + .btn.primary.full — 화면 아래 고정 주 버튼 */
-export function CtaBar({ children, onClick, disabled }: CtaBarProps) {
+export function CtaBar({ children, onClick, disabled, form }: CtaBarProps) {
   return (
     <Box
       sx={{
@@ -25,7 +27,8 @@ export function CtaBar({ children, onClick, disabled }: CtaBarProps) {
     >
       <Box
         component="button"
-        type="button"
+        type={form ? 'submit' : 'button'}
+        form={form}
         disabled={disabled}
         onClick={onClick}
         sx={{

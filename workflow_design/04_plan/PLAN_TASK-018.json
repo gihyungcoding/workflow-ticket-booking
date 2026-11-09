@@ -1,0 +1,861 @@
+{
+  "task_id": "TASK-018",
+  "route": "Frontend",
+  "route_reason": "화면 5종·라우트·클라이언트 검증·타이머·클립보드가 변경 대상. 필요한 서버 API(handle·/social/pending)는 TASK-016 에서 이미 머지됨",
+  "design": {
+    "inputs": [
+      {
+        "name": "email",
+        "type": "string",
+        "source": "로그인·가입 폼",
+        "constraints": [
+          "필수(공백만이면 없음)",
+          "가입은 255자 이하(UTF-16 길이) — 로그인은 길이를 검증하지 않는다",
+          "앞뒤 공백만 걷어 보낸다"
+        ]
+      },
+      {
+        "name": "password",
+        "type": "string",
+        "source": "로그인·가입 폼",
+        "constraints": [
+          "필수",
+          "가입은 8자 이상 72자 이하 — 벗어나면 칸 아래 안내 문구 자리가 오류로 바뀌고 제출하지 않는다",
+          "변환하지 않는다"
+        ]
+      },
+      {
+        "name": "passwordConfirm",
+        "type": "string",
+        "source": "가입 폼",
+        "constraints": [
+          "필수",
+          "password 와 다르면 그 칸 아래 '비밀번호가 일치하지 않아요'"
+        ]
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "source": "가입 폼",
+        "constraints": [
+          "필수(공백만이면 없음)",
+          "100자 이하"
+        ]
+      },
+      {
+        "name": "role",
+        "type": "AUDIENCE|ORGANIZER",
+        "source": "가입 폼 세그먼트·역할 선택 행",
+        "constraints": [
+          "필수 — 고르지 않으면 제출하지 않는다"
+        ]
+      },
+      {
+        "name": "error",
+        "type": "query string",
+        "source": "/login?error=social",
+        "constraints": [
+          "값이 정확히 'social' 일 때만 맨 위 실패 안내"
+        ]
+      },
+      {
+        "name": "from",
+        "type": "location.state",
+        "source": "로그인으로 보낸 화면",
+        "constraints": [
+          "앱 안 경로만 (safeDestination — 기존 동작 유지)",
+          "로그인·가입 화면 판별은 라우터 매칭과 같은 규칙 (/login/·/Login·/%6Cogin 도 순환)"
+        ]
+      },
+      {
+        "name": "socialProvider",
+        "type": "sessionStorage 문자열",
+        "source": "소셜 버튼을 누를 때 기록",
+        "constraints": [
+          "kakao·naver·google·apple 중 하나일 때만 이름을 보인다",
+          "저장소가 막혀도 화면이 죽지 않는다"
+        ]
+      },
+      {
+        "name": "pendingToken",
+        "type": "location.state 문자열",
+        "source": "콜백 화면이 넘김",
+        "constraints": [
+          "없거나 빈 값이면 /login 으로"
+        ]
+      },
+      {
+        "name": "pending 응답",
+        "type": "{provider,email,name,expiresAt}",
+        "source": "외부 서버 응답 — POST /api/auth/social/pending",
+        "constraints": [
+          "provider 는 KAKAO·NAVER·GOOGLE·APPLE",
+          "expiresAt 은 ISO-8601 시각 문자열",
+          "401 PENDING_SIGNUP_EXPIRED 면 만료 상태"
+        ]
+      },
+      {
+        "name": "로그인·가입 완료 응답",
+        "type": "{accessToken,user{id,email,name,role,handle}}",
+        "source": "외부 서버 응답 — POST /login · /social/complete",
+        "constraints": [
+          "accessToken 은 비지 않은 문자열, user.name 은 공백만이 아닌 문자열, user.email 은 문자열, user.role 은 AUDIENCE·ORGANIZER, user.handle 은 공백만이 아닌 문자열이어야 성공 (/api/auth/me 복원도 같은 user 규칙)",
+          "401 INVALID_CREDENTIALS · 409 EMAIL_ALREADY_EXISTS·SOCIAL_ACCOUNT_ALREADY_LINKED · 401 PENDING_SIGNUP_EXPIRED · 401 WRITE_KEY_INVALID 를 code 로 구분"
+        ]
+      },
+      {
+        "name": "가입 응답",
+        "type": "상태 201",
+        "source": "외부 서버 응답 — POST /signup",
+        "constraints": [
+          "201 일 때만 자동 로그인으로 넘어간다"
+        ]
+      },
+      {
+        "name": "클립보드 쓰기 결과",
+        "type": "Promise",
+        "source": "navigator.clipboard.writeText",
+        "constraints": [
+          "실패하거나 API 가 없으면 아이디를 선택 상태로 두고 '길게 눌러 복사해 주세요'"
+        ]
+      },
+      {
+        "name": "Field.help",
+        "type": "string prop",
+        "source": "공용 부품 prop (TASK-017 Field 확장)",
+        "constraints": [
+          "빈·공백이면 없음",
+          "error 가 있으면 help 대신 error 를 같은 자리에"
+        ]
+      },
+      {
+        "name": "via",
+        "type": "라우트 state",
+        "source": "가입·역할 선택이 /joined 로 이동할 때 넘김",
+        "constraints": [
+          "'email' 또는 KAKAO·NAVER·GOOGLE·APPLE 일 때만 경로를 보인다",
+          "없거나 모르는 값이면 역할만"
+        ]
+      },
+      {
+        "name": "주소 경로(pathname)",
+        "type": "string",
+        "source": "브라우저 주소 — 라우터가 디코딩·정규화해 매칭",
+        "constraints": [
+          "인증 화면 판별은 라우터 매칭과 같은 결과여야 한다(끝 슬래시·대소문자·퍼센트 인코딩)"
+        ]
+      }
+    ],
+    "input_fields": [
+      {
+        "field": "email",
+        "flows": [
+          "F1",
+          "F3"
+        ],
+        "kinds": [
+          "required",
+          "string",
+          "string_stored"
+        ],
+        "max": 255,
+        "note": "로그인(F1)은 길이를 검증하지 않는다 — max+1 은 F1 에서 n/a 후보"
+      },
+      {
+        "field": "password",
+        "flows": [
+          "F1",
+          "F3"
+        ],
+        "kinds": [
+          "required",
+          "string",
+          "string_stored"
+        ],
+        "max": 72,
+        "note": "가입은 최소 8자도 같은 자리"
+      },
+      {
+        "field": "passwordConfirm",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "required",
+          "string"
+        ]
+      },
+      {
+        "field": "name",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "required",
+          "string",
+          "string_stored"
+        ],
+        "max": 100
+      },
+      {
+        "field": "role",
+        "flows": [
+          "F3",
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "enum"
+        ]
+      },
+      {
+        "field": "error_query",
+        "flows": [
+          "F2"
+        ],
+        "kinds": [
+          "enum"
+        ],
+        "note": "?error= 의 값"
+      },
+      {
+        "field": "from",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "required",
+          "opaque",
+          "converted"
+        ],
+        "note": "location.state.from — safeDestination — 라우터가 바꿔 읽는 표기(끝 슬래시·대소문자·퍼센트 인코딩)는 converted (Phase 4 RC-2)"
+      },
+      {
+        "field": "social_provider",
+        "flows": [
+          "F4"
+        ],
+        "kinds": [
+          "required",
+          "enum"
+        ],
+        "note": "sessionStorage — 콜백 화면 문구에만 쓴다. 가입 완료 화면의 경로는 via (1회차 plan_gap)"
+      },
+      {
+        "field": "pending_token",
+        "flows": [
+          "F5",
+          "F6",
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "opaque"
+        ]
+      },
+      {
+        "field": "pending_provider",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "enum"
+        ]
+      },
+      {
+        "field": "pending_email",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ]
+      },
+      {
+        "field": "pending_name",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ]
+      },
+      {
+        "field": "expires_at",
+        "flows": [
+          "F6"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "datetime",
+          "converted"
+        ],
+        "note": "ISO 문자열 → 시각 변환(Date). 표기 변형(오프셋·소수 초)"
+      },
+      {
+        "field": "pending_response",
+        "flows": [
+          "F5",
+          "F6"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result"
+        ]
+      },
+      {
+        "field": "login_response",
+        "flows": [
+          "F1",
+          "F3"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result",
+          "error_state"
+        ],
+        "note": "F3 은 가입 201 뒤 자동 로그인"
+      },
+      {
+        "field": "signup_response",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result",
+          "error_state"
+        ]
+      },
+      {
+        "field": "complete_response",
+        "flows": [
+          "F7"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result",
+          "error_state"
+        ]
+      },
+      {
+        "field": "user_handle",
+        "flows": [
+          "F1",
+          "F3",
+          "F7",
+          "F8"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ],
+        "note": "로그인·가입 완료 응답의 user.handle"
+      },
+      {
+        "field": "clipboard_write",
+        "flows": [
+          "F8"
+        ],
+        "kinds": [
+          "async_result"
+        ]
+      },
+      {
+        "field": "field_help",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "string"
+        ],
+        "note": "공용 Field 의 help prop — 빈·공백이면 안내 자리를 그리지 않는다(TASK-017 prop 규칙과 같게). 오류가 있으면 같은 자리가 오류로"
+      },
+      {
+        "field": "via",
+        "flows": [
+          "F8"
+        ],
+        "kinds": [
+          "required",
+          "enum"
+        ],
+        "note": "/joined 라우트 state — 'email' 또는 대기 정보 provider(KAKAO·NAVER·GOOGLE·APPLE)"
+      },
+      {
+        "field": "access_token",
+        "flows": [
+          "F1",
+          "F3",
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ],
+        "note": "로그인·가입 완료 응답 accessToken"
+      },
+      {
+        "field": "user_name",
+        "flows": [
+          "F1",
+          "F3",
+          "F7",
+          "F8"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ],
+        "note": "응답 user.name — F8 은 /api/auth/me 복원"
+      },
+      {
+        "field": "user_email",
+        "flows": [
+          "F1",
+          "F3",
+          "F7",
+          "F8"
+        ],
+        "kinds": [
+          "required",
+          "json_field"
+        ],
+        "note": "응답 user.email — 문자열이면 된다(빈 값 허용, 기존 규칙)"
+      },
+      {
+        "field": "user_role",
+        "flows": [
+          "F1",
+          "F3",
+          "F7",
+          "F8"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "enum"
+        ],
+        "note": "응답 user.role — AUDIENCE·ORGANIZER. 가입 완료 윗줄의 역할"
+      },
+      {
+        "field": "route_path",
+        "flows": [
+          "F10"
+        ],
+        "kinds": [
+          "converted"
+        ],
+        "note": "주소 경로 — 라우터는 디코딩·대소문자 무시·끝 슬래시 허용으로 매칭한다 (Phase 4 RC-2)"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "login 화면",
+        "type": "screen",
+        "description": "시안 login — 머리글·이메일/비밀번호·로그인하기·또는·소셜 4·'계정이 없나요? 이메일로 가입'"
+      },
+      {
+        "name": "login 자격 증명 오류",
+        "type": "state",
+        "description": "401 INVALID_CREDENTIALS — 두 칸 모두 오류 표시, 비밀번호 칸 아래 '이메일 또는 비밀번호가 올바르지 않아요'"
+      },
+      {
+        "name": "login 소셜 실패 안내",
+        "type": "state",
+        "description": "맨 위 '로그인이 취소됐거나 실패했어요'"
+      },
+      {
+        "name": "signup 화면·오류",
+        "type": "screen",
+        "description": "시안 signup — 비밀번호 안내 '8자 이상 72자 이하로 정해요' 자리가 오류로 바뀜, 확인 불일치 '비밀번호가 일치하지 않아요', 409 이면 이메일 칸 '이미 가입된 이메일이에요' + 칸 안 '로그인하기' 링크 · '이미 계정이 있나요?' 줄 숨김"
+      },
+      {
+        "name": "oauth-callback 화면",
+        "type": "screen",
+        "description": "진행 표시 + '<제공자> 계정을 확인하고 있어요'"
+      },
+      {
+        "name": "role-select 화면",
+        "type": "screen",
+        "description": "'<제공자>로 처음 가입' + '<이메일>(<이름>)으로 가입하고 있어요' · 역할 행 2 · 5분 안내 · 계속하기"
+      },
+      {
+        "name": "role-select 만료",
+        "type": "state",
+        "description": "'가입 시간이 지났어요' · '5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요' · '다시 로그인하기' → /login — 대기 정보를 알면(화면에 머물다 만료·계속하기 401) 윗줄 '<제공자>로 처음 가입' 과 '<이메일>(<이름>)' 도, 역할 라벨과 오류 아이콘 (Phase 4 롤백)"
+      },
+      {
+        "name": "joined 화면",
+        "type": "screen",
+        "description": "'<경로> · <역할>' · '가입이 끝났어요' · 내 티켓온 아이디(handle) · 아이디 복사 · 시작하기 → /"
+      },
+      {
+        "name": "아이디 복사 토스트",
+        "type": "state",
+        "description": "'아이디를 복사했어요 — 일행에게 붙여넣어 보내세요' / 실패 시 아이디 선택 + '길게 눌러 복사해 주세요'"
+      },
+      {
+        "name": "제출 중",
+        "type": "state",
+        "description": "주 버튼 비활성 — 두 번 보낼 수 없다"
+      },
+      {
+        "name": "서버 오류",
+        "type": "state",
+        "description": "'로그인하지 못했어요. 잠시 후 다시 시도해 주세요' / '가입하지 못했어요. 잠시 후 다시 시도해 주세요' 등 해요체"
+      },
+      {
+        "name": "login 가입 뒤 안내",
+        "type": "state",
+        "description": "자동 로그인 실패로 온 경우 맨 위 '가입은 끝났어요. 로그인해 주세요' + 이메일 칸 채움"
+      },
+      {
+        "name": "대기 정보 실패",
+        "type": "state",
+        "description": "'가입 정보를 불러오지 못했어요' + '다시 시도하기'(같은 요청 다시)"
+      },
+      {
+        "name": "시안 모양 값",
+        "type": "style",
+        "description": "out/components.css·screens <style> 값 — .plain .appbar 바탕, .title 자간 -0.03em, .row-art img 36px, .field-msg svg 18px, .hero-more 18px·2px, .id-value 1.15, .wait-spin 32px·3px·트랙/호 (SC-38)"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "이메일 로그인",
+        "steps": [
+          "이메일·비밀번호 입력, 빈 칸이면 요청하지 않음",
+          "POST /api/auth/login (제출 중 버튼 비활성)",
+          "200 → 토큰 저장 → safeDestination(from) 으로",
+          "401 INVALID_CREDENTIALS → 두 칸 오류 + 한 문구",
+          "그 외 → 서버 오류 문구, 다시 제출하면 이전 오류가 꺼짐",
+          "로그인 뒤 이동할 곳(from)이 로그인·가입 화면이면 — 라우터와 같은 규칙으로 판별 — 홈으로"
+        ],
+        "covers": [
+          "로그인 401 이면 두 칸이 함께 오류 표시되고 \"이메일 또는 비밀번호가 올바르지 않아요\" 가 나온다",
+          "로그인 성공 시 원래 가려던 화면으로 돌아간다 (기존 동작 유지)",
+          "제출 중에는 주 버튼을 다시 누를 수 없다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "소셜 실패 안내",
+        "steps": [
+          "/login?error=social 진입",
+          "맨 위 안내 블록"
+        ],
+        "covers": [
+          "`/login?error=social` 이면 맨 위에 \"로그인이 취소됐거나 실패했어요\" 가 나온다"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "이메일 가입 → 자동 로그인 → 가입 완료",
+        "steps": [
+          "칸 검증(필수·길이·확인 일치·역할) — 실패하면 요청하지 않음",
+          "POST /api/auth/signup",
+          "201 → 같은 이메일·비밀번호로 POST /login → 토큰 저장",
+          "자동 로그인이 실패하면 /login 으로 — 맨 위 '가입은 끝났어요. 로그인해 주세요', 이메일 칸 채움",
+          "/joined 로 (경로 '이메일')",
+          "409 EMAIL_ALREADY_EXISTS → 이메일 칸 오류 + 칸 안 로그인 링크, 아래 로그인 줄 숨김",
+          "그 외 → 서버 오류"
+        ],
+        "covers": [
+          "비밀번호가 8자 미만이거나 72자 초과면 비밀번호 칸 아래 안내가 오류로 바뀌고 제출되지 않는다",
+          "비밀번호 확인이 다르면 \"비밀번호가 일치하지 않아요\" 가 그 칸 아래 나온다",
+          "가입 409 이면 이메일 칸 아래 \"이미 가입된 이메일이에요\" 와 로그인 링크가 나오고, 아래 \"이미 계정이 있나요?\" 줄이 사라진다",
+          "가입에 성공하면 자동으로 로그인되어 `/joined` 로 가고 \"이메일 · 관객\" 과 내 아이디가 보인다",
+          "제출 중에는 주 버튼을 다시 누를 수 없다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "소셜 버튼 → 콜백 화면",
+        "steps": [
+          "소셜 버튼을 누르면 제공자 id 를 sessionStorage 에 기록하고 인가 주소로 이동",
+          "/oauth2/redirect 에서 기록을 읽어 '<제공자> 계정을 확인하고 있어요'",
+          "토큰 처리는 기존 동작 (token → /, pendingToken → /oauth2/role, 실패 → /login?error=social)"
+        ],
+        "covers": [
+          "소셜 버튼을 누른 뒤 콜백 화면에 \"카카오 계정을 확인하고 있어요\" 처럼 그 제공자 이름이 나온다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "역할 선택 — 대기 정보 표시",
+        "steps": [
+          "pendingToken 없으면 /login",
+          "POST /api/auth/social/pending",
+          "200 → '<제공자>로 처음 가입' + '<이메일>(<이름>)으로 가입하고 있어요' + 역할 행",
+          "조회 중에는 로딩",
+          "응답이 올바르지 않거나 실패하면 '대기 정보 실패' + 다시 시도"
+        ],
+        "covers": [
+          "역할 선택 화면에 \"카카오로 처음 가입\" 과 \"<이메일> (<이름>)으로 가입하고 있어요\" 가 나온다"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "역할 선택 — 만료",
+        "steps": [
+          "expiresAt 까지 남은 시간 뒤 만료 상태로 전환(화면에 머물러 있어도)",
+          "대기 정보 조회나 계속하기가 401 PENDING_SIGNUP_EXPIRED 면 같은 만료 상태",
+          "다시 로그인하기 → /login",
+          "계속하기 요청이 가는 중에 시간이 지나면 응답을 기다린다 — 200 이면 가입 완료, 그 밖의 실패면 만료 상태(이미 시간이 지났다)"
+        ],
+        "covers": [
+          "역할 선택 화면을 연 채 `expiresAt` 이 지나면 만료 상태(가입 시간이 지났어요 + 다시 로그인하기)로 바뀐다 (가짜 타이머로 확인)",
+          "대기 정보 조회나 계속하기가 401 `PENDING_SIGNUP_EXPIRED` 면 같은 만료 상태가 된다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "역할 선택 → 가입 완료",
+        "steps": [
+          "역할 행을 고름 (안 고르면 요청하지 않음)",
+          "계속하기 → POST /api/auth/social/complete (제출 중 비활성)",
+          "200 → 토큰 저장 → /joined (경로 = 대기 정보의 제공자)",
+          "409 → 이미 가입 안내, 그 외 → 서버 오류"
+        ],
+        "covers": [
+          "역할을 고르고 계속하기를 누르면 `/joined` 로 가고 \"카카오 · 관객\" 과 내 아이디가 보인다",
+          "제출 중에는 주 버튼을 다시 누를 수 없다"
+        ]
+      },
+      {
+        "id": "F8",
+        "name": "가입 완료 화면",
+        "steps": [
+          "'<경로> · <역할>' 과 user.handle 표시",
+          "아이디 복사 → navigator.clipboard.writeText(handle) → 토스트",
+          "복사 실패 → 아이디 선택 + 안내",
+          "시작하기 → /"
+        ],
+        "covers": [
+          "가입에 성공하면 자동으로 로그인되어 `/joined` 로 가고 \"이메일 · 관객\" 과 내 아이디가 보인다",
+          "역할을 고르고 계속하기를 누르면 `/joined` 로 가고 \"카카오 · 관객\" 과 내 아이디가 보인다",
+          "가입 완료 화면의 아이디 복사를 누르면 클립보드에 아이디가 들어가고 토스트 \"아이디를 복사했어요 — 일행에게 붙여넣어 보내세요\" 가 나온다",
+          "시작하기를 누르면 홈(`/`)으로 간다"
+        ]
+      },
+      {
+        "id": "F9",
+        "name": "시안 대조",
+        "steps": [
+          "다섯 화면과 오류 상태 3종을 375px 로 띄움",
+          "out/screens 의 같은 화면과 나란히 캡처 (Phase 4)",
+          "요소의 시안 모양 값을 계산된 스타일로 대조 (SC-38)"
+        ],
+        "covers": [
+          "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
+        ]
+      },
+      {
+        "id": "F10",
+        "name": "인증 화면 판별 — 전역 헤더 없이 시안 한 장",
+        "steps": [
+          "주소 경로를 라우터와 같은 규칙(끝 슬래시·대소문자 무시·퍼센트 디코딩)으로 인증 경로 5개와 대조",
+          "인증 화면이면 전역 헤더·Container 없이 그 화면만",
+          "아니면 기존처럼 헤더와 함께"
+        ],
+        "covers": [
+          "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
+        ]
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "Frontend (React)",
+    "note": "화면·입력·API 호출만. 계정 판정·만료 판정은 서버가 최종 (architecture.md §2). 시각 값은 토큰에서 (DESIGN-001·002)",
+    "constraints_applied": [
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0002",
+    "ADR-0007",
+    "ADR-0008",
+    "ADR-0015",
+    "ADR-0018",
+    "ADR-0019",
+    "ADR-0021",
+    "ADR-0022"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "frontend/src/pages/LoginPage.tsx",
+        "change": "시안 login 으로 재작성 — 401 두 칸 오류, 맨 위 소셜 실패 안내, 가입 줄"
+      },
+      {
+        "path": "frontend/src/pages/SignUpPage.tsx",
+        "change": "시안 signup — 비밀번호 안내 자리 오류, 409 칸 안 링크, 세그먼트 역할, 하단 CTA, 201 뒤 자동 로그인 → /joined"
+      },
+      {
+        "path": "frontend/src/pages/OAuthRedirectPage.tsx",
+        "change": "'<제공자> 계정을 확인하고 있어요' 표시 (토큰 처리는 그대로)"
+      },
+      {
+        "path": "frontend/src/pages/RoleSelectionPage.tsx",
+        "change": "대기 정보 서버 조회, 역할 행, 만료 타이머·만료 상태, 완료 뒤 /joined"
+      },
+      {
+        "path": "frontend/src/pages/JoinedPage.tsx",
+        "change": "가입 완료 화면 (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/auth/messages.ts",
+        "change": "해요체 문구 정본 (시안)"
+      },
+      {
+        "path": "frontend/src/auth/socialProvider.ts",
+        "change": "제공자 기록·읽기·표시 이름 (sessionStorage, 막혀도 안 죽음) (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/api/auth.ts",
+        "change": "AuthUser.handle, fetchPendingSignup(), readPendingSignup 제거"
+      },
+      {
+        "path": "frontend/src/App.tsx",
+        "change": "/joined 라우트, 인증 화면에서 AppHeader 숨김"
+      },
+      {
+        "path": "frontend/src/components/SocialLoginButtons.tsx",
+        "change": "시안 버튼 모양, 누를 때 제공자 기록"
+      },
+      {
+        "path": "frontend/src/components/ui/Field.tsx",
+        "change": "안내 문구(help) 자리 — 오류면 같은 자리가 오류로, 오류 문구 옆 동작 링크"
+      },
+      {
+        "path": "frontend/src/components/ui/Segmented.tsx",
+        "change": "시안 .seg — role=radiogroup (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/components/ui/Hero.tsx",
+        "change": "시안 .hero — eyebrow·title·lead (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/components/ui/Info.tsx",
+        "change": "시안 .info — 아이콘 + 안내 한 줄 (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/components/ui/index.ts",
+        "change": "새 부품 export"
+      },
+      {
+        "path": "frontend/src/theme/GlobalTokens.tsx",
+        "change": "--c-track (out/components.css:11·29 — 토큰 참조값) 정의 (TASK-017 이월)"
+      },
+      {
+        "path": "frontend/src/assets/fluent/ticket.svg",
+        "change": "시안 일러스트 (out/assets/fluent, MIT) (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/assets/fluent/clipboard.svg",
+        "change": "시안 일러스트 (out/assets/fluent, MIT) (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/auth/authPaths.ts",
+        "change": "인증 경로 판별 공통 지점 (Phase 4 롤백에서 생김)"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "frontend/src/components/ui/index.ts",
+        "symbol": "AppBar·Page·Block·Row·CtaBar·Field·Toast",
+        "note": "TASK-017 시안 부품 — 새로 만들지 않는다"
+      },
+      {
+        "path": "frontend/src/api/auth.ts",
+        "symbol": "login·signUp·completeSocialSignUp",
+        "note": "자동 로그인도 login() 재사용"
+      },
+      {
+        "path": "frontend/src/auth/AuthContext.tsx",
+        "symbol": "useAuth().login",
+        "note": "세대 직렬화(ADR-0018) 포함"
+      },
+      {
+        "path": "frontend/src/pages/LoginPage.tsx",
+        "symbol": "safeDestination",
+        "note": "기존 동작 유지"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "ApiError·throwIfApiError·isWriteKeyRejected",
+        "note": "code 로 오류 구분"
+      },
+      {
+        "path": "frontend/src/theme/tokens.ts",
+        "symbol": "token·componentSizes",
+        "note": "색·치수는 여기서만"
+      }
+    ],
+    "existing_tests": [
+      "frontend/src/auth/AuthScreens.test.tsx",
+      "frontend/src/auth/SocialLoginScreens.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/src/components/ui/task017.ui.test.tsx"
+    ],
+    "unresolved": [
+      "#1 승인된 테스트의 옛 기대값 — AuthScreens.test.tsx(TASK-010: 합니다체 MSG 표, 중복 Alert '이미 가입된 이메일입니다.', 가입 성공 → /login, 로그인·가입 화면 기본 상태) · SocialLoginScreens.test.tsx(TASK-013: '거의 다 됐어요', 토큰 디코드 안내 문구, 완료 → /, 만료 버튼 '로그인 화면으로', 문구 상수 4개). AC 와 상충 — 2b 에서 새 기대값으로 바꾸고 통합 승인(HITL#1·2)에서 함께 승인받는다. 단언 수는 줄이지 않는다",
+      "#2 AuthUser.handle 을 필수로 읽는다(빈 문자열이면 응답 오류). 기존 테스트의 user 픽스처(로그인·/me·complete 응답)에 handle 이 없어 #1 과 함께 고친다. 서버는 TASK-016 부터 늘 보낸다(UserResponse.handle)",
+      "#3 문구가 시안에 없는 상태 — 칸 필수 오류·이름 길이·서버 오류·쓰기 거부·역할 선택 409·콜백에서 제공자 기록이 없을 때. 해요체로 새로 정해 messages.ts 를 정본으로 하고 SCENARIO 상단 표에 적는다 (2a). 쓰기 거부 WRITE_REJECTED_MESSAGE 는 공연 화면과 공유라 이번에 바꾸지 않는다",
+      "#4 [사용자 결정 2026-11-06] 가입 201 뒤 자동 로그인이 실패하면(5xx·네트워크·응답 오류) /login 으로 보내고 맨 위에 '가입은 끝났어요. 로그인해 주세요' 안내, 이메일 칸을 미리 채운다. 401·409 같은 판정 응답도 같은 처리(계정은 이미 있다)",
+      "#5 [사용자 결정 2026-11-06] 인증 화면(/login·/signup·/oauth2/redirect·/oauth2/role·/joined)에서만 전역 AppHeader 를 숨긴다. 다른 화면의 헤더는 그대로",
+      "#6 /joined 를 비로그인으로 직접 열면 /login, 복원 중이면 기다린다. 경로('이메일'·'카카오')는 라우트 state 로 넘긴다 — 새로고침으로 state 가 사라지면 경로 없이 역할만 보인다",
+      "#7 만료 판정은 브라우저 시계로 expiresAt 까지 기다린다. 시계가 어긋나도 서버가 최종 판정(401 → 같은 만료 상태)이므로 ADR-0024 의 오프셋은 쓰지 않는다 — 카운트다운을 화면에 보이지 않기 때문",
+      "#8 공용 Field 를 고친다(help·오류 옆 링크) — TASK-017 부품 테스트(task017.ui.test.tsx) 가 그대로 통과해야 한다",
+      "#9 새 부품(Segmented·Hero·Info)·--c-track 의 값은 토큰에서 온다 — 리터럴 금지(DESIGN-001·002). 화면 고유 클래스(.who·.id-value·.pick)는 화면 파일 안에서 토큰으로",
+      "#10 일러스트 ticket.svg·clipboard.svg 를 out/assets/fluent 에서 복사 — LICENSE.md(MIT) 확인 후 출처 주석",
+      "#11 복사 실패 상태('길게 눌러 복사해 주세요')는 AC 에 없고 feature 문서 §2-5 에만 있다 — 같은 화면의 상태라 범위에 넣는다(CP decisions 에 기록)",
+      "#12 drift — ADR-0021(토큰은 URL fragment) 인데 백엔드는 아직 query(?token=)로 보내고 프론트도 query 를 읽는다. 이 태스크 AC 밖 — 회고 drift 로 넘긴다",
+      "#13 375px 대조·서체·가로 넘침은 jsdom 이 계산하지 않는다 — F9 는 Phase 4 브라우저 증거(같은 출처 375px iframe)",
+      "#14 TASK-017 이월 판정 — 앱바 긴 제목: 이번 화면은 앱바 제목이 없다(n/a) · Sheet --c-track: 세그먼트 도입으로 이번에 정의 · Badge 사용자 문구·배지/버튼 같은 말: 이번 화면에 배지 없음(n/a)",
+      "#15 [Phase 4 롤백 2026-11-09] 경로 표기 판별(F10·from) 과 시안 값(RC-3)을 시나리오로 — 인증 경로 판별은 auth/authPaths.ts 한 곳. 만료 화면 제목 안 email(name) 은 사용자 결정으로 지금대로(시안 차이)"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 14
+    }
+  },
+  "acceptance_criteria": [
+    "로그인 401 이면 두 칸이 함께 오류 표시되고 \"이메일 또는 비밀번호가 올바르지 않아요\" 가 나온다",
+    "`/login?error=social` 이면 맨 위에 \"로그인이 취소됐거나 실패했어요\" 가 나온다",
+    "로그인 성공 시 원래 가려던 화면으로 돌아간다 (기존 동작 유지)",
+    "비밀번호가 8자 미만이거나 72자 초과면 비밀번호 칸 아래 안내가 오류로 바뀌고 제출되지 않는다",
+    "비밀번호 확인이 다르면 \"비밀번호가 일치하지 않아요\" 가 그 칸 아래 나온다",
+    "가입 409 이면 이메일 칸 아래 \"이미 가입된 이메일이에요\" 와 로그인 링크가 나오고, 아래 \"이미 계정이 있나요?\" 줄이 사라진다",
+    "가입에 성공하면 자동으로 로그인되어 `/joined` 로 가고 \"이메일 · 관객\" 과 내 아이디가 보인다",
+    "소셜 버튼을 누른 뒤 콜백 화면에 \"카카오 계정을 확인하고 있어요\" 처럼 그 제공자 이름이 나온다",
+    "역할 선택 화면에 \"카카오로 처음 가입\" 과 \"<이메일> (<이름>)으로 가입하고 있어요\" 가 나온다",
+    "역할 선택 화면을 연 채 `expiresAt` 이 지나면 만료 상태(가입 시간이 지났어요 + 다시 로그인하기)로 바뀐다 (가짜 타이머로 확인)",
+    "대기 정보 조회나 계속하기가 401 `PENDING_SIGNUP_EXPIRED` 면 같은 만료 상태가 된다",
+    "역할을 고르고 계속하기를 누르면 `/joined` 로 가고 \"카카오 · 관객\" 과 내 아이디가 보인다",
+    "가입 완료 화면의 아이디 복사를 누르면 클립보드에 아이디가 들어가고 토스트 \"아이디를 복사했어요 — 일행에게 붙여넣어 보내세요\" 가 나온다",
+    "시작하기를 누르면 홈(`/`)으로 간다",
+    "제출 중에는 주 버튼을 다시 누를 수 없다",
+    "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
+  ],
+  "test_hints": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npm test",
+    "mock_strategy": "fetch 를 URL·method 별로 스텁(응답마다 새 Response). 만료는 vi.useFakeTimers + vi.setSystemTime 으로 expiresAt 경계. 클립보드는 navigator.clipboard.writeText 스텁(성공·거부·없음). sessionStorage 막힘은 getItem/setItem 이 throw. 화면은 App + MemoryRouter + AuthProvider 로 실제 라우트를 지난다(기존 AuthScreens 관례). 375px 대조는 Phase 4 브라우저"
+  }
+}
