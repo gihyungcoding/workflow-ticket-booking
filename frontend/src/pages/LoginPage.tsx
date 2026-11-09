@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { INVALID_CREDENTIALS, login } from '../api/auth'
 import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected } from '../api/performances'
 import { useAuth } from '../auth/AuthContext'
+import { isOneOf } from '../auth/authPaths'
 import { LinkLine, MoreLink, OrDivider, PrimaryButton, TopNotice } from '../auth/AuthParts'
 import { AUTH_MESSAGES } from '../auth/messages'
 import { SocialLoginButtons } from '../components/SocialLoginButtons'
@@ -16,8 +17,8 @@ function safeDestination(from: unknown): string {
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//') || from.includes('\\')) {
     return '/'
   }
-  const pathname = from.split(/[?#]/)[0]
-  return pathname === '/login' || pathname === '/signup' ? '/' : from
+  // 로그인·가입으로 되돌아가는 순환 — 라우터와 같은 규칙으로 본다 (/login/·/Login 도 같은 화면)
+  return isOneOf(['/login', '/signup'], from.split(/[?#]/)[0]) ? '/' : from
 }
 
 type ServerError = 'credentials' | 'rejected' | 'failed' | null

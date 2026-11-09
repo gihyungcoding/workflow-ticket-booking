@@ -307,7 +307,7 @@ function RoleLabel() {
 // 시안 .field-msg 의 경고 아이콘 — 오류를 색만으로 전하지 않는다
 function ErrorIcon() {
   return (
-    <svg aria-hidden="true" width={componentSizes.iconSmall} height={componentSizes.iconSmall} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}>
+    <svg aria-hidden="true" width={componentSizes.fieldMsgIcon} height={componentSizes.fieldMsgIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 8v5M12 16h.01" />
     </svg>
