@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-06T09:00:00Z
-summary: "Phase 4 2회차 롤백 — SC-36~39 추가(경로 표기·로그인 뒤 순환·시안 값·만료 구성), PLAN F10·route_path·from converted, 칸 246/246. 검증 3회차 대기."
+summary: "롤백 뒤 39건, 칸 246/246, 검증 3회차 PASS(경고 7). Phase 2b 로."
 
 next_steps:
-  - "scenario-validator 3회차 — 2회차 판정 원문 첨부"
+  - "Phase 2b — SC-36~39 를 task018.auth.test.tsx 로(롤백 테스트 정식화), 통합 승인"
 
 decisions:
   - decision: "새로 쓴다 — TASK-010·013 시나리오는 확장하지 않고, 옛 기대값을 단언하는 기존 테스트는 2b 에서 새 기대값으로 바꾼다"
@@ -29,6 +29,9 @@ decisions:
   - decision: "Phase 4 롤백 — RC-2·RC-3 변종 전부를 시나리오로(SC-36 경로 표기×헤더, SC-37 from 표기×순환, SC-38 시안 값, SC-39 만료 구성). PLAN 에 F10·route_path(converted)·from converted — 분류 보완(plan_gap 성격)이라 ROLLBACK_PLAN 아님"
     rationale: "사용자 결정 2026-11-09 시나리오 롤백. 만료 제목은 지금대로(제가 정한 값 16)"
 
+  - decision: "3회차 경고 중 반영 — V5 SC-36 로그인 상태 열·라우트 state 표기, SC-38 상태 열·px 단언·색은 다른 요소와 대조, V6 SC-39 When 을 표로, V8 PLAN outputs(만료 구성·시안 값)·F9 step, V12 ① 깨진 퍼센트 인코딩 행 ④ /Login?error=social, V1 대상 목록. 보류 — V4·V7·V9, V12 ②③(슬래시·대소문자 변환 경계) ⑤"
+    rationale: "경고는 재검증하지 않는다 — 통합 HITL 에서 사람이 판단"
+
 attempts:
   - round: 1
     outcome: "V11 FAIL — false_cover 2 (email@F1 NUL 행 없음, SC-09 이메일 '256자' 가 실제 254자), plan_gap 2 (via, 응답 accessToken·user.name·email·role)"
@@ -40,4 +43,7 @@ attempts:
   - round: 3
     outcome: "Phase 4 2회차 FAIL(RC-2 퍼센트 인코딩) → 2a 롤백"
     back_to: "2a Step 2"
+  - round: 4
+    outcome: "검증 3회차 PASS — fail 0, warn 7"
+    back_to: null
 ---

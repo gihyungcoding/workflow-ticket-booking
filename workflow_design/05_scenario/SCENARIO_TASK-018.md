@@ -1,6 +1,6 @@
 # TASK-018 시나리오
 
-대상: `pages/LoginPage.tsx`·`SignUpPage.tsx`·`OAuthRedirectPage.tsx`·`RoleSelectionPage.tsx`(재작성), `pages/JoinedPage.tsx`(신규), `auth/messages.ts`, `auth/socialProvider.ts`(신규), `api/auth.ts`, `App.tsx`, `components/SocialLoginButtons.tsx`, `components/ui/Field.tsx`, `components/ui/{Segmented,Hero,Info}.tsx`(신규).
+대상: `pages/LoginPage.tsx`·`SignUpPage.tsx`·`OAuthRedirectPage.tsx`·`RoleSelectionPage.tsx`(재작성), `pages/JoinedPage.tsx`(신규), `auth/messages.ts`, `auth/socialProvider.ts`(신규), `api/auth.ts`, `App.tsx`, `components/SocialLoginButtons.tsx`, `components/ui/Field.tsx`, `components/ui/{Segmented,Hero,Info}.tsx`(신규), `auth/authPaths.ts`(Phase 4 롤백 — 인증 경로 판별 공통 지점).
 테스트는 서버를 두지 않는다 — "서버가 ~로 응답한다"는 `fetch` 응답(상태·본문)으로 만든다. 화면은 `App` + `MemoryRouter` + `AuthProvider` 로 실제 라우트를 지나고, 이동은 라우터의 현재 경로로 확인한다(jsdom 은 페이지를 옮기지 않는다).
 토큰은 `localStorage` 의 `accessToken` (ADR-0015). 콜백 토큰은 지금처럼 query 로 온다(ADR-0021 fragment 전환은 이 태스크 밖 — PLAN #12).
 요청 본문을 단언할 때는 보낸 `fetch` 의 `body` 를 `JSON.parse` 해 비교한다.
@@ -754,9 +754,9 @@ flow: F1
 
 ## SC-36 (boundary) 라우터가 인증 화면으로 그리는 주소면 표기가 달라도 전역 헤더가 없다
 
-- **Given** 로그인하지 않았다
+- **Given** 표의 로그인 상태다 (로그인 상태 행은 저장된 토큰으로 복원, 라우트 state 가 필요한 행은 그 state 로 연다)
 - **When** 표의 주소를 연다
-- **Then** 표의 화면이 그려지고 전역 헤더의 `가입` 링크·`로그아웃` 버튼이 표대로 있거나 없다
+- **Then** 표의 화면이 그려지고 전역 헤더(비로그인이면 `가입` 링크, 로그인이면 `로그아웃` 버튼)가 표대로 있거나 없다
 
 | 주소 (라우터가 바꿔 읽는 표기) | 그려지는 화면 | 전역 헤더 |
 |---|---|---|
@@ -764,10 +764,14 @@ flow: F1
 | `/Login` · `/LOGIN` (대소문자) | 로그인 | 없다 |
 | `/%6Cogin` (퍼센트 인코딩 — 라우터가 `/login` 으로 디코딩) | 로그인 | 없다 |
 | `/signup/` · `/Signup` · `/%73ignup` | 가입 | 없다 |
-| `/joined/` · `/Joined` (로그인 상태) | 가입 완료 | 없다 |
-| `/oauth2/role/` (라우트 state 의 pendingToken 있음) | 역할 선택 | 없다 |
+| `/joined/` · `/Joined` — 로그인 상태 | 가입 완료 | 없다 (`로그아웃` 없음) |
+| `/oauth2/role/` — 라우트 state `{pendingToken:"pend-1"}` | 역할 선택 | 없다 |
 | `/oauth2/redirect/` · `/oauth2/Redirect` (`?token=…`, 응답 대기) | 콜백 | 없다 |
 | `/` · `/performances/new` (인증 화면 아님) | 공연 목록 · 공연 등록 | 있다 |
+| `/%` · `/%E0%A4%A` (깨진 퍼센트 인코딩 — 인증 화면 아님) | 앱이 죽지 않는다 | 있다 |
+| `/` — 로그인 상태 (인증 화면 아님) | 공연 목록 | 있다 (`로그아웃`) |
+
+`/Login?error=social` 처럼 표기가 다른 로그인 주소에서도 맨 위 `로그인이 취소됐거나 실패했어요` 가 보인다 (SC-07 과 같은 규칙).
 
 covers: 다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다
 flow: F10
@@ -795,18 +799,18 @@ flow: F1
 ## SC-38 (happy) 인증 화면의 모양 값은 시안과 같다
 
 - **Given** 표의 화면을 표의 상태로 연다
-- **When** 그 요소를 본다
-- **Then** 계산된 스타일이 표의 시안 값과 같다
+- **When** 그 요소의 계산된 스타일을 읽는다
+- **Then** 표의 값과 같다 — 색은 다른 요소의 계산값과 대조하고, em 은 jsdom 이 px 로 계산하므로 px 로 단언한다
 
-| 화면 · 요소 | 시안 값 (출처) |
-|---|---|
-| 가입 · 역할 선택의 앱바 | 바탕이 아래 흰 화면(`--c-surface`)과 같다 (`.plain .appbar`) |
-| 로그인 · 가입 · 콜백 제목 | 자간 `-0.03em` (`.title`) |
-| 역할 선택 행 일러스트 | 36px × 36px, 44px 칸 가운데 (`.row-art img`) |
-| 만료 안내 · 역할 미선택 오류 아이콘 | 18px (`.field-msg svg`) |
-| `이메일로 가입` · `로그인하기` 등 화살표 링크 | 아이콘 18px · 간격 2px (`.hero-more`) |
-| 가입 완료 아이디 | 줄 높이 1.15 · 자간 `-0.03em` (`.id-value`) |
-| 콜백 진행 표시 | 32px 원, 테두리 3px, 트랙 `--c-line` · 호 `--c-brand` (`.wait-spin`) |
+| 화면 · 상태 | 요소 | 값 (시안 출처) |
+|---|---|---|
+| `/signup` 기본 · `/oauth2/role` 역할 선택 | 앱바 | 바탕이 아래 흰 화면 바탕과 같다 (`.plain .appbar`) |
+| `/login` · `/signup` 기본 · 콜백 확인 중 | 제목 | 자간 -0.03em = -0.84px (28px 제목) (`.title`) |
+| `/oauth2/role` 역할 선택 | 행 일러스트 | 36px × 36px (`.row-art img`) |
+| `/oauth2/role` 만료 · 역할 미선택 제출 뒤 | 오류 아이콘 | 18px (`.field-msg svg`) |
+| `/login` 기본 | `이메일로 가입` 화살표 | 아이콘 18px · 간격 2px (`.hero-more`) |
+| `/joined` 로그인 상태 | 아이디 | 줄 높이 1.15 · 자간 -0.03em (`.id-value`) |
+| 콜백 확인 중 | 진행 표시 | 32px, 테두리 3px, 트랙 색 = 구분선 색(`--c-line`) · 호 색 = 주 버튼 색(`--c-brand`) (`.wait-spin`) |
 
 화면 전체의 나란히 비교는 SC-34 (Phase 4 화면 확인).
 
@@ -815,16 +819,16 @@ flow: F9
 
 ## SC-39 (boundary) 화면에 머물다 만료되면 어느 계정이었는지 남긴다
 
-- **Given** 가짜 타이머, 지금은 `2026-11-11T08:35:00Z`, 대기 정보는 `KAKAO`·`harin.kim@kakao.com`·`김하린`·`expiresAt 2026-11-11T08:40:00Z` 다
-- **When** 역할 선택 화면을 연 채 5분이 흐른다
-- **Then** 제목 `가입 시간이 지났어요`(SC-23) 와 함께 윗줄 `카카오로 처음 가입`, 그 아래 `harin.kim@kakao.com(김하린)` 이 보인다
-- **And** `역할` 라벨 아래 오류 안내(아이콘 + `5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요`) 가 있다
+- **Given** 가짜 타이머, 지금은 `2026-11-11T08:35:00Z`, 대기 정보 응답은 `KAKAO`·`harin.kim@kakao.com`·`김하린`·`expiresAt 2026-11-11T08:40:00Z` 다
+- **When** 표의 경로로 만료 상태가 된다
+- **Then** 모든 행에서 제목 `가입 시간이 지났어요`(SC-23), `역할` 라벨, 그 아래 오류 안내(아이콘 + `5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요`) 가 있다
+- **And** 윗줄 `카카오로 처음 가입` 과 `harin.kim@kakao.com(김하린)` 은 표대로 보이거나 없다
 
-| 만료 경로 | 윗줄·이메일(이름) |
+| 만료 경로 (When) | 윗줄·이메일(이름) |
 |---|---|
-| 화면에 머물다 시간이 됨 | 보인다 |
-| 계속하기가 401 `PENDING_SIGNUP_EXPIRED` | 보인다 (대기 정보를 이미 안다) |
-| 대기 정보 조회가 처음부터 401 `PENDING_SIGNUP_EXPIRED` | 없다 — 모른다. 제목과 오류 안내만 |
+| 역할 선택 화면을 연 채 5분이 흐른다 | 보인다 |
+| `관객` 을 골라 계속하기 → 401 `PENDING_SIGNUP_EXPIRED` | 보인다 (대기 정보를 이미 안다) |
+| 대기 정보 조회가 처음부터 401 `PENDING_SIGNUP_EXPIRED` (가짜 타이머 없이) | 없다 — 모른다 |
 
 covers: 역할 선택 화면을 연 채 `expiresAt` 이 지나면 만료 상태(가입 시간이 지났어요 + 다시 로그인하기)로 바뀐다 (가짜 타이머로 확인)
 flow: F6
