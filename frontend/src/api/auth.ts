@@ -111,15 +111,23 @@ export interface PendingSignup {
 
 // ISO-8601 시각 + 오프셋(Z 또는 ±hh:mm). 오프셋이 없으면 로컬 시각으로 읽히므로 받지 않는다.
 // 소수 초는 Java Instant 처럼 9자리까지 올 수 있다 — 밀리초까지만 쓴다(버림).
-const INSTANT = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})$/
+const INSTANT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(?:Z|([+-])(\d{2}):(\d{2}))$/
 
+// Date.parse 는 2월 30일을 3월 2일로, 24:00 을 다음 날로 넘겨 읽는다 — 칸마다 범위를 보고 달력으로 되돌려 대조한다.
 function parseInstant(value: unknown): number | null {
   if (typeof value !== 'string') return null
   const m = INSTANT.exec(value)
   if (!m) return null
-  const millis = (m[2] ?? '').slice(0, 3).padEnd(3, '0')
-  const at = Date.parse(`${m[1]}.${millis}${m[3]}`)
-  return Number.isNaN(at) ? null : at
+  const [year, month, day, hour, minute, second] = m.slice(1, 7).map(Number)
+  const millis = Number((m[7] ?? '').slice(0, 3).padEnd(3, '0'))
+  const offsetHour = Number(m[9] ?? 0)
+  const offsetMinute = Number(m[10] ?? 0)
+  if (hour > 23 || minute > 59 || second > 59 || offsetHour > 23 || offsetMinute > 59) return null
+  const local = Date.UTC(year, month - 1, day, hour, minute, second, millis)
+  const calendar = new Date(local)
+  if (calendar.getUTCFullYear() !== year || calendar.getUTCMonth() !== month - 1 || calendar.getUTCDate() !== day) return null
+  const sign = m[8] === '-' ? -1 : 1
+  return local - sign * (offsetHour * 60 + offsetMinute) * 60_000
 }
 
 // 소셜 가입 대기 정보 — 토큰이 쿼리에 남지 않게 POST 로 보낸다 (ADR-0021 과 같은 이유).

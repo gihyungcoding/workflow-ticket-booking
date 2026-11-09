@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -59,6 +59,7 @@ export function RoleSelectionPage() {
   const [serverError, setServerError] = useState<ServerError>(null)
   const [submitting, setSubmitting] = useState(false)
   const inFlight = useRef(false)
+  const roleErrorId = useId()
   // 화면을 떠난 뒤에 도착한 응답은 로그인·이동·오류 표시 어디에도 쓰지 않는다 (ADR-0018).
   const mounted = useRef(true)
   useEffect(() => {
@@ -220,7 +221,7 @@ export function RoleSelectionPage() {
           <Box component="span" sx={{ fontSize: token('--fs-sub'), fontWeight: Number(token('--fw-strong')), color: token('--c-text-2') }}>
             역할
           </Box>
-          <Box role="radiogroup" aria-label="역할" sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
+          <Box role="radiogroup" aria-label="역할" aria-describedby={roleError ? roleErrorId : undefined} sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
             {ROLE_ROWS.map((row) => {
               const selected = role === row.value
               return (
@@ -267,7 +268,11 @@ export function RoleSelectionPage() {
             })}
           </Box>
           {roleError && (
-            <Box component="p" data-field-error="" sx={{ margin: 0, fontSize: token('--fs-sub'), color: token('--c-danger') }}>
+            <Box component="p" id={roleErrorId} data-field-error="" sx={{ margin: 0, display: 'flex', alignItems: 'center', gap: componentSizes.rowGap, fontSize: token('--fs-sub'), color: token('--c-danger') }}>
+              <svg aria-hidden="true" width={componentSizes.iconSmall} height={componentSizes.iconSmall} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v5M12 16h.01" />
+              </svg>
               {roleError}
             </Box>
           )}
