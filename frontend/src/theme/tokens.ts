@@ -125,6 +125,7 @@ export const componentSizes = {
   appMaxWidth: '375px', // 시안 뷰포트 width=375
   waitArt: '72px', // oauth-callback .wait-art 72px (screens/oauth-callback.html)
   waitSpin: '32px', // oauth-callback .wait-spin 32px
+  waitSpinBorder: '3px', // .wait-spin border 3px
   rowArt: '36px', // .row-art img 36px (components.css 165행)
   moreIcon: '18px', // .hero-more svg 18px (47행)
   fieldMsgIcon: '18px', // .field-msg svg 18px (130행)

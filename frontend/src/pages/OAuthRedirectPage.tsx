@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { fetchMe } from '../api/auth'
 import { useAuth } from '../auth/AuthContext'
@@ -76,7 +75,25 @@ export function OAuthRedirectPage() {
         <Box component="h1" sx={{ margin: 0, fontSize: token('--fs-title'), fontWeight: Number(token('--fw-title')), lineHeight: Number(token('--lh-title')), letterSpacing: componentSizes.titleTracking, textWrap: 'balance' }}>
           {AUTH_MESSAGES.socialChecking(providerName)}
         </Box>
-        <CircularProgress size={componentSizes.waitSpin} aria-label={AUTH_MESSAGES.socialCheckingProgress} />
+        {/* 시안 .wait-spin — 트랙(--c-line) 위에서 호(--c-brand)가 돈다. 움직임을 줄이면 돌지 않는다 */}
+        <Box
+          component="span"
+          role="progressbar"
+          aria-label={AUTH_MESSAGES.socialCheckingProgress}
+          sx={{
+            boxSizing: 'border-box',
+            width: componentSizes.waitSpin,
+            height: componentSizes.waitSpin,
+            borderRadius: token('--r-pill'),
+            borderWidth: componentSizes.waitSpinBorder,
+            borderStyle: 'solid',
+            borderColor: token('--c-line'),
+            borderTopColor: token('--c-brand'),
+            '@keyframes waitSpin': { to: { transform: 'rotate(360deg)' } },
+            animation: 'waitSpin .8s linear infinite',
+            '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+          }}
+        />
       </Box>
     </Page>
   )
