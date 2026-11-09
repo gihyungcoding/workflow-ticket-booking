@@ -76,6 +76,31 @@ describe('TASK-018 RC-2 인증 화면 판별은 라우터 매칭과 같다', () 
     },
   )
 
+  test.each(['/login/', '/Login', '/LOGIN?x=1', '/signup/', '/Signup', '/login/#a'])(
+    '로그인 뒤 이동할 곳(from)이 %s 면 로그인·가입 화면으로 돌아가지 않고 홈으로 간다',
+    async (from) => {
+      stubServer({
+        'POST /api/auth/login': () => json(200, { accessToken: 'tok-1', tokenType: 'Bearer', expiresInSeconds: 86400, user: USER }),
+      })
+      renderAt({ pathname: '/login', state: { from } })
+      await act(async () => {
+        const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+        for (const [label, value] of [['이메일', 'a@b.com'], ['비밀번호', 'password1']]) {
+          const input = screen.getByLabelText(label)
+          set.call(input, value)
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+        }
+      })
+      await act(async () => {
+        screen.getByRole('button', { name: '로그인하기' }).click()
+      })
+      await flush()
+      // 홈은 인증 화면이 아니라 전역 헤더가 다시 보인다
+      expect(await screen.findByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '로그인하기' })).not.toBeInTheDocument()
+    },
+  )
+
   test.each(['/', '/performances/new'])('%s 는 인증 화면이 아니라 헤더가 있다', async (path) => {
     stubServer()
     renderAt(path)
@@ -134,6 +159,8 @@ describe('TASK-018 RC-3 시안과 같은 모양', () => {
     const alert = screen.getByRole('alert')
     expect(alert).toHaveTextContent('5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요')
     expect(alert.querySelector('svg')).not.toBeNull()
+    // 시안 .field-msg svg 18px (components.css 130행)
+    expect(alert.querySelector('svg')!.getAttribute('width')).toBe(componentSizes.fieldMsgIcon)
   })
 
   test('D4 서버가 처음부터 만료라고 하면 대기 정보를 모르므로 윗줄 없이 같은 안내만', async () => {
