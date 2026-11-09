@@ -1876,6 +1876,224 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SC-36",
+      "type": "boundary",
+      "title": "라우터가 인증 화면으로 그리는 주소면 표기가 달라도 전역 헤더가 없다",
+      "given": [
+        "로그인하지 않았다"
+      ],
+      "when": [
+        "표의 주소를 연다"
+      ],
+      "then": [
+        "표의 화면이 그려지고 전역 헤더의 `가입` 링크·`로그아웃` 버튼이 표대로 있거나 없다"
+      ],
+      "covers": [
+        "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
+      ],
+      "flow": "F10",
+      "table": {
+        "columns": [
+          "주소 (라우터가 바꿔 읽는 표기)",
+          "그려지는 화면",
+          "전역 헤더"
+        ],
+        "rows": [
+          [
+            "`/login/` (끝 슬래시)",
+            "로그인",
+            "없다"
+          ],
+          [
+            "`/Login` · `/LOGIN` (대소문자)",
+            "로그인",
+            "없다"
+          ],
+          [
+            "`/%6Cogin` (퍼센트 인코딩 — 라우터가 `/login` 으로 디코딩)",
+            "로그인",
+            "없다"
+          ],
+          [
+            "`/signup/` · `/Signup` · `/%73ignup`",
+            "가입",
+            "없다"
+          ],
+          [
+            "`/joined/` · `/Joined` (로그인 상태)",
+            "가입 완료",
+            "없다"
+          ],
+          [
+            "`/oauth2/role/` (라우트 state 의 pendingToken 있음)",
+            "역할 선택",
+            "없다"
+          ],
+          [
+            "`/oauth2/redirect/` · `/oauth2/Redirect` (`?token=…`, 응답 대기)",
+            "콜백",
+            "없다"
+          ],
+          [
+            "`/` · `/performances/new` (인증 화면 아님)",
+            "공연 목록 · 공연 등록",
+            "있다"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "SC-37",
+      "type": "error",
+      "title": "로그인 뒤 이동할 곳이 로그인·가입 화면이면 표기가 달라도 홈으로 간다",
+      "given": [
+        "서버가 `/api/auth/login` 에 200(SC-04 본문)을 준다",
+        "`/login` 으로 올 때 라우트 state 의 `from` 이 표의 값이다"
+      ],
+      "when": [
+        "이메일·비밀번호를 넣고 `로그인하기` 를 누른다"
+      ],
+      "then": [
+        "경로가 표의 이동 위치가 된다 — 로그인·가입 화면으로 되돌아가지 않는다"
+      ],
+      "covers": [
+        "로그인 성공 시 원래 가려던 화면으로 돌아간다 (기존 동작 유지)"
+      ],
+      "flow": "F1",
+      "table": {
+        "columns": [
+          "`from`",
+          "이동 위치"
+        ],
+        "rows": [
+          [
+            "`/login/`",
+            "`/`"
+          ],
+          [
+            "`/Login`",
+            "`/`"
+          ],
+          [
+            "`/LOGIN?x=1`",
+            "`/`"
+          ],
+          [
+            "`/login/#a`",
+            "`/`"
+          ],
+          [
+            "`/%6Cogin`",
+            "`/`"
+          ],
+          [
+            "`/signup/` · `/Signup` · `/%73ignup` (행마다)",
+            "`/`"
+          ],
+          [
+            "`/performances/%37` (인증 화면 아님 — 그대로)",
+            "`/performances/%37`"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "SC-38",
+      "type": "happy",
+      "title": "인증 화면의 모양 값은 시안과 같다",
+      "given": [
+        "표의 화면을 표의 상태로 연다"
+      ],
+      "when": [
+        "그 요소를 본다"
+      ],
+      "then": [
+        "계산된 스타일이 표의 시안 값과 같다"
+      ],
+      "covers": [
+        "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
+      ],
+      "flow": "F9",
+      "notes": [
+        "화면 전체의 나란히 비교는 SC-34 (Phase 4 화면 확인)."
+      ],
+      "table": {
+        "columns": [
+          "화면 · 요소",
+          "시안 값 (출처)"
+        ],
+        "rows": [
+          [
+            "가입 · 역할 선택의 앱바",
+            "바탕이 아래 흰 화면(`--c-surface`)과 같다 (`.plain .appbar`)"
+          ],
+          [
+            "로그인 · 가입 · 콜백 제목",
+            "자간 `-0.03em` (`.title`)"
+          ],
+          [
+            "역할 선택 행 일러스트",
+            "36px × 36px, 44px 칸 가운데 (`.row-art img`)"
+          ],
+          [
+            "만료 안내 · 역할 미선택 오류 아이콘",
+            "18px (`.field-msg svg`)"
+          ],
+          [
+            "`이메일로 가입` · `로그인하기` 등 화살표 링크",
+            "아이콘 18px · 간격 2px (`.hero-more`)"
+          ],
+          [
+            "가입 완료 아이디",
+            "줄 높이 1.15 · 자간 `-0.03em` (`.id-value`)"
+          ],
+          [
+            "콜백 진행 표시",
+            "32px 원, 테두리 3px, 트랙 `--c-line` · 호 `--c-brand` (`.wait-spin`)"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "SC-39",
+      "type": "boundary",
+      "title": "화면에 머물다 만료되면 어느 계정이었는지 남긴다",
+      "given": [
+        "가짜 타이머, 지금은 `2026-11-11T08:35:00Z`, 대기 정보는 `KAKAO`·`harin.kim@kakao.com`·`김하린`·`expiresAt 2026-11-11T08:40:00Z` 다"
+      ],
+      "when": [
+        "역할 선택 화면을 연 채 5분이 흐른다"
+      ],
+      "then": [
+        "제목 `가입 시간이 지났어요`(SC-23) 와 함께 윗줄 `카카오로 처음 가입`, 그 아래 `harin.kim@kakao.com(김하린)` 이 보인다",
+        "`역할` 라벨 아래 오류 안내(아이콘 + `5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요`) 가 있다"
+      ],
+      "covers": [
+        "역할 선택 화면을 연 채 `expiresAt` 이 지나면 만료 상태(가입 시간이 지났어요 + 다시 로그인하기)로 바뀐다 (가짜 타이머로 확인)"
+      ],
+      "flow": "F6",
+      "table": {
+        "columns": [
+          "만료 경로",
+          "윗줄·이메일(이름)"
+        ],
+        "rows": [
+          [
+            "화면에 머물다 시간이 됨",
+            "보인다"
+          ],
+          [
+            "계속하기가 401 `PENDING_SIGNUP_EXPIRED`",
+            "보인다 (대기 정보를 이미 안다)"
+          ],
+          [
+            "대기 정보 조회가 처음부터 401 `PENDING_SIGNUP_EXPIRED`",
+            "없다 — 모른다. 제목과 오류 안내만"
+          ]
+        ]
+      }
     }
   ],
   "coverage_matrix": [
@@ -3541,6 +3759,34 @@
         "SC-31",
         "SC-35"
       ]
+    },
+    {
+      "cell": "from@F1:converted.raw_vs_converted",
+      "state": "covered",
+      "by": [
+        "SC-37"
+      ]
+    },
+    {
+      "cell": "from@F1:converted.real_entry",
+      "state": "covered",
+      "by": [
+        "SC-37"
+      ]
+    },
+    {
+      "cell": "route_path@F10:converted.raw_vs_converted",
+      "state": "covered",
+      "by": [
+        "SC-36"
+      ]
+    },
+    {
+      "cell": "route_path@F10:converted.real_entry",
+      "state": "covered",
+      "by": [
+        "SC-36"
+      ]
     }
   ],
   "coverage": {
@@ -3549,6 +3795,6 @@
     "uncovered": []
   },
   "human_input": {
-    "generate_red_trigger": true
+    "generate_red_trigger": false
   }
 }

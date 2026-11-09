@@ -63,7 +63,8 @@
         "type": "location.state",
         "source": "로그인으로 보낸 화면",
         "constraints": [
-          "앱 안 경로만 (safeDestination — 기존 동작 유지)"
+          "앱 안 경로만 (safeDestination — 기존 동작 유지)",
+          "로그인·가입 화면 판별은 라우터 매칭과 같은 규칙 (/login/·/Login·/%6Cogin 도 순환)"
         ]
       },
       {
@@ -134,6 +135,14 @@
         "constraints": [
           "'email' 또는 KAKAO·NAVER·GOOGLE·APPLE 일 때만 경로를 보인다",
           "없거나 모르는 값이면 역할만"
+        ]
+      },
+      {
+        "name": "주소 경로(pathname)",
+        "type": "string",
+        "source": "브라우저 주소 — 라우터가 디코딩·정규화해 매칭",
+        "constraints": [
+          "인증 화면 판별은 라우터 매칭과 같은 결과여야 한다(끝 슬래시·대소문자·퍼센트 인코딩)"
         ]
       }
     ],
@@ -216,9 +225,10 @@
         ],
         "kinds": [
           "required",
-          "opaque"
+          "opaque",
+          "converted"
         ],
-        "note": "location.state.from — safeDestination"
+        "note": "location.state.from — safeDestination — 라우터가 바꿔 읽는 표기(끝 슬래시·대소문자·퍼센트 인코딩)는 converted (Phase 4 RC-2)"
       },
       {
         "field": "social_provider",
@@ -437,6 +447,16 @@
           "enum"
         ],
         "note": "응답 user.role — AUDIENCE·ORGANIZER. 가입 완료 윗줄의 역할"
+      },
+      {
+        "field": "route_path",
+        "flows": [
+          "F10"
+        ],
+        "kinds": [
+          "converted"
+        ],
+        "note": "주소 경로 — 라우터는 디코딩·대소문자 무시·끝 슬래시 허용으로 매칭한다 (Phase 4 RC-2)"
       }
     ],
     "outputs": [
@@ -515,7 +535,8 @@
           "POST /api/auth/login (제출 중 버튼 비활성)",
           "200 → 토큰 저장 → safeDestination(from) 으로",
           "401 INVALID_CREDENTIALS → 두 칸 오류 + 한 문구",
-          "그 외 → 서버 오류 문구, 다시 제출하면 이전 오류가 꺼짐"
+          "그 외 → 서버 오류 문구, 다시 제출하면 이전 오류가 꺼짐",
+          "로그인 뒤 이동할 곳(from)이 로그인·가입 화면이면 — 라우터와 같은 규칙으로 판별 — 홈으로"
         ],
         "covers": [
           "로그인 401 이면 두 칸이 함께 오류 표시되고 \"이메일 또는 비밀번호가 올바르지 않아요\" 가 나온다",
@@ -634,6 +655,18 @@
         "covers": [
           "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
         ]
+      },
+      {
+        "id": "F10",
+        "name": "인증 화면 판별 — 전역 헤더 없이 시안 한 장",
+        "steps": [
+          "주소 경로를 라우터와 같은 규칙(끝 슬래시·대소문자 무시·퍼센트 디코딩)으로 인증 경로 5개와 대조",
+          "인증 화면이면 전역 헤더·Container 없이 그 화면만",
+          "아니면 기존처럼 헤더와 함께"
+        ],
+        "covers": [
+          "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다"
+        ]
       }
     ]
   },
@@ -676,8 +709,7 @@
       },
       {
         "path": "frontend/src/pages/JoinedPage.tsx",
-        "change": "가입 완료 화면",
-        "new": true
+        "change": "가입 완료 화면 (TASK-018 Phase 3 에서 신규 생성)"
       },
       {
         "path": "frontend/src/auth/messages.ts",
@@ -685,8 +717,7 @@
       },
       {
         "path": "frontend/src/auth/socialProvider.ts",
-        "change": "제공자 기록·읽기·표시 이름 (sessionStorage, 막혀도 안 죽음)",
-        "new": true
+        "change": "제공자 기록·읽기·표시 이름 (sessionStorage, 막혀도 안 죽음) (TASK-018 Phase 3 에서 신규 생성)"
       },
       {
         "path": "frontend/src/api/auth.ts",
@@ -706,18 +737,15 @@
       },
       {
         "path": "frontend/src/components/ui/Segmented.tsx",
-        "change": "시안 .seg — role=radiogroup",
-        "new": true
+        "change": "시안 .seg — role=radiogroup (TASK-018 Phase 3 에서 신규 생성)"
       },
       {
         "path": "frontend/src/components/ui/Hero.tsx",
-        "change": "시안 .hero — eyebrow·title·lead",
-        "new": true
+        "change": "시안 .hero — eyebrow·title·lead (TASK-018 Phase 3 에서 신규 생성)"
       },
       {
         "path": "frontend/src/components/ui/Info.tsx",
-        "change": "시안 .info — 아이콘 + 안내 한 줄",
-        "new": true
+        "change": "시안 .info — 아이콘 + 안내 한 줄 (TASK-018 Phase 3 에서 신규 생성)"
       },
       {
         "path": "frontend/src/components/ui/index.ts",
@@ -729,13 +757,15 @@
       },
       {
         "path": "frontend/src/assets/fluent/ticket.svg",
-        "change": "시안 일러스트 (out/assets/fluent, MIT)",
-        "new": true
+        "change": "시안 일러스트 (out/assets/fluent, MIT) (TASK-018 Phase 3 에서 신규 생성)"
       },
       {
         "path": "frontend/src/assets/fluent/clipboard.svg",
-        "change": "시안 일러스트 (out/assets/fluent, MIT)",
-        "new": true
+        "change": "시안 일러스트 (out/assets/fluent, MIT) (TASK-018 Phase 3 에서 신규 생성)"
+      },
+      {
+        "path": "frontend/src/auth/authPaths.ts",
+        "change": "인증 경로 판별 공통 지점 (Phase 4 롤백에서 생김)"
       }
     ],
     "reusable": [
@@ -790,7 +820,8 @@
       "#11 복사 실패 상태('길게 눌러 복사해 주세요')는 AC 에 없고 feature 문서 §2-5 에만 있다 — 같은 화면의 상태라 범위에 넣는다(CP decisions 에 기록)",
       "#12 drift — ADR-0021(토큰은 URL fragment) 인데 백엔드는 아직 query(?token=)로 보내고 프론트도 query 를 읽는다. 이 태스크 AC 밖 — 회고 drift 로 넘긴다",
       "#13 375px 대조·서체·가로 넘침은 jsdom 이 계산하지 않는다 — F9 는 Phase 4 브라우저 증거(같은 출처 375px iframe)",
-      "#14 TASK-017 이월 판정 — 앱바 긴 제목: 이번 화면은 앱바 제목이 없다(n/a) · Sheet --c-track: 세그먼트 도입으로 이번에 정의 · Badge 사용자 문구·배지/버튼 같은 말: 이번 화면에 배지 없음(n/a)"
+      "#14 TASK-017 이월 판정 — 앱바 긴 제목: 이번 화면은 앱바 제목이 없다(n/a) · Sheet --c-track: 세그먼트 도입으로 이번에 정의 · Badge 사용자 문구·배지/버튼 같은 말: 이번 화면에 배지 없음(n/a)",
+      "#15 [Phase 4 롤백 2026-11-09] 경로 표기 판별(F10·from) 과 시안 값(RC-3)을 시나리오로 — 인증 경로 판별은 auth/authPaths.ts 한 곳. 만료 화면 제목 안 email(name) 은 사용자 결정으로 지금대로(시안 차이)"
     ],
     "exploration": {
       "method": "inline",

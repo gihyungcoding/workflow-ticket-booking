@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-06T09:00:00Z
-summary: "SCENARIO_TASK-018 35건, AC 16/16, 입력 경계 242/242. 1회차 V11 FAIL → 2회차 PASS(경고 7)."
+summary: "Phase 4 2회차 롤백 — SC-36~39 추가(경로 표기·로그인 뒤 순환·시안 값·만료 구성), PLAN F10·route_path·from converted, 칸 246/246. 검증 3회차 대기."
 
 next_steps:
-  - "Phase 2b — Red 테스트 (기존 AuthScreens·SocialLoginScreens 옛 기대값 교체 포함)"
+  - "scenario-validator 3회차 — 2회차 판정 원문 첨부"
 
 decisions:
   - decision: "새로 쓴다 — TASK-010·013 시나리오는 확장하지 않고, 옛 기대값을 단언하는 기존 테스트는 2b 에서 새 기대값으로 바꾼다"
@@ -26,6 +26,9 @@ decisions:
   - decision: "2회차 경고 중 반영 — V1 SC-35 JSON 표를 둘로(파생 스크립트), V12 ③이메일 길이는 걷은 값으로·①응답 토큰·아이디는 걷지 않음(제가 정한 값 3), ⑤from 숫자·객체 행(SC-04), ⑥복원 중 via 유지(SC-31). 보류 — V4·V6·V7·V9(1회차와 같음), V12 ②빈 email 표시·④복사 연타(TASK-017 Toast 부품 규칙을 그대로 따른다)"
     rationale: "경고는 재검증하지 않는다 — HITL 요약에 반영·보류를 적는다"
 
+  - decision: "Phase 4 롤백 — RC-2·RC-3 변종 전부를 시나리오로(SC-36 경로 표기×헤더, SC-37 from 표기×순환, SC-38 시안 값, SC-39 만료 구성). PLAN 에 F10·route_path(converted)·from converted — 분류 보완(plan_gap 성격)이라 ROLLBACK_PLAN 아님"
+    rationale: "사용자 결정 2026-11-09 시나리오 롤백. 만료 제목은 지금대로(제가 정한 값 16)"
+
 attempts:
   - round: 1
     outcome: "V11 FAIL — false_cover 2 (email@F1 NUL 행 없음, SC-09 이메일 '256자' 가 실제 254자), plan_gap 2 (via, 응답 accessToken·user.name·email·role)"
@@ -34,4 +37,7 @@ attempts:
   - round: 2
     outcome: "PASS — fail 0, warn 7 (V1·V4·V5·V6·V7·V9·V12)"
     back_to: null
+  - round: 3
+    outcome: "Phase 4 2회차 FAIL(RC-2 퍼센트 인코딩) → 2a 롤백"
+    back_to: "2a Step 2"
 ---
