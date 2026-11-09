@@ -413,7 +413,11 @@
     "넓은 화면에서 토스트 전체 폭(TASK-017 Toast)"
   ],
   "human_review": {
-    "decision": null,
+    "decision": "ROLLBACK_IMPLEMENTATION",
+    "reject_type": "RETRY_IMPL",
+    "reason": "RC-2 [correctness] + RC-3 시안 차이 — Phase 3 에서 뿌리 단위로",
+    "decided_at": "2026-11-09",
+    "via": "AskUserQuestion HITL#3",
     "verified_commit": null,
     "verified_at": null
   }

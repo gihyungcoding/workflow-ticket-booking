@@ -4,7 +4,7 @@ saved_at: 2026-11-09T08:00:00Z
 summary: "Phase 4 1회차 FAIL — 테스트 665/665·lint·tsc·build·제약 통과, 리뷰 RC-2([correctness] 인증 화면 판별 정확 일치) + 시안 대조 차이 RC-3(D1~D5). 뿌리 3·변종 18(재현 10)."
 
 next_steps:
-  - "HITL#3 — FAIL 이라 롤백만. 권장: Phase 3 (RC-2 공통 지점 App.tsx · RC-3 화면별 + not_probed 변종 전수)"
+  - "Phase 3 롤백 — RC-2 공통 지점 App.tsx · RC-3 화면별, not_probed 변종 전수. 변종마다 테스트 먼저"
 
 decisions:
   - decision: "화면 확인은 DTO 스키마 모의 서버(:18081) + vite(:5175, VITE_API_BASE_URL) + out 정적 서버(:5176), 같은 출처 375px iframe 으로 시안과 나란히"
@@ -17,5 +17,5 @@ decisions:
 attempts:
   - round: 1
     outcome: "FAIL — RC-2 재현 3, RC-3 재현 5"
-    back_to: null
+    back_to: "phase3 (사용자 결정 2026-11-09 — 구현으로 롤백)"
 ---
