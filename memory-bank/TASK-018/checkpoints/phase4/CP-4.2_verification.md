@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-09T08:00:00Z
 summary: "Phase 4 3회차 WARN — 결함 0, RC-1·2·3 해소. 남은 것: 만료 제목 시안 차이(사용자 결정), 병렬 실행 기존 테스트 부하 실패 1회(무관). HITL#3 예외 승인 2026-11-09."
 

@@ -3,7 +3,7 @@ task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: IN_PROGRESS
+status: DONE
 track: standard
 created_at: 2026-11-06
 last_updated: 2026-11-09
@@ -13,22 +13,24 @@ sub_categories: [audience, organizer]
 target_repo: "."
 branch: "feature/task-018-auth-screens-redesign"
 
-last_checkpoint: "CP-4.2"
+report: "https://claude.ai/artifact/EkQFfXpvUocbGAdm3RjmNz"
+last_checkpoint: "CP-5.2"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-018.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-018.md"
   test: "workflow_design/05_scenario/TEST_TASK-018.json"
   dev: "workflow_design/06_dev/DEV_TASK-018.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-018.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-018.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 3회차 WARN → 예외 승인 (verified_commit 1fcfc65).
+TASK-018 완료 — 회고 작성, 승인 대기(/wf-retro).
 
 ## 다음 한 걸음
 
-wf-reflect — 회고·태스크 종료, 그 뒤 /wf-ship.
+/wf-ship 으로 푸시·PR. 머지는 사람이.
 
 ## 알아둬야 할 것
 

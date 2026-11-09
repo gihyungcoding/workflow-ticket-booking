@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-06T08:00:00Z
 summary: "PLAN_TASK-018.json — route Frontend, flows 9건이 AC 16건을 전부 덮음. input_fields 20 → 칸 162(첫 적용)."
 

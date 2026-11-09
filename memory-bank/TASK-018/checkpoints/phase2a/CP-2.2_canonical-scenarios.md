@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-06T09:00:00Z
 summary: "롤백 뒤 39건, 칸 246/246, 검증 3회차 PASS(경고 7). Phase 2b 로."
 

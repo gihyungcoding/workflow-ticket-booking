@@ -1015,7 +1015,7 @@
       "TASK-016",
       "TASK-017"
     ],
-    "status": "todo",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",

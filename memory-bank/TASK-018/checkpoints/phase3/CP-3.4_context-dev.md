@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-09T06:00:00Z
 summary: "Phase 4 2회차 롤백 뒤 Green 706/706 (todo 1). isOneOf → matchRoutes, 콜백 스피너 시안대로. 자체 리뷰 결함 0, 미해결 0."
 
