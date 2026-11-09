@@ -6,6 +6,8 @@ import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 import App from '../App'
 import { theme } from '../theme'
 import { Field } from '../components/ui'
+import { token as designToken } from '../theme/tokens'
+import type { TokenName } from '../theme/tokens'
 import { AuthProvider, useAuth } from './AuthContext'
 
 // TASK-018 시나리오 SC-01 ~ SC-35. SoT: workflow_design/05_scenario/SCENARIO_TASK-018.md
@@ -1756,4 +1758,218 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
       }
     }
   })
+})
+
+// Phase 4 롤백 (2026-11-09) — VERIFY_TASK-018 RC-2·RC-3 의 변종을 시나리오로 옮긴 것. SC-36 ~ SC-39.
+describe('TASK-018 Phase 4 롤백 — 경로 표기·시안 값·만료 구성', () => {
+  // 토큰 색을 jsdom 이 계산한 값으로 — 테스트에 색 리터럴을 두지 않는다 (DESIGN-002)
+  function colorOf(name: TokenName): string {
+    const probe = document.createElement('span')
+    probe.style.color = designToken(name)
+    document.body.appendChild(probe)
+    const color = getComputedStyle(probe).color
+    probe.remove()
+    return color
+  }
+  // 시안 .title 자간 -0.03em — jsdom 은 em 을 px 로 계산한다 (28px × -0.03)
+  const TITLE_TRACKING_PX = '-0.84px'
+
+  // ---------- SC-36 ----------
+  type Screen36 = 'login' | 'signup' | 'joined' | 'role' | 'callback' | 'list' | 'register' | 'none'
+  const SC36: { path: string; screen: Screen36; loggedIn?: boolean; state?: unknown; header: boolean }[] = [
+    { path: '/login/', screen: 'login', header: false },
+    { path: '/Login', screen: 'login', header: false },
+    { path: '/LOGIN', screen: 'login', header: false },
+    { path: '/%6Cogin', screen: 'login', header: false },
+    { path: '/signup/', screen: 'signup', header: false },
+    { path: '/Signup', screen: 'signup', header: false },
+    { path: '/%73ignup', screen: 'signup', header: false },
+    { path: '/joined/', screen: 'joined', loggedIn: true, header: false },
+    { path: '/Joined', screen: 'joined', loggedIn: true, header: false },
+    { path: '/oauth2/role/', screen: 'role', state: { pendingToken: 'pend-1' }, header: false },
+    { path: '/oauth2/redirect/?token=tok-1', screen: 'callback', header: false },
+    { path: '/oauth2/Redirect?token=tok-1', screen: 'callback', header: false },
+    { path: '/', screen: 'list', header: true },
+    { path: '/performances/new', screen: 'register', header: true },
+    { path: '/%', screen: 'none', header: true },
+    { path: '/%E0%A4%A', screen: 'none', header: true },
+    { path: '/', screen: 'list', loggedIn: true, header: true },
+  ]
+  test.each(SC36)(
+    'SC-36 (boundary) 라우터가 인증 화면으로 그리는 주소면 표기가 달라도 전역 헤더가 없다 — $path (로그인 $loggedIn)',
+    async (row) => {
+      // Given 표의 로그인 상태 (콜백의 /me 는 붙들어 화면에 머문다)
+      if (row.loggedIn) localStorage.setItem('accessToken', 'tok-1')
+      stubServer(row.screen === 'callback' ? { [ME]: () => deferred().promise } : {})
+
+      // When 표의 주소를 연다
+      const [pathname, search = ''] = row.path.split('?')
+      renderAt(row.state ? { pathname, state: row.state } : search ? `${pathname}?${search}` : pathname)
+
+      // Then 표의 화면
+      if (row.screen === 'login') expect(await screen.findByRole('heading', { name: '쓰던 계정으로 바로 들어와요' })).toBeInTheDocument()
+      if (row.screen === 'signup') expect(await screen.findByRole('heading', { name: '이메일로 가입' })).toBeInTheDocument()
+      if (row.screen === 'joined') expect(await screen.findByText(HANDLE)).toBeInTheDocument()
+      if (row.screen === 'role') expect(await screen.findByRole('button', { name: '계속하기' })).toBeInTheDocument()
+      if (row.screen === 'callback') expect(await screen.findByText('소셜 계정을 확인하고 있어요')).toBeInTheDocument()
+      if (row.screen === 'register') expect(await screen.findByLabelText(/^공연명/)).toBeInTheDocument()
+      await settle()
+      // And 전역 헤더
+      const headerShown = row.loggedIn
+        ? screen.queryByRole('button', { name: '로그아웃' }) !== null
+        : screen.queryByRole('link', { name: '가입' }) !== null
+      expect(headerShown).toBe(row.header)
+    },
+  )
+
+  test('SC-36 (boundary) 표기가 다른 로그인 주소에서도 소셜 실패 안내가 나온다 — /Login?error=social', () => {
+    stubServer()
+    renderAt('/Login?error=social')
+    expect(screen.getByText(MSG.socialFailed)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '가입' })).not.toBeInTheDocument()
+  })
+
+  // ---------- SC-37 ----------
+  test.each([
+    { from: '/login/', to: '/' },
+    { from: '/Login', to: '/' },
+    { from: '/LOGIN?x=1', to: '/' },
+    { from: '/login/#a', to: '/' },
+    { from: '/%6Cogin', to: '/' },
+    { from: '/signup/', to: '/' },
+    { from: '/Signup', to: '/' },
+    { from: '/%73ignup', to: '/' },
+    { from: '/performances/%37', to: '/performances/%37' },
+  ])('SC-37 (error) 로그인 뒤 이동할 곳이 로그인·가입 화면이면 표기가 달라도 홈으로 간다 — $from', async ({ from, to }) => {
+    // Given 서버 200, state.from 은 표의 값
+    stubServer({ 'GET /api/performances/7': () => res(200, { ...performance, id: 7 }) })
+    renderAt({ pathname: '/login', state: { from } })
+
+    // When
+    fillLogin()
+    await click('로그인하기')
+
+    // Then
+    await waitFor(() => expect(token()).toBe('tok-1'))
+    await waitFor(() => expect(where()).toBe(to))
+  })
+
+  // ---------- SC-38 ----------
+  test.each([
+    { label: '/signup 앱바', open: () => renderAt('/signup') },
+    { label: '역할 선택 앱바', open: () => renderAt({ pathname: '/oauth2/role', state: { pendingToken: 'pend-1' } }), wait: '계속하기' },
+  ])('SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 — $label 바탕이 흰 화면과 같다', async ({ open, wait }) => {
+    stubServer()
+    open()
+    if (wait) await screen.findByRole('button', { name: wait })
+    const bar = screen.getByRole('button', { name: '뒤로' }).closest('header')!
+    const page = screen.getByRole('main')
+    expect(getComputedStyle(page).backgroundColor).toBe(colorOf('--c-surface'))
+    expect(getComputedStyle(bar).backgroundColor).toBe(getComputedStyle(page).backgroundColor)
+  })
+
+  test.each([
+    { label: '/login 제목', path: '/login', name: '쓰던 계정으로 바로 들어와요' },
+    { label: '/signup 제목', path: '/signup', name: '이메일로 가입' },
+    { label: '콜백 제목', path: '/oauth2/redirect?token=tok-1', name: '소셜 계정을 확인하고 있어요' },
+  ])('SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 — $label 자간', async ({ path, name }) => {
+    stubServer({ [ME]: () => deferred().promise })
+    renderAt(path)
+    expect(getComputedStyle(await screen.findByRole('heading', { name })).letterSpacing).toBe(TITLE_TRACKING_PX)
+  })
+
+  test('SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 — 역할 행 일러스트 36px', async () => {
+    stubServer()
+    await arriveAtRole('pend-1')
+    const img = (await screen.findByRole('radio', { name: /^관객/ })).querySelector('img')!
+    expect(getComputedStyle(img).width).toBe('36px')
+    expect(getComputedStyle(img).height).toBe('36px')
+  })
+
+  test.each(['만료', '역할 미선택'])('SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 — %s 오류 아이콘 18px', async (state) => {
+    stubServer(state === '만료' ? { [PENDING_KEY]: () => res(401, { code: 'PENDING_SIGNUP_EXPIRED' }) } : {})
+    await arriveAtRole('pend-1')
+    if (state === '역할 미선택') {
+      await roleReady()
+      await click('계속하기')
+    }
+    const message = state === '만료' ? await screen.findByRole('alert') : (await screen.findByText(MSG.roleRequired)).closest('p')!
+    const icon = message.querySelector('svg')!
+    expect(icon.getAttribute('width')).toBe('18px')
+    expect(icon.getAttribute('height')).toBe('18px')
+  })
+
+  test("SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 — '이메일로 가입' 화살표 18px · 간격 2px", () => {
+    stubServer()
+    renderAt('/login')
+    const link = screen.getByRole('link', { name: '이메일로 가입' })
+    expect(link.querySelector('svg')!.getAttribute('width')).toBe('18px')
+    expect(getComputedStyle(link).gap).toBe('2px')
+  })
+
+  test('SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 — 가입 완료 아이디 줄 높이·자간', async () => {
+    localStorage.setItem('accessToken', 'tok-1')
+    stubServer()
+    renderAt({ pathname: '/joined', state: { via: 'email' } })
+    const id = await screen.findByText(HANDLE)
+    expect(getComputedStyle(id).lineHeight).toBe('1.15')
+    expect(getComputedStyle(id).letterSpacing).not.toBe('')
+    expect(getComputedStyle(id).letterSpacing).not.toBe('normal')
+  })
+
+  test('SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 — 콜백 진행 표시 32px·테두리 3px·트랙·호', async () => {
+    stubServer({ [ME]: () => deferred().promise })
+    renderAt('/oauth2/redirect?token=tok-1')
+    const spin = await screen.findByRole('progressbar')
+    const style = getComputedStyle(spin)
+    expect(style.width).toBe('32px')
+    expect(style.height).toBe('32px')
+    expect(style.borderTopWidth).toBe('3px')
+    expect(style.borderRightColor).toBe(colorOf('--c-line'))
+    expect(style.borderTopColor).toBe(colorOf('--c-brand'))
+  })
+
+  // ---------- SC-39 ----------
+  test.each(['timer', 'complete-401', 'pending-401'] as const)(
+    'SC-39 (boundary) 화면에 머물다 만료되면 어느 계정이었는지 남긴다 — %s',
+    async (path) => {
+      // Given 대기 정보 응답
+      const pending = { provider: 'KAKAO', email: 'harin.kim@kakao.com', name: '김하린', expiresAt: '2026-11-11T08:40:00Z' }
+      if (path === 'timer') {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
+        vi.setSystemTime(new Date('2026-11-11T08:35:00.000Z'))
+      }
+      stubServer({
+        [PENDING_KEY]: () => (path === 'pending-401' ? res(401, { code: 'PENDING_SIGNUP_EXPIRED' }) : res(200, path === 'timer' ? pending : { ...pending, expiresAt: new Date(Date.now() + 300_000).toISOString() })),
+        [COMPLETE]: () => res(401, { code: 'PENDING_SIGNUP_EXPIRED' }),
+      })
+
+      // When 표의 경로로 만료
+      await arriveAtRole('pend-1')
+      if (path === 'timer') {
+        for (let i = 0; i < 5; i++) await act(() => vi.advanceTimersByTimeAsync(0))
+        await act(() => vi.advanceTimersByTimeAsync(300_000))
+      } else if (path === 'complete-401') {
+        await roleReady()
+        await userEvent.click(roleRow('관객'))
+        await click('계속하기')
+      }
+
+      // Then 제목·라벨·아이콘 붙은 오류 안내
+      const heading = path === 'timer' ? screen.getByRole('heading', { name: MSG.expiredTitle }) : await screen.findByRole('heading', { name: MSG.expiredTitle })
+      expect(heading).toBeInTheDocument()
+      expect(screen.getByText('역할')).toBeInTheDocument()
+      const alert = screen.getByRole('alert')
+      expect(alert).toHaveTextContent(MSG.expiredBody)
+      expect(alert.querySelector('svg')).not.toBeNull()
+      // And 윗줄·이메일(이름)
+      if (path === 'pending-401') {
+        expect(screen.queryByText('카카오로 처음 가입')).not.toBeInTheDocument()
+        expect(screen.queryByText('harin.kim@kakao.com(김하린)')).not.toBeInTheDocument()
+      } else {
+        expect(screen.getByText('카카오로 처음 가입')).toBeInTheDocument()
+        expect(screen.getByText('harin.kim@kakao.com(김하린)')).toBeInTheDocument()
+      }
+    },
+  )
 })

@@ -351,6 +351,46 @@
         "failed": 107,
         "passed": 0
       }
+    },
+    {
+      "scenario_id": "SC-36",
+      "test_function": "SC-36 (boundary) 라우터가 인증 화면으로 그리는 주소면 표기가 달라도 전역 헤더가 없다 (+ /Login?error=social)",
+      "status": "red",
+      "failure": "/%6Cogin·/%73ignup — 전역 헤더가 붙는다 (isOneOf 가 퍼센트 디코딩을 하지 않음)",
+      "rows": {
+        "failed": 2,
+        "passed": 16
+      },
+      "note": "끝 슬래시·대소문자 행은 Phase 3 롤백 구현으로 이미 통과 — 변이 M1 으로 확인"
+    },
+    {
+      "scenario_id": "SC-37",
+      "test_function": "SC-37 (error) 로그인 뒤 이동할 곳이 로그인·가입 화면이면 표기가 달라도 홈으로 간다",
+      "status": "red",
+      "failure": "/%6Cogin·/%73ignup — 로그인 화면으로 되돌아간다",
+      "rows": {
+        "failed": 2,
+        "passed": 7
+      },
+      "note": "변이 M2 로 나머지 행 확인"
+    },
+    {
+      "scenario_id": "SC-38",
+      "test_function": "SC-38 (happy) 인증 화면의 모양 값은 시안과 같다 (10행)",
+      "status": "red",
+      "failure": "콜백 진행 표시 borderTopWidth '16px'(테두리 없음) ≠ '3px' — MUI CircularProgress 는 테두리·트랙이 없다",
+      "rows": {
+        "failed": 1,
+        "passed": 9
+      },
+      "note": "앱바·자간·일러스트·아이콘·화살표·줄 높이는 롤백 구현으로 통과 — 변이 M3~M8"
+    },
+    {
+      "scenario_id": "SC-39",
+      "test_function": "SC-39 (boundary) 화면에 머물다 만료되면 어느 계정이었는지 남긴다 (3행)",
+      "status": "already_passing",
+      "failure": null,
+      "note": "Phase 3 롤백 구현(View expired 의 pending)이 이미 있다 — 변이 M9(타이머 만료에 pending:null) 로 timer 행이 실패함을 확인"
     }
   ],
   "red_result": {
@@ -380,10 +420,10 @@
     "lint": "npm run lint error 0"
   },
   "inventory_check": {
-    "scenarios": 35,
-    "test_functions": 35,
+    "scenarios": 39,
+    "test_functions": 39,
     "match": true,
-    "note": "표 시나리오는 test.each 한 줄 = 시나리오 한 건. SC-34 는 test.todo"
+    "note": "SC-36 은 표 test.each + /Login?error=social 한 건, SC-38 은 test.each·test 7개 묶음 — 모두 'SC-NN' 이름. SC-34 는 test.todo. 롤백 임시 파일 task018.rollback.test.tsx 는 SC-36~39 로 흡수해 삭제"
   },
   "existing_test_modifications": [
     {
@@ -434,9 +474,60 @@
     "mock_strategy": "fetch 를 메서드+경로 별로 스텁(요청마다 새 Response). 만료·토스트는 vi.useFakeTimers(+Date). 클립보드는 navigator.clipboard 대체. 저장소 막힘은 Storage.prototype 스파이. 앱 밖 이동·세션 변경은 테스트용 버튼(Outside)"
   },
   "human_review": {
-    "approved": true,
-    "approved_at": "2026-11-09",
-    "via": "AskUserQuestion — HITL#1·2 통합",
-    "decision": "승인"
+    "approved": false
+  },
+  "red_retry": {
+    "round": 2,
+    "reason": "Phase 4 2회차 FAIL → 2a 롤백(사용자 결정) — RC-2·RC-3 변종 시나리오화",
+    "command": "cd frontend && npx vitest run --no-file-parallelism",
+    "result": "707 — 5 failed (SC-36·37 퍼센트 인코딩 4, SC-38 스피너 1), 701 passed, 1 todo",
+    "mutation_check": [
+      {
+        "id": "M1",
+        "mutation": "App.tsx isOneOf → AUTH_PATHS.includes(pathname)",
+        "caught": "SC-36 13행 실패"
+      },
+      {
+        "id": "M2",
+        "mutation": "LoginPage safeDestination isOneOf → 정확 일치",
+        "caught": "SC-37 8행 실패"
+      },
+      {
+        "id": "M3",
+        "mutation": "AppBar plain 무시(--c-bg)",
+        "caught": "SC-38 앱바 2행 실패"
+      },
+      {
+        "id": "M4",
+        "mutation": "Hero letterSpacing 제거",
+        "caught": "SC-38 자간 2행 실패(콜백 제목은 별도 지점이라 통과)"
+      },
+      {
+        "id": "M5",
+        "mutation": "역할 행 일러스트 rowArt → touch(44px)",
+        "caught": "SC-38 일러스트 실패"
+      },
+      {
+        "id": "M6",
+        "mutation": "오류 아이콘 fieldMsgIcon → iconSmall(20px)",
+        "caught": "SC-38 아이콘 2행 실패"
+      },
+      {
+        "id": "M7",
+        "mutation": "MoreLink gap moreGap → rowGap",
+        "caught": "SC-38 화살표 실패"
+      },
+      {
+        "id": "M8",
+        "mutation": "아이디 lineHeight → --lh-title",
+        "caught": "SC-38 줄 높이 실패"
+      },
+      {
+        "id": "M9",
+        "mutation": "타이머 만료 시 pending: null",
+        "caught": "SC-39 timer 행 실패"
+      }
+    ],
+    "restored": "각 변이 뒤 git checkout -- <파일>, git status 로 소스 변경 없음 확인 (테스트 파일만 수정)"
   }
 }

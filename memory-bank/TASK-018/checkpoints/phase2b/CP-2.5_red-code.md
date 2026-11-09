@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-06T11:00:00Z
-summary: "Red — 새 테스트 35건(시나리오 1:1, 행 361) 중 red 32·already_passing 2(SC-10·SC-19)·Phase 4 수동 1(SC-34). 기존 AuthScreens·SocialLoginScreens 옛 기대값 교체(단언 삭제 0). 통합 승인(HITL#1·2) 받음 2026-11-09."
+summary: "Phase 4 롤백 Red — SC-36~39 를 task018.auth.test.tsx 에(롤백 임시 테스트 흡수·삭제). Red 5행(퍼센트 인코딩 4·스피너 1), 나머지는 변이 M1~M9 로 확인. 통합 승인 대기."
 
 next_steps:
-  - "Phase 3 — wf-develop (Green)"
+  - "HITL#1·2 재승인 (SC-36~39 + 제가 정한 값 15·16)"
 
 decisions:
   - decision: "새 테스트는 frontend/src/auth/task018.auth.test.tsx 한 파일, 앱 전체(App)+MemoryRouter 로 실제 라우트를 지난다"
@@ -16,5 +16,8 @@ decisions:
   - decision: "SC-27·SC-29 의 '오류·경고 없음' 은 console.error 스파이 대신 화면(실패 문구 없음·경로 그대로)으로 단언"
     rationale: "React 18 은 언마운트 뒤 setState 경고를 내지 않아 콘솔 단언이 아무것도 증명하지 못하고, 다른 라이브러리 경고로 가짜 실패만 만든다"
 
-attempts: []
+attempts:
+  - round: 2
+    outcome: "Phase 4 2회차 FAIL → 2a 롤백 뒤 Red 재작성"
+    back_to: "2b"
 ---
