@@ -474,7 +474,16 @@
     "mock_strategy": "fetch 를 메서드+경로 별로 스텁(요청마다 새 Response). 만료·토스트는 vi.useFakeTimers(+Date). 클립보드는 navigator.clipboard 대체. 저장소 막힘은 Storage.prototype 스파이. 앱 밖 이동·세션 변경은 테스트용 버튼(Outside)"
   },
   "human_review": {
-    "approved": false
+    "approved": true,
+    "approved_at": "2026-11-09",
+    "via": "AskUserQuestion — HITL#1·2 재승인 (Phase 4 롤백 SC-36~39)",
+    "decision": "승인",
+    "history": [
+      {
+        "approved_at": "2026-11-09",
+        "scope": "SC-01~35 최초 승인"
+      }
+    ]
   },
   "red_retry": {
     "round": 2,

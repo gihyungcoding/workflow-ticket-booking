@@ -1,8 +1,8 @@
 ---
 task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (Phase 4 2회차 롤백)"
+phase: "3"
+phase_name: "Phase 3 - Green (Phase 4 2회차 롤백 뒤)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-06
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 2회차 FAIL(RC-2 퍼센트 인코딩 변종) → 시나리오로 롤백 (사용자 결정 2026-11-09). 만료 제목은 지금대로.
+Phase 4 2회차 롤백 → 2a(SC-36~39, 검증 3회차 PASS) → 2b Red 재승인(2026-11-09).
 
 ## 다음 한 걸음
 
-wf-scenario — RC-2 변종(끝 슬래시·대소문자·퍼센트 인코딩 × 헤더 숨김·로그인 뒤 순환)과 RC-3 시안 값(task018.rollback.test 가 지키는 것 + 스피너 두께·트랙)을 시나리오로. PLAN input_fields 에 경로 표기 필드가 필요하면 보완(plan_gap). 이전 VALIDATION 원문을 붙여 검증자 재호출.
+wf-develop — Red 5행: isOneOf 퍼센트 디코딩(라우터 규칙, 깨진 인코딩은 죽지 않게), 콜백 스피너 시안대로. 그 뒤 자체 리뷰 → Phase 4 3회차.
 
 ## 알아둬야 할 것
 

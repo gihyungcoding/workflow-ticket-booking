@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-06T11:00:00Z
-summary: "Phase 4 롤백 Red — SC-36~39 를 task018.auth.test.tsx 에(롤백 임시 테스트 흡수·삭제). Red 5행(퍼센트 인코딩 4·스피너 1), 나머지는 변이 M1~M9 로 확인. 통합 승인 대기."
+summary: "Phase 4 롤백 Red — SC-36~39 를 task018.auth.test.tsx 에(롤백 임시 테스트 흡수·삭제). Red 5행(퍼센트 인코딩 4·스피너 1), 나머지는 변이 M1~M9 로 확인. 통합 재승인 받음 2026-11-09."
 
 next_steps:
-  - "HITL#1·2 재승인 (SC-36~39 + 제가 정한 값 15·16)"
+  - "Phase 3 — isOneOf 에 라우터와 같은 퍼센트 디코딩, 콜백 스피너 시안대로(32px·3px·트랙·호)"
 
 decisions:
   - decision: "새 테스트는 frontend/src/auth/task018.auth.test.tsx 한 파일, 앱 전체(App)+MemoryRouter 로 실제 라우트를 지난다"
