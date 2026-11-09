@@ -483,7 +483,12 @@
     "넓은 화면에서 토스트 전체 폭(TASK-017 Toast)"
   ],
   "human_review": {
-    "decision": null,
+    "decision": "ROLLBACK_SCENARIO",
+    "reject_type": "RETRY_SCENARIO",
+    "reason": "RC-2·RC-3 변종(경로 표기 — 끝 슬래시·대소문자·퍼센트 인코딩, 로그인 뒤 순환, 시안 값)이 승인 시나리오 밖 — 2a 에서 변종 전부를 시나리오로 가져간다",
+    "decided_at": "2026-11-09",
+    "via": "AskUserQuestion HITL#3",
+    "also_decided": "만료 화면 제목은 지금대로(승인 시나리오 SC-23 유지) — 시안 차이로 기록",
     "verified_commit": null,
     "verified_at": null
   },

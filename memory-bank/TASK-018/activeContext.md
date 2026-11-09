@@ -1,8 +1,8 @@
 ---
 task_id: TASK-018
 title: "인증 화면 5종을 시안대로"
-phase: "3"
-phase_name: "Phase 3 - Green (Phase 4 롤백)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (Phase 4 2회차 롤백)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-06
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 1회차 FAIL → Phase 3 롤백 (사용자 결정). VERIFY root_causes RC-2(인증 화면 판별) · RC-3(시안 차이 D1~D5 + not_probed 2).
+Phase 4 2회차 FAIL(RC-2 퍼센트 인코딩 변종) → 시나리오로 롤백 (사용자 결정 2026-11-09). 만료 제목은 지금대로.
 
 ## 다음 한 걸음
 
-wf-develop — 변종마다 테스트를 먼저 실패시키고 RC-2 는 App.tsx 한 곳, RC-3 은 화면별. not_probed(.id-value line-height·.wait-spin, /joined/ 등) 도 프로브.
+wf-scenario — RC-2 변종(끝 슬래시·대소문자·퍼센트 인코딩 × 헤더 숨김·로그인 뒤 순환)과 RC-3 시안 값(task018.rollback.test 가 지키는 것 + 스피너 두께·트랙)을 시나리오로. PLAN input_fields 에 경로 표기 필드가 필요하면 보완(plan_gap). 이전 VALIDATION 원문을 붙여 검증자 재호출.
 
 ## 알아둬야 할 것
 
