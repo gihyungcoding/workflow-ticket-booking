@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-09T08:00:00Z
-summary: "Phase 4 2회차 FAIL — RC-2 later(퍼센트 인코딩) 재현. 1회차: FAIL — 테스트 665/665·lint·tsc·build·제약 통과, 리뷰 RC-2([correctness] 인증 화면 판별 정확 일치) + 시안 대조 차이 RC-3(D1~D5). 뿌리 3·변종 18(재현 10)."
+summary: "Phase 4 3회차 WARN — 결함 0, RC-1·2·3 해소. 남은 것: 만료 제목 시안 차이(사용자 결정), 병렬 실행 기존 테스트 부하 실패 1회(무관). HITL#3 대기."
 
 next_steps:
-  - "Phase 2a — RC-2·RC-3 변종 전부를 시나리오로(경로 표기 3종 × 헤더·로그인 뒤 순환, 시안 값). 검증자 → 2b Red → 통합 승인 → 3 → 4"
+  - "HITL#3 — 승인/예외 승인 시 verified_commit 기록 → Phase 5"
 
 decisions:
   - decision: "화면 확인은 DTO 스키마 모의 서버(:18081) + vite(:5175, VITE_API_BASE_URL) + out 정적 서버(:5176), 같은 출처 375px iframe 으로 시안과 나란히"
@@ -24,4 +24,7 @@ attempts:
   - round: 2
     outcome: "FAIL — RC-2 later 변종(퍼센트 인코딩 /%6Cogin) 재현 1, RC-3 남은 차이 2(만료 제목 — 시나리오 충돌, 스피너 두께 — 사소)"
     back_to: "phase2a (사용자 결정 2026-11-09 — 시나리오로 롤백. 만료 제목은 지금대로)"
+  - round: 3
+    outcome: "WARN — 결함 0"
+    back_to: null
 ---

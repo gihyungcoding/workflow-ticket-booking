@@ -1,13 +1,14 @@
 {
   "task_id": "TASK-018",
-  "round": 2,
-  "status": "FAIL",
-  "status_reason": "RC-2 의 later 변종 재현 — 퍼센트 인코딩 주소(/%6Cogin)를 라우터는 디코딩해 매칭하지만 isOneOf(matchPath)는 아니다. 낮은 심각도이나 [correctness]. RC-3 은 만료 제목 구성(승인 시나리오 충돌) · .wait-spin 두께·트랙만 남음",
+  "round": 3,
+  "status": "WARN",
+  "status_reason": "결함 0 — RC-1·2·3 해소. 남은 것: 만료 화면 제목이 시안과 다름(사용자 결정, 제가 정한 값 16), 병렬 실행에서 기존 PerformanceRegisterPage 테스트가 부하로 1회 실패(순차 재실행 통과, 이번 변경과 무관)",
   "evidence": {
     "tests": {
       "command": "cd frontend && npx vitest run --no-file-parallelism",
       "exit_code": 0,
-      "summary": "21 files, 692 passed, 1 todo, 65.5s"
+      "summary": "20 files, 706 passed, 1 todo (SC-34 화면 확인), 77.6s",
+      "note": "리뷰어 병렬 실행 1회차에 PerformanceRegisterPage '401 WRITE_KEY_INVALID' 1건 실패, 재실행 2회 통과 — develop 에서도 보던 부하 시간 초과(CP-1.3)"
     },
     "lint": {
       "command": "cd frontend && npm run lint",
@@ -24,7 +25,7 @@
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "50 files changed, 10315 insertions(+), 416 deletions(-)"
+      "summary": "49 files changed, 11014 insertions(+), 417 deletions(-)"
     }
   },
   "acceptance_criteria": [
@@ -41,7 +42,7 @@
     {
       "criterion": "로그인 성공 시 원래 가려던 화면으로 돌아간다 (기존 동작 유지)",
       "verdict": "PASS",
-      "evidence": "SC-04(12행) 통과"
+      "evidence": "SC-04(12행) 통과 · SC-37 (표기 다른 from 9행)"
     },
     {
       "criterion": "비밀번호가 8자 미만이거나 72자 초과면 비밀번호 칸 아래 안내가 오류로 바뀌고 제출되지 않는다",
@@ -106,7 +107,7 @@
     {
       "criterion": "다섯 화면과 오류 상태 3종을 375px 로 띄워 `out/screens/` 의 같은 화면과 나란히 비교한 캡처가 Phase 4 증거에 있다",
       "verdict": "WARN",
-      "evidence": "2회차 캡처 — signup·callback·role-select·만료를 시안과 다시 나란히. D1~D7 해소(앱바 rgb(254,254,254), 제목 자간 -0.84px, 일러스트 36px, 스피너 32px, 만료에 윗줄·이메일·라벨·아이콘). 남은 차이: 만료 제목 안 email(name)(승인 시나리오 SC-23 과 충돌 — 사람 판단), 스피너 두께·트랙(사소)"
+      "evidence": "1~3회차 375px 캡처 — 시안과 나란히. 남은 차이 1: 만료 화면 제목 안 email(name) (사용자 결정 2026-11-09 지금대로 — 제가 정한 값 16). 3회차: 콜백 스피너 시안대로(트랙·호·회전), /%6Cogin·/%73ignup·/login/·/Login 헤더 없음"
     }
   ],
   "screens": [
@@ -144,7 +145,7 @@
       "name": "oauth-callback",
       "state": "확인 중",
       "verdict": "PASS",
-      "evidence": "모의 서버 검증(2회차) — 스키마 출처 1회차와 같음. 375px iframe(innerWidth 375) — 1회차 차이(D1·D2·D3·D7) 해소"
+      "evidence": "3회차 — 문구·제목 한 줄·스피너 32px 트랙 rgb(229,230,237)·호 rgb(65,84,255)·waitSpin 회전 (iframe 0.6배 축소로 테두리 2.5px 표시)"
     },
     {
       "name": "role-select",
@@ -185,8 +186,8 @@
     {
       "name": "login·signup",
       "state": "/%6Cogin · /%73ignup 퍼센트 인코딩",
-      "verdict": "FAIL",
-      "evidence": "2회차 브라우저 재현 — 화면은 로그인·가입인데 전역 헤더·Container 가 붙는다 (RC-2 later)"
+      "verdict": "PASS",
+      "evidence": "3회차 브라우저 — 로그인·가입 화면, 헤더 없음 (matchRoutes)"
     }
   ],
   "screen_method": {
@@ -201,7 +202,7 @@
     "error_count": 0,
     "warn_count": 3,
     "no_target": [],
-    "files_scanned": 383,
+    "files_scanned": 379,
     "overdue_promotions": [],
     "violations": [
       {
@@ -272,6 +273,18 @@
         "findings": 2,
         "correctness": 1,
         "summary": "RC-2 later — 퍼센트 인코딩(matchPath 는 디코딩 안 함, Routes 는 함). [design] .wait-spin 두께 3px·트랙 링"
+      },
+      {
+        "n": 7,
+        "phase": 3,
+        "findings": 0,
+        "summary": "2회차 롤백 자체 리뷰 — matchRoutes 프로브 전 표기 일치"
+      },
+      {
+        "n": 8,
+        "phase": 4,
+        "findings": 0,
+        "summary": "3회차 — RC-1·2·3 해소, 판별 호출부 2곳 모두 isOneOf(matchRoutes), 승인 테스트 무변경"
       }
     ]
   },
@@ -285,15 +298,15 @@
           "case": "expiresAt 이 달력상 없는 날(2026-02-30, 04-31)",
           "origin": "found",
           "probe": "reproduced",
-          "fixed": true,
-          "evidence": "frontend/src/auth/task018.review.test.ts"
+          "evidence": "frontend/src/auth/task018.review.test.ts",
+          "resolved": true
         },
         {
           "case": "expiresAt 이 T24:00:00",
           "origin": "predicted",
           "probe": "reproduced",
-          "fixed": true,
-          "evidence": "frontend/src/auth/task018.review.test.ts"
+          "evidence": "frontend/src/auth/task018.review.test.ts",
+          "resolved": true
         },
         {
           "case": "오프셋 +99:99, +24:00, +09:60, 초 :60",
@@ -346,44 +359,44 @@
           "case": "/login/ — 전역 헤더·Container 가 로그인 화면에 붙는다",
           "origin": "found",
           "probe": "reproduced",
-          "evidence": "브라우저 375px iframe — '로그인\\n가입' 헤더",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "/Login — 대소문자",
           "origin": "predicted",
           "probe": "reproduced",
-          "evidence": "브라우저 375px iframe — 같은 헤더",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "/signup/ — 가입 화면",
           "origin": "predicted",
           "probe": "reproduced",
-          "evidence": "리뷰어 프로브(App 렌더, 가입 링크 1개)",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "/joined/, /oauth2/role/, /oauth2/redirect/",
           "origin": "predicted",
           "probe": "reproduced",
           "reason": "같은 AUTH_PATHS.has(pathname) 한 줄 — Phase 3 에서 테스트로 프로브",
-          "fixed": true,
-          "evidence": "frontend/src/auth/task018.rollback.test.tsx"
+          "evidence": "frontend/src/auth/task018.rollback.test.tsx",
+          "resolved": true
         },
         {
           "case": "LoginPage.safeDestination 이 from 의 /login/·/Login·/signup/ 을 순환으로 보지 않음",
           "origin": "later",
           "probe": "reproduced",
-          "fixed": true,
-          "evidence": "frontend/src/auth/task018.rollback.test.tsx"
+          "evidence": "frontend/src/auth/task018.rollback.test.tsx",
+          "resolved": true
         },
         {
           "case": "/%6Cogin·/%73ignup 등 퍼센트 인코딩 — Routes 는 디코딩해 매칭, isOneOf(matchPath) 는 아님 (App 헤더 · safeDestination 순환)",
           "origin": "later",
           "probe": "reproduced",
-          "fixed": false,
-          "evidence": "2회차 브라우저 iframe 재현 + 리뷰어 react-router 7.18 프로브"
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         }
       ],
       "fix_locus": "common",
@@ -402,60 +415,60 @@
           "case": "D1 흰 바탕(plain) 화면의 앱바 바탕이 --c-bg — 시안 .plain .appbar 는 --c-surface (signup·role-select·만료·실패)",
           "origin": "found",
           "probe": "reproduced",
-          "evidence": "브라우저 getComputedStyle(header).backgroundColor = rgb(241,242,246), 캡처 대조",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "D2 Hero·콜백 제목에 .title letter-spacing -0.03em 미적용 — 콜백 제목이 두 줄로 감김",
           "origin": "found",
           "probe": "reproduced",
-          "evidence": "computed letterSpacing -0.32px(시안 -0.84px), 캡처 대조",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "D3 역할 행 일러스트 44px — 시안 .row-art img 36px",
           "origin": "found",
           "probe": "reproduced",
-          "evidence": "computed width 44px, 캡처 대조",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "D4 만료 상태에 윗줄(제공자로 처음 가입)·'역할' 라벨·오류 아이콘 없음(타이머로 만료될 때는 대기 정보를 안다)",
           "origin": "found",
           "probe": "reproduced",
-          "evidence": "캡처 대조 role-select--error",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "D5 MoreLink 화살표 18px·gap 2px 리터럴 — 시안 .hero-more svg 18px/gap 2px 이나 componentSizes 에 없음",
           "origin": "found",
           "probe": "reproduced",
-          "evidence": "리뷰어 소견 + out/components.css 46·47행",
-          "fixed": true
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "resolved": true
         },
         {
           "case": "그 밖의 시안 고유 클래스(.id-value line-height 1.15, .wait-spin)",
           "origin": "predicted",
           "probe": "reproduced",
           "reason": "Phase 3 에서 out/screens 의 <style> 과 components.css 를 화면별로 전수 대조",
-          "fixed": true,
-          "evidence": "frontend/src/auth/task018.rollback.test.tsx D6·D7"
+          "evidence": "frontend/src/auth/task018.rollback.test.tsx D6·D7",
+          "resolved": true
         },
         {
           "case": "만료 화면 email(name) 이 제목(h1) 밖 — 시안은 제목 안",
           "origin": "later",
           "probe": "reproduced",
-          "fixed": false,
-          "evidence": "2회차 캡처",
-          "note": "승인 시나리오 SC-23 이 heading 을 '가입 시간이 지났어요' 로 단언 — 사람 결정 필요"
+          "evidence": "frontend/src/auth/task018.auth.test.tsx SC-23·SC-39 — 승인 시나리오 「제가 정한 값」 16 이 사양(사용자 결정 2026-11-09)",
+          "note": "시안과 다름 — 사양으로 확정. HITL#3 에 표시",
+          "resolved": true
         },
         {
           "case": ".wait-spin 테두리 3px·트랙 링(--c-line) — MUI 기본 두께 약 2.6px·트랙 없음",
           "origin": "later",
           "probe": "reproduced",
-          "fixed": false,
-          "evidence": "시안 oauth-callback <style> 과 코드 대조",
-          "severity": "minor"
+          "evidence": "frontend/src/auth/task018.auth.test.tsx (SC-36~39)",
+          "severity": "minor",
+          "resolved": true
         }
       ],
       "fix_locus": "per_site",
@@ -483,12 +496,7 @@
     "넓은 화면에서 토스트 전체 폭(TASK-017 Toast)"
   ],
   "human_review": {
-    "decision": "ROLLBACK_SCENARIO",
-    "reject_type": "RETRY_SCENARIO",
-    "reason": "RC-2·RC-3 변종(경로 표기 — 끝 슬래시·대소문자·퍼센트 인코딩, 로그인 뒤 순환, 시안 값)이 승인 시나리오 밖 — 2a 에서 변종 전부를 시나리오로 가져간다",
-    "decided_at": "2026-11-09",
-    "via": "AskUserQuestion HITL#3",
-    "also_decided": "만료 화면 제목은 지금대로(승인 시나리오 SC-23 유지) — 시안 차이로 기록",
+    "decision": null,
     "verified_commit": null,
     "verified_at": null
   },
@@ -506,6 +514,21 @@
         "verified_at": null
       },
       "summary": "코드 리뷰 [correctness] RC-2 재현(인증 화면 판별이 라우터 매칭과 다름) + 시안 대조 차이 5건(RC-3). Phase 3 롤백"
+    },
+    {
+      "round": 2,
+      "status": "FAIL",
+      "human_review": {
+        "decision": "ROLLBACK_SCENARIO",
+        "reject_type": "RETRY_SCENARIO",
+        "reason": "RC-2·RC-3 변종(경로 표기 — 끝 슬래시·대소문자·퍼센트 인코딩, 로그인 뒤 순환, 시안 값)이 승인 시나리오 밖 — 2a 에서 변종 전부를 시나리오로 가져간다",
+        "decided_at": "2026-11-09",
+        "via": "AskUserQuestion HITL#3",
+        "also_decided": "만료 화면 제목은 지금대로(승인 시나리오 SC-23 유지) — 시안 차이로 기록",
+        "verified_commit": null,
+        "verified_at": null
+      },
+      "summary": "RC-2 의 later 변종 재현 — 퍼센트 인코딩 주소(/%6Cogin)를 라우터는 디코딩해 매칭하지만 isOneOf(matchPath)는 아니다. 낮은 심각도이나 [correctness]. RC-3 은 만료 제목 구성(승인 시나리오 충돌) · .wait-spin 두께·트랙만 남음"
     }
   ]
 }
