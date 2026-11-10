@@ -141,16 +141,18 @@
       "section": "Step 5.5 자체 리뷰 앞",
       "change": "Frontend+시안 태스크는 자체 리뷰 전에 앱을 띄워 같은 출처 375px iframe 으로 시안과 나란히 본다(screen-verification.md 방식). 차이는 리뷰 소견과 같이 처리",
       "evidence": "TASK-018 — 화면 대조가 Phase 4 에서 처음 이뤄져 FAIL. 근본 원인 분석 B(실제 환경 확인을 Phase 3 으로)",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "ce2cc83"
     },
     {
       "target": ".claude/skills/wf-develop/SKILL.md",
       "section": "Step 5.5 리뷰 프롬프트",
       "change": "프레임워크의 판별(라우터 매칭·디코더·검증기)을 흉내 내는 코드가 있으면 '프레임워크 함수를 그대로 쓰는가, 아니면 같은 입력 표기(인코딩·대소문자·끝 슬래시)에서 결과가 같은가' 를 프로브하도록 리뷰 지시에 넣는다",
       "evidence": "TASK-018 RC-2 — 정확 일치 → matchPath → matchRoutes 로 세 번 고침, later 변종 3",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "ce2cc83"
     },
     {
       "target": "scripts/coverage_matrix.py",
@@ -198,6 +200,8 @@
     }
   },
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-10T00:00:00Z",
+    "reviewed_in": "batch"
   }
 }
