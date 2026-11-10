@@ -122,6 +122,8 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0024](../decisions/ADR-0024-countdown-by-server-clock-offset.md)
 - 결제는 무통장 입금만, 입금 확인은 내부 API →
   [ADR-0025](../decisions/ADR-0025-bank-transfer-only-with-internal-confirm-api.md)
+- 시간 제한 화면은 기한에 재조회 없이 클라이언트가 전환, 판정은 다음 요청에서 서버 →
+  [ADR-0026](../decisions/ADR-0026-client-timer-transition-server-judgment.md)
 
 ## 7. 알려진 부채
 
