@@ -804,7 +804,7 @@
       "complexity": {
         "size_score": 3,
         "risk_score": 3,
-        "total_score": 45.0,
+        "total_score": 45,
         "level": "보통"
       }
     },
@@ -857,7 +857,7 @@
       "complexity": {
         "size_score": 2,
         "risk_score": 2,
-        "total_score": 32.0,
+        "total_score": 32,
         "level": "단순"
       }
     },
@@ -909,7 +909,7 @@
       "complexity": {
         "size_score": 3,
         "risk_score": 3,
-        "total_score": 48.0,
+        "total_score": 48,
         "level": "보통"
       }
     },
@@ -975,7 +975,7 @@
       "complexity": {
         "size_score": 4,
         "risk_score": 3,
-        "total_score": 60.0,
+        "total_score": 60,
         "level": "보통"
       }
     },
@@ -1057,7 +1057,7 @@
       "complexity": {
         "size_score": 4,
         "risk_score": 3,
-        "total_score": 60.0,
+        "total_score": 60,
         "level": "보통"
       }
     },
@@ -1073,6 +1073,232 @@
         "5",
         "6",
         "7"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task C"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-019",
+    "title": "기준 시각·포스터·구역 위치·머리글 후보 API",
+    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 2(booking-ux-02)는 이미 동작하는 공연 목록·상세(TASK-001·002)를 시안의 홈·공연 상세·구역 위치 시트로 바꾸고, 오픈 카운트다운을 티켓온 기준 시각으로 센다(ADR-0024·0026). 서버 시각 API(GET /api/time, Clock 주입, no-store), performance.poster_url 과 performance_zone(묶음·설명·무대 기준 순서) 추가(V6), 등록 API 에 선택 필드 posterUrl·zones 와 검증(INVALID_POSTER_URL·ZONE_GRADE_UNKNOWN·ZONE_GRADE_DUPLICATED), 목록·상세 응답에 posterUrl, 상세 sections 에 area·areaNote·stageOrder(stageOrder 순), 홈 머리글 후보 GET /api/performances/next-opening(가장 이른 openAt, 없으면 204). 포함하지 않음: 회차(흐름 4), 포스터 수정·업로드, 주최자 폼 변경, 스크랩, 진입 보장(FR-5, 흐름 3).",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "마이그레이션·등록 검증·조회 API 변경은 백엔드 범위",
+    "priority": "High",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 10
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "`GET /api/time` 이 인증 없이 200 과 주입된 `Clock` 의 시각을 `now`(ISO-8601 UTC)로 돌려주고, 응답에 `Cache-Control: no-store` 가 있다",
+        "`posterUrl`·`zones` 없이 등록하면 지금과 같이 201 이고, 상세 `sections` 는 등록 순서대로 `stageOrder` 1, 2, … 와 `area` = 등급 이름을 갖는다",
+        "`zones` 를 주고 등록하면 상세 `sections` 가 `zones` 를 펼친 순서의 `stageOrder` 로 정렬되고 `area`·`areaNote` 를 갖는다. `zones` 에 없는 등급은 그 뒤에 붙는다",
+        "`posterUrl` 이 `http://`·상대 경로·501자면 400 `INVALID_POSTER_URL`, `zones` 에 없는 등급이면 400 `ZONE_GRADE_UNKNOWN`, 중복 등급이면 400 `ZONE_GRADE_DUPLICATED` 이고 공연·좌석·구역 행이 생기지 않는다",
+        "목록·상세 응답에 `posterUrl` 이 있고, 없는 공연은 키가 없다",
+        "`next-opening` 이 아직 열리지 않은 공연 중 `openAt` 이 가장 이른 1건을 돌려준다. 취소된 공연·이미 열린 공연·지난 공연은 고르지 않고, 후보가 없으면 204",
+        "V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/resources/db/migration/V6__add_poster_and_zones.sql",
+          "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+          "backend/src/main/java/com/example/ticket_booking/domain/PerformanceZone.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/PerformanceZoneRepository.java",
+          "backend/src/main/java/com/example/ticket_booking/api/TimeController.java",
+          "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+          "backend/src/main/java/com/example/ticket_booking/api/dto/RegisterPerformanceRequest.java",
+          "backend/src/main/java/com/example/ticket_booking/api/dto/ZoneRequest.java",
+          "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+          "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+          "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+          "backend/src/main/java/com/example/ticket_booking/service/SectionSummaryResponse.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+          "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+          "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/booking-ux-02-browse.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task A"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-020",
+    "title": "기준 시계·공연 상세·구역 위치 시트를 시안대로",
+    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 2(booking-ux-02)는 이미 동작하는 공연 목록·상세(TASK-001·002)를 시안의 홈·공연 상세·구역 위치 시트로 바꾸고, 오픈 카운트다운을 티켓온 기준 시각으로 센다(ADR-0024·0026). useServerClock(GET /api/time 3회 측정·최소 왕복 표본·화면 복귀 재측정·실패 상태), 한국 시간 표기 유틸, 공연 상세를 out/screens/concert.html 대로(예정 카운트다운·예매 가능·매진·마감·공연 취소·기준 시각 실패), 0초에 재조회 없이 예매 가능으로 전환(ADR-0026), 구역 위치 시트(zone-map.html — 배치도 + 묶음 행), 예매하기 → /performances/:id/queue 임시 화면, 제목 없는 AppBar 의 빈 h1 제거. 시안과 다르게 두는 것(§8): 회차 하나, 오픈 5분 전 안내 없음. 포함하지 않음: 대기열 동작(흐름 3), 회차·매수 선택(흐름 4), 오픈 5분 전 안내 문구.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience"
+    ],
+    "reason_primary": "카운트다운·화면 상태 전이·시트는 프론트 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-019"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 12
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "기기 시계가 서버보다 3초 빠르게 설정돼 있어도 카운트다운이 서버 시각 기준으로 표시되고, CTA 가 서버 시각의 `openAt` 에 켜진다 (오프셋 주입 테스트)",
+        "기준 시각이 `openAt` 에 닿으면 상세 API 를 다시 부르지 않고(그 순간 호출 0회 — ADR-0026) 머리글이 \"지금 예매할 수 있어요\", CTA 가 켜진 \"예매하기\"로 바뀐다. 남은 좌석이 0 이면 「매진」으로 바뀐다",
+        "카운트다운이 1일 이상·1시간 이상·1시간 미만·1분 미만에서 각각 \"3일 4시간\"·\"2시간 15분\"·\"4분 32초\"·\"32초\" 형식이고 `role=\"timer\"` 의 `aria-label` 이 같다",
+        "`GET /api/time` 이 실패하면 카운트다운 대신 \"기준 시각을 맞추지 못했어요\" + 다시 맞추기가 보이고 CTA 는 꺼짐이다",
+        "탭이 다시 보이면 `GET /api/time` 을 다시 호출한다",
+        "예매 가능·매진·마감·공연 취소 상태가 §2-5 표의 머리글·CTA 로 보인다",
+        "켜진 \"예매하기\"를 누르면 `/performances/:id/queue` 로 가고 \"대기열을 준비하고 있어요\"가 보인다",
+        "가격이 `sections` 의 최솟값~최댓값(\"110,000~150,000원\"), 한 가격이면 \"150,000원\"으로 보인다",
+        "\"구역 위치 보기\"를 누르면 시트가 열리고, 배치도와 묶음 행이 `stageOrder` 순(\"플로어 F1~F4 / 무대 앞 바닥, F1이 가장 앞 / 150,000원\")으로 보인다. 확인·흐린 바탕·뒤로 가기로 닫힌다",
+        "구역이 1개인 공연은 \"구역 위치 보기\" 행이 없고, 묶음이 5개 이상이면 배치도 없이 행만 보인다",
+        "포스터가 없거나 이미지 로드가 실패하면 회색 면 + 아이콘이 같은 크기로 보인다",
+        "제목이 없는 앱바(상세·가입·역할 선택)에 빈 `h1` 이 없다 (TASK-018 drift)",
+        "없는 공연 404 → \"찾는 공연이 없어요\" + 홈으로, 그 밖의 실패 → \"공연 정보를 불러오지 못했어요\" + 다시 시도",
+        "375px 에서 `concert.html`·`zone-map.html` 과 나란히 띄워 구조·문구·색이 같다 (회차·5분 전 안내는 §8 의 차이)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/api/time.ts",
+          "frontend/src/hooks/useServerClock.ts",
+          "frontend/src/utils/datetime.ts",
+          "frontend/src/api/performances.ts",
+          "frontend/src/pages/PerformanceDetailPage.tsx",
+          "frontend/src/components/ZoneMapSheet.tsx",
+          "frontend/src/components/ZoneMap.tsx",
+          "frontend/src/pages/QueuePlaceholderPage.tsx",
+          "frontend/src/components/ui/AppBar.tsx",
+          "frontend/src/components/StatusBadge.tsx",
+          "frontend/src/App.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/booking-ux-02-browse.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task B"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-021",
+    "title": "홈 화면을 시안대로",
+    "description": "디자인 정본을 out/ 시안으로 바꿨다(ADR-0022). 흐름 2(booking-ux-02)는 이미 동작하는 공연 목록·상세(TASK-001·002)를 시안의 홈·공연 상세·구역 위치 시트로 바꾸고, 오픈 카운트다운을 티켓온 기준 시각으로 센다(ADR-0024·0026). 공연 목록을 out/screens/home.html 의 홈으로 — 머리글(티켓온 기준 시각, next-opening 후보 '오늘 오후 6:00에 <공연명> 예매가 열려요', 없으면 일반 문구), 상태 칩 6개(?status=), 2열 포스터 카드(배지·공연명·날짜+시각·장소·상태별 한 줄), 더 보기(20개씩), 로딩·빈 목록·오류·더 보기 실패·포스터 없음. 시안과 다르게 두는 것(§8): 카드 일시는 항상 날짜+시각, 내 예매 행 없음. 포함하지 않음: 검색·장르·랭킹(시안이 뺌), 내 예매 진입(흐름 5), 스크랩.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience"
+    ],
+    "reason_primary": "홈 화면·필터·페이지 이어 붙이기는 프론트 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-019",
+      "TASK-020"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 10
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "`next-opening` 후보가 오늘(기준 시각, 한국 시간) 열리면 \"오늘 오후 6:00에 <공연명> 예매가 열려요\", 다른 날이면 \"11월 14일(토) 오후 2:00에 …\"가 보이고, \"<공연명> 공연 보기\"가 그 상세로 간다. 204 면 \"다가오는 공연을 골라 보세요\"만 보인다",
+        "머리글 위 \"티켓온 · 11월 11일(수) 오후 5:50\"이 기준 시각이고, 기준 시각 측정이 실패하면 이 줄이 없다",
+        "칩을 누르면 해당 `status` 로 첫 페이지를 다시 불러오고 누른 칩만 `aria-pressed=\"true\"` 다",
+        "카드가 배지·공연명·시작 일시(항상 날짜 + 시각)·장소를 보이고, 예매 가능은 \"남은 좌석 N석\", 예정은 \"<오픈 일시> 오픈\"(오늘이면 \"오늘 오후 6:00 오픈\")을 덧붙인다. 카드를 누르면 상세로 간다",
+        "공연이 20개를 넘으면 \"더 보기\"가 보이고 누르면 다음 20개가 아래에 붙는다. 다 불러오면 버튼이 없다. 실패하면 이미 보인 카드는 그대로이고 \"불러오지 못했어요 · 다시 시도\"가 보인다",
+        "빈 목록은 전체면 \"다가오는 공연이 없어요\", 칩이면 \"<칩> 공연이 없어요\" + 전체 보기가 보인다",
+        "목록 실패 시 \"공연 목록을 불러오지 못했어요\" + 다시 시도, 로딩 중엔 카드 자리 4개가 보인다",
+        "\"내 예매\" 행이 없다 (흐름 5)",
+        "375px 에서 `home.html` 과 나란히 띄워 구조·문구·색이 같다 (카드 일시·내 예매는 §8 의 차이)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/api/performances.ts",
+          "frontend/src/pages/PerformanceListPage.tsx",
+          "frontend/src/components/PerformanceCard.tsx",
+          "frontend/src/components/StatusChips.tsx",
+          "frontend/src/components/StatusBadge.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/booking-ux-02-browse.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
       ],
       "sections_with_ranges": [
         {

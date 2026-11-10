@@ -26,9 +26,11 @@
 
 | Task | 범위 | 산출물 | 포함하지 않음 | 선행 | 추정 | 태스크 ID |
 |---|---|---|---|---|---|---|
-| A. 백엔드 — 기준 시각·포스터·구역 위치·머리글 후보 | 서버 시각 API, `performance.poster_url`·`performance_zone` 추가, 등록 API 에 `posterUrl`·`zones`(선택), 응답에 포스터·구역 위치, 홈 머리글 후보 1건 조회 | `V6__add_poster_and_zones.sql`, `PerformanceZone`, `TimeController`(`GET /api/time`), `GET /api/performances/next-opening`, `RegisterPerformanceRequest.posterUrl/zones`, `PerformanceResponse.posterUrl`, `SectionSummaryResponse.area/areaNote/stageOrder` | 회차(흐름 4), 포스터 수정·업로드, 주최자 폼 변경, 스크랩, 진입 보장(FR-5, 흐름 3) | — | 10h | |
-| B. 프론트 — 기준 시계·공연 상세·구역 위치 시트 | `useServerClock`(오프셋 측정·화면 복귀 재측정), 날짜 표기 유틸, 상세 화면을 시안대로(상태 5종 + 시각 실패), 0초 전환, 구역 위치 시트, 대기열 임시 화면, AppBar 빈 h1 수정 | `hooks/useServerClock.ts`, `utils/datetime.ts` 확장, `PerformanceDetailPage` 재작성, `ZoneMapSheet`·`ZoneMap`(신규), `QueuePlaceholderPage`(신규) + `/performances/:id/queue` 라우트, `api/time.ts`(신규) | 대기열 동작(흐름 3), 회차·매수 선택(흐름 4), 오픈 5분 전 안내 문구 | A | 12h | |
-| C. 프론트 — 홈 화면 | 홈을 시안대로 — 머리글(기준 시각·곧 열리는 공연), 상태 칩 필터, 2열 포스터 카드, 더 보기(20개씩), 상태별 화면 | `PerformanceListPage` 재작성(→ 홈), `PerformanceCard`·`StatusChips`(신규), `api/performances.ts` 의 `getPerformances(status, page)`·`getNextOpening()` | 검색·장르·랭킹(시안이 뺌), 내 예매 진입(흐름 5), 스크랩 | A, B | 10h | |
+| A. 백엔드 — 기준 시각·포스터·구역 위치·머리글 후보 | 서버 시각 API, `performance.poster_url`·`performance_zone` 추가, 등록 API 에 `posterUrl`·`zones`(선택), 응답에 포스터·구역 위치, 홈 머리글 후보 1건 조회 | `V6__add_poster_and_zones.sql`, `PerformanceZone`, `TimeController`(`GET /api/time`), `GET /api/performances/next-opening`, `RegisterPerformanceRequest.posterUrl/zones`, `PerformanceResponse.posterUrl`, `SectionSummaryResponse.area/areaNote/stageOrder` | 회차(흐름 4), 포스터 수정·업로드, 주최자 폼 변경, 스크랩, 진입 보장(FR-5, 흐름 3) | — | 10h | TASK-019 |
+| B. 프론트 — 기준 시계·공연 상세·구역 위치 시트 | `useServerClock`(오프셋 측정·화면 복귀 재측정), 날짜 표기 유틸, 상세 화면을 시안대로(상태 5종 + 시각 실패), 0초 전환, 구역 위치 시트, 대기열 임시 화면, AppBar 빈 h1 수정 | `hooks/useServerClock.ts`, `utils/datetime.ts` 확장, `PerformanceDetailPage` 재작성, `ZoneMapSheet`·`ZoneMap`(신규), `QueuePlaceholderPage`(신규) + `/performances/:id/queue` 라우트, `api/time.ts`(신규) | 대기열 동작(흐름 3), 회차·매수 선택(흐름 4), 오픈 5분 전 안내 문구 | A | 12h | TASK-020 |
+| C. 프론트 — 홈 화면 | 홈을 시안대로 — 머리글(기준 시각·곧 열리는 공연), 상태 칩 필터, 2열 포스터 카드, 더 보기(20개씩), 상태별 화면 | `PerformanceListPage` 재작성(→ 홈), `PerformanceCard`·`StatusChips`(신규), `api/performances.ts` 의 `getPerformances(status, page)`·`getNextOpening()` | 검색·장르·랭킹(시안이 뺌), 내 예매 진입(흐름 5), 스크랩 | A, B | 10h | TASK-021 |
+
+[태스크 생성 2026-11-10]
 
 **분리 이유**: 서버 시각·구역 위치는 마이그레이션과 등록 검증이 있는 백엔드 변경이라 화면과
 다른 행이다(A). 카운트다운·0초 전환은 ADR-0024 의 핵심이고 시계 훅을 만드는 쪽이라 상세(B)에
