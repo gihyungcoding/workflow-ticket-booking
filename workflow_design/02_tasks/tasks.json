@@ -1091,7 +1091,7 @@
     "reason_primary": "마이그레이션·등록 검증·조회 API 변경은 백엔드 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "in_progress",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",

@@ -3,7 +3,7 @@ task_id: TASK-019
 title: "기준 시각·포스터·구역 위치·머리글 후보 API"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: ACTIVE
+status: DONE
 track: standard
 created_at: 2026-11-11
 last_updated: 2026-11-11
@@ -13,7 +13,9 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-019-server-time-poster-zones"
 
-last_checkpoint: "CP-4.2"
+report: "https://claude.ai/artifact/GhQNn2cLTvimAWSKrSjYJ1"
+
+last_checkpoint: "CP-5.2"
 source: "docs/product/features/booking-ux-02-browse.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-019.json"
@@ -21,15 +23,16 @@ artifacts:
   test: "workflow_design/05_scenario/TEST_TASK-019.json"
   dev: "workflow_design/06_dev/DEV_TASK-019.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-019.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-019.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 2회차 WARN → 예외 승인(verified_commit c4f7a72). Phase 5 진입.
+TASK-019 완료 — 회고 작성, 승인 대기(/wf-retro).
 
 ## 다음 한 걸음
 
-wf-reflect — KPT·규칙 개선안 → /wf-ship.
+/wf-ship 으로 PR — 머지는 사람이. 회고 승인은 /wf-retro.
 
 ## 알아둬야 할 것
 
