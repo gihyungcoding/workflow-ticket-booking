@@ -20,7 +20,8 @@
           "선택",
           "https 절대 URL(스킴 대소문자 무관, 호스트 필수)",
           "UTF-16 코드 유닛 500 이하",
-          "빈 문자열은 없음이 아니라 INVALID_POSTER_URL"
+          "빈 문자열은 없음이 아니라 INVALID_POSTER_URL",
+          "제어문자·짝 없는 서로게이트 거부, 앞뒤 공백을 걷어내지 않는다(URI 파싱 실패로 거부)"
         ]
       },
       {
@@ -40,7 +41,7 @@
         "constraints": [
           "@NotBlank",
           "@Size(max=30)",
-          "NUL·짝 없는 서로게이트 거부(ADR-0019)"
+          "제어문자(\\p{Cc}, NUL 포함)·짝 없는 서로게이트 거부(ADR-0019)"
         ]
       },
       {
@@ -50,7 +51,8 @@
         "constraints": [
           "선택",
           "@Size(max=60)",
-          "NUL·짝 없는 서로게이트 거부(ADR-0019)"
+          "제어문자(\\p{Cc}, NUL 포함)·짝 없는 서로게이트 거부(ADR-0019)",
+          "주면 공백만이거나 빈 값이면 거부"
         ]
       },
       {
@@ -87,7 +89,6 @@
       {
         "field": "posterUrl",
         "flows": [
-          "F2",
           "F4"
         ],
         "kinds": [
@@ -97,13 +98,11 @@
           "converted"
         ],
         "max": 500,
-        "note": "required 아님(선택). 없음(키 없음·null)은 F2 정상. converted = 'HTTPS://' 대소문자·앞뒤 공백·URI 파싱 실패 문자"
+        "note": "선택 — 없음(키 없음·null)은 F2·F3 정상 경로. 경계 표(F4)에 통과 행(정확히 500자·대문자 HTTPS)을 함께 둔다. converted = 'HTTPS://' 대소문자·앞뒤 공백·URI 파싱 실패 문자"
       },
       {
         "field": "zones",
         "flows": [
-          "F2",
-          "F3",
           "F4"
         ],
         "kinds": [
@@ -115,7 +114,6 @@
       {
         "field": "zones[].area",
         "flows": [
-          "F3",
           "F4"
         ],
         "kinds": [
@@ -129,7 +127,6 @@
       {
         "field": "zones[].note",
         "flows": [
-          "F3",
           "F4"
         ],
         "kinds": [
@@ -143,7 +140,6 @@
       {
         "field": "zones[].grades",
         "flows": [
-          "F3",
           "F4"
         ],
         "kinds": [
@@ -479,7 +475,7 @@
       "#4 기존 공연(zone 행 없음)의 기본 순서 — AC7 '응답이 바뀌지 않는다' 에 맞춰 기존 순서(price DESC, grade ASC)를 유지하고 그 순서로 stageOrder 1..n. V6 는 백필하지 않는다(feature §3-1). 새로 등록한 공연은 zone 행이 늘 있으므로 이 경로는 V6 이전 공연에만 탄다",
       "#5 같은 grade 가 두 구역 행(다른 rowStart)이면 zone 은 하나. 가격이 다르면 findSectionCounts 가 두 줄을 주고 둘 다 같은 area·stageOrder — 같은 stageOrder 안에서는 price DESC",
       "#6 ADR-0019 는 모든 문자열 입력에 NUL·서로게이트 거부를 요구하지만 기존 title·venue·grade 는 적용돼 있지 않다(drift — AC 밖, 손대지 않음). 새 필드 area·note 에만 NoLoneSurrogate 를 붙인다. grades 는 sections 의 grade 와 정확 일치 판정이라 별도 검증 없이 UNKNOWN 으로 떨어진다",
-      "#7 posterUrl 의 JSON 타입 — 숫자·불리언을 Jackson 이 문자열로 강제 변환할 수 있다. 기존 StrictStringDeserializer 를 붙여 INVALID_REQUEST 로 막을지 2a 에서 칸(json_field.wrong_type)으로 판정한다. title·venue 와의 일관성도 함께",
+      "#7 posterUrl 의 JSON 타입 — 숫자·불리언을 Jackson 이 문자열로 강제 변환할 수 있다. 기존 StrictStringDeserializer 를 붙여 INVALID_REQUEST 로 막을지 2a 에서 칸(json_field.wrong_type)으로 판정한다. title·venue 와의 일관성도 함께 → 2a 판정: posterUrl·area·note·grades 원소에 StrictStringDeserializer 를 붙여 INVALID_REQUEST (SC-07). title·venue 는 손대지 않는다",
       "#8 오류 우선순위: Bean Validation(INVALID_REQUEST) → 기존 서비스 검증 → INVALID_POSTER_URL → ZONE_GRADE_UNKNOWN/DUPLICATED(펼친 순서 첫 위반). 기존 오류 응답 회귀(PerformanceErrorResponseRegressionTest 의 8행 표)는 새 필드가 없는 요청이라 바뀌지 않는다",
       "#9 테스트 DB 는 H2 + ddl-auto — 새 UNIQUE·CHECK 는 엔티티 애노테이션으로도 둔다. V6 SQL 과 기존 데이터 위 적용은 Testcontainers PostgreSQL 에서만 검증된다(ADR-0006, UsersHandleMigrationTest 관례)"
     ],

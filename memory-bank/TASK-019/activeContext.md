@@ -13,10 +13,11 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-019-server-time-poster-zones"
 
-last_checkpoint: "CP-1.3"
+last_checkpoint: "CP-2.2"
 source: "docs/product/features/booking-ux-02-browse.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-019.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-019.md"
 ---
 
 ## 지금 무엇을 하고 있나
