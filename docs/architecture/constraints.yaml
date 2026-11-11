@@ -99,6 +99,22 @@ constraints:
       pattern: "(allowedOrigins?|allowedOriginPatterns?|addAllowedOrigin(Pattern)?|setAllowedOrigins?)\\(\\s*(List\\.of\\(|Arrays\\.asList\\(|Collections\\.singletonList\\()?\\s*\"\\*\""
     severity: error
 
+  # --- 인증 ---------------------------------------------------------------
+  # 2026-11-11 에 warn 으로 도입 — 쓰기 가드가 아직 있다. organizer-flow Task A 가 지운다.
+  # 그 태스크 ID 가 생기면 promote_after 에 적는다.
+
+  - id: AUTH-001
+    rule: "공유 비밀 헤더(X-Write-Key)로 API 를 보호하지 않는다 — 쓰기는 JWT 역할과 소유권으로 보호한다"
+    rationale: "공유 비밀은 누가 호출했는지 남기지 못하고, 프론트 번들에 실리면 누구에게나 보인다.
+                보호 방식을 JWT + 역할 + 소유권 하나로 둔다 (ADR-0029)"
+    adr: ADR-0029
+    detect:
+      type: forbidden_pattern
+      paths: ["backend/src/main/java/**/*.java", "frontend/src/**/*.ts", "frontend/src/**/*.tsx", "frontend/.env.example"]
+      exclude_paths: ["frontend/src/**/*.test.ts", "frontend/src/**/*.test.tsx"]
+      pattern: "X-Write-Key|WRITE_API_KEY|VITE_WRITE_KEY"
+    severity: warn
+
   # --- 디자인 (docs/product/design.md) ------------------------------------
   # 2026-09-09 에 warn 으로 도입, 2026-10-13 에 001·002 를 error 로 승격 (ADR-0011).
   # 003 은 위반 3건 중 2건이 목록 재설계에서 버려질 코드라 warn 으로 둔다 —
