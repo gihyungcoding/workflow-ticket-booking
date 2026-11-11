@@ -1,8 +1,8 @@
 ---
 task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2a"
+phase_name: "Phase 2a - Scenario"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -13,18 +13,19 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-022-owner-role-auth"
 
-last_checkpoint: null
+last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
 source: "docs/product/features/organizer-flow.md (Task A)"
-artifacts: {}
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-022.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-워크플로우 시작. Phase 1 진입 전.
+Phase 1 완료. Phase 2a 진입 전.
 
 ## 다음 한 걸음
 
-`wf-plan` 으로 코드베이스를 조사해 `PLAN_TASK-022.json` 을 만든다. 출발점은 기능 문서 §3-1~3-4·§6 백엔드(Task A).
+`wf-scenario` 로 시나리오를 쓴다. PLAN unresolved 의 승인 테스트 수정 5건을 회귀 시나리오로 명시한다.
 
 ## 알아둬야 할 것
 
