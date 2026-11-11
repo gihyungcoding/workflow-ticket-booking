@@ -151,6 +151,11 @@ Foundation 문서가 아직 없으면(빈 프로젝트) 이 단계를 건너뛰�
   응답 키 단언(`jsonPath`·키 목록 비교)을 Grep 해 걸리는 테스트를 `unresolved` 에 적는다.
   승인된 테스트라 Phase 3 에서 고치려면 사람 승인이 필요하다 — 미리 알면 2b 에서 함께 다룬다
   (→ TASK-016 Phase 3 에서 승인 테스트 수정 2건)
+- **마이그레이션을 추가하면** 최신 스키마 버전을 단언하는 테스트(끝까지 적용한 뒤 버전을 비교하는
+  `flyway(null)` + `targetSchemaVersion` 등)를, **새 FK 자식 테이블이 생기면** 부모 행을 지우는 테스트
+  정리(`deleteAll`·`@AfterEach`)를 Grep 해 `unresolved` 에 적는다 — 둘 다 새 버전·새 행이 생기는 순간
+  승인된 테스트가 깨진다 (→ TASK-019 Phase 3 — `UsersHandleMigrationTest` 수정 승인, FK 위반으로
+  `ON DELETE CASCADE`)
 
 조사 결과를 `codebase_analysis` 에 기록한다. 찾지 못한 것은 `unresolved` 에 남긴다 —
 못 찾았다는 사실이 다음 Phase에 필요한 정보다.
