@@ -1,24 +1,24 @@
 {
   "task_id": "TASK-022",
   "checks": [
-    {"id":"V1","name":"MD ↔ JSON 일치","verdict":"pass","detail":"MD 와 JSON 모두 SC-01~SC-15 의 15건이다. ID, type, flow, covers, GWT 문장, 표 행이 일치한다. SC-05 의 표 두 개는 JSON 에서 한 배열로 이어 붙었으나 행은 같다. SC-08 의 When 은 1개로 줄었고 SC-13·14 가 나뉘었다."},
+    {"id":"V1","name":"MD ↔ JSON 일치","verdict":"pass","detail":"MD 와 JSON 모두 SC-01~SC-15 의 15건이다. ID, type, flow, covers, GWT 문장, 표 행이 일치한다. SC-09 표 c 행은 MD 와 JSON 모두 200 이다. 이번 회차에 바뀐 곳은 이 행뿐이다."},
     {"id":"V2","name":"개수 하한","verdict":"pass","detail":"전체 15건. happy 는 SC-03, 08, 09, 11, 14 이고 error 는 SC-04, 05, 06, 07, 13 이며 regression 은 SC-01, 02, 10, 12, 15 다."},
     {"id":"V3","name":"acceptance_criteria 커버리지","verdict":"pass","detail":"기준 8건을 직접 대조했다. 기준1→SC-01·02, 기준2→SC-03·05, 기준3→SC-04·05·06·12, 기준4→SC-07, 기준5→SC-08·13·14, 기준6→SC-09, 기준7→SC-10·15, 기준8→SC-11·12. 모두 대응한다."},
-    {"id":"V4","name":"flow 대응","verdict":"pass","detail":"사용된 flow F1~F8 이 모두 Plan design.flows 에 있다. 새로 생긴 SC-13·14 는 F5, SC-15 는 F7 이다."},
-    {"id":"V5","name":"Then 관찰 가능성","verdict":"warn","detail":"SC-02 의 'PerformanceBrowseResponseApiTest 의 기존 키 단언 그대로' 와 SC-12 의 '기대 숫자는 PerformanceErrorResponseRegressionTest 그대로' 는 외부 테스트 파일에 기대를 위임한다. 키 집합을 시나리오 안에 적어야 그대로 단언으로 옮길 수 있다. SC-07 f·g 는 400 상태만 단언한다고 명시했으므로 허용 범위다. SC-01 의 '읽어 둔 값과 같다' 는 Given 에 읽어 두는 단계가 생겨 해소됐다."},
-    {"id":"V6","name":"When 단일성","verdict":"warn","detail":"SC-08 과 SC-10 은 나뉘어 1회차 지적이 해소됐다. 남은 것: SC-09 의 When 은 가입→로그인→소셜 완료→등록을 '차례로' 보내는 연쇄라 When 이 여럿이다. SC-07 의 마지막 And('title 이 빈 문자열인 수정 본문을 P2·P0·999999 에 보내면 400')는 Then 안에 새 When 이 들어 있다. 별도 시나리오로 나누는 것이 맞다."},
-    {"id":"V7","name":"구현 누출","verdict":"warn","detail":"SC-10 의 When·Then 에 FQCN 과 빈 이름 `writeGuardFilter` 가 있다. 삭제 검증이라 불가피한 면은 있다. SC-03·05·07·08 의 Then 에 엔티티 필드명 `ownerId` 가 쓰였다. SC-09 Given 의 `Environment.getProperty` 는 Given 이라 허용된다."},
-    {"id":"V8","name":"입출력 대응","verdict":"warn","detail":"1회차의 typ/exp·pendingToken·400 누락은 PLAN 에 반영됐다. 남은 것: SC-12 k·l 은 관객 토큰으로 DELETE·PATCH 를 보내 403 을 기대하고 d·e 는 주최자 토큰으로 405 를 기대한다. PLAN 은 SecurityConfig 에서 'POST·PUT 은 hasRole(ORGANIZER)' 라고만 적었고 DELETE·PATCH 의 규칙이 없다. 시나리오 규약의 '그 밖의 메서드는 ROLE_ORGANIZER' 와 어긋난다. 또 PLAN outputs 에 405·415 가 없다."},
-    {"id":"V9","name":"중복","verdict":"warn","detail":"SC-05 b(AUDIENCE→403)는 SC-04 e 와 같은 경로다. SC-05 a 는 SC-03 과 SC-06 a, SC-09 d 와 같은 정상 등록 경로다. SC-06 a·b 도 정상 경로이며 실행을 따로 한다고만 적었다."},
+    {"id":"V4","name":"flow 대응","verdict":"pass","detail":"사용된 flow F1~F8 이 모두 Plan design.flows 에 있다."},
+    {"id":"V5","name":"Then 관찰 가능성","verdict":"warn","detail":"[2회차 지적 유지] SC-02 의 'PerformanceBrowseResponseApiTest 의 기존 키 단언 그대로' 와 SC-12 의 'PerformanceErrorResponseRegressionTest 의 8행, 기대 숫자 그대로' 는 외부 테스트 파일에 기대를 위임한다. SC-12 는 표에 숫자가 있어 영향이 작고, SC-02 는 키 집합이 시나리오에 없다. SC-09 c 는 '지금 가입 완료 응답과 같다' 로 응답 형태를 위임하지만 상태 200 은 명시했다."},
+    {"id":"V6","name":"When 단일성","verdict":"warn","detail":"[2회차 지적 유지] SC-09 의 When 은 가입→로그인→소셜 완료→등록을 '차례로' 보내는 연쇄다. SC-07 의 마지막 And(빈 title 수정 본문을 P2·P0·999999 에 보내면 400)는 Then 안에 새 When 이 들어 있다. 이번 회차에 바뀐 부분이 아니라 fail 로 올리지 않는다."},
+    {"id":"V7","name":"구현 누출","verdict":"warn","detail":"[2회차 지적 유지] SC-10 의 When·Then 에 FQCN 과 빈 이름 `writeGuardFilter` 가 있다. 삭제 검증이라 불가피한 면이 있다. SC-03·05·07·08 의 Then 에 엔티티 필드명 `ownerId` 가 쓰였다."},
+    {"id":"V8","name":"입출력 대응","verdict":"pass","detail":"2회차의 SC-12 DELETE·PATCH 지적이 해소된 것으로 보인다. PLAN SecurityConfig 변경이 '그 밖의 메서드(POST·PUT·DELETE·PATCH 등)는 hasRole(ORGANIZER)' 로 적혔고, PLAN outputs 에 405/415 가 있다. SC-09 c 의 200 은 AuthController.completeSocialSignUp 이 LoginResponse 를 그대로 반환(기본 200)하는 것과 맞다. 수정은 정당하다."},
+    {"id":"V9","name":"중복","verdict":"warn","detail":"[2회차 지적 유지] SC-05 b 는 SC-04 e 와 같은 경로다. SC-05 a 는 SC-03 과 SC-06 a, SC-09 d 와 같은 정상 등록 경로다."},
     {"id":"V10","name":"회귀 누락","verdict":"pass","detail":"기존 동작을 바꾸는 태스크이고 regression 이 SC-01, 02, 10, 12, 15 로 있다. 기존 승인 테스트 변경 표도 있다."},
-    {"id":"V11","name":"입력 경계 판정","verdict":"pass","detail":"1회차 fail 은 모두 해소됐다. (1) affix_entry false_cover: SC-06 에 `=`(j), LF(k), NUL(l), 짝 없는 서로게이트(m) 행이 추가돼 공백·~·비 ASCII 와 함께 Then 이 401 을 단언한다. (2) plan_gap: PLAN input_fields 에 sub(required·integer_notation), WRITE_GUARD_ENABLED / WRITE_API_KEY(config), role 의 string 이 추가됐다. 새 칸의 판정도 맞다. sub 의 numeric_string(q)·integral_fraction(r)·exponent(s)·type_range(t) 와 required.missing(p) 는 SC-05 에 값과 401 단언이 있다. role 의 string.empty(l)·blank(m)·unicode_blank(n) 은 SC-05 에 값이 있고, max+1 n/a 사유는 PLAN role note 에 근거가 있다. config 칸의 n/a 사유도 PLAN note 와 SC-09·SC-10 에 근거가 있다. 문제 있는 칸이 없어 v11_matrix 는 비웠다. 참고(warn 아님): sub@F2·F3:required.null 의 n/a 는 'null 도 같은 문자열 아님 판정' 이라는 추정에 기대고 있어 단언은 없다."},
-    {"id":"V12","name":"목록 밖 경계 제안","verdict":"warn","detail":"[신규] (1) PLAN input_fields 에 typ/exp 와 pendingToken 이 없다. SC-05 u·v 가 typ·exp 를 값으로 쓰고 SC-09 c 가 pendingToken 을 쓰지만 칸 목록에는 없다. 이번 회차에서 PLAN inputs 에는 올렸으니 input_fields 에도 올리는지 사람이 정해야 한다. (2) [신규] 만료 경계 정각(exp = T)이 만료인지 아닌지는 SC-05 v(T-1s)만으로 정해지지 않는다. (3) [신규] SC-06 b 가 'bearer'(소문자 스킴)를 201 로 기대한다. PLAN 은 기존 BEARER 정규식 재사용이라고만 했다. 현재 정규식이 대소문자를 구분하는지 확인이 필요하다. 구분하면 이 행은 기존 동작을 바꾸는 요구이거나 오류다. (4) 서명이 유효하지만 sub 의 사용자가 없는 주최자 토큰은 PLAN unresolved 에 500 으로 남겨 두었고 시나리오는 없다. (5) 취소된 공연의 재취소 동작은 단언되지 않았다. TASK-023 으로 미뤄졌다."}
+    {"id":"V11","name":"입력 경계 판정","verdict":"pass","detail":"coverage_matrix 의 모든 칸을 다시 봤다. 이번 회차의 변경은 SC-09 c 의 기대 상태뿐이고 어느 칸의 by·reason 도 바뀌지 않았다. 2회차에서 맞다고 판정한 칸 판정이 그대로 유지된다. false_cover, bad_na, plan_gap 이 없다."},
+    {"id":"V12","name":"목록 밖 경계 제안","verdict":"warn","detail":"[2회차 지적 중 남은 것] (1) PLAN input_fields 에 typ/exp 와 pendingToken 이 없다. SC-05 u·v 와 SC-09 c 가 이 값을 쓴다. (2) 만료 경계 정각(exp = T)이 만료인지는 SC-05 v(T-1s)만으로 정해지지 않는다. (3) 서명은 유효한데 sub 의 사용자가 없는 주최자 토큰은 PLAN unresolved 에 500 으로 남아 있고 시나리오가 없다. (4) 취소된 공연의 재취소는 TASK-023 으로 미뤄졌다. 2회차 (3) 'bearer' 소문자 우려는 철회한다. JwtAuthenticationFilter.BEARER 가 Pattern.CASE_INSENSITIVE 라서 SC-06 b 의 201 은 기존 동작과 맞다."}
   ],
   "v11_matrix": [],
   "overall": {
     "pass": true,
     "fail_count": 0,
-    "warn_count": 7,
-    "summary": "1회차 fail(V11)은 해소됐다. SC-06 에 `=`·LF·NUL·서로게이트 행이 추가됐고 PLAN input_fields 에 sub·config·role string 이 들어갔으며 새 칸의 판정도 맞다. V1~V4 도 15건 기준으로 통과했다. 남은 warn 은 외부 테스트 위임(V5), SC-09 와 SC-07 의 다중 When(V6), 구현명(V7), SC-12 DELETE·PATCH 규칙이 PLAN 에 없음(V8), 중복(V9), 신규 경계 제안(V12) 이며 HITL 에서 판단한다."
+    "warn_count": 6,
+    "summary": "SC-09 표 c 행의 201→200 수정은 AuthController 의 /social/complete 가 200 을 반환하는 것과 일치한다. MD 와 JSON 도 일치한다. 이전 회차 fail 은 없고 새로 깨진 곳도 없다. V1~V4 와 V11 은 통과했다. 남은 warn 은 V5, V6, V7, V9, V12 이고 HITL 에서 판단한다. V8 은 PLAN 이 DELETE·PATCH 규칙과 405/415 를 담게 되어 pass 로 올렸다. V12 의 'bearer' 대소문자 우려는 철회한다."
   }
 }
