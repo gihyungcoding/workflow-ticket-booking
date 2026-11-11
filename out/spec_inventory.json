@@ -344,6 +344,18 @@
    "view": "booking",
    "edit": "transfer--done",
    "after": "transfer--done"
+  },
+  {
+   "id": "O4",
+   "name": "공연(주최자)",
+   "quote": "organizer-flow.md §1-1 — 주최자는 「내 공연」에서 등록·수정·취소·공개를 한다",
+   "create": "organizer-new",
+   "view": "organizer-show",
+   "edit": "organizer-edit",
+   "after": [
+    "organizer-show--done",
+    "organizer-cancelled"
+   ]
   }
  ]
 }

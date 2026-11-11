@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>공연 등록</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+</head>
+<body class="plain has-cta">
+<header class="appbar"><a class="appbar-btn" href="organizer.html" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><h1 class="appbar-title">공연 등록</h1><span></span></header>
+<main class="page">
+  <header class="hero">
+    <p class="title">공연과 좌석을 입력하면 비공개로 저장돼요</p>
+  </header>
+  <div class="field"><label class="label" for="title">공연명</label><input class="input" id="title" value="소리풍경 밴드 나이트 앙코르"></div>
+  <div class="field"><label class="label" for="venue">장소</label><input class="input" id="venue" value="롤링홀"></div>
+  <div class="field"><label class="label" for="start">공연 일시</label><input class="input" id="start" value="12월 26일(토) 오후 7:00"></div>
+  <div class="field"><label class="label" for="open">예매 오픈</label><input class="input" id="open" value="12월 1일(화) 오후 8:00"></div>
+  <div class="field is-error"><label class="label" for="close">예매 마감</label><input class="input" id="close" value="12월 26일(토) 오후 9:00" aria-invalid="true"><p class="field-msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>예매 마감은 공연 시작 전이어야 해요</p></div>
+  <section class="block">
+    <div class="block-head"><h2 class="h2">구역 1 · 120석</h2></div>
+  <div class="field"><label class="label" for="g1">등급</label><input class="input" id="g1" value="R"></div>
+  <div class="field"><label class="label" for="p1">가격</label><input class="input" id="p1" value="55,000"></div>
+  <div class="field"><label class="label" for="rs1">시작 열</label><input class="input" id="rs1" value="A"></div>
+  <div class="field"><label class="label" for="re1">끝 열</label><input class="input" id="re1" value="F"></div>
+  <div class="field"><label class="label" for="n1">열당 좌석 수</label><input class="input" id="n1" value="20"></div>
+  </section>
+  <section class="block">
+    <div class="block-head"><h2 class="h2">구역 2 · 180석</h2></div>
+  <div class="field"><label class="label" for="g2">등급</label><input class="input" id="g2" value="S"></div>
+  <div class="field"><label class="label" for="p2">가격</label><input class="input" id="p2" value="44,000"></div>
+  <div class="field"><label class="label" for="rs2">시작 열</label><input class="input" id="rs2" value="G"></div>
+  <div class="field"><label class="label" for="re2">끝 열</label><input class="input" id="re2" value="O"></div>
+  <div class="field"><label class="label" for="n2">열당 좌석 수</label><input class="input" id="n2" value="20"></div>
+  </section>
+  <button class="btn secondary full" data-stay="구역 칸을 하나 더 열었어요">구역 추가</button>
+  <p class="info"><img src="../assets/fluent/ticket.svg" alt=""><span>모두 <span class="num">300석</span>이 만들어져요 · 등록한 뒤엔 좌석 구성을 바꿀 수 없어요</span></p>
+  <p class="info"><img src="../assets/fluent/eyes.svg" alt=""><span>공개하기 전에는 관객에게 보이지 않아요</span></p>
+</main>
+<div class="cta"><a class="btn primary full" href="organizer-show.html">등록하기</a></div>
+</body></html>

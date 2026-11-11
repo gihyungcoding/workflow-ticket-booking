@@ -34,21 +34,20 @@
 | B. 백엔드 — 비공개 상태·주최자 조회·공개 전환 API | `published` 추가, 관객 조회 3경로 공개만, 주최자 목록(필터·정렬)·단건(좌석 요약 포함), `publish`·`unpublish`, 비공개 수정 시각 제한 해제, 취소된 공연 409, `editable`·`visibilityChangeable` 서버 계산 | `V8__add_performance_published.sql`, `OrganizerPerformanceResponse`, `OrganizerPerformanceController`, `GET /api/organizer/performances[/{id}]`, `POST /api/performances/{id}/publish·unpublish` | 등급별 잔여, 매출·예매자, 공개 예약, 좌석 구성 변경 | A | 12h | |
 | C. 프론트 — 토큰 전송·주최자 가드 | `request()` Bearer 주입·쓰기 키 제거, 401/403 오류 구분, `RequireOrganizer` 로 등록·수정 화면 보호(비로그인 → 로그인 후 복귀, 관객 → 안내), 쓰기 키 거부 안내 분기·환경변수 제거 | `http.ts`·`performances.ts` 변경, `RequireOrganizer.tsx`, `App.tsx` 라우트 | 내 공연 화면, 진입 링크, 등록 후 이동 경로 변경 | A | 6h | |
 | D. 프론트 — 내 공연 목록·진입 경로 | `/organizer` 목록(필터 칩·배지·빈/필터 0건/로딩/오류), 가입 완료·로그인 후 역할별 이동, `AppHeader` 「내 공연」 | `OrganizerPerformanceListPage.tsx`, `api/organizer.ts`, `JoinedPage`·`LoginPage`·`AppHeader` 변경 | 내 공연 상세, 공개 전환, 등록·수정 복귀 경로 | B, C | 8h | |
-| E. 프론트 — 내 공연 상세·공개 전환·등록/수정 복귀 | `/organizer/performances/:id`(공개 카드·좌석 요약·정보·수정/취소/관객 화면 보기), 공개 전환과 409 안내, 404 안내, 등록 성공 → 내 공연 상세, 수정 화면 값 로드를 주최자 조회로 | `OrganizerPerformanceDetailPage.tsx`, `PerformanceRegisterPage`·`PerformanceEditPage` 변경 | 좌석 맵, 등급별 잔여, 좌석 구성 수정 | D | 10h | |
+| E. 프론트 — 내 공연 상세·공개 전환·등록/수정 시안 적용 | `/organizer/performances/:id`(진행 타임라인·공개 전환·좌석 요약·정보·수정/취소/관객 목록 보기), 공개 전환과 409 안내, 404 안내, 등록·수정 폼을 시안 구조·문구로, 등록 성공 → 내 공연 상세, 수정 화면 값 로드를 주최자 조회로 | `OrganizerPerformanceDetailPage.tsx`, `PerformanceRegisterPage`·`PerformanceEditPage` 변경 | 좌석 맵, 등급별 잔여, 좌석 구성 수정, 포스터·구역 위치 입력 | D | 12h | |
 
 **분리 이유**: 보안 경계(A: 누가 쓰기를 할 수 있나)와 노출 규칙(B: 무엇이 관객에게 보이나)은
 실패했을 때의 피해가 달라 따로 검증한다 — A 는 거부 경로의 "DB 변경 없음"이, B 는 관객 조회
 3경로의 누락 없는 필터가 핵심이다. 프론트는 기존 화면의 토큰·가드 배선(C)을 새 화면(D·E)과
-떼어 C 만으로도 A 의 서버 변경 뒤 등록·수정이 계속 동작하게 한다. D·E 는 **주최자 시안을
-`out/screens/` 에 추가한 뒤** 시작한다 (§8).
+떼어 C 만으로도 A 의 서버 변경 뒤 등록·수정이 계속 동작하게 한다. D·E 는 주최자 시안
+(`out/screens/organizer*.html`, 2026-11-11 추가)을 따른다 (§8).
 
 ```
 흐름
   A(소유자·인가) ──► B(비공개·주최자 API) ──┐
-       │                                    ├──► D(내 공연 목록·진입) ──► E(상세·공개 전환)
+       │                                    ├──► D(내 공연 목록·진입) ──► E(상세·공개 전환·폼 시안)
        └──────────► C(토큰·가드) ───────────┘
-                         ▲
-              [주최자 시안 out/screens/ 추가] ── D·E 착수 조건
+                    [주최자 시안 out/screens/organizer*.html — 완료 2026-11-11]
 ```
 
 ### 1-3. 상세
@@ -67,7 +66,7 @@
 
 **UI 라이브러리**: MUI (Material UI) — ADR-0002
 **디자인 정본**: `docs/product/design.md` · `design-tokens.css`
-**와이어프레임**: 없음 — 이 문서 확정 후 `out/screens/` 에 주최자 시안을 추가한다 (ADR-0022, §8)
+**시안** [2026-11-11]: `out/screens/organizer.html`·`organizer--empty`·`organizer-new`(+`--error`)·`organizer-show`(+`--done`)·`organizer-edit`(+`--error`)·`organizer-live`·`organizer-cancel-sheet`·`organizer-cancelled`·`organizer-only` — 흐름은 `out/index.html` 의 「주최자 — 내 공연 관리」 묶음. 화면은 시안과 같아야 한다 (ADR-0022). 아래 2-4 ASCII 는 시안 이전의 초안이고, 다르면 시안이 이긴다
 
 ### 2-1. 이 화면에서 사용자가 하려는 일
 
@@ -95,15 +94,15 @@
 
 | 우선 | 요소 | 왜 필요한가 | 데이터 출처 |
 |---|---|---|---|
-| 1 | 공개 여부 (비공개 배지) | 관객에게 보이는지가 주최자의 첫 질문 | ⚠ 없음 — `performance.published` 신규 |
-| 2 | 예매 상태 배지 | 예매 전·예매 중·매진·종료·취소 | 계산값 `PerformanceStatusRules.of()` |
+| 1 | 공개 여부 (「비공개」 배지 `is-draft` — 7번째 의미색, design.md §5) | 관객에게 보이는지가 주최자의 첫 질문 | ⚠ 없음 — `performance.published` 신규 |
+| 2 | 예매 상태 배지 | 예정·예매 가능·매진·마감 배지, 취소는 평문 「공연 취소」 — 관객 시안과 같은 이름 (design.md §5) | 계산값 `PerformanceStatusRules.of()` |
 | 3 | 공연명 | 식별 | `performance.title` |
 | 4 | 공연 일시 · 장소 | 식별 | `performance.start_at` · `venue` |
 | 5 | 예매 오픈 일시 | 공개·수정 가능 기한이 여기서 정해진다 | `performance.open_at` |
 | 6 | 잔여 / 총 좌석 | 판매 현황의 대체값 (예매 테이블이 없다) | `available_seats` · `total_seats` |
 | 7 | 포스터 썸네일 | 식별 보조 | `performance.poster_url` (선택) |
-| — | 상태 필터 (전체·비공개·예매 전·예매 중·매진·종료·취소) | 공연이 쌓이면 찾기 | 계산값 + `published` |
-| — | 「공연 등록」 주 버튼 | 첫 공연이 없을 때의 다음 행동 | — |
+| — | 상태 필터 (전체·비공개·예정·예매 가능·매진·마감·취소) | 공연이 쌓이면 찾기 | 계산값 + `published` |
+| — | 「공연 등록」 떠 있는 버튼 (목록은 첫 화면이라 하단 고정 버튼을 두지 않는다) | 새 공연을 만드는 주 행동 | — |
 | — | **소유자로 걸러냄** | 「내」 공연 | ⚠ 없음 — `performance.owner_id` 신규 |
 
 **내 공연 상세 (관리)**
@@ -409,13 +408,13 @@ public record OrganizerPerformanceResponse(
 - [ ] 주최자가 가입 완료 화면에서 「시작하기」를 누르면 `/organizer` 로, 관객은 `/` 로 간다
 - [ ] 주최자가 `from` 없이 로그인하면 `/organizer` 로, `from` 이 있으면 그 경로로 간다
 - [ ] 주최자로 로그인하면 `AppHeader` 에 「내 공연」 링크가 있고, 관객·비로그인에게는 없다
-- [ ] `/organizer` 는 내 공연을 행마다 공연명·공연 일시·장소·오픈 일시·잔여/총 좌석·상태 배지로 보여주고, 비공개면 「비공개」 배지가 붙는다
-- [ ] 필터 칩(전체·비공개·예매 전·예매 중·매진·종료·취소)을 누르면 해당 `filter` 로 다시 불러온다
+- [ ] `/organizer` 는 내 공연을 행마다 공연명·공연 일시·장소·오픈 일시 또는 남은/총 좌석·상태 배지로 보여주고, 비공개면 「비공개」 배지(`is-draft`)가, 취소면 배지 없이 「공연 취소」가 보인다
+- [ ] 필터 칩(전체·비공개·예정·예매 가능·매진·마감·취소)을 누르면 해당 `filter` 로 다시 불러온다
 - [ ] 공연 0건이면 「아직 등록한 공연이 없어요」와 「첫 공연 등록하기」가, 필터 결과 0건이면 「<필터명> 공연이 없어요」와 「전체 보기」가 보인다
 - [ ] 불러오는 중에는 행 자리표시가, 실패하면 「공연 목록을 불러오지 못했어요」와 「다시 시도」가 보인다
-- [ ] 「공연 등록」 버튼이 `/performances/new` 로, 행 선택이 `/organizer/performances/:id` 로 간다
+- [ ] 떠 있는 「공연 등록」 버튼이 `/performances/new` 로, 행 선택이 `/organizer/performances/:id` 로 간다
 - [ ] 비로그인·관객의 `/organizer` 진입은 Task C 의 가드 규칙대로 처리된다
-- [ ] 화면 구조·문구가 `out/screens/` 의 주최자 목록 시안과 같다
+- [ ] 화면 구조·문구가 `out/screens/organizer.html`·`organizer--empty.html`·`organizer-only.html` 과 같다
 
 ### Task E (프론트 — 내 공연 상세·공개 전환·등록/수정 복귀)
 
@@ -428,7 +427,8 @@ public record OrganizerPerformanceResponse(
 - [ ] 남의 공연·없는 공연이면 둘 다 「공연을 찾을 수 없어요」와 「내 공연으로」가 보인다
 - [ ] 등록 성공 후 `/organizer/performances/<새 id>` 로 간다
 - [ ] 수정 화면은 주최자 단건 조회(`getMyPerformance`)로 값을 채우고 — 비공개 공연도 열린다 — 저장 후 내 공연 상세로 돌아온다
-- [ ] 화면 구조·문구가 `out/screens/` 의 주최자 상세 시안과 같다
+- [ ] 화면 구조·문구가 `out/screens/organizer-show.html`·`organizer-show--done.html`·`organizer-live.html`·`organizer-cancel-sheet.html`·`organizer-cancelled.html` 과 같다
+- [ ] 등록·수정 폼의 구조·문구(구역 블록, 「시작 열·끝 열·열당 좌석 수」, 만들어질 좌석 수, 오류 문구)가 `out/screens/organizer-new.html`(+`--error`)·`organizer-edit.html`(+`--error`) 과 같다
 
 ---
 
@@ -476,6 +476,8 @@ public record OrganizerPerformanceResponse(
 - `frontend/src/pages/JoinedPage.tsx` — 「시작하기」 목적지를 역할로 가름 (지금 `navigate('/')`)
 - `frontend/src/pages/LoginPage.tsx:safeDestination()` — `from` 없을 때 역할별 기본 경로
 - `frontend/src/components/AppHeader.tsx` — 주최자에게 「내 공연」
+- `frontend/src/theme/tokens.ts` — `--c-draft`·`--c-draft-tint`·`--c-draft-tint-text` 를 `docs/product/design-tokens.css` 에서 옮긴다 (Task D)
+- `frontend/src/components/ui/Badge.tsx:BadgeTone` — `draft` 톤 추가 (Task D)
 - `frontend/src/pages/PerformanceRegisterPage.tsx` — 성공 시 `navigate('/organizer/performances/${id}')` (지금 `/performances/${id}`)
 - `frontend/src/pages/PerformanceEditPage.tsx` — 값 로드를 `getMyPerformance` 로
 - 공통 부품 `frontend/src/components/ui/`(`Badge`·`Row`·`Block`·`Segmented`·`CtaBar`·`Sheet`)과 `components/StatusBadge.tsx` 재사용
@@ -517,4 +519,6 @@ public record OrganizerPerformanceResponse(
 | 공연은 비공개로 등록되고, 공개 전환은 양방향·오픈 전에만 | 준비 중 공연을 숨기되, 예매가 열린 뒤 사라지지 않게 | 이 기능만 | — |
 | 운영자 승인 없이 주최자가 직접 공개 | 운영자 기능이 범위 밖(product.md §4) | 이 기능만 | — (product.md §7 열린 질문 갱신) |
 | 주최자 응답은 `OrganizerPerformanceResponse` 로 타입 분리, 가능 여부 플래그는 서버 계산 | 관객 응답에 주최자 필드 누출 방지. 시각 판단은 서버(ADR-0026) | 이 기능만 | — |
-| 주최자 화면 시안을 태스크 생성 전에 `out/screens/` 에 추가 | 화면은 시안과 같아야 한다(ADR-0022) | 이 기능만 | — |
+| 주최자 화면 시안을 태스크 생성 전에 `out/screens/` 에 추가 [완료 2026-11-11, 12장] | 화면은 시안과 같아야 한다(ADR-0022) | 이 기능만 | — |
+| 「비공개」는 7번째 의미 배지 `is-draft`(청록 `#0B8086`) | 주최자가 해야 할 일이라 회색 불가, 기존 6색은 모두 다른 뜻. 시안 검사기가 색 공유를 막는다 | **전체** (디자인 정본) | — design.md §4·§5 갱신 |
+| 주최자 상태 이름은 관객과 같다 (예정·예매 가능·매진·마감·공연 취소) | 같은 공연을 두 이름으로 부르지 않는다 | 이 기능만 | — |
