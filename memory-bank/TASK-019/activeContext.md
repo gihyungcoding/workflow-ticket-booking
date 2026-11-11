@@ -1,8 +1,8 @@
 ---
 task_id: TASK-019
 title: "기준 시각·포스터·구역 위치·머리글 후보 API"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -13,18 +13,19 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-019-server-time-poster-zones"
 
-last_checkpoint: null
+last_checkpoint: "CP-1.3"
 source: "docs/product/features/booking-ux-02-browse.md (Task A)"
-artifacts: {}
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-019.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-워크플로우 시작. Phase 1 진입 전.
+Phase 1 완료(CP-1.3). Phase 2a 시나리오 설계 진입.
 
 ## 다음 한 걸음
 
-`wf-plan` 으로 코드베이스를 조사해 `PLAN_TASK-019.json` 을 만든다. 출발점은 기능 문서 §3·§6.
+`coverage_matrix.py --task-id TASK-019 --skeleton` 으로 82칸 골격을 받아 SCENARIO 를 쓴다.
 
 ## 알아둬야 할 것
 
