@@ -252,6 +252,9 @@ public class PerformanceService {
    * https 절대 URL 이고 500자(UTF-16 코드 유닛) 이하여야 한다. 원문 그대로 판정한다 — 앞뒤 공백을 걷어내지 않고(URI 파싱에서 거부된다), 스킴의
    * 대소문자는 RFC 3986 대로 구분하지 않되 저장값은 바꾸지 않는다. java.net.URI 는 짝 없는 서로게이트를 비 ASCII 글자로 받아 주므로 제어문자와 함께
    * 먼저 거부한다.
+   *
+   * <p>호스트는 URI.getHost() 로 보지 않는다 — 밑줄·비 ASCII 글자가 있는 호스트는 URI 가 등록 기반 권한으로 분류해 null 을 돌려준다. 대신 권한
+   * 부분에서 userinfo(…@)와 포트(:…)를 직접 떼어 본다 (TASK-019 자체 리뷰 RC-1).
    */
   private void validatePosterUrl(String posterUrl) {
     if (posterUrl == null) {
@@ -267,11 +270,45 @@ public class PerformanceService {
     } catch (URISyntaxException exception) {
       throw new InvalidPosterUrlException();
     }
-    if (!"https".equalsIgnoreCase(uri.getScheme())
-        || uri.getHost() == null
-        || uri.getHost().isEmpty()) {
+    if (!"https".equalsIgnoreCase(uri.getScheme()) || !hasValidAuthority(uri)) {
       throw new InvalidPosterUrlException();
     }
+  }
+
+  /** userinfo 가 있으면 비어 있지 않고, 포트가 있으면 숫자이며, 호스트가 비어 있지 않고 %XX 를 담지 않는다. */
+  private static boolean hasValidAuthority(URI uri) {
+    String authority = uri.getRawAuthority();
+    if (authority == null) {
+      return false;
+    }
+    int userInfoEnd = authority.lastIndexOf('@');
+    if (userInfoEnd == 0) {
+      return false;
+    }
+    String hostAndPort = authority.substring(userInfoEnd + 1);
+    String host;
+    String port;
+    if (hostAndPort.startsWith("[")) {
+      // IPv6 리터럴은 URI 가 서버 기반으로 파싱했을 때만(getHost() != null) 올바르다
+      int literalEnd = hostAndPort.indexOf(']');
+      if (uri.getHost() == null || literalEnd < 0) {
+        return false;
+      }
+      host = hostAndPort.substring(0, literalEnd + 1);
+      String rest = hostAndPort.substring(literalEnd + 1);
+      if (!rest.isEmpty() && !rest.startsWith(":")) {
+        return false;
+      }
+      port = rest.isEmpty() ? null : rest.substring(1);
+    } else {
+      int portStart = hostAndPort.lastIndexOf(':');
+      host = portStart < 0 ? hostAndPort : hostAndPort.substring(0, portStart);
+      port = portStart < 0 ? null : hostAndPort.substring(portStart + 1);
+    }
+    if (port != null && (port.isEmpty() || !port.chars().allMatch(Character::isDigit))) {
+      return false;
+    }
+    return !host.isEmpty() && host.indexOf('%') < 0;
   }
 
   private record ZonePlacement(String grade, String area, String note, int stageOrder) {}
