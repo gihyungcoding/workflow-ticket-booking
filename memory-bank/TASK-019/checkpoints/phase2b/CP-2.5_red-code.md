@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-11T00:00:00Z
-summary: "Red 16건 — 16 실패 / 기존 164 통과. 스켈레톤 3파일(PerformanceZone·Repository·Performance 9인자 생성자 UOE). 통합 HITL 대기."
+summary: "Red 16건 — 16 실패 / 기존 164 통과. 스켈레톤 3파일(PerformanceZone·Repository·Performance 9인자 생성자 UOE). 통합 HITL 승인(2026-11-11)."
 
 next_steps:
-  - "HITL#1·2 통합 승인 → Phase 3"
+  - "Phase 3 — wf-develop. V6 → 엔티티 제약 → TimeController·SecurityConfig → DTO·검증 → 구역 저장·병합 → next-opening"
 
 decisions:
   - decision: "테스트 5파일로 나눔 — ServerTime · ZoneRegistration(SC-02~09) · BrowseResponse(SC-10·15) · NextOpening(SC-11~13) · ZoneMigration(SC-14·16, PostgreSQL)"

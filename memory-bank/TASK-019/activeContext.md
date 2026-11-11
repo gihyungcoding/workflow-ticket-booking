@@ -1,8 +1,8 @@
 ---
 task_id: TASK-019
 title: "기준 시각·포스터·구역 위치·머리글 후보 API"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -23,11 +23,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Red 16건 커밋(CP-2.5). 시나리오·Red 통합 승인(HITL#1·2) 대기.
+시나리오·Red 승인(HITL#1·2, 2026-11-11). Phase 3 진입.
 
 ## 다음 한 걸음
 
-사람 승인 후 `wf-develop`.
+`wf-develop` — Red 16건을 통과시키는 최소 구현.
 
 ## 알아둬야 할 것
 
