@@ -72,10 +72,12 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
 
 **쓰기 — 예매·입금 확인**
 무통장 입금 예약은 선점과 같은 트랜잭션 경계에서 예매 행을 만든다. 입금 확인은
-`X-Write-Key` 로 보호한 내부 API 로 받는다 (ADR-0025).
+내부 API 로 받는다 (ADR-0025). 보호 수단은 공유 키가 아니라 운영자 역할 + JWT 다 —
+방식은 그 API 를 만드는 기능에서 정하고, 정하기 전에는 열지 않는다 (ADR-0029).
 
 **쓰기 — 공연 등록/관리**
-`React → API(POST/PUT) → Service → Repository`. 주최자 권한 확인은 Service 계층에서.
+`React → API(POST/PUT) → Service → Repository`. 역할(주최자) 확인은 `SecurityConfig` 의
+경로 규칙에서, 소유권 확인은 Service 계층에서 한다. 소유권 위반은 404 (ADR-0029).
 
 ## 5. 외부 의존
 
@@ -128,6 +130,8 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0027](../decisions/ADR-0027-display-string-blank-definition.md)
 - 사용자 입력 URL 은 https, 권한 부분을 직접 나눠 하위 요소마다 판정 →
   [ADR-0028](../decisions/ADR-0028-user-url-validation-by-authority-parts.md)
+- 쓰기 가드 제거, API 쓰기는 JWT 역할(`SecurityConfig`) + 소유권(Service, 위반은 404)으로만 보호 →
+  [ADR-0029](../decisions/ADR-0029-replace-write-guard-with-role-and-ownership.md)
 
 ## 7. 알려진 부채
 

@@ -39,6 +39,8 @@
   --c-success: #1A8347; --c-success-tint: #E7F4ED; --c-success-tint-text: #187B43;
   --c-warning: #9B6C00; --c-warning-tint: #FBF4E5; --c-warning-tint-text: #916500;
   --c-info: #7257FF; --c-info-tint: #F0EEFE; --c-info-tint-text: #6647FF;
+  /* 비공개(공개 전 준비 중) — derive.py 생성값이 아니라 손으로 더한 7번째 의미색 (design.md §4·§5, 2026-11-11) */
+  --c-draft: #0B8086; --c-draft-tint: #ECF7F8; --c-draft-tint-text: #0B7D82;
 
   /* 상호작용·비활성·겹침 */
   --c-brand-pressed: #3C4DE5;

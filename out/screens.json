@@ -4,7 +4,8 @@
   "공연 찾기와 오픈 전 — 같은 시계로 기다린다",
   "대기열 — 순번은 지켜진다",
   "예매 4단계 — 매수 먼저, 연석은 한 번에",
-  "예매 뒤 — 입금·확정·정리"
+  "예매 뒤 — 입금·확정·정리",
+  "주최자 — 내 공연 관리 (2026-11-11 추가)"
  ],
  "story": {
   "headline": "가입은 <em>버튼 한 번</em>, 오픈은 <em>같은 시계</em>, 일행 자리는 <em>한 번에</em>",
@@ -37,7 +38,8 @@
   "매진": "is-danger",
   "마감": "",
   "입금 대기": "is-warning",
-  "예매 확정": "is-success"
+  "예매 확정": "is-success",
+  "비공개": "is-draft"
  },
  "people": [
   {
@@ -163,6 +165,51 @@
     "role-select",
     "joined",
     "signup"
+   ],
+   "core": false
+  },
+  {
+   "name": "한도윤 — 혼자 공연을 여는 주최자",
+   "who": "34세 한국 여성, 인디 공연 기획사 소리풍경 컴퍼니를 혼자 운영한다",
+   "why": "전화·메신저 예매로 같은 자리를 두 번 판 뒤 12월 앙코르 공연부터 티켓온으로 판다",
+   "feels": "조심스러움 — 준비 덜 된 공연이 먼저 보일까, 좌석 숫자를 잘못 넣을까",
+   "wants": [
+    {
+     "q": "내 공연이 지금 관객에게 보이나",
+     "at": [
+      "organizer",
+      "organizer-show"
+     ]
+    },
+    {
+     "q": "좌석이 몇 석, 어떻게 만들어지나",
+     "at": [
+      "organizer-new",
+      "organizer-show"
+     ]
+    },
+    {
+     "q": "언제까지 고치거나 숨길 수 있나",
+     "at": [
+      "organizer-show",
+      "organizer-live"
+     ]
+    },
+    {
+     "q": "열린 공연은 몇 석 남았나",
+     "at": [
+      "organizer",
+      "organizer-live"
+     ]
+    }
+   ],
+   "win": "앙코르를 비공개로 등록해 300석을 확인하고, 준비가 끝난 날 공개하기 한 번으로 관객 목록에 올렸을 때",
+   "screens": [
+    "organizer",
+    "organizer-new",
+    "organizer-show",
+    "organizer-edit",
+    "organizer-live"
    ],
    "core": false
   }
@@ -314,7 +361,12 @@
     "large_list": false,
     "long_task": false
    },
-   "branches": [],
+   "branches": [
+    {
+     "to": "organizer",
+     "label": "주최자로 가입했으면 「시작하기」가 내 공연으로"
+    }
+   ],
    "states": []
   },
   {
@@ -855,6 +907,260 @@
    },
    "branches": [],
    "states": []
+  },
+  {
+   "id": "organizer",
+   "file": "screens/organizer.html",
+   "title": "내 공연 · 도윤",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "list",
+   "archetype": "행 목록",
+   "archetype_why": "주최자에게 공연은 고르는 상품이 아니라 처리할 항목 — 상태·남은 좌석을 행으로 훑는다",
+   "role": "editor",
+   "purpose": "내 공연이 관객에게 보이는지, 몇 석 남았는지 본다",
+   "policies": [
+    "주최자가 가입 완료·로그인 직후(돌아갈 곳이 없을 때) 오는 첫 화면 · 헤더 「내 공연」",
+    "공연 일시 늦은 순 · 칩은 비공개(취소 안 된 비공개)와 상태별",
+    "비로그인은 로그인 뒤 이 화면으로 돌아온다 · 관객은 organizer-only"
+   ],
+   "traits": {
+    "list_first_use": true,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "organizer-only",
+     "label": "관객 계정으로 들어오면"
+    }
+   ],
+   "states": [
+    "empty"
+   ]
+  },
+  {
+   "id": "organizer--empty",
+   "file": "screens/organizer--empty.html",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "title": "내 공연 · 공연 0건",
+   "purpose": "첫 공연이 없을 때",
+   "role": "editor",
+   "kind": "list",
+   "state_of": "organizer",
+   "state": "empty"
+  },
+  {
+   "id": "organizer-new",
+   "file": "screens/organizer-new.html",
+   "title": "공연 등록",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "form",
+   "role": "editor",
+   "purpose": "공연과 좌석 구성을 넣고 만들어질 좌석 수를 확인한다",
+   "policies": [
+    "등록하면 비공개로 저장 — 공개하기 전에는 관객에게 안 보인다",
+    "구역마다 등급·가격·시작 열·끝 열·열당 좌석 수 · 합계 5,000석 이하",
+    "예매 오픈 ≤ 예매 마감 ≤ 공연 일시 · 등록 뒤 좌석 구성은 못 바꾼다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "organizer-show",
+   "file": "screens/organizer-show.html",
+   "title": "내 공연 상세 · 앙코르 비공개",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "detail",
+   "archetype": "진행 추적형",
+   "archetype_why": "등록 → 공개 → 오픈 → 마감 중 어디인지가 「언제까지 고치고 숨길 수 있나」에 답한다",
+   "role": "editor",
+   "purpose": "비공개 공연을 확인하고 공개한다",
+   "policies": [
+    "공개·비공개 전환은 오픈 전에만 — 지나면 「예매가 열린 뒤에는 공개 여부를 바꿀 수 없어요」",
+    "비공개 공연은 오픈 시각과 무관하게 정보 수정 가능",
+    "남의 공연·없는 공연은 같은 「공연을 찾을 수 없어요」",
+    "「관객 화면에서 보기」는 공개된 공연에만 — 실제 목적지는 그 공연의 관객 상세(/performances/:id), 시안에선 관객 목록으로 이어 둠"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": true,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "organizer-cancel-sheet",
+     "label": "공연 취소"
+    }
+   ],
+   "states": [
+    "done"
+   ]
+  },
+  {
+   "id": "organizer-show--done",
+   "file": "screens/organizer-show--done.html",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "title": "내 공연 상세 · 공개한 뒤",
+   "purpose": "공개한 뒤 모습(오픈 전이라 비공개로 돌릴 수 있다)",
+   "role": "editor",
+   "kind": "detail",
+   "state_of": "organizer-show",
+   "state": "done"
+  },
+  {
+   "id": "organizer-edit",
+   "file": "screens/organizer-edit.html",
+   "title": "정보 수정 · 앙코르",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "form",
+   "role": "editor",
+   "purpose": "공연명·장소·일시를 고친다",
+   "policies": [
+    "좌석 구성은 읽기만 — 등록 뒤 바꿀 수 없다",
+    "공개 공연은 오픈 뒤 수정 화면으로 들어올 수 없다(상세에서 「정보 수정」이 사라진다)"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": [
+    "error"
+   ]
+  },
+  {
+   "id": "organizer-live",
+   "file": "screens/organizer-live.html",
+   "title": "내 공연 상세 · 나이트 예매 중",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "detail",
+   "archetype": "진행 추적형",
+   "archetype_why": "판매 중인 공연은 남은 좌석과 지금 단계가 먼저다",
+   "role": "editor",
+   "purpose": "열린 공연의 남은 좌석을 보고, 지금 바꿀 수 없는 것을 안다",
+   "policies": [
+    "오픈 뒤라 공개 전환·정보 수정 없음 — 취소만",
+    "남은 좌석은 공연 전체 값만(등급별 남은 좌석은 좌석 선점 기능 뒤)",
+    "「관객 화면에서 보기」는 공개된 공연에만 — 실제 목적지는 그 공연의 관객 상세(/performances/:id), 시안에선 관객 목록으로 이어 둠"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "organizer-cancel-sheet",
+     "label": "공연 취소"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "organizer-cancel-sheet",
+   "file": "screens/organizer-cancel-sheet.html",
+   "title": "공연 취소 한 번 더 확인",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "sheet",
+   "over": "organizer-show",
+   "role": "editor",
+   "purpose": "되돌릴 수 없다는 것을 확인한다",
+   "policies": [
+    "취소하면 되돌릴 수 없고 다시 공개할 수 없다",
+    "공개 공연이면 관객 목록에 「공연 취소」로 남는다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "organizer-cancelled",
+   "file": "screens/organizer-cancelled.html",
+   "title": "공연 취소 완료",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "result",
+   "role": "editor",
+   "purpose": "취소됐고 관객에게 어떻게 보이는지 안다",
+   "policies": [
+    "취소된 공연은 공개 전환·수정·취소 버튼 없이 읽기만"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "organizer-only",
+   "file": "screens/organizer-only.html",
+   "title": "주최자만 · 관객이 들어왔을 때",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "관객이 주최자 주소에 들어왔을 때 갈 곳을 안다",
+   "policies": [
+    "내 공연·등록·수정 주소 모두 같은 안내",
+    "서버도 관객 토큰의 쓰기를 403 으로 막는다(ADR-0029)"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [],
+   "states": []
+  },
+  {
+   "id": "organizer-new--error",
+   "file": "screens/organizer-new--error.html",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "title": "공연 등록 · 마감 시각 오류",
+   "purpose": "예매 마감이 공연 시작보다 늦을 때",
+   "role": "editor",
+   "kind": "form",
+   "state_of": "organizer-new",
+   "state": "error"
+  },
+  {
+   "id": "organizer-edit--error",
+   "file": "screens/organizer-edit--error.html",
+   "group": "주최자 — 내 공연 관리 (2026-11-11 추가)",
+   "title": "정보 수정 · 공연명 빈칸",
+   "purpose": "공연명을 지웠을 때",
+   "role": "editor",
+   "kind": "form",
+   "state_of": "organizer-edit",
+   "state": "error"
   }
  ],
  "prd_coverage": {
@@ -958,6 +1264,16 @@
   ],
   "B-상세": [
    "concert"
+  ],
+  "ORG-flow": [
+   "organizer",
+   "organizer-new",
+   "organizer-show",
+   "organizer-edit",
+   "organizer-live",
+   "organizer-cancel-sheet",
+   "organizer-cancelled",
+   "organizer-only"
   ]
  },
  "stage": "max",
