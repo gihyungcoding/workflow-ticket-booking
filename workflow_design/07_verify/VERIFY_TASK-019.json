@@ -308,8 +308,33 @@
     "summary": "뿌리 2 · 변종 17, 재현 13(해소 5) · 미프로브 1"
   },
   "human_review": {
-    "decision": null,
+    "decision": "ROLLBACK_SCENARIO",
+    "reason_code": "COVERAGE_INSUFFICIENT",
+    "reject_type": "RETRY_SCENARIO",
+    "decided_at": "2026-11-11",
+    "via": "AskUserQuestion — HITL#3",
+    "user_decisions": [
+      "userinfo 안의 '@'(https://a@b@host) → 거부",
+      "area·note 가 NBSP(U+00A0)·U+200B 만 → 공백으로 보고 거부"
+    ],
     "verified_commit": null,
     "verified_at": null
+  },
+  "reject": {
+    "type": "RETRY_SCENARIO",
+    "attempt": 2,
+    "max_attempts": 3,
+    "history": [
+      {
+        "attempt": 1,
+        "from": "Phase 3 자체 리뷰 RC-1",
+        "note": "호스트 정의 추가"
+      },
+      {
+        "attempt": 2,
+        "from": "Phase 4 VERIFY 1회차 FAIL",
+        "note": "RC-1 잔여 변종 + RC-2"
+      }
+    ]
   }
 }

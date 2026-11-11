@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 통과 | CP-2.2 | 16건 · 칸 40 · 검증 1회차 PASS |
 | 2b Red | ✅ 재승인 | CP-2.5 | 16건 · RETRY_SCENARIO 1회 |
 | 3 Green | ✅ 완료 | CP-3.4 | 180/180 · 자체 리뷰 2R (RC-1 수정, 미해결 2) |
-| 4 Verify | ⬜ 대기 | — | |
+| 4 Verify | ↩️ 재시도 | CP-4.2 | 1회차 FAIL → 2a (RC-1·RC-2) |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건
