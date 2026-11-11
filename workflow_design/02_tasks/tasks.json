@@ -1317,7 +1317,7 @@
     "reason_primary": "인증 필터·SecurityConfig·서비스 소유권 검사·마이그레이션이 서버 범위",
     "priority": "High",
     "depends_on": [],
-    "status": "todo",
+    "status": "in_progress",
     "meta": {
       "estimate": {
         "unit": "hour",
