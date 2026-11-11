@@ -30,11 +30,13 @@
 
 | Task | 범위 | 산출물 | 포함하지 않음 | 선행 | 추정 | 태스크 ID |
 |---|---|---|---|---|---|---|
-| A. 백엔드 — 공연 소유자·역할 인가·쓰기 가드 제거 | `owner_id` 추가, JWT `role` → `ROLE_*` 권한, 공연 쓰기 API 주최자 전용(401/403), 등록 시 소유자 지정, 수정·취소 소유권 검사(404), 쓰기 가드·CORS 키 헤더 제거, 기존 쓰기 테스트에 주최자 토큰 픽스처, 관련 문서 갱신 | `V7__add_performance_owner.sql`, `AccessClaims`, `SecurityConfig`·`JwtAuthenticationFilter`·`PerformanceService` 변경, `WriteGuard*` 삭제 | 비공개 상태, 주최자 조회 API, 공개 전환, 입금 확인 API 보호 방식 | — | 14h | |
-| B. 백엔드 — 비공개 상태·주최자 조회·공개 전환 API | `published` 추가, 관객 조회 3경로 공개만, 주최자 목록(필터·정렬)·단건(좌석 요약 포함), `publish`·`unpublish`, 비공개 수정 시각 제한 해제, 취소된 공연 409, `editable`·`visibilityChangeable` 서버 계산 | `V8__add_performance_published.sql`, `OrganizerPerformanceResponse`, `OrganizerPerformanceController`, `GET /api/organizer/performances[/{id}]`, `POST /api/performances/{id}/publish·unpublish` | 등급별 잔여, 매출·예매자, 공개 예약, 좌석 구성 변경 | A | 12h | |
-| C. 프론트 — 토큰 전송·주최자 가드 | `request()` Bearer 주입·쓰기 키 제거, 401/403 오류 구분, `RequireOrganizer` 로 등록·수정 화면 보호(비로그인 → 로그인 후 복귀, 관객 → 안내), 쓰기 키 거부 안내 분기·환경변수 제거 | `http.ts`·`performances.ts` 변경, `RequireOrganizer.tsx`, `App.tsx` 라우트 | 내 공연 화면, 진입 링크, 등록 후 이동 경로 변경 | A | 6h | |
-| D. 프론트 — 내 공연 목록·진입 경로 | `/organizer` 목록(필터 칩·배지·빈/필터 0건/로딩/오류), 가입 완료·로그인 후 역할별 이동, `AppHeader` 「내 공연」 | `OrganizerPerformanceListPage.tsx`, `api/organizer.ts`, `JoinedPage`·`LoginPage`·`AppHeader` 변경 | 내 공연 상세, 공개 전환, 등록·수정 복귀 경로 | B, C | 8h | |
-| E. 프론트 — 내 공연 상세·공개 전환·등록/수정 시안 적용 | `/organizer/performances/:id`(진행 타임라인·공개 전환·좌석 요약·정보·수정/취소/관객 목록 보기), 공개 전환과 409 안내, 404 안내, 등록·수정 폼을 시안 구조·문구로, 등록 성공 → 내 공연 상세, 수정 화면 값 로드를 주최자 조회로 | `OrganizerPerformanceDetailPage.tsx`, `PerformanceRegisterPage`·`PerformanceEditPage` 변경 | 좌석 맵, 등급별 잔여, 좌석 구성 수정, 포스터·구역 위치 입력 | D | 12h | |
+| A. 백엔드 — 공연 소유자·역할 인가·쓰기 가드 제거 | `owner_id` 추가, JWT `role` → `ROLE_*` 권한, 공연 쓰기 API 주최자 전용(401/403), 등록 시 소유자 지정, 수정·취소 소유권 검사(404), 쓰기 가드·CORS 키 헤더 제거, 기존 쓰기 테스트에 주최자 토큰 픽스처, 관련 문서 갱신 | `V7__add_performance_owner.sql`, `AccessClaims`, `SecurityConfig`·`JwtAuthenticationFilter`·`PerformanceService` 변경, `WriteGuard*` 삭제 | 비공개 상태, 주최자 조회 API, 공개 전환, 입금 확인 API 보호 방식 | — | 14h | TASK-022 |
+| B. 백엔드 — 비공개 상태·주최자 조회·공개 전환 API | `published` 추가, 관객 조회 3경로 공개만, 주최자 목록(필터·정렬)·단건(좌석 요약 포함), `publish`·`unpublish`, 비공개 수정 시각 제한 해제, 취소된 공연 409, `editable`·`visibilityChangeable` 서버 계산 | `V8__add_performance_published.sql`, `OrganizerPerformanceResponse`, `OrganizerPerformanceController`, `GET /api/organizer/performances[/{id}]`, `POST /api/performances/{id}/publish·unpublish` | 등급별 잔여, 매출·예매자, 공개 예약, 좌석 구성 변경 | A | 12h | TASK-023 |
+| C. 프론트 — 토큰 전송·주최자 가드 | `request()` Bearer 주입·쓰기 키 제거, 401/403 오류 구분, `RequireOrganizer` 로 등록·수정 화면 보호(비로그인 → 로그인 후 복귀, 관객 → 안내), 쓰기 키 거부 안내 분기·환경변수 제거 | `http.ts`·`performances.ts` 변경, `RequireOrganizer.tsx`, `App.tsx` 라우트 | 내 공연 화면, 진입 링크, 등록 후 이동 경로 변경 | A | 6h | TASK-024 |
+| D. 프론트 — 내 공연 목록·진입 경로 | `/organizer` 목록(필터 칩·배지·빈/필터 0건/로딩/오류), 가입 완료·로그인 후 역할별 이동, `AppHeader` 「내 공연」 | `OrganizerPerformanceListPage.tsx`, `api/organizer.ts`, `JoinedPage`·`LoginPage`·`AppHeader` 변경 | 내 공연 상세, 공개 전환, 등록·수정 복귀 경로 | B, C | 8h | TASK-025 |
+| E. 프론트 — 내 공연 상세·공개 전환·등록/수정 시안 적용 | `/organizer/performances/:id`(진행 타임라인·공개 전환·좌석 요약·정보·수정/취소/관객 목록 보기), 공개 전환과 409 안내, 404 안내, 등록·수정 폼을 시안 구조·문구로, 등록 성공 → 내 공연 상세, 수정 화면 값 로드를 주최자 조회로 | `OrganizerPerformanceDetailPage.tsx`, `PerformanceRegisterPage`·`PerformanceEditPage` 변경 | 좌석 맵, 등급별 잔여, 좌석 구성 수정, 포스터·구역 위치 입력 | D | 12h | TASK-026 |
+
+[태스크 생성 2026-11-11]
 
 **분리 이유**: 보안 경계(A: 누가 쓰기를 할 수 있나)와 노출 규칙(B: 무엇이 관객에게 보이나)은
 실패했을 때의 피해가 달라 따로 검증한다 — A 는 거부 경로의 "DB 변경 없음"이, B 는 관객 조회

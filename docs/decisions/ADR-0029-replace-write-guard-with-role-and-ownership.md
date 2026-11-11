@@ -105,6 +105,6 @@ ADR-0025 의 판단(입금 확인은 운영자 화면 없이 보호된 내부 AP
 ## 검사 가능한 제약
 
 - **AUTH-001** — `X-Write-Key`·`WRITE_API_KEY`·`VITE_WRITE_KEY` 를 백엔드 main·프론트 src 에 쓰지 않는다.
-  도입 시점에는 위반이 있어 `warn`, organizer-flow Task A 가 끝나면 `error` 로 올린다
-  (`promote_after` 는 태스크 생성 후 기입)
+  도입 시점에는 위반이 있어 `warn`, 백엔드(Task A, TASK-022)와 프론트(Task C, TASK-024)에서
+  모두 지운 뒤 `error` 로 올린다 (`promote_after: TASK-024`)
 - 소유권 위반의 404 통일은 코드 패턴으로 검사할 수 없다 — 각 태스크의 시나리오(남의 자원·소유자 없음·없는 자원 3종이 같은 응답)로 확인한다
