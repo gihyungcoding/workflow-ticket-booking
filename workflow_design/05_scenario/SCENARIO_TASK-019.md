@@ -27,7 +27,7 @@
 | `S0` (등록 순서) | `2층` C열 10석 77000 · `F1` A열 10석 150000 · `1층` B열 10석 99000 |
 | `S1` (등록 순서) | `2층` C열 10석 77000 · `F2` B열 10석 120000 · `F1` A열 10석 150000 · `1층` D열 10석 99000 |
 | 서버 시각 응답 | 200 `{"now": "<ISO-8601 UTC, Z 로 끝남>"}`, 헤더 `Cache-Control` 값이 정확히 `no-store` |
-| posterUrl 규칙 | 스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI. `java.net.URI` 로 파싱돼야 한다. 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다 |
+| posterUrl 규칙 | 스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법에 맞아야 한다). 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다 |
 | 구역 문자열 | `area` 는 필수, 공백 아님, 30자 이하. `note` 는 선택이지만 주면 공백이 아니고 60자 이하. 둘 다 제어문자(`\p{Cc}`)·짝 없는 서로게이트를 거부한다(ADR-0019). 변환 없이 저장한다 |
 | grades | 필수, 빈 배열 아님, 원소는 공백 아님. sections 의 grade 와 **정확히 같은 문자열**이어야 한다(대소문자·공백 구분) |
 | stageOrder | `zones` 를 펼친 순서(묶음 → 묶음 안 grades)로 1, 2, … 를 매기고, `zones` 에 없는 등급이 sections 에 처음 나온 순서대로 그 뒤에 붙는다. 그렇게 붙은 등급은 `area` = 등급 이름이고 `areaNote` 는 없다. `zones` 가 없거나 null 이거나 `[]` 이면 모든 등급이 이렇게 된다 |
@@ -39,13 +39,17 @@
 
 ## SC-01 (happy) 서버 시각은 인증 없이 주입된 시각을 캐시 금지로 돌려준다
 
-- **Given** 시계가 `2026-11-11T08:55:28.123Z` 를 가리킨다
+- **Given** 시계가 아래 표의 시각을 가리킨다
 - **When** Authorization 헤더 없이 `GET /api/time` 을 호출한다
 - **Then** 200 이다
-- **And** 본문의 `now` 문자열이 `Z` 로 끝나고, `Instant` 로 파싱하면 `2026-11-11T08:55:28.123Z` 와 같다
+- **And** 본문의 `now` 문자열이 `Z` 로 끝나고, `Instant` 로 파싱하면 표의 시각과 같다
 - **And** 본문 키는 `now` 하나뿐이다
-- **And** 응답 헤더 `Cache-Control` 의 값은 정확히 `no-store` 다 (Spring Security 기본값 `no-cache, no-store, max-age=0, must-revalidate` 가 아니다)
-- **And** 시계를 `2026-11-11T09:00:00Z` 로 옮기고 다시 호출하면 `now` 가 `2026-11-11T09:00:00Z` 다
+- **And** 응답 헤더 `Cache-Control` 의 값은 정확히 `no-store` 다 (`no-cache, no-store, max-age=0, must-revalidate` 처럼 다른 지시가 섞이지 않는다)
+
+| # | 시계 |
+|---|---|
+| a | `2026-11-11T08:55:28.123Z` |
+| b | `2026-11-11T09:00:00Z` (같은 테스트 컨텍스트에서 a 다음에 — 앞 값이 남지 않는다) |
 
 covers: `GET /api/time` 이 인증 없이 200 과 주입된 `Clock` 의 시각을 `now`(ISO-8601 UTC)로 돌려주고, 응답에 `Cache-Control: no-store` 가 있다
 flow: F1
@@ -121,6 +125,7 @@ flow: F2
 | k | `https://cdn.example.com/a b.jpg` | URI 로 파싱되지 않는 문자 |
 | l | `https://cdn.example.com/a` + U+0000 + `.jpg` | NUL |
 | m | `https://cdn.example.com/a` + U+D800 + `.jpg` | 짝 없는 서로게이트 |
+| n | `https://cdn.example.com/`(24자) + `🎤` × 238 + `a` (총 501 코드 유닛) | 최대 + 1 — 코드 유닛으로 센다 |
 
 covers: `posterUrl` 이 `http://`·상대 경로·501자면 400 `INVALID_POSTER_URL`, `zones` 에 없는 등급이면 400 `ZONE_GRADE_UNKNOWN`, 중복 등급이면 400 `ZONE_GRADE_DUPLICATED` 이고 공연·좌석·구역 행이 생기지 않는다
 flow: F4
@@ -142,6 +147,7 @@ flow: F4
 | f | area | ` 플로어 ` (앞뒤 공백) | 걷어내지 않는다 |
 | g | area · note | `플로어 🎤` · `무대 🎤 앞` | 짝이 맞는 서로게이트(이모지)는 받는다 |
 | h | note | ` 무대 앞 ` (앞뒤 공백) | 걷어내지 않는다 |
+| i | area | `🎤` × 15 (30 코드 유닛) | 이모지로 정확히 상한 — 코드 유닛으로 센다 |
 
 covers: `zones` 를 주고 등록하면 상세 `sections` 가 `zones` 를 펼친 순서의 `stageOrder` 로 정렬되고 `area`·`areaNote` 를 갖는다. `zones` 에 없는 등급은 그 뒤에 붙는다
 flow: F3
@@ -186,11 +192,13 @@ flow: F4
 | d | `[{area: ""}]` | area 빈 값 |
 | e | `[{area: "   "}]` | area 공백만 |
 | f | `[{area: "가" × 31}]` | area 최대 + 1 |
+| f2 | `[{area: "🎤" × 15 + "가"}]` (16 코드포인트, 31 코드 유닛) | area 최대 + 1 — 코드 유닛으로 센다 |
 | g | `[{area: "플로" + U+0000 + "어"}]` | area NUL |
 | h | `[{area: "플로" + U+D800}]` | area 짝 없는 서로게이트 |
 | i | `[{note: ""}]` | note 빈 값 |
 | j | `[{note: "   "}]` | note 공백만 |
 | k | `[{note: "나" × 61}]` | note 최대 + 1 |
+| k2 | `[{note: "🎤" × 30 + "나"}]` (61 코드 유닛) | note 최대 + 1 — 코드 유닛으로 센다 |
 | l | `[{note: "무대" + U+0000}]` | note NUL |
 | m | `[{note: "무대" + U+DC00}]` | note 짝 없는 서로게이트 |
 | n | `[{"area": "플로어"}]` | grades 누락 |
@@ -295,7 +303,7 @@ flow: F5
 covers: `next-opening` 이 아직 열리지 않은 공연 중 `openAt` 이 가장 이른 1건을 돌려준다. 취소된 공연·이미 열린 공연·지난 공연은 고르지 않고, 후보가 없으면 204
 flow: F5
 
-## SC-14 (regression) V6 는 기존 데이터가 있는 PostgreSQL 에 적용되고 제약을 만든다
+## SC-14 (regression) V6 는 기존 데이터가 있는 PostgreSQL 에 적용되고 기존 행이 그대로다
 
 - **Given** PostgreSQL 에 Flyway 를 V5 까지 적용했다
 - **And** performance 1행(취소 아님, `R0` 의 시각, total/available 20)과 그 공연의 seat 20행(`R` 80000 10행, 그다음 `VIP` 120000 10행)을 SQL 로 넣었다
@@ -303,19 +311,6 @@ flow: F5
 - **Then** 적용이 성공하고 현재 버전이 6 이다
 - **And** 그 performance 행의 `poster_url` 은 NULL 이고, 기존 행의 다른 열(title·venue·시각·좌석 수)은 그대로다
 - **And** `performance_zone` 은 0행이다
-- **And** 그 공연에 `(grade 'R', area 'R', stage_order 1)` 을 넣으면 성공한다
-- **And** 이어서 아래 표의 행을 넣으면 각각 제약 위반으로 실패한다
-
-| # | 넣는 행 | 걸리는 제약 |
-|---|---|---|
-| a | grade `R`, area `x`, stage_order 2 | UNIQUE (performance_id, grade) |
-| b | grade `VIP`, area `x`, stage_order 1 | UNIQUE (performance_id, stage_order) |
-| c | grade `VIP`, area `x`, stage_order 0 | CHECK stage_order > 0 |
-| d | grade `VIP`, area NULL, stage_order 2 | area NOT NULL |
-| e | performance_id 999(없음), grade `VIP`, area `x`, stage_order 1 | FK performance(id) |
-| f | grade `VIP`, area `가` × 31, stage_order 2 | area VARCHAR(30) |
-| g | grade `VIP`, area `x`, area_note `나` × 61, stage_order 2 | area_note VARCHAR(60) |
-| h | performance.poster_url 을 `a` × 501 로 UPDATE | poster_url VARCHAR(500) |
 
 covers: V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)
 flow: F7
@@ -333,6 +328,27 @@ flow: F7
 covers: V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)
 flow: F7
 
+## SC-16 (regression) V6 가 만든 구역 테이블은 잘못된 행을 받지 않는다
+
+- **Given** SC-14 처럼 V5 까지의 데이터 위에 V6 까지 적용했다
+- **And** 그 공연에 `(grade 'R', area 'R', stage_order 1)` 한 행이 들어가 있다 (이 INSERT 는 성공한다)
+- **When** 아래 표의 행을 넣는다 (행마다 새 트랜잭션)
+- **Then** 각각 제약 위반으로 실패하고, `performance_zone` 은 1행 그대로다
+
+| # | 넣는 행 | 걸리는 제약 |
+|---|---|---|
+| a | grade `R`, area `x`, stage_order 2 | UNIQUE (performance_id, grade) |
+| b | grade `VIP`, area `x`, stage_order 1 | UNIQUE (performance_id, stage_order) |
+| c | grade `VIP`, area `x`, stage_order 0 | CHECK stage_order > 0 |
+| d | grade `VIP`, area NULL, stage_order 2 | area NOT NULL |
+| e | performance_id 999(없음), grade `VIP`, area `x`, stage_order 1 | FK performance(id) |
+| f | grade `VIP`, area `가` × 31, stage_order 2 | area VARCHAR(30) |
+| g | grade `VIP`, area `x`, area_note `나` × 61, stage_order 2 | area_note VARCHAR(60) |
+| h | performance.poster_url 을 `a` × 501 로 UPDATE | poster_url VARCHAR(500) |
+
+covers: V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)
+flow: F7
+
 ## 입력 경계 칸
 
 | 칸 | 판정 | 근거 |
@@ -340,7 +356,7 @@ flow: F7
 | posterUrl@F4:json_field.wrong_type | covered | SC-07 |
 | posterUrl@F4:string.empty | covered | SC-05 |
 | posterUrl@F4:string.blank | covered | SC-05 |
-| posterUrl@F4:string.max+1 | covered | SC-05, SC-06 |
+| posterUrl@F4:string.max+1 | covered | SC-05 |
 | posterUrl@F4:string_stored.nul | covered | SC-05 |
 | posterUrl@F4:string_stored.surrogate | covered | SC-05 |
 | posterUrl@F4:string_stored.normalized | covered | SC-05, SC-06 |
@@ -355,14 +371,14 @@ flow: F7
 | zones[].area@F4:json_field.wrong_type | covered | SC-07 |
 | zones[].area@F4:string.empty | covered | SC-08 |
 | zones[].area@F4:string.blank | covered | SC-08 |
-| zones[].area@F4:string.max+1 | covered | SC-08, SC-06 |
+| zones[].area@F4:string.max+1 | covered | SC-08 |
 | zones[].area@F4:string_stored.nul | covered | SC-08 |
 | zones[].area@F4:string_stored.surrogate | covered | SC-08, SC-06 |
 | zones[].area@F4:string_stored.normalized | covered | SC-06 |
 | zones[].note@F4:json_field.wrong_type | covered | SC-07 |
 | zones[].note@F4:string.empty | covered | SC-08 |
 | zones[].note@F4:string.blank | covered | SC-08 |
-| zones[].note@F4:string.max+1 | covered | SC-08, SC-06 |
+| zones[].note@F4:string.max+1 | covered | SC-08 |
 | zones[].note@F4:string_stored.nul | covered | SC-08 |
 | zones[].note@F4:string_stored.surrogate | covered | SC-08, SC-06 |
 | zones[].note@F4:string_stored.normalized | covered | SC-06 |

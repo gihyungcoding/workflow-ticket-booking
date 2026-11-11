@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-11T00:00:00Z
-summary: "SCENARIO_TASK-019 — 15건(happy 5 · error 5 · boundary 3 · regression 2), AC 7/7, 입력 경계 40/40. 독립검증 대기."
+summary: "SCENARIO_TASK-019 — 16건(happy 5 · error 5 · boundary 3 · regression 3), AC 7/7, 입력 경계 40/40. 독립검증 1회차 PASS(경고 4) — 일부 반영, 재검증 안 함."
 
 next_steps:
-  - "scenario-validator 1회차 호출 → VALIDATION_TASK-019.json"
+  - "Phase 2b — Red 테스트. SC-14·16 은 Testcontainers PostgreSQL, 나머지 H2. 기존 Performance 8인자 생성자 유지"
 
 decisions:
   - decision: "새로 작성 (기존 시나리오 확장 아님)"
@@ -24,5 +24,12 @@ decisions:
   - decision: "PLAN inputs 제약 대조 — 모든 constraints 항목이 SC-01~15 의 Then 에 단언됨. '시각 API·next-opening·상태 계산이 같은 Clock' 은 SC-01(시각 이동)·SC-11/12(MutableClock T)로"
     rationale: "Step 2 입력 제약 대조"
 
-attempts: []
+  - decision: "검증 경고 반영 — V6: SC-01 의 2회차 호출을 시각 표(a·b)로 바꿔 When 을 하나로, SC-14 의 제약 INSERT 를 SC-16 으로 분리. V7: 규약의 'java.net.URI' 를 'RFC 3986 문법' 으로, SC-01 괄호의 'Spring Security 기본값' 언급 제거. V11 참고: max+1 칸의 by 에서 SC-06(정확히 상한) 제거. V12(2): 이모지 코드 유닛 상한 행 추가 — SC-05 n, SC-06 i, SC-08 f2·k2"
+    rationale: "검증자 1회차 경고. 통과 + 경고라 재검증하지 않는다"
+  - decision: "검증 경고 보류 — V9(SC-13 중복: 저장된 공연 0건의 빈 본문을 따로 지킨다), V12(1)(sections[].grade 는 기존 필드 — 같은 grade 여러 행은 SC-04 가 확인), V12(3)(userinfo·포트·IP 호스트는 https 절대 URL 규칙 안이라 받는다 — 새 규칙을 만들지 않는다), V12(4)(시나리오에 명시됨), V12(5)(같은 grade 두 행 + zones 조합 — SC-04 와 SC-03 의 병합 경로가 같다)"
+    rationale: "통합 HITL 에서 사람이 판단한다"
+
+attempts:
+  - round: 1
+    result: "PASS — fail 0, warn 4 (V6·V7·V9·V12)"
 ---

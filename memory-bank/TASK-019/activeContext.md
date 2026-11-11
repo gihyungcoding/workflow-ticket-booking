@@ -1,8 +1,8 @@
 ---
 task_id: TASK-019
 title: "기준 시각·포스터·구역 위치·머리글 후보 API"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -22,11 +22,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 완료(CP-1.3). Phase 2a 시나리오 설계 진입.
+Phase 2a 완료(CP-2.2) — 시나리오 16건, 독립검증 1회차 PASS. Phase 2b 진입.
 
 ## 다음 한 걸음
 
-`coverage_matrix.py --task-id TASK-019 --skeleton` 으로 82칸 골격을 받아 SCENARIO 를 쓴다.
+`wf-red` — 시나리오 16건을 실패하는 테스트로 옮긴다.
 
 ## 알아둬야 할 것
 

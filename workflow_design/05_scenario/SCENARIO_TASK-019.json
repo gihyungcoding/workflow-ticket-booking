@@ -20,7 +20,7 @@
     },
     {
       "항목": "posterUrl 규칙",
-      "값": "스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI. `java.net.URI` 로 파싱돼야 한다. 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다"
+      "값": "스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법에 맞아야 한다). 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다"
     },
     {
       "항목": "구역 문자열",
@@ -61,19 +61,27 @@
       "type": "happy",
       "title": "서버 시각은 인증 없이 주입된 시각을 캐시 금지로 돌려준다",
       "given": [
-        "시계가 `2026-11-11T08:55:28.123Z` 를 가리킨다"
+        "시계가 아래 표의 시각을 가리킨다"
       ],
       "when": [
         "Authorization 헤더 없이 `GET /api/time` 을 호출한다"
       ],
       "then": [
         "200 이다",
-        "본문의 `now` 문자열이 `Z` 로 끝나고, `Instant` 로 파싱하면 `2026-11-11T08:55:28.123Z` 와 같다",
+        "본문의 `now` 문자열이 `Z` 로 끝나고, `Instant` 로 파싱하면 표의 시각과 같다",
         "본문 키는 `now` 하나뿐이다",
-        "응답 헤더 `Cache-Control` 의 값은 정확히 `no-store` 다 (Spring Security 기본값 `no-cache, no-store, max-age=0, must-revalidate` 가 아니다)",
-        "시계를 `2026-11-11T09:00:00Z` 로 옮기고 다시 호출하면 `now` 가 `2026-11-11T09:00:00Z` 다"
+        "응답 헤더 `Cache-Control` 의 값은 정확히 `no-store` 다 (`no-cache, no-store, max-age=0, must-revalidate` 처럼 다른 지시가 섞이지 않는다)"
       ],
-      "table": [],
+      "table": [
+        {
+          "#": "a",
+          "시계": "`2026-11-11T08:55:28.123Z`"
+        },
+        {
+          "#": "b",
+          "시계": "`2026-11-11T09:00:00Z` (같은 테스트 컨텍스트에서 a 다음에 — 앞 값이 남지 않는다)"
+        }
+      ],
       "covers": [
         "`GET /api/time` 이 인증 없이 200 과 주입된 `Clock` 의 시각을 `now`(ISO-8601 UTC)로 돌려주고, 응답에 `Cache-Control: no-store` 가 있다"
       ],
@@ -271,6 +279,11 @@
           "#": "m",
           "posterUrl": "`https://cdn.example.com/a` + U+D800 + `.jpg`",
           "무엇": "짝 없는 서로게이트"
+        },
+        {
+          "#": "n",
+          "posterUrl": "`https://cdn.example.com/`(24자) + `🎤` × 238 + `a` (총 501 코드 유닛)",
+          "무엇": "최대 + 1 — 코드 유닛으로 센다"
         }
       ],
       "covers": [
@@ -340,6 +353,12 @@
           "필드": "note",
           "값": "` 무대 앞 ` (앞뒤 공백)",
           "무엇": "걷어내지 않는다"
+        },
+        {
+          "#": "i",
+          "필드": "area",
+          "값": "`🎤` × 15 (30 코드 유닛)",
+          "무엇": "이모지로 정확히 상한 — 코드 유닛으로 센다"
         }
       ],
       "covers": [
@@ -474,6 +493,11 @@
           "무엇": "area 최대 + 1"
         },
         {
+          "#": "f2",
+          "zones": "`[{area: \"🎤\" × 15 + \"가\"}]` (16 코드포인트, 31 코드 유닛)",
+          "무엇": "area 최대 + 1 — 코드 유닛으로 센다"
+        },
+        {
           "#": "g",
           "zones": "`[{area: \"플로\" + U+0000 + \"어\"}]`",
           "무엇": "area NUL"
@@ -497,6 +521,11 @@
           "#": "k",
           "zones": "`[{note: \"나\" × 61}]`",
           "무엇": "note 최대 + 1"
+        },
+        {
+          "#": "k2",
+          "zones": "`[{note: \"🎤\" × 30 + \"나\"}]` (61 코드 유닛)",
+          "무엇": "note 최대 + 1 — 코드 유닛으로 센다"
         },
         {
           "#": "l",
@@ -818,7 +847,7 @@
     {
       "id": "SC-14",
       "type": "regression",
-      "title": "V6 는 기존 데이터가 있는 PostgreSQL 에 적용되고 제약을 만든다",
+      "title": "V6 는 기존 데이터가 있는 PostgreSQL 에 적용되고 기존 행이 그대로다",
       "given": [
         "PostgreSQL 에 Flyway 를 V5 까지 적용했다",
         "performance 1행(취소 아님, `R0` 의 시각, total/available 20)과 그 공연의 seat 20행(`R` 80000 10행, 그다음 `VIP` 120000 10행)을 SQL 로 넣었다"
@@ -829,9 +858,50 @@
       "then": [
         "적용이 성공하고 현재 버전이 6 이다",
         "그 performance 행의 `poster_url` 은 NULL 이고, 기존 행의 다른 열(title·venue·시각·좌석 수)은 그대로다",
-        "`performance_zone` 은 0행이다",
-        "그 공연에 `(grade 'R', area 'R', stage_order 1)` 을 넣으면 성공한다",
-        "이어서 아래 표의 행을 넣으면 각각 제약 위반으로 실패한다"
+        "`performance_zone` 은 0행이다"
+      ],
+      "table": [],
+      "covers": [
+        "V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)"
+      ],
+      "flow": "F7"
+    },
+    {
+      "id": "SC-15",
+      "type": "regression",
+      "title": "구역 행이 없는 기존 공연의 응답은 기본 구역값만 더해진다",
+      "given": [
+        "시계는 `T` 다",
+        "공연 L 과 좌석을 저장소로 직접 넣었다: `R` 80000 10석, `VIP` 120000 10석, `S` 80000 5석 (이 순서). posterUrl 은 없고 구역 행도 없다 (V6 이전에 등록된 공연)"
+      ],
+      "when": [
+        "`GET /api/performances/{L}` 을 호출한다"
+      ],
+      "then": [
+        "200 이고 `posterUrl` 키가 없다",
+        "`sections` 는 기존 순서(price 내림차순 → grade 오름차순)대로 `VIP` 120000(stageOrder 1) · `R` 80000(2) · `S` 80000(3) 이다",
+        "각 section 의 `area` 는 자기 grade 이고, 키는 정확히 `grade, price, seatCount, area, stageOrder` 다",
+        "`GET /api/performances` 의 L 항목 키는 정확히 `id, title, venue, startAt, openAt, closeAt, totalSeats, availableSeats, status` 다"
+      ],
+      "table": [],
+      "covers": [
+        "V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)"
+      ],
+      "flow": "F7"
+    },
+    {
+      "id": "SC-16",
+      "type": "regression",
+      "title": "V6 가 만든 구역 테이블은 잘못된 행을 받지 않는다",
+      "given": [
+        "SC-14 처럼 V5 까지의 데이터 위에 V6 까지 적용했다",
+        "그 공연에 `(grade 'R', area 'R', stage_order 1)` 한 행이 들어가 있다 (이 INSERT 는 성공한다)"
+      ],
+      "when": [
+        "아래 표의 행을 넣는다 (행마다 새 트랜잭션)"
+      ],
+      "then": [
+        "각각 제약 위반으로 실패하고, `performance_zone` 은 1행 그대로다"
       ],
       "table": [
         {
@@ -879,29 +949,6 @@
         "V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)"
       ],
       "flow": "F7"
-    },
-    {
-      "id": "SC-15",
-      "type": "regression",
-      "title": "구역 행이 없는 기존 공연의 응답은 기본 구역값만 더해진다",
-      "given": [
-        "시계는 `T` 다",
-        "공연 L 과 좌석을 저장소로 직접 넣었다: `R` 80000 10석, `VIP` 120000 10석, `S` 80000 5석 (이 순서). posterUrl 은 없고 구역 행도 없다 (V6 이전에 등록된 공연)"
-      ],
-      "when": [
-        "`GET /api/performances/{L}` 을 호출한다"
-      ],
-      "then": [
-        "200 이고 `posterUrl` 키가 없다",
-        "`sections` 는 기존 순서(price 내림차순 → grade 오름차순)대로 `VIP` 120000(stageOrder 1) · `R` 80000(2) · `S` 80000(3) 이다",
-        "각 section 의 `area` 는 자기 grade 이고, 키는 정확히 `grade, price, seatCount, area, stageOrder` 다",
-        "`GET /api/performances` 의 L 항목 키는 정확히 `id, title, venue, startAt, openAt, closeAt, totalSeats, availableSeats, status` 다"
-      ],
-      "table": [],
-      "covers": [
-        "V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)"
-      ],
-      "flow": "F7"
     }
   ],
   "coverage_matrix": [
@@ -930,8 +977,7 @@
       "cell": "posterUrl@F4:string.max+1",
       "state": "covered",
       "by": [
-        "SC-05",
-        "SC-06"
+        "SC-05"
       ]
     },
     {
@@ -1038,8 +1084,7 @@
       "cell": "zones[].area@F4:string.max+1",
       "state": "covered",
       "by": [
-        "SC-08",
-        "SC-06"
+        "SC-08"
       ]
     },
     {
@@ -1089,8 +1134,7 @@
       "cell": "zones[].note@F4:string.max+1",
       "state": "covered",
       "by": [
-        "SC-08",
-        "SC-06"
+        "SC-08"
       ]
     },
     {

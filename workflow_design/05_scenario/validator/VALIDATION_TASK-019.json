@@ -1,0 +1,24 @@
+{
+  "task_id": "TASK-019",
+  "checks": [
+    {"id":"V1","name":"MD ↔ JSON 일치","verdict":"pass","detail":"MD 와 JSON 모두 SC-01~SC-15 의 15건이다. ID, 유형, covers, flow 가 같고, Given/When/Then 문장과 표 행도 같다. 규약표 12행도 일치한다. 입력 경계 칸 39개도 MD 표와 JSON coverage_matrix 가 같다."},
+    {"id":"V2","name":"개수 하한","verdict":"pass","detail":"전체 15건이다. happy 5건(SC-01,02,03,10,11), error 5건(SC-05,07,08,09,13), boundary 3건, regression 2건이다."},
+    {"id":"V3","name":"acceptance_criteria 커버리지","verdict":"pass","detail":"Plan 기준 7건을 직접 대조했다. 기준1→SC-01, 기준2→SC-02·04, 기준3→SC-03·06, 기준4→SC-05·07·08·09, 기준5→SC-10, 기준6→SC-11·12·13, 기준7→SC-14·15. 미커버 기준은 없다. covers 문자열은 Plan 원문과 글자 단위로 같다."},
+    {"id":"V4","name":"flow 대응","verdict":"pass","detail":"사용된 flow F1~F7 이 모두 Plan design.flows[].id 에 있다."},
+    {"id":"V5","name":"Then 관찰 가능성","verdict":"pass","detail":"Then 대부분이 상태 코드, code, 키 집합, 값, 행 수처럼 바로 단언할 수 있는 형태다. 모호한 표현('정상적으로', '올바르게')은 없다. SC-02 의 '기존 정렬이었다면 …였을 것이다' 는 설명문이고, 앞 문장이 순서를 단언한다."},
+    {"id":"V6","name":"When 단일성","verdict":"warn","detail":"SC-01 의 Then 마지막 And 는 '시계를 09:00:00Z 로 옮기고 다시 호출하면' 이라는 두 번째 When 이다. SC-14 는 Then 에서 INSERT(성공 1건, 제약 위반 8건)를 계속 실행한다. 이 행들은 Given 이나 별도 When 이 아니라 Then 에 들어 있다. SC-01 은 2회차 호출을 별도 시나리오로 나누고, SC-14 는 제약 시도를 When 으로 옮기는 편이 낫다."},
+    {"id":"V7","name":"구현 누출","verdict":"warn","detail":"SC-01 의 Then 이 Spring Security 기본 헤더 값을 언급한다. 설명을 위한 괄호이고 단언은 'no-store' 하나다. 규약표 posterUrl 규칙은 'java.net.URI 로 파싱' 이라는 구현 수단을 정본에 적었다. SC-14 는 UNIQUE·CHECK·VARCHAR 같은 스키마 용어를 쓴다. 마이그레이션 시나리오라 불가피하다. 이 셋은 경미하다."},
+    {"id":"V8","name":"입출력 대응","verdict":"pass","detail":"다루는 입력은 모두 Plan inputs 안이다: posterUrl, zones 와 그 하위 필드, sections, now, 기존 데이터. 출력도 모두 Plan outputs 안이다: /api/time, 400 코드 4종, sections 필드, next-opening 200·204, V6. INVALID_TIME_ORDER 는 기존 코드이고 PerformanceExceptionHandler 에 실재한다."},
+    {"id":"V9","name":"중복","verdict":"warn","detail":"SC-13 은 SC-12 a·g 와 SC-11 의 제외 행(P3·P4·P5)이 이미 확인하는 '후보 없음 → 204' 경로를 다시 탄다. 새로 확인하는 것은 저장된 공연이 0건일 때의 빈 본문 정도다. SC-02 와 SC-15 도 '구역 행이 없을 때 기본 구역' 이라는 겹침이 있다. 다만 SC-02 는 등록 경로, SC-15 는 구역 행 없는 조회 경로라 정당화는 된다."},
+    {"id":"V10","name":"회귀 누락","verdict":"pass","detail":"기존 공연 조회와 응답 형태를 바꾸는 태스크다. regression 시나리오가 SC-14(V6 마이그레이션)와 SC-15(구역 행 없는 기존 공연의 응답 키·정렬)로 있다."},
+    {"id":"V11","name":"입력 경계 판정","verdict":"pass","detail":"coverage_matrix 39칸을 전부 확인했다. false_cover, bad_na, plan_gap 에 해당하는 것은 없다. n/a 판정은 없고 전부 covered 다. 각 칸의 by 시나리오가 해당 값을 When 의 표에 쓰고, Then 이 그 경계의 결과를 단언한다. posterUrl 의 empty·blank·max+1·nul·surrogate·normalized·converted 는 SC-05 와 SC-06 의 행이 대응한다. zones 하위 필드(area·note·grades)는 SC-07·08·09 의 행이 모두 있다. openAt/startAt 의 now_eq_boundary 는 SC-12 a·b·f·g 가 맞다. 참고로 area·note 의 string.max+1 에 SC-06 도 by 로 적혔지만 SC-06 은 정확히 상한값이라 max+1 이 아니다. SC-08 이 이미 단독으로 커버하므로 false_cover 는 아니다."},
+    {"id":"V12","name":"목록 밖 경계 제안","verdict":"warn","detail":"사람이 HITL 에서 판단할 후보다. (1) sections[].grade 는 Plan design.inputs 에 있지만 input_fields 에는 없다. 이번 태스크가 '같은 grade 가 여러 행이면 구역 하나' 라는 의미를 새로 얹는 필드다. 다만 'SectionRequest 제약 그대로' 라는 기존 필드라 plan_gap 으로 올리지 않고 여기서 경고한다. (2) area 30자, note 60자, posterUrl 500자 상한을 이모지(서로게이트 쌍) 때문에 코드 유닛이 상한을 넘는 경우로 검증하는 행이 없다. SC-06 g 는 짧은 이모지만 쓴다. Plan 은 UTF-16 코드 유닛 기준이라고 명시한다. (3) posterUrl 에 userinfo 가 있는 URL(https://user@host), 포트, 호스트가 IP 인 경우는 어느 행에도 없다. (4) SC-12 f·g 는 closeAt 이 startAt 보다 뒤인 조합이라 등록 API 가 막는 데이터다. 시나리오가 그 점을 명시하고 있다. (5) 같은 grade 의 두 구역 행이 zones 로 묶일 때(SC-04 + zones 지정) 조합은 없다."}
+  ],
+  "v11_matrix": [],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 4,
+    "summary": "구조, 커버리지(기준 7/7), flow 대응, 입력 경계 39칸은 모두 충족해 fail 은 없다. 경고 4건이다. V6 은 SC-01 의 Then 에 2회차 호출이 있고 SC-14 의 Then 에서 INSERT 를 계속 실행한다. V7 은 구현 용어가 경미하게 섞였다. V9 는 SC-13 이 SC-11·12 와 같은 경로를 탄다. V12 는 sections[].grade 가 input_fields 에서 빠진 점, 이모지 코드 유닛 상한 경계, URL 변형을 사람이 판단해야 한다."
+  }
+}
