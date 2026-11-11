@@ -124,6 +124,10 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0025](../decisions/ADR-0025-bank-transfer-only-with-internal-confirm-api.md)
 - 시간 제한 화면은 기한에 재조회 없이 클라이언트가 전환, 판정은 다음 요청에서 서버 →
   [ADR-0026](../decisions/ADR-0026-client-timer-transition-server-judgment.md)
+- 표시 문자열의 「공백 아님」은 유니코드 공백·NBSP·U+200B 를 공백으로 보는 한 판정 →
+  [ADR-0027](../decisions/ADR-0027-display-string-blank-definition.md)
+- 사용자 입력 URL 은 https, 권한 부분을 직접 나눠 하위 요소마다 판정 →
+  [ADR-0028](../decisions/ADR-0028-user-url-validation-by-authority-parts.md)
 
 ## 7. 알려진 부채
 
