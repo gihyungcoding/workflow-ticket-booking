@@ -1,0 +1,544 @@
+{
+  "task_id": "TASK-022",
+  "source_of_truth": "workflow_design/05_scenario/SCENARIO_TASK-022.md",
+  "conventions_table": [
+    "| 주최자 `O1`·`O2` | `AuthTestHelper.signUp` 으로 역할 `ORGANIZER` 로 가입하고, `login` 으로 얻은 access 토큰을 쓴다. 서로 다른 사용자다 |",
+    "| 관객 `A1` | 같은 방법으로 역할 `AUDIENCE` 로 가입한 사용자 |",
+    "| 기본 등록 요청 `R0` | title `소리풍경 밴드 나이트`, venue `롤링홀`, openAt `T+7d`, closeAt `T+29d`, startAt `T+30d`, sections `R` A~B열 열당 10석 55000 |",
+    "| 기본 수정 요청 `U0` | title `소리풍경 밴드 나이트 앙코르`, venue·시각은 `R0` 과 같다 |",
+    "| 쓰기 경로 3개 | `POST /api/performances`(본문 `R0`), `PUT /api/performances/{id}`(본문 `U0`), `POST /api/performances/{id}/cancel` |",
+    "| 접근 규칙 | `/api/performances/**` 의 `GET` 은 누구나 쓸 수 있다. 그 밖의 메서드는 `ROLE_ORGANIZER` 가 있어야 한다 |",
+    "| 401 본문 | `{\"code\":\"UNAUTHORIZED\",\"message\":…}` — 기존 entry point 와 같다 |",
+    "| 403 본문 | `{\"code\":\"FORBIDDEN_ROLE\",\"message\":\"주최자만 이용할 수 있습니다\"}`, `Content-Type` `application/json` |",
+    "| 404 본문 | `{\"code\":\"PERFORMANCE_NOT_FOUND\",\"message\":\"Performance not found: <요청한 id>\"}` — 남의 공연·소유자 없음·없는 id 가 같다 |",
+    "| 유효한 역할 클레임 | `role` 이 문자열 `\"ORGANIZER\"` 또는 `\"AUDIENCE\"` 와 **정확히** 같아야 한다. 그 밖의 값(누락·null·문자열이 아닌 값·정의 밖 문자열·대소문자 다름)이면 토큰 전체가 무효다. 무효 토큰은 쓰기 경로에서 401 이다 |",
+    "| 응답의 소유자 | 공연 응답 JSON 에 `ownerId` 키가 없다(등록·수정·취소·목록·상세) |",
+    "| CORS 허용 헤더 | preflight 응답의 `Access-Control-Allow-Headers` 는 정확히 `Content-Type, Authorization` 이다 |"
+  ],
+  "scenarios": [
+    {
+      "id": "SC-01",
+      "type": "regression",
+      "title": "V7 은 기존 공연이 있는 PostgreSQL 에 적용되고 소유자를 비워 둔다",
+      "given": [
+        "PostgreSQL 에 V6 까지 적용했다",
+        "기존 공연 1행과 좌석 20행을 넣었다(`seedV5Performance` 관례)",
+        "사용자 1행을 넣었다"
+      ],
+      "when": [
+        "Flyway 를 끝까지 적용한다"
+      ],
+      "then": [
+        "적용에 성공하고 현재 버전은 `7` 이다",
+        "기존 공연의 `owner_id` 는 NULL 이다",
+        "`title`·`venue`·`start_at`·`open_at`·`close_at`·`total_seats`·`available_seats`·`cancelled`·`poster_url` 은 적용 전과 같다",
+        "없는 사용자 id 로 `owner_id` 를 갱신하면 외래 키 위반으로 실패한다",
+        "있는 사용자 id 로 갱신한 뒤 그 사용자 행을 지우면, 그 공연의 `owner_id` 가 NULL 이 된다(공연 행은 남는다)"
+      ],
+      "table": [],
+      "covers": [
+        "마이그레이션 후 기존 `performance` 행의 `owner_id` 가 NULL 이고, 기존 관객 조회 API 응답이 마이그레이션 전과 같다"
+      ],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-02",
+      "type": "regression",
+      "title": "소유자 없는 기존 공연의 관객 응답은 그대로다",
+      "given": [
+        "`ownerId` 를 주지 않는 기존 생성자로 공연 `P0` 을 저장했다(소유자 NULL)"
+      ],
+      "when": [
+        "토큰 없이 `GET /api/performances` 와 `GET /api/performances/{P0}` 을 호출한다"
+      ],
+      "then": [
+        "둘 다 200 이다",
+        "목록 항목과 상세의 키 집합이 이 태스크 전과 같다(`PerformanceBrowseResponseApiTest` 의 기존 키 단언 그대로)",
+        "어느 응답에도 `ownerId` 키가 없다"
+      ],
+      "table": [],
+      "covers": [
+        "마이그레이션 후 기존 `performance` 행의 `owner_id` 가 NULL 이고, 기존 관객 조회 API 응답이 마이그레이션 전과 같다"
+      ],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-03",
+      "type": "happy",
+      "title": "주최자가 등록하면 그 사람이 소유자다",
+      "given": [
+        "공연이 없다"
+      ],
+      "when": [
+        "`O1` 의 토큰을 `Authorization: Bearer <토큰>` 으로 실어 `R0` 으로 `POST /api/performances` 를 호출한다"
+      ],
+      "then": [
+        "201 이다",
+        "응답 본문에 `ownerId` 키가 없다",
+        "트랜잭션 밖에서 응답 id 로 다시 읽은 공연의 `ownerId` 가 `O1` 의 사용자 id 다",
+        "그 공연의 좌석은 20행이다(기존 등록 규칙 그대로)"
+      ],
+      "table": [],
+      "covers": [
+        "주최자 토큰으로 `POST /api/performances` 를 보내면 201 이고, 저장된 행의 `owner_id` 가 그 사용자 id 다 (비트랜잭션 조회로 확인)"
+      ],
+      "flow": "F2"
+    },
+    {
+      "id": "SC-04",
+      "type": "error",
+      "title": "토큰이 없거나 무효면 401, 관객이면 403 이고 DB 는 그대로다",
+      "given": [
+        "`O1` 소유의 공연 `P1` 이 있다(openAt `T+7d`, 취소 안 됨)",
+        "공연 수·좌석 수를 트랜잭션 밖에서 세어 두었다"
+      ],
+      "when": [
+        "쓰기 경로 3개 각각에 아래 표의 `Authorization` 을 실어 보낸다(수정·취소의 `{id}` 는 `P1`)"
+      ],
+      "then": [
+        "상태와 `code` 가 표와 같다",
+        "요청마다 공연 수·좌석 수가 그대로다",
+        "`P1` 의 title 은 `소리풍경 밴드 나이트` 이고 `cancelled` 는 false 다"
+      ],
+      "table": [
+        "| # | Authorization | 기대 |",
+        "|---|---|---|",
+        "| a | 헤더 없음 | 401 `UNAUTHORIZED` |",
+        "| b | 빈 문자열 `\"\"` | 401 `UNAUTHORIZED` |",
+        "| c | `Bearer ` (토큰 없음) | 401 `UNAUTHORIZED` |",
+        "| d | `Bearer <O1 토큰의 서명 한 글자를 바꾼 것>` | 401 `UNAUTHORIZED` |",
+        "| e | `Bearer <A1 토큰>` | 403 `FORBIDDEN_ROLE` (본문은 규약 표 그대로) |",
+        "| f | `Bearer <A1 토큰에서 role 만 ORGANIZER 로 바꾼 것>` (`tamperRole`, 서명 불일치) | 401 `UNAUTHORIZED` |"
+      ],
+      "covers": [
+        "토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다"
+      ],
+      "flow": "F3"
+    },
+    {
+      "id": "SC-05",
+      "type": "error",
+      "title": "역할 클레임이 정확한 값이 아니면 토큰이 무효다",
+      "given": [
+        "공연이 없다",
+        "아래 표의 `role` 로 테스트 비밀(`JWT_SECRET`)로 직접 서명한 access 토큰을 만들었다"
+      ],
+      "when": [
+        "그 토큰으로 `R0` 을 `POST /api/performances` 에 보낸다"
+      ],
+      "then": [
+        "상태와 `code` 가 표와 같다",
+        "201 이 아닌 행에서는 공연 수가 0 그대로다(트랜잭션 밖에서 센다)"
+      ],
+      "table": [
+        "| # | role 클레임 | 기대 |",
+        "|---|---|---|",
+        "| a | `\"ORGANIZER\"` | 201 |",
+        "| b | `\"AUDIENCE\"` | 403 `FORBIDDEN_ROLE` |",
+        "| c | 클레임 없음 | 401 `UNAUTHORIZED` |",
+        "| d | `null` | 401 `UNAUTHORIZED` |",
+        "| e | 숫자 `1` | 401 `UNAUTHORIZED` |",
+        "| f | 배열 `[\"ORGANIZER\"]` | 401 `UNAUTHORIZED` |",
+        "| g | 객체 `{\"name\":\"ORGANIZER\"}` | 401 `UNAUTHORIZED` |",
+        "| h | 불리언 `true` | 401 `UNAUTHORIZED` |",
+        "| i | `\"ADMIN\"` (정의 밖) | 401 `UNAUTHORIZED` |",
+        "| j | `\"organizer\"` (소문자) | 401 `UNAUTHORIZED` |",
+        "| k | `\" ORGANIZER\"` (앞 공백) | 401 `UNAUTHORIZED` |",
+        "| l | `\"\"` | 401 `UNAUTHORIZED` |"
+      ],
+      "covers": [
+        "토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다",
+        "주최자 토큰으로 `POST /api/performances` 를 보내면 201 이고, 저장된 행의 `owner_id` 가 그 사용자 id 다 (비트랜잭션 조회로 확인)"
+      ],
+      "flow": "F2, F3"
+    },
+    {
+      "id": "SC-06",
+      "type": "error",
+      "title": "Authorization 헤더 앞뒤에 붙은 글자는 정상 토큰을 무효로 만든다",
+      "given": [
+        "공연이 없다",
+        "`O1` 의 정상 토큰을 `<t>` 라 한다"
+      ],
+      "when": [
+        "아래 표의 헤더로 `R0` 을 `POST /api/performances` 에 보낸다"
+      ],
+      "then": [
+        "상태가 표와 같다",
+        "401 행에서는 공연 수가 0 그대로다",
+        "이 판정은 기존 `JwtAuthenticationFilter.BEARER` 규칙 그대로다(이 태스크에서 바꾸지 않는다)"
+      ],
+      "table": [
+        "| # | Authorization | 기대 |",
+        "|---|---|---|",
+        "| a | `Bearer <t>` | 201 |",
+        "| b | `bearer <t>` (스킴 소문자, RFC 7235) | 201 |",
+        "| c | `Bearer  <t>` (공백 두 개) | 401 |",
+        "| d | `Bearer <t> ` (뒤 공백) | 401 |",
+        "| e | ` Bearer <t>` (앞 공백) | 401 |",
+        "| f | `<t>` (스킴 없음) | 401 |",
+        "| g | `Bearer <t>~` | 401 |",
+        "| h | `Bearer <t>é` (비 ASCII 꼬리) | 401 |",
+        "| i | `Basic <t>` | 401 |"
+      ],
+      "covers": [
+        "토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다"
+      ],
+      "flow": "F2, F3"
+    },
+    {
+      "id": "SC-07",
+      "type": "error",
+      "title": "남의 공연·소유자 없는 공연·없는 공연은 같은 404 이고 DB 는 그대로다",
+      "given": [
+        "`O2` 소유의 공연 `P2` 가 있다",
+        "소유자가 NULL 인 공연 `P0` 이 있다",
+        "둘 다 openAt `T+7d` 이고 취소되지 않았다",
+        "공연 수와 각 공연의 title·`cancelled` 를 트랜잭션 밖에서 읽어 두었다"
+      ],
+      "when": [
+        "`O1` 의 토큰으로 아래 표의 id 에 수정(`U0`)과 취소를 각각 보낸다"
+      ],
+      "then": [
+        "상태·본문이 표와 같다",
+        "남의 공연·소유자 없는 공연·없는 공연 세 행의 본문은 `message` 에 들어간 id 만 다르다(키 집합과 `code` 가 같다)",
+        "`P2`·`P0` 의 title·`cancelled`·`ownerId` 와 공연 수가 그대로다"
+      ],
+      "table": [
+        "| # | id | 기대 |",
+        "|---|---|---|",
+        "| a | `P2` (남의 공연) | 404 `PERFORMANCE_NOT_FOUND`, message `Performance not found: <P2>` |",
+        "| b | `P0` (소유자 NULL) | 404 `PERFORMANCE_NOT_FOUND`, message `Performance not found: <P0>` |",
+        "| c | `999999` (없음) | 404 `PERFORMANCE_NOT_FOUND`, message `Performance not found: 999999` |",
+        "| d | `0` | 404 `PERFORMANCE_NOT_FOUND` |",
+        "| e | `-1` | 404 `PERFORMANCE_NOT_FOUND` |",
+        "| f | `9223372036854775808` (long 초과) | 400 (기존 경로 타입 불일치 응답) |",
+        "| g | `1.9` | 400 (기존 경로 타입 불일치 응답) |"
+      ],
+      "covers": [
+        "다른 주최자의 공연, 소유자가 NULL 인 공연, 없는 id 에 수정·취소를 보내면 모두 같은 형태의 404 이고 DB 가 바뀌지 않는다"
+      ],
+      "flow": "F4"
+    },
+    {
+      "id": "SC-08",
+      "type": "happy",
+      "title": "자기 공연의 수정·취소는 지금 규칙대로 반영된다",
+      "given": [
+        "`O1` 이 `R0` 으로 등록한 공연 `P1` 이 있다(openAt `T+7d`)"
+      ],
+      "when": [
+        "시계가 `T` 일 때 `O1` 의 토큰으로 `PUT /api/performances/{P1}` 에 `U0` 을 보낸다",
+        "시계를 `T+7d`(openAt 과 같은 시각)로 옮기고 같은 수정을 title `다른 제목` 으로 보낸다",
+        "`O1` 의 토큰으로 `POST /api/performances/{P1}/cancel` 을 보낸다"
+      ],
+      "then": [
+        "200 이고 응답 title 이 `소리풍경 밴드 나이트 앙코르` 다",
+        "트랜잭션 밖에서 다시 읽은 `P1` 의 title 도 같고, `ownerId` 는 `O1` 그대로다",
+        "409 `REGISTRATION_ALREADY_OPEN` 이다",
+        "다시 읽은 title 은 `소리풍경 밴드 나이트 앙코르` 그대로다",
+        "200 이고 응답 `cancelled` 가 true 다",
+        "트랜잭션 밖에서 다시 읽은 `P1` 의 `cancelled` 가 true 다"
+      ],
+      "table": [],
+      "covers": [
+        "자기 공연의 수정·취소는 지금 규칙(수정은 `now < openAt`) 그대로 동작하고 DB 에 반영된다"
+      ],
+      "flow": "F5"
+    },
+    {
+      "id": "SC-09",
+      "type": "happy",
+      "title": "쓰기 키 없이 가입·로그인·소셜 가입 완료가 되고, 가드 환경변수를 켜도 막히지 않는다",
+      "given": [
+        "테스트 컨텍스트에 `WRITE_GUARD_ENABLED=true`, `WRITE_API_KEY=guard-key-0123456789` 를 준다",
+        "그 값이 실제로 들어갔다 — `Environment.getProperty(\"WRITE_GUARD_ENABLED\")` 가 `\"true\"` 다"
+      ],
+      "when": [
+        "`X-Write-Key` 헤더 없이 아래 요청을 차례로 보낸다"
+      ],
+      "then": [
+        "상태가 표와 같다",
+        "어느 응답 본문의 `code` 도 `WRITE_KEY_INVALID`(지금 가드의 거부 코드)가 아니다"
+      ],
+      "table": [
+        "| # | 요청 | 기대 |",
+        "|---|---|---|",
+        "| a | `POST /api/auth/signup` (ORGANIZER) | 201 |",
+        "| b | `POST /api/auth/login` (a 의 계정) | 200, accessToken 있음 |",
+        "| c | `POST /api/auth/social/complete` (유효한 pendingToken, 역할 AUDIENCE) | 201 |",
+        "| d | `POST /api/performances` (b 의 토큰, `R0`) | 201 |"
+      ],
+      "covers": [
+        "`X-Write-Key` 없이 가입·로그인·소셜 가입 완료가 성공한다. `WRITE_GUARD_ENABLED=true` 를 줘도 쓰기 요청이 키 때문에 거부되지 않는다"
+      ],
+      "flow": "F6"
+    },
+    {
+      "id": "SC-10",
+      "type": "regression",
+      "title": "쓰기 가드 코드가 없고 CORS 가 키 헤더를 허용하지 않는다",
+      "given": [],
+      "when": [
+        "`com.example.ticket_booking.config.WriteGuardFilter` 와 `…config.WriteGuardConfig` 를 클래스 이름으로 불러온다",
+        "허용된 Origin 으로 `OPTIONS /api/performances` preflight 를 보낸다"
+      ],
+      "then": [
+        "둘 다 `ClassNotFoundException` 이다",
+        "애플리케이션 컨텍스트에 `writeGuardFilter` 라는 이름의 빈이 없다",
+        "`Access-Control-Allow-Headers` 가 정확히 `Content-Type, Authorization` 이다",
+        "그 값에 `X-Write-Key` 가 없다"
+      ],
+      "table": [],
+      "covers": [
+        "`WriteGuardFilter`·`WriteGuardConfig` 와 그 테스트가 저장소에 없고, CORS 허용 헤더에 `X-Write-Key` 가 없다"
+      ],
+      "flow": "F7"
+    },
+    {
+      "id": "SC-11",
+      "type": "happy",
+      "title": "공연 조회는 토큰 없이도, 무효 토큰이 실려도 열린다",
+      "given": [
+        "시계가 `T` 이고, 공연 `P1`(openAt `T+7d`, 취소 안 됨)이 있다"
+      ],
+      "when": [
+        "아래 세 조회를 `Authorization` 없이 한 번, `Bearer invalid.token.value` 로 한 번 보낸다"
+      ],
+      "then": [
+        "모두 200 이다",
+        "상세 응답 id 가 `P1` 이다",
+        "next-opening 응답 id 도 `P1` 이다"
+      ],
+      "table": [
+        "| 조회 |",
+        "|---|",
+        "| `GET /api/performances` |",
+        "| `GET /api/performances/{P1}` |",
+        "| `GET /api/performances/next-opening` |"
+      ],
+      "covers": [
+        "`GET /api/performances/**` 는 토큰 없이 지금처럼 200 이다"
+      ],
+      "flow": "F8"
+    },
+    {
+      "id": "SC-12",
+      "type": "regression",
+      "title": "기존 오류 응답 회귀 표는 쓰기 행에 주최자 토큰을 실으면 같은 숫자다",
+      "given": [
+        "`PerformanceErrorResponseRegressionTest` 의 표(8행)가 있다",
+        "`GET` 이 아닌 행(DELETE·PATCH·POST text/plain·POST 취소 id 타입 불일치)에만 `O1` 의 토큰을 싣는다"
+      ],
+      "when": [
+        "각 행을 보낸다"
+      ],
+      "then": [
+        "모든 행의 상태가 표의 기대 숫자(400·405·415·404)와 같다",
+        "같은 쓰기 행을 토큰 없이 보내면 401 이다"
+      ],
+      "table": [],
+      "covers": [
+        "`GET /api/performances/**` 는 토큰 없이 지금처럼 200 이다",
+        "토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다"
+      ],
+      "flow": "F3, F8"
+    }
+  ],
+  "coverage_matrix": [
+    {
+      "cell": "Authorization@F2:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "Authorization@F2:required.null",
+      "state": "n/a",
+      "reason": "HTTP 헤더에는 null 값이 없다 — 빈 값(SC-04 b)·스킴만(SC-04 c)이 그 자리를 덮는다"
+    },
+    {
+      "cell": "Authorization@F2:opaque.affix_entry",
+      "state": "covered",
+      "by": [
+        "SC-06"
+      ]
+    },
+    {
+      "cell": "role@F2:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F2:required.null",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F2:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F2:enum.undefined",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F2:enum.each",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "Authorization@F3:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "Authorization@F3:required.null",
+      "state": "n/a",
+      "reason": "HTTP 헤더에는 null 값이 없다 — 빈 값(SC-04 b)·스킴만(SC-04 c)이 그 자리를 덮는다"
+    },
+    {
+      "cell": "Authorization@F3:opaque.affix_entry",
+      "state": "covered",
+      "by": [
+        "SC-06"
+      ]
+    },
+    {
+      "cell": "role@F3:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F3:required.null",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F3:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F3:enum.undefined",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "role@F3:enum.each",
+      "state": "covered",
+      "by": [
+        "SC-05"
+      ]
+    },
+    {
+      "cell": "id@F4:required.missing",
+      "state": "n/a",
+      "reason": "경로 변수 — id 가 없는 경로(PUT /api/performances, POST /api/performances/cancel)는 다른 매핑이라 이 흐름에 오지 않는다. SC-12 회귀 표의 미지원 메서드 405 가 그 경로를 덮는다"
+    },
+    {
+      "cell": "id@F4:required.null",
+      "state": "n/a",
+      "reason": "경로 변수에는 null 이 없다(문자열 'null' 은 타입 불일치 400 — SC-07 f·g 와 같은 경로)"
+    },
+    {
+      "cell": "id@F4:integer.negative",
+      "state": "covered",
+      "by": [
+        "SC-07"
+      ]
+    },
+    {
+      "cell": "id@F4:integer.zero",
+      "state": "covered",
+      "by": [
+        "SC-07"
+      ]
+    },
+    {
+      "cell": "id@F4:integer.max+1",
+      "state": "n/a",
+      "reason": "id 에 업무 상한이 없다 — 타입 상한은 overflow 칸(SC-07 f)이 덮는다"
+    },
+    {
+      "cell": "id@F4:integer.fraction",
+      "state": "covered",
+      "by": [
+        "SC-07"
+      ]
+    },
+    {
+      "cell": "id@F4:integer.overflow",
+      "state": "covered",
+      "by": [
+        "SC-07"
+      ]
+    },
+    {
+      "cell": "id@F5:required.missing",
+      "state": "n/a",
+      "reason": "F5 는 자기 소유의 실재 id 만 쓰는 정상 흐름 — 잘못된 id 는 소유권 검사보다 앞에서 F4 와 같은 경로(404·400)로 끝난다. 그 칸은 id@F4 가 덮는다(SC-07)"
+    },
+    {
+      "cell": "id@F5:required.null",
+      "state": "n/a",
+      "reason": "F5 는 자기 소유의 실재 id 만 쓰는 정상 흐름 — 잘못된 id 는 소유권 검사보다 앞에서 F4 와 같은 경로(404·400)로 끝난다. 그 칸은 id@F4 가 덮는다(SC-07)"
+    },
+    {
+      "cell": "id@F5:integer.negative",
+      "state": "n/a",
+      "reason": "F5 는 자기 소유의 실재 id 만 쓰는 정상 흐름 — 잘못된 id 는 소유권 검사보다 앞에서 F4 와 같은 경로(404·400)로 끝난다. 그 칸은 id@F4 가 덮는다(SC-07)"
+    },
+    {
+      "cell": "id@F5:integer.zero",
+      "state": "n/a",
+      "reason": "F5 는 자기 소유의 실재 id 만 쓰는 정상 흐름 — 잘못된 id 는 소유권 검사보다 앞에서 F4 와 같은 경로(404·400)로 끝난다. 그 칸은 id@F4 가 덮는다(SC-07)"
+    },
+    {
+      "cell": "id@F5:integer.max+1",
+      "state": "n/a",
+      "reason": "F5 는 자기 소유의 실재 id 만 쓰는 정상 흐름 — 잘못된 id 는 소유권 검사보다 앞에서 F4 와 같은 경로(404·400)로 끝난다. 그 칸은 id@F4 가 덮는다(SC-07)"
+    },
+    {
+      "cell": "id@F5:integer.fraction",
+      "state": "n/a",
+      "reason": "F5 는 자기 소유의 실재 id 만 쓰는 정상 흐름 — 잘못된 id 는 소유권 검사보다 앞에서 F4 와 같은 경로(404·400)로 끝난다. 그 칸은 id@F4 가 덮는다(SC-07)"
+    },
+    {
+      "cell": "id@F5:integer.overflow",
+      "state": "n/a",
+      "reason": "F5 는 자기 소유의 실재 id 만 쓰는 정상 흐름 — 잘못된 id 는 소유권 검사보다 앞에서 F4 와 같은 경로(404·400)로 끝난다. 그 칸은 id@F4 가 덮는다(SC-07)"
+    }
+  ],
+  "coverage": {
+    "acceptance_criteria_total": 8,
+    "acceptance_criteria_covered": 8,
+    "uncovered": []
+  },
+  "human_input": {
+    "generate_red_trigger": false
+  }
+}
