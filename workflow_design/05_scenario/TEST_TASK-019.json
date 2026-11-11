@@ -162,7 +162,10 @@
     "note": "승인된 기존 테스트는 고치지 않았다. 기존 8인자 생성자 유지(PLAN unresolved #3). PerformanceSectionSummaryApiTest 는 순서·키를 단언하지 않아 계속 통과(#2 확인)"
   },
   "human_review": {
-    "approved": false,
+    "approved": true,
+    "decision": "APPROVE",
+    "reviewed_at": "2026-11-11",
+    "via": "AskUserQuestion — RETRY_SCENARIO 2/3 뒤 통합 재승인(HITL#1·2)",
     "history": [
       {
         "approved": true,

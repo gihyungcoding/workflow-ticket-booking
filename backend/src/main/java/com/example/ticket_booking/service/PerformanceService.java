@@ -275,14 +275,18 @@ public class PerformanceService {
     }
   }
 
-  /** userinfo 가 있으면 비어 있지 않고, 포트가 있으면 숫자이며, 호스트가 비어 있지 않고 %XX 를 담지 않는다. */
+  /**
+   * userinfo 가 있으면 비어 있지 않고 '@' 를 담지 않으며, 포트가 있으면 ASCII 숫자이고, 호스트가 비어 있지 않고 %XX·':'(IPv6 리터럴 제외)를
+   * 담지 않는다.
+   */
   private static boolean hasValidAuthority(URI uri) {
     String authority = uri.getRawAuthority();
     if (authority == null) {
       return false;
     }
+    // userinfo 는 비어 있지 않고 '@' 를 담지 않는다 — 첫 '@' 와 마지막 '@' 가 같아야 한다
     int userInfoEnd = authority.lastIndexOf('@');
-    if (userInfoEnd == 0) {
+    if (userInfoEnd == 0 || authority.indexOf('@') != userInfoEnd) {
       return false;
     }
     String hostAndPort = authority.substring(userInfoEnd + 1);
@@ -305,10 +309,15 @@ public class PerformanceService {
       host = portStart < 0 ? hostAndPort : hostAndPort.substring(0, portStart);
       port = portStart < 0 ? null : hostAndPort.substring(portStart + 1);
     }
-    if (port != null && (port.isEmpty() || !port.chars().allMatch(Character::isDigit))) {
+    // 포트는 ASCII 숫자만 — Character.isDigit 는 아랍-인도·전각 숫자도 받는다
+    if (port != null && (port.isEmpty() || !port.chars().allMatch(c -> c >= '0' && c <= '9'))) {
       return false;
     }
-    return !host.isEmpty() && host.indexOf('%') < 0;
+    if (host.isEmpty() || host.indexOf('%') >= 0) {
+      return false;
+    }
+    // IPv6 리터럴이 아닌 호스트에 ':' 가 남았으면 포트 구분자가 둘 이상이었다
+    return host.startsWith("[") || host.indexOf(':') < 0;
   }
 
   private record ZonePlacement(String grade, String area, String note, int stageOrder) {}
