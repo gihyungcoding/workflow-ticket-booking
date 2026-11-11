@@ -27,8 +27,8 @@
 | `S0` (등록 순서) | `2층` C열 10석 77000 · `F1` A열 10석 150000 · `1층` B열 10석 99000 |
 | `S1` (등록 순서) | `2층` C열 10석 77000 · `F2` B열 10석 120000 · `F1` A열 10석 150000 · `1층` D열 10석 99000 |
 | 서버 시각 응답 | 200 `{"now": "<ISO-8601 UTC, Z 로 끝남>"}`, 헤더 `Cache-Control` 값이 정확히 `no-store` |
-| posterUrl 규칙 | 스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법을 따르되 호스트·경로의 비 ASCII 글자는 받는다). 호스트는 권한 부분에서 userinfo(`…@`)와 포트(`:…`)를 뗀 것이다 — 밑줄·비 ASCII 글자 호스트는 받는다(경로의 비 ASCII 와 같게). 호스트에 `%XX` 가 있거나, `@` 앞 userinfo 가 비었거나, `:` 뒤 포트가 비었으면 거부한다. IPv6(`[…]`)·userinfo·포트가 갖춰진 주소는 받는다. 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다 |
-| 구역 문자열 | `area` 는 필수, 공백 아님, 30자 이하. `note` 는 선택이지만 주면 공백이 아니고 60자 이하. 둘 다 제어문자(`\p{Cc}`)·짝 없는 서로게이트를 거부한다(ADR-0019). 변환 없이 저장한다 |
+| posterUrl 규칙 | 스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법을 따르되 호스트·경로의 비 ASCII 글자는 받는다). 호스트는 권한 부분에서 userinfo(`…@`)와 포트(`:…`)를 뗀 것이다 — 밑줄·비 ASCII 글자 호스트는 받는다(경로의 비 ASCII 와 같게). 호스트에 `%XX` 나 `:` 가 있거나(IPv6 리터럴 `[…]` 은 제외), `@` 앞 userinfo 가 비었거나 userinfo 안에 `@` 가 또 있거나, `:` 뒤 포트가 비었거나 ASCII 숫자(`0`~`9`)가 아닌 글자를 담으면 거부한다. IPv6(`[…]`)·userinfo·포트가 갖춰진 주소는 받는다. 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다 |
+| 구역 문자열 | `area` 는 필수, 공백 아님, 30자 이하. `note` 는 선택이지만 주면 공백이 아니고 60자 이하. 「공백 아님」은 공백으로 보는 글자 — 유니코드 공백(분류 Zs·Zl·Zp, 탭·줄바꿈, NBSP U+00A0, 전각 공백 U+3000 포함)과 제로폭 공백 U+200B — 가 아닌 글자가 하나 이상 있다는 뜻이고, area·note 가 같은 판정을 쓴다. 둘 다 제어문자(`\p{Cc}`)·짝 없는 서로게이트를 거부한다(ADR-0019). 변환 없이 저장한다 |
 | grades | 필수, 빈 배열 아님, 원소는 공백 아님. sections 의 grade 와 **정확히 같은 문자열**이어야 한다(대소문자·공백 구분) |
 | stageOrder | `zones` 를 펼친 순서(묶음 → 묶음 안 grades)로 1, 2, … 를 매기고, `zones` 에 없는 등급이 sections 에 처음 나온 순서대로 그 뒤에 붙는다. 그렇게 붙은 등급은 `area` = 등급 이름이고 `areaNote` 는 없다. `zones` 가 없거나 null 이거나 `[]` 이면 모든 등급이 이렇게 된다 |
 | 상세 sections 정렬 | 구역 행이 있으면 `stageOrder` 오름차순이고, 같은 stageOrder 안에서는 price 내림차순이다. 구역 행이 없는 기존 공연은 기존 순서(price 내림차순, grade 오름차순)를 그대로 두고 그 순서로 stageOrder 1..n 을 매긴다 |
@@ -132,6 +132,11 @@ flow: F2
 | r | `https://:8443/a.jpg` | 호스트 없이 포트만 |
 | s | `https://cdn.example.com:abc/a.jpg` | 숫자가 아닌 포트 |
 | t | `https://[::1/a.jpg` | 닫히지 않은 IPv6 |
+| u | `https://a:1:2/a.jpg` | 호스트에 `:` 여럿 |
+| v | `https://:80:90/a.jpg` | 호스트가 `:` 로 시작, 포트 둘 |
+| w | `https://cdn.example.com:٨٠/a.jpg` | 포트가 아랍-인도 숫자 |
+| x | `https://cdn.example.com:８０/a.jpg` | 포트가 전각 숫자 |
+| y | `https://a@b@cdn.example.com/a.jpg` | userinfo 안에 `@` |
 
 covers: `posterUrl` 이 `http://`·상대 경로·501자면 400 `INVALID_POSTER_URL`, `zones` 에 없는 등급이면 400 `ZONE_GRADE_UNKNOWN`, 중복 등급이면 400 `ZONE_GRADE_DUPLICATED` 이고 공연·좌석·구역 행이 생기지 않는다
 flow: F4
@@ -159,6 +164,7 @@ flow: F4
 | k | posterUrl | `https://포스터.example.com/a.jpg` | 비 ASCII 호스트 |
 | l | posterUrl | `https://[::1]:8443/a.jpg` | IPv6 호스트 + 포트 |
 | m | posterUrl | `https://user@cdn.example.com:8443/a.jpg` | userinfo + 포트 |
+| n | area · note | U+00A0 + `플로어` · `무대` + U+3000 + `앞` | 공백 글자가 섞여도 다른 글자가 있으면 받고, 그대로 저장한다 |
 
 covers: `zones` 를 주고 등록하면 상세 `sections` 가 `zones` 를 펼친 순서의 `stageOrder` 로 정렬되고 `area`·`areaNote` 를 갖는다. `zones` 에 없는 등급은 그 뒤에 붙는다
 flow: F3
@@ -202,12 +208,20 @@ flow: F4
 | c | `[{area: null}]` | area null |
 | d | `[{area: ""}]` | area 빈 값 |
 | e | `[{area: "   "}]` | area 공백만 |
+| e2 | `[{area: U+3000}]` | area 전각 공백만 |
+| e3 | `[{area: U+00A0 × 2}]` | area NBSP 만 |
+| e4 | `[{area: U+200B}]` | area 제로폭 공백만 |
 | f | `[{area: "가" × 31}]` | area 최대 + 1 |
 | f2 | `[{area: "🎤" × 15 + "가"}]` (16 코드포인트, 31 코드 유닛) | area 최대 + 1 — 코드 유닛으로 센다 |
 | g | `[{area: "플로" + U+0000 + "어"}]` | area NUL |
 | h | `[{area: "플로" + U+D800}]` | area 짝 없는 서로게이트 |
 | i | `[{note: ""}]` | note 빈 값 |
 | j | `[{note: "   "}]` | note 공백만 |
+| j2 | `[{note: U+3000}]` | note 전각 공백만 |
+| j3 | `[{note: U+2003}]` | note EM SPACE 만 |
+| j4 | `[{note: U+2028}]` | note 줄 구분자만 |
+| j5 | `[{note: U+00A0}]` | note NBSP 만 |
+| j6 | `[{note: U+200B + " "}]` | note 제로폭 공백 + 공백 |
 | k | `[{note: "나" × 61}]` | note 최대 + 1 |
 | k2 | `[{note: "🎤" × 30 + "나"}]` (61 코드 유닛) | note 최대 + 1 — 코드 유닛으로 센다 |
 | l | `[{note: "무대" + U+0000}]` | note NUL |

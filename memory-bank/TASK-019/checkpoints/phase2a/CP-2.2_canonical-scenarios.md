@@ -32,9 +32,14 @@ decisions:
   - decision: "RETRY_SCENARIO(Phase 3 자체 리뷰 RC-1) — posterUrl 호스트 규칙을 '권한 부분에서 userinfo·포트를 뗀 것' 으로 정의, SC-05 o~t · SC-06 j~m 추가. 2회차 경고 반영: V5 SC-06 Then 에 'note 를 보내지 않으면 areaNote 키 없음', V6 SC-16 When 문구, V12(1) 포트만·숫자 아닌 포트·닫히지 않은 IPv6 행, V12(3) 규칙 문구, merged 행 수. 보류: V12(1) 범위 밖 포트(:99999 — URI 가 받는다, 새 규칙 만들지 않음), V12(2)(4) userinfo·경로의 %XX·#frag 는 받는다, V9·V7·(5)(6)(7) 1회차와 같음"
     rationale: "사용자 결정 '관대하게'(2026-11-11)"
 
+  - decision: "RETRY_SCENARIO 2/3(VERIFY 1회차 RC-1·RC-2) — 호스트 ':'·userinfo '@'·ASCII 아닌 포트 숫자 거부, '공백 아님' 을 유니코드 공백+NBSP+U+200B 로 정의(area·note 같은 판정). SC-05 u~y, SC-08 e2~e4·j2~j6, SC-06 n. 3회차 경고 보류: V12(1) grades 원소의 NBSP·U+200B — sections 에 같은 등급이 없으면 ZONE_GRADE_UNKNOWN 으로 거부되므로 새 규칙 없음, V12(2)~(8)·V5·V7·V9 는 이전 회차와 같음"
+    rationale: "사용자 결정 2026-11-11 (HITL#3)"
+
 attempts:
   - round: 1
     result: "PASS — fail 0, warn 4 (V6·V7·V9·V12)"
   - round: 2
     result: "PASS — fail 0, warn 6 (V5·V7·V9·V12·부기) — RETRY_SCENARIO 재검증"
+  - round: 3
+    result: "PASS — fail 0, warn 6 — RETRY_SCENARIO 2/3 재검증"
 ---

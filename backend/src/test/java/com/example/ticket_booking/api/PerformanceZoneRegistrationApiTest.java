@@ -403,6 +403,11 @@ class PerformanceZoneRegistrationApiTest {
     rows.put("r 호스트 없이 포트만", "https://:8443/a.jpg");
     rows.put("s 숫자가 아닌 포트", "https://cdn.example.com:abc/a.jpg");
     rows.put("t 닫히지 않은 IPv6", "https://[::1/a.jpg");
+    rows.put("u 호스트에 콜론 여럿", "https://a:1:2/a.jpg");
+    rows.put("v 콜론으로 시작하는 호스트와 포트 둘", "https://:80:90/a.jpg");
+    rows.put("w 아랍-인도 숫자 포트", "https://cdn.example.com:\u0668\u0660/a.jpg");
+    rows.put("x 전각 숫자 포트", "https://cdn.example.com:\uFF18\uFF10/a.jpg");
+    rows.put("y userinfo 안의 @", "https://a@b@cdn.example.com/a.jpg");
 
     SoftAssertions softly = new SoftAssertions();
     softly.assertThat(rows.get("d 501자")).as("d 길이").hasSize(501);
@@ -443,7 +448,8 @@ class PerformanceZoneRegistrationApiTest {
             new Row("j 호스트 밑줄", "https://cdn_1.example.com/a.jpg", null, null),
             new Row("k 비 ASCII 호스트", "https://포스터.example.com/a.jpg", null, null),
             new Row("l IPv6 + 포트", "https://[::1]:8443/a.jpg", null, null),
-            new Row("m userinfo + 포트", "https://user@cdn.example.com:8443/a.jpg", null, null));
+            new Row("m userinfo + 포트", "https://user@cdn.example.com:8443/a.jpg", null, null),
+            new Row("n 공백 글자가 섞인 area·note", null, "\u00A0플로어", "무대\u3000앞"));
 
     SoftAssertions softly = new SoftAssertions();
     softly.assertThat(rows.get(0).posterUrl()).as("a 길이").hasSize(500);
@@ -566,12 +572,20 @@ class PerformanceZoneRegistrationApiTest {
     rows.put("c area null", List.of(zoneWith("area", null)));
     rows.put("d area 빈 값", List.of(zoneWith("area", "")));
     rows.put("e area 공백만", List.of(zoneWith("area", "   ")));
+    rows.put("e2 area 전각 공백만", List.of(zoneWith("area", "\u3000")));
+    rows.put("e3 area NBSP 만", List.of(zoneWith("area", "\u00A0\u00A0")));
+    rows.put("e4 area 제로폭 공백만", List.of(zoneWith("area", "\u200B")));
     rows.put("f area 31자", List.of(zoneWith("area", "가".repeat(31))));
     rows.put("f2 area 이모지 31 코드 유닛", List.of(zoneWith("area", "🎤".repeat(15) + "가")));
     rows.put("g area NUL", List.of(zoneWith("area", "플로\u0000어")));
     rows.put("h area 서로게이트", List.of(zoneWith("area", "플로\uD800")));
     rows.put("i note 빈 값", List.of(zoneWith("note", "")));
     rows.put("j note 공백만", List.of(zoneWith("note", "   ")));
+    rows.put("j2 note 전각 공백만", List.of(zoneWith("note", "\u3000")));
+    rows.put("j3 note EM SPACE 만", List.of(zoneWith("note", "\u2003")));
+    rows.put("j4 note 줄 구분자만", List.of(zoneWith("note", "\u2028")));
+    rows.put("j5 note NBSP 만", List.of(zoneWith("note", "\u00A0")));
+    rows.put("j6 note 제로폭 공백과 공백", List.of(zoneWith("note", "\u200B ")));
     rows.put("k note 61자", List.of(zoneWith("note", "나".repeat(61))));
     rows.put("k2 note 이모지 61 코드 유닛", List.of(zoneWith("note", "🎤".repeat(30) + "나")));
     rows.put("l note NUL", List.of(zoneWith("note", "무대\u0000")));

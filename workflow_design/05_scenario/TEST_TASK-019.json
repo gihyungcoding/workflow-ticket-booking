@@ -44,7 +44,8 @@
       "test_function": "test_sc05_포스터_주소가_https_절대_URL_이_아니면_INVALID_POSTER_URL",
       "status": "red",
       "failure": "14행 모두 201 — posterUrl 을 모르는 필드로 무시",
-      "failure_retry": "p 빈 userinfo · q 빈 포트 — 201(통과시킴). o·r·s·t 는 기존 구현이 이미 거부"
+      "failure_retry": "p 빈 userinfo · q 빈 포트 — 201(통과시킴). o·r·s·t 는 기존 구현이 이미 거부",
+      "failure_retry3": "u·v·w·x·y — 201(통과시킴)"
     },
     {
       "scenario_id": "SC-06",
@@ -52,7 +53,8 @@
       "test_function": "test_sc06_상한_안의_값과_표기_변형은_받은_그대로_저장된다",
       "status": "red",
       "failure": "posterUrl·area·areaNote null",
-      "failure_retry": "j 호스트 밑줄 · k 비 ASCII 호스트 — 400(거부함). l·m 은 이미 통과"
+      "failure_retry": "j 호스트 밑줄 · k 비 ASCII 호스트 — 400(거부함). l·m 은 이미 통과",
+      "failure_retry3": "n 은 이미 통과(공백 글자가 섞인 값은 지금도 받는다)"
     },
     {
       "scenario_id": "SC-07",
@@ -66,7 +68,8 @@
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
       "test_function": "test_sc08_구역_원소의_형태가_틀리면_INVALID_REQUEST",
       "status": "red",
-      "failure": "20행 모두 201 — zones 무시"
+      "failure": "20행 모두 201 — zones 무시",
+      "failure_retry3": "e3·e4·j2·j3·j4·j5·j6 — 201. e2(U+3000 area)는 기존 @NotBlank 가 이미 거부"
     },
     {
       "scenario_id": "SC-09",
@@ -159,24 +162,32 @@
     "note": "승인된 기존 테스트는 고치지 않았다. 기존 8인자 생성자 유지(PLAN unresolved #3). PerformanceSectionSummaryApiTest 는 순서·키를 단언하지 않아 계속 통과(#2 확인)"
   },
   "human_review": {
-    "approved": true,
-    "decision": "APPROVE",
-    "reviewed_at": "2026-11-11",
-    "via": "AskUserQuestion — RETRY_SCENARIO 뒤 통합 재승인(HITL#1·2)",
+    "approved": false,
     "history": [
       {
         "approved": true,
         "decision": "APPROVE",
         "reviewed_at": "2026-11-11",
         "via": "AskUserQuestion — 1차 통합(HITL#1·2)"
+      },
+      {
+        "approved": true,
+        "decision": "APPROVE",
+        "reviewed_at": "2026-11-11",
+        "via": "AskUserQuestion — RETRY_SCENARIO 뒤 통합 재승인(HITL#1·2)"
       }
     ]
   },
   "red_retry": {
     "reason": "RETRY_SCENARIO — Phase 3 자체 리뷰 RC-1(posterUrl 호스트 판정), 사용자 결정 '관대하게'",
-    "attempt": 2,
+    "attempt": 3,
     "command": "./gradlew test --tests '*PerformanceZoneRegistrationApiTest'",
     "result": "8건 중 2건 실패(SC-05·SC-06) — 새 행 p·q·j·k 만 실패",
-    "mutation_check": "구현이 이미 있어 변이 대신 새 행이 현재 구현에서 실패하는 것으로 Red 를 관찰(RC-1 변종과 일치). 실패하지 않은 새 행(o·r·s·t·l·m)은 규칙상 지금도 맞는 행"
+    "mutation_check": "구현이 이미 있어 변이 대신 새 행이 현재 구현에서 실패하는 것으로 Red 를 관찰(RC-1 변종과 일치). 실패하지 않은 새 행(o·r·s·t·l·m)은 규칙상 지금도 맞는 행",
+    "round3": {
+      "reason": "RETRY_SCENARIO 2/3 — VERIFY 1회차 FAIL RC-1·RC-2",
+      "command": "./gradlew test --tests '*PerformanceZoneRegistrationApiTest'",
+      "result": "8건 중 2건 실패(SC-05·SC-08) — 새 거부 행 12개 중 11개 실패, e2 는 이미 맞음"
+    }
   }
 }
