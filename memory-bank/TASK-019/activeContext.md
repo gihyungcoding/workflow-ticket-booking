@@ -14,6 +14,11 @@ target_repo: "."
 branch: "feature/task-019-server-time-poster-zones"
 
 report: "https://claude.ai/artifact/GhQNn2cLTvimAWSKrSjYJ1"
+pull_request:
+  number: 39
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/39"
+  base: develop
+  opened_at: 2026-11-11
 
 last_checkpoint: "CP-5.2"
 source: "docs/product/features/booking-ux-02-browse.md (Task A)"
@@ -32,7 +37,7 @@ TASK-019 완료 — 회고 작성, 승인 대기(/wf-retro).
 
 ## 다음 한 걸음
 
-/wf-ship 으로 PR — 머지는 사람이. 회고 승인은 /wf-retro.
+PR #39 머지 대기 — 머지는 사람이. 회고 승인은 /wf-retro.
 
 ## 알아둬야 할 것
 
