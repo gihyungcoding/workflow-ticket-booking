@@ -1,0 +1,30 @@
+{
+  "task_id": "TASK-022",
+  "checks": [
+    {"id":"V1","name":"MD ↔ JSON 일치","verdict":"pass","detail":"MD 와 JSON 모두 SC-01~SC-12 의 12건이다. ID, type, flow, covers, 표 행, GWT 문장이 일치한다. 단 SC-08 은 JSON 에서 When ①②③ 이 한 배열에 평평하게 들어가 Then 과의 짝이 사라졌다(구조 손실이고 문장은 같다). SC-10 의 'git ls-files 는 Phase 4 확인' 주석은 JSON 에 없다."},
+    {"id":"V2","name":"개수 하한","verdict":"pass","detail":"전체 12건이다. happy 는 SC-03, 08, 09, 11 이고 error 는 SC-04, 05, 06, 07 이며 regression 은 SC-01, 02, 10, 12 다."},
+    {"id":"V3","name":"acceptance_criteria 커버리지","verdict":"pass","detail":"기준 8건을 직접 대조했다. 기준1→SC-01·02, 기준2→SC-03·05, 기준3→SC-04·05·06·12, 기준4→SC-07, 기준5→SC-08, 기준6→SC-09, 기준7→SC-10, 기준8→SC-11·12. 모두 대응한다."},
+    {"id":"V4","name":"flow 대응","verdict":"pass","detail":"사용된 flow F1~F8 이 모두 Plan design.flows 에 있다. SC-05·06 의 'F2, F3' 와 SC-12 의 'F3, F8' 도 실재한다."},
+    {"id":"V5","name":"Then 관찰 가능성","verdict":"warn","detail":"SC-07 f·g 의 '400 (기존 경로 타입 불일치 응답)' 은 어떤 code·본문인지 정하지 않아 그대로 단언으로 옮길 수 없다. SC-12 의 'PerformanceErrorResponseRegressionTest 표(8행)' 는 외부 테스트 파일을 참조하는 간접 단언이다. SC-01 의 '적용 전과 같다' 는 적용 전 값을 어떻게 읽어 두는지 Given 에 없다."},
+    {"id":"V6","name":"When 단일성","verdict":"warn","detail":"SC-08 은 When ①(수정)·②(시계 이동 후 재수정)·③(취소)의 세 개로, 한 시나리오에 When 이 여럿이다. SC-10 도 When ①(클래스 로드)과 ②(preflight)로 서로 무관한 두 동작이다. 각각 시나리오를 나누는 것이 맞다."},
+    {"id":"V7","name":"구현 누출","verdict":"warn","detail":"SC-06 의 Then 에 '기존 JwtAuthenticationFilter.BEARER 규칙 그대로' 가 있어 클래스·상수명이 Then 에 샌다. SC-04 f 에 헬퍼명 `tamperRole`, SC-10 에 클래스 FQCN·빈 이름 `writeGuardFilter` 가 있다. SC-10 은 삭제 검증이라 불가피한 면이 있으나 관찰 가능한 형태(예: X-Write-Key 없이 쓰기 성공)로 충분히 덮이는지 따져 볼 만하다."},
+    {"id":"V8","name":"입출력 대응","verdict":"warn","detail":"SC-09 c 의 social/complete(pendingToken), SC-05 의 sub·typ·exp 클레임 설정은 Plan inputs 에 pendingToken·typ·exp 가 없다. 입력 표가 불완전하다. SC-07 f·g 의 400 은 Plan outputs 에 없는 400 응답이다(Plan 은 기존 회귀 표가 덮는다고만 언급)."},
+    {"id":"V9","name":"중복","verdict":"warn","detail":"SC-05 b(AUDIENCE→403)는 SC-04 e 와 같은 경로(관객→403)다. SC-05 a(ORGANIZER→201)는 SC-03·SC-06 a 와 같은 정상 경로다. SC-09 d 도 SC-03 과 같은 등록 경로다. SC-06 a·b 는 서로 다른 입력이긴 하나 정상 경로다."},
+    {"id":"V10","name":"회귀 누락","verdict":"pass","detail":"기존 동작을 바꾸는 태스크이고 regression 이 SC-01, 02, 10, 12 로 있다. 기존 승인 테스트 변경 표도 있다."},
+    {"id":"V11","name":"입력 경계 판정","verdict":"fail","detail":"affix_entry 두 칸이 false_cover 이고, input_fields 에서 plan_gap 이 세 건 나왔다(v11_matrix 참조). 그 밖의 칸(role 의 required·json_field·enum, id@F4 의 integer, 나머지 n/a)은 SC-05 와 SC-07 의 행이 값과 단언을 갖고 있어 적절하다고 판정했다."},
+    {"id":"V12","name":"목록 밖 경계 제안","verdict":"warn","detail":"(1) typ=refresh 토큰이나 만료된 access 토큰으로 쓰기 경로를 호출하는 경우는 SC-05 가 typ 을 access 로 고정해서 덮이지 않는다. 기대는 401 이다. (2) 타 소유자·소유자 NULL 공연에 유효하지 않은 본문을 PUT 하면 400 과 404 중 무엇이 먼저인지(소유 여부 노출) 정해지지 않았다. (3) AUDIENCE 토큰으로 DELETE·PATCH 를 보내면 403 인지 405 인지 정해지지 않았다. SC-12 는 주최자 토큰만 다룬다. (4) 취소된 공연을 주최자가 재취소하는 경우는 TASK-023 으로 미뤄 두었고 이 태스크에서 현재 동작이 단언되지 않는다. (5) 사용자 삭제 후 SET NULL 이 된 공연을 다른 주최자가 수정하는 경우는 SC-07 b 와 같은 경로다."}
+  ],
+  "v11_matrix": [
+    {"cell":"Authorization@F2:opaque.affix_entry","kind":"false_cover","detail":"by=SC-06 이다. 이 칸은 '=·~·공백·LF·NUL·서로게이트·비 ASCII' 를 실제 입구로 넣는 것을 요구한다. SC-06 은 공백(c·d·e), ~(g), 비 ASCII(h)만 보낸다. '=' 꼬리, LF, NUL, 짝 없는 서로게이트 행이 없다. 이 값들이 JwtTokenFormatTest·TokenFormatApiTest 로 이미 덮인다면 그 근거를 인용해 n/a 로 두거나, 행을 추가해야 한다."},
+    {"cell":"Authorization@F3:opaque.affix_entry","kind":"false_cover","detail":"F2 와 같다. SC-06 에는 =·LF·NUL·서로게이트 행이 없다."},
+    {"field":"sub","kind":"plan_gap","missing_field":"sub","detail":"design.inputs 에 sub(long, 토큰 클레임)가 있는데 input_fields 에 없다. 외부가 적는 정수 클레임이라 integer_notation 4칸(numeric_string·integral_fraction·exponent·type_range)과 required 가 대상이다. 'verifyAccessToken 규칙 그대로' 라면 기존 테스트 인용으로 n/a 처리할 칸이라도 PLAN 표에는 올라야 한다. 이번에 sub 로 principal 을 만들고 owner_id 에 저장하는 경로가 새로 생겼다."},
+    {"field":"WRITE_GUARD_ENABLED / WRITE_API_KEY","kind":"plan_gap","missing_field":"WRITE_GUARD_ENABLED / WRITE_API_KEY","detail":"design.inputs 에 env 로 올라 있고 SC-09 가 true 값을 실제로 준다. input_fields 에 없다. config 종류(unset·empty·blank·case·notation 등)는 '더 이상 읽지 않는다' 는 사유의 n/a 로 풀 수 있으나 칸 자체가 표에 있어야 한다."},
+    {"field":"role","kind":"plan_gap","missing_kinds":["string"],"detail":"role 은 문자열 클레임인데 SC-05 가 빈 문자열(l)·앞 공백(k)을 쓴다. PLAN 은 role 에 string 종류(empty·blank·unicode_blank 등)를 두지 않았다. 시나리오가 PLAN 이 정하지 않은 경계를 쓰고 있다. 사유를 두고 n/a 로 둘지 PLAN 에 넣을지 정해야 한다."}
+  ],
+  "overall": {
+    "pass": false,
+    "fail_count": 1,
+    "warn_count": 7,
+    "summary": "V1~V4 는 통과했다(12건, 기준 8건 모두 대응). V11 이 fail 이다. Authorization@F2·F3 의 affix_entry 칸이 SC-06 에 =·LF·NUL·서로게이트 행이 없어 false_cover 다. PLAN input_fields 에서는 sub 와 WRITE_GUARD 환경변수 필드, role 의 string 종류가 빠져 plan_gap 이다. PLAN 을 한 번 고치고 새 칸을 채우면 된다. V6(SC-08 과 SC-10 의 When 복수), V7(BEARER·tamperRole 누출), V5, V8, V9, V12 는 warn 이고 HITL 에서 판단할 사항이다."
+  }
+}
