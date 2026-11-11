@@ -1,8 +1,8 @@
 ---
 task_id: TASK-019
 title: "기준 시각·포스터·구역 위치·머리글 후보 API"
-phase: "4"
-phase_name: "Phase 4 - Verify"
+phase: "5"
+phase_name: "Phase 5 - Reflect"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -25,11 +25,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-RC-1·RC-2 수정(e49ca08), 180/180. Phase 4 2회차 진입.
+Phase 4 2회차 WARN → 예외 승인(verified_commit c4f7a72). Phase 5 진입.
 
 ## 다음 한 걸음
 
-wf-verify 2회차 — 이전 root_causes 를 넘기고 수정 커밋(f7fc060...HEAD)을 반드시 리뷰.
+wf-reflect — KPT·규칙 개선안 → /wf-ship.
 
 ## 알아둬야 할 것
 

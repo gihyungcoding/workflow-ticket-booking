@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-11T00:00:00Z
-summary: "VERIFY 2회차 WARN — 180/180(단독 재실행)·spotless 0·아키텍처 error 0 · 리뷰 [correctness] 0. RC-1·RC-2 해소, 보이지 않는 서식 문자는 accepted_risk(ADR-0019). HITL#3 대기."
+summary: "VERIFY 2회차 WARN — 180/180(단독 재실행)·spotless 0·아키텍처 error 0 · 리뷰 [correctness] 0. RC-1·RC-2 해소, 보이지 않는 서식 문자는 accepted_risk(ADR-0019). HITL#3 예외 승인."
 
 next_steps:
-  - "HITL#3 2회차 — WARN 이라 승인·예외 승인 가능"
+  - "Phase 5 — wf-reflect (standard: 완료 리포트 Artifact)"
 
 decisions:
   - decision: "나머지 검사를 끝까지 돌렸다 — 아키텍처·산문 대조·보안·회귀"
