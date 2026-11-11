@@ -3,12 +3,15 @@ package com.example.ticket_booking.api;
 import com.example.ticket_booking.api.dto.ErrorResponse;
 import com.example.ticket_booking.service.DuplicateSeatRangeException;
 import com.example.ticket_booking.service.EmptySectionsException;
+import com.example.ticket_booking.service.InvalidPosterUrlException;
 import com.example.ticket_booking.service.InvalidRequestException;
 import com.example.ticket_booking.service.InvalidSectionException;
 import com.example.ticket_booking.service.InvalidTimeOrderException;
 import com.example.ticket_booking.service.PerformanceNotFoundException;
 import com.example.ticket_booking.service.RegistrationAlreadyOpenException;
 import com.example.ticket_booking.service.SeatLimitExceededException;
+import com.example.ticket_booking.service.ZoneGradeDuplicatedException;
+import com.example.ticket_booking.service.ZoneGradeUnknownException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,6 +75,25 @@ public class PerformanceExceptionHandler {
   public ResponseEntity<ErrorResponse> handleInvalidSection(InvalidSectionException exception) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(new ErrorResponse("INVALID_SECTION", exception.getMessage()));
+  }
+
+  @ExceptionHandler(InvalidPosterUrlException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidPosterUrl(InvalidPosterUrlException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new ErrorResponse("INVALID_POSTER_URL", exception.getMessage()));
+  }
+
+  @ExceptionHandler(ZoneGradeUnknownException.class)
+  public ResponseEntity<ErrorResponse> handleZoneGradeUnknown(ZoneGradeUnknownException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new ErrorResponse("ZONE_GRADE_UNKNOWN", exception.getMessage()));
+  }
+
+  @ExceptionHandler(ZoneGradeDuplicatedException.class)
+  public ResponseEntity<ErrorResponse> handleZoneGradeDuplicated(
+      ZoneGradeDuplicatedException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new ErrorResponse("ZONE_GRADE_DUPLICATED", exception.getMessage()));
   }
 
   /**

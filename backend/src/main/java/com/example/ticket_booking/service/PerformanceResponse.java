@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * sections는 단일 공연 상세 조회(getPerformance)에서만 채워진다 — 목록/등록/수정/취소 응답은 null로 두어 JSON에서 키 자체가
- * 생략된다(TASK-008, acceptance_criteria 3).
+ * 생략된다(TASK-008, acceptance_criteria 3). posterUrl 도 없으면 키가 생략된다(TASK-019).
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record PerformanceResponse(
@@ -20,4 +20,5 @@ public record PerformanceResponse(
     Integer totalSeats,
     Integer availableSeats,
     PerformanceStatus status,
+    String posterUrl,
     List<SectionSummaryResponse> sections) {}

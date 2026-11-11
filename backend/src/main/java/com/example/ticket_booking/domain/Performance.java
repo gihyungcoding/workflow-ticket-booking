@@ -57,6 +57,9 @@ public class Performance {
   @Column(nullable = false)
   private Boolean cancelled;
 
+  @Column(name = "poster_url", length = 500)
+  private String posterUrl;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -72,14 +75,7 @@ public class Performance {
       Integer totalSeats,
       Integer availableSeats,
       Boolean cancelled) {
-    this.title = title;
-    this.venue = venue;
-    this.startAt = startAt;
-    this.openAt = openAt;
-    this.closeAt = closeAt;
-    this.totalSeats = totalSeats;
-    this.availableSeats = availableSeats;
-    this.cancelled = cancelled;
+    this(title, venue, startAt, openAt, closeAt, totalSeats, availableSeats, cancelled, null);
   }
 
   public Performance(
@@ -92,7 +88,15 @@ public class Performance {
       Integer availableSeats,
       Boolean cancelled,
       String posterUrl) {
-    throw new UnsupportedOperationException();
+    this.title = title;
+    this.venue = venue;
+    this.startAt = startAt;
+    this.openAt = openAt;
+    this.closeAt = closeAt;
+    this.totalSeats = totalSeats;
+    this.availableSeats = availableSeats;
+    this.cancelled = cancelled;
+    this.posterUrl = posterUrl;
   }
 
   public Long getId() {
@@ -129,6 +133,10 @@ public class Performance {
 
   public Boolean getCancelled() {
     return cancelled;
+  }
+
+  public String getPosterUrl() {
+    return posterUrl;
   }
 
   public void updateSchedule(

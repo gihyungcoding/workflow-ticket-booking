@@ -3,14 +3,26 @@ package com.example.ticket_booking.service;
 import com.example.ticket_booking.domain.Performance;
 import com.example.ticket_booking.domain.PerformanceStatus;
 import com.example.ticket_booking.domain.PerformanceStatusRules;
+import com.example.ticket_booking.domain.PerformanceZone;
 import com.example.ticket_booking.domain.Seat;
 import com.example.ticket_booking.repository.PerformanceRepository;
+import com.example.ticket_booking.repository.PerformanceZoneRepository;
 import com.example.ticket_booking.repository.SeatRepository;
+import com.example.ticket_booking.repository.SeatSectionCount;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,15 +34,22 @@ public class PerformanceService {
 
   private static final int MAX_SEATS = 5000;
   private static final BigDecimal MAX_INT_VALUE = BigDecimal.valueOf(Integer.MAX_VALUE);
+  private static final int MAX_POSTER_URL_LENGTH = 500;
+  private static final Pattern CONTROL_OR_LONE_SURROGATE = Pattern.compile("[\\p{Cc}\\p{Cs}]");
 
   private final PerformanceRepository performanceRepository;
   private final SeatRepository seatRepository;
+  private final PerformanceZoneRepository zoneRepository;
   private final Clock clock;
 
   public PerformanceService(
-      PerformanceRepository performanceRepository, SeatRepository seatRepository, Clock clock) {
+      PerformanceRepository performanceRepository,
+      SeatRepository seatRepository,
+      PerformanceZoneRepository zoneRepository,
+      Clock clock) {
     this.performanceRepository = performanceRepository;
     this.seatRepository = seatRepository;
+    this.zoneRepository = zoneRepository;
     this.clock = clock;
   }
 
@@ -54,13 +73,56 @@ public class PerformanceService {
     return toResponse(performance, clock.instant(), sectionsOf(id));
   }
 
+  /** 홈 머리글 후보 — 선택 규칙은 여기 한 곳에 둔다(스크랩이 생기면 이 정렬의 1순위만 바뀐다). */
+  public Optional<PerformanceResponse> getNextOpening() {
+    Instant now = clock.instant();
+    return performanceRepository
+        .findNextOpening(now)
+        .map(performance -> toResponse(performance, now));
+  }
+
+  /**
+   * 좌석 집계(price 내림차순 → grade 오름차순)에 구역 위치를 붙여 stageOrder 순으로 돌려준다. 구역 행이 없는 등급(V6 이전에 등록된 공연)은 집계
+   * 순서대로 기존 구역 뒤에 등급 이름을 묶음 이름으로 붙인다 — 그래서 V6 이전 공연의 순서는 바뀌지 않는다. 같은 등급의 가격이 둘이면 같은 구역 안에서 집계 순서(가격
+   * 내림차순)를 지킨다.
+   */
   private List<SectionSummaryResponse> sectionsOf(Long performanceId) {
-    return seatRepository.findSectionCounts(performanceId).stream()
-        .map(
-            count ->
-                new SectionSummaryResponse(
-                    count.getGrade(), count.getPrice(), count.getSeatCount()))
-        .toList();
+    Map<String, PerformanceZone> zones = new HashMap<>();
+    int lastStageOrder = 0;
+    for (PerformanceZone zone :
+        zoneRepository.findByPerformanceIdOrderByStageOrder(performanceId)) {
+      zones.put(zone.getGrade(), zone);
+      lastStageOrder = Math.max(lastStageOrder, zone.getStageOrder());
+    }
+    Map<String, Integer> unzonedOrder = new HashMap<>();
+    List<SectionSummaryResponse> sections = new ArrayList<>();
+    for (SeatSectionCount count : seatRepository.findSectionCounts(performanceId)) {
+      PerformanceZone zone = zones.get(count.getGrade());
+      if (zone != null) {
+        sections.add(
+            new SectionSummaryResponse(
+                count.getGrade(),
+                count.getPrice(),
+                count.getSeatCount(),
+                zone.getArea(),
+                zone.getAreaNote(),
+                zone.getStageOrder()));
+        continue;
+      }
+      if (!unzonedOrder.containsKey(count.getGrade())) {
+        unzonedOrder.put(count.getGrade(), lastStageOrder + unzonedOrder.size() + 1);
+      }
+      sections.add(
+          new SectionSummaryResponse(
+              count.getGrade(),
+              count.getPrice(),
+              count.getSeatCount(),
+              count.getGrade(),
+              null,
+              unzonedOrder.get(count.getGrade())));
+    }
+    sections.sort(Comparator.comparing(SectionSummaryResponse::stageOrder));
+    return sections;
   }
 
   @Transactional
@@ -70,7 +132,9 @@ public class PerformanceService {
       Instant startAt,
       Instant openAt,
       Instant closeAt,
-      List<SectionSpec> sections) {
+      List<SectionSpec> sections,
+      String posterUrl,
+      List<ZoneSpec> zones) {
     if (sections == null) {
       throw new InvalidRequestException("sections가 필요합니다");
     }
@@ -98,10 +162,25 @@ public class PerformanceService {
       }
     }
 
+    validatePosterUrl(posterUrl);
+    List<ZonePlacement> placements = placeZones(sections, zones);
+
     Performance performance =
         performanceRepository.save(
-            new Performance(title, venue, startAt, openAt, closeAt, totalSeats, totalSeats, false));
+            new Performance(
+                title, venue, startAt, openAt, closeAt, totalSeats, totalSeats, false, posterUrl));
     seatRepository.saveAll(generateSeats(performance, sections));
+    zoneRepository.saveAll(
+        placements.stream()
+            .map(
+                placement ->
+                    new PerformanceZone(
+                        performance,
+                        placement.grade(),
+                        placement.area(),
+                        placement.note(),
+                        placement.stageOrder()))
+            .toList());
 
     return toResponse(performance, clock.instant());
   }
@@ -167,6 +246,64 @@ public class PerformanceService {
     if (!isIntegral(section.seatsPerRow())) {
       throw new InvalidSectionException("seatsPerRow는 정수여야 합니다");
     }
+  }
+
+  /**
+   * https 절대 URL 이고 500자(UTF-16 코드 유닛) 이하여야 한다. 원문 그대로 판정한다 — 앞뒤 공백을 걷어내지 않고(URI 파싱에서 거부된다), 스킴의
+   * 대소문자는 RFC 3986 대로 구분하지 않되 저장값은 바꾸지 않는다. java.net.URI 는 짝 없는 서로게이트를 비 ASCII 글자로 받아 주므로 제어문자와 함께
+   * 먼저 거부한다.
+   */
+  private void validatePosterUrl(String posterUrl) {
+    if (posterUrl == null) {
+      return;
+    }
+    if (posterUrl.length() > MAX_POSTER_URL_LENGTH
+        || CONTROL_OR_LONE_SURROGATE.matcher(posterUrl).find()) {
+      throw new InvalidPosterUrlException();
+    }
+    URI uri;
+    try {
+      uri = new URI(posterUrl);
+    } catch (URISyntaxException exception) {
+      throw new InvalidPosterUrlException();
+    }
+    if (!"https".equalsIgnoreCase(uri.getScheme())
+        || uri.getHost() == null
+        || uri.getHost().isEmpty()) {
+      throw new InvalidPosterUrlException();
+    }
+  }
+
+  private record ZonePlacement(String grade, String area, String note, int stageOrder) {}
+
+  /**
+   * 등급마다 구역 위치를 정한다. zones 를 펼친 순서(묶음 → 묶음 안 grades)로 stageOrder 를 매기고, zones 에 없는 등급은 sections 에
+   * 처음 나온 순서대로 그 뒤에 등급 이름을 묶음 이름으로 붙인다. 펼친 grades 를 순서대로 보다가 처음 걸린 위반(sections 에 없음 / 이미 나옴)을 던진다.
+   */
+  private List<ZonePlacement> placeZones(List<SectionSpec> sections, List<ZoneSpec> zones) {
+    Set<String> sectionGrades = new LinkedHashSet<>();
+    for (SectionSpec section : sections) {
+      sectionGrades.add(section.grade());
+    }
+    List<ZonePlacement> placements = new ArrayList<>();
+    Set<String> placed = new LinkedHashSet<>();
+    for (ZoneSpec zone : zones) {
+      for (String grade : zone.grades()) {
+        if (!sectionGrades.contains(grade)) {
+          throw new ZoneGradeUnknownException(grade);
+        }
+        if (!placed.add(grade)) {
+          throw new ZoneGradeDuplicatedException(grade);
+        }
+        placements.add(new ZonePlacement(grade, zone.area(), zone.note(), placements.size() + 1));
+      }
+    }
+    for (String grade : sectionGrades) {
+      if (placed.add(grade)) {
+        placements.add(new ZonePlacement(grade, grade, null, placements.size() + 1));
+      }
+    }
+    return placements;
   }
 
   private static boolean isIntegral(BigDecimal value) {
@@ -237,6 +374,7 @@ public class PerformanceService {
         performance.getTotalSeats(),
         performance.getAvailableSeats(),
         status,
+        performance.getPosterUrl(),
         sections);
   }
 }

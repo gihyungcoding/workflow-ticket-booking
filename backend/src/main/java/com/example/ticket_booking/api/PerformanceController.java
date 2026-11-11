@@ -8,6 +8,7 @@ import com.example.ticket_booking.service.PerformanceListResponse;
 import com.example.ticket_booking.service.PerformanceResponse;
 import com.example.ticket_booking.service.PerformanceService;
 import com.example.ticket_booking.service.SectionSpec;
+import com.example.ticket_booking.service.ZoneSpec;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,15 @@ public class PerformanceController {
     return performanceService.getPerformances(status, page, Math.min(size, 100));
   }
 
+  /** 홈 머리글 후보. 리터럴 경로라 /{id} 보다 먼저 매칭된다. */
+  @GetMapping("/next-opening")
+  public ResponseEntity<PerformanceResponse> nextOpening() {
+    return performanceService
+        .getNextOpening()
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.noContent().build());
+  }
+
   @GetMapping("/{id}")
   public PerformanceResponse detail(@PathVariable Long id) {
     return performanceService.getPerformance(id);
@@ -51,6 +61,12 @@ public class PerformanceController {
         request.sections() == null
             ? null
             : request.sections().stream().map(this::toSectionSpec).toList();
+    List<ZoneSpec> zones =
+        request.zones() == null
+            ? List.of()
+            : request.zones().stream()
+                .map(zone -> new ZoneSpec(zone.area(), zone.note(), zone.grades()))
+                .toList();
     PerformanceResponse response =
         performanceService.registerPerformance(
             request.title(),
@@ -58,7 +74,9 @@ public class PerformanceController {
             request.startAt(),
             request.openAt(),
             request.closeAt(),
-            sections);
+            sections,
+            request.posterUrl(),
+            zones);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
