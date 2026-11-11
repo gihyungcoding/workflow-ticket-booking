@@ -397,6 +397,12 @@ class PerformanceZoneRegistrationApiTest {
     rows.put("l NUL", "https://cdn.example.com/a\u0000.jpg");
     rows.put("m 서로게이트", "https://cdn.example.com/a\uD800.jpg");
     rows.put("n 이모지 501 코드 유닛", prefix + "🎤".repeat(238) + "a");
+    rows.put("o 호스트 퍼센트 인코딩", "https://ex%41mple.com/a.jpg");
+    rows.put("p 빈 userinfo", "https://@cdn.example.com/a.jpg");
+    rows.put("q 빈 포트", "https://cdn.example.com:/a.jpg");
+    rows.put("r 호스트 없이 포트만", "https://:8443/a.jpg");
+    rows.put("s 숫자가 아닌 포트", "https://cdn.example.com:abc/a.jpg");
+    rows.put("t 닫히지 않은 IPv6", "https://[::1/a.jpg");
 
     SoftAssertions softly = new SoftAssertions();
     softly.assertThat(rows.get("d 501자")).as("d 길이").hasSize(501);
@@ -433,7 +439,11 @@ class PerformanceZoneRegistrationApiTest {
             new Row("f area 앞뒤 공백", null, " 플로어 ", null),
             new Row("g 이모지", null, "플로어 🎤", "무대 🎤 앞"),
             new Row("h note 앞뒤 공백", null, null, " 무대 앞 "),
-            new Row("i area 이모지 30 코드 유닛", null, "🎤".repeat(15), null));
+            new Row("i area 이모지 30 코드 유닛", null, "🎤".repeat(15), null),
+            new Row("j 호스트 밑줄", "https://cdn_1.example.com/a.jpg", null, null),
+            new Row("k 비 ASCII 호스트", "https://포스터.example.com/a.jpg", null, null),
+            new Row("l IPv6 + 포트", "https://[::1]:8443/a.jpg", null, null),
+            new Row("m userinfo + 포트", "https://user@cdn.example.com:8443/a.jpg", null, null));
 
     SoftAssertions softly = new SoftAssertions();
     softly.assertThat(rows.get(0).posterUrl()).as("a 길이").hasSize(500);
@@ -466,7 +476,11 @@ class PerformanceZoneRegistrationApiTest {
           .as("%s posterUrl", row.label())
           .isEqualTo(row.posterUrl());
       softly.assertThat(f1.get("area")).as("%s area", row.label()).isEqualTo(area);
-      softly.assertThat(f1.get("areaNote")).as("%s areaNote", row.label()).isEqualTo(row.note());
+      if (row.note() == null) {
+        softly.assertThat(f1).as("%s areaNote 키", row.label()).doesNotContainKey("areaNote");
+      } else {
+        softly.assertThat(f1.get("areaNote")).as("%s areaNote", row.label()).isEqualTo(row.note());
+      }
     }
     softly.assertAll();
   }

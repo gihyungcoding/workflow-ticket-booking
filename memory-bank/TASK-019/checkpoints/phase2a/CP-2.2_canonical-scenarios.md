@@ -29,7 +29,12 @@ decisions:
   - decision: "검증 경고 보류 — V9(SC-13 중복: 저장된 공연 0건의 빈 본문을 따로 지킨다), V12(1)(sections[].grade 는 기존 필드 — 같은 grade 여러 행은 SC-04 가 확인), V12(3)(userinfo·포트·IP 호스트는 https 절대 URL 규칙 안이라 받는다 — 새 규칙을 만들지 않는다), V12(4)(시나리오에 명시됨), V12(5)(같은 grade 두 행 + zones 조합 — SC-04 와 SC-03 의 병합 경로가 같다)"
     rationale: "통합 HITL 에서 사람이 판단한다"
 
+  - decision: "RETRY_SCENARIO(Phase 3 자체 리뷰 RC-1) — posterUrl 호스트 규칙을 '권한 부분에서 userinfo·포트를 뗀 것' 으로 정의, SC-05 o~t · SC-06 j~m 추가. 2회차 경고 반영: V5 SC-06 Then 에 'note 를 보내지 않으면 areaNote 키 없음', V6 SC-16 When 문구, V12(1) 포트만·숫자 아닌 포트·닫히지 않은 IPv6 행, V12(3) 규칙 문구, merged 행 수. 보류: V12(1) 범위 밖 포트(:99999 — URI 가 받는다, 새 규칙 만들지 않음), V12(2)(4) userinfo·경로의 %XX·#frag 는 받는다, V9·V7·(5)(6)(7) 1회차와 같음"
+    rationale: "사용자 결정 '관대하게'(2026-11-11)"
+
 attempts:
   - round: 1
     result: "PASS — fail 0, warn 4 (V6·V7·V9·V12)"
+  - round: 2
+    result: "PASS — fail 0, warn 6 (V5·V7·V9·V12·부기) — RETRY_SCENARIO 재검증"
 ---

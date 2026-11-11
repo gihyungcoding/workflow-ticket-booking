@@ -20,7 +20,7 @@
     },
     {
       "항목": "posterUrl 규칙",
-      "값": "스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법에 맞아야 한다). 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다"
+      "값": "스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법을 따르되 호스트·경로의 비 ASCII 글자는 받는다). 호스트는 권한 부분에서 userinfo(`…@`)와 포트(`:…`)를 뗀 것이다 — 밑줄·비 ASCII 글자 호스트는 받는다(경로의 비 ASCII 와 같게). 호스트에 `%XX` 가 있거나, `@` 앞 userinfo 가 비었거나, `:` 뒤 포트가 비었으면 거부한다. IPv6(`[…]`)·userinfo·포트가 갖춰진 주소는 받는다. 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다"
     },
     {
       "항목": "구역 문자열",
@@ -284,6 +284,36 @@
           "#": "n",
           "posterUrl": "`https://cdn.example.com/`(24자) + `🎤` × 238 + `a` (총 501 코드 유닛)",
           "무엇": "최대 + 1 — 코드 유닛으로 센다"
+        },
+        {
+          "#": "o",
+          "posterUrl": "`https://ex%41mple.com/a.jpg`",
+          "무엇": "호스트의 퍼센트 인코딩"
+        },
+        {
+          "#": "p",
+          "posterUrl": "`https://@cdn.example.com/a.jpg`",
+          "무엇": "빈 userinfo"
+        },
+        {
+          "#": "q",
+          "posterUrl": "`https://cdn.example.com:/a.jpg`",
+          "무엇": "빈 포트"
+        },
+        {
+          "#": "r",
+          "posterUrl": "`https://:8443/a.jpg`",
+          "무엇": "호스트 없이 포트만"
+        },
+        {
+          "#": "s",
+          "posterUrl": "`https://cdn.example.com:abc/a.jpg`",
+          "무엇": "숫자가 아닌 포트"
+        },
+        {
+          "#": "t",
+          "posterUrl": "`https://[::1/a.jpg`",
+          "무엇": "닫히지 않은 IPv6"
         }
       ],
       "covers": [
@@ -303,7 +333,8 @@
       ],
       "then": [
         "201 이다",
-        "상세에서 `posterUrl`, `F1` section 의 `area`·`areaNote` 가 보낸 문자열과 정확히 같다 (공백·대소문자를 바꾸지 않는다)"
+        "상세에서 `posterUrl`, `F1` section 의 `area`·`areaNote` 가 보낸 문자열과 정확히 같다 (공백·대소문자를 바꾸지 않는다)",
+        "note 를 보내지 않은 행은 `F1` section 에 `areaNote` 키가 없다"
       ],
       "table": [
         {
@@ -359,6 +390,30 @@
           "필드": "area",
           "값": "`🎤` × 15 (30 코드 유닛)",
           "무엇": "이모지로 정확히 상한 — 코드 유닛으로 센다"
+        },
+        {
+          "#": "j",
+          "필드": "posterUrl",
+          "값": "`https://cdn_1.example.com/a.jpg`",
+          "무엇": "호스트에 밑줄"
+        },
+        {
+          "#": "k",
+          "필드": "posterUrl",
+          "값": "`https://포스터.example.com/a.jpg`",
+          "무엇": "비 ASCII 호스트"
+        },
+        {
+          "#": "l",
+          "필드": "posterUrl",
+          "값": "`https://[::1]:8443/a.jpg`",
+          "무엇": "IPv6 호스트 + 포트"
+        },
+        {
+          "#": "m",
+          "필드": "posterUrl",
+          "값": "`https://user@cdn.example.com:8443/a.jpg`",
+          "무엇": "userinfo + 포트"
         }
       ],
       "covers": [
@@ -898,7 +953,7 @@
         "그 공연에 `(grade 'R', area 'R', stage_order 1)` 한 행이 들어가 있다 (이 INSERT 는 성공한다)"
       ],
       "when": [
-        "아래 표의 행을 넣는다 (행마다 새 트랜잭션)"
+        "아래 표의 행을 넣는다 — h 는 공연 행을 고친다 (행마다 새 트랜잭션)"
       ],
       "then": [
         "각각 제약 위반으로 실패하고, `performance_zone` 은 1행 그대로다"
@@ -1244,7 +1299,7 @@
     "merged": [
       {
         "scenarios": [
-          "posterUrl 형식 위반 13행"
+          "posterUrl 형식 위반 20행"
         ],
         "into": "SC-05",
         "reason": "같은 포스터 판정 경로 — 값만 다르다"
@@ -1258,7 +1313,7 @@
       },
       {
         "scenarios": [
-          "구역 원소 형태 위반 18행"
+          "구역 원소 형태 위반 20행"
         ],
         "into": "SC-08",
         "reason": "같은 Bean Validation 경로(ADR-0010) — 위반 조건마다 행을 따로 둔다"
@@ -1272,7 +1327,7 @@
       },
       {
         "scenarios": [
-          "상한 안·표기 변형 통과 8행"
+          "상한 안·표기 변형 통과 13행"
         ],
         "into": "SC-06",
         "reason": "같은 저장 경로 — 받은 그대로인지 한 단언"
@@ -1287,6 +1342,6 @@
     ]
   },
   "human_input": {
-    "generate_red_trigger": true
+    "generate_red_trigger": false
   }
 }

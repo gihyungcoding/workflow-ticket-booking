@@ -27,7 +27,7 @@
 | `S0` (등록 순서) | `2층` C열 10석 77000 · `F1` A열 10석 150000 · `1층` B열 10석 99000 |
 | `S1` (등록 순서) | `2층` C열 10석 77000 · `F2` B열 10석 120000 · `F1` A열 10석 150000 · `1층` D열 10석 99000 |
 | 서버 시각 응답 | 200 `{"now": "<ISO-8601 UTC, Z 로 끝남>"}`, 헤더 `Cache-Control` 값이 정확히 `no-store` |
-| posterUrl 규칙 | 스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법에 맞아야 한다). 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다 |
+| posterUrl 규칙 | 스킴이 `https`(대소문자 무관)이고 호스트가 있는 절대 URI(RFC 3986 문법을 따르되 호스트·경로의 비 ASCII 글자는 받는다). 호스트는 권한 부분에서 userinfo(`…@`)와 포트(`:…`)를 뗀 것이다 — 밑줄·비 ASCII 글자 호스트는 받는다(경로의 비 ASCII 와 같게). 호스트에 `%XX` 가 있거나, `@` 앞 userinfo 가 비었거나, `:` 뒤 포트가 비었으면 거부한다. IPv6(`[…]`)·userinfo·포트가 갖춰진 주소는 받는다. 제어문자·짝 없는 서로게이트는 거부한다. UTF-16 코드 유닛 500 이하. 빈 문자열·공백도 거부한다. 변환 없이 받은 그대로 저장한다 |
 | 구역 문자열 | `area` 는 필수, 공백 아님, 30자 이하. `note` 는 선택이지만 주면 공백이 아니고 60자 이하. 둘 다 제어문자(`\p{Cc}`)·짝 없는 서로게이트를 거부한다(ADR-0019). 변환 없이 저장한다 |
 | grades | 필수, 빈 배열 아님, 원소는 공백 아님. sections 의 grade 와 **정확히 같은 문자열**이어야 한다(대소문자·공백 구분) |
 | stageOrder | `zones` 를 펼친 순서(묶음 → 묶음 안 grades)로 1, 2, … 를 매기고, `zones` 에 없는 등급이 sections 에 처음 나온 순서대로 그 뒤에 붙는다. 그렇게 붙은 등급은 `area` = 등급 이름이고 `areaNote` 는 없다. `zones` 가 없거나 null 이거나 `[]` 이면 모든 등급이 이렇게 된다 |
@@ -126,6 +126,12 @@ flow: F2
 | l | `https://cdn.example.com/a` + U+0000 + `.jpg` | NUL |
 | m | `https://cdn.example.com/a` + U+D800 + `.jpg` | 짝 없는 서로게이트 |
 | n | `https://cdn.example.com/`(24자) + `🎤` × 238 + `a` (총 501 코드 유닛) | 최대 + 1 — 코드 유닛으로 센다 |
+| o | `https://ex%41mple.com/a.jpg` | 호스트의 퍼센트 인코딩 |
+| p | `https://@cdn.example.com/a.jpg` | 빈 userinfo |
+| q | `https://cdn.example.com:/a.jpg` | 빈 포트 |
+| r | `https://:8443/a.jpg` | 호스트 없이 포트만 |
+| s | `https://cdn.example.com:abc/a.jpg` | 숫자가 아닌 포트 |
+| t | `https://[::1/a.jpg` | 닫히지 않은 IPv6 |
 
 covers: `posterUrl` 이 `http://`·상대 경로·501자면 400 `INVALID_POSTER_URL`, `zones` 에 없는 등급이면 400 `ZONE_GRADE_UNKNOWN`, 중복 등급이면 400 `ZONE_GRADE_DUPLICATED` 이고 공연·좌석·구역 행이 생기지 않는다
 flow: F4
@@ -136,6 +142,7 @@ flow: F4
 - **When** `R0` 에 아래 표의 필드를 더해 `POST /api/performances` 를 호출한다 (구역 행은 `"zones": [{"area": <area>, "note": <note>, "grades": ["F1"]}]`, 표에 없는 값은 area `플로어`·note 없음)
 - **Then** 201 이다
 - **And** 상세에서 `posterUrl`, `F1` section 의 `area`·`areaNote` 가 보낸 문자열과 정확히 같다 (공백·대소문자를 바꾸지 않는다)
+- **And** note 를 보내지 않은 행은 `F1` section 에 `areaNote` 키가 없다
 
 | # | 필드 | 값 | 무엇 |
 |---|---|---|---|
@@ -148,6 +155,10 @@ flow: F4
 | g | area · note | `플로어 🎤` · `무대 🎤 앞` | 짝이 맞는 서로게이트(이모지)는 받는다 |
 | h | note | ` 무대 앞 ` (앞뒤 공백) | 걷어내지 않는다 |
 | i | area | `🎤` × 15 (30 코드 유닛) | 이모지로 정확히 상한 — 코드 유닛으로 센다 |
+| j | posterUrl | `https://cdn_1.example.com/a.jpg` | 호스트에 밑줄 |
+| k | posterUrl | `https://포스터.example.com/a.jpg` | 비 ASCII 호스트 |
+| l | posterUrl | `https://[::1]:8443/a.jpg` | IPv6 호스트 + 포트 |
+| m | posterUrl | `https://user@cdn.example.com:8443/a.jpg` | userinfo + 포트 |
 
 covers: `zones` 를 주고 등록하면 상세 `sections` 가 `zones` 를 펼친 순서의 `stageOrder` 로 정렬되고 `area`·`areaNote` 를 갖는다. `zones` 에 없는 등급은 그 뒤에 붙는다
 flow: F3
@@ -332,7 +343,7 @@ flow: F7
 
 - **Given** SC-14 처럼 V5 까지의 데이터 위에 V6 까지 적용했다
 - **And** 그 공연에 `(grade 'R', area 'R', stage_order 1)` 한 행이 들어가 있다 (이 INSERT 는 성공한다)
-- **When** 아래 표의 행을 넣는다 (행마다 새 트랜잭션)
+- **When** 아래 표의 행을 넣는다 — h 는 공연 행을 고친다 (행마다 새 트랜잭션)
 - **Then** 각각 제약 위반으로 실패하고, `performance_zone` 은 1행 그대로다
 
 | # | 넣는 행 | 걸리는 제약 |
