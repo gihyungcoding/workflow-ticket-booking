@@ -41,10 +41,11 @@
 - **Given** PostgreSQL 에 V6 까지 적용했다
 - **And** 기존 공연 1행과 좌석 20행을 넣었다(`seedV5Performance` 관례)
 - **And** 사용자 1행을 넣었다
+- **And** 기존 공연 행의 열 값을 읽어 두었다
 - **When** Flyway 를 끝까지 적용한다
 - **Then** 적용에 성공하고 현재 버전은 `7` 이다
 - **And** 기존 공연의 `owner_id` 는 NULL 이다
-- **And** `title`·`venue`·`start_at`·`open_at`·`close_at`·`total_seats`·`available_seats`·`cancelled`·`poster_url` 은 적용 전과 같다
+- **And** `title`·`venue`·`start_at`·`open_at`·`close_at`·`total_seats`·`available_seats`·`cancelled`·`poster_url` 은 읽어 둔 값과 같다
 - **And** 없는 사용자 id 로 `owner_id` 를 갱신하면 외래 키 위반으로 실패한다
 - **And** 있는 사용자 id 로 갱신한 뒤 그 사용자 행을 지우면, 그 공연의 `owner_id` 가 NULL 이 된다(공연 행은 남는다)
 
@@ -90,7 +91,7 @@ flow: F2
 | c | `Bearer ` (토큰 없음) | 401 `UNAUTHORIZED` |
 | d | `Bearer <O1 토큰의 서명 한 글자를 바꾼 것>` | 401 `UNAUTHORIZED` |
 | e | `Bearer <A1 토큰>` | 403 `FORBIDDEN_ROLE` (본문은 규약 표 그대로) |
-| f | `Bearer <A1 토큰에서 role 만 ORGANIZER 로 바꾼 것>` (`tamperRole`, 서명 불일치) | 401 `UNAUTHORIZED` |
+| f | `Bearer <A1 토큰의 payload 에서 role 만 ORGANIZER 로 바꾸고 서명은 그대로 둔 것>` | 401 `UNAUTHORIZED` |
 
 covers: 토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다
 flow: F3
@@ -104,6 +105,7 @@ flow: F3
 - **When** 그 토큰으로 `R0` 을 `POST /api/performances` 에 보낸다
 - **Then** 상태와 `code` 가 표와 같다
 - **And** 201 이 아닌 행에서는 공연 수가 0 그대로다(트랜잭션 밖에서 센다)
+- **And** a 행에서 저장된 공연의 `ownerId` 는 `O1` 의 id 다
 
 | # | role 클레임 | 기대 |
 |---|---|---|
@@ -119,6 +121,21 @@ flow: F3
 | j | `"organizer"` (소문자) | 401 `UNAUTHORIZED` |
 | k | `" ORGANIZER"` (앞 공백) | 401 `UNAUTHORIZED` |
 | l | `""` | 401 `UNAUTHORIZED` |
+| m | `"   "` (공백만) | 401 `UNAUTHORIZED` |
+| n | `"\u3000"` (전각 공백만) | 401 `UNAUTHORIZED` |
+| o | `"ORGANIZER\u200B"` (제로폭 공백 꼬리) | 401 `UNAUTHORIZED` |
+
+role 이 `"ORGANIZER"` 로 정상일 때, 다른 클레임만 아래처럼 바꾼 토큰도 같은 요청으로 보낸다.
+
+| # | 바꾼 클레임 | 기대 |
+|---|---|---|
+| p | `sub` 없음 | 401 `UNAUTHORIZED` |
+| q | `sub` 숫자 `7`(문자열이 아님) | 401 `UNAUTHORIZED` |
+| r | `sub` `"7.0"` | 401 `UNAUTHORIZED` |
+| s | `sub` `"7e0"` | 401 `UNAUTHORIZED` |
+| t | `sub` `"9223372036854775808"` (long 초과) | 401 `UNAUTHORIZED` |
+| u | `typ` `"pending"` | 401 `UNAUTHORIZED` |
+| v | 만료 `T-1s` | 401 `UNAUTHORIZED` |
 
 covers: 토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다
 covers: 주최자 토큰으로 `POST /api/performances` 를 보내면 201 이고, 저장된 행의 `owner_id` 가 그 사용자 id 다 (비트랜잭션 조회로 확인)
@@ -131,7 +148,6 @@ flow: F2, F3
 - **When** 아래 표의 헤더로 `R0` 을 `POST /api/performances` 에 보낸다
 - **Then** 상태가 표와 같다
 - **And** 401 행에서는 공연 수가 0 그대로다
-- **And** 이 판정은 기존 `JwtAuthenticationFilter.BEARER` 규칙 그대로다(이 태스크에서 바꾸지 않는다)
 
 | # | Authorization | 기대 |
 |---|---|---|
@@ -144,6 +160,10 @@ flow: F2, F3
 | g | `Bearer <t>~` | 401 |
 | h | `Bearer <t>é` (비 ASCII 꼬리) | 401 |
 | i | `Basic <t>` | 401 |
+| j | `Bearer <t>=` (`=` 꼬리 — 토큰 문법상 허용되는 글자지만 서명이 맞지 않는다) | 401 |
+| k | `Bearer <t>\n` (LF 꼬리) | 401 |
+| l | `Bearer <t>\u0000` (NUL 꼬리) | 401 |
+| m | `Bearer <t>\uD800` (짝 없는 서로게이트 꼬리) | 401 |
 
 - a·b 는 서로 다른 테스트 실행에서 각각 1건씩 만들어진다
 - 공연 수는 행마다 직전 값과 비교한다
@@ -169,23 +189,40 @@ flow: F2, F3
 | c | `999999` (없음) | 404 `PERFORMANCE_NOT_FOUND`, message `Performance not found: 999999` |
 | d | `0` | 404 `PERFORMANCE_NOT_FOUND` |
 | e | `-1` | 404 `PERFORMANCE_NOT_FOUND` |
-| f | `9223372036854775808` (long 초과) | 400 (기존 경로 타입 불일치 응답) |
-| g | `1.9` | 400 (기존 경로 타입 불일치 응답) |
+| f | `9223372036854775808` (long 초과) | 400 — 상태만 단언한다(기존 회귀 표와 같은 수준) |
+| g | `1.9` | 400 — 상태만 단언한다 |
+
+- **And** 본문 검증은 소유권보다 먼저다. title 이 빈 문자열인 수정 본문을 `P2`·`P0`·`999999` 에 보내면 세 경우 모두 400 `INVALID_REQUEST` 로 같다(소유 여부가 드러나지 않는다)
 
 covers: 다른 주최자의 공연, 소유자가 NULL 인 공연, 없는 id 에 수정·취소를 보내면 모두 같은 형태의 404 이고 DB 가 바뀌지 않는다
 flow: F4
 
-## SC-08 (happy) 자기 공연의 수정·취소는 지금 규칙대로 반영된다
+## SC-08 (happy) 자기 공연을 오픈 전에 수정하면 반영된다
 
-- **Given** `O1` 이 `R0` 으로 등록한 공연 `P1` 이 있다(openAt `T+7d`)
-- **When ①** 시계가 `T` 일 때 `O1` 의 토큰으로 `PUT /api/performances/{P1}` 에 `U0` 을 보낸다
-- **Then ①** 200 이고 응답 title 이 `소리풍경 밴드 나이트 앙코르` 다
+- **Given** 시계가 `T` 이고, `O1` 이 `R0` 으로 등록한 공연 `P1` 이 있다(openAt `T+7d`)
+- **When** `O1` 의 토큰으로 `PUT /api/performances/{P1}` 에 `U0` 을 보낸다
+- **Then** 200 이고 응답 title 이 `소리풍경 밴드 나이트 앙코르` 다
 - **And** 트랜잭션 밖에서 다시 읽은 `P1` 의 title 도 같고, `ownerId` 는 `O1` 그대로다
-- **When ②** 시계를 `T+7d`(openAt 과 같은 시각)로 옮기고 같은 수정을 title `다른 제목` 으로 보낸다
-- **Then ②** 409 `REGISTRATION_ALREADY_OPEN` 이다
-- **And** 다시 읽은 title 은 `소리풍경 밴드 나이트 앙코르` 그대로다
-- **When ③** `O1` 의 토큰으로 `POST /api/performances/{P1}/cancel` 을 보낸다
-- **Then ③** 200 이고 응답 `cancelled` 가 true 다
+
+covers: 자기 공연의 수정·취소는 지금 규칙(수정은 `now < openAt`) 그대로 동작하고 DB 에 반영된다
+flow: F5
+
+## SC-13 (error) 자기 공연이라도 오픈 시각이 되면 수정할 수 없다
+
+- **Given** `O1` 소유의 공연 `P1` 이 있다(openAt `T+7d`, title `소리풍경 밴드 나이트`)
+- **And** 시계가 `T+7d`(openAt 과 같은 시각)다
+- **When** `O1` 의 토큰으로 `PUT /api/performances/{P1}` 에 title `다른 제목` 인 본문을 보낸다
+- **Then** 409 `REGISTRATION_ALREADY_OPEN` 이다
+- **And** 트랜잭션 밖에서 다시 읽은 title 은 `소리풍경 밴드 나이트` 그대로다
+
+covers: 자기 공연의 수정·취소는 지금 규칙(수정은 `now < openAt`) 그대로 동작하고 DB 에 반영된다
+flow: F5
+
+## SC-14 (happy) 자기 공연을 취소하면 반영된다
+
+- **Given** `O1` 소유의 공연 `P1` 이 있다(취소 안 됨)
+- **When** `O1` 의 토큰으로 `POST /api/performances/{P1}/cancel` 을 보낸다
+- **Then** 200 이고 응답 `cancelled` 가 true 다
 - **And** 트랜잭션 밖에서 다시 읽은 `P1` 의 `cancelled` 가 true 다
 
 covers: 자기 공연의 수정·취소는 지금 규칙(수정은 `now < openAt`) 그대로 동작하고 DB 에 반영된다
@@ -210,18 +247,26 @@ flow: F5
 covers: `X-Write-Key` 없이 가입·로그인·소셜 가입 완료가 성공한다. `WRITE_GUARD_ENABLED=true` 를 줘도 쓰기 요청이 키 때문에 거부되지 않는다
 flow: F6
 
-## SC-10 (regression) 쓰기 가드 코드가 없고 CORS 가 키 헤더를 허용하지 않는다
+## SC-10 (regression) 쓰기 가드 코드가 없다
 
-- **When ①** `com.example.ticket_booking.config.WriteGuardFilter` 와 `…config.WriteGuardConfig` 를 클래스 이름으로 불러온다
-- **Then ①** 둘 다 `ClassNotFoundException` 이다
+- **When** 쓰기 가드 필터와 그 설정 클래스(`com.example.ticket_booking.config.WriteGuardFilter`·`…config.WriteGuardConfig`)를 이름으로 불러온다
+- **Then** 둘 다 `ClassNotFoundException` 이다
 - **And** 애플리케이션 컨텍스트에 `writeGuardFilter` 라는 이름의 빈이 없다
-- **When ②** 허용된 Origin 으로 `OPTIONS /api/performances` preflight 를 보낸다
-  (`Access-Control-Request-Method: POST`, `Access-Control-Request-Headers: authorization, content-type`)
-- **Then ②** `Access-Control-Allow-Headers` 가 정확히 `Content-Type, Authorization` 이다
-- **And** 그 값에 `X-Write-Key` 가 없다
 
+이 시나리오는 삭제를 확인하는 것이라 이름이 그대로 나온다.
 테스트 파일 5개(`WriteGuardFilterTest` 등)가 저장소에 없다는 것은 자동 테스트로 확인하지 않는다.
 Phase 4 에서 `git ls-files` 로 확인한다.
+
+covers: `WriteGuardFilter`·`WriteGuardConfig` 와 그 테스트가 저장소에 없고, CORS 허용 헤더에 `X-Write-Key` 가 없다
+flow: F7
+
+## SC-15 (regression) CORS preflight 가 키 헤더를 허용하지 않는다
+
+- **Given** 허용된 Origin 이 있다
+- **When** 그 Origin 으로 `OPTIONS /api/performances` preflight 를 보낸다
+  (`Access-Control-Request-Method: POST`, `Access-Control-Request-Headers: authorization, content-type`)
+- **Then** `Access-Control-Allow-Headers` 가 정확히 `Content-Type, Authorization` 이다
+- **And** 그 값에 `X-Write-Key` 가 없다
 
 covers: `WriteGuardFilter`·`WriteGuardConfig` 와 그 테스트가 저장소에 없고, CORS 허용 헤더에 `X-Write-Key` 가 없다
 flow: F7
@@ -245,13 +290,28 @@ flow: F8
 
 ## SC-12 (regression) 기존 오류 응답 회귀 표는 쓰기 행에 주최자 토큰을 실으면 같은 숫자다
 
-- **Given** `PerformanceErrorResponseRegressionTest` 의 표(8행)가 있다
-- **And** `GET` 이 아닌 행(DELETE·PATCH·POST text/plain·POST 취소 id 타입 불일치)에만 `O1` 의 토큰을 싣는다
-- **When** 각 행을 보낸다
-- **Then** 모든 행의 상태가 표의 기대 숫자(400·405·415·404)와 같다
-- **And** 같은 쓰기 행을 토큰 없이 보내면 401 이다
+- **Given** 공연 `P0`(소유자 NULL)이 있다
+- **When** 아래 표의 요청을 표의 토큰으로 보낸다
+- **Then** 모든 행의 상태가 표와 같다
 
-이것은 승인된 테스트를 고치는 일이다(아래 「기존 승인 테스트 변경」).
+| # | 요청 | 토큰 | 기대 |
+|---|---|---|---|
+| a | `GET /api/performances/abc` | 없음 | 400 |
+| b | `GET /api/performances?page=abc` | 없음 | 400 |
+| c | `GET /api/performances?status=NOPE` | 없음 | 400 |
+| d | `DELETE /api/performances/{P0}` | `O1` | 405 |
+| e | `PATCH /api/performances/{P0}` | `O1` | 405 |
+| f | `POST /api/performances` (text/plain 본문 `x`) | `O1` | 415 |
+| g | `POST /api/performances/abc/cancel` | `O1` | 400 |
+| h | `GET /api/performances/99999` | 없음 | 404 |
+| i | `DELETE /api/performances/{P0}` | 없음 | 401 |
+| j | `POST /api/performances` (text/plain 본문 `x`) | 없음 | 401 |
+| k | `DELETE /api/performances/{P0}` | `A1` | 403 |
+| l | `PATCH /api/performances/{P0}` | `A1` | 403 |
+
+a~h 는 `PerformanceErrorResponseRegressionTest` 의 8행이다. 기대 숫자는 그대로 두고, 쓰기 행에만 토큰을 싣는다.
+그래서 이것은 승인된 테스트를 고치는 일이다(아래 「기존 승인 테스트 변경」).
+i~l 은 새로 더하는 행이다.
 
 covers: `GET /api/performances/**` 는 토큰 없이 지금처럼 200 이다
 covers: 토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다
