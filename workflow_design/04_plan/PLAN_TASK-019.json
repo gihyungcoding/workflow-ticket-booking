@@ -1,0 +1,504 @@
+{
+  "task_id": "TASK-019",
+  "route": "Backend",
+  "route_reason": "서버 시각 API·마이그레이션·등록 검증·조회 응답 조립이 모두 서버 범위. 화면 변경 없음(TASK-020·021)",
+  "design": {
+    "inputs": [
+      {
+        "name": "now",
+        "type": "Instant",
+        "source": "주입된 Clock (ADR-0005)",
+        "constraints": [
+          "시각 API·next-opening·상태 계산이 같은 Clock 을 쓴다"
+        ]
+      },
+      {
+        "name": "posterUrl",
+        "type": "String | null",
+        "source": "POST /api/performances 본문",
+        "constraints": [
+          "선택",
+          "https 절대 URL(스킴 대소문자 무관, 호스트 필수 — 권한 부분에서 userinfo·포트를 뗀 것. 밑줄·비 ASCII 호스트 허용, 호스트의 %XX·':'(IPv6 제외)·빈 userinfo·userinfo 안 '@'·빈 포트·ASCII 숫자 아닌 포트 거부)",
+          "UTF-16 코드 유닛 500 이하",
+          "빈 문자열은 없음이 아니라 INVALID_POSTER_URL",
+          "제어문자·짝 없는 서로게이트 거부, 앞뒤 공백을 걷어내지 않는다(URI 파싱 실패로 거부)"
+        ]
+      },
+      {
+        "name": "zones",
+        "type": "List<ZoneRequest> | null",
+        "source": "POST /api/performances 본문",
+        "constraints": [
+          "선택",
+          "null·빈 배열이면 모든 등급 기본 구역",
+          "null 원소는 INVALID_REQUEST"
+        ]
+      },
+      {
+        "name": "zones[].area",
+        "type": "String",
+        "source": "요청 본문",
+        "constraints": [
+          "@NotBlank",
+          "@Size(max=30)",
+          "제어문자(\\p{Cc}, NUL 포함)·짝 없는 서로게이트 거부(ADR-0019)",
+          "'공백 아님' 은 유니코드 공백(Zs·Zl·Zp·탭·줄바꿈)과 U+200B 를 공백으로 본다 — area·note 같은 판정"
+        ]
+      },
+      {
+        "name": "zones[].note",
+        "type": "String | null",
+        "source": "요청 본문",
+        "constraints": [
+          "선택",
+          "@Size(max=60)",
+          "제어문자(\\p{Cc}, NUL 포함)·짝 없는 서로게이트 거부(ADR-0019)",
+          "주면 공백만이거나 빈 값이면 거부",
+          "'공백 아님' 은 유니코드 공백(Zs·Zl·Zp·탭·줄바꿈)과 U+200B 를 공백으로 본다 — area·note 같은 판정"
+        ]
+      },
+      {
+        "name": "zones[].grades",
+        "type": "List<String>",
+        "source": "요청 본문",
+        "constraints": [
+          "@NotEmpty",
+          "원소 @NotBlank",
+          "sections 의 grade 와 정확히 같은 문자열(대소문자·공백 구분)",
+          "전체 zones 를 통틀어 한 번만"
+        ]
+      },
+      {
+        "name": "sections[].grade",
+        "type": "String",
+        "source": "요청 본문(기존)",
+        "constraints": [
+          "기존 SectionRequest 제약 그대로",
+          "같은 grade 가 여러 구역 행이면 구역은 하나(첫 등장 순서)"
+        ]
+      },
+      {
+        "name": "기존 공연 데이터",
+        "type": "DB 행",
+        "source": "V6 이전 performance·seat",
+        "constraints": [
+          "poster_url NULL",
+          "performance_zone 행 없음"
+        ]
+      }
+    ],
+    "input_fields": [
+      {
+        "field": "posterUrl",
+        "flows": [
+          "F4"
+        ],
+        "kinds": [
+          "json_field",
+          "string",
+          "string_stored",
+          "converted"
+        ],
+        "max": 500,
+        "note": "선택 — 없음(키 없음·null)은 F2·F3 정상 경로. 경계 표(F4)에 통과 행(정확히 500자·대문자 HTTPS)을 함께 둔다. converted = 'HTTPS://' 대소문자·앞뒤 공백·URI 파싱 실패 문자"
+      },
+      {
+        "field": "zones",
+        "flows": [
+          "F4"
+        ],
+        "kinds": [
+          "json_field",
+          "array"
+        ],
+        "note": "선택. 빈 배열 = 없음(F2). max+1 은 개수 상한이 없어 n/a 후보(등급 수가 상한 — UNKNOWN·DUPLICATED 가 막는다)"
+      },
+      {
+        "field": "zones[].area",
+        "flows": [
+          "F4"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string",
+          "string_stored"
+        ],
+        "max": 30
+      },
+      {
+        "field": "zones[].note",
+        "flows": [
+          "F4"
+        ],
+        "kinds": [
+          "json_field",
+          "string",
+          "string_stored"
+        ],
+        "max": 60,
+        "note": "선택 — 없으면 areaNote 키 생략"
+      },
+      {
+        "field": "zones[].grades",
+        "flows": [
+          "F4"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "array",
+          "string_stored"
+        ],
+        "note": "array.empty → INVALID_REQUEST, null_element → INVALID_REQUEST. string_stored.normalized = 대소문자·앞뒤 공백 다른 등급은 UNKNOWN"
+      },
+      {
+        "field": "openAt",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "datetime"
+        ],
+        "note": "next-opening: openAt == now 는 이미 열림(고르지 않음). 상태 규칙 PerformanceStatusRules 와 같은 경계"
+      },
+      {
+        "field": "startAt",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "datetime"
+        ],
+        "note": "startAt == now 는 지나지 않음(notPastSpecification 의 >=)"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "GET /api/time 200",
+        "type": "{now: Instant(ISO-8601 UTC)}",
+        "description": "Cache-Control 값이 정확히 no-store (Security 기본 헤더에 기대지 않고 컨트롤러가 직접)"
+      },
+      {
+        "name": "POST /api/performances 201",
+        "type": "PerformanceResponse",
+        "description": "posterUrl 포함(있을 때). zone 행이 등급마다 하나 저장된다"
+      },
+      {
+        "name": "400 INVALID_POSTER_URL",
+        "type": "error",
+        "description": "https 절대 URL 아님·500자 초과·빈 문자열"
+      },
+      {
+        "name": "400 ZONE_GRADE_UNKNOWN",
+        "type": "error",
+        "description": "zones 의 등급이 sections 에 없음"
+      },
+      {
+        "name": "400 ZONE_GRADE_DUPLICATED",
+        "type": "error",
+        "description": "한 등급이 zones 전체에서 두 번 이상"
+      },
+      {
+        "name": "400 INVALID_REQUEST",
+        "type": "error",
+        "description": "zones 원소·area·note·grades 형태 위반(Bean Validation, ADR-0010)"
+      },
+      {
+        "name": "GET /api/performances/{id} sections",
+        "type": "List<SectionSummaryResponse(grade, price, seatCount, area, areaNote?, stageOrder)>",
+        "description": "stageOrder 순(같으면 price DESC). zone 행이 없는 기존 공연은 기존 순서(price DESC, grade ASC)에 1..n, area=grade"
+      },
+      {
+        "name": "목록·상세 posterUrl",
+        "type": "String?",
+        "description": "없으면 키 생략(PerformanceResponse 의 NON_NULL)"
+      },
+      {
+        "name": "GET /api/performances/next-opening",
+        "type": "200 PerformanceResponse(sections 없음) | 204",
+        "description": "cancelled=false, openAt>now, startAt>=now 중 openAt ASC, id ASC 첫 건"
+      },
+      {
+        "name": "V6 마이그레이션",
+        "type": "스키마",
+        "description": "performance.poster_url VARCHAR(500) NULL, performance_zone 테이블(UNIQUE 2개, CHECK stage_order>0). 기존 행 백필 없음"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "서버 시각 조회",
+        "steps": [
+          "GET /api/time (인증 없음 — SecurityConfig permitAll)",
+          "TimeController 가 주입된 Clock.instant() 를 now 로",
+          "ResponseEntity.cacheControl(CacheControl.noStore())"
+        ],
+        "covers": [
+          "`GET /api/time` 이 인증 없이 200 과 주입된 `Clock` 의 시각을 `now`(ISO-8601 UTC)로 돌려주고, 응답에 `Cache-Control: no-store` 가 있다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "구역 없이 등록 — 기본 구역",
+        "steps": [
+          "posterUrl·zones 없음(또는 zones=[])",
+          "기존 검증 그대로",
+          "sections 의 distinct grade 를 첫 등장 순서로 stageOrder 1..n, area=grade, note 없음으로 zone 저장",
+          "상세 조회 시 stageOrder 순"
+        ],
+        "covers": [
+          "`posterUrl`·`zones` 없이 등록하면 지금과 같이 201 이고, 상세 `sections` 는 등록 순서대로 `stageOrder` 1, 2, … 와 `area` = 등급 이름을 갖는다"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "구역을 주고 등록",
+        "steps": [
+          "zones 를 펼친 순서(묶음 → grades)로 stageOrder 부여, area·note 는 묶음 값",
+          "zones 에 없는 등급은 그 뒤에 sections 첫 등장 순서로 기본값",
+          "posterUrl 저장",
+          "상세 sections 를 zone 과 병합해 stageOrder 순으로"
+        ],
+        "covers": [
+          "`zones` 를 주고 등록하면 상세 `sections` 가 `zones` 를 펼친 순서의 `stageOrder` 로 정렬되고 `area`·`areaNote` 를 갖는다. `zones` 에 없는 등급은 그 뒤에 붙는다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "등록 거부 — 포스터·구역",
+        "steps": [
+          "Bean Validation 위반(zones 원소·area·note·grades 형태) → INVALID_REQUEST",
+          "기존 서비스 검증(sections·시각·좌석 수·범위 겹침) 먼저",
+          "posterUrl 검증 → INVALID_POSTER_URL",
+          "펼친 grades 를 순서대로 훑어 처음 걸린 위반: sections 에 없음 → ZONE_GRADE_UNKNOWN / 이미 나옴 → ZONE_GRADE_DUPLICATED",
+          "저장 전 거부 — 공연·좌석·구역 행 0"
+        ],
+        "covers": [
+          "`posterUrl` 이 `http://`·상대 경로·501자면 400 `INVALID_POSTER_URL`, `zones` 에 없는 등급이면 400 `ZONE_GRADE_UNKNOWN`, 중복 등급이면 400 `ZONE_GRADE_DUPLICATED` 이고 공연·좌석·구역 행이 생기지 않는다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "머리글 후보",
+        "steps": [
+          "GET /api/performances/next-opening (리터럴 경로가 /{id} 보다 우선)",
+          "Repository: notPast(now) AND statusSpecification(UPCOMING, now), openAt ASC, id ASC, 1건",
+          "있으면 200 PerformanceResponse(sections 없음), 없으면 204"
+        ],
+        "covers": [
+          "`next-opening` 이 아직 열리지 않은 공연 중 `openAt` 이 가장 이른 1건을 돌려준다. 취소된 공연·이미 열린 공연·지난 공연은 고르지 않고, 후보가 없으면 204"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "posterUrl 응답",
+        "steps": [
+          "Performance.posterUrl 을 PerformanceResponse 에 실음",
+          "목록·상세·등록·수정·취소·next-opening 응답에 같은 규칙",
+          "null 이면 NON_NULL 로 키 생략"
+        ],
+        "covers": [
+          "목록·상세 응답에 `posterUrl` 이 있고, 없는 공연은 키가 없다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "기존 데이터 위의 V6",
+        "steps": [
+          "Flyway V1~V5 + 기존 공연·좌석 행 (PostgreSQL)",
+          "V6 적용 성공",
+          "poster_url NULL·zone 행 0",
+          "애플리케이션 조회: posterUrl 키 없음, sections 는 기존 순서 그대로 + area=grade·stageOrder 1..n"
+        ],
+        "covers": [
+          "V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)"
+        ]
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "API(TimeController·PerformanceController) / Service(PerformanceService) / Repository(PerformanceZoneRepository·PerformanceRepositoryImpl) / domain(PerformanceZone)",
+    "note": "구역 검증·stageOrder 계산·병합은 Service. 다음 오픈 조회 조건 조립은 Repository(ARCH-003). Controller 는 ZoneRequest → ZoneSpec 변환만(ARCH-002 — Service 는 api.dto 를 모른다, SectionSpec 관례). 응답 DTO 는 service 패키지(architecture.md §2). TimeController 는 Clock 만 읽는다 — 도메인 규칙이 없어 Service 를 두지 않는다",
+    "constraints_applied": [
+      "ARCH-001",
+      "ARCH-002",
+      "ARCH-003",
+      "ARCH-004"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0003",
+    "ADR-0005",
+    "ADR-0006",
+    "ADR-0010",
+    "ADR-0019",
+    "ADR-0024",
+    "ADR-0026"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "backend/src/main/resources/db/migration/V6__add_poster_and_zones.sql",
+        "change": "poster_url 컬럼 + performance_zone 테이블",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+        "change": "posterUrl 필드(length 500, nullable)·생성자 인자·getter"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceZone.java",
+        "change": "엔티티 — @UniqueConstraint 2개·@CheckConstraint(stage_order>0) 로 H2 ddl-auto 에도 같은 제약",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceZoneRepository.java",
+        "change": "findByPerformanceIdOrderByStageOrder",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryCustom.java",
+        "change": "Optional<Performance> findNextOpening(Instant now)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+        "change": "findNextOpening — notPast + statusSpecification(UPCOMING) 재사용, openAt·id 정렬, 1건"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/TimeController.java",
+        "change": "GET /api/time, Clock 주입, no-store",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+        "change": "/api/time permitAll"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/RegisterPerformanceRequest.java",
+        "change": "posterUrl(String) · @Valid List<ZoneRequest> zones"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ZoneRequest.java",
+        "change": "area·note·grades + Bean Validation(NoLoneSurrogate 포함)",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/ZoneSpec.java",
+        "change": "Controller → Service 전달용 (SectionSpec 관례)",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+        "change": "register 에 posterUrl·zones 전달, GET /next-opening(200|204)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+        "change": "registerPerformance 시그니처 확장·포스터/구역 검증·zone 저장, sectionsOf 병합·정렬, getNextOpening, toResponse 에 posterUrl"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+        "change": "posterUrl 추가"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/SectionSummaryResponse.java",
+        "change": "area·areaNote·stageOrder 추가, areaNote null 이면 키 생략"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidPosterUrlException.java",
+        "change": "신규 예외",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/ZoneGradeUnknownException.java",
+        "change": "신규 예외",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/ZoneGradeDuplicatedException.java",
+        "change": "신규 예외",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+        "change": "세 코드 400 매핑. zones[ 필드 위반은 최상위로 분류돼 INVALID_REQUEST (기존 isSectionElementField 그대로)"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+        "symbol": "statusSpecification / notPastSpecification",
+        "note": "next-opening 조건 — 새로 쓰지 않는다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/SectionSpec.java",
+        "symbol": "SectionSpec",
+        "note": "ZoneSpec 도 같은 방식으로 Service 경계 타입"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/dto/NoLoneSurrogate.java",
+        "symbol": "NoLoneSurrogate.REGEX",
+        "note": "area·note 문자열 검증(ADR-0019)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java",
+        "symbol": "clock()",
+        "note": "TimeController 주입"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+        "symbol": "MutableClock",
+        "note": "시각 경계·next-opening"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/ClockTestConfig.java",
+        "symbol": "ClockTestConfig",
+        "note": "@Import 로 Clock 대체"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/repository/UsersHandleMigrationTest.java",
+        "symbol": "Testcontainers + Flyway target",
+        "note": "V6 기존 데이터 위 적용 테스트 패턴"
+      }
+    ],
+    "existing_tests": [
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceSectionSummaryApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardIntegrationTest.java",
+      "backend/src/test/java/com/example/ticket_booking/repository/PerformanceConstraintTest.java",
+      "backend/src/test/java/com/example/ticket_booking/repository/UsersHandleMigrationTest.java"
+    ],
+    "unresolved": [
+      "#1 Security 기본 헤더가 이미 'Cache-Control: no-cache, no-store, max-age=0, must-revalidate' 를 붙인다 — 'no-store 가 있다' 단언은 구현 없이도 통과한다(가짜 Red). 시나리오는 값이 정확히 'no-store' 인지 단언한다(컨트롤러가 직접 설정하면 Security 의 CacheControlHeadersWriter 는 덮지 않는다)",
+      "#2 상세 sections 순서가 바뀐다 — 지금은 price DESC, grade ASC. zone 행이 있는 공연(이번 등록부터)은 stageOrder 순. 기존 승인 테스트 PerformanceSectionSummaryApiTest 는 순서를 단언하지 않고(anySatisfy·필터) 키 목록도 단언하지 않아 깨지지 않을 것으로 본다 — 2b 에서 Red 실행으로 확인",
+      "#3 Performance 생성자에 posterUrl 을 더하면 new Performance(…) 를 쓰는 테스트 7개 파일(PerformanceApiTest·RegistrationApiTest·SectionSummaryApiTest·ErrorResponseRegressionTest·WriteGuardIntegrationTest·AuthRegressionApiTest·PerformanceConstraintTest)이 컴파일 실패 — 승인 테스트 수정 회피를 위해 기존 8인자 생성자를 유지하고 posterUrl 을 받는 생성자를 추가한다",
+      "#4 기존 공연(zone 행 없음)의 기본 순서 — AC7 '응답이 바뀌지 않는다' 에 맞춰 기존 순서(price DESC, grade ASC)를 유지하고 그 순서로 stageOrder 1..n. V6 는 백필하지 않는다(feature §3-1). 새로 등록한 공연은 zone 행이 늘 있으므로 이 경로는 V6 이전 공연에만 탄다",
+      "#5 같은 grade 가 두 구역 행(다른 rowStart)이면 zone 은 하나. 가격이 다르면 findSectionCounts 가 두 줄을 주고 둘 다 같은 area·stageOrder — 같은 stageOrder 안에서는 price DESC",
+      "#6 ADR-0019 는 모든 문자열 입력에 NUL·서로게이트 거부를 요구하지만 기존 title·venue·grade 는 적용돼 있지 않다(drift — AC 밖, 손대지 않음). 새 필드 area·note 에만 NoLoneSurrogate 를 붙인다. grades 는 sections 의 grade 와 정확 일치 판정이라 별도 검증 없이 UNKNOWN 으로 떨어진다",
+      "#7 posterUrl 의 JSON 타입 — 숫자·불리언을 Jackson 이 문자열로 강제 변환할 수 있다. 기존 StrictStringDeserializer 를 붙여 INVALID_REQUEST 로 막을지 2a 에서 칸(json_field.wrong_type)으로 판정한다. title·venue 와의 일관성도 함께 → 2a 판정: posterUrl·area·note·grades 원소에 StrictStringDeserializer 를 붙여 INVALID_REQUEST (SC-07). title·venue 는 손대지 않는다",
+      "#8 오류 우선순위: Bean Validation(INVALID_REQUEST) → 기존 서비스 검증 → INVALID_POSTER_URL → ZONE_GRADE_UNKNOWN/DUPLICATED(펼친 순서 첫 위반). 기존 오류 응답 회귀(PerformanceErrorResponseRegressionTest 의 8행 표)는 새 필드가 없는 요청이라 바뀌지 않는다",
+      "#9 테스트 DB 는 H2 + ddl-auto — 새 UNIQUE·CHECK 는 엔티티 애노테이션으로도 둔다. V6 SQL 과 기존 데이터 위 적용은 Testcontainers PostgreSQL 에서만 검증된다(ADR-0006, UsersHandleMigrationTest 관례)"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 18
+    }
+  },
+  "acceptance_criteria": [
+    "`GET /api/time` 이 인증 없이 200 과 주입된 `Clock` 의 시각을 `now`(ISO-8601 UTC)로 돌려주고, 응답에 `Cache-Control: no-store` 가 있다",
+    "`posterUrl`·`zones` 없이 등록하면 지금과 같이 201 이고, 상세 `sections` 는 등록 순서대로 `stageOrder` 1, 2, … 와 `area` = 등급 이름을 갖는다",
+    "`zones` 를 주고 등록하면 상세 `sections` 가 `zones` 를 펼친 순서의 `stageOrder` 로 정렬되고 `area`·`areaNote` 를 갖는다. `zones` 에 없는 등급은 그 뒤에 붙는다",
+    "`posterUrl` 이 `http://`·상대 경로·501자면 400 `INVALID_POSTER_URL`, `zones` 에 없는 등급이면 400 `ZONE_GRADE_UNKNOWN`, 중복 등급이면 400 `ZONE_GRADE_DUPLICATED` 이고 공연·좌석·구역 행이 생기지 않는다",
+    "목록·상세 응답에 `posterUrl` 이 있고, 없는 공연은 키가 없다",
+    "`next-opening` 이 아직 열리지 않은 공연 중 `openAt` 이 가장 이른 1건을 돌려준다. 취소된 공연·이미 열린 공연·지난 공연은 고르지 않고, 후보가 없으면 204",
+    "V6 마이그레이션이 기존 데이터가 있는 DB 에 적용되고 기존 공연의 목록·상세 응답이 바뀌지 않는다(`posterUrl` 없음, `sections` 에 기본 구역값만 추가)"
+  ],
+  "test_hints": {
+    "framework": "JUnit 5 + Spring Boot Test + MockMvc (PerformanceRegistrationApiTest 관례), 마이그레이션은 Testcontainers PostgreSQL + Flyway",
+    "command": "cd backend && JAVA_HOME=/Users/gihyung/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home ./gradlew test --tests '*Time*' --tests '*Performance*' --tests '*ZoneMigration*'",
+    "mock_strategy": "API 통합 테스트는 실제 H2 + 리포지토리(모킹 없음). 거부 경로의 '행이 생기지 않음' 은 클래스 레벨 @Transactional 없이 리포지토리 count 로 새로 읽는다(CLAUDE.md 리뷰 지시). 시각은 MutableClock(ClockTestConfig). V6 는 운영 엔진(PostgreSQL)에서 V5 까지 올리고 기존 행을 넣은 뒤 V6 적용 — 필수(ADR-0006)"
+  }
+}

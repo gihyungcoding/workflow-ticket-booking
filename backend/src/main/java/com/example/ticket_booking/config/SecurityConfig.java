@@ -70,6 +70,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         "/api/performances/**",
+                        "/api/time",
                         "/api/auth/signup",
                         "/api/auth/login",
                         "/api/auth/social/complete",

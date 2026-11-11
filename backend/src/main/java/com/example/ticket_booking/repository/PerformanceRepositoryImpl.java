@@ -4,8 +4,11 @@ import com.example.ticket_booking.domain.Performance;
 import com.example.ticket_booking.domain.PerformanceStatus;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
@@ -31,6 +34,14 @@ public class PerformanceRepositoryImpl extends SimpleJpaRepository<Performance, 
       spec = spec.and(statusSpecification(status, now));
     }
     return findAll(spec, pageable);
+  }
+
+  @Override
+  public Optional<Performance> findNextOpening(Instant now) {
+    Specification<Performance> spec =
+        notPastSpecification(now).and(statusSpecification(PerformanceStatus.UPCOMING, now));
+    PageRequest first = PageRequest.of(0, 1, Sort.by("openAt").ascending().and(Sort.by("id")));
+    return findAll(spec, first).stream().findFirst();
   }
 
   /** 목록은 status 필터와 무관하게 항상 지난 공연(startAt < now)을 제외한다 (F4). */

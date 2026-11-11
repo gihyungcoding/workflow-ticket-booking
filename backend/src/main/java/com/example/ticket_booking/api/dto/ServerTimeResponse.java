@@ -1,0 +1,5 @@
+package com.example.ticket_booking.api.dto;
+
+import java.time.Instant;
+
+public record ServerTimeResponse(Instant now) {}

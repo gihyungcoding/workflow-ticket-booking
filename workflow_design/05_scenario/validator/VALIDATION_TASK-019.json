@@ -1,0 +1,25 @@
+{
+  "task_id": "TASK-019",
+  "checks": [
+    {"id":"V1","name":"MD ↔ JSON 일치","verdict":"pass","detail":"MD 와 JSON 모두 SC-01~SC-16 의 16건이다. ID, 유형, flow, covers 와 GWT 문장이 같다. 이번에 고친 부분도 일치한다. 규약표 posterUrl 규칙과 구역 문자열 행은 두 파일이 글자 단위로 같다. SC-05 는 a~y 25행, SC-06 은 a~n 14행, SC-08 은 28행(e2·e3·e4·j2~j6 포함)으로 양쪽이 같다. coverage_matrix 40칸도 MD 표와 같다. 이전 회차에 지적한 coverage.merged 행 수 불일치는 고쳐졌다(SC-05 25, SC-08 28, SC-06 14가 실제 행 수와 맞다). PLAN design.inputs 의 posterUrl, area, note 제약 문구는 규약표와 같은 규칙이다."},
+    {"id":"V2","name":"개수 하한","verdict":"pass","detail":"전체 16건이다. happy 5건(SC-01,02,03,10,11), error 5건(SC-05,07,08,09,13), boundary 3건(SC-04,06,12), regression 3건(SC-14,15,16)이다."},
+    {"id":"V3","name":"acceptance_criteria 커버리지","verdict":"pass","detail":"PLAN 기준 7건을 직접 대조했다. 기준1→SC-01, 기준2→SC-02·04, 기준3→SC-03·06, 기준4→SC-05·07·08·09, 기준5→SC-10, 기준6→SC-11·12·13, 기준7→SC-14·15·16. covers 문자열은 PLAN 원문과 같다. 미커버 기준은 없다."},
+    {"id":"V4","name":"flow 대응","verdict":"pass","detail":"사용된 flow F1~F7 이 모두 PLAN design.flows[].id 에 있다."},
+    {"id":"V5","name":"Then 관찰 가능성","verdict":"warn","detail":"SC-06 의 Then 은 'F1 section 의 area·areaNote 가 보낸 문자열과 정확히 같다' 이다. posterUrl 행(a,b,c,j~m)은 note 를 보내지 않으므로 areaNote 는 '같다'가 아니라 '키가 없다'로 단언해야 한다. 행마다 단언 대상이 다른데 Then 이 이를 구분하지 않는다(이전 회차와 같은 지적). 이번에 추가된 SC-05 u~y 와 SC-08 e2~j6 의 Then 은 400 과 code, 행 수라서 바로 단언할 수 있다."},
+    {"id":"V6","name":"When 단일성","verdict":"pass","detail":"모든 시나리오의 When 이 하나다. 이번에 바뀐 SC-05, SC-06, SC-08 도 표 행마다 호출 하나다. 경미한 점으로, SC-16 의 마지막 행 h 는 INSERT 가 아니라 UPDATE 인데 When 은 '행을 넣는다'라서 문구가 어긋난다."},
+    {"id":"V7","name":"구현 누출","verdict":"warn","detail":"SC-01 의 Then 괄호가 Spring Security 기본 헤더 값을 언급한다. SC-16 은 UNIQUE, CHECK, VARCHAR 같은 스키마 용어를 쓴다(마이그레이션 시나리오라 불가피). 이번에 추가된 규칙 문구에는 함수명이나 클래스명이 없다. 유니코드 분류명(Zs·Zl·Zp)은 관찰 가능한 규칙이라 누출로 보지 않는다."},
+    {"id":"V8","name":"입출력 대응","verdict":"pass","detail":"새로 추가된 행(호스트의 ':', userinfo 안 '@', 비 ASCII 숫자 포트, 유니코드 공백 area/note)은 모두 PLAN inputs 의 posterUrl, zones[].area, zones[].note 와 제약 문구 범위 안이고, 결과는 PLAN outputs 의 INVALID_POSTER_URL, INVALID_REQUEST 안이다."},
+    {"id":"V9","name":"중복","verdict":"warn","detail":"SC-13 은 SC-11 의 제외 행과 SC-12 a·g 가 이미 확인하는 '후보 없음 → 204' 경로를 다시 탄다. 새로 확인하는 것은 공연이 0건일 때의 빈 본문 정도다. SC-05 u·v 도 호스트에 ':' 가 있는 같은 거부 분기다. 다만 호스트의 위치(여럿, 맨 앞)가 달라 정당화된다."},
+    {"id":"V10","name":"회귀 누락","verdict":"pass","detail":"SC-14(V6 적용), SC-15(구역 행이 없는 기존 공연의 응답), SC-16(V6 스키마 제약)이 regression 으로 있다."},
+    {"id":"V11","name":"입력 경계 판정","verdict":"pass","detail":"coverage_matrix 40칸을 전부 확인했다. 전부 covered 이고 n/a 는 없다. 이번에 바뀐 칸을 보면, zones[].area 의 string.blank 는 SC-08 e·e2·e3·e4 가 공백, 전각 공백, NBSP, 제로폭 공백을 When 에 쓰고 Then 이 400 INVALID_REQUEST 와 0행을 단언한다. zones[].note 의 string.blank 는 j·j2~j6 이 같은 방식이다. area 와 note 의 string_stored.normalized 는 SC-06 f·h·n 이 앞뒤 공백, NBSP, U+3000 이 섞인 값을 받아 그대로 저장하는지 단언한다. posterUrl 칸은 SC-05 a~y 와 SC-06 a~m 이 대응한다. false_cover, bad_na, plan_gap 에 해당하는 것은 없다. zones@array.max+1 이 SC-09 h·i 로 covered 인 것은 PLAN note 가 n/a 후보라고 했으나 covered 이므로 문제없다."},
+    {"id":"V12","name":"목록 밖 경계 제안","verdict":"warn","detail":"사람이 HITL 에서 판단할 후보다. (1) [신규] grades 원소의 '공백 아님'. 규약표의 새 정의(NBSP, U+3000, U+200B 도 공백)는 area·note 에만 명시돼 있다. grades 행은 '원소는 공백 아님'이라고만 적혀 있고 PLAN 은 @NotBlank 다. SC-08 r 은 ASCII 공백만 확인한다. NBSP 나 U+200B 만인 grades 원소가 INVALID_REQUEST 인지, ZONE_GRADE_UNKNOWN 으로 떨어지는지 정해져 있지 않다. (2) 범위 밖 포트 `:99999` 와 `:0` 은 허용 여부가 없다. 잘못된 IPv6 리터럴 `[zz]` 도 없다. (3) userinfo 에 ':' 가 있는 `user:pw@host` 와 userinfo, 경로의 `%XX` 는 허용 여부가 없다. 호스트의 %XX 만 거부한다고 적혀 있다. (4) 경로, 쿼리, 프래그먼트가 없는 `https://host` 와 `#frag` 가 붙은 주소의 허용 여부가 없다. (5) 규칙은 'RFC 3986 문법'을 따른다고 하면서 비 ASCII 와 밑줄 호스트를 받는다. 구현이 java.net.URI 를 그대로 쓸 수 없고 권한 부분을 직접 분해해야 한다. (6) sections[].grade 는 PLAN inputs 에 있는데 input_fields 에는 없다(이전 회차 지적 유지). (7) 같은 grade 의 두 구역 행(SC-04)과 zones 지정을 조합한 행이 없다. (8) SC-12 f·g 는 등록 API 가 막는 시각 조합이라 저장소로 직접 넣는다고 명시돼 있다."},
+    {"id":"부기","name":"참고(검증 항목 외)","verdict":"warn","detail":"SC-16 은 기준7 의 covers 에 매핑돼 있지만 기준('응답이 바뀌지 않는다')과 직접 관련은 약하다. 스키마 제약 시나리오라 covers 정합성이 느슨하다. 시나리오 본문에는 영향이 없다."}
+  ],
+  "v11_matrix": [],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 6,
+    "summary": "V1~V4 와 V11 은 모두 통과했다. RC-1·RC-2 로 고친 규약표(호스트의 ':', userinfo 안 '@', 비 ASCII 숫자 포트, 유니코드 공백·NBSP·U+200B 판정)와 SC-05 u~y, SC-06 n, SC-08 e2~e4·j2~j6 은 MD 와 JSON 이 일치한다. PLAN 제약 문구와도 같고, 새로 깨진 곳도 없다. 이전 회차의 coverage.merged 행 수 불일치도 고쳐졌다. 경고는 SC-06 Then 의 단언 대상 모호함(V5), 구현 용어(V7), SC-13 중복(V9), V12 경계 제안(특히 grades 원소의 공백 정의가 area·note 와 다르게 남은 점), SC-16 covers 느슨함이다."
+  }
+}

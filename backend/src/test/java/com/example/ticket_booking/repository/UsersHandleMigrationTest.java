@@ -155,7 +155,7 @@ class UsersHandleMigrationTest {
     flyway("4").migrate();
 
     // When V5 를 적용한다
-    var result = flyway(null).migrate();
+    var result = flyway("5").migrate();
 
     // Then 적용이 성공한다
     assertThat(result.success).isTrue();

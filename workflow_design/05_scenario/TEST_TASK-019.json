@@ -1,0 +1,196 @@
+{
+  "task_id": "TASK-019",
+  "supersedes": "SCENARIO_TASK-019.json",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/api/PerformanceBrowseResponseApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/PerformanceNextOpeningApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/ServerTimeApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/repository/PerformanceZoneMigrationTest.java",
+    "backend/src/test/java/com/example/ticket_booking/support/JsonText.java"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/ServerTimeApiTest.java",
+      "test_function": "test_sc01_서버_시각은_인증_없이_주입된_시각을_캐시_금지로_돌려준다",
+      "status": "red",
+      "failure": "401 — /api/time 경로·permitAll 없음"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc02_포스터_구역_없이_등록하면_등록_순서대로_기본_구역이_매겨진다",
+      "status": "red",
+      "failure": "sections 순서 F1·1층·2층(가격순), stageOrder·area null, section 키 3개"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc03_구역을_주면_펼친_순서로_정렬되고_빠진_등급은_뒤에_붙는다",
+      "status": "red",
+      "failure": "응답 posterUrl null, 순서 가격순, area null"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc04_같은_등급이_두_구역_행이면_구역은_하나이고_그_안에서는_가격순이다",
+      "status": "red",
+      "failure": "순서 VIP·R·R, stageOrder·area null"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc05_포스터_주소가_https_절대_URL_이_아니면_INVALID_POSTER_URL",
+      "status": "red",
+      "failure": "14행 모두 201 — posterUrl 을 모르는 필드로 무시",
+      "failure_retry": "p 빈 userinfo · q 빈 포트 — 201(통과시킴). o·r·s·t 는 기존 구현이 이미 거부",
+      "failure_retry3": "u·v·w·x·y — 201(통과시킴)"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc06_상한_안의_값과_표기_변형은_받은_그대로_저장된다",
+      "status": "red",
+      "failure": "posterUrl·area·areaNote null",
+      "failure_retry": "j 호스트 밑줄 · k 비 ASCII 호스트 — 400(거부함). l·m 은 이미 통과",
+      "failure_retry3": "n 은 이미 통과(공백 글자가 섞인 값은 지금도 받는다)"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc07_포스터_구역_필드의_JSON_타입이_다르면_INVALID_REQUEST",
+      "status": "red",
+      "failure": "12행 모두 201 — 필드 무시"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc08_구역_원소의_형태가_틀리면_INVALID_REQUEST",
+      "status": "red",
+      "failure": "20행 모두 201 — zones 무시",
+      "failure_retry3": "e3·e4·j2·j3·j4·j5·j6 — 201. e2(U+3000 area)는 기존 @NotBlank 가 이미 거부"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "test_function": "test_sc09_구역의_등급이_sections_에_없거나_겹치면_등급_오류",
+      "status": "red",
+      "failure": "a~l 201 (m 은 기존 INVALID_TIME_ORDER 로 이미 맞음 — 표의 우선순위 행)"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceBrowseResponseApiTest.java",
+      "test_function": "test_sc10_목록_상세에_포스터가_있고_없는_공연은_키가_없다",
+      "status": "red",
+      "failure": "A 의 목록·상세 posterUrl null (B 의 '키 없음' 은 이미 참)"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceNextOpeningApiTest.java",
+      "test_function": "test_sc11_머리글_후보는_아직_열리지_않은_공연_중_가장_이른_오픈이다",
+      "status": "red",
+      "failure": "UnsupportedOperationException — posterUrl 을 받는 Performance 생성자 스켈레톤"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceNextOpeningApiTest.java",
+      "test_function": "test_sc12_머리글_후보의_시각_경계와_같은_오픈_시각",
+      "status": "red",
+      "failure": "7행 모두 400 — next-opening 이 /{id} 로 매칭돼 타입 불일치"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceNextOpeningApiTest.java",
+      "test_function": "test_sc13_후보가_없으면_204_이고_본문이_비어_있다",
+      "status": "red",
+      "failure": "a·b 400 — 같은 이유"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/repository/PerformanceZoneMigrationTest.java",
+      "test_function": "test_sc14_V6_는_기존_데이터가_있는_PostgreSQL_에_적용되고_기존_행이_그대로다",
+      "status": "red",
+      "failure": "현재 버전 5 — V6 없음",
+      "config_applied_via": "Testcontainers postgres:16-alpine + Flyway target 5 → LATEST"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceBrowseResponseApiTest.java",
+      "test_function": "test_sc15_구역_행이_없는_기존_공연의_응답은_기본_구역값만_더해진다",
+      "status": "red",
+      "failure": "stageOrder·area null, section 키 3개 (posterUrl 없음·목록 키 9개는 이미 참)"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/repository/PerformanceZoneMigrationTest.java",
+      "test_function": "test_sc16_V6_가_만든_구역_테이블은_잘못된_행을_받지_않는다",
+      "status": "red",
+      "failure": "PSQLException relation performance_zone does not exist — V6 없음",
+      "config_applied_via": "Testcontainers postgres:16-alpine + Flyway target 5 → LATEST"
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test",
+    "total": 180,
+    "failed": 16,
+    "passed": 164,
+    "existing_tests_still_passing": true,
+    "note": "새 테스트 16건 전부 실패, 기존 164건 통과. 표 안의 일부 행(SC-09 m, SC-10 B, SC-15 목록 키·posterUrl 없음, SC-02 응답 키)은 기존 동작이라 이미 참 — 같은 테스트의 다른 단언이 실패"
+  },
+  "inventory_check": {
+    "scenarios": 16,
+    "test_functions": 16,
+    "match": true,
+    "method": "grep -ho 'void test_sc[0-9]*' 5개 파일 vs jq .scenarios[].id"
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + Spring Boot Test + MockMvc · Testcontainers PostgreSQL + Flyway",
+    "mock_strategy": "실제 H2 + 리포지토리, 클래스 레벨 @Transactional 없음 — 행마다 deleteAll 후 count 로 새로 읽음. 시각은 MutableClock(T=2026-11-11T08:00:00Z). 요청 본문은 JsonText 로 손 직렬화(제어문자·서로게이트를 \\uXXXX 로 — 직렬화기가 바꾸지 않게)"
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/src/main/java/com/example/ticket_booking/domain/PerformanceZone.java",
+      "backend/src/main/java/com/example/ticket_booking/repository/PerformanceZoneRepository.java",
+      "backend/src/main/java/com/example/ticket_booking/domain/Performance.java"
+    ],
+    "contents": "PerformanceZone: @Entity·@Table·필드·@Id·@ManyToOne·@Column(name) 만(길이·NOT NULL·UNIQUE·CHECK 제약 없음 — 제약은 동작이라 Phase 3). PerformanceZoneRepository: 빈 JpaRepository 인터페이스. Performance: posterUrl 을 받는 9인자 생성자, 본문 throw new UnsupportedOperationException() 한 줄",
+    "purity_check": "UnsupportedOperationException 은 SC-11 1건(그 생성자를 쓰는 유일한 테스트). 나머지 15건은 HTTP·SQL 결과 단언 실패 — 스켈레톤이 값을 반환하는 경로가 없다"
+  },
+  "existing_tests_impact": {
+    "changed": [],
+    "note": "승인된 기존 테스트는 고치지 않았다. 기존 8인자 생성자 유지(PLAN unresolved #3). PerformanceSectionSummaryApiTest 는 순서·키를 단언하지 않아 계속 통과(#2 확인)"
+  },
+  "human_review": {
+    "approved": true,
+    "decision": "APPROVE",
+    "reviewed_at": "2026-11-11",
+    "via": "AskUserQuestion — RETRY_SCENARIO 2/3 뒤 통합 재승인(HITL#1·2)",
+    "history": [
+      {
+        "approved": true,
+        "decision": "APPROVE",
+        "reviewed_at": "2026-11-11",
+        "via": "AskUserQuestion — 1차 통합(HITL#1·2)"
+      },
+      {
+        "approved": true,
+        "decision": "APPROVE",
+        "reviewed_at": "2026-11-11",
+        "via": "AskUserQuestion — RETRY_SCENARIO 뒤 통합 재승인(HITL#1·2)"
+      }
+    ]
+  },
+  "red_retry": {
+    "reason": "RETRY_SCENARIO — Phase 3 자체 리뷰 RC-1(posterUrl 호스트 판정), 사용자 결정 '관대하게'",
+    "attempt": 3,
+    "command": "./gradlew test --tests '*PerformanceZoneRegistrationApiTest'",
+    "result": "8건 중 2건 실패(SC-05·SC-06) — 새 행 p·q·j·k 만 실패",
+    "mutation_check": "구현이 이미 있어 변이 대신 새 행이 현재 구현에서 실패하는 것으로 Red 를 관찰(RC-1 변종과 일치). 실패하지 않은 새 행(o·r·s·t·l·m)은 규칙상 지금도 맞는 행",
+    "round3": {
+      "reason": "RETRY_SCENARIO 2/3 — VERIFY 1회차 FAIL RC-1·RC-2",
+      "command": "./gradlew test --tests '*PerformanceZoneRegistrationApiTest'",
+      "result": "8건 중 2건 실패(SC-05·SC-08) — 새 거부 행 12개 중 11개 실패, e2 는 이미 맞음"
+    }
+  }
+}
