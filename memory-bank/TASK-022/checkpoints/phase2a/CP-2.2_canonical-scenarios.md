@@ -1,5 +1,5 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-11T00:00:00Z
 summary: "SCENARIO_TASK-022 — 15건(happy 5·error 5·regression 5), AC 8/8, 입력 경계 57/57. 독립검증 2회차 PASS(경고 7)"
 
@@ -36,6 +36,9 @@ attempts:
   - round: 2
     result: PASS
     detail: "V11 해소. 경고 7(V5·V6·V7·V8·V9·V12 + 참고)"
+  - round: 3
+    result: PENDING
+    detail: "2b Red 작성 중 발견 — SC-09 c 의 social/complete 기대 201 이 실제 응답(200, AuthController·WriteGuardSocialCompleteTest)과 다르다. 200 으로 고치고 재검증"
 ---
 
 # CP-2.2 시나리오 — TASK-022

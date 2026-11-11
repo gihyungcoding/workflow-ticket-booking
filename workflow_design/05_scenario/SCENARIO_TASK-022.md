@@ -241,7 +241,7 @@ flow: F5
 |---|---|---|
 | a | `POST /api/auth/signup` (ORGANIZER) | 201 |
 | b | `POST /api/auth/login` (a 의 계정) | 200, accessToken 있음 |
-| c | `POST /api/auth/social/complete` (유효한 pendingToken, 역할 AUDIENCE) | 201 |
+| c | `POST /api/auth/social/complete` (유효한 pendingToken, 역할 AUDIENCE) | 200 (지금 가입 완료 응답과 같다) |
 | d | `POST /api/performances` (b 의 토큰, `R0`) | 201 |
 
 covers: `X-Write-Key` 없이 가입·로그인·소셜 가입 완료가 성공한다. `WRITE_GUARD_ENABLED=true` 를 줘도 쓰기 요청이 키 때문에 거부되지 않는다
