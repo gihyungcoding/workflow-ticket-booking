@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-11-10 · 총 26건
+마지막 재생성: 2026-11-11 · 총 28건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -31,6 +31,8 @@
 | [ADR-0024](ADR-0024-countdown-by-server-clock-offset.md) | 오픈 카운트다운은 서버 시각과의 차이(오프셋)로 계산하고, 오픈 판정은 서버만 한다 | 채택됨 | 2026-11-04 |
 | [ADR-0025](ADR-0025-bank-transfer-only-with-internal-confirm-api.md) | 결제는 무통장 입금만 두고, 입금 확인은 쓰기 키로 보호한 내부 API 로 처리한다 | 채택됨 | 2026-11-04 |
 | [ADR-0026](ADR-0026-client-timer-transition-server-judgment.md) | 시간 제한 화면은 기한이 되면 다시 조회하지 않고 클라이언트가 전환하고, 판정은 다음 요청에서 서버가 한다 | 채택됨 | 2026-11-10 |
+| [ADR-0027](ADR-0027-display-string-blank-definition.md) | 표시 문자열의 「공백 아님」은 유니코드 공백·NBSP·U+200B 를 공백으로 보는 한 판정으로 하고, 서식 문자는 받는다 | 채택됨 | 2026-11-11 |
+| [ADR-0028](ADR-0028-user-url-validation-by-authority-parts.md) | 사용자가 입력하는 URL 은 https 이고, 권한 부분을 직접 나눠 하위 요소마다 판정한다 | 채택됨 | 2026-11-11 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다 | 2026-10-14 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로 대체됨) | 2026-10-14 |
 | [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) | 자동 연결은 이메일 소유가 확인된 계정에만 한다 | 채택됨 (ADR-0014 의 "이메일이 같으면 이메일 가입 계정에도 연결" 부분을 대체) | 2026-10-23 |
