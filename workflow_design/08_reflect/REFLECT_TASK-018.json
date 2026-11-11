@@ -159,8 +159,9 @@
       "section": "KINDS",
       "change": "kind 'route_path' 추가 — trailing_slash·case·percent_encoded·malformed_encoding 칸. coverage-policy.md §2-1 표에도 같은 행(--check-policy)",
       "evidence": "TASK-018 — 경로 표기를 converted 로 대신 분류했고 칸이 2개라 표기 변종을 강제하지 못했다. Phase 4 2회차 FAIL(퍼센트 인코딩)",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "91c7c4d"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",

@@ -140,40 +140,45 @@
       "section": "KINDS",
       "change": "kind 'url' 추가 — scheme_case · host_charset(밑줄·비 ASCII) · host_percent · host_colon · userinfo_empty · userinfo_at · port_empty · port_non_ascii_digit · ipv6 · surrounding_space 칸. coverage-policy.md §2-1 표에도 같은 행(--check-policy)",
       "evidence": "TASK-019 RC-1 — 리뷰 4라운드 동안 변종이 하나씩 새로 나옴(later 3), 시나리오 롤백 2회",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "91c7c4d"
     },
     {
       "target": "scripts/coverage_matrix.py",
       "section": "KINDS.string",
       "change": "string 에 unicode_blank 칸(U+3000·NBSP·U+200B·U+2028) 추가. 같은 '공백 아님' 규칙을 쓰는 필드가 둘 이상이면 한 표로 묶으라는 안내를 desc 에",
       "evidence": "TASK-019 RC-2 — note 의 \\S 가 ASCII 기준이라 U+3000 이 201. string.blank 칸이 ASCII 공백 행만으로 covered",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "91c7c4d"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 2 — NOT NULL·DTO 필드 추가 항목 옆",
       "change": "마이그레이션을 추가하면 최신 버전을 단언하는 테스트(flyway(null) + targetSchemaVersion 등)와, 새 FK 자식 테이블이 생기면 부모 행을 지우는 테스트 정리(deleteAll)를 Grep 해 unresolved 에 적는다",
       "evidence": "TASK-019 Phase 3 — UsersHandleMigrationTest SC-13 수정(사용자 승인), AuthRegressionApiTest FK 위반 → ON DELETE CASCADE",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "b7fe100"
     },
     {
       "target": ".claude/skills/wf-develop/SKILL.md",
       "section": "Step 5.5 — 4. 고쳤으면 한 번 더 리뷰한다",
       "change": "2라운드 뒤 남은 [correctness] 가 시나리오에 없는 변종이면 unresolved 로 Phase 4 에 넘기지 말고 3 의 표대로 지금 사용자에게 2a 롤백을 제안한다. 상한은 같은 Phase 안의 수정 루프에만 적용한다",
       "evidence": "TASK-019 — 2R unresolved 2건이 그대로 Phase 4 1회차 FAIL 의 원인",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "b7fe100"
     },
     {
       "target": ".claude/skills/wf-verify/SKILL.md",
       "section": "실행 순서",
       "change": "리뷰어 프롬프트에 '저장소 안에서 ./gradlew test 를 돌리지 않는다 — 프로브는 저장소 밖 스크래치에서' 를 넣는다. Gradle 은 test-results 를 공유해 동시 실행이 본 실행을 깨뜨린다",
       "evidence": "TASK-019 Phase 4 2회차 — NoSuchFileException in-progress-results-generic.bin, 재실행으로 확인",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "b7fe100"
     }
   ],
   "metrics": {
@@ -199,6 +204,9 @@
     "기능 문서 §3-1·§3-3 을 구현에 맞춰 갱신해야 한다(drift)"
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-11T00:00:00Z",
+    "reviewed_in": "batch",
+    "note": "승인 + ADR 작성 (후보 2건)"
   }
 }
