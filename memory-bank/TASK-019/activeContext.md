@@ -1,8 +1,8 @@
 ---
 task_id: TASK-019
 title: "기준 시각·포스터·구역 위치·머리글 후보 API"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -25,11 +25,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 1회차 FAIL → 2a 롤백(RETRY_SCENARIO 2/3). RC-1 잔여 변종 + RC-2(유니코드 공백·숫자).
+RC-1·RC-2 수정(e49ca08), 180/180. Phase 4 2회차 진입.
 
 ## 다음 한 걸음
 
-SC-05·SC-08 에 변종 행 추가 → 검증자 3회차 → 2b 재승인 → Phase 3 수정 → Phase 4 재검증.
+wf-verify 2회차 — 이전 root_causes 를 넘기고 수정 커밋(f7fc060...HEAD)을 반드시 리뷰.
 
 ## 알아둬야 할 것
 

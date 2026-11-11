@@ -128,11 +128,12 @@
   ],
   "test_status": "green",
   "test_result": {
-    "command": "cd backend && ./gradlew test",
+    "command": "cd backend && ./gradlew test --rerun-tasks",
     "total": 180,
     "passed": 180,
     "failed": 0,
-    "target_tests_passed": 16
+    "target_tests_passed": 16,
+    "after": "e49ca08 (주석만 바뀐 커밋 앞 실행 — 로직 동일, 컴파일·spotless 재확인)"
   },
   "lint": {
     "command": "cd backend && ./gradlew spotlessCheck",
@@ -217,6 +218,27 @@
         "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java#hasValidAuthority"
       ],
       "route": "RETRY_SCENARIO → 2a 2회차 → 2b 재승인 → cd2df9f"
+    },
+    {
+      "root_cause": "RC-1 · RC-2 (VERIFY 1회차 FAIL)",
+      "variants": [
+        "호스트 ':' 여럿 (a:1:2, :80:90)",
+        "ASCII 아닌 포트 숫자 (٨٠, ８０)",
+        "userinfo 안 '@'",
+        "note 유니코드 공백 (U+3000·U+2003·U+2028)",
+        "area·note NBSP·U+200B 만"
+      ],
+      "tests": [
+        "SC-05 u~y",
+        "SC-08 e2~e4·j2~j6",
+        "SC-06 n"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java#hasValidAuthority",
+        "backend/src/main/java/com/example/ticket_booking/api/dto/ZoneRequest.java#NOT_BLANK (area·note 공용)"
+      ],
+      "route": "VERIFY FAIL → RETRY_SCENARIO 2/3 → 2a 3회차 PASS → 2b 재승인 → e49ca08"
     }
   ],
   "pre_review": {
@@ -307,27 +329,8 @@
         ]
       }
     ],
-    "unresolved": [
-      {
-        "id": "RC-1/a:1:2",
-        "category": "correctness",
-        "where": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java hasValidAuthority",
-        "what": "호스트에 ':' 가 여러 개(https://a:1:2/)면 마지막 ':' 로만 나눠 host='a:1' 로 통과",
-        "fix_hint": "host 에 ':' 가 있으면 거부"
-      },
-      {
-        "id": "RC-1/unicode-digit",
-        "category": "correctness",
-        "where": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java hasValidAuthority",
-        "what": "포트 판정의 Character::isDigit 가 아랍-인도·전각 숫자를 받는다",
-        "fix_hint": "'0'~'9' 만"
-      }
-    ],
+    "unresolved": [],
     "deferred": [
-      {
-        "what": "userinfo 에 '@' 가 둘 이상(https://a@b@host) 통과",
-        "why": "규약 미정 — 사람 판단"
-      },
       {
         "what": "포트 범위(:0·:65536·:99999999999) 미검사",
         "why": "규약에 없음, 2a 에서 보류로 기록"
@@ -336,6 +339,10 @@
         "what": "호스트 '.'·'-'·'a..b' 통과",
         "why": "규약은 '비어 있지 않음' 까지"
       }
+    ],
+    "resolved_after_phase4": [
+      "RC-1/a:1:2 → e49ca08",
+      "RC-1/unicode-digit → e49ca08"
     ]
   }
 }
