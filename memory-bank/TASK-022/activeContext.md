@@ -1,8 +1,8 @@
 ---
 task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
-phase: "2a"
-phase_name: "Phase 2a - Scenario"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -13,19 +13,21 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-022-owner-role-auth"
 
-last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/organizer-flow.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-022.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-022.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-022.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 완료. Phase 2a 진입 전.
+Phase 2a 독립검증 통과(2회차). Phase 2b 진입 전.
 
 ## 다음 한 걸음
 
-`wf-scenario` 로 시나리오를 쓴다. PLAN unresolved 의 승인 테스트 수정 5건을 회귀 시나리오로 명시한다.
+`wf-red` 로 Red 테스트를 쓴다. 시나리오 MD 끝 「기존 승인 테스트 변경」 6건을 함께 고치고 통합 HITL(#1·2)에 올린다.
 
 ## 알아둬야 할 것
 

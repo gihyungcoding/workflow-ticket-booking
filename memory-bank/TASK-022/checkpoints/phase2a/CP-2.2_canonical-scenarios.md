@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-11T00:00:00Z
-summary: "SCENARIO_TASK-022 — 15건(happy 5·error 5·regression 5), AC 8/8, 입력 경계 57/57. 독립검증 2회차 대기"
+summary: "SCENARIO_TASK-022 — 15건(happy 5·error 5·regression 5), AC 8/8, 입력 경계 57/57. 독립검증 2회차 PASS(경고 7)"
 
 next_steps:
-  - "scenario-validator 2회차 — 1회차 판정 원문을 붙인다"
+  - "Phase 2b — wf-red. 승인 테스트 변경 6건을 Red 와 함께 통합 HITL 에 올린다"
 
 decisions:
   - decision: "새로 쓴다 — 기존 시나리오를 확장하지 않는다"
@@ -25,10 +25,17 @@ decisions:
   - decision: "보류: V9 중복(SC-05 a·b, SC-09 d) — 표의 기준 행이라 남긴다. V12 (4) 취소된 공연 재취소는 TASK-023 이 409 로 정한다 — 이 태스크는 동작을 바꾸지 않아 단언하지 않는다. V12 (5) 는 SC-07 b 와 같은 경로"
     rationale: "경고는 사람 판단 몫 — 2b 통합 HITL 요약에 올린다"
 
+  - decision: "2회차 경고 반영(재검증 없음): V8 — PLAN SecurityConfig 변경을 'GET 외 모든 메서드 hasRole(ORGANIZER)' 로, outputs 에 405·415. V12(3) — BEARER 정규식이 CASE_INSENSITIVE 임을 코드로 확인(JwtAuthenticationFilter) — SC-06 b 는 기존 동작"
+    rationale: "PASS 후 경고는 재검증하지 않는다"
+  - decision: "2회차 경고 보류(HITL 에서 판단): V5 SC-02·12 의 기존 테스트 위임 — SC-12 는 표로 적었고 SC-02 는 기존 승인 테스트 단언을 그대로 쓴다. V6 SC-09 연쇄(가입→로그인→등록은 앞 응답이 다음 입력이라 하나의 흐름)·SC-07 마지막 And(2b 에서 별도 테스트 메서드로 나눈다). V7 ownerId(관찰 대상이 DB 값이라 필드명이 곧 관찰 지점). V9 중복. V12 (1) typ/exp·pendingToken 은 기존 규칙 그대로라 칸을 두지 않음 (2) exp 정각 경계는 기존 notExpiredValidator 규칙 — 이 태스크가 바꾸지 않음 (4) sub 사용자 없음 500 은 PLAN unresolved (5) 재취소는 TASK-023"
+    rationale: "경고는 사람 판단 몫"
 attempts:
   - round: 1
     result: FAIL
     detail: "V11 — affix_entry false_cover 2칸(=·LF·NUL·서로게이트 행 없음), plan_gap 3건(sub·WRITE_GUARD env·role string). 경고 7"
+  - round: 2
+    result: PASS
+    detail: "V11 해소. 경고 7(V5·V6·V7·V8·V9·V12 + 참고)"
 ---
 
 # CP-2.2 시나리오 — TASK-022

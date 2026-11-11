@@ -3,7 +3,7 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | flows 8 · AC 8 |
-| 2a Scenario | ⬜ 대기 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.2 | 15건 · 경계 57 · 검증 2회차 PASS |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |
