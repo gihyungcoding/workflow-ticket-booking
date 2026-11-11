@@ -1,0 +1,341 @@
+{
+  "task_id": "TASK-019",
+  "changed_files": [
+    {
+      "path": "backend/src/main/resources/db/migration/V6__add_poster_and_zones.sql",
+      "change": "poster_url 컬럼 + performance_zone(UNIQUE 2·CHECK·ON DELETE CASCADE)",
+      "lines_changed": 12
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+      "change": "posterUrl 필드·9인자 생성자(8인자는 위임)·getter",
+      "lines_changed": 21
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceZone.java",
+      "change": "엔티티 — 제약 애노테이션·@OnDelete CASCADE",
+      "lines_changed": 81
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceZoneRepository.java",
+      "change": "findByPerformanceIdOrderByStageOrder",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryCustom.java",
+      "change": "findNextOpening",
+      "lines_changed": 4
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+      "change": "findNextOpening — notPast + UPCOMING 재사용, openAt·id 정렬",
+      "lines_changed": 11
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/TimeController.java",
+      "change": "GET /api/time, Clock, no-store",
+      "lines_changed": 29
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ServerTimeResponse.java",
+      "change": "{now}",
+      "lines_changed": 5
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+      "change": "/api/time permitAll",
+      "lines_changed": 1
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/RegisterPerformanceRequest.java",
+      "change": "posterUrl(Strict) · zones(@NotNull @Valid 원소)",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ZoneRequest.java",
+      "change": "area·note·grades 검증",
+      "lines_changed": 31
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/ZoneSpec.java",
+      "change": "Service 경계 타입",
+      "lines_changed": 9
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "등록에 posterUrl·zones, GET /next-opening 200|204",
+      "lines_changed": 20
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "validatePosterUrl·hasValidAuthority·placeZones·sectionsOf 병합·getNextOpening·posterUrl 응답",
+      "lines_changed": 193
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java",
+      "change": "posterUrl",
+      "lines_changed": 3
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/SectionSummaryResponse.java",
+      "change": "area·areaNote·stageOrder, NON_NULL",
+      "lines_changed": 12
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidPosterUrlException.java",
+      "change": "신규",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/ZoneGradeUnknownException.java",
+      "change": "신규",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/ZoneGradeDuplicatedException.java",
+      "change": "신규",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+      "change": "3개 코드 400",
+      "lines_changed": 22
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+      "symbol": "statusSpecification / notPastSpecification"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/SectionSpec.java",
+      "symbol": "SectionSpec 관례 → ZoneSpec"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/StrictStringDeserializer.java",
+      "symbol": "StrictStringDeserializer"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java",
+      "symbol": "clock()"
+    }
+  ],
+  "not_reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/NoLoneSurrogate.java",
+      "why": "area·note 는 NUL 도 거부해야 해 SignUpRequest.name 과 같은 \\p{Cc}\\p{Cs} 정규식을 ZoneRequest 상수로 둠"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && ./gradlew test",
+    "total": 180,
+    "passed": 180,
+    "failed": 0,
+    "target_tests_passed": 16
+  },
+  "lint": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0
+  },
+  "refactoring": [
+    {
+      "what": "하지 않음",
+      "why": "placeZones·sectionsOf·hasValidAuthority 가 각각 한 일만 한다. 수정 커밋(cd2df9f)에서 호스트 분해를 hasValidAuthority 로 분리한 것이 유일한 구조 변경"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "#1 Security 기본 Cache-Control",
+      "how": "SC-01 실행",
+      "fact": "컨트롤러가 CacheControl.noStore() 를 달면 Security 가 덮지 않아 값이 정확히 no-store",
+      "impact": "없음"
+    },
+    {
+      "item": "#2 PerformanceSectionSummaryApiTest 순서·키",
+      "how": "전체 스위트",
+      "fact": "순서·키를 단언하지 않아 계속 통과",
+      "impact": "없음"
+    },
+    {
+      "item": "#3 Performance 생성자",
+      "how": "8인자를 9인자로 위임",
+      "fact": "기존 테스트 수정 없음",
+      "impact": "없음"
+    },
+    {
+      "item": "#7 posterUrl JSON 타입",
+      "how": "2a 판정대로 StrictStringDeserializer",
+      "fact": "SC-07 통과",
+      "impact": "없음"
+    },
+    {
+      "item": "#9 H2 제약",
+      "how": "엔티티 @UniqueConstraint·@CheckConstraint·@OnDelete",
+      "fact": "SC-14·16 은 PostgreSQL 에서 통과",
+      "impact": "없음"
+    }
+  ],
+  "test_modifications": [
+    {
+      "file": "backend/src/test/java/com/example/ticket_booking/repository/UsersHandleMigrationTest.java",
+      "scenario": "TASK-016 SC-13",
+      "change": "flyway(null) → flyway(\"5\") (단언 targetSchemaVersion == \"5\" 그대로)",
+      "reason": "V6 가 생기면 '최신 == 5' 는 반드시 깨진다 — 시나리오 문장 'V5 를 적용한다' 대로 관찰",
+      "approval": "AskUserQuestion 2026-11-11 '승인 (대상만 \"5\" 로)'"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "backend/src/main/resources/db/migration/V6__add_poster_and_zones.sql",
+      "what": "ON DELETE CASCADE — feature §3-1 SQL 에 없음",
+      "why": "등록이 구역 행을 만들어 승인 테스트 AuthRegressionApiTest 의 정리(deleteAll)가 FK 위반. 구역은 공연에 딸린 값. 리뷰: 좌석 FK 는 그대로라 좌석 있는 공연 삭제는 막힌다"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/dto/ServerTimeResponse.java",
+      "what": "PLAN target_files 에 없던 새 파일",
+      "why": "/api/time 응답 레코드"
+    }
+  ],
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-1",
+      "variants": [
+        "밑줄 호스트",
+        "비 ASCII 호스트",
+        "호스트 %XX",
+        "빈 userinfo",
+        "빈 포트"
+      ],
+      "tests": [
+        "SC-05 o~t",
+        "SC-06 j~m"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java#hasValidAuthority"
+      ],
+      "route": "RETRY_SCENARIO → 2a 2회차 → 2b 재승인 → cd2df9f"
+    }
+  ],
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "develop...HEAD (2f02c8a)",
+        "findings": 2,
+        "tests_added": [],
+        "fix_commit": null,
+        "note": "[correctness] RC-1 + [test] 같은 뿌리 — 시나리오 밖 동작이라 2a 재진입(사용자 결정)"
+      },
+      {
+        "n": 2,
+        "scope": "2f02c8a...HEAD (289fee7 테스트 행, cd2df9f 수정) · 같은 카테고리 전수 · 호출부 전수",
+        "findings": 2,
+        "tests_added": [],
+        "fix_commit": null,
+        "note": "RC-1 변종 5건 고쳐짐 확인. 같은 뿌리 새 변종 2건 [correctness] + 판단 요청 1건"
+      }
+    ],
+    "root_causes": [
+      {
+        "id": "RC-1",
+        "summary": "URI.getHost()==null 을 '호스트 없음'으로 해석하지만, 서버 기반 문법에 맞지 않는 유효한 호스트(밑줄·비 ASCII)도 null 이 된다. 수정 후에는 권한 부분을 직접 분해하는 hasValidAuthority 가 호스트·포트 문법을 부분적으로만 검사한다",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "호스트에 밑줄 (https://exa_mple.com/p.png)",
+            "origin": "found",
+            "probe": "reproduced",
+            "fixed_in_round2": true
+          },
+          {
+            "case": "비 ASCII 호스트 (https://例え.jp/a)",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "fixed_in_round2": true
+          },
+          {
+            "case": "호스트의 퍼센트 인코딩 (https://ex%41mple.com/x)",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "fixed_in_round2": true
+          },
+          {
+            "case": "빈 userinfo (https://@a.com) 통과",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "fixed_in_round2": true
+          },
+          {
+            "case": "빈 포트 (https://a.com:/x) 통과",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "fixed_in_round2": true
+          },
+          {
+            "case": "IPv6·대소문자 스킴·끝 슬래시·userinfo+포트",
+            "origin": "predicted",
+            "probe": "not_reproduced"
+          },
+          {
+            "case": "호스트에 ':' 여러 개 (https://a:1:2/) 가 host='a:1', port='2' 로 읽혀 통과",
+            "origin": "later",
+            "probe": "reproduced"
+          },
+          {
+            "case": "포트에 비 ASCII 숫자 (https://a.com:٨٠/x, 전각 ８０) — Character.isDigit 가 유니코드 숫자를 허용",
+            "origin": "later",
+            "probe": "reproduced"
+          },
+          {
+            "case": "userinfo 에 '@' 가 둘 이상 (https://a@b@host) 통과 — 규약 미정, 사용자 판단 필요",
+            "origin": "later",
+            "probe": "reproduced"
+          },
+          {
+            "case": "IPv6 뒤 쓰레기·IPv6+빈 포트·IPv6+이중 포트·미닫힌 대괄호",
+            "origin": "predicted",
+            "probe": "not_reproduced"
+          },
+          {
+            "case": "PUT 등 다른 입구로 posterUrl 유입",
+            "origin": "predicted",
+            "probe": "not_reproduced"
+          }
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "id": "RC-1/a:1:2",
+        "category": "correctness",
+        "where": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java hasValidAuthority",
+        "what": "호스트에 ':' 가 여러 개(https://a:1:2/)면 마지막 ':' 로만 나눠 host='a:1' 로 통과",
+        "fix_hint": "host 에 ':' 가 있으면 거부"
+      },
+      {
+        "id": "RC-1/unicode-digit",
+        "category": "correctness",
+        "where": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java hasValidAuthority",
+        "what": "포트 판정의 Character::isDigit 가 아랍-인도·전각 숫자를 받는다",
+        "fix_hint": "'0'~'9' 만"
+      }
+    ],
+    "deferred": [
+      {
+        "what": "userinfo 에 '@' 가 둘 이상(https://a@b@host) 통과",
+        "why": "규약 미정 — 사람 판단"
+      },
+      {
+        "what": "포트 범위(:0·:65536·:99999999999) 미검사",
+        "why": "규약에 없음, 2a 에서 보류로 기록"
+      },
+      {
+        "what": "호스트 '.'·'-'·'a..b' 통과",
+        "why": "규약은 '비어 있지 않음' 까지"
+      }
+    ]
+  }
+}

@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-11T00:00:00Z
-summary: "1차 Green 180/180(2f02c8a). 자체 리뷰 1R — [correctness] RC-1 posterUrl 호스트 판정(URI.getHost null). 사용자 결정으로 2a 재진입(RETRY_SCENARIO), SC-05·06 행 추가 중."
+summary: "Green 180/180, spotless 0. 자체 리뷰 2R — RC-1 변종 5건 수정(cd2df9f), 같은 뿌리 [correctness] 2건 미해결(호스트 ':' 여럿·비 ASCII 포트 숫자)로 Phase 4 에 넘김."
 
 next_steps:
-  - "2a 검증 2회차 → 2b 통합 승인 → 새 행 Red 확인 → validatePosterUrl 수정 → 자체 리뷰 2R"
+  - "Phase 4 — wf-verify. 이전 라운드 root_causes(RC-1)와 pre_review.unresolved 2건을 리뷰어에 넘긴다"
 
 decisions:
   - decision: "구현 순서: V6 → 엔티티 제약 → TimeController·SecurityConfig → DTO(ZoneRequest·StrictStringDeserializer) → 예외·핸들러 → placeZones·sectionsOf·getNextOpening"
@@ -18,7 +18,12 @@ decisions:
   - decision: "자체 리뷰 RC-1 은 시나리오에 없는 동작이라 Phase 3 에서 테스트를 만들지 않고 2a 로 — 사용자 결정 '관대하게': 밑줄·비 ASCII 호스트 허용, 호스트 %XX·빈 userinfo·빈 포트 거부, IPv6·userinfo+포트 허용"
     rationale: "wf-develop Step 5.5 표 — 변종 전부 한 번에"
 
+  - decision: "자체 리뷰 2R 뒤 남은 [correctness] 2건은 고치지 않고 pre_review.unresolved — 2라운드 상한(wf-develop Step 5.5)"
+    rationale: "판정은 Phase 4"
+
 attempts:
   - round: "pre_review 1"
     result: "[correctness] 1 (RC-1, 변종 5 reproduced) · [test] 1 — 같은 뿌리"
+  - round: "pre_review 2"
+    result: "RC-1 변종 5 수정 확인 · 새 [correctness] 2 (unresolved) · 판단 요청 1 (deferred)"
 ---

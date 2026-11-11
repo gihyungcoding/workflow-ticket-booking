@@ -1,8 +1,8 @@
 ---
 task_id: TASK-019
 title: "기준 시각·포스터·구역 위치·머리글 후보 API"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -13,21 +13,22 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-019-server-time-poster-zones"
 
-last_checkpoint: "CP-2.5"
+last_checkpoint: "CP-3.4"
 source: "docs/product/features/booking-ux-02-browse.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-019.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-019.md"
   test: "workflow_design/05_scenario/TEST_TASK-019.json"
+  dev: "workflow_design/06_dev/DEV_TASK-019.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-시나리오·Red 승인(HITL#1·2, 2026-11-11). Phase 3 진입.
+Phase 3 완료(CP-3.4) — 180/180, 자체 리뷰 2R, 미해결 [correctness] 2건.
 
 ## 다음 한 걸음
 
-`wf-develop` — Red 16건을 통과시키는 최소 구현.
+`wf-verify` — 미해결 2건을 리뷰어에 넘긴다.
 
 ## 알아둬야 할 것
 
