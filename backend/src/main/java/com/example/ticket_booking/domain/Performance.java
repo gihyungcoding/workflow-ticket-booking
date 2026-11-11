@@ -82,6 +82,19 @@ public class Performance {
     this.cancelled = cancelled;
   }
 
+  public Performance(
+      String title,
+      String venue,
+      Instant startAt,
+      Instant openAt,
+      Instant closeAt,
+      Integer totalSeats,
+      Integer availableSeats,
+      Boolean cancelled,
+      String posterUrl) {
+    throw new UnsupportedOperationException();
+  }
+
   public Long getId() {
     return id;
   }

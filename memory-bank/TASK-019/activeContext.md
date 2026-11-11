@@ -13,20 +13,21 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-019-server-time-poster-zones"
 
-last_checkpoint: "CP-2.2"
+last_checkpoint: "CP-2.5"
 source: "docs/product/features/booking-ux-02-browse.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-019.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-019.md"
+  test: "workflow_design/05_scenario/TEST_TASK-019.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a 완료(CP-2.2) — 시나리오 16건, 독립검증 1회차 PASS. Phase 2b 진입.
+Red 16건 커밋(CP-2.5). 시나리오·Red 통합 승인(HITL#1·2) 대기.
 
 ## 다음 한 걸음
 
-`wf-red` — 시나리오 16건을 실패하는 테스트로 옮긴다.
+사람 승인 후 `wf-develop`.
 
 ## 알아둬야 할 것
 
