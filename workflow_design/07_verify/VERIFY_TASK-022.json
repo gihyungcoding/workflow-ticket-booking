@@ -398,17 +398,27 @@
         "reason_code": "IMPL_DEFECT",
         "summary": "뿌리 1 · 새 변종 2, 재현 2(해소 0)"
       },
-      "human_review": null
+      "human_review": {
+        "decision": "REJECT",
+        "reject_to": "Phase 3 (구현 결함)",
+        "decided_at": "2026-11-12",
+        "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
+      }
     }
   ],
   "reject": {
     "to": "Phase 3",
-    "attempt": 1,
+    "attempt": 2,
     "history": [
       {
         "attempt": 1,
         "from": "Phase 4 VERIFY 1회차 FAIL",
         "note": "RC-2 배포 체크리스트 — 시나리오·코드는 그대로"
+      },
+      {
+        "attempt": 2,
+        "from": "Phase 4 VERIFY 2회차 FAIL",
+        "note": "RC-2 later 변종 2 — V7 운영 영향, 마이그레이션 개수"
       }
     ]
   }
