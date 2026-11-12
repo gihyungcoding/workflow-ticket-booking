@@ -1,0 +1,317 @@
+{
+  "task_id": "TASK-022",
+  "status": "FAIL",
+  "status_reason": "RC-2 — 이 태스크가 고친 배포 체크리스트(PLAN target_files)가 프론트 VITE_WRITE_KEY 를 '넣어도 서버가 무시한다' 고 안내한다. 실제로는 X-Write-Key 가 실린 쓰기(가입·로그인 포함)의 preflight 가 Allow-Headers 불일치로 브라우저에서 막힌다. 그대로 따르면 배포된 프론트의 로그인이 끊긴다. 코드·테스트·제약은 통과",
+  "evidence": {
+    "tests": {
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --continue (build/test-results 를 지우고 실행)",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL in 1m 35s — 39 classes, 184 tests, 0 failed, 0 skipped (91.0s)"
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "출력 없음(통과)"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "47 files changed, 4141 insertions(+), 812 deletions(-) — backend/src/main·docs/release 12 files +197 -153, backend/src/test 15 files +1394 -655, 나머지는 workflow 산출물"
+    },
+    "head": "5a9f947d8786b3b3519005f41658624ab3687899",
+    "worktree_clean": true
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "마이그레이션 후 기존 performance 행의 owner_id 가 NULL 이고, 기존 관객 조회 API 응답이 마이그레이션 전과 같다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnerMigrationTest#test_sc01(PostgreSQL 16 Testcontainers, V6→V7, owner_id NULL·다른 열 같음·FK 23503·ON DELETE SET NULL) · PerformanceOwnershipApiTest#test_sc02(키 집합·ownerId 부재) · PerformanceBrowseResponseApiTest 통과"
+    },
+    {
+      "criterion": "주최자 토큰으로 POST /api/performances 를 보내면 201 이고, 저장된 행의 owner_id 가 그 사용자 id 다 (비트랜잭션 조회로 확인)",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc03·test_sc05 a 행 — 클래스 레벨 @Transactional 없음, performanceRepository.findById 로 재조회"
+    },
+    {
+      "criterion": "토큰 없이 POST·PUT /api/performances/** 를 보내면 401, 관객 토큰이면 403 FORBIDDEN_ROLE 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc04(6행×3경로, 403 본문·Content-Type, count·title·cancelled 재조회)·test_sc05(30행)·test_sc06(13행) · PerformanceErrorResponseRegressionTest#test_sc12 i~l(실제 서버)"
+    },
+    {
+      "criterion": "다른 주최자의 공연, 소유자가 NULL 인 공연, 없는 id 에 수정·취소를 보내면 모두 같은 형태의 404 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc07 — 404 본문 키 집합 1종, message id 만 다름, P2·P0 재조회 그대로, 빈 title 은 세 경우 모두 400"
+    },
+    {
+      "criterion": "자기 공연의 수정·취소는 지금 규칙(수정은 now < openAt) 그대로 동작하고 DB 에 반영된다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc08·test_sc13·test_sc14 (비트랜잭션 재조회). PerformanceRegistrationApiTest 기존 수정·취소 테스트 통과(클래스 @Transactional — 반영은 위 비트랜잭션 테스트가 덮음, 리뷰어 확인)"
+    },
+    {
+      "criterion": "X-Write-Key 없이 가입·로그인·소셜 가입 완료가 성공한다. WRITE_GUARD_ENABLED=true 를 줘도 쓰기 요청이 키 때문에 거부되지 않는다",
+      "verdict": "PASS",
+      "evidence": "WriteGuardRemovalApiTest#test_sc09 — @SpringBootTest(properties) 로 가드 변수 주입, Environment.getProperty 로 적용 확인, 201·200·200·201. 단 브라우저 경로는 RC-2 참고(서버 쪽 기준은 충족)"
+    },
+    {
+      "criterion": "WriteGuardFilter·WriteGuardConfig 와 그 테스트가 저장소에 없고, CORS 허용 헤더에 X-Write-Key 가 없다",
+      "verdict": "PASS",
+      "evidence": "WriteGuardRemovalApiTest#test_sc10·test_sc15, CorsFilterTest#test_sc01. `git ls-files | grep -i writeguard` → WriteGuardRemovalApiTest.java 1건뿐(삭제 대상 테스트 5개 없음)"
+    },
+    {
+      "criterion": "GET /api/performances/** 는 토큰 없이 지금처럼 200 이다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc11(토큰 없음·무효 토큰, 목록·상세·next-opening) · AuthRegressionApiTest 조회 행"
+    }
+  ],
+  "screens": [],
+  "screens_skipped_reason": "route=Backend — 화면 변경 없음",
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 8,
+    "no_target": [],
+    "files_scanned": 525,
+    "overdue_promotions": [],
+    "violations": [
+      {
+        "id": "AUTH-001",
+        "severity": "warn",
+        "count": 5,
+        "files": [
+          "frontend/.env.example",
+          "frontend/src/api/http.ts",
+          "frontend/src/vite-env.d.ts"
+        ]
+      },
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "count": 3,
+        "files": [
+          "frontend/src/pages/PerformanceDetailPage.tsx",
+          "frontend/src/pages/PerformanceEditPage.tsx",
+          "frontend/src/pages/PerformanceListPage.tsx"
+        ]
+      }
+    ],
+    "auth_001_delta": "develop 10건(backend CorsFilter·WriteGuardConfig·WriteGuardFilter + frontend 3파일) → 5건(frontend .env.example·http.ts·vite-env.d.ts). 백엔드 위반 0 — 남은 것은 TASK-024 범위(promote_after)",
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직 하지 않음",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "PerformanceController 는 principal 을 꺼내 넘기기만 한다 — 소유권 판정은 Service(findOwned)"
+      },
+      {
+        "rule": "API: DB 접근 하지 않음",
+        "constraint": "ARCH-001",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: HTTP 관심사 하지 않음",
+        "constraint": "ARCH-002",
+        "state": "✓",
+        "note": "api 패키지 import 만 검사. PerformanceService 는 ownerId(Long)만 받는다 — Authentication 타입을 쓰지 않음"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용",
+        "constraint": "ARCH-003",
+        "state": "✓"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어 하지 않음",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "Performance 는 ownerId 필드·생성자만 — 위반 없음. Phase 5 rule_proposals 후보(TASK-019 와 같은 갭)"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단 하지 않음",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "이번 변경에 Repository 수정 없음"
+      },
+      {
+        "rule": "Frontend: 도메인 규칙",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "이번 변경 없음"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "184/184 passed",
+    "callers_checked": true,
+    "callers": "registerPerformance·updatePerformance·cancelPerformance 의 호출부는 PerformanceController 3곳뿐(Grep). verifyAccessToken 은 verifyAccessClaims 위임 — JwtTokenFormatTest·OAuth2SocialLoginCallbackTest 통과. sub 를 사용자 id 로 읽는 곳은 verifyAccessClaims 1곳"
+  },
+  "scope_deviations": [],
+  "code_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "phase": 3,
+        "scope": "develop...HEAD (ebcb3e5)",
+        "findings": "[correctness] RC-1(sub 비정규 표기, reproduced 4) — 시나리오 밖 → RETRY_SCENARIO 2/3 · [design] HEAD 401/403 · [info] 프론트 X-Write-Key"
+      },
+      {
+        "n": 2,
+        "phase": 3,
+        "scope": "ebcb3e5...HEAD · 같은 카테고리 전수",
+        "findings": "결함 없음 — RC-1 해소(7f812e0), 새 변종 없음"
+      },
+      {
+        "n": 3,
+        "phase": 4,
+        "scope": "develop...HEAD 전체 · RC-1 not_probed 변종 프로브",
+        "findings": [
+          "결함 없음([correctness] 0) — RC-1 not_probed 변종 전부 서명된 토큰으로 프로브해 not_reproduced(뒤 개행·빈 문자열·0·19자리 경계·20자리 이상·공백·JSON 숫자·전각·아라비아-인도). role·SecurityConfig 경로 변형도 우회 없음",
+          "[design] HEAD /api/performances 비로그인 401·관객 403 — 시나리오 결정과 같고 fail-closed. 저장소에 HEAD 사용처 없음. 결함 아님",
+          "[info] frontend/src/api/http.ts:12-17 이 VITE_WRITE_KEY 가 있으면 X-Write-Key 를 붙인다 — 백엔드가 Allow-Headers 에서 뺐으므로 그 값이 설정된 프론트의 브라우저 쓰기(가입·로그인 포함)는 preflight 에서 실패. '프론트에서 VITE_WRITE_KEY 제거 후 백엔드 배포' 순서가 체크리스트에 있는지 확인 권고 → 검증자 확인 결과 RC-2"
+        ],
+        "test_integrity": "PerformanceOwnershipApiTest·WriteGuardRemovalApiTest 클래스 레벨 @Transactional 없음, 거부 경로 count·reload 비트랜잭션. WriteGuardRemovalApiTest properties 실제 주입 + Environment 단언. SC-05 w~ad 는 실제 필터·디코더 경로, o1Id 변형 — 가짜 통과 아님",
+        "probe_location": "/private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java"
+      }
+    ],
+    "findings": [
+      {
+        "category": "correctness",
+        "source": "검증자(리뷰어 [info] 확인)",
+        "file": "docs/release/first-deploy-checklist.md",
+        "line": 102,
+        "summary": "'프론트의 VITE_WRITE_KEY 는 … 그 전까지는 넣어도 서버가 무시한다' — 사실과 다름(RC-2)"
+      },
+      {
+        "category": "design",
+        "source": "리뷰어",
+        "file": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+        "summary": "HEAD 공개 경로 401/403 — 시나리오 결정과 같음, 결함 아님(HITL 판단 항목)"
+      }
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "sub 의 정수 판정을 Long.parseLong 에 위임해 정규형이 아닌 표기(부호·앞자리 0·유니코드 숫자)도 같은 사용자로 받아들인다",
+      "found_in_round": 1,
+      "found_in_phase": 3,
+      "variants": [
+        {
+          "case": "sub \"+7\"",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 w 행 · 7f812e0 CANONICAL_USER_ID · Phase 4 리뷰 재프로브 거부"
+        },
+        {
+          "case": "sub \"07\"",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 x 행"
+        },
+        {
+          "case": "sub \"٧\" (유니코드 숫자)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 y 행"
+        },
+        {
+          "case": "sub \"-7\" (음수 userId)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 z 행"
+        },
+        {
+          "case": "sub \" 7\" (공백)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 ac 행"
+        },
+        {
+          "case": "sub \"9223372036854775808\" (long 초과)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 t 행"
+        },
+        {
+          "case": "sub 숫자 7 / 이스케이프 \"\\u0037\"",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 q 행(숫자) · 이스케이프는 디코딩 후 \"7\" 과 같은 값이라 통과가 의도 — Phase 4 리뷰 프로브 /private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java"
+        },
+        {
+          "case": "role 대소문자·공백·배열·null·중복 키·이스케이프",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 b~o 행 · Phase 4 리뷰 프로브"
+        },
+        {
+          "case": "2R: 뒤 개행 \"7\\n\"·빈 문자열·\"0\"·19자리 경계(…807 통과/…808 거부)·99999… 19자리 초과값",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 aa(0)·t(…808) 행 · 뒤 개행·빈 문자열·…807·20자리 이상은 Phase 4 리뷰 프로브 /private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java (서명된 토큰, verifyAccessClaims + MockMvc)"
+        },
+        {
+          "case": "전각 숫자, 앞뒤 공백, JSON 숫자 7.0",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 ad·ac·r 행"
+        },
+        {
+          "case": "SecurityConfig 경로 변형(끝 슬래시, %31, 대문자, 미지원 메서드, ;x=1, //)",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "Phase 4 리뷰 프로브 /private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java · PerformanceErrorResponseRegressionTest#test_sc12"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "배포 체크리스트가 '백엔드가 X-Write-Key 를 더 이상 허용하지 않는다' 는 변경의 브라우저 쪽 결과를 반영하지 않았다 — 프론트가 아직 그 헤더를 보내는 동안(TASK-024 전)의 배포 순서와 확인 단계가 틀렸다",
+      "found_in_round": 3,
+      "found_in_phase": 4,
+      "variants": [
+        {
+          "case": "§5: 'VITE_WRITE_KEY 는 … 그 전까지는 넣어도 서버가 무시한다'",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "frontend/src/api/http.ts:10-18 — VITE_WRITE_KEY 가 있으면 POST·PUT·PATCH·DELETE 에 X-Write-Key 를 붙인다(가입·로그인 포함). CorsFilter ALLOW_HEADERS = \"Content-Type, Authorization\" — WriteGuardRemovalApiTest#test_sc15·CorsFilterTest#test_sc01 가 단언. 요청 헤더가 Allow-Headers 에 없으면 브라우저가 preflight 를 실패로 본다(Fetch 표준 CORS-preflight)"
+        },
+        {
+          "case": "배포 순서 없음 — 프론트 빌드에서 VITE_WRITE_KEY 를 지우고 재배포한 뒤 백엔드 배포",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "`grep -n '순서' docs/release/first-deploy-checklist.md` — 235행의 일반 관행('제거하는 변경은 프론트 먼저') 외에 이 변경의 순서가 없다"
+        },
+        {
+          "case": "§7 브라우저: '공연 등록을 하나 해본다 — 등록이 성공한다'",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "등록은 이제 ROLE_ORGANIZER 토큰이 필요하다(PerformanceOwnershipApiTest#test_sc04 a 행 401). 프론트는 TASK-024 전까지 Authorization 을 보내지 않는다(http.ts·organizer-flow.md §5 TASK-024 표) — 브라우저에서 등록은 401"
+        },
+        {
+          "case": "§7 브라우저: '키를 일부러 틀리게 빌드해보면 \"쓰기 거부\" 안내'",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "가드 삭제 — WriteGuardRemovalApiTest#test_sc10. WRITE_KEY_INVALID 를 내는 서버 코드가 없어 확인 단계가 성립하지 않는다"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "sub(정규형 10진)·role(정확 일치)·typ·exp 를 디코더 전 원문/디코더 후 값으로 검증. 본문 검증(@Valid)이 소유권보다 먼저(SC-07)라 소유 여부가 드러나지 않음",
+    "authorization": "/api/performances/** 쓰기는 hasRole(ORGANIZER), 소유권은 Service findOwned(남의 공연·NULL·없음 같은 404). ERROR 디스패치 permitAll 은 기존(원 요청의 인가는 REQUEST 디스패치에서 끝남). HEAD 는 fail-closed",
+    "secrets": "해당 없음 — 하드코딩 비밀 없음. 테스트 키(guard-key-0123456789)는 테스트 properties 뿐",
+    "logging": "해당 없음 — 새 로그 없음",
+    "deploy": "RC-2 — 배포 순서를 틀리면 가용성 문제(로그인 불가). 보안 우회는 아님"
+  },
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}

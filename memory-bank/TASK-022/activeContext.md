@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-022-owner-role-auth"
 
-last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
+last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
 source: "docs/product/features/organizer-flow.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-022.json"
@@ -21,15 +21,16 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-022.json"
   test: "workflow_design/05_scenario/TEST_TASK-022.json"
   dev: "workflow_design/06_dev/DEV_TASK-022.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-022.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 완료 — 184/184, 자체 리뷰 2R(RC-1 수정, unresolved 0). Phase 4 진입 전.
+Phase 4 1회차 FAIL — RC-2(배포 체크리스트). 코드·테스트·제약은 통과. HITL #3 (롤백 선택) 대기.
 
 ## 다음 한 걸음
 
-`wf-verify` — RC-1 root_causes(not_probed 변종 프로브)·deferred HEAD 를 리뷰어에 넘기고, CLAUDE.md JPA 지시 포함. SC-10 은 `git ls-files` 로 WriteGuard 테스트 5개 부재 확인.
+HITL #3 에서 롤백 방향을 받는다. Phase 3 이면 체크리스트 §5(VITE_WRITE_KEY 를 지우고 프론트 먼저 재배포)·§7(등록 확인은 TASK-024 뒤, 키 오빌드 단계 삭제)을 고치고 수정 커밋을 재리뷰.
 
 ## 알아둬야 할 것
 
