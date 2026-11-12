@@ -1,8 +1,8 @@
 ---
 task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-022-owner-role-auth"
 
-last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
 source: "docs/product/features/organizer-flow.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-022.json"
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 자체 리뷰 RC-1(sub 비정규 표기) 로 RETRY_SCENARIO(2/3). 2a 5회차 PASS. 2b 재진입.
+RETRY_SCENARIO(2/3) 뒤 통합 재승인(2026-11-12). Phase 3 — sub 정규형 검사 구현 중.
 
 ## 다음 한 걸음
 
-SC-05 w~ad 테스트를 먼저 실패시킨다 → 통합 HITL 재승인 → Phase 3 sub 정규형 검사 → 자체 리뷰 2R.
+verifyAccessClaims 에 sub 정규형 검사 → 전체 스위트 → 자체 리뷰 2R → DEV_TASK-022.json → Phase 4.
 
 ## 알아둬야 할 것
 

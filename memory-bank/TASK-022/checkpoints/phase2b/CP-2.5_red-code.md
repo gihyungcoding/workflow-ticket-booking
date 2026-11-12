@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "Red 15건 — 새 시나리오 Red 11 · already_passing 4(SC-02·11·13·14). 전체 184 중 20 실패(새 11 + 바뀐 승인 테스트 9), 손대지 않은 기존 테스트 전부 통과. 스켈레톤: Performance getOwnerId·소유자 생성자 UOE. 통합 HITL 승인(2026-11-12)"
 
 next_steps:
-  - "통합 HITL #1·2 재승인(2회차 RETRY) → Phase 3 sub 정규형 검사 → 자체 리뷰 2R"
+  - "Phase 3 — sub 정규형 검사 → 전체 스위트 → 자체 리뷰 2R(RC-1 넘김)"
 
 decisions:
   - decision: "테스트 4파일 — OwnerMigration(SC-01, PostgreSQL) · Ownership(SC-02~08·11·13·14, MockMvc) · ErrorResponseRegression(SC-12, 실제 서버) · WriteGuardRemoval(SC-09·10·15, 가드 properties ON)"
