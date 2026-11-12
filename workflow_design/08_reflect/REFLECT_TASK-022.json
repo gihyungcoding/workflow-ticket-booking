@@ -171,8 +171,9 @@
       "section": "Step 3 — 실행해서 실패 확인",
       "change": "① 표 테스트는 행별 실제값을 적고 다른 행과 다른 값으로 실패하는 행을 HITL 전에 설명 ② UOE 로 중단된 테스트는 실행되지 않은 뒷부분을 적는다 ③ 실행 전 build/test-results 삭제, BUILD·컴파일 결과를 먼저 확인",
       "evidence": "TASK-022 — SC-06 k·l 신호를 Red 에서 놓침, SC-05·13 하네스 결함이 Green 에서 드러남, 컴파일 실패 뒤 남은 XML 오독 위험",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "2a1ba29"
     },
     {
       "target": "scripts/coverage_matrix.py",
@@ -192,7 +193,9 @@
     }
   ],
   "completion_report": {
-    "approved_by_human": false,
-    "artifact_url": "https://claude.ai/artifact/FimhyrS5sqfXHq1EnNdNeX"
+    "approved_by_human": true,
+    "artifact_url": "https://claude.ai/artifact/FimhyrS5sqfXHq1EnNdNeX",
+    "reviewed_at": "2026-11-12T09:19:55Z",
+    "reviewed_in": "batch"
   }
 }
