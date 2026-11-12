@@ -32,6 +32,7 @@
 | 401 본문 | `{"code":"UNAUTHORIZED","message":…}` — 기존 entry point 와 같다 |
 | 403 본문 | `{"code":"FORBIDDEN_ROLE","message":"주최자만 이용할 수 있습니다"}`, `Content-Type` `application/json` |
 | 404 본문 | `{"code":"PERFORMANCE_NOT_FOUND","message":"Performance not found: <요청한 id>"}` — 남의 공연·소유자 없음·없는 id 가 같다 |
+| 유효한 사용자 클레임 | `sub` 는 JSON 문자열이고, 1 이상의 정수를 정규형 10진으로 적은 것이어야 한다 — ASCII 숫자만, 부호·앞자리 0 없음, long 범위. 그 밖이면 토큰 전체가 무효다(쓰기 경로에서 401) |
 | 유효한 역할 클레임 | `role` 이 문자열 `"ORGANIZER"` 또는 `"AUDIENCE"` 와 **정확히** 같아야 한다. 그 밖의 값(누락·null·문자열이 아닌 값·정의 밖 문자열·대소문자 다름)이면 토큰 전체가 무효다. 무효 토큰은 쓰기 경로에서 401 이다 |
 | 응답의 소유자 | 공연 응답 JSON 에 `ownerId` 키가 없다(등록·수정·취소·목록·상세) |
 | CORS 허용 헤더 | preflight 응답의 `Access-Control-Allow-Headers` 는 정확히 `Content-Type, Authorization` 이다 |
@@ -136,6 +137,16 @@ role 이 `"ORGANIZER"` 로 정상일 때, 다른 클레임만 아래처럼 바�
 | t | `sub` `"9223372036854775808"` (long 초과) | 401 `UNAUTHORIZED` |
 | u | `typ` `"pending"` | 401 `UNAUTHORIZED` |
 | v | 만료 `T-1s` | 401 `UNAUTHORIZED` |
+| w | `sub` `"+<O1 id>"` (부호) | 401 `UNAUTHORIZED` |
+| x | `sub` `"0<O1 id>"` (앞자리 0) | 401 `UNAUTHORIZED` |
+| y | `sub` 가 `O1` 의 id 를 아라비아-인도 숫자(`٠`~`٩`)로 적은 것 | 401 `UNAUTHORIZED` |
+| z | `sub` `"-<O1 id>"` (음수) | 401 `UNAUTHORIZED` |
+| aa | `sub` `"0"` | 401 `UNAUTHORIZED` |
+| ab | `sub` `"<O1 id>.5"` (소수) | 401 `UNAUTHORIZED` |
+| ac | `sub` `" <O1 id>"` (앞 공백) | 401 `UNAUTHORIZED` |
+| ad | `sub` 가 `O1` 의 id 를 전각 숫자(`０`~`９`)로 적은 것 | 401 `UNAUTHORIZED` |
+
+w~z·ac·ad 는 `O1` 의 id 를 다르게 적은 것이다 — 읽으면 같은 사용자(또는 그 음수)가 되지만 정규형이 아니라 거부된다.
 
 covers: 토큰 없이 `POST`·`PUT /api/performances/**` 를 보내면 401, 관객 토큰이면 403 `FORBIDDEN_ROLE` 이고 DB 가 바뀌지 않는다
 covers: 주최자 토큰으로 `POST /api/performances` 를 보내면 201 이고, 저장된 행의 `owner_id` 가 그 사용자 id 다 (비트랜잭션 조회로 확인)

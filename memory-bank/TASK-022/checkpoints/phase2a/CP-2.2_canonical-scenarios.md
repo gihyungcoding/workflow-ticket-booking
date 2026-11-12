@@ -1,10 +1,10 @@
 ---
 status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
-summary: "SCENARIO_TASK-022 — 15건(happy 5·error 5·regression 5), AC 8/8, 입력 경계 57/57. Phase 3 에서 RETRY_SCENARIO(1/3) — SC-06 k·l 기대 401→400. 독립검증 4회차 PASS(경고 6)"
+summary: "SCENARIO_TASK-022 — 15건(happy 5·error 5·regression 5), AC 8/8, 입력 경계 71/71. RETRY_SCENARIO 2/3(Phase 3 자체 리뷰 RC-1) — SC-05 에 sub 비정규 표기 8행. 독립검증 5회차 PASS(경고 6)"
 
 next_steps:
-  - "Phase 2b 재진입 — SC-06 k·l 단언을 400 으로, SC-05(행 a 정리 순서)·SC-13(시계 이동 뒤 재로그인) 하네스를 고쳐 통합 HITL 재승인"
+  - "Phase 2b 재진입 — SC-05 w~ad 테스트를 먼저 실패시키고(구현 46af97b 기준) 통합 HITL 재승인 → Phase 3 sub 정규형 검사"
   - "Phase 2b — wf-red. 승인 테스트 변경 6건을 Red 와 함께 통합 HITL 에 올린다"
 
 decisions:
@@ -36,6 +36,12 @@ decisions:
     rationale: "SC-06 표의 다른 행·SC-05 의 클레임 변형은 헤더에 제어 문자가 들어가지 않는다(클레임 안의 제어 문자는 base64url 로 인코딩됨)"
   - decision: "4회차 경고 반영(재검증 없음): V7 신규 — SC-06 k 의 괄호 사유에서 '보안 체인의 요청 방화벽' 을 '요청 자체가 거부된다' 로. V12 신규(400 근거) — 위 프로브·Red 실행 기록이 실제 요청 확인이다. 2b Red 재실행에서 다시 관찰한다"
     rationale: "PASS 후 경고는 재검증하지 않는다"
+  - decision: "RETRY_SCENARIO(2/3, Phase 3 자체 리뷰 RC-1 → 2a, 사용자 선택) — 규약 표에 '유효한 사용자 클레임'(1 이상 정규형 10진, ASCII 숫자, 부호·앞자리 0 없음, long 범위). SC-05 두 번째 표에 w(+)·x(앞자리 0)·y(아라비아-인도 숫자)·z(음수)·aa(\"0\")·ab(소수) — 모두 401"
+    rationale: "리뷰어가 서명된 토큰으로 '+7'·'07'·'٧'·'-7' 이 사용자 7(-7)로 통과함을 재현. 시나리오의 sub 행(p~t)에 없는 변종이라 Phase 3 에서 만들지 않고 2a 로. 변종 전부 한 번에"
+  - decision: "PLAN input_fields 보완(분류 보완 — 롤백 아님): sub kinds 에 integer·converted, note 갱신. 새 칸 14개를 SC-05 로 판정"
+    rationale: "integer_notation 종류에 부호·앞자리 0·유니코드 숫자 칸이 없다. check_plan.py 의 위반 9건은 target_files 의 new·존재 검사 — 구현으로 파일이 생기거나 지워진 결과이고 보완 전 PLAN 에서도 같은 9건이다"
+  - decision: "5회차 경고 반영(재검증 없음): V12 신규 — sub 앞 공백(ac)·전각 숫자(ad) 행 추가. 같은 뿌리(RC-1)의 변종이라 한 번에 가져간다"
+    rationale: "PASS 후 경고는 재검증하지 않는다"
 attempts:
   - round: 1
     result: FAIL
@@ -50,6 +56,11 @@ attempts:
     result: PASS
     detail: "RETRY_SCENARIO(1/3, Phase 3 → 2a) — SC-06 k·l 401→400. 경고 6(V5·V6·V7·V9·V12, 신규 V7 k 행 구현 설명·V12 400 근거)"
     outcome: "Phase 3 Green 에서 SC-06 k·l 이 400"
+    back_to: "2a"
+  - round: 5
+    result: PASS
+    detail: "RETRY_SCENARIO(2/3, Phase 3 자체 리뷰 RC-1 → 2a) — SC-05 w~ab·규약 행·PLAN sub kinds. 경고 6(신규 V9 p~ab 같은 경로·V12 sub 공백·전각 숫자 → ac·ad 로 반영)"
+    outcome: "Phase 3 자체 리뷰 1R [correctness] RC-1 이 시나리오 밖 변종"
     back_to: "2a"
 ---
 

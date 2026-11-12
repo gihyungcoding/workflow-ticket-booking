@@ -251,9 +251,11 @@
         ],
         "kinds": [
           "required",
-          "integer_notation"
+          "integer_notation",
+          "integer",
+          "converted"
         ],
-        "note": "토큰 클레임(문자열 정수). 기존 verifyAccessToken 의 Long.parseLong 규칙 그대로 — 이번에 principal → owner_id 로 저장되는 경로가 생겨 칸으로 둔다"
+        "note": "토큰 클레임(문자열 정수). JSON 문자열이고 1 이상의 정규형 10진(ASCII 숫자, 부호·앞자리 0 없음, long 범위)만 받는다 — Long.parseLong 은 '+7'·'07'·유니코드 숫자·음수를 받아 같은 사용자의 다른 표기를 통과시킨다(Phase 3 자체 리뷰 RC-1). 이번에 principal → owner_id 로 저장되는 경로가 생겨 칸으로 둔다"
       },
       {
         "field": "id",
