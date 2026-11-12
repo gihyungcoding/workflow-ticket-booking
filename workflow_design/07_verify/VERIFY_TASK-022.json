@@ -468,12 +468,17 @@
         "reason_code": "IMPL_DEFECT",
         "summary": "뿌리 1 · 새 변종 3, 재현 3(해소 0)"
       },
-      "human_review": null
+      "human_review": {
+        "decision": "REJECT",
+        "reject_to": "Phase 3 (구현 결함)",
+        "decided_at": "2026-11-12",
+        "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
+      }
     }
   ],
   "reject": {
     "to": "Phase 3",
-    "attempt": 2,
+    "attempt": 3,
     "history": [
       {
         "attempt": 1,
@@ -484,6 +489,11 @@
         "attempt": 2,
         "from": "Phase 4 VERIFY 2회차 FAIL",
         "note": "RC-2 later 변종 2 — V7 운영 영향, 마이그레이션 개수"
+      },
+      {
+        "attempt": 3,
+        "from": "Phase 4 VERIFY 3회차 FAIL",
+        "note": "RC-2 later 변종 3 — 롤백 시 가드, HEAD 401, SQL 대소문자. changed_files 대조 완료"
       }
     ]
   }
