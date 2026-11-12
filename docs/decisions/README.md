@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-11-11 · 총 29건
+마지막 재생성: 2026-11-12 · 총 30건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -32,6 +32,7 @@
 | [ADR-0027](ADR-0027-display-string-blank-definition.md) | 표시 문자열의 「공백 아님」은 유니코드 공백·NBSP·U+200B 를 공백으로 보는 한 판정으로 하고, 서식 문자는 받는다 | 채택됨 | 2026-11-11 |
 | [ADR-0028](ADR-0028-user-url-validation-by-authority-parts.md) | 사용자가 입력하는 URL 은 https 이고, 권한 부분을 직접 나눠 하위 요소마다 판정한다 | 채택됨 | 2026-11-11 |
 | [ADR-0029](ADR-0029-replace-write-guard-with-role-and-ownership.md) | 쓰기 가드를 없애고, API 쓰기는 JWT 역할과 소유권으로만 보호한다 | 채택됨 | 2026-11-11 |
+| [ADR-0030](ADR-0030-request-token-from-single-auth-session.md) | 프론트 요청 토큰은 앱에 하나뿐인 AuthProvider 의 세션에서 읽는다 | 채택됨 | 2026-11-12 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다 | 2026-10-14 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로, 쓰기 가드 자체는 ADR-0029 로 대체됨) | 2026-10-14 |
 | [ADR-0017](ADR-0017-keep-write-guard-until-ownership-check.md) | 쓰기 가드는 공연 쓰기 API 에 소유권 검사가 붙을 때까지 유지한다 | ADR-0029 로 대체됨 | 2026-10-21 |

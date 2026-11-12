@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -12,13 +12,15 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import {
   ApiError,
-  WRITE_REJECTED_MESSAGE,
+  ForbiddenRoleError,
+  UnauthorizedError,
   cancelPerformance,
   getPerformance,
-  isWriteKeyRejected,
   updatePerformance,
 } from '../api/performances'
 import type { Performance } from '../api/performances'
+import { useAuth } from '../auth/AuthContext'
+import { OrganizerOnlyNotice } from '../auth/RequireOrganizer'
 import { StatusBadge } from '../components/StatusBadge'
 import { fromDatetimeLocalInput, toDatetimeLocalInput } from '../utils/datetime'
 
@@ -35,6 +37,33 @@ export function PerformanceEditPage() {
   const [closeAt, setCloseAt] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [forbidden, setForbidden] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const auth = useAuth()
+  // 화면을 떠난 뒤 도착한 응답은 로그아웃·이동·표시 어디에도 쓰지 않는다 (ADR-0018)
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
+
+  // 쓰기의 401·403 — 401 은 로그아웃 후 로그인으로(돌아올 곳은 이 화면), 403 은 주최자 전용 안내. 처리했으면 true
+  function handleAuthError(error: unknown): boolean {
+    if (error instanceof UnauthorizedError) {
+      auth.logout()
+      navigate('/login', { replace: true, state: { from: location.pathname + location.search + location.hash } })
+      return true
+    }
+    if (error instanceof ForbiddenRoleError) {
+      setCancelDialogOpen(false)
+      setForbidden(true)
+      return true
+    }
+    return false
+  }
 
   function load() {
     if (!id) return
@@ -67,11 +96,11 @@ export function PerformanceEditPage() {
       })
       // PUT 응답에는 sections가 없다(PerformanceResponse — 상세 GET에서만 채워짐).
       // 응답으로 통째로 교체하면 화면에서 좌석 구성 요약이 사라지므로 기존 값을 보존한다.
+      if (!mounted.current) return
       setPerformance((prev) => (prev ? { ...updated, sections: prev.sections } : updated))
     } catch (error) {
-      if (isWriteKeyRejected(error)) {
-        setSaveError(WRITE_REJECTED_MESSAGE)
-      } else if (error instanceof ApiError && error.code === 'REGISTRATION_ALREADY_OPEN') {
+      if (!mounted.current || handleAuthError(error)) return
+      if (error instanceof ApiError && error.code === 'REGISTRATION_ALREADY_OPEN') {
         setSaveError('이미 오픈된 공연은 기본 정보를 수정할 수 없습니다')
       } else {
         setSaveError('저장하지 못했습니다. 다시 시도해 주세요')
@@ -88,17 +117,19 @@ export function PerformanceEditPage() {
     if (!id) return
     try {
       const updated = await cancelPerformance(id)
+      if (!mounted.current) return
       // POST cancel 응답에도 sections가 없다 — 저장과 동일한 이유로 기존 값을 보존한다.
       setPerformance((prev) => (prev ? { ...updated, sections: prev.sections } : updated))
       setSaveError(null)
       setCancelDialogOpen(false)
     } catch (error) {
+      if (!mounted.current || handleAuthError(error)) return
       setCancelDialogOpen(false)
-      setSaveError(
-        isWriteKeyRejected(error) ? WRITE_REJECTED_MESSAGE : '취소하지 못했습니다. 다시 시도해 주세요',
-      )
+      setSaveError('취소하지 못했습니다. 다시 시도해 주세요')
     }
   }
+
+  if (forbidden) return <OrganizerOnlyNotice />
 
   if (loadState.status === 'loading') {
     return <Skeleton variant="rectangular" height={240} />

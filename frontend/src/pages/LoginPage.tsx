@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import Box from '@mui/material/Box'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { INVALID_CREDENTIALS, login } from '../api/auth'
-import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected } from '../api/performances'
+import { ApiError } from '../api/performances'
 import { useAuth } from '../auth/AuthContext'
 import { isOneOf } from '../auth/authPaths'
 import { LinkLine, MoreLink, OrDivider, PrimaryButton, TopNotice } from '../auth/AuthParts'
@@ -21,7 +21,7 @@ function safeDestination(from: unknown): string {
   return isOneOf(['/login', '/signup'], from.split(/[?#]/)[0]) ? '/' : from
 }
 
-type ServerError = 'credentials' | 'rejected' | 'failed' | null
+type ServerError = 'credentials' | 'failed' | null
 
 interface LoginState {
   from?: unknown
@@ -75,9 +75,7 @@ export function LoginPage() {
       navigate(safeDestination(state?.from), { replace: true })
     } catch (error) {
       if (!mounted.current) return
-      if (isWriteKeyRejected(error)) {
-        setServerError('rejected')
-      } else if (error instanceof ApiError && error.code === INVALID_CREDENTIALS) {
+      if (error instanceof ApiError && error.code === INVALID_CREDENTIALS) {
         setServerError('credentials')
       } else {
         setServerError('failed')
@@ -101,7 +99,6 @@ export function LoginPage() {
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-m') }}>
         {notice === 'social' && <TopNotice>{AUTH_MESSAGES.socialFailed}</TopNotice>}
         {notice === 'joined' && <TopNotice severity="info">{AUTH_MESSAGES.joinedThenLogin}</TopNotice>}
-        {serverError === 'rejected' && <TopNotice>{WRITE_REJECTED_MESSAGE}</TopNotice>}
         {serverError === 'failed' && <TopNotice>{AUTH_MESSAGES.loginFailed}</TopNotice>}
         <Hero eyebrow="티켓온" title="쓰던 계정으로 바로 들어와요" lead="카카오·네이버·구글·애플 계정이면 처음이어도 버튼 한 번으로 시작해요" />
       </Box>

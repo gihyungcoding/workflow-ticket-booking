@@ -1,0 +1,452 @@
+{
+  "task_id": "TASK-024",
+  "route": "Frontend",
+  "route_reason": "API 클라이언트 헤더·오류 구분, 라우트 가드, 화면 분기·안내 화면이 변경 대상. 서버 쪽(401 UNAUTHORIZED·403 FORBIDDEN_ROLE·소유권 404)은 TASK-022 로 develop 에 머지됨",
+  "design": {
+    "inputs": [
+      {
+        "name": "stored_token",
+        "type": "string",
+        "source": "localStorage[accessToken] (ADR-0015)",
+        "constraints": [
+          "비었거나 공백만이면 없음으로 본다(AuthContext.readToken 과 같은 규칙)",
+          "저장소 접근이 throw 해도 요청은 나간다(헤더만 없음)",
+          "앞뒤 공백을 걷어 `Bearer <값>` 으로 싣는다",
+          "헤더에 실을 수 없는 값(NUL·CR/LF 가운데·Latin-1 밖 글자 — Headers 가 거부)이면 Authorization 없이 요청을 보낸다",
+          "요청 토큰의 정본은 화면의 로그인 세션(AuthProvider)이다 — 세션이 정해지면(로그인·복원·로그아웃) 저장소 값과 달라도 세션 값을 쓴다. 세션이 정해지기 전에만 저장소 값을 쓴다 (Phase 4 1회차 RC-1)"
+        ]
+      },
+      {
+        "name": "init.headers.Authorization",
+        "type": "string",
+        "source": "request() 호출부 (fetchMe 가 직접 싣는다)",
+        "constraints": [
+          "호출부가 이미 실었으면 덮어쓰지 않는다"
+        ]
+      },
+      {
+        "name": "method",
+        "type": "string",
+        "source": "request() 호출부",
+        "constraints": [
+          "어떤 메서드에도 X-Write-Key 를 싣지 않는다",
+          "Bearer 는 메서드와 무관하게 저장된 토큰이 있으면 싣는다(§3-7) — 무효 토큰은 서버가 익명으로 본다(JwtAuthenticationFilter)"
+        ]
+      },
+      {
+        "name": "auth_state",
+        "type": "enum",
+        "source": "useAuth() — restoring · user · user.role",
+        "constraints": [
+          "restoring → 아무것도 그리지 않음",
+          "user 없음 → /login (state.from)",
+          "role ≠ ORGANIZER → 안내",
+          "ORGANIZER → 화면",
+          "user·restoring 은 AuthProvider 의 복원 결과다(기존) — /api/auth/me 401 이면 토큰을 지우고 user 없음, 그 밖의 실패(5xx·네트워크·비 JSON)나 두 역할 밖 role(api/auth.ts isAuthUser 가 거부)은 토큰을 남기고 user 없음. 가드는 user 없음을 비로그인으로 다룬다"
+        ]
+      },
+      {
+        "name": "protected_path",
+        "type": "string",
+        "source": "브라우저 주소 — /performances/new · /performances/:id/edit",
+        "constraints": [
+          "라우터가 그 화면으로 고르는 표기(끝 슬래시·대소문자·퍼센트 인코딩)는 모두 가드를 지난다"
+        ]
+      },
+      {
+        "name": "from",
+        "type": "string",
+        "source": "가드가 /login 에 넘기는 location.state.from (pathname+search+hash)",
+        "constraints": [
+          "LoginPage.safeDestination 이 그대로 판정(기존)"
+        ]
+      },
+      {
+        "name": "write_response",
+        "type": "http response",
+        "source": "외부 서버 응답 — POST /api/performances · PUT /api/performances/{id} · POST /api/performances/{id}/cancel",
+        "constraints": [
+          "401 → UnauthorizedError (본문 무관)",
+          "403 → ForbiddenRoleError (본문 무관)",
+          "그 밖은 지금처럼 ApiError/Error"
+        ]
+      },
+      {
+        "name": "session_token",
+        "type": "string | null",
+        "source": "AuthProvider 세션 — login(token)(이메일 로그인·가입 뒤 자동 로그인·소셜 콜백 OAuthRedirectPage·소셜 가입 완료가 모두 이 경로)·logout()·복원 결과",
+        "constraints": [
+          "저장소 setItem·removeItem 실패와 무관하게 세션 값이 요청에 실린다",
+          "다른 탭의 저장소 변경은 이 탭의 세션을 바꾸지 않는다"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Authorization 헤더",
+        "type": "request header",
+        "description": "저장된 토큰이 있으면 `Bearer <토큰>`. X-Write-Key 는 어떤 요청에도 없음"
+      },
+      {
+        "name": "UnauthorizedError · ForbiddenRoleError",
+        "type": "error class",
+        "description": "api/performances.ts — 쓰기 3함수가 401/403 을 구분해 던진다"
+      },
+      {
+        "name": "/login 이동",
+        "type": "navigation",
+        "description": "가드(비로그인)·쓰기 401 → /login, state.from = 원래 경로. 쓰기 401 은 먼저 logout"
+      },
+      {
+        "name": "주최자 전용 안내",
+        "type": "screen",
+        "description": "시안 organizer-only — idcard 그림·「주최자만 이용할 수 있어요」·「공연 등록과 관리는 주최자 계정에서 할 수 있어요」·「공연 둘러보기」(→ /). 폼을 그리지 않는다"
+      },
+      {
+        "name": "빈 렌더",
+        "type": "screen",
+        "description": "restoring 동안 가드는 null"
+      },
+      {
+        "name": "쓰기 키 흔적 제거",
+        "type": "code removal",
+        "description": "VITE_WRITE_KEY·WRITE_KEY_INVALID·WRITE_REJECTED_MESSAGE·isWriteKeyRejected·write-rejected 분기 — 옛 거부 응답은 각 화면의 일반 실패 문구로"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "요청 헤더 (request)",
+        "steps": [
+          "요청 토큰을 정한다 — 세션(AuthProvider 의 login·logout·복원)이 정해졌으면 세션 값, 아니면 저장된 토큰(throw·빈 값·공백 → 없음)",
+          "호출부가 Authorization 을 이미 실었으면 그대로",
+          "아니면 토큰이 있을 때 Authorization: Bearer <토큰>",
+          "X-Write-Key 는 싣지 않는다",
+          "apiUrl(path) 로 fetch"
+        ],
+        "covers": [
+          "로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "주최자 가드 진입 (RequireOrganizer)",
+        "steps": [
+          "/performances/new · /performances/:id/edit 를 RequireOrganizer 로 감싼다",
+          "restoring → null",
+          "user 없음 → <Navigate to=/login replace state={from}>",
+          "role ≠ ORGANIZER → 주최자 전용 안내(「공연 둘러보기」 → /)",
+          "ORGANIZER → 원래 화면",
+          "로그인 성공 → safeDestination(from) 으로 복귀(기존 LoginPage)"
+        ],
+        "covers": [
+          "비로그인으로 `/performances/new`·`/performances/:id/edit` 에 들어가면 `/login` 으로 가고, 로그인 후 원래 경로로 돌아온다",
+          "관객으로 같은 경로에 들어가면 폼 대신 「주최자만 이용할 수 있어요」와 「공연 둘러보기」가 보인다",
+          "토큰 복원 중에는 가드가 안내·이동 없이 아무것도 그리지 않는다 (복원 후 주최자면 폼이 보인다)"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "쓰기 API 401/403 처리 (등록·수정 저장·취소)",
+        "steps": [
+          "registerPerformance·updatePerformance·cancelPerformance 가 401 → UnauthorizedError, 403 → ForbiddenRoleError",
+          "화면이 UnauthorizedError 면 logout() 후 /login (state.from = 현재 경로)",
+          "ForbiddenRoleError 면 폼 대신 주최자 전용 안내",
+          "화면을 떠난 뒤 도착한 응답은 logout·이동·표시에 쓰지 않는다"
+        ],
+        "covers": [
+          "쓰기 API 가 401 이면 로그아웃되고 `/login` 으로 간다. 403 이면 「주최자만 이용할 수 있어요」가 보인다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "쓰기 키 흔적 제거",
+        "steps": [
+          "http.ts 의 VITE_WRITE_KEY 읽기·WRITE_METHODS 제거(주석 갱신)",
+          "performances.ts 의 WRITE_KEY_INVALID·WRITE_REJECTED_MESSAGE·isWriteKeyRejected 제거",
+          "LoginPage·SignUpPage·RoleSelectionPage·PerformanceRegisterPage·PerformanceEditPage 의 rejected 분기 제거 — 같은 응답은 각 화면의 일반 실패 문구",
+          ".env.example·vite-env.d.ts 에서 VITE_WRITE_KEY 제거",
+          "WriteKeyRejected.test.tsx 삭제"
+        ],
+        "covers": [
+          "`VITE_WRITE_KEY`·`WRITE_REJECTED_MESSAGE`·`isWriteKeyRejected` 가 `frontend/src` 와 `.env.example` 에 없다"
+        ]
+      }
+    ],
+    "input_fields": [
+      {
+        "field": "stored_token",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "config",
+          "opaque",
+          "multi_param"
+        ],
+        "group": "auth_header",
+        "note": "localStorage accessToken — unset·empty·blank 는 헤더 없음. case·notation·list_separator·prefix_only 는 n/a 후보. affix_entry 는 앞뒤 공백·개행이 그대로 실리는지(서버가 판정). multi_param: 호출부 Authorization 과 함께 — 호출부 값이 우선"
+      },
+      {
+        "field": "caller_authorization",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "multi_param"
+        ],
+        "group": "auth_header",
+        "note": "init.headers.Authorization (fetchMe 가 직접 싣는다)"
+      },
+      {
+        "field": "method",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "enum"
+        ],
+        "note": "GET·POST·PUT·DELETE·PATCH — X-Write-Key 는 어디에도 없고 Bearer 는 모두에 붙는다"
+      },
+      {
+        "field": "auth_state",
+        "flows": [
+          "F2"
+        ],
+        "kinds": [
+          "enum",
+          "async_result"
+        ],
+        "note": "restoring · user 없음 · AUDIENCE · ORGANIZER. 복원 결과가 늦게 와도 가드가 다시 판정"
+      },
+      {
+        "field": "protected_path",
+        "flows": [
+          "F2"
+        ],
+        "kinds": [
+          "route_path"
+        ],
+        "note": "라우터가 고르는 표기면 가드를 지난다 — 가드는 Route element 에 있으므로 라우터 매칭과 같다"
+      },
+      {
+        "field": "from",
+        "flows": [
+          "F2",
+          "F3"
+        ],
+        "kinds": [
+          "opaque"
+        ],
+        "note": "pathname+search+hash. 판정은 기존 safeDestination"
+      },
+      {
+        "field": "write_response",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result",
+          "error_state"
+        ],
+        "note": "401/403 은 상태로 판별(본문 무관). 그 밖의 코드는 지금 분기 그대로"
+      },
+      {
+        "field": "session_token",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "multi_param"
+        ],
+        "group": "token_source",
+        "note": "세션(메모리) — RC-1"
+      },
+      {
+        "field": "storage_token",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "multi_param"
+        ],
+        "group": "token_source",
+        "note": "design.inputs 의 stored_token 과 같은 localStorage 값 — token_source 묶음(세션 × 저장소)에서 쓰는 이름. auth_header 묶음(저장소 × 호출부)은 stored_token"
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "Frontend (React)",
+    "note": "화면·입력·API 호출만. 가드는 화면을 가르는 편의이고 최종 판단은 서버(architecture.md §2, 기능 문서 §4). 시각 값은 토큰에서(DESIGN-001·002)",
+    "constraints_applied": [
+      "AUTH-001",
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0029",
+    "ADR-0015",
+    "ADR-0016",
+    "ADR-0017",
+    "ADR-0018",
+    "ADR-0022"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "frontend/src/api/http.ts",
+        "change": "X-Write-Key 제거, 저장된 토큰이 있으면 Authorization: Bearer (호출부 값 우선), 주석 갱신"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "change": "쓰기 키 export 제거, UnauthorizedError·ForbiddenRoleError, 쓰기 3함수가 401/403 구분"
+      },
+      {
+        "path": "frontend/src/api/auth.ts",
+        "change": "ACCESS_TOKEN_KEY 위치 조정(http.ts 와의 순환 import 회피) — unresolved #2"
+      },
+      {
+        "path": "frontend/src/auth/RequireOrganizer.tsx",
+        "change": "가드 + 주최자 전용 안내 화면",
+        "created_in": "c109808 (Phase 3) — 2a 롤백 시점에는 이미 있음"
+      },
+      {
+        "path": "frontend/src/App.tsx",
+        "change": "/performances/new·/performances/:id/edit 를 RequireOrganizer 로 감싼다"
+      },
+      {
+        "path": "frontend/src/pages/LoginPage.tsx",
+        "change": "rejected 분기 제거"
+      },
+      {
+        "path": "frontend/src/pages/SignUpPage.tsx",
+        "change": "rejected 분기 제거"
+      },
+      {
+        "path": "frontend/src/pages/RoleSelectionPage.tsx",
+        "change": "rejected 분기 제거(대기 정보 조회·완료 둘 다)"
+      },
+      {
+        "path": "frontend/src/pages/PerformanceRegisterPage.tsx",
+        "change": "write-rejected 제거, 401 → logout + /login(from), 403 → 주최자 전용 안내"
+      },
+      {
+        "path": "frontend/src/pages/PerformanceEditPage.tsx",
+        "change": "rejected 제거, 저장·취소의 401 → logout + /login(from), 403 → 주최자 전용 안내"
+      },
+      {
+        "path": "frontend/.env.example",
+        "change": "VITE_WRITE_KEY 항목 제거"
+      },
+      {
+        "path": "frontend/src/vite-env.d.ts",
+        "change": "VITE_WRITE_KEY 타입 제거"
+      },
+      {
+        "path": "frontend/src/api/http.test.ts",
+        "change": "승인 테스트 sc04·sc05 를 Bearer·X-Write-Key 부재 기대로 (2b)"
+      },
+      {
+        "path": "frontend/src/auth/AuthScreens.test.tsx",
+        "change": "쓰기 키 거부 행을 일반 실패 기대로 (2b)"
+      },
+      {
+        "path": "frontend/src/auth/task018.auth.test.tsx",
+        "change": "401 WRITE_KEY_INVALID 행 3곳·writeRejected 판정을 일반 실패 기대로 (2b) — implementation_spec 밖"
+      },
+      {
+        "path": "frontend/src/auth/SocialLoginScreens.test.tsx",
+        "change": "쓰기 가드 행 2곳을 일반 실패 기대로 (2b) — implementation_spec 밖"
+      },
+      {
+        "path": "frontend/src/App.test.tsx",
+        "change": "SC-10 을 주최자 로그인 상태로 (2b) — 가드가 비로그인 등록 화면을 막는다"
+      },
+      {
+        "path": "frontend/src/auth/AuthContext.tsx",
+        "change": "login·logout·복원 결과를 요청 토큰의 정본(세션)으로 http.ts 에 알린다 — RC-1"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "frontend/src/auth/AuthContext.tsx",
+        "symbol": "useAuth",
+        "note": "user·restoring·logout — 가드와 401 처리가 그대로 쓴다. JoinedPage 의 `if (restoring) return null` 관례"
+      },
+      {
+        "path": "frontend/src/pages/LoginPage.tsx",
+        "symbol": "safeDestination",
+        "note": "state.from 복귀 — 새로 만들지 않는다"
+      },
+      {
+        "path": "frontend/src/auth/authPaths.ts",
+        "symbol": "isOneOf",
+        "note": "경로 판별이 필요하면 라우터와 같은 matchRoutes"
+      },
+      {
+        "path": "frontend/src/assets/fluent/idcard.svg",
+        "symbol": "idcard",
+        "note": "시안 organizer-only 의 그림 — OAuthRedirectPage 가 이미 import"
+      },
+      {
+        "path": "frontend/src/components/ui/index.ts",
+        "symbol": "Block·Hero·CtaBar·Page",
+        "note": "안내 화면 부품 — 값은 토큰(theme/tokens.ts)"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "throwIfApiError",
+        "note": "401/403 외 오류는 지금처럼"
+      }
+    ],
+    "existing_tests": [
+      "frontend/src/api/http.test.ts",
+      "frontend/src/auth/AuthScreens.test.tsx",
+      "frontend/src/auth/task018.auth.test.tsx",
+      "frontend/src/auth/SocialLoginScreens.test.tsx",
+      "frontend/src/pages/PerformanceRegisterPage.test.tsx",
+      "frontend/src/pages/PerformanceEditPage.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/src/auth/task024.organizer.test.tsx"
+    ],
+    "unresolved": [
+      "#1 승인된 테스트의 옛 기대값 — http.test.ts(sc04·sc05 X-Write-Key), WriteKeyRejected.test.tsx(sc06~sc12, 삭제), AuthScreens.test.tsx(10곳), task018.auth.test.tsx(16곳: 401 WRITE_KEY_INVALID 행·writeRejected), SocialLoginScreens.test.tsx(3곳). AC6 과 상충 — 2b 에서 새 기대값(일반 실패 문구)으로 바꾸고 통합 승인에서 함께 받는다. 단언 수는 줄이지 않는다. task018·SocialLoginScreens 는 태스크 implementation_spec 밖이라 scope_deviation 으로 남긴다 · 추가(2a): App.test.tsx SC-10, AuthScreens SC-28 등록 단락, task018 SC-36 등록 행 — 비로그인으로 등록 폼을 단언",
+      "#2 순환 import — api/auth.ts 가 http.ts 의 request 를 import 하므로 http.ts 가 auth.ts 의 ACCESS_TOKEN_KEY 를 가져오면 순환. 상수를 http.ts(또는 작은 모듈)로 옮기고 auth.ts 가 다시 내보내는 방향 — Phase 3 확인",
+      "#3 결정: 401/403 은 상태로 판별한다(본문 무관). SecurityConfig 가 이 경로에서 내는 403 은 FORBIDDEN_ROLE 하나뿐이고, 프록시가 본문 없이 돌려줘도 같은 처리가 맞다. 옛 주석('상태가 아니라 코드로') 은 쓰기 키와 함께 사라진다",
+      "#4 범위 밖 확인 — 남의 공연·소유자 NULL 공연의 수정 화면은 공개 GET 으로 값이 로드되고, 저장·취소 404 는 지금의 일반 실패 문구로 남는다. §2-5 「남의 공연(수정)」은 getMyPerformance 로 바꾸는 TASK-026 범위",
+      "#5 안내 화면 배치 — 시안 organizer-only 의 appbar 「내 공연」(뒤로 → /organizer)은 /organizer 가 TASK-025 에서 생기므로 넣지 않는다. 지금 앱 셸(AppHeader) 안에 본문(그림·제목·부제·「공연 둘러보기」)만. 색·간격·글자는 토큰에서(DESIGN-001·002), 그림은 기존 idcard.svg",
+      "#6 결정: 화면을 떠난 뒤 도착한 401/403 은 logout·이동·표시에 쓰지 않는다(ADR-0018, LoginPage 의 mounted 관례). 같은 화면에서 저장 중 로그아웃(다른 탭 아님, 헤더 로그아웃)이 먼저 일어나면 가드가 /login 으로 보낸다",
+      "#7 Bearer 를 GET 에도 싣는다(§3-7 '저장된 토큰이 있으면') — 만료·무효 토큰은 JwtAuthenticationFilter 가 무시해 익명이 되므로 공개 GET 이 401 이 되지 않는다(TASK-022 코드로 확인). 공개 GET 의 회귀는 기존 목록·상세 테스트가 지킨다",
+      "#8 docs/release/first-deploy-checklist.md §5-1·§7 의 'TASK-024 전까지' 문구 — 배포 순서 안내로 여전히 맞아 이 태스크에서 고치지 않는다. AUTH-001 의 error 승격(promote_after: TASK-024)은 constraints.yaml 변경이라 Phase 5 drift·rule_proposals 로 넘긴다",
+      "#9 Phase 4 1회차 RC-1(→ 2a 롤백) — 인증 정본이 둘(가드=메모리 user, 헤더=localStorage). 요청 토큰의 정본을 세션으로 맞춘다(SC-17). AuthContext.tsx 가 target 에 더해진다 — login·logout·복원에서 세션 토큰을 http.ts 에 알린다"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 13
+    },
+    "deleted_files": [
+      {
+        "path": "frontend/src/pages/WriteKeyRejected.test.tsx",
+        "deleted_in": "adfc932 (Phase 2b, 통합 HITL 승인)",
+        "replaced_by": "SC-09·10·12·15"
+      }
+    ]
+  },
+  "acceptance_criteria": [
+    "로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다",
+    "비로그인으로 `/performances/new`·`/performances/:id/edit` 에 들어가면 `/login` 으로 가고, 로그인 후 원래 경로로 돌아온다",
+    "관객으로 같은 경로에 들어가면 폼 대신 「주최자만 이용할 수 있어요」와 「공연 둘러보기」가 보인다",
+    "토큰 복원 중에는 가드가 안내·이동 없이 아무것도 그리지 않는다 (복원 후 주최자면 폼이 보인다)",
+    "쓰기 API 가 401 이면 로그아웃되고 `/login` 으로 간다. 403 이면 「주최자만 이용할 수 있어요」가 보인다",
+    "`VITE_WRITE_KEY`·`WRITE_REJECTED_MESSAGE`·`isWriteKeyRejected` 가 `frontend/src` 와 `.env.example` 에 없다"
+  ],
+  "test_hints": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npm test",
+    "mock_strategy": "fetch 를 URL·method 별로 스텁(응답마다 새 Response), 실린 헤더를 기록해 단언. localStorage 에 토큰을 넣어 두고 /api/auth/me 스텁으로 복원(지연 응답으로 restoring 관찰). 화면은 App + MemoryRouter + AuthProvider 로 실제 라우트를 지난다(AuthScreens 관례). AC6 은 frontend/src·.env.example 원문 Grep 정적 테스트(task017.static.test.ts 관례, 테스트 파일 제외). 375px 시안 대조는 Phase 4 브라우저"
+  }
+}

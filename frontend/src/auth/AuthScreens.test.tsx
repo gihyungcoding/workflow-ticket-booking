@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { StrictMode } from 'react'
 import { ThemeProvider } from '@mui/material/styles'
 import { MemoryRouter, useLocation } from 'react-router-dom'
-import { registerPerformance, WRITE_REJECTED_MESSAGE } from '../api/performances'
+import { registerPerformance } from '../api/performances'
 import App from '../App'
 import { theme } from '../theme'
 import { AuthProvider } from './AuthContext'
@@ -31,7 +31,9 @@ const MSG = {
 }
 // 링크가 문장 안에 들어가므로 앞부분만 본다.
 const DUP = /이미 가입된 이메일이에요/
-const ALL_ERRORS = [...Object.values(MSG), DUP, WRITE_REJECTED_MESSAGE]
+// 옛 쓰기 키 거부 문구 — 쓰기 가드가 사라져 어떤 화면에도 나오지 않는다 (TASK-024)
+const OLD_WRITE_REJECTED = '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요'
+const ALL_ERRORS = [...Object.values(MSG), DUP, OLD_WRITE_REJECTED]
 
 const performance = {
   id: 5,
@@ -543,9 +545,9 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     { label: '임의 JSON + 400', respond: () => res(400, { foo: 1 }), message: MSG.signupFail },
     { label: '네트워크 오류', respond: networkError, message: MSG.signupFail },
     {
-      label: '401 WRITE_KEY_INVALID (쓰기 가드)',
+      label: '401 WRITE_KEY_INVALID (옛 쓰기 가드 코드)',
       respond: () => res(401, { code: 'WRITE_KEY_INVALID', message: 'X-Write-Key' }),
-      message: WRITE_REJECTED_MESSAGE,
+      message: MSG.signupFail,
     },
   ]
   test.each(SC11_ROWS)('SC-11 (error) 중복이 아닌 가입 실패는 일반 문구로 보이고 중복 문구가 새지 않는다 — $label', async (row) => {
@@ -559,6 +561,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
 
     // Then 표의 문구, 중복 문구는 없다
     expect(await screen.findByText(row.message)).toBeInTheDocument()
+    expect(screen.queryByText(OLD_WRITE_REJECTED)).not.toBeInTheDocument()
     expect(screen.queryByText(DUP)).not.toBeInTheDocument()
     // And 화면 유지, 토큰 없음
     expect(where()).toBe('/signup')
@@ -706,9 +709,9 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
       message: MSG.loginFail,
     },
     {
-      label: '401 WRITE_KEY_INVALID (쓰기 가드)',
+      label: '401 WRITE_KEY_INVALID (옛 쓰기 가드 코드)',
       respond: () => res(401, { code: 'WRITE_KEY_INVALID', message: 'X-Write-Key' }),
-      message: WRITE_REJECTED_MESSAGE,
+      message: MSG.loginFail,
     },
   ]
   test.each(SC17_ROWS)('SC-17 (error) 자격 증명 실패가 아닌 로그인 이상 응답은 일반 문구로 보인다 — $label', async (row) => {
@@ -722,6 +725,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
 
     // Then 표의 문구, 자격 증명 실패 문구는 없다
     expect(await screen.findByText(row.message)).toBeInTheDocument()
+    expect(screen.queryByText(OLD_WRITE_REJECTED)).not.toBeInTheDocument()
     expect(screen.queryByText(MSG.badCredentials)).not.toBeInTheDocument()
     // And 토큰 없음, 화면 유지
     expect(token()).toBeNull()
@@ -754,10 +758,10 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
       nextText: DUP,
     },
     {
-      label: '가입 쓰기 거부 → 201',
+      label: '가입 옛 쓰기 가드 코드 → 201',
       screen: '가입',
       first: () => res(401, { code: 'WRITE_KEY_INVALID' }),
-      firstText: WRITE_REJECTED_MESSAGE,
+      firstText: MSG.signupFail,
       next: () => res(201, SIGNUP_RESP),
       nextText: null,
     },
@@ -973,8 +977,11 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
   })
 
   test('SC-28 (regression) 헤더와 새 라우트가 기존 공연 화면을 해치지 않는다', async () => {
-    // Given 로그인하지 않았고 서버가 공연 목록·상세를 준다
-    stubServer({ 'POST /api/performances': () => res(201, performance) })
+    // Given 로그인하지 않았고 서버가 공연 목록·상세를 준다 (등록 화면 단락만 주최자로 로그인한다 — TASK-024 가드)
+    stubServer({
+      'POST /api/performances': () => res(201, performance),
+      'GET /api/auth/me': () => res(200, { ...USER, role: 'ORGANIZER' }),
+    })
 
     // When / Then 기존 화면 세 곳과 헤더
     renderAt('/')
@@ -983,10 +990,12 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     expect(screen.getByRole('link', { name: '가입' })).toBeInTheDocument()
     cleanup()
 
+    localStorage.setItem('accessToken', 'tok-org')
     renderAt('/performances/new')
-    expect(screen.getByLabelText(/^공연명/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument()
+    expect(await screen.findByLabelText(/^공연명/)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '로그아웃' })).toBeInTheDocument()
     cleanup()
+    localStorage.clear()
 
     renderAt('/performances/3')
     await waitFor(() => expect(callsTo('GET /api/performances/3').length).toBeGreaterThan(0))

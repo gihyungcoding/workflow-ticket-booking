@@ -1,6 +1,7 @@
 import Container from '@mui/material/Container'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import { AUTH_PATHS, isOneOf } from './auth/authPaths'
+import { RequireOrganizer } from './auth/RequireOrganizer'
 import { AppHeader } from './components/AppHeader'
 import { JoinedPage } from './pages/JoinedPage'
 import { LoginPage } from './pages/LoginPage'
@@ -19,9 +20,9 @@ function App() {
   const routes = (
     <Routes>
       <Route path="/" element={<PerformanceListPage />} />
-      <Route path="/performances/new" element={<PerformanceRegisterPage />} />
+      <Route path="/performances/new" element={<RequireOrganizer><PerformanceRegisterPage /></RequireOrganizer>} />
       <Route path="/performances/:id" element={<PerformanceDetailPage />} />
-      <Route path="/performances/:id/edit" element={<PerformanceEditPage />} />
+      <Route path="/performances/:id/edit" element={<RequireOrganizer><PerformanceEditPage /></RequireOrganizer>} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/oauth2/redirect" element={<OAuthRedirectPage />} />

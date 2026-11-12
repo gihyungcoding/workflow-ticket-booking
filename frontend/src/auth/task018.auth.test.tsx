@@ -21,7 +21,8 @@ const MSG = {
   joinedThenLogin: '가입은 끝났어요. 로그인해 주세요',
   loginFailed: '로그인하지 못했어요. 잠시 후 다시 시도해 주세요',
   signUpFailed: '가입하지 못했어요. 잠시 후 다시 시도해 주세요',
-  writeRejected: '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요',
+  // 옛 쓰기 키 거부 문구 — 쓰기 가드가 사라져 어떤 화면에도 나오지 않는다 (TASK-024)
+  oldWriteRejected: '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요',
   pwHelp: '8자 이상 72자 이하로 정해요',
   mismatch: '비밀번호가 일치하지 않아요',
   duplicate: '이미 가입된 이메일이에요',
@@ -314,7 +315,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
 
   // ---------- SC-03 ----------
   const SC03: { label: string; respond: Responder; message: string }[] = [
-    { label: '401 WRITE_KEY_INVALID', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }), message: MSG.writeRejected },
+    { label: '401 WRITE_KEY_INVALID(옛 쓰기 가드 코드)', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }), message: MSG.loginFailed },
     { label: '401 다른 code', respond: () => res(401, { code: 'UNAUTHORIZED' }), message: MSG.loginFailed },
     { label: '401 빈 본문', respond: () => res(401), message: MSG.loginFailed },
     { label: '500 비 JSON', respond: () => text(500, '<html>oops</html>'), message: MSG.loginFailed },
@@ -341,6 +342,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
 
     // Then 표의 문구, 두 칸은 오류가 아니다
     expect(await screen.findByText(message)).toBeInTheDocument()
+    expect(screen.queryByText(MSG.oldWriteRejected)).not.toBeInTheDocument()
     expect(invalid(LABEL.email)).toBe(false)
     expect(invalid(LABEL.password)).toBe(false)
     // And 경로 그대로, 토큰 없음
@@ -642,7 +644,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
   // ---------- SC-12 ----------
   const SC12: { label: string; respond: Responder; message: string }[] = [
     { label: '409 다른 code', respond: () => res(409, { code: 'SOCIAL_ACCOUNT_ALREADY_LINKED' }), message: MSG.signUpFailed },
-    { label: '401 WRITE_KEY_INVALID', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }), message: MSG.writeRejected },
+    { label: '401 WRITE_KEY_INVALID(옛 쓰기 가드 코드)', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }), message: MSG.signUpFailed },
     { label: '400', respond: () => res(400, { code: 'VALIDATION_FAILED' }), message: MSG.signUpFailed },
     { label: '200 빈 본문', respond: () => res(200), message: MSG.signUpFailed },
     { label: '500 빈 본문', respond: () => res(500), message: MSG.signUpFailed },
@@ -662,6 +664,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
 
     // Then 표의 문구, 이메일 칸은 오류 아님
     expect(await screen.findByText(message)).toBeInTheDocument()
+    expect(screen.queryByText(MSG.oldWriteRejected)).not.toBeInTheDocument()
     expect(invalid(LABEL.email)).toBe(false)
     // And login 요청 없음, 경로 그대로
     expect(callsTo(LOGIN)).toHaveLength(0)
@@ -706,7 +709,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
     { label: '500 빈 본문', respond: () => res(500) },
     { label: '503 비 JSON', respond: () => text(503, 'down') },
     { label: '401 INVALID_CREDENTIALS', respond: () => res(401, { code: 'INVALID_CREDENTIALS' }) },
-    { label: '401 WRITE_KEY_INVALID', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }) },
+    { label: '401 WRITE_KEY_INVALID(옛 쓰기 가드 코드)', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }) },
     { label: '네트워크 오류', respond: networkError },
     { label: '200 빈 본문', respond: () => res(200) },
     {
@@ -1116,32 +1119,32 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
         else body[field] = v
         return res(200, body)
       },
-      writeRejected: false,
     }))
   const SC22 = [
     ...fieldRows('provider', [undefined, null, 1, 'LINE', 'kakao']),
     ...fieldRows('email', [undefined, null, 42, '', '   ']),
     ...fieldRows('name', [undefined, null, {}, '', '   ']),
     ...fieldRows('expiresAt', [undefined, null, 1762850400, '내일', '2026-11-11T08:40:00']),
-    { label: '200 빈 본문', respond: () => res(200), writeRejected: false },
-    { label: '200 비 JSON', respond: () => text(200, 'ok'), writeRejected: false },
-    { label: '401 다른 code', respond: () => res(401, { code: 'UNAUTHORIZED' }), writeRejected: false },
-    { label: '401 빈 본문', respond: () => res(401), writeRejected: false },
-    { label: '401 WRITE_KEY_INVALID', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }), writeRejected: true },
-    { label: '500 빈 본문', respond: () => res(500), writeRejected: false },
-    { label: '502 비 JSON', respond: () => text(502, '<html>'), writeRejected: false },
-    { label: '네트워크 오류', respond: networkError, writeRejected: false },
+    { label: '200 빈 본문', respond: () => res(200) },
+    { label: '200 비 JSON', respond: () => text(200, 'ok') },
+    { label: '401 다른 code', respond: () => res(401, { code: 'UNAUTHORIZED' }) },
+    { label: '401 빈 본문', respond: () => res(401) },
+    { label: '401 WRITE_KEY_INVALID(옛 쓰기 가드 코드)', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }) },
+    { label: '500 빈 본문', respond: () => res(500) },
+    { label: '502 비 JSON', respond: () => text(502, '<html>') },
+    { label: '네트워크 오류', respond: networkError },
   ]
   test.each(SC22)(
     'SC-22 (error) 대기 정보가 올바르지 않거나 가져오지 못하면 실패 안내와 다시 시도를 보인다 — $label',
-    async ({ respond, writeRejected }) => {
+    async ({ respond }) => {
       // Given 첫 응답은 표, 다시 시도는 정상
       let n = 0
       stubServer({ [PENDING_KEY]: () => (++n === 1 ? respond() : res(200, pendingBody())) })
       await arriveAtRole('pend-1')
 
       // When / Then 실패 안내와 다시 시도하기, 역할 행·계속하기 없음
-      expect(await screen.findByText(writeRejected ? MSG.writeRejected : MSG.pendingFailed)).toBeInTheDocument()
+      expect(await screen.findByText(MSG.pendingFailed)).toBeInTheDocument()
+      expect(screen.queryByText(MSG.oldWriteRejected)).not.toBeInTheDocument()
       expect(screen.getByRole('button', { name: '다시 시도하기' })).toBeInTheDocument()
       expect(screen.queryAllByRole('radio')).toHaveLength(0)
       expect(screen.queryByRole('button', { name: '계속하기' })).not.toBeInTheDocument()
@@ -1281,7 +1284,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
     { label: '409 이메일', respond: () => res(409, { code: 'EMAIL_ALREADY_EXISTS' }), message: MSG.alreadyJoined, link: true },
     { label: '409 소셜 연결', respond: () => res(409, { code: 'SOCIAL_ACCOUNT_ALREADY_LINKED' }), message: MSG.alreadyJoined, link: true },
     { label: '409 다른 code', respond: () => res(409, { code: 'OTHER' }), message: MSG.completeFailed, link: false },
-    { label: '401 WRITE_KEY_INVALID', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }), message: MSG.writeRejected, link: false },
+    { label: '401 WRITE_KEY_INVALID(옛 쓰기 가드 코드)', respond: () => res(401, { code: 'WRITE_KEY_INVALID' }), message: MSG.completeFailed, link: false },
     { label: '500 빈 본문', respond: () => res(500), message: MSG.completeFailed, link: false },
     { label: '502 비 JSON', respond: () => text(502, '<html>'), message: MSG.completeFailed, link: false },
     { label: '네트워크 오류', respond: networkError, message: MSG.completeFailed, link: false },
@@ -1302,6 +1305,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
 
     // Then 표의 문구, 경로·토큰
     const message = await screen.findByText(row.message)
+    expect(screen.queryByText(MSG.oldWriteRejected)).not.toBeInTheDocument()
     expect(where()).toBe('/oauth2/role')
     expect(token()).toBeNull()
     const links = within(message.parentElement!).queryAllByRole('link', { name: '로그인하기' })
@@ -1776,7 +1780,7 @@ describe('TASK-018 Phase 4 롤백 — 경로 표기·시안 값·만료 구성',
 
   // ---------- SC-36 ----------
   type Screen36 = 'login' | 'signup' | 'joined' | 'role' | 'callback' | 'list' | 'register' | 'none'
-  const SC36: { path: string; screen: Screen36; loggedIn?: boolean; state?: unknown; header: boolean }[] = [
+  const SC36: { path: string; screen: Screen36; loggedIn?: boolean; organizer?: boolean; state?: unknown; header: boolean }[] = [
     { path: '/login/', screen: 'login', header: false },
     { path: '/Login', screen: 'login', header: false },
     { path: '/LOGIN', screen: 'login', header: false },
@@ -1790,7 +1794,8 @@ describe('TASK-018 Phase 4 롤백 — 경로 표기·시안 값·만료 구성',
     { path: '/oauth2/redirect/?token=tok-1', screen: 'callback', header: false },
     { path: '/oauth2/Redirect?token=tok-1', screen: 'callback', header: false },
     { path: '/', screen: 'list', header: true },
-    { path: '/performances/new', screen: 'register', header: true },
+    // 등록 화면은 주최자만 그린다 (TASK-024 가드) — 주최자로 로그인해 같은 단언을 지킨다
+    { path: '/performances/new', screen: 'register', loggedIn: true, organizer: true, header: true },
     { path: '/%', screen: 'none', header: true },
     { path: '/%E0%A4%A', screen: 'none', header: true },
     { path: '/', screen: 'list', loggedIn: true, header: true },
@@ -1800,7 +1805,13 @@ describe('TASK-018 Phase 4 롤백 — 경로 표기·시안 값·만료 구성',
     async (row) => {
       // Given 표의 로그인 상태 (콜백의 /me 는 붙들어 화면에 머문다)
       if (row.loggedIn) localStorage.setItem('accessToken', 'tok-1')
-      stubServer(row.screen === 'callback' ? { [ME]: () => deferred().promise } : {})
+      stubServer(
+        row.screen === 'callback'
+          ? { [ME]: () => deferred().promise }
+          : row.organizer
+            ? { [ME]: () => res(200, { ...USER, role: 'ORGANIZER' }) }
+            : {},
+      )
 
       // When 표의 주소를 연다
       const [pathname, search = ''] = row.path.split('?')

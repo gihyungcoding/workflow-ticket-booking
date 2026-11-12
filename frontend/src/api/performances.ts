@@ -64,13 +64,11 @@ export class ApiError extends Error {
   }
 }
 
-export const WRITE_KEY_INVALID = 'WRITE_KEY_INVALID'
-export const WRITE_REJECTED_MESSAGE = '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요'
+// 공연 쓰기의 인증 실패(401) — 토큰이 없거나 무효하다. 화면은 로그아웃하고 로그인으로 보낸다.
+export class UnauthorizedError extends Error {}
 
-// 상태(401)가 아니라 서버가 준 코드로 판별한다 — 향후 인증의 401 과 섞이지 않게.
-export function isWriteKeyRejected(error: unknown): boolean {
-  return error instanceof ApiError && error.code === WRITE_KEY_INVALID
-}
+// 공연 쓰기의 역할 불일치(403) — 주최자가 아니다 (ADR-0029). 화면은 주최자 전용 안내를 보인다.
+export class ForbiddenRoleError extends Error {}
 
 export async function getPerformances(): Promise<PerformanceListResponse> {
   const response = await request('/api/performances')
@@ -99,6 +97,14 @@ export async function throwIfApiError(response: Response): Promise<never> {
   throw new Error(`요청 실패: ${response.status}`)
 }
 
+// 공연 쓰기 응답의 오류 — 401/403 은 본문과 무관하게 상태로 가른다(SecurityConfig 가 이 경로에서 내는 403 은 FORBIDDEN_ROLE 뿐이고,
+// 프록시가 본문 없이 돌려줘도 같은 처리가 맞다). 그 밖은 지금처럼 코드로.
+async function throwWriteError(response: Response): Promise<never> {
+  if (response.status === 401) throw new UnauthorizedError('인증이 필요합니다')
+  if (response.status === 403) throw new ForbiddenRoleError('주최자만 이용할 수 있습니다')
+  return throwIfApiError(response)
+}
+
 export async function registerPerformance(
   input: RegisterPerformanceInput,
 ): Promise<Performance> {
@@ -108,7 +114,7 @@ export async function registerPerformance(
     body: JSON.stringify(input),
   })
   if (!response.ok) {
-    await throwIfApiError(response)
+    await throwWriteError(response)
   }
   return response.json()
 }
@@ -123,7 +129,7 @@ export async function updatePerformance(
     body: JSON.stringify(input),
   })
   if (!response.ok) {
-    await throwIfApiError(response)
+    await throwWriteError(response)
   }
   return response.json()
 }
@@ -131,7 +137,7 @@ export async function updatePerformance(
 export async function cancelPerformance(id: string): Promise<Performance> {
   const response = await request(`/api/performances/${id}/cancel`, { method: 'POST' })
   if (!response.ok) {
-    await throwIfApiError(response)
+    await throwWriteError(response)
   }
   return response.json()
 }

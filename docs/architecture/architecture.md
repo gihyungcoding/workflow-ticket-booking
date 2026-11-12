@@ -132,6 +132,8 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0028](../decisions/ADR-0028-user-url-validation-by-authority-parts.md)
 - 쓰기 가드 제거, API 쓰기는 JWT 역할(`SecurityConfig`) + 소유권(Service, 위반은 404)으로만 보호 →
   [ADR-0029](../decisions/ADR-0029-replace-write-guard-with-role-and-ownership.md)
+- 프론트 요청 토큰은 앱에 하나뿐인 AuthProvider 의 세션에서 읽는다(저장소는 세션 전·Provider 밖에서만) →
+  [ADR-0030](../decisions/ADR-0030-request-token-from-single-auth-session.md)
 
 ## 7. 알려진 부채
 
