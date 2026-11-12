@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-12T00:00:00Z
-summary: "SCENARIO_TASK-024 — 16건(happy 3 / error 4 / boundary 5 / regression 4), AC 6/6, 입력 경계 34칸(covered 30 · n/a 4). 독립검증 1회차 PASS(경고 7)"
+summary: "SCENARIO_TASK-024 — 16건(happy 3 / error 4 / boundary 5 / regression 4), AC 6/6, 입력 경계 34칸(covered 30 · n/a 4). 독립검증 2회차 PASS(경고 5)"
 
 next_steps:
   - "Phase 2b — wf-red. 승인 테스트 6파일 변경을 함께. SC-06 은 행마다 라우터가 실제로 고른 화면을 기록"
@@ -29,6 +29,9 @@ attempts:
   - n: 1
     result: PASS
     note: "fail 0 · warn 7 — 재검증 없이 경고 반영"
+  - n: 2
+    result: PASS
+    note: "2b 에서 RETRY_SCENARIO 1/3 — SC-09 Then '전역 헤더 비로그인 모양' 이 /login(인증 화면, 헤더 없음)에서 관찰 불가 → 로그인 화면 제목으로. fail 0 · warn 5(V5·V6·V7·V9·V12)"
 
 ---
 

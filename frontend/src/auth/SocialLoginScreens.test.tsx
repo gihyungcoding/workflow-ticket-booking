@@ -18,7 +18,8 @@ const MSG = {
   expired: '5분이 지나 역할을 고를 수 없어요. 다시 로그인해 주세요',
   completeFail: '가입을 끝내지 못했어요. 잠시 후 다시 시도해 주세요',
   alreadyJoined: '이미 가입된 계정이에요',
-  writeRejected: '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요',
+  // 옛 쓰기 키 거부 문구 — 쓰기 가드가 사라져 어떤 화면에도 나오지 않는다 (TASK-024)
+  oldWriteRejected: '쓰기 권한 확인에 실패했습니다. 관리자에게 문의해 주세요',
   roleRequired: '역할을 골라 주세요',
   // 역할 선택 안내는 토큰 디코드가 아니라 서버의 대기 정보에서 온다 (TASK-018)
   guide: 'hong@gmail.com(홍길동)으로 가입하고 있어요',
@@ -557,7 +558,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       message: MSG.completeFail,
       link: false,
     },
-    { label: '쓰기 가드', resp: () => res(403, { code: 'WRITE_KEY_INVALID' }), message: MSG.writeRejected, link: false },
+    { label: '옛 쓰기 가드 코드', resp: () => res(403, { code: 'WRITE_KEY_INVALID' }), message: MSG.completeFail, link: false },
     { label: '409 이메일', resp: () => res(409, { code: 'EMAIL_ALREADY_EXISTS' }), message: MSG.alreadyJoined, link: true },
     {
       label: '409 소셜 연결',
@@ -580,6 +581,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
       // Then 표의 문구가 보이고 만료 안내는 보이지 않는다
       const alert = await screen.findByRole('alert')
       expect(alert.textContent).toContain(message)
+      expect(alert.textContent).not.toContain(MSG.oldWriteRejected)
       expect(screen.queryByText(MSG.expired)).not.toBeInTheDocument()
       // And 주최자가 선택된 채 계속하기가 다시 활성이다
       expect(roleRadio('주최자')).toBeChecked()
@@ -603,7 +605,7 @@ describe('TASK-013 소셜 로그인 버튼·콜백·역할 선택', () => {
   const RETRY_ROWS = [
     { label: '500 비 JSON', first: () => text(500, 'boom'), gone: MSG.completeFail },
     { label: '409 이메일', first: () => res(409, { code: 'EMAIL_ALREADY_EXISTS' }), gone: MSG.alreadyJoined },
-    { label: '쓰기 가드', first: () => res(403, { code: 'WRITE_KEY_INVALID' }), gone: MSG.writeRejected },
+    { label: '옛 쓰기 가드 코드', first: () => res(403, { code: 'WRITE_KEY_INVALID' }), gone: MSG.completeFail },
   ]
   test.each(RETRY_ROWS)(
     'SC-10 (error) 가입 완료가 실패한 뒤 다시 제출하면 이전 문구가 사라지고 성공하면 로그인한다 — $label',

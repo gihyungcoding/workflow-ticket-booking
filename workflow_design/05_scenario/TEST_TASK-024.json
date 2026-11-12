@@ -1,0 +1,91 @@
+{
+  "task_id": "TASK-024",
+  "supersedes": "SCENARIO_TASK-024.json",
+  "test_file": "frontend/src/auth/task024.organizer.test.tsx",
+  "test_files_changed": [
+    "frontend/src/api/http.test.ts",
+    "frontend/src/pages/WriteKeyRejected.test.tsx (삭제)",
+    "frontend/src/auth/AuthScreens.test.tsx",
+    "frontend/src/auth/task018.auth.test.tsx",
+    "frontend/src/auth/SocialLoginScreens.test.tsx",
+    "frontend/src/App.test.tsx"
+  ],
+  "red_scenarios": [
+    { "scenario_id": "SC-01", "test_function": "SC-01 (happy) 저장된 토큰이 있으면 요청에 Bearer 가 실리고, 쓰기 키는 어디에도 없다", "status": "red",
+      "rows": "a~f 전부 실패 — Authorization expected null to be 'Bearer tok-org'" },
+    { "scenario_id": "SC-02", "test_function": "SC-02 (boundary) 토큰이 없거나 헤더에 실을 수 없으면 Authorization 없이 요청은 나간다", "status": "red",
+      "rows": "e·f·i·j 실패(expected null to be 'Bearer …'). a·b·c·d·g·h 통과 — 기대가 'Authorization 없음' 이고 지금 코드는 어떤 경우에도 Authorization 을 싣지 않는다(구현 뒤 의미가 생기는 행)" },
+    { "scenario_id": "SC-03", "test_function": "SC-03 (boundary) 호출부가 Authorization 을 실었으면 저장된 토큰으로 덮어쓰지 않는다", "status": "red",
+      "rows": "c 실패(expected null to be 'Bearer tok-A'). a·b·d 통과 — 지금 코드는 호출부 헤더를 그대로 두고 저장 토큰을 싣지 않는다(덮어쓰기 금지는 구현 뒤 의미)" },
+    { "scenario_id": "SC-04", "test_function": "SC-04 (happy) 주최자는 등록 화면에서 공연을 등록하고, 요청에 자기 토큰이 실린다", "status": "red",
+      "rows": "폼은 보이고 제출도 나감. Authorization expected null to be 'Bearer tok-org' 에서 멈춤 — 뒤의 X-Write-Key 부재·/performances/42 이동은 실행되지 않음" },
+    { "scenario_id": "SC-05", "test_function": "SC-05 (error) 비로그인으로 보호 경로에 들어가면 로그인으로 가고, 로그인 후 원래 경로로 돌아온다", "status": "red",
+      "rows": "a~d 전부 첫 Then 에서 실패 — 주소가 연 주소 그대로(expected '/performances/new' to be '/login'). 로그인·복귀 단계는 실행되지 않음 → 하네스 프로브로 확인(harness_probe)" },
+    { "scenario_id": "SC-06", "test_function": "SC-06 (boundary) 표기가 달라도 라우터가 등록·수정 화면으로 고르는 주소면 가드를 지난다", "status": "red",
+      "rows": "a~g 전부 첫 Then 에서 실패 — 주소가 연 주소 그대로. 행 g(%E0)는 react-router 가 'could not be decoded' 경고를 내고 수정 라우트를 고른다(주소 유지가 그 증거). 관객 재진입 단계는 실행되지 않음" },
+    { "scenario_id": "SC-07", "test_function": "SC-07 (error) 관객이 보호 경로에 들어가면 폼 대신 주최자 전용 안내가 보인다", "status": "red",
+      "rows": "a·b 실패 — 안내 문구 없음. 「공연 둘러보기」 클릭 단계는 실행되지 않음" },
+    { "scenario_id": "SC-08", "test_function": "SC-08 (boundary) 토큰을 복원하는 동안 가드는 아무것도 그리지 않고, 결과에 따라 갈린다", "status": "red",
+      "rows": "a~g 전부 '아무것도 그리지 않는다' 에서 실패(복원 중 폼이 보임: expected true to be false). /me 종료 뒤 단계는 실행되지 않음" },
+    { "scenario_id": "SC-09", "test_function": "SC-09 (error) 쓰기 API 가 401 이면 로그아웃되고, 로그인으로 갔다가 같은 화면으로 돌아온다", "status": "red",
+      "rows": "a~g 전부 '토큰이 지워진다' 에서 실패(expected 'tok-org' to be null). 등록·저장·취소 요청은 실제로 나감(쓰기 동작 하네스는 지남). 재로그인 단계는 실행되지 않음" },
+    { "scenario_id": "SC-10", "test_function": "SC-10 (error) 쓰기 API 가 403 이면 폼 대신 주최자 전용 안내가 보이고, 로그인은 유지된다", "status": "red",
+      "rows": "a~f 전부 안내 문구 없음에서 실패. 지금은 옛 분기로 '등록하지 못했습니다' 등 일반 문구가 나온다(f 는 403 WRITE_KEY_INVALID 라 옛 쓰기 키 문구)" },
+    { "scenario_id": "SC-11", "test_function": "SC-11 (boundary) 화면을 떠난 뒤 도착한 쓰기 응답은 로그인 상태·주소·화면을 바꾸지 않는다", "status": "red",
+      "rows": "a~f 전부 로그아웃 뒤 '/login' 에서 실패 — 가드가 없어 등록 화면에 머문다. 재로그인·늦은 응답 단계는 실행되지 않음 → 로그아웃 버튼·제출 하네스는 프로브로 확인" },
+    { "scenario_id": "SC-12", "test_function": "SC-12 (regression) 401·403 이 아닌 쓰기 실패는 지금 문구 그대로이고, 다시 제출하면 꺼진다", "status": "already_passing", "failure": null,
+      "note": "이 태스크가 바꾸지 않는 기존 문구·재제출 동작(주최자 로그인 상태). 구조적으로 Red 불가 — 구현이 401/403 분기를 넣을 때 다른 오류를 삼키지 않는지 지킨다" },
+    { "scenario_id": "SC-13", "test_function": "기존 승인 테스트의 행 — AuthScreens SC-11·SC-17·SC-19 / task018 SC-03·SC-12·SC-14·SC-22·SC-26 / SocialLoginScreens SC-09·SC-10 의 옛 쓰기 가드 코드 행", "status": "red",
+      "rows": "9행 실패(AuthScreens 3, task018 4, SocialLoginScreens 2) — 지금은 옛 쓰기 키 문구가 나와 일반 실패 문구를 못 찾음. task018 SC-14 행 f 는 통과(가입 뒤 자동 로그인 실패는 응답 코드와 무관하게 이미 로그인 화면 안내 — already_passing 행)" },
+    { "scenario_id": "SC-14", "test_function": "기존 승인 테스트 — App.test SC-10 / AuthScreens SC-28 등록 단락 / task018 SC-36 의 /performances/new 행", "status": "already_passing", "failure": null,
+      "note": "주최자 로그인 상태로 바꾼 Given 에서 기존 단언이 그대로 통과한다. 가드가 들어온 뒤에도 같은 단언을 지키게 하는 회귀 — 구조적으로 Red 불가" },
+    { "scenario_id": "SC-15", "test_function": "SC-15 (happy) 쓰기 키 흔적이 소스와 환경 예시에 없다", "status": "red",
+      "rows": "첫 단언에서 실패 — 11개 파일이 걸린다(vite-env.d.ts·http.ts·performances.ts·5개 화면·.env.example 등). 뒤의 단언은 실행되지 않음" },
+    { "scenario_id": "SC-16", "test_function": "SC-16 (regression) 무효 토큰이 저장돼 있어도 공개 조회 화면은 지금처럼 열린다", "status": "already_passing", "failure": null,
+      "note": "지금 코드는 공개 조회에 토큰을 싣지 않아 통과한다. 구현이 Bearer 를 GET 에도 실은 뒤 공개 화면이 깨지지 않는지 지키는 회귀 — 구조적으로 Red 불가" }
+  ],
+  "red_result": {
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npx vitest run (--reporter=json)",
+    "total": 768, "failed": 61, "passed": 706, "todo": 1,
+    "breakdown": "task024.organizer.test.tsx 68 케이스 중 52 실패·16 통과(SC-02 6행, SC-03 3행, SC-12 5행, SC-16 2행) + SC-13 기존 행 9 실패",
+    "existing_tests_still_passing": true,
+    "existing_note": "SC-13 으로 기대를 바꾼 9행 말고는 기존 테스트 실패 0. 지운 테스트: http.test sc04·sc05(→ SC-01·02), WriteKeyRejected.test.tsx 전체(→ SC-09·10·12·15)",
+    "lint": "npm run lint — 새 경고 0 (networkError 미사용 경고는 지움)"
+  },
+  "harness_probe": {
+    "method": "버린 프로브 테스트(src/auth/zz_probe024.test.tsx, 커밋하지 않고 삭제)",
+    "verified": [
+      "로그인 화면에서 loginWith 로 로그인하면 state.from(경로·쿼리·해시)으로 돌아가고 수정 폼에 P5 값이 채워진다 — SC-05·09 의 복귀 단계",
+      "주최자 등록 화면에서 doWrite('register') 가 POST 를 보내고, 응답을 붙든 채 전역 헤더 「로그아웃」 버튼을 누르면 토큰이 지워진다 — SC-11 하네스",
+      "수정 저장·취소 확인이 PUT·POST cancel 을 보낸다 — SC-09·10·12 의 쓰기 동작"
+    ],
+    "not_verified": [
+      "취소 대화상자가 닫히는 전환 중에는 배경이 aria-hidden 이라 「로그아웃」 버튼을 role 로 찾지 못한다 — 대화상자 뒤에 로그아웃을 누르는 시나리오는 없어 영향 없음(SC-11 은 등록 화면)",
+      "가드가 생긴 뒤 /login 으로 보낼 때의 state.from 값 — 구현 전이라 확인 불가(SC-05·06·08·09 의 from 단언)"
+    ]
+  },
+  "inventory_check": {
+    "scenarios": 16,
+    "test_functions": 16,
+    "match": true,
+    "how": "task024.organizer.test.tsx 의 'SC-NN (' 제목 14종(SC-01~12·15·16) + SC-13(기존 3파일의 행) + SC-14(기존 3파일의 테스트). grep -oE \"'SC-[0-9]+ \\(\" | sort -u = 14"
+  },
+  "testing_preferences": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "mock_strategy": "fetch 를 'METHOD path' 표로 스텁(응답마다 새 Response), 실린 헤더는 calls 로 기록. 화면은 App + MemoryRouter + AuthProvider. 늦은 응답은 deferred. SC-15 는 node:fs 로 원문 스캔(task017.static.test.ts 관례)"
+  },
+  "approved_test_changes": [
+    { "file": "frontend/src/api/http.test.ts", "change": "test_sc04·test_sc05(쓰기 키) 삭제, 쓰이지 않게 된 request import 삭제, 설명 주석 갱신. sc01~03 그대로", "scenario": "SC-01·02" },
+    { "file": "frontend/src/pages/WriteKeyRejected.test.tsx", "change": "파일 삭제", "scenario": "SC-09·10·12·15" },
+    { "file": "frontend/src/auth/AuthScreens.test.tsx", "change": "WRITE_REJECTED_MESSAGE import 를 옛 문구 상수 OLD_WRITE_REJECTED 로, SC-11·SC-17·SC-19 의 옛 코드 행 기대를 일반 실패 문구로 + SC-11·SC-17 에 옛 문구 부재 단언, SC-28 등록 단락을 주최자 로그인(토큰 + /me ORGANIZER)으로", "scenario": "SC-13 a~c · SC-14 b" },
+    { "file": "frontend/src/auth/task018.auth.test.tsx", "change": "MSG.writeRejected → MSG.oldWriteRejected(부재 단언용), SC-03·SC-12·SC-26 행 기대를 일반 실패 문구로 + 부재 단언, SC-22 의 writeRejected 분기 제거 + 부재 단언, SC-14 행 라벨, SC-36 등록 행을 주최자 로그인으로(organizer 필드)", "scenario": "SC-13 d~h · SC-14 c" },
+    { "file": "frontend/src/auth/SocialLoginScreens.test.tsx", "change": "MSG.writeRejected → MSG.oldWriteRejected, 실패 표·SC-10 재제출 표의 옛 코드 행 기대를 일반 실패 문구로 + 실패 표에 부재 단언", "scenario": "SC-13 i·j" },
+    { "file": "frontend/src/App.test.tsx", "change": "SC-10 을 AuthProvider + 주최자 토큰 + /me 스텁으로, 폼 단언을 findBy 로(복원 대기), afterEach 정리", "scenario": "SC-14 a" }
+  ],
+  "red_retry": {
+    "attempt": 1,
+    "type": "RETRY_SCENARIO",
+    "reason": "SC-09 의 Then '전역 헤더가 비로그인 모양이다(「로그인」 링크)' 는 /login 이 인증 화면이라 헤더를 그리지 않아(TASK-018 사용자 결정) 어떤 구현에서도 관찰할 수 없다 → '로그인 화면(제목)이 보인다' 로 고치고 검증자 2회차 PASS"
+  },
+  "human_review": { "approved": false }
+}

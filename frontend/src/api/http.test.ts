@@ -6,9 +6,9 @@ import {
   updatePerformance,
 } from './performances'
 import type { RegisterPerformanceInput, UpdatePerformanceInput } from './performances'
-import { request } from './http'
 
-// TASK-015 시나리오 SC-01 ~ SC-05. SoT: workflow_design/05_scenario/SCENARIO_TASK-015.md
+// TASK-015 시나리오 SC-01 ~ SC-03. SoT: workflow_design/05_scenario/SCENARIO_TASK-015.md
+// SC-04·SC-05(쓰기 키)는 TASK-024 에서 지웠다 — 헤더 규칙은 auth/task024.organizer.test.tsx SC-01·SC-02
 
 const performanceBody = {
   id: 7,
@@ -80,7 +80,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('http — API 주소·쓰기 키', () => {
+describe('http — API 주소', () => {
   test('test_sc01_주소가_설정되면_모든_호출이_그_주소를_앞에_붙여_나간다', async () => {
     // Given VITE_API_BASE_URL 이 https://api.example.com 으로 설정돼 있다
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.com')
@@ -147,53 +147,6 @@ describe('http — API 주소·쓰기 키', () => {
       expect(calls[0].url).toBe('https://api.example.com/api/performances')
       // And 스킴 뒤에 // 가 없다
       expect(calls[0].url.replace('https://', '')).not.toContain('//')
-    }
-  })
-
-  test('test_sc04_쓰기_키가_있으면_쓰기_요청에만_X-Write-Key_가_붙는다', async () => {
-    // Given VITE_WRITE_KEY 가 k-123 이다
-    vi.stubEnv('VITE_WRITE_KEY', 'k-123')
-    const calls = stubFetch()
-
-    // When 요청을 메서드별로 보낸다
-    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'GET', 'HEAD']) {
-      await request('/api/performances', { method })
-    }
-    const direct = calls.splice(0)
-
-    // Then POST·PUT·PATCH·DELETE 에는 X-Write-Key: k-123 이 있다
-    for (const call of direct.slice(0, 4)) {
-      expect(headersOf(call).get('X-Write-Key')).toBe('k-123')
-    }
-    // And GET·HEAD 에는 없다
-    for (const call of direct.slice(4)) {
-      expect(headersOf(call).has('X-Write-Key')).toBe(false)
-    }
-
-    // And 화면 API: 등록·수정·취소에 붙고 조회에는 붙지 않으며 Content-Type 은 유지된다
-    await callAllFive()
-    expect(calls.map((c) => headersOf(c).has('X-Write-Key'))).toEqual([false, false, true, true, true])
-    expect(headersOf(calls[2]).get('Content-Type')).toBe('application/json')
-    expect(headersOf(calls[3]).get('Content-Type')).toBe('application/json')
-  })
-
-  test('test_sc05_쓰기_키가_없으면_헤더를_아예_보내지_않는다', async () => {
-    // Given 미설정·빈 문자열·공백만 세 경우
-    for (const value of [undefined, '', '   ']) {
-      vi.unstubAllEnvs()
-      if (value !== undefined) vi.stubEnv('VITE_WRITE_KEY', value)
-      const calls = stubFetch()
-
-      // When 쓰기 요청(POST·PUT·DELETE)을 보낸다
-      for (const method of ['POST', 'PUT', 'DELETE']) {
-        await request('/api/performances', { method })
-      }
-
-      // Then 요청 헤더에 X-Write-Key 항목이 존재하지 않는다 (빈 값으로도 보내지 않는다)
-      for (const call of calls) {
-        expect(headersOf(call).has('X-Write-Key')).toBe(false)
-      }
-      expect(calls).toHaveLength(3)
     }
   })
 })
