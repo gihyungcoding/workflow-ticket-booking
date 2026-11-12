@@ -150,6 +150,14 @@
         "46843f7",
         "40767bc"
       ]
+    },
+    {
+      "type": "PHASE4_REJECT_TO_PHASE3",
+      "attempt": 2,
+      "trigger": "VERIFY 2회차 FAIL — RC-2 later 변종 2",
+      "commits": [
+        "870f43e"
+      ]
     }
   ],
   "rollback_fixes": [
@@ -188,6 +196,21 @@
         "docs/release/first-deploy-checklist.md §5-1(새 절 — 순서·근거 한곳) · §7 브라우저 2행 · §9 배포 순서 · 상태 줄 — 모두 §5-1 을 가리킨다"
       ],
       "fix_commit": "40767bc,c3d9a57"
+    },
+    {
+      "root_cause": "RC-2",
+      "from": "Phase 4 VERIFY 2회차 FAIL",
+      "variants": [
+        "V7 로 기존 공연 owner NULL — 수정·취소 불가 운영 영향 미서술",
+        "§4-1·§4-2 마이그레이션 'V1·V2' 서술"
+      ],
+      "tests": [],
+      "tests_note": "문서 결함. 근거 동작은 PerformanceOwnerMigrationTest#test_sc01·PerformanceOwnershipApiTest#test_sc07 b 행",
+      "fix_locus": "common",
+      "sites": [
+        "docs/release/first-deploy-checklist.md §5-2(새 절) · §4-1 · §4-2 — §4-1 이 §5-2 를 가리킨다"
+      ],
+      "fix_commit": "870f43e"
     }
   ],
   "pre_review": {
