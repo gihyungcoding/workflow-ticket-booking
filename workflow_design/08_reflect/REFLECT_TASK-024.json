@@ -2,83 +2,153 @@
   "task_id": "TASK-024",
   "track": "light",
   "keep": [
-    { "what": "화면 확인을 실제 백엔드(임시 Postgres 컨테이너 + bootRun)로 하고, 필요한 상태는 도구로 만들었다",
-      "evidence": "Phase 3·4 에서 실제 401(토큰 망가뜨리기)·403(관객 토큰으로 바꾸기)·복원 중(/api/auth/me 4초 지연 프록시)·저장소 차단(iframe Storage.prototype.setItem 차단)을 브라우저에서 확인. 모의 서버 없이 9상태 PASS, 시안 대조로 버튼 폭 차이 1건을 Phase 3 에서 잡음(9558a67)" },
-    { "what": "Red 에서 멈춘 테스트의 뒷부분을 버린 프로브로 미리 확인했다 (TASK-022 회고로 반영한 wf-red Step 3)",
-      "evidence": "CP-2.5 decisions — 로그인 복귀·로그아웃 버튼·쓰기 동작 하네스 프로브 후 삭제. Green 첫 실행에 767/767, 승인 테스트 수정 0(test_modifications [])" }
+    {
+      "what": "화면 확인을 실제 백엔드(임시 Postgres 컨테이너 + bootRun)로 하고, 필요한 상태는 도구로 만들었다",
+      "evidence": "Phase 3·4 에서 실제 401(토큰 망가뜨리기)·403(관객 토큰으로 바꾸기)·복원 중(/api/auth/me 4초 지연 프록시)·저장소 차단(iframe Storage.prototype.setItem 차단)을 브라우저에서 확인. 모의 서버 없이 9상태 PASS, 시안 대조로 버튼 폭 차이 1건을 Phase 3 에서 잡음(9558a67)"
+    },
+    {
+      "what": "Red 에서 멈춘 테스트의 뒷부분을 버린 프로브로 미리 확인했다 (TASK-022 회고로 반영한 wf-red Step 3)",
+      "evidence": "CP-2.5 decisions — 로그인 복귀·로그아웃 버튼·쓰기 동작 하네스 프로브 후 삭제. Green 첫 실행에 767/767, 승인 테스트 수정 0(test_modifications [])"
+    }
   ],
   "problem": [
-    { "what": "Phase 1 이 AuthContext 의 '저장에 실패해도 이번 방문은 메모리로 로그인 유지' 계약을 읽지 않아, 요청 토큰을 저장소에서만 읽는 설계로 정본을 둘로 만들었다",
+    {
+      "what": "Phase 1 이 AuthContext 의 '저장에 실패해도 이번 방문은 메모리로 로그인 유지' 계약을 읽지 않아, 요청 토큰을 저장소에서만 읽는 설계로 정본을 둘로 만들었다",
       "evidence": "VERIFY 1회차 FAIL RC-1(4e978f2) → HITL#3 시나리오 롤백(RETRY_SCENARIO 2/3) → SC-17·세션 정본(13f1ed9)·수명(13ac45b)·ADR-0030. PLAN reusable 에 useAuth 를 적었지만 writeToken 의 실패 처리 주석은 보지 않았다",
-      "phase": 1 },
-    { "what": "같은 뿌리의 변종이 라운드마다 새로 나왔다 — 첫 스윕이 '세션을 바꾸는 전이 전부' 를 열거하지 않았다",
+      "phase": 1
+    },
+    {
+      "what": "같은 뿌리의 변종이 라운드마다 새로 나왔다 — 첫 스윕이 '세션을 바꾸는 전이 전부' 를 열거하지 않았다",
       "evidence": "RC-1 later 변종 3건(저장·삭제 실패 뒤 로그아웃, Provider 언마운트 뒤 세션 잔존, Provider 둘 이상) — 자체 리뷰 2R·Phase 4 2회차에서 차례로. check_root_causes '스윕이 놓친 변종 3건'",
-      "phase": 4 },
-    { "what": "시나리오 Then 이 그 화면에 없는 요소(인증 화면의 전역 헤더)를 단언해 관찰 불가였다",
+      "phase": 4
+    },
+    {
+      "what": "시나리오 Then 이 그 화면에 없는 요소(인증 화면의 전역 헤더)를 단언해 관찰 불가였다",
       "evidence": "SC-09 '전역 헤더가 비로그인 모양' — /login 은 TASK-018 결정으로 헤더를 그리지 않는다. 2b 에서 발견해 RETRY_SCENARIO 1/3, 검증자 2회차",
-      "phase": "2a" },
-    { "what": "Phase 1 이 가드로 막히는 기존 테스트(비로그인으로 등록 화면을 그리던 3곳)를 찾지 못했다",
+      "phase": "2a"
+    },
+    {
+      "what": "Phase 1 이 가드로 막히는 기존 테스트(비로그인으로 등록 화면을 그리던 3곳)를 찾지 못했다",
       "evidence": "App.test SC-10·AuthScreens SC-28·task018 SC-36 — 2a 에서 발견해 SC-14 로 추가(CP-2.2 decisions)",
-      "phase": 1 }
+      "phase": 1
+    }
   ],
   "try": [
-    { "what": "클라이언트가 이미 다른 곳(메모리·컨텍스트·저장소)에 있는 상태를 새 경로로 읽게 되면, 기존 정본과 그 실패 처리(주석의 약속 포함)를 PLAN unresolved 에 적고 '두 경로가 갈라지는 입력' 을 input_fields 에 넣는다",
-      "target": ".claude/skills/wf-plan/SKILL.md" },
-    { "what": "가드·인가처럼 라우트 진입을 바꾸는 변경이면 그 경로를 렌더하는 기존 테스트를 경로 문자열로 Grep 해 unresolved 에 적는다 (App 렌더·initialEntries)",
-      "target": ".claude/skills/wf-plan/SKILL.md" },
-    { "what": "Then 에 화면 요소를 쓸 때 그 요소를 그 화면이 실제로 그리는지(인증 화면 무헤더 같은 화면별 예외) 코드로 확인한다",
-      "target": ".claude/skills/wf-scenario/SKILL.md" }
+    {
+      "what": "클라이언트가 이미 다른 곳(메모리·컨텍스트·저장소)에 있는 상태를 새 경로로 읽게 되면, 기존 정본과 그 실패 처리(주석의 약속 포함)를 PLAN unresolved 에 적고 '두 경로가 갈라지는 입력' 을 input_fields 에 넣는다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "가드·인가처럼 라우트 진입을 바꾸는 변경이면 그 경로를 렌더하는 기존 테스트를 경로 문자열로 Grep 해 unresolved 에 적는다 (App 렌더·initialEntries)",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "Then 에 화면 요소를 쓸 때 그 요소를 그 화면이 실제로 그리는지(인증 화면 무헤더 같은 화면별 예외) 코드로 확인한다",
+      "target": ".claude/skills/wf-scenario/SKILL.md"
+    }
   ],
   "insights": [
     "같은 상태를 두 군데서 읽게 만드는 변경은 실패 경로(저장 실패·다른 탭·언마운트)에서만 드러난다. 정본을 하나로 정하는 결정을 Phase 1 에서 해야 한다",
     "뿌리 스윕은 '입력 종류' 보다 '상태를 바꾸는 전이 목록'(초기화·로그인·로그아웃·복원 성공/실패/stale·마운트/언마운트)을 열거할 때 변종을 한 번에 잡는다"
   ],
   "phase_analysis": {
-    "1": { "retries": 0, "note": "PLAN 보완 2회(2a 롤백 시 session_token·AuthContext, 구현 뒤 파일 목록 정정) — 분류 보완" },
-    "2a": { "retries": 2, "note": "독립검증 3회 PASS(FAIL 0). RETRY_SCENARIO 2회 — SC-09 관찰 불가 Then(2b), RC-1(Phase 4)" },
-    "2b": { "retries": 1, "note": "통합 HITL 2회 승인(SC-17 추가 뒤 재승인)" },
-    "3": { "retries": 0, "note": "Green 첫 실행 통과. 자체 리뷰 1R 결함 0 · RC-1 수정 후 2R(later 2 — 수명 수정, Provider 둘 ADR-0030)" },
-    "4": { "retries": 1, "note": "1회차 FAIL(RC-1) → 2회차 WARN → EXCEPTION_APPROVE(verified_commit 57ff928). 예외 4" },
-    "5": { "retries": 0, "note": "—" }
+    "1": {
+      "retries": 0,
+      "note": "PLAN 보완 2회(2a 롤백 시 session_token·AuthContext, 구현 뒤 파일 목록 정정) — 분류 보완"
+    },
+    "2a": {
+      "retries": 2,
+      "note": "독립검증 3회 PASS(FAIL 0). RETRY_SCENARIO 2회 — SC-09 관찰 불가 Then(2b), RC-1(Phase 4)"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "통합 HITL 2회 승인(SC-17 추가 뒤 재승인)"
+    },
+    "3": {
+      "retries": 0,
+      "note": "Green 첫 실행 통과. 자체 리뷰 1R 결함 0 · RC-1 수정 후 2R(later 2 — 수명 수정, Provider 둘 ADR-0030)"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1회차 FAIL(RC-1) → 2회차 WARN → EXCEPTION_APPROVE(verified_commit 57ff928). 예외 4"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
   },
   "adr_candidates": [
-    { "decision": "프론트 쓰기 API 의 401/403 은 응답 본문이 아니라 상태로 판별한다(401 → 로그아웃·로그인, 403 → 역할 안내)",
+    {
+      "decision": "프론트 쓰기 API 의 401/403 은 응답 본문이 아니라 상태로 판별한다(401 → 로그아웃·로그인, 403 → 역할 안내)",
       "why_broader": "TASK-025·026 의 주최자 조회·공개 전환 API 와 이후 소유 자원 API 에도 같은 분기가 필요하다",
       "evidence": "CP-1.3 decisions, performances.ts throwWriteError",
-      "suggested_title": "프론트 인증 오류는 상태 코드로 판별" }
+      "suggested_title": "프론트 인증 오류는 상태 코드로 판별"
+    }
   ],
   "architecture_drift": [
-    { "what": "AUTH-001 이 promote_after: TASK-024 인데 아직 warn 이다 — 위반은 0 이 됐다(파일 125개)",
+    {
+      "what": "AUTH-001 이 promote_after: TASK-024 인데 아직 warn 이다 — 위반은 0 이 됐다(파일 125개)",
       "where": "docs/architecture/constraints.yaml AUTH-001",
       "found_how": "check_architecture.py --json (Phase 4 2회차)",
-      "suggestion": "severity 를 error 로 올리고 promote_after 를 지운다" },
-    { "what": "AuthProvider 가 앱에 하나라는 전제(ADR-0030)를 기계로 검사하지 않는다",
+      "suggestion": "severity 를 error 로 올리고 promote_after 를 지운다"
+    },
+    {
+      "what": "AuthProvider 가 앱에 하나라는 전제(ADR-0030)를 기계로 검사하지 않는다",
       "where": "frontend/src/main.tsx · ADR-0030 「검사 가능한 제약: 없음」",
       "found_how": "Phase 3 자체 리뷰 2R(Provider 둘 이상 변종)",
-      "suggestion": "테스트 파일을 제외한 소스에서 <AuthProvider> 가 한 곳뿐인지 세는 제약 — 패턴 검사로 가능한지 architecture-doc 에서 판단" }
+      "suggestion": "테스트 파일을 제외한 소스에서 <AuthProvider> 가 한 곳뿐인지 세는 제약 — 패턴 검사로 가능한지 architecture-doc 에서 판단"
+    }
   ],
   "rule_proposals": [
-    { "target": ".claude/skills/wf-plan/SKILL.md", "section": "Step 2 — 코드베이스 조사",
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 2 — 코드베이스 조사",
       "change": "① 기존에 다른 곳(메모리·컨텍스트·저장소)에 있는 상태를 새 경로로 읽게 되면 기존 정본과 그 실패 처리(주석의 약속 포함)를 unresolved 에 적고, 두 경로가 갈라지는 입력(저장 실패·다른 탭·언마운트)을 input_fields 에 넣는다 ② 라우트 진입을 바꾸는 변경(가드·리다이렉트)이면 그 경로를 렌더하는 기존 테스트(App 렌더·initialEntries)를 경로 문자열로 Grep 해 unresolved 에 적는다",
       "evidence": "TASK-024 — RC-1 Phase 4 FAIL·2a 롤백, 기존 테스트 3곳 충돌을 2a 에서 발견",
-      "status": "pending", "recurring": 1 },
-    { "target": ".claude/skills/wf-scenario/SKILL.md", "section": "Step 2 — 시나리오 작성",
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "98855c6"
+    },
+    {
+      "target": ".claude/skills/wf-scenario/SKILL.md",
+      "section": "Step 2 — 시나리오 작성",
       "change": "Then 에 화면 요소(전역 헤더·탭바 등)를 쓸 때 그 화면이 그 요소를 그리는지 코드로 확인한다 — 화면별 예외(인증 화면 무헤더 등)",
       "evidence": "TASK-024 SC-09 — /login 은 헤더가 없어 관찰 불가, RETRY_SCENARIO 1/3",
-      "status": "pending", "recurring": 1 },
-    { "target": ".claude/skills/wf-verify/references/root-cause-sweep.md", "section": "변종 열거",
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "98855c6"
+    },
+    {
+      "target": ".claude/skills/wf-verify/references/root-cause-sweep.md",
+      "section": "변종 열거",
       "change": "상태를 다루는 결함이면 입력 종류와 함께 '그 상태를 바꾸는 전이 전부'(초기화·로그인·로그아웃·복원 성공/실패/stale·마운트/언마운트·인스턴스 둘)를 변종 표의 행으로 연다",
       "evidence": "TASK-024 RC-1 later 변종 3건이 자체 리뷰 2R·Phase 4 2회차에서 차례로 나옴",
-      "status": "pending", "recurring": 0 },
-    { "target": "docs/architecture/constraints.yaml", "section": "AUTH-001",
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "98855c6"
+    },
+    {
+      "target": "docs/architecture/constraints.yaml",
+      "section": "AUTH-001",
       "change": "severity warn → error, promote_after 제거 (위반 0 확인)",
       "evidence": "TASK-024 Phase 4 2회차 check_architecture — AUTH-001 위반 0, 파일 125개",
-      "status": "pending", "recurring": 0 }
+      "status": "pending",
+      "recurring": 0
+    }
   ],
   "follow_ups": [
-    { "what": "AuthContext.logout 이 복원 중이면 restoring 을 false 로 돌리지 않는다(develop 기존 결함, 현재 도달 불가)",
-      "to": "TASK-025", "why": "로그아웃 진입 경로(AppHeader 「내 공연」 등)가 늘어나는 태스크 — 사용자 결정(Phase 4 2회차)",
-      "fix_hint": "logout 에 setRestoring(false). 복원 중 logout → stale 복원 결과 뒤 가드가 /login 으로 가는 시나리오" }
+    {
+      "what": "AuthContext.logout 이 복원 중이면 restoring 을 false 로 돌리지 않는다(develop 기존 결함, 현재 도달 불가)",
+      "to": "TASK-025",
+      "why": "로그아웃 진입 경로(AppHeader 「내 공연」 등)가 늘어나는 태스크 — 사용자 결정(Phase 4 2회차)",
+      "fix_hint": "logout 에 setRestoring(false). 복원 중 logout → stale 복원 결과 뒤 가드가 /login 으로 가는 시나리오"
+    }
   ],
-  "completion_report": { "approved_by_human": false, "artifact_url": null, "skipped_reason": "track light — 리포트 Artifact 생략(wf-orchestrator 경량 경로)" }
+  "completion_report": {
+    "approved_by_human": true,
+    "artifact_url": null,
+    "skipped_reason": "track light — 리포트 Artifact 생략(wf-orchestrator 경량 경로)",
+    "reviewed_at": "2026-11-12T13:40:19Z",
+    "reviewed_in": "batch"
+  }
 }
