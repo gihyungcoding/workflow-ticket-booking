@@ -1,8 +1,8 @@
 ---
 task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
-phase: "4"
-phase_name: "Phase 4 - Verify"
+phase: "5"
+phase_name: "Phase 5 - Reflect"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 2회차 FAIL — RC-2 later 변종 2(배포 체크리스트). HITL #3 대기.
+Phase 4 4회차 WARN → HITL#3 예외 승인(2026-11-12, verified_commit 8ea4ac9). Phase 5 진입 전.
 
 ## 다음 한 걸음
 
-HITL #3 에서 롤백 방향을 받는다. Phase 3 이면 체크리스트 §5(VITE_WRITE_KEY 를 지우고 프론트 먼저 재배포)·§7(등록 확인은 TASK-024 뒤, 키 오빌드 단계 삭제)을 고치고 수정 커밋을 재리뷰.
+`wf-reflect` — KPT 와 규칙 개선안. 핵심 입력: 배포 문서의 운영 결과를 Phase 1·2a 에서 다루지 않아 Phase 4 가 3라운드 FAIL(later 변종 8), Red 시나리오 기대값 실측 불일치(SC-06 k·l, SC-09 c). 승인 이후 소스를 고치지 않는다 — /wf-ship 이 대조한다.
 
 ## 알아둬야 할 것
 

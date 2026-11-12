@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "VERIFY 4회차 WARN — 184/184, spotless 0, 제약 error 0·no_target 0, [correctness] 0, RC-1·RC-2 재현 변종 전부 해소. 경미 문서 소견 2 · AUTH-001 warn(TASK-024) · 브라우저 쓰기 공백(TASK-024 전, 문서에 명시)."
 
 next_steps:
-  - "HITL #3 — WARN. 승인·예외 승인이면 verified_commit 기록 후 Phase 5"
+  - "Phase 5 — wf-reflect. 입력: RC-2 later 변종 8(같은 뿌리 3라운드), RETRY_SCENARIO 2회, 경미 문서 소견 2(try)"
 
 decisions:
   - decision: "리뷰어 [info](프론트 X-Write-Key)를 검증자가 확인 — 이 태스크가 고친 docs/release/first-deploy-checklist.md 102행 '넣어도 서버가 무시한다' 가 사실과 다르다. [correctness] RC-2 로 판정, status FAIL"
@@ -13,6 +13,9 @@ decisions:
     rationale: "리뷰어 판단, 저장소에 HEAD 사용처 없음"
   - decision: "AUTH-001 warn 은 develop 10 → 5건, 백엔드 0. 남은 프론트 5건은 TASK-024(promote_after)"
     rationale: "worktree 로 develop 에서 check_architecture 를 돌려 비교"
+
+  - decision: "HITL#3 EXCEPTION_APPROVE (2026-11-12) — verified_commit 8ea4ac9"
+    rationale: "WARN 4건(문서 경미 2·브라우저 쓰기 공백·HEAD 401·AUTH-001 프론트)을 알고 승인"
 
 attempts:
   - round: 1

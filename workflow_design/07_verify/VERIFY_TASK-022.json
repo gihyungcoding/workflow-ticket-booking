@@ -446,9 +446,10 @@
     "deploy": "RC-2 — 배포 순서를 틀리면 가용성 문제(로그인 불가). 보안 우회는 아님"
   },
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "8ea4ac98767601cd51d566b05b1fd2154aa72ce5",
+    "verified_at": "2026-11-12T04:34:55Z",
+    "via": "AskUserQuestion — HITL#3 '예외 승인'"
   },
   "round_history": [
     {
@@ -504,7 +505,12 @@
       "round": 4,
       "status": "WARN",
       "summary": "[correctness] 0, RC-2 3회차 변종 3건 해소. 경미 문서 소견 2건(WARN)",
-      "human_review": null
+      "human_review": {
+        "decision": "EXCEPTION_APPROVE",
+        "verified_commit": "8ea4ac98767601cd51d566b05b1fd2154aa72ce5",
+        "verified_at": "2026-11-12T04:34:55Z",
+        "via": "AskUserQuestion — HITL#3 '예외 승인'"
+      }
     }
   ],
   "reject": {
@@ -527,5 +533,27 @@
         "note": "RC-2 later 변종 3 — 롤백 시 가드, HEAD 401, SQL 대소문자. changed_files 대조 완료"
       }
     ]
-  }
+  },
+  "exceptions": [
+    {
+      "item": "배포 체크리스트 경미 소견 — §5-2 SQL 주석 '같은 규칙' 의 정확도(탭·비 ASCII 대문자)",
+      "handling": "Phase 5 try 후보 — 확인 SELECT 가 실패를 드러내므로 위험 낮음"
+    },
+    {
+      "item": "배포 체크리스트 경미 소견 — §5 옛 가드 변수 삭제 기준(§9 참조) 부재, 롤백 시 프론트 동반 롤백 서술 없음",
+      "handling": "Phase 5 try 후보"
+    },
+    {
+      "item": "TASK-024 전까지 브라우저 공연 쓰기 401",
+      "handling": "의도된 공백 — AUTH-001 promote_after TASK-024, 체크리스트 §5-1. TASK-024 와 같은 배포로"
+    },
+    {
+      "item": "HEAD·Origin 없는 OPTIONS /api/performances 401",
+      "handling": "시나리오 결정('GET 외 모든 메서드는 ROLE_ORGANIZER') — 문서 §5·§9 에 GET 모니터링 명시"
+    },
+    {
+      "item": "AUTH-001 warn 5건(frontend)",
+      "handling": "TASK-024 범위"
+    }
+  ]
 }
