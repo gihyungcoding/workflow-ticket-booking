@@ -122,11 +122,11 @@ class PerformanceZoneMigrationTest {
       performanceId = seedV5Performance(connection);
     }
 
-    // When
-    flyway(null).migrate();
+    // When — V6 로 대상을 고정한다(TASK-022 에서 V7 이 더해져 "끝까지" 는 V6 가 아니다)
+    flyway("6").migrate();
 
     // Then
-    Flyway latest = flyway(null);
+    Flyway latest = flyway("6");
     assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("6");
     try (Connection connection = connect();
         PreparedStatement select =

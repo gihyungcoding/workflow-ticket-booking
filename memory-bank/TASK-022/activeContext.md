@@ -6,28 +6,29 @@ phase_name: "Phase 2b - Red"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
-last_updated: 2026-11-11
+last_updated: 2026-11-12
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-022-owner-role-auth"
 
-last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
 source: "docs/product/features/organizer-flow.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-022.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-022.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-022.json"
+  test: "workflow_design/05_scenario/TEST_TASK-022.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a 독립검증 통과(2회차). Phase 2b 진입 전.
+Phase 2b Red 작성 완료(Red 11 · already_passing 4, 승인 테스트 변경 7파일 + 삭제 5파일). 통합 HITL #1·2 대기.
 
 ## 다음 한 걸음
 
-`wf-red` 로 Red 테스트를 쓴다. 시나리오 MD 끝 「기존 승인 테스트 변경」 6건을 함께 고치고 통합 HITL(#1·2)에 올린다.
+통합 HITL #1·2 승인을 받는다. 승인되면 Phase 3(wf-develop).
 
 ## 알아둬야 할 것
 

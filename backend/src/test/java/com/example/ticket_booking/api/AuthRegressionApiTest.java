@@ -1,8 +1,11 @@
 package com.example.ticket_booking.api;
 
+import static com.example.ticket_booking.support.AuthTestHelper.accessTokenOf;
 import static com.example.ticket_booking.support.AuthTestHelper.bodyAsMap;
 import static com.example.ticket_booking.support.AuthTestHelper.getWithAuthorization;
+import static com.example.ticket_booking.support.AuthTestHelper.login;
 import static com.example.ticket_booking.support.AuthTestHelper.postJson;
+import static com.example.ticket_booking.support.AuthTestHelper.signUp;
 import static com.example.ticket_booking.support.AuthTestHelper.signedToken;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import com.example.ticket_booking.domain.Performance;
 import com.example.ticket_booking.repository.PerformanceRepository;
 import com.example.ticket_booking.repository.SeatRepository;
+import com.example.ticket_booking.repository.UserRepository;
 import com.example.ticket_booking.support.ClockTestConfig;
 import com.example.ticket_booking.support.MutableClock;
 import java.time.Instant;
@@ -28,6 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
  * TASK-009 시나리오 SC-15 (regression).
@@ -35,7 +40,10 @@ import org.springframework.test.web.servlet.MvcResult;
  * <p>Security 가 들어와도 공연 API 가 인증 없이 그대로 동작하는지, 인증 API 경로의 사전 요청이 보안 필터에서 거부되지 않는지 본다. CORS 허용 출처는
  * 클래스 properties 로 주입한다. 이 시나리오는 Security 구현 전에도 통과한다(already_passing) — 기존 동작이 계속된다는 부정형 회귀다.
  *
- * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-009.md
+ * <p>TASK-022 부터 공연 쓰기는 주최자 토큰이 있어야 한다(ADR-0029). 토큰 없는 등록·수정·취소는 401 로 바꾸고, 주최자 토큰으로 자기 공연을
+ * 등록·수정·취소하는 행(201·200·200)을 더했다. 조회 행은 그대로다.
+ *
+ * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-009.md · SCENARIO_TASK-022.md (기존 승인 테스트 변경)
  */
 @SpringBootTest(properties = {"CORS_ALLOWED_ORIGINS=https://app.example.com"})
 @AutoConfigureMockMvc
@@ -47,6 +55,7 @@ class AuthRegressionApiTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private PerformanceRepository performanceRepository;
   @Autowired private SeatRepository seatRepository;
+  @Autowired private UserRepository userRepository;
   @Autowired private MutableClock clock;
 
   @Value("${JWT_SECRET}")
@@ -67,6 +76,7 @@ class AuthRegressionApiTest {
   private void deleteAllPerformances() {
     seatRepository.deleteAll();
     performanceRepository.deleteAll();
+    userRepository.deleteAll();
   }
 
   private String registerJson() {
@@ -85,6 +95,30 @@ class AuthRegressionApiTest {
             now.plus(30, ChronoUnit.DAYS),
             now.minus(1, ChronoUnit.DAYS),
             now.plus(20, ChronoUnit.DAYS));
+  }
+
+  /** 주최자가 등록해 수정·취소할 공연 — 오픈 전이어야 수정할 수 있다. */
+  private String ownedJson() {
+    Instant now = clock.instant();
+    return """
+        {
+          "title": "공연 Q",
+          "venue": "테스트홀",
+          "startAt": "%s",
+          "openAt": "%s",
+          "closeAt": "%s",
+          "sections": [{"grade":"VIP","price":120000,"rowStart":"A","rowEnd":"B","seatsPerRow":10}]
+        }
+        """
+        .formatted(
+            now.plus(30, ChronoUnit.DAYS),
+            now.plus(5, ChronoUnit.DAYS),
+            now.plus(20, ChronoUnit.DAYS));
+  }
+
+  private MvcResult withBearer(MockHttpServletRequestBuilder builder, String token)
+      throws Exception {
+    return mockMvc.perform(builder.header("Authorization", "Bearer " + token)).andReturn();
   }
 
   private String updateJson() {
@@ -135,12 +169,40 @@ class AuthRegressionApiTest {
             .andReturn();
     MvcResult cancel = mockMvc.perform(post("/api/performances/" + id + "/cancel")).andReturn();
 
-    // Then 모든 행의 상태가 기대와 같다 (401·403 이 아니다)
+    // Then 조회 행은 200 이다 (401·403 이 아니다)
     soft.assertThat(list.getResponse().getStatus()).as("GET 목록").isEqualTo(200);
     soft.assertThat(detail.getResponse().getStatus()).as("GET 단건").isEqualTo(200);
-    soft.assertThat(register.getResponse().getStatus()).as("POST 등록").isEqualTo(201);
-    soft.assertThat(update.getResponse().getStatus()).as("PUT 수정").isEqualTo(200);
-    soft.assertThat(cancel.getResponse().getStatus()).as("POST 취소").isEqualTo(200);
+    // And (TASK-022) 토큰 없는 쓰기는 401 이다
+    soft.assertThat(register.getResponse().getStatus()).as("POST 등록 — 토큰 없음").isEqualTo(401);
+    soft.assertThat(update.getResponse().getStatus()).as("PUT 수정 — 토큰 없음").isEqualTo(401);
+    soft.assertThat(cancel.getResponse().getStatus()).as("POST 취소 — 토큰 없음").isEqualTo(401);
+
+    // When (TASK-022) 주최자 토큰으로 등록하고, 자기 공연을 수정·취소한다
+    signUp(mockMvc, "organizer@example.com", "password123", "한도윤", "ORGANIZER");
+    String organizer = accessTokenOf(login(mockMvc, "organizer@example.com", "password123"));
+    MvcResult ownedRegister =
+        withBearer(
+            post("/api/performances")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerJson()),
+            organizer);
+    MvcResult owned =
+        withBearer(
+            post("/api/performances").contentType(MediaType.APPLICATION_JSON).content(ownedJson()),
+            organizer);
+    Object ownedId = owned.getResponse().getStatus() == 201 ? bodyAsMap(owned).get("id") : -1;
+    MvcResult ownedUpdate =
+        withBearer(
+            put("/api/performances/" + ownedId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateJson()),
+            organizer);
+    MvcResult ownedCancel = withBearer(post("/api/performances/" + ownedId + "/cancel"), organizer);
+
+    // Then 201·200·200 이다
+    soft.assertThat(ownedRegister.getResponse().getStatus()).as("POST 등록 — 주최자").isEqualTo(201);
+    soft.assertThat(ownedUpdate.getResponse().getStatus()).as("PUT 수정 — 주최자").isEqualTo(200);
+    soft.assertThat(ownedCancel.getResponse().getStatus()).as("POST 취소 — 주최자").isEqualTo(200);
     // And 응답 본문은 기존과 같은 필드를 갖는다
     if (list.getResponse().getStatus() == 200) {
       soft.assertThat(bodyAsMap(list).keySet())
@@ -148,7 +210,7 @@ class AuthRegressionApiTest {
           .containsExactlyInAnyOrder("content", "page", "size", "totalElements");
     }
     for (Map.Entry<String, MvcResult> entry :
-        Map.of("단건", detail, "등록", register, "수정", update).entrySet()) {
+        Map.of("단건", detail, "등록", ownedRegister, "수정", ownedUpdate).entrySet()) {
       int status = entry.getValue().getResponse().getStatus();
       if (status == 200 || status == 201) {
         soft.assertThat(bodyAsMap(entry.getValue()).keySet())
@@ -156,8 +218,8 @@ class AuthRegressionApiTest {
             .contains("id", "title", "venue", "status");
       }
     }
-    if (cancel.getResponse().getStatus() == 200) {
-      soft.assertThat(bodyAsMap(cancel).get("status")).as("취소 status").isEqualTo("CANCELLED");
+    if (ownedCancel.getResponse().getStatus() == 200) {
+      soft.assertThat(bodyAsMap(ownedCancel).get("status")).as("취소 status").isEqualTo("CANCELLED");
     }
 
     // When 같은 조회에 만료된 토큰 / 위조된 토큰이 실려 온다

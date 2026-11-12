@@ -1,5 +1,8 @@
 package com.example.ticket_booking.api;
 
+import static com.example.ticket_booking.support.AuthTestHelper.accessTokenOf;
+import static com.example.ticket_booking.support.AuthTestHelper.login;
+import static com.example.ticket_booking.support.AuthTestHelper.signUp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -8,6 +11,7 @@ import com.example.ticket_booking.domain.Performance;
 import com.example.ticket_booking.domain.Seat;
 import com.example.ticket_booking.repository.PerformanceRepository;
 import com.example.ticket_booking.repository.SeatRepository;
+import com.example.ticket_booking.repository.UserRepository;
 import com.example.ticket_booking.support.ClockTestConfig;
 import com.example.ticket_booking.support.MutableClock;
 import java.time.Instant;
@@ -32,6 +36,9 @@ import tools.jackson.databind.json.JsonMapper;
  * SC-16~SC-21은 Phase 4 1차 FAIL(VERIFY_TASK-004.json) 이후 attempt 2에서, SC-22~SC-24는 Phase 4 2차 FAIL
  * 이후 attempt 3에서 추가됐다.
  *
+ * <p>TASK-022 부터 공연 쓰기는 주최자 토큰이 있어야 하고 수정·취소는 자기 공연만 된다(ADR-0029). 모든 쓰기에 주최자 토큰을 싣고, 수정·취소 대상 픽스처는
+ * 그 주최자를 소유자로 저장한다. 기대값은 바꾸지 않았다.
+ *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-004.md
  */
 @SpringBootTest
@@ -48,11 +55,20 @@ class PerformanceRegistrationApiTest {
 
   @Autowired private MutableClock clock;
 
+  @Autowired private UserRepository userRepository;
+
   private final ObjectMapper objectMapper = JsonMapper.builder().build();
 
+  private String organizerToken;
+
+  private Long organizerId;
+
   @BeforeEach
-  void resetClock() {
+  void resetClock() throws Exception {
     clock.setInstant(Instant.now());
+    signUp(mockMvc, "organizer@example.com", "password123", "한도윤", "ORGANIZER");
+    organizerToken = accessTokenOf(login(mockMvc, "organizer@example.com", "password123"));
+    organizerId = userRepository.findByEmail("organizer@example.com").orElseThrow().getId();
   }
 
   private Performance performance(
@@ -65,23 +81,44 @@ class PerformanceRegistrationApiTest {
       boolean cancelled) {
     return performanceRepository.save(
         new Performance(
-            title, "테스트홀", startAt, openAt, closeAt, totalSeats, availableSeats, cancelled));
+            organizerId,
+            title,
+            "테스트홀",
+            startAt,
+            openAt,
+            closeAt,
+            totalSeats,
+            availableSeats,
+            cancelled,
+            null));
   }
 
   private MvcResult postJson(String url, String json) throws Exception {
     return mockMvc
-        .perform(post(url).contentType(MediaType.APPLICATION_JSON).content(json))
+        .perform(
+            post(url)
+                .header("Authorization", "Bearer " + organizerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
         .andReturn();
   }
 
   private MvcResult putJson(String url, String json) throws Exception {
     return mockMvc
-        .perform(put(url).contentType(MediaType.APPLICATION_JSON).content(json))
+        .perform(
+            put(url)
+                .header("Authorization", "Bearer " + organizerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
         .andReturn();
   }
 
   private MvcResult cancel(Long id) throws Exception {
-    return mockMvc.perform(post("/api/performances/" + id + "/cancel")).andReturn();
+    return mockMvc
+        .perform(
+            post("/api/performances/" + id + "/cancel")
+                .header("Authorization", "Bearer " + organizerToken))
+        .andReturn();
   }
 
   @SuppressWarnings("unchecked")

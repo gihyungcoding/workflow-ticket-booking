@@ -1,0 +1,203 @@
+{
+  "task_id": "TASK-022",
+  "supersedes": "SCENARIO_TASK-022.json",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/repository/PerformanceOwnerMigrationTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
+    "backend/src/test/java/com/example/ticket_booking/api/WriteGuardRemovalApiTest.java"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/repository/PerformanceOwnerMigrationTest.java",
+      "test_function": "test_sc01_V7_은_기존_공연이_있는_PostgreSQL_에_적용되고_소유자를_비워_둔다",
+      "status": "red",
+      "failure": "현재 버전 expected \"7\" but was \"6\" — V7 없음"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc02_소유자_없는_기존_공연의_관객_응답은_그대로다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "부정형 회귀 — 소유자 없는 공연의 조회 키 집합·ownerId 부재는 이 태스크 전에도 참. 구조적으로 Red 불가"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc03_주최자가_등록하면_그_사람이_소유자다",
+      "status": "red",
+      "failure": "UnsupportedOperationException — Performance.getOwnerId 스켈레톤(201·응답 키 단언은 통과 후 소유자 재조회에서)"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc04_토큰이_없거나_무효면_401_관객이면_403_이고_DB_는_그대로다",
+      "status": "red",
+      "failure": "63건 — 토큰 없음·무효·관객 모두 201/200 (인가 규칙 없음), DB 가 바뀜"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다",
+      "status": "red",
+      "failure": "UnsupportedOperationException — a 행 getOwnerId 에서 중단. 나머지 행은 Green 에서 검증"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc06_Authorization_헤더_앞뒤에_붙은_글자는_정상_토큰을_무효로_만든다",
+      "status": "red",
+      "failure": "20건 — c~m 행이 201 (토큰 없이도 등록됨), 공연 수 증가. a·b 는 이미 201"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc07_남의_공연_소유자_없는_공연_없는_공연은_같은_404_이고_DB_는_그대로다",
+      "status": "red",
+      "failure": "UnsupportedOperationException — getOwnerId. 그 전에 남의 공연·소유자 NULL 수정·취소가 200 으로 soft 실패 누적"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc08_자기_공연을_오픈_전에_수정하면_반영된다",
+      "status": "red",
+      "failure": "UnsupportedOperationException — getOwnerId"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc13_자기_공연이라도_오픈_시각이_되면_수정할_수_없다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "기존 규칙(now < openAt) 보존 — 이 태스크가 바꾸지 않는 409. 소유권 검사가 이 경로를 잘못 404 로 바꾸면 Green 에서 실패한다"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc14_자기_공연을_취소하면_반영된다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "지금은 누구나 취소할 수 있어 자기 공연 취소도 이미 200. 소유권 검사가 자기 공연을 막으면 Green 에서 실패한다. 시나리오의 '응답 cancelled true' 는 응답 DTO 에 cancelled 필드가 없어 status == CANCELLED 로 관찰한다(PerformanceResponse)"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/WriteGuardRemovalApiTest.java",
+      "test_function": "test_sc09_쓰기_키_없이_가입_로그인_소셜_가입_완료가_되고_가드_환경변수를_켜도_막히지_않는다",
+      "status": "red",
+      "failure": "9건 — 가입·로그인·소셜 완료 401 WRITE_KEY_INVALID (가드가 살아 있음)",
+      "config_applied_via": "@SpringBootTest(properties={\"WRITE_GUARD_ENABLED=true\",\"WRITE_API_KEY=guard-key-0123456789\",\"CORS_ALLOWED_ORIGINS=https://app.example.com\"}) + Environment.getProperty 로 적용 확인"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/WriteGuardRemovalApiTest.java",
+      "test_function": "test_sc10_쓰기_가드_코드가_없다",
+      "status": "red",
+      "failure": "Expecting code to raise a throwable — WriteGuardFilter 클래스가 아직 있음"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/WriteGuardRemovalApiTest.java",
+      "test_function": "test_sc15_CORS_preflight_가_키_헤더를_허용하지_않는다",
+      "status": "red",
+      "failure": "Allow-Headers \"Content-Type, Authorization, X-Write-Key\"",
+      "config_applied_via": "같은 클래스 properties 의 CORS_ALLOWED_ORIGINS"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "test_function": "test_sc11_공연_조회는_토큰_없이도_무효_토큰이_실려도_열린다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "부정형 회귀 — GET 공개는 기존 동작(TASK-009). SecurityConfig 를 고치며 GET 을 막으면 Green 에서 실패한다"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
+      "test_function": "test_sc12_기존_오류_응답_회귀_표는_쓰기_행에_주최자_토큰을_실으면_같은_숫자다",
+      "status": "red",
+      "failure": "i·j·k·l 4행 — 405/415 (401·403 기대). a~h 는 이미 같은 숫자",
+      "note": "실제 서버(RANDOM_PORT)에서 돈다 — MockMvc 는 ERROR 디스패치를 재현하지 못해(이 클래스의 TASK-009 주석) 토큰 실린 405·415 행이 가짜 통과할 수 있다. 그래서 진행 중이던 MockMvc 판에서 이 클래스로 옮겼다"
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --continue",
+    "total": 184,
+    "failed": 20,
+    "passed": 164,
+    "new_scenarios": {
+      "red": 11,
+      "already_passing": 4
+    },
+    "changed_approved_tests_red": 9,
+    "existing_tests_still_passing": true,
+    "note": "실패 20 = 새 시나리오 Red 11 + 바뀐 승인 테스트 9(AuthRegressionApiTest SC-15 1 · PerformanceRegistrationApiTest 7 · CorsFilterTest SC-01 1). 바뀐 승인 테스트 중 PerformanceErrorResponseRegressionTest SC-17 · ZoneRegistration · BrowseResponse · ZoneMigration SC-14 는 통과. 손대지 않은 기존 테스트는 전부 통과",
+    "lint": "spotlessCheck 통과"
+  },
+  "inventory_check": {
+    "scenarios": 15,
+    "test_functions": 15,
+    "match": true,
+    "method": "grep -ho 'void test_sc[0-9]*' (Ownership·OwnerMigration·WriteGuardRemoval) + PerformanceErrorResponseRegressionTest 의 test_sc12 1건 vs jq .scenarios[].id"
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + Spring Boot Test + MockMvc · 실제 서버 HttpClient(SC-12) · Testcontainers PostgreSQL + Flyway(SC-01)",
+    "mock_strategy": "모킹 없음. 클래스 레벨 @Transactional 없음 — 거부 경로의 'DB 변경 없음' 과 반영은 리포지토리 count·findById 로 새로 읽음. 토큰은 실제 가입·로그인, 클레임 변형은 PendingTokenTestHelper.signedRaw 로 테스트 비밀 서명. 시각은 MutableClock T=2026-11-11T08:00:00Z"
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/src/main/java/com/example/ticket_booking/domain/Performance.java"
+    ],
+    "contents": "getOwnerId() 와 ownerId 를 첫 인자로 받는 10인자 생성자(PLAN target_files[1] '기존 생성자 유지'), 본문은 둘 다 throw new UnsupportedOperationException() 한 줄. 필드·@Column 은 넣지 않음(컬럼 매핑은 동작이라 Phase 3)",
+    "purity_check": "UnsupportedOperationException 11건 = SC-03·05·07·08 + PerformanceRegistrationApiTest 7(소유자 픽스처 생성자). 나머지 9건은 HTTP 상태·헤더·Flyway 버전·클래스 존재 단언 실패 — 스켈레톤이 값을 돌려주는 경로가 없다"
+  },
+  "existing_tests_impact": {
+    "changed": [
+      {
+        "file": "backend/src/test/java/com/example/ticket_booking/api/AuthRegressionApiTest.java",
+        "change": "토큰 없는 등록·수정·취소 기대를 201/200 → 401 로. 주최자 토큰으로 등록(201)·자기 공연 수정(200)·취소(200) 행을 더하고 본문 키 단언을 그 행으로 옮김. 조회·preflight 행은 그대로"
+      },
+      {
+        "file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
+        "change": "SC-17 의 쓰기 4행(DELETE·PATCH·text/plain POST·abc cancel)에 실제 가입·로그인한 주최자 토큰을 실음. 기대 숫자는 그대로. TASK-022 SC-12 메서드 추가"
+      },
+      {
+        "file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
+        "change": "@BeforeEach 에서 주최자 가입·로그인, 모든 쓰기에 토큰. 수정·취소 픽스처 performance(...) 를 소유자 생성자로(그 주최자 소유). 기대값 그대로"
+      },
+      {
+        "file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+        "change": "등록에 주최자 토큰, 정리에 users 추가"
+      },
+      {
+        "file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceBrowseResponseApiTest.java",
+        "change": "등록에 주최자 토큰, 정리에 users 추가"
+      },
+      {
+        "file": "backend/src/test/java/com/example/ticket_booking/repository/PerformanceZoneMigrationTest.java",
+        "change": "SC-14 의 '끝까지' 를 flyway(\"6\") 로 고정"
+      },
+      {
+        "file": "backend/src/test/java/com/example/ticket_booking/config/CorsFilterTest.java",
+        "change": "SC-01 의 Allow-Headers 단언을 contains(…X-Write-Key) → isEqualTo(\"Content-Type, Authorization\") + X-Write-Key 없음"
+      }
+    ],
+    "deleted": [
+      "backend/src/test/java/com/example/ticket_booking/config/WriteGuardFilterTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardAuthApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardIntegrationTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardOffIntegrationTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/WriteGuardSocialCompleteTest.java"
+    ],
+    "sweep": "테스트 전체를 post/put /api/performances·cancel·X-Write-Key·WRITE_GUARD 로 Grep — 표 밖의 충돌 없음. AuthRegressionApiTest preflight 의 Access-Control-Request-Headers 에 x-write-key 가 남지만 상태·Allow-Origin 만 단언해 영향 없음"
+  },
+  "harness_probe": {
+    "not_verified": [
+      "SC-12 a~h 가 실제 서버에서 주최자 토큰과 함께 같은 숫자인지는 지금 토큰이 무시되는 상태에서만 확인됨 — SecurityConfig 변경 후 ERROR 디스패치(/error)에서 인증이 다시 평가되는지는 Green 에서 드러난다"
+    ]
+  },
+  "human_review": {
+    "approved": false
+  }
+}

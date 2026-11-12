@@ -99,6 +99,20 @@ public class Performance {
     this.posterUrl = posterUrl;
   }
 
+  public Performance(
+      Long ownerId,
+      String title,
+      String venue,
+      Instant startAt,
+      Instant openAt,
+      Instant closeAt,
+      Integer totalSeats,
+      Integer availableSeats,
+      Boolean cancelled,
+      String posterUrl) {
+    throw new UnsupportedOperationException();
+  }
+
   public Long getId() {
     return id;
   }
@@ -137,6 +151,10 @@ public class Performance {
 
   public String getPosterUrl() {
     return posterUrl;
+  }
+
+  public Long getOwnerId() {
+    throw new UnsupportedOperationException();
   }
 
   public void updateSchedule(
