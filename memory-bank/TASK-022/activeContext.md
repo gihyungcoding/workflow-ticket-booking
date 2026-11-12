@@ -3,7 +3,7 @@ task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: ACTIVE
+status: DONE
 track: standard
 created_at: 2026-11-11
 last_updated: 2026-11-12
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-022-owner-role-auth"
 
-last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
+last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/organizer-flow.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-022.json"
@@ -22,15 +22,16 @@ artifacts:
   test: "workflow_design/05_scenario/TEST_TASK-022.json"
   dev: "workflow_design/06_dev/DEV_TASK-022.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-022.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-022.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 4회차 WARN → HITL#3 예외 승인(2026-11-12, verified_commit 8ea4ac9). Phase 5 진입 전.
+DONE (2026-11-12). Phase 4 예외 승인(verified_commit 8ea4ac9), 회고 작성 — 승인 대기(/wf-retro).
 
 ## 다음 한 걸음
 
-`wf-reflect` — KPT 와 규칙 개선안. 핵심 입력: 배포 문서의 운영 결과를 Phase 1·2a 에서 다루지 않아 Phase 4 가 3라운드 FAIL(later 변종 8), Red 시나리오 기대값 실측 불일치(SC-06 k·l, SC-09 c). 승인 이후 소스를 고치지 않는다 — /wf-ship 이 대조한다.
+`/wf-ship` 으로 PR. TASK-024 와 같은 배포로(체크리스트 §5-1). 회고 승인은 `/wf-retro`.
 
 ## 알아둬야 할 것
 
