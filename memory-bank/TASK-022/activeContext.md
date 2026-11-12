@@ -15,6 +15,11 @@ branch: "feature/task-022-owner-role-auth"
 
 last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/organizer-flow.md (Task A)"
+pull_request:
+  number: 44
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/44"
+  base: develop
+  opened_at: 2026-11-12
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-022.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-022.md"
@@ -31,7 +36,7 @@ DONE (2026-11-12). Phase 4 예외 승인(verified_commit 8ea4ac9), 회고 작성
 
 ## 다음 한 걸음
 
-`/wf-ship` 으로 PR. TASK-024 와 같은 배포로(체크리스트 §5-1). 회고 승인은 `/wf-retro`.
+PR #44 리뷰 후 사람이 머지. TASK-024 와 같은 배포로(체크리스트 §5-1). 회고 승인은 `/wf-retro`.
 
 ## 알아둬야 할 것
 
