@@ -1,0 +1,75 @@
+{
+  "task_id": "TASK-024",
+  "changed_files": [
+    { "path": "frontend/src/api/http.ts", "change": "저장된 토큰을 Bearer 로 싣기(호출부 Authorization 우선·앞뒤 공백 trim·Headers 거부 값이면 토큰 없이), X-Write-Key 제거, ACCESS_TOKEN_KEY 를 여기로", "lines_changed": 30 },
+    { "path": "frontend/src/api/auth.ts", "change": "ACCESS_TOKEN_KEY 재내보내기(순환 import 회피)", "lines_changed": 6 },
+    { "path": "frontend/src/api/performances.ts", "change": "쓰기 키 export 제거, UnauthorizedError·ForbiddenRoleError, 쓰기 3함수의 throwWriteError", "lines_changed": 24 },
+    { "path": "frontend/src/auth/RequireOrganizer.tsx", "change": "가드 + OrganizerOnlyNotice(시안 organizer-only 본문)", "lines_changed": 65, "new": true },
+    { "path": "frontend/src/App.tsx", "change": "등록·수정 라우트를 RequireOrganizer 로", "lines_changed": 5 },
+    { "path": "frontend/src/pages/PerformanceRegisterPage.tsx", "change": "write-rejected 제거, 401 → logout + /login(from), 403 → 안내, mounted ref", "lines_changed": 41 },
+    { "path": "frontend/src/pages/PerformanceEditPage.tsx", "change": "rejected 제거, 저장·취소 401/403 공통 처리(handleAuthError), mounted ref", "lines_changed": 51 },
+    { "path": "frontend/src/pages/LoginPage.tsx", "change": "rejected 분기 제거", "lines_changed": 9 },
+    { "path": "frontend/src/pages/SignUpPage.tsx", "change": "rejected 분기 제거", "lines_changed": 9 },
+    { "path": "frontend/src/pages/RoleSelectionPage.tsx", "change": "rejected 분기 제거(대기 정보 실패 화면·완료 오류)", "lines_changed": 13 },
+    { "path": "frontend/src/theme/tokens.ts", "change": "componentSizes.emptySubMax 240px(.empty .row-sub)", "lines_changed": 1 },
+    { "path": "frontend/.env.example", "change": "VITE_WRITE_KEY 제거", "lines_changed": 4 },
+    { "path": "frontend/src/vite-env.d.ts", "change": "VITE_WRITE_KEY 타입 제거", "lines_changed": 1 }
+  ],
+  "commits": { "implementation": "c109808", "screen_fix": "9558a67" },
+  "reused": [
+    { "path": "frontend/src/auth/AuthContext.tsx", "symbol": "useAuth (user·restoring·logout)" },
+    { "path": "frontend/src/pages/LoginPage.tsx", "symbol": "safeDestination — state.from 복귀를 그대로 씀" },
+    { "path": "frontend/src/assets/fluent/idcard.svg", "symbol": "idcard" },
+    { "path": "frontend/src/components/ui/index.ts", "symbol": "Block" },
+    { "path": "frontend/src/api/performances.ts", "symbol": "throwIfApiError — 401/403 밖 오류" }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npx vitest run",
+    "total": 768, "passed": 767, "failed": 0, "todo": 1,
+    "target_tests_passed": 68,
+    "note": "task024.organizer.test.tsx 68 케이스 전부 통과 + SC-13 기존 행 9·SC-14 기존 3건 통과. 첫 구현에서 Green — 테스트 수정 없음. 화면 수정(9558a67) 뒤 다시 실행해 같은 결과"
+  },
+  "lint": { "command": "cd frontend && npm run lint", "errors": 0, "warnings": 7, "note": "경고 7건 모두 기존 파일(AuthContext·PerformanceDetail/Edit/List 의 set-state-in-effect·task017.ui.test jsx-key). Edit 의 경고는 load() 의 기존 setState — 줄 번호만 이동" },
+  "build": { "command": "cd frontend && npm run build", "exit_code": 0 },
+  "architecture": { "command": "python3 scripts/check_architecture.py", "error_count": 0, "warn": "DESIGN-003 기존 3파일(Detail·Edit·List)만. AUTH-001 위반 0(TASK-022 끝 5 → 0)" },
+  "refactoring": [
+    { "what": "PerformanceEditPage 의 저장·취소 401/403 처리를 handleAuthError 하나로", "why": "두 호출부가 같은 처리 — 하나만 고치는 실수를 막는다" },
+    { "what": "등록·수정 화면 사이의 401 처리(logout + navigate)는 공통 훅으로 빼지 않았다", "why": "두 곳이고 수정 화면은 대화상자 닫기가 더 있다. 내 공연 화면(TASK-025·026)에서 세 번째 호출부가 생길 때 뺀다" }
+  ],
+  "plan_unresolved_resolution": [
+    { "item": "#2 순환 import — http.ts 가 auth.ts 의 ACCESS_TOKEN_KEY 를 가져오면 순환", "how": "auth.ts 의 import 확인(./http 의 request), AuthContext 의 import 확인", "fact": "상수를 http.ts 로 옮기고 auth.ts 가 export { ACCESS_TOKEN_KEY } 로 다시 내보냄 — AuthContext 의 import 경로 그대로", "impact": "없음(tsc -b 통과)" },
+    { "item": "#7 Bearer 를 GET 에도 싣는다 — 무효 토큰이 공개 조회를 막지 않는가", "how": "실제 백엔드(18080, Postgres 컨테이너)에서 'broken-token' 을 실은 채 화면 사용 + SC-16", "fact": "JwtAuthenticationFilter 가 검증 실패를 익명으로 통과 — 목록·상세 200. 쓰기는 401 → 로그아웃 → /login(from) 까지 실제 브라우저에서 확인", "impact": "없음" }
+  ],
+  "test_modifications": [],
+  "scope_deviations": [
+    { "path": "frontend/src/auth/task018.auth.test.tsx", "reason": "태스크 implementation_spec 밖 — 옛 쓰기 키 행이 있어 SC-13·14 로 함께 바꿈(통합 HITL 에서 승인, Red 커밋 adfc932)" },
+    { "path": "frontend/src/auth/SocialLoginScreens.test.tsx", "reason": "같은 이유(SC-13 i·j)" },
+    { "path": "frontend/src/App.test.tsx", "reason": "SC-14 a — 가드로 비로그인 등록 화면이 막혀 주최자 로그인 Given 으로(승인)" },
+    { "path": "frontend/src/api/auth.ts", "reason": "spec 밖이지만 PLAN target_files 에 있음 — ACCESS_TOKEN_KEY 재내보내기" },
+    { "path": "frontend/src/theme/tokens.ts", "reason": "PLAN 밖 — 시안 .empty .row-sub max-width 240px 를 매직 넘버 대신 componentSizes 로(DESIGN-003)" }
+  ],
+  "screen_check": {
+    "how": "실제 백엔드(bootRun 18080 + postgres:16 임시 컨테이너) + Vite(5174, VITE_API_BASE_URL) — 같은 출처 375px iframe(innerWidth 373). 시안은 out/ 를 임시 정적 서버(5199)로 같은 크기 iframe. 측정 후 서버·컨테이너 종료",
+    "states": [
+      { "state": "관객으로 /performances/new", "result": "안내(그림 32px·제목 16/600·부제 14 rgb(76,79,102)·버튼 56px brand r12) — 폼 없음. 시안 값과 같다" },
+      { "state": "주최자로 /performances/new → 토큰을 망가뜨리고 등록", "result": "실제 401 → /login, state.from '/performances/new', 로그인 제목" }
+    ],
+    "diffs": [
+      { "what": "버튼 폭 133px vs 시안 245px — 시안 .block .btn { align-self: stretch }", "fixed_in": "9558a67" },
+      { "what": "블록 폭 309px vs 시안 341px — 등록·수정 화면의 기존 앱 셸(MUI Container 좌우 16px)", "fixed_in": null, "why": "PLAN unresolved #5 — 시안 셸(appbar 「내 공연」)은 /organizer 가 생기는 TASK-025·026" }
+    ]
+  },
+  "pre_review": {
+    "rounds": [
+      { "n": 1, "scope": "전체 develop...HEAD (c109808 까지)", "findings": 0,
+        "tests_added": [], "fix_commit": null,
+        "probed": "from × safeDestination 표기(대소문자·끝 슬래시·퍼센트 인코딩·깨진 인코딩·//) matchRoutes 프로브, 만료 토큰이 실린 인증 요청, fetchMe 헤더 충돌, StrictMode mounted, 늦은 응답 — 재현 없음",
+        "notes": ["[test] 수정 화면 id 가 바뀌어도 forbidden 유지 — 역할 기반 403 이라 의미상 문제 없음", "복원 일시 오류 뒤 남은 토큰이 계속 실림 — 서버가 익명으로 봐 무해, 이전부터의 동작", "401 때 가드 Navigate 와 페이지 navigate 가 같은 from 으로 replace — 중복이지만 무해"] }
+    ],
+    "after_review_commits": [ { "commit": "9558a67", "what": "시안 대조 차이(버튼 align-self) — 스타일 한 줄, 동작 변경 없음. Phase 4 리뷰 범위에 포함" } ],
+    "root_causes": [],
+    "unresolved": [],
+    "deferred": []
+  }
+}
