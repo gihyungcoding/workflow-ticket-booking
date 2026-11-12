@@ -158,6 +158,14 @@
       "commits": [
         "870f43e"
       ]
+    },
+    {
+      "type": "PHASE4_REJECT_TO_PHASE3",
+      "attempt": 3,
+      "trigger": "VERIFY 3회차 FAIL — RC-2 later 변종 3",
+      "commits": [
+        "23f6e2f"
+      ]
     }
   ],
   "rollback_fixes": [
@@ -211,6 +219,22 @@
         "docs/release/first-deploy-checklist.md §5-2(새 절) · §4-1 · §4-2 — §4-1 이 §5-2 를 가리킨다"
       ],
       "fix_commit": "870f43e"
+    },
+    {
+      "root_cause": "RC-2",
+      "from": "Phase 4 VERIFY 3회차 FAIL",
+      "variants": [
+        "§5 옛 변수 '지워도 된다' vs 롤백 시 가드 OFF",
+        "HEAD·Origin 없는 OPTIONS 401 미서술",
+        "§5-2 SQL 대소문자 무동작·확인 쿼리 없음"
+      ],
+      "tests": [],
+      "tests_note": "문서 결함. 근거: develop WriteGuardFilter.fromEnv · 임시 MockMvc 프로브(HEAD 401) · AuthService.java:267",
+      "fix_locus": "common",
+      "sites": [
+        "docs/release/first-deploy-checklist.md §5(롤백·HEAD) · §5-2(lower(trim()) + 확인 SELECT + 재로그인) · §9 헬스체크"
+      ],
+      "fix_commit": "23f6e2f"
     }
   ],
   "pre_review": {
