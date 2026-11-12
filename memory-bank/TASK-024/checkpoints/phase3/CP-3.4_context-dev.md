@@ -1,10 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-12T00:00:00Z
-summary: "Green — 767/767(+todo 1), 대상 68 케이스 전부 통과, 린트 error 0, 제약 error 0(AUTH-001 위반 0). 자체 리뷰 1R 결함 0. 시안 대조 차이 1건 수정(9558a67)"
+summary: "RC-1 수정 Green — 775/775(+todo 1), SC-17·보강 통과, 자체 리뷰 2R(later 변종 2: 1 수정·1 ADR-0030 수용). (1회차) Green — 767/767(+todo 1), 대상 68 케이스 전부 통과, 린트 error 0, 제약 error 0(AUTH-001 위반 0). 자체 리뷰 1R 결함 0. 시안 대조 차이 1건 수정(9558a67)"
 
 next_steps:
-  - "Phase 4 — wf-verify. 리뷰 범위 develop...HEAD(9558a67 포함). 화면은 실제 백엔드로 다시 확인. AUTH-001 승격 여부는 HITL#3 요약에"
+  - "Phase 4 2회차 — 리뷰 범위 develop...HEAD. pre_review.root_causes RC-1 넘김. 토큰 복원 중 화면을 브라우저로(지연 프록시)"
+  - "(1회차) Phase 4 — wf-verify. 리뷰 범위 develop...HEAD(9558a67 포함). 화면은 실제 백엔드로 다시 확인. AUTH-001 승격 여부는 HITL#3 요약에"
 
 decisions:
   - decision: "구현 순서 http.ts → performances.ts → RequireOrganizer·App → 등록·수정 → 인증 화면·env"
@@ -18,7 +19,9 @@ decisions:
   - decision: "시안 대조: 버튼 align-self stretch 는 고치고, 블록 폭(기존 앱 셸)은 남긴다"
     rationale: "PLAN #5 — 시안 셸은 TASK-025·026"
 
-attempts: []
+attempts:
+  - n: 2
+    note: "Phase 4 1회차 RC-1 → 2a → 2b 재승인 → 세션 정본(13f1ed9)·수명(13ac45b)·ADR-0030(b4aca5c)"
 ---
 
 # CP-3.4 Green — TASK-024

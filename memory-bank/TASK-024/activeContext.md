@@ -1,8 +1,8 @@
 ---
 task_id: TASK-024
 title: "프론트 토큰 전송·주최자 가드"
-phase: "3"
-phase_name: "Phase 3 - Green (RC-1 수정)"
+phase: "4"
+phase_name: "Phase 4 - Verify (2회차)"
 status: ACTIVE
 track: light
 created_at: 2026-11-12
@@ -30,7 +30,7 @@ Phase 4 1회차 FAIL — RC-1(가드=메모리 user, 헤더=localStorage). HITL#
 
 ## 다음 한 걸음
 
-`wf-develop` — SC-17 Green: 요청 토큰의 정본을 AuthProvider 세션으로.
+`wf-verify` 2회차 — RC-1 수정(13f1ed9·13ac45b)·ADR-0030 재검증.
 
 ## 알아둬야 할 것
 
