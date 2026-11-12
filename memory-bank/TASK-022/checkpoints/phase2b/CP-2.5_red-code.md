@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
-summary: "Red 15건 — 새 시나리오 Red 11 · already_passing 4(SC-02·11·13·14). 전체 184 중 20 실패(새 11 + 바뀐 승인 테스트 9), 손대지 않은 기존 테스트 전부 통과. 스켈레톤: Performance getOwnerId·소유자 생성자 UOE. 통합 HITL 대기"
+summary: "Red 15건 — 새 시나리오 Red 11 · already_passing 4(SC-02·11·13·14). 전체 184 중 20 실패(새 11 + 바뀐 승인 테스트 9), 손대지 않은 기존 테스트 전부 통과. 스켈레톤: Performance getOwnerId·소유자 생성자 UOE. 통합 HITL 승인(2026-11-12)"
 
 next_steps:
-  - "HITL #1·2 통합 승인 — 승인 시 generate_red_trigger·human_review.approved 기록 후 Phase 3(wf-develop)"
+  - "Phase 3 — wf-develop. V7 → Performance ownerId → JwtTokenProvider role 검증·AccessClaims → SecurityConfig(GET 외 ORGANIZER, 403 FORBIDDEN_ROLE) → Service 소유권(404) → WriteGuard 삭제·CORS 헤더"
 
 decisions:
   - decision: "테스트 4파일 — OwnerMigration(SC-01, PostgreSQL) · Ownership(SC-02~08·11·13·14, MockMvc) · ErrorResponseRegression(SC-12, 실제 서버) · WriteGuardRemoval(SC-09·10·15, 가드 properties ON)"

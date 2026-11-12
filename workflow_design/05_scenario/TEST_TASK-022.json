@@ -198,6 +198,9 @@
     ]
   },
   "human_review": {
-    "approved": false
+    "approved": true,
+    "decision": "APPROVE",
+    "reviewed_at": "2026-11-12",
+    "via": "AskUserQuestion — 통합(HITL#1·2)"
   }
 }

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b Red 작성 완료(Red 11 · already_passing 4, 승인 테스트 변경 7파일 + 삭제 5파일). 통합 HITL #1·2 대기.
+Phase 2b 통합 HITL #1·2 승인(2026-11-12). Phase 3 진입 전.
 
 ## 다음 한 걸음
 
-통합 HITL #1·2 승인을 받는다. 승인되면 Phase 3(wf-develop).
+`wf-develop` 로 Red 20건을 Green 으로. SC-12 a~h 가 SecurityConfig 변경 뒤에도 실제 서버에서 같은 숫자인지(ERROR 디스패치) 주의.
 
 ## 알아둬야 할 것
 
