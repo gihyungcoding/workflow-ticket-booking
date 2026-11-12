@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "VERIFY 1회차 FAIL — RC-2(배포 체크리스트가 X-Write-Key 제거의 브라우저 쪽 결과를 반영 못함, 변종 4 reproduced). 테스트 184/184, spotless 0, 제약 error 0·no_target 0, 리뷰 [correctness] 0, RC-1 해소."
 
 next_steps:
-  - "HITL #3 — FAIL 이라 롤백만. 권장: Phase 3 로 — 체크리스트 §5·§7·배포 순서 수정 → 수정 커밋 재리뷰 → Phase 4 2회차"
+  - "Phase 3 롤백(사용자 결정 2026-11-12) — 체크리스트 수정 → 수정 커밋 재리뷰 → Phase 4 2회차"
 
 decisions:
   - decision: "리뷰어 [info](프론트 X-Write-Key)를 검증자가 확인 — 이 태스크가 고친 docs/release/first-deploy-checklist.md 102행 '넣어도 서버가 무시한다' 가 사실과 다르다. [correctness] RC-2 로 판정, status FAIL"

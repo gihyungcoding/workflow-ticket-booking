@@ -313,5 +313,35 @@
     "decision": null,
     "verified_commit": null,
     "verified_at": null
+  },
+  "round_history": [
+    {
+      "round": 1,
+      "status": "FAIL",
+      "summary": "RC-2 — 배포 체크리스트(PLAN target_files)가 X-Write-Key 제거의 브라우저 쪽 결과를 반영하지 못함. 코드 결함 0",
+      "rollback": {
+        "to": "3",
+        "reason_code": "IMPL_DEFECT",
+        "why": "결함은 문서 산출물에만 있고 시나리오·코드는 맞다 — Phase 3 에서 문서를 고친다",
+        "summary": "뿌리 1 · 변종 4, 재현 4(해소 0)"
+      },
+      "human_review": {
+        "decision": "REJECT",
+        "reject_to": "Phase 3 (구현 결함 — reject-state-machine §1 HITL#3 REJECT)",
+        "decided_at": "2026-11-12",
+        "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
+      }
+    }
+  ],
+  "reject": {
+    "to": "Phase 3",
+    "attempt": 1,
+    "history": [
+      {
+        "attempt": 1,
+        "from": "Phase 4 VERIFY 1회차 FAIL",
+        "note": "RC-2 배포 체크리스트 — 시나리오·코드는 그대로"
+      }
+    ]
   }
 }
