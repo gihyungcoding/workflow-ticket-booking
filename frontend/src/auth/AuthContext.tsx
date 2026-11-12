@@ -49,6 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionToken(token)
     return token
   })
+  // 이 Provider 의 세션 토큰 — 내려갔다 다시 올라올 때(StrictMode 포함) 같은 값을 다시 알린다
+  const session = useRef<string | null>(storedToken)
+  const adopt = (token: string | null) => {
+    session.current = token
+    setSessionToken(token)
+  }
+  useEffect(() => {
+    setSessionToken(session.current)
+    // 내려가면 세션이 끝난다 — Provider 밖의 요청은 저장소를 읽는다
+    return () => setSessionToken(undefined)
+  }, [])
   const [user, setUser] = useState<AuthUser | null>(null)
   const [restoring, setRestoring] = useState(storedToken !== null)
   // login/logout 이 일어날 때마다 올린다 — 그 전에 시작한 복원의 결과를 버리는 기준.
@@ -68,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (stale()) return
         // 복원에 실패하면 화면은 비로그인이다 — 요청 토큰도 같이 비운다.
         // 저장된 토큰은 401(무효라는 증거)일 때만 지운다 — 일시 오류면 다음 방문에 다시 복원한다.
-        setSessionToken(null)
+        adopt(null)
         if (error instanceof TokenRejectedError) writeToken(null)
       })
       .finally(() => {
@@ -85,14 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       restoring,
       login: (accessToken, loggedIn) => {
         sessionGeneration.current += 1
-        setSessionToken(accessToken)
+        adopt(accessToken)
         writeToken(accessToken)
         setUser(loggedIn)
         setRestoring(false)
       },
       logout: () => {
         sessionGeneration.current += 1
-        setSessionToken(null)
+        adopt(null)
         writeToken(null)
         setUser(null)
       },

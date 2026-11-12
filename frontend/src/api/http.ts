@@ -11,8 +11,8 @@ export function apiUrl(path: string): string {
 // 그때만 저장소를 읽는다. 저장에 실패했거나 다른 탭이 저장소를 바꿔도 이 탭의 요청은 화면과 같다 (TASK-024 RC-1).
 let sessionToken: string | null | undefined
 
-/** AuthProvider 전용 — 로그인·로그아웃·복원 결과를 요청 토큰으로 알린다 */
-export function setSessionToken(token: string | null) {
+/** AuthProvider 전용 — 로그인·로그아웃·복원 결과를 요청 토큰으로 알린다. undefined 는 세션이 끝났다(Provider 가 내려감) */
+export function setSessionToken(token: string | null | undefined) {
   sessionToken = token
 }
 

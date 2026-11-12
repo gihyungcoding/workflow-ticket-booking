@@ -756,6 +756,29 @@ describe('TASK-024 F1 — 요청 토큰의 정본은 화면의 로그인 세션'
   )
 })
 
+// Phase 3 자체 리뷰 보강 (RC-1 later 변종) — 규약표 '요청 토큰의 정본': AuthProvider 밖에서는 저장소 값을 쓴다
+describe('TASK-024 F1 — AuthProvider 가 내려간 뒤의 요청 토큰', () => {
+  test('SC-17 보강 (boundary) AuthProvider 가 내려가면 세션이 끝나 요청은 저장소 값을 쓴다', async () => {
+    // Given 주최자로 로그인한 화면(tok-mem — 저장에 실패해 세션에만 있다)
+    stubServer({ [LOGIN]: () => res(200, loginBody('tok-mem', ORG)) })
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage blocked')
+    })
+    const view = renderAt('/login')
+    await loginWith()
+    await waitFor(() => expect(where()).toBe('/'))
+    spy.mockRestore()
+
+    // When AuthProvider 가 내려가고, 저장소에 tok-x 가 있을 때 요청을 보낸다
+    view.unmount()
+    localStorage.setItem('accessToken', 'tok-x')
+    await request('/api/performances', { method: 'POST' })
+
+    // Then 세션이 아니라 저장소 값이 실린다
+    expect(headersOf(calls[calls.length - 1]).get('Authorization')).toBe('Bearer tok-x')
+  })
+})
+
 // ---------- F4 쓰기 키 흔적 ----------
 
 /** 저장소 루트 — vitest 의 URL 해석은 /@fs 접두를 붙이므로 문자열로 자른다 (task017.static.test.ts 관례) */
