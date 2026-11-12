@@ -1,33 +1,37 @@
 {
   "task_id": "TASK-024",
-  "status": "FAIL",
-  "status_reason": "Phase 4 리뷰 [correctness] RC-1 — 인증 상태의 정본이 둘(가드는 메모리 AuthContext.user, 요청 헤더는 localStorage). 저장소 쓰기가 막히면 주최자 가드는 통과하고 쓰기 요청엔 토큰이 없어 401 → 로그아웃 → 로그인 반복. 시나리오에 없는 동작이라 2a 롤백 대상. 테스트·린트·빌드·제약은 통과",
+  "status": "WARN",
+  "status_reason": "2회차 — RC-1 해소(SC-17·보강 테스트, 실제 브라우저 저장소 차단 확인). 차단급 결함 0. WARN: (1) 기존 결함 1건 분리 — 복원 중 logout 시 restoring 이 true 로 남음(develop 기존 코드, 현재 앱에서 도달 불가, 사용자 결정으로 TASK-025 이관) (2) AuthProvider 둘 이상 변종은 ADR-0030 수용 (3) 시안 셸(블록 폭·appbar)은 TASK-025·026 (4) AUTH-001 error 승격은 Phase 5",
   "evidence": {
     "tests": {
       "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npx vitest run",
       "exit_code": 0,
-      "summary": "Test Files 20 passed (20) · Tests 767 passed | 1 todo (768) · Duration 25.09s"
+      "summary": "Test Files 20 passed (20) · Tests 775 passed | 1 todo (776) · Duration 24.16s",
+      "round": 2
     },
     "lint": {
       "command": "cd frontend && npm run lint",
       "exit_code": 0,
-      "summary": "error 0 · warning 7 — 모두 기존 파일(AuthContext·Performance Detail/Edit/List set-state-in-effect·task017.ui.test jsx-key)"
+      "summary": "error 0 · warning 7 — 모두 기존 파일",
+      "round": 2
     },
     "build": {
       "command": "cd frontend && npm run build",
       "exit_code": 0,
-      "summary": "빌드 성공(청크 크기 경고만)"
+      "summary": "빌드 성공",
+      "round": 2
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "38 files changed, 3029 insertions(+), 367 deletions(-) — frontend 20 files, +1005 -367, 나머지는 workflow 산출물·memory-bank"
+      "summary": "45 files changed, 4029 insertions(+), 371 deletions(-) — frontend 21 files +1157 -370, 나머지는 workflow 산출물·memory-bank·ADR-0030",
+      "round": 2
     }
   },
   "acceptance_criteria": [
     {
       "criterion": "로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다",
-      "verdict": "FAIL",
-      "evidence": "SC-01·02·03·04 통과, 실제 백엔드에서 주최자 등록 201·수정 저장 확인. 단 RC-1 — 저장소 쓰기가 막힌 환경에서는 '로그인 상태'(메모리 user=ORGANIZER)인데 쓰기 요청에 Authorization 이 없다(리뷰어 프로브 reproduced)"
+      "verdict": "PASS",
+      "evidence": "SC-01·02·03·04·16·17(a~g)·SC-17 보강 통과. 실제 브라우저: 저장소 setItem 을 막은 iframe 에서 주최자 로그인 → 저장소 비어 있음 → 등록 201 → 상세 이동(13f1ed9). 1회차 FAIL(RC-1) 해소"
     },
     {
       "criterion": "비로그인으로 `/performances/new`·`/performances/:id/edit` 에 들어가면 `/login` 으로 가고, 로그인 후 원래 경로로 돌아온다",
@@ -42,7 +46,7 @@
     {
       "criterion": "토큰 복원 중에는 가드가 안내·이동 없이 아무것도 그리지 않는다 (복원 후 주최자면 폼이 보인다)",
       "verdict": "PASS",
-      "evidence": "SC-08 7행 통과(복원 중 폼·안내 없음·주소 유지, /me 결과별 분기). 브라우저에서는 이 상태를 만들지 않았다 — screens 참고"
+      "evidence": "SC-08 7행 통과. 실제 브라우저(/api/auth/me 를 4초 늦추는 프록시 경유): 복원 중 1.5·4·7초 — 폼·안내·로그인 화면 없음, 주소 유지, 공연 조회 0회. 복원 뒤 주최자 → 폼(가을 재즈 콘서트), 관객 → 안내"
     },
     {
       "criterion": "쓰기 API 가 401 이면 로그아웃되고 `/login` 으로 간다. 403 이면 「주최자만 이용할 수 있어요」가 보인다",
@@ -95,8 +99,8 @@
     {
       "name": "공연 등록·수정",
       "state": "토큰 복원 중",
-      "verdict": "WARN",
-      "evidence": "브라우저에서 만들지 않음 — /api/auth/me 만 늦추는 프록시가 필요한데 이번 라운드가 RC-1 로 FAIL 이라 다음 라운드에서 본다. 동작은 SC-08 이 덮는다"
+      "verdict": "PASS",
+      "evidence": "지연 프록시(scratchpad/proxy/delay-me.mjs, GET /api/auth/me 4초) + Vite 5175. 복원 중 아무것도 그리지 않음·주소 유지·공연 조회 0, 복원 뒤 주최자 폼 / 관객 안내. 개발 StrictMode 라 /me 가 두 번(4·8초) 나감"
     },
     {
       "name": "공연 등록·수정",
@@ -109,6 +113,12 @@
       "state": "lang·title",
       "verdict": "PASS",
       "evidence": "<html lang=\"ko\">, <title>공연 예매</title>"
+    },
+    {
+      "name": "공연 등록",
+      "state": "저장소 쓰기 차단(사생활 보호 모드 흉내)",
+      "verdict": "PASS",
+      "evidence": "iframe 의 Storage.prototype.setItem 이 QuotaExceededError → 주최자 로그인 → /performances/new 복귀, 저장소 비어 있음 → 등록 → 상세 이동, 헤더 주최자·로그아웃"
     }
   ],
   "architecture": {
@@ -215,6 +225,20 @@
         "scope": "develop...HEAD (9558a67 포함)",
         "findings": 2,
         "summary": "[correctness] 1 — RC-1 저장소 쓰기 실패 시 메모리 로그인과 요청 헤더가 갈라짐. [test] 1 — 같은 뿌리의 테스트 빈틈(SC-02 는 getItem throw 만). 이전 notes 3건은 결함 아님으로 재확정. request() 호출부 전수·CORS·테스트 약화 여부·판별 재구현 여부·디자인 확인 — 그 밖 결함 없음"
+      },
+      {
+        "n": 3,
+        "phase": 3,
+        "scope": "RC-1 수정 13f1ed9 + develop...HEAD",
+        "findings": 2,
+        "note": "DEV pre_review 2R — later 변종 2(Provider 수명 → 13ac45b 수정, Provider 둘 이상 → ADR-0030)"
+      },
+      {
+        "n": 4,
+        "phase": 4,
+        "scope": "develop...HEAD (13ac45b·ADR-0030 포함)",
+        "findings": 1,
+        "summary": "차단급 결함 0. RC-1 전수(세션 전이·request 호출부·stale 복원 프로브) 이상 없음. 보강 테스트 진짜. [correctness/참고·비차단] 복원 중 logout 시 restoring 영구 true — develop 기존 로직, 현재 앱에서 도달 불가"
       }
     ],
     "findings": [
@@ -230,6 +254,17 @@
         "file": "frontend/src/auth/task024.organizer.test.tsx",
         "summary": "SC-02 d 는 getItem throw 만 본다 — 로그인 직후 저장 실패(setItem throw·쿼터) 상태의 쓰기 요청을 단언하는 시나리오가 없다",
         "root_cause": "RC-1"
+      },
+      {
+        "category": "correctness",
+        "severity": "non-blocking",
+        "pre_existing": true,
+        "file": "frontend/src/auth/AuthContext.tsx",
+        "summary": "복원 중 logout() 이 불리면 restoring 이 false 로 돌아오지 않는다(logout 이 setRestoring(false) 를 하지 않고 stale 복원의 finally 는 건너뜀) → RequireOrganizer 빈 화면·헤더 복원 중 표시가 남음. 요청 토큰은 정상(adopt(null))",
+        "reachability": "현재 도달 불가 — logout 호출부는 AppHeader(user 있을 때만)·등록/수정 401 처리(가드 통과 뒤 = restoring false)뿐",
+        "origin": "develop 의 기존 AuthContext 로직 — 이번 변경이 만든 것 아님",
+        "handling": "사용자 결정(AskUserQuestion '분리해 후속으로') — RC-1 과 다른 뿌리라 root_causes 에 넣지 않고 TASK-025(로그아웃 진입 경로가 늘어나는 태스크)로 이관. 수정 방향: logout 에 setRestoring(false)",
+        "probe": "reproduced (리뷰어 scratchpad/p/src/auth/probe.test.tsx — 401·500·네트워크 × StrictMode 6가지)"
       }
     ]
   },
@@ -243,25 +278,61 @@
           "case": "setItem 이 throw 하는 저장소에서 주최자 로그인 후 쓰기 — 가드 통과, 헤더 없음 → 401 → 로그아웃 반복",
           "origin": "found",
           "probe": "reproduced",
-          "evidence": "리뷰어 프로브 scratchpad/p.mjs — http.ts 사본, setItem throw 저장소에서 request('/api/performances',{method:'POST'}) 의 Authorization null"
+          "resolved": true,
+          "evidence": "frontend/src/auth/task024.organizer.test.tsx SC-17 a (Red 실패 → 13f1ed9 통과) · 실제 브라우저 저장소 차단 등록 201"
         },
         {
           "case": "쿼터 초과로 setItem 만 실패하고 getItem 은 null",
           "origin": "predicted",
           "probe": "reproduced",
-          "evidence": "같은 http.ts 경로 — 리뷰어 프로브"
+          "resolved": true,
+          "evidence": "frontend/src/auth/task024.organizer.test.tsx SC-17 b"
         },
         {
           "case": "다른 탭에서 로그아웃해 토큰이 사라졌는데 이 탭의 메모리 user 는 그대로 — 쓰기 401 → 이 탭도 로그아웃(수렴)",
           "origin": "predicted",
-          "probe": "not_probed",
-          "reason": "코드 추적상 UnauthorizedError 처리로 수렴. 화면 수준 프로브 없음 — Phase 3 테스트가 프로브한다"
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "frontend/src/auth/task024.organizer.test.tsx SC-17 f (Red: 토큰 없음) — 정책을 이 탭 세션이 정본으로 정함(SC-17 notes·ADR-0030). e(다른 탭이 다른 계정 토큰)도 같은 테스트"
         },
         {
           "case": "소셜 로그인(OAuthRedirectPage)이 login() 으로 저장한 뒤 같은 상황",
           "origin": "predicted",
-          "probe": "not_probed",
-          "reason": "login() 공용 경로라 같은 뿌리. 화면 수준 프로브 없음 — Phase 3 테스트가 프로브한다"
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "frontend/src/auth/task024.organizer.test.tsx SC-17 c (Red 실패 → 통과)"
+        },
+        {
+          "case": "저장·삭제가 모두 실패한 뒤 로그아웃 — 저장소에 남은 tok-old 가 실림",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "frontend/src/auth/task024.organizer.test.tsx SC-17 d"
+        },
+        {
+          "case": "AuthProvider 언마운트 뒤 모듈 전역 세션 잔존 — Provider 밖 request() 가 이전 세션 토큰을 싣는다",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "frontend/src/auth/task024.organizer.test.tsx SC-17 보강 (Red 실패 → 13ac45b 통과)"
+        },
+        {
+          "case": "AuthProvider 가 둘 이상일 때 나중에 마운트된 쪽 세션이 실려 앞 Provider 화면과 갈라진다",
+          "origin": "later",
+          "probe": "reproduced",
+          "accepted_risk": "ADR-0030 — 앱에 AuthProvider 는 하나(main.tsx). 사용자 결정"
+        },
+        {
+          "case": "복원 일시 오류 뒤 요청 토큰이 null 인가(화면 비로그인과 일치)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "리뷰어 프로브 scratchpad/p/src/auth/probe.test.tsx (StrictMode) — 요청 토큰 null·저장소 유지"
+        },
+        {
+          "case": "복원 중 login/logout 으로 stale 이 된 복원 실패가 새 세션 토큰을 덮는가",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "리뷰어 프로브 scratchpad/p/src/auth/probe.test.tsx — 401·500·네트워크 × StrictMode 6가지, 새 세션 유지"
         }
       ]
     }
@@ -283,15 +354,25 @@
         "why": "RC-1 변종(저장 실패 상태의 쓰기)이 시나리오 밖 — 2a 에서 변종 4개를 한 번에 시나리오로",
         "summary": "뿌리 1 · 변종 4, 재현 2(해소 0), 미프로브 2"
       }
+    },
+    {
+      "round": 2,
+      "status": "WARN",
+      "summary": "RC-1 해소(재현 7: 해소 6·ADR 수용 1, 미재현 2). 차단급 결함 0. 기존 결함 1 분리(TASK-025). 테스트 775/775·린트·빌드·제약 통과, 화면 9상태"
     }
   ],
   "human_review": {
-    "decision": "REJECT",
-    "reject_to": "Phase 2a (시나리오 결함 — reject-state-machine §1 HITL#3 REJECT)",
-    "reason_code": "SCENARIO_INCOMPLETE",
-    "decided_at": "2026-11-12",
-    "via": "AskUserQuestion — HITL#3 \"시나리오로 롤백\"",
-    "verified_commit": null
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null,
+    "round1": {
+      "decision": "REJECT",
+      "reject_to": "Phase 2a (시나리오 결함 — reject-state-machine §1 HITL#3 REJECT)",
+      "reason_code": "SCENARIO_INCOMPLETE",
+      "decided_at": "2026-11-12",
+      "via": "AskUserQuestion — HITL#3 \"시나리오로 롤백\"",
+      "verified_commit": null
+    }
   },
   "reject": {
     "to": "Phase 2a",
@@ -310,5 +391,23 @@
         "note": "RC-1 — 가드=메모리 user, 헤더=localStorage. 저장 실패 상태의 쓰기 시나리오 없음"
       }
     ]
-  }
+  },
+  "exceptions_candidates": [
+    {
+      "item": "기존 결함 — 복원 중 logout 시 restoring 영구 true(도달 불가)",
+      "handling": "TASK-025 로 이관(사용자 결정)"
+    },
+    {
+      "item": "AuthProvider 둘 이상이면 요청 토큰이 한쪽 화면과 갈라짐",
+      "handling": "ADR-0030 수용"
+    },
+    {
+      "item": "시안 셸 — 블록 폭 309 vs 341, appbar 「내 공연」 없음",
+      "handling": "PLAN #5 — TASK-025·026"
+    },
+    {
+      "item": "AUTH-001 promote_after TASK-024 — 위반 0, error 승격 미실시",
+      "handling": "Phase 5 drift 로"
+    }
+  ]
 }
