@@ -168,8 +168,9 @@
       "section": "Step 2 테스트 작성",
       "change": "① 성공 행에서 화면이 이동하는 흐름이면 이동 뒤에 이전 화면 요소를 단언하지 않는다(응답을 붙들거나 단언 순서를 바꾼다) ② 표의 '없음(undefined)' 행을 기본 매개변수가 있는 도우미로 넘기지 않는다 ③ 기존 테스트가 '도메인 요청 총수'를 세면 새 연쇄 요청(자동 로그인 등)과 부딪히는지 Grep. ④ 스타일 단언은 em 대신 px(jsdom 계산), 색은 토큰을 칠한 탐침 요소의 계산값과 대조(DESIGN-002)",
       "evidence": "TASK-018 DEV test_modifications 3건(Phase 3 에서 사람 승인 추가), 롤백 테스트 자간 em·rgb 리터럴로 2번 고침",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "2a1ba29"
     },
     {
       "target": ".claude/skills/wf-verify/references/screen-verification.md",
