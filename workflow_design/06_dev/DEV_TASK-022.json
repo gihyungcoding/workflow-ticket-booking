@@ -178,7 +178,8 @@
         "§5 '넣어도 서버가 무시한다'",
         "배포 순서 부재",
         "§7 브라우저 등록 성공 단계",
-        "§7 키 오빌드 단계"
+        "§7 키 오빌드 단계",
+        "정방향 순서의 전환 구간(옛 백엔드 가드가 키 없는 쓰기를 401) 미서술 — 수정 커밋 리뷰 [doc]"
       ],
       "tests": [],
       "tests_note": "문서 결함 — 자동 테스트 대상이 아니다. 근거 사실(Allow-Headers)은 WriteGuardRemovalApiTest#test_sc15 가 단언",
@@ -186,7 +187,7 @@
       "sites": [
         "docs/release/first-deploy-checklist.md §5-1(새 절 — 순서·근거 한곳) · §7 브라우저 2행 · §9 배포 순서 · 상태 줄 — 모두 §5-1 을 가리킨다"
       ],
-      "fix_commit": "40767bc"
+      "fix_commit": "40767bc,c3d9a57"
     }
   ],
   "pre_review": {
@@ -206,6 +207,15 @@
         "tests_added": [],
         "fix_commit": "7f812e0",
         "note": "RC-1 reproduced 4건 해소, 공통 지점 1곳. 새 변종 없음"
+      },
+      {
+        "n": 3,
+        "phase": 3,
+        "scope": "40767bc (Phase 4 FAIL 뒤 수정 커밋) · 같은 카테고리 전수(이 문서·docs/release·README·.env.example 주석)",
+        "findings": 1,
+        "tests_added": [],
+        "fix_commit": "c3d9a57",
+        "note": "RC-2 변종 4건 해소. [doc, 사소] 정방향 순서의 전환 구간 미서술 → develop WriteGuardAuthApiTest#test_sc19 로 사실 확인 후 §5-1 에 반영. curl 스모크 4~8번 기대값 일치"
       }
     ],
     "root_causes": [
