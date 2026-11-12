@@ -67,6 +67,7 @@ flow: F1
 | g | `'tok\u00001'`(NUL 포함) | 없음 (헤더에 실을 수 없는 값) |
 | h | `'토큰'`(헤더 바이트 범위 밖) | 없음 |
 | i | `'tök'`(Latin-1 안) | `Bearer tök` (그대로 싣는다. 판정은 서버가 한다) |
+| j | `'Bearer tok-1'`(접두사까지 저장된 값) | `Bearer Bearer tok-1` (해석하지 않고 그대로 싣는다) |
 
 covers: 로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다
 flow: F1
@@ -222,6 +223,7 @@ flow: F3
 - **And** 주소는 그 화면의 주소 그대로다
 - **And** 저장된 토큰은 그대로다(`tok-org`)
 - **And** 옛 쓰기 키 문구는 없다
+- **And** 취소 확인 대화상자(행 c)는 닫혀 있다
 
 | 행 | 화면 주소 | 쓰기 동작 | 403 응답 |
 |---|---|---|---|
@@ -299,7 +301,7 @@ notes: 행 d 는 남의 공연·소유자 없는 공연에 대한 저장이다. 
 | c | `AuthScreens.test.tsx` 재제출 표(「가입 쓰기 거부 → 201」 행) | 가입 | 첫 응답 401 `WRITE_KEY_INVALID` | 첫 문구가 가입 일반 실패(`MSG.signupFail`)이고, 다시 제출해 201 이면 꺼진다 |
 | d | `task018.auth.test.tsx` SC-03 | 로그인 | 401 `WRITE_KEY_INVALID` | `MSG.loginFailed` |
 | e | `task018.auth.test.tsx` SC-12 | 가입 | 401 `WRITE_KEY_INVALID` | `MSG.signUpFailed` |
-| f | `task018.auth.test.tsx` SC-14 | 가입 뒤 자동 로그인 | 로그인 응답 401 `WRITE_KEY_INVALID` | 그 표의 다른 행과 같은 기대(로그인 화면으로 가서 안내) |
+| f | `task018.auth.test.tsx` SC-14 | 가입 뒤 자동 로그인 | 로그인 응답 401 `WRITE_KEY_INVALID` | 주소 `/login`, 맨 위 「가입은 끝났어요. 로그인해 주세요」, 저장된 토큰 없음(그 표의 다른 행과 같다) |
 | g | `task018.auth.test.tsx` SC-22 | 소셜 역할 선택(대기 정보 조회) | 401 `WRITE_KEY_INVALID` | `MSG.pendingFailed` + 「다시 시도하기」 |
 | h | `task018.auth.test.tsx` SC-26 | 소셜 역할 선택(가입 완료) | 401 `WRITE_KEY_INVALID` | `MSG.completeFailed`, 링크 없음 |
 | i | `SocialLoginScreens.test.tsx` 실패 표 | 소셜 가입 완료 | 403 `WRITE_KEY_INVALID` | `MSG.completeFail`, 링크 없음 |
@@ -339,6 +341,26 @@ covers: `VITE_WRITE_KEY`·`WRITE_REJECTED_MESSAGE`·`isWriteKeyRejected` 가 `fr
 flow: F4
 
 notes: 둘째 줄의 패턴은 제약 AUTH-001 의 `forbidden_pattern` 과 같은 범위다. 테스트 파일은 옛 응답 코드 `WRITE_KEY_INVALID` 를 입력값으로 쓰므로(SC-09 f·SC-10 f·SC-13) 둘째 줄에서 뺀다.
+
+## SC-16 (regression) 무효 토큰이 저장돼 있어도 공개 조회 화면은 지금처럼 열린다
+
+- **Given** `localStorage.accessToken` 이 `tok-stale` 이다
+- **And** `GET /api/auth/me` 가 401 을 준다(만료·무효 토큰)
+- **And** `GET /api/performances` 와 `GET /api/performances/3` 은 토큰과 무관하게 200 을 준다(서버는 무효 토큰을 익명으로 본다 — TASK-022)
+- **When** 표의 주소를 연다
+- **Then** 표의 화면이 보인다
+- **And** 공연 조회 요청이 정확히 그 주소의 것만 나갔고, 오류 문구가 없다
+- **And** 전역 헤더는 비로그인 모양이다(「로그인」 링크)
+
+| 행 | 연 주소 | 화면 |
+|---|---|---|
+| a | `/` | 목록에 `가을 재즈 콘서트` |
+| b | `/performances/3` | 상세에 `가을 재즈 콘서트` |
+
+covers: 로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다
+flow: F1
+
+notes: 저장된 토큰은 복원 401 로 지워지므로, 공연 조회 요청에 `tok-stale` 이 실렸는지는 복원 순서에 달렸다. 이 시나리오는 실렸든 아니든 화면이 같은지를 본다(PLAN unresolved #7).
 
 ## 기존 승인 테스트 변경 (2b 에서 함께 승인받는다)
 

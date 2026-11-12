@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-12T00:00:00Z
-summary: "SCENARIO_TASK-024 — 15건(happy 3 / error 4 / boundary 5 / regression 3), AC 6/6, 입력 경계 34칸(covered 29 · n/a 5). 독립검증 대기"
+summary: "SCENARIO_TASK-024 — 16건(happy 3 / error 4 / boundary 5 / regression 4), AC 6/6, 입력 경계 34칸(covered 30 · n/a 4). 독립검증 1회차 PASS(경고 7)"
 
 next_steps:
-  - "scenario-validator 1회차 → VALIDATION_TASK-024.json 원문 저장"
+  - "Phase 2b — wf-red. 승인 테스트 6파일 변경을 함께. SC-06 은 행마다 라우터가 실제로 고른 화면을 기록"
 
 decisions:
   - decision: "새로 쓴다 — 기존 http.test·WriteKeyRejected.test 시나리오를 확장하지 않고 SC-01·02·09·10·12 로 대체한다"
@@ -20,7 +20,16 @@ decisions:
   - decision: "기존 승인 테스트 6파일 변경을 SC-13·SC-14 와 '기존 승인 테스트 변경' 표로 명시 — App.test SC-10·AuthScreens SC-28·task018 SC-36 은 Phase 1 이 놓친 충돌(비로그인 등록 화면)이라 추가"
     rationale: "가드가 생기면 비로그인으로 /performances/new 를 열어 폼을 단언하던 테스트가 깨진다"
 
-attempts: []
+  - decision: "검증 경고 반영 — V5: SC-13 f 를 구체 문구로. V8: PLAN auth_state 제약에 AuthProvider 복원 규칙(401 만 토큰 삭제, 두 역할 밖 role 은 user 없음)을 근거로 적음. V11: leave n/a 사유를 PLAN 출처로. V12-1: SC-16(무효 토큰 + 공개 조회) 추가. V12-4: SC-10 에 취소 대화상자 닫힘. V12-5: SC-02 j('Bearer tok-1' 저장값) 추가 → prefix_only covered"
+    rationale: "싸게 고칠 수 있고 관찰 가능한 단언이 생긴다"
+  - decision: "검증 경고 보류 — V6(다중 When: 한 흐름의 순차 단계, 쪼개면 같은 Given 을 반복), V7(SC-01~03 은 http.ts 단위 동작이라 함수 호출이 입구, SC-13 의 MSG 상수는 기존 테스트 파일의 이름), V9(본문 무관 판별을 못 박으려는 의도적 행), V12-2·3·6(연속 클릭 401·수정 화면 GET 실패·다른 탭 — 기존 동작이거나 Task C 범위 밖), V4(SC-04 flow 'F1, F2' 표기)"
+    rationale: "HITL 에서 사람이 판단"
+
+attempts:
+  - n: 1
+    result: PASS
+    note: "fail 0 · warn 7 — 재검증 없이 경고 반영"
+
 ---
 
 # CP-2.2 시나리오 — TASK-024

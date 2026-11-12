@@ -40,7 +40,8 @@
           "restoring → 아무것도 그리지 않음",
           "user 없음 → /login (state.from)",
           "role ≠ ORGANIZER → 안내",
-          "ORGANIZER → 화면"
+          "ORGANIZER → 화면",
+          "user·restoring 은 AuthProvider 의 복원 결과다(기존) — /api/auth/me 401 이면 토큰을 지우고 user 없음, 그 밖의 실패(5xx·네트워크·비 JSON)나 두 역할 밖 role(api/auth.ts isAuthUser 가 거부)은 토큰을 남기고 user 없음. 가드는 user 없음을 비로그인으로 다룬다"
         ]
       },
       {

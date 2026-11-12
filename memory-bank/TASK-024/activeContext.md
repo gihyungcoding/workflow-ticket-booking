@@ -1,8 +1,8 @@
 ---
 task_id: TASK-024
 title: "프론트 토큰 전송·주최자 가드"
-phase: "1"
-phase_name: "Phase 1 - Plan"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 track: light
 created_at: 2026-11-12
@@ -13,19 +13,21 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-024-frontend-token-guard"
 
-last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/organizer-flow.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-024.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-024.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-024.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 완료 — PLAN_TASK-024 (flows 4 · AC 6 · input_fields 8). Phase 2a 진입.
+Phase 2a 완료 — 시나리오 16건, 독립검증 1회차 PASS(경고 7). Phase 2b 진입.
 
 ## 다음 한 걸음
 
-`wf-scenario` — coverage_matrix 로 칸을 닫고 독립검증. 승인 테스트 수정 5파일(PLAN unresolved #1)을 회귀 시나리오로.
+`wf-red` — 16건을 Red 로, 승인 테스트 6파일 변경을 함께 통합 HITL 로.
 
 ## 알아둬야 할 것
 
