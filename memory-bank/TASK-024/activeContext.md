@@ -13,7 +13,7 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-024-frontend-token-guard"
 
-last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
+last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
 source: "docs/product/features/organizer-flow.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-024.json"
@@ -21,11 +21,12 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-024.json"
   test: "workflow_design/05_scenario/TEST_TASK-024.json"
   dev: "workflow_design/06_dev/DEV_TASK-024.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-024.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 완료 — Green 767/767, 자체 리뷰 결함 0, 시안 대조 수정 1(9558a67). Phase 4 진입.
+Phase 4 1회차 FAIL — RC-1(가드=메모리 user, 헤더=localStorage). HITL#3 롤백 결정 대기.
 
 ## 다음 한 걸음
 

@@ -1,0 +1,130 @@
+{
+  "task_id": "TASK-024",
+  "status": "FAIL",
+  "status_reason": "Phase 4 리뷰 [correctness] RC-1 — 인증 상태의 정본이 둘(가드는 메모리 AuthContext.user, 요청 헤더는 localStorage). 저장소 쓰기가 막히면 주최자 가드는 통과하고 쓰기 요청엔 토큰이 없어 401 → 로그아웃 → 로그인 반복. 시나리오에 없는 동작이라 2a 롤백 대상. 테스트·린트·빌드·제약은 통과",
+
+  "evidence": {
+    "tests": { "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npx vitest run", "exit_code": 0,
+               "summary": "Test Files 20 passed (20) · Tests 767 passed | 1 todo (768) · Duration 25.09s" },
+    "lint":  { "command": "cd frontend && npm run lint", "exit_code": 0,
+               "summary": "error 0 · warning 7 — 모두 기존 파일(AuthContext·Performance Detail/Edit/List set-state-in-effect·task017.ui.test jsx-key)" },
+    "build": { "command": "cd frontend && npm run build", "exit_code": 0, "summary": "빌드 성공(청크 크기 경고만)" },
+    "diff":  { "command": "git diff --stat develop...HEAD", "summary": "38 files changed, 3029 insertions(+), 367 deletions(-) — frontend 20 files, +1005 -367, 나머지는 workflow 산출물·memory-bank" }
+  },
+
+  "acceptance_criteria": [
+    { "criterion": "로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다", "verdict": "FAIL",
+      "evidence": "SC-01·02·03·04 통과, 실제 백엔드에서 주최자 등록 201·수정 저장 확인. 단 RC-1 — 저장소 쓰기가 막힌 환경에서는 '로그인 상태'(메모리 user=ORGANIZER)인데 쓰기 요청에 Authorization 이 없다(리뷰어 프로브 reproduced)" },
+    { "criterion": "비로그인으로 `/performances/new`·`/performances/:id/edit` 에 들어가면 `/login` 으로 가고, 로그인 후 원래 경로로 돌아온다", "verdict": "PASS",
+      "evidence": "SC-05·06·14 통과. 실제 브라우저: 비로그인 /performances/new·/performances/1/edit?tab=a·/Performances/NEW/ → /login, state.from 이 연 주소 그대로. 401 뒤 다시 로그인하면 /performances/1/edit 로 복귀·폼" },
+    { "criterion": "관객으로 같은 경로에 들어가면 폼 대신 「주최자만 이용할 수 있어요」와 「공연 둘러보기」가 보인다", "verdict": "PASS",
+      "evidence": "SC-06·07 통과. 실제 브라우저: 관객으로 /performances/1/edit → 안내, 폼 없음, 주소 유지, GET /api/performances/1 0회. 「공연 둘러보기」 → /" },
+    { "criterion": "토큰 복원 중에는 가드가 안내·이동 없이 아무것도 그리지 않는다 (복원 후 주최자면 폼이 보인다)", "verdict": "PASS",
+      "evidence": "SC-08 7행 통과(복원 중 폼·안내 없음·주소 유지, /me 결과별 분기). 브라우저에서는 이 상태를 만들지 않았다 — screens 참고" },
+    { "criterion": "쓰기 API 가 401 이면 로그아웃되고 `/login` 으로 간다. 403 이면 「주최자만 이용할 수 있어요」가 보인다", "verdict": "PASS",
+      "evidence": "SC-09·10·11·12 통과. 실제 백엔드: 망가뜨린 토큰으로 등록·취소 → 실제 401 → 토큰 삭제·/login(from 유지). 관객 토큰으로 바꿔 저장 → 실제 403 FORBIDDEN_ROLE → 안내, 주소 유지, 토큰 유지" },
+    { "criterion": "`VITE_WRITE_KEY`·`WRITE_REJECTED_MESSAGE`·`isWriteKeyRejected` 가 `frontend/src` 와 `.env.example` 에 없다", "verdict": "PASS",
+      "evidence": "SC-15 통과(원문 스캔). check_architecture AUTH-001 위반 0(파일 125개)" }
+  ],
+
+  "screens": [
+    { "name": "공연 등록·수정", "state": "비로그인", "verdict": "PASS",
+      "evidence": "실제 백엔드(bootRun 18080 + postgres:16 임시 컨테이너) + Vite 5174, 375px 같은 출처 iframe(innerWidth 373). /performances/new·/performances/1/edit?tab=a·/Performances/NEW/ → /login 「쓰던 계정으로 바로 들어와요」, from 원래 주소" },
+    { "name": "공연 수정", "state": "관객 역할", "verdict": "PASS",
+      "evidence": "안내 화면, 폼 없음, 주소 유지, 공연 조회 요청 0. 그림 32px·제목 16/600·부제 14 rgb(76,79,102)·버튼 56px brand r12 — 시안 organizer-only 측정값과 같다. 「공연 둘러보기」 → /. 버튼 포커스 outline solid 2px" },
+    { "name": "공연 수정", "state": "주최자 기본", "verdict": "PASS", "evidence": "폼에 '가을 재즈 콘서트' 로드" },
+    { "name": "공연 수정", "state": "쓰기 403", "verdict": "PASS", "evidence": "관객 토큰으로 바꿔 저장 → 실제 403 → 안내, 주소·토큰 유지" },
+    { "name": "공연 수정", "state": "쓰기 401(취소)", "verdict": "PASS", "evidence": "망가뜨린 토큰으로 취소 확인 → 실제 401 → 토큰 삭제·/login(from /performances/1/edit) → 다시 로그인하면 수정 화면 복귀·폼. 공연은 취소되지 않음" },
+    { "name": "공연 등록", "state": "쓰기 401(등록)", "verdict": "PASS", "evidence": "Phase 3 같은 환경 — 실제 401 → /login(from /performances/new)" },
+    { "name": "공연 등록·수정", "state": "토큰 복원 중", "verdict": "WARN",
+      "evidence": "브라우저에서 만들지 않음 — /api/auth/me 만 늦추는 프록시가 필요한데 이번 라운드가 RC-1 로 FAIL 이라 다음 라운드에서 본다. 동작은 SC-08 이 덮는다" },
+    { "name": "공연 등록·수정", "state": "시안 셸 대비", "verdict": "WARN",
+      "evidence": "블록 폭 309px vs 시안 341px — 등록·수정 화면의 기존 앱 셸(MUI Container 좌우 16px)과 시안 appbar 「내 공연」 없음. PLAN unresolved #5 — TASK-025·026" },
+    { "name": "품질 하한", "state": "lang·title", "verdict": "PASS", "evidence": "<html lang=\"ko\">, <title>공연 예매</title>" }
+  ],
+
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 530,
+    "overdue_promotions": [],
+    "violations": [
+      { "id": "DESIGN-003", "severity": "warn", "detail": "기존 3파일(PerformanceDetailPage·PerformanceEditPage·PerformanceListPage 의 Skeleton height) — 이번 변경이 만든 것 아님" }
+    ],
+    "auth_001": "위반 0 (파일 125개) — TASK-022 끝의 5건(프론트)이 사라졌다. promote_after: TASK-024 — error 승격은 Phase 5 drift 로",
+    "prose_coverage": [
+      { "rule": "API: 비즈니스 로직 하지 않음", "constraint": null, "state": "검사 불가", "note": "이번 변경 없음" },
+      { "rule": "API: DB 접근 하지 않음", "constraint": "ARCH-001", "state": "✓" },
+      { "rule": "Service: HTTP 관심사 하지 않음", "constraint": "ARCH-002", "state": "✓" },
+      { "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용", "constraint": "ARCH-003", "state": "✓" },
+      { "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어 하지 않음", "constraint": null, "state": "미인코딩", "note": "이번 변경 없음 — TASK-019·022 와 같은 갭" },
+      { "rule": "Repository: 도메인 규칙 판단 하지 않음", "constraint": null, "state": "검사 불가", "note": "이번 변경 없음" },
+      { "rule": "Frontend: 도메인 규칙(최종 판단은 서버)", "constraint": null, "state": "검사 불가",
+        "note": "RequireOrganizer 는 화면을 가르는 편의이고 쓰기 허용 판단은 서버 401/403 이 한다(F3). 역할 판정을 클라이언트가 최종으로 하지 않음 — 위반 없음" }
+    ]
+  },
+
+  "regression": {
+    "full_suite": "767/767 passed (+todo 1)",
+    "callers_checked": true,
+    "callers": "request() 호출부 10곳 — auth.ts 5(signUp·login·completeSocialSignUp·fetchPendingSignup·fetchMe), performances.ts 조회 2·쓰기 3. 직접 fetch 는 http.ts 뿐. 무효 토큰이 permitAll 경로에 실려도 JwtAuthenticationFilter 가 익명으로 통과(SC-16·실제 브라우저). fetchMe 는 명시 헤더 우선(SC-03). CORS ALLOW_HEADERS 'Content-Type, Authorization' — 다른 출처(5174→18080)에서 실제 확인"
+  },
+
+  "scope_deviations": [
+    { "path": "frontend/src/auth/task018.auth.test.tsx", "verdict": "수용", "reason": "통합 HITL#1·2 에서 승인한 SC-13·14 변경" },
+    { "path": "frontend/src/auth/SocialLoginScreens.test.tsx", "verdict": "수용", "reason": "같음(SC-13)" },
+    { "path": "frontend/src/App.test.tsx", "verdict": "수용", "reason": "같음(SC-14)" },
+    { "path": "frontend/src/api/auth.ts", "verdict": "수용", "reason": "PLAN target_files — ACCESS_TOKEN_KEY 재내보내기" },
+    { "path": "frontend/src/theme/tokens.ts", "verdict": "수용", "reason": "시안 값 240px 를 componentSizes 로(DESIGN-003)" }
+  ],
+
+  "code_review": {
+    "rounds": [
+      { "n": 1, "phase": 3, "scope": "develop...HEAD (c109808)", "findings": 0, "note": "DEV_TASK-024 pre_review — notes 3건(결함 아님)" },
+      { "n": 2, "phase": 4, "scope": "develop...HEAD (9558a67 포함)", "findings": 2,
+        "summary": "[correctness] 1 — RC-1 저장소 쓰기 실패 시 메모리 로그인과 요청 헤더가 갈라짐. [test] 1 — 같은 뿌리의 테스트 빈틈(SC-02 는 getItem throw 만). 이전 notes 3건은 결함 아님으로 재확정. request() 호출부 전수·CORS·테스트 약화 여부·판별 재구현 여부·디자인 확인 — 그 밖 결함 없음" }
+    ],
+    "findings": [
+      { "category": "correctness", "file": "frontend/src/api/http.ts", "line": 13,
+        "summary": "request() 가 토큰을 localStorage 에서만 읽는다. AuthContext.writeToken 은 저장 실패를 삼키고 메모리 로그인을 유지하므로, 저장소 쓰기가 막힌 브라우저에서 주최자는 가드를 통과하지만 쓰기 요청에 토큰이 없다 → 401 → logout → /login 이 로그인할 때마다 반복",
+        "root_cause": "RC-1" },
+      { "category": "test", "file": "frontend/src/auth/task024.organizer.test.tsx",
+        "summary": "SC-02 d 는 getItem throw 만 본다 — 로그인 직후 저장 실패(setItem throw·쿼터) 상태의 쓰기 요청을 단언하는 시나리오가 없다", "root_cause": "RC-1" }
+    ]
+  },
+
+  "root_causes": [
+    { "id": "RC-1",
+      "summary": "인증 상태의 정본이 둘이다 — 화면 가드는 메모리(AuthContext.user)를, 요청 헤더는 localStorage 를 본다. 저장이 실패하면 둘이 갈라진다",
+      "found_in_round": 2,
+      "variants": [
+        { "case": "setItem 이 throw 하는 저장소에서 주최자 로그인 후 쓰기 — 가드 통과, 헤더 없음 → 401 → 로그아웃 반복", "origin": "found", "probe": "reproduced",
+          "evidence": "리뷰어 프로브 scratchpad/p.mjs — http.ts 사본, setItem throw 저장소에서 request('/api/performances',{method:'POST'}) 의 Authorization null" },
+        { "case": "쿼터 초과로 setItem 만 실패하고 getItem 은 null", "origin": "predicted", "probe": "reproduced",
+          "evidence": "같은 http.ts 경로 — 리뷰어 프로브" },
+        { "case": "다른 탭에서 로그아웃해 토큰이 사라졌는데 이 탭의 메모리 user 는 그대로 — 쓰기 401 → 이 탭도 로그아웃(수렴)", "origin": "predicted", "probe": "not_probed",
+          "reason": "코드 추적상 UnauthorizedError 처리로 수렴. 화면 수준 프로브 없음 — Phase 3 테스트가 프로브한다" },
+        { "case": "소셜 로그인(OAuthRedirectPage)이 login() 으로 저장한 뒤 같은 상황", "origin": "predicted", "probe": "not_probed",
+          "reason": "login() 공용 경로라 같은 뿌리. 화면 수준 프로브 없음 — Phase 3 테스트가 프로브한다" }
+      ] }
+  ],
+
+  "security": {
+    "input_validation": "해당 없음 — 새 입력 필드 없음. from 은 기존 safeDestination 이 판정(//·역슬래시·외부 주소 차단, 리뷰어 matchRoutes 프로브)",
+    "authorization": "쓰기 판단은 서버(401/403/404). 프론트 가드는 화면 편의 — 우회해도 서버가 막는다(실제 백엔드 401·403 확인)",
+    "secrets": "VITE_WRITE_KEY(번들 노출 공유 비밀) 제거 — AUTH-001 위반 0. 하드코딩 토큰 없음(테스트 픽스처만)",
+    "logging": "해당 없음 — 토큰을 로그·URL 에 남기지 않음. from 은 location.state 로 넘김(쿼리 아님)"
+  },
+
+  "round_history": [
+    { "round": 1, "status": "FAIL", "summary": "RC-1 — 저장소 쓰기 실패 시 메모리 로그인과 요청 헤더 정본 불일치. 뿌리 1 · 변종 4, 재현 2(해소 0), 미프로브 2. 테스트 767/767·린트·빌드·제약 통과" }
+  ],
+
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}
