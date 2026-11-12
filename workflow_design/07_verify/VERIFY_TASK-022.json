@@ -1,26 +1,26 @@
 {
   "task_id": "TASK-022",
-  "status": "FAIL",
-  "status_reason": "3회차 — RC-2 2회차 변종 2건 해소. 같은 뿌리 later 변종 3건 재현: 롤백 시 옛 가드가 꺼진 채 뜨는데 §5 가 옛 변수를 '지워도 된다' 고 함 · HEAD·Origin 없는 OPTIONS 가 401 로 바뀐 것(모니터링) 미서술 · §5-2 SQL 이 대소문자 이메일에서 조용히 무동작. 소스 변경 없음, 184/184",
+  "status": "WARN",
+  "status_reason": "4회차 — 코드·테스트·제약 통과, [correctness] 0, RC-1·RC-2 재현 변종 전부 해소. WARN 사유: (1) 배포 문서 경미 소견 2건(§5-2 SQL 주석 '같은 규칙' 이 탭·비 ASCII 대문자에서 Java 정규화와 다를 수 있음 — 확인 SELECT 가 드러냄 / §5 '§9 롤백 항목' 참조가 지우는 기준 없이 비어 있고 롤백 시 프론트도 함께 되돌려야 한다는 서술 없음) (2) AUTH-001 warn 5건(프론트, TASK-024 범위) (3) 이 백엔드 배포 뒤 TASK-024 전까지 브라우저 공연 쓰기 401 — 의도된 공백, 체크리스트 §5-1 에 명시 (4) HEAD·Origin 없는 OPTIONS 401 — 시나리오 결정, 문서 §5·§9 에 명시",
   "evidence": {
     "tests": {
       "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --continue (build/test-results 를 지우고 실행)",
       "exit_code": 0,
-      "summary": "BUILD SUCCESSFUL in 1m 37s — 39 classes, 184 tests, 0 failed, 0 skipped (92.1s)",
-      "round": 3
+      "summary": "BUILD SUCCESSFUL in 1m 41s — 39 classes, 184 tests, 0 failed, 0 skipped (96.9s)",
+      "round": 4
     },
     "lint": {
       "command": "cd backend && ./gradlew spotlessCheck",
       "exit_code": 0,
       "summary": "출력 없음(통과)",
-      "round": 3
+      "round": 4
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "49 files changed, 4697 insertions(+), 818 deletions(-). 461f8f5...HEAD -- backend frontend 비어 있음",
-      "round": 3
+      "summary": "49 files changed, 4809 insertions(+), 819 deletions(-). 461f8f5...HEAD -- backend frontend 비어 있음 — 1회차 이후 바뀐 것은 docs/release/first-deploy-checklist.md 와 workflow 산출물",
+      "round": 4
     },
-    "head": "9bc976540b2b41c4b600caec31d1ede41e9d65d8",
+    "head": "26895458cbbbeef4e365a96d996a76b796f7ed45",
     "worktree_clean": true
   },
   "acceptance_criteria": [
@@ -155,6 +155,14 @@
       "files_scanned": 525,
       "no_target": [],
       "overdue_promotions": []
+    },
+    "round4": {
+      "status": "pass",
+      "error_count": 0,
+      "warn_count": 8,
+      "files_scanned": 525,
+      "no_target": [],
+      "overdue_promotions": []
     }
   },
   "regression": {
@@ -219,6 +227,17 @@
           "불필요 판정: 배포 전 발급 토큰(develop 도 role 클레임 발급), sub 정규형(발급분은 정규형), 롤백 시 V7 컬럼(nullable·옛 코드 무시)"
         ],
         "changed_files_sweep": "V7·ownerId·소유권·AccessClaims/role·sub·SecurityConfig 인가/403·HEAD/OPTIONS·CorsFilter·WriteGuard 삭제·JWT_SECRET — 11 항목 전부 대조"
+      },
+      {
+        "n": 7,
+        "phase": 4,
+        "scope": "23f6e2f (3회차 갭 3건 수정) · 같은 문서 다른 절과의 모순",
+        "findings": [
+          "결함 없음 — root_causes []",
+          "(a) 롤백 시 옛 가드 변수 보존·(b) HEAD/OPTIONS 401·(c) SQL lower(trim())+확인 SELECT 해소",
+          "[docs 경미] §5-2 주석 '같은 규칙' 은 탭·비 ASCII 대문자에서 Java trim/toLowerCase 와 다를 수 있다 — 확인 SELECT 가 드러냄",
+          "[docs 경미] §5 '§9 롤백 항목' 참조에 옛 변수 삭제 기준이 없음, 롤백 시 프론트도 함께 되돌려야 한다는 서술 없음"
+        ]
       }
     ],
     "findings": [
@@ -234,6 +253,12 @@
         "source": "리뷰어",
         "file": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
         "summary": "HEAD 공개 경로 401/403 — 시나리오 결정과 같음, 결함 아님(HITL 판단 항목)"
+      },
+      {
+        "category": "docs",
+        "source": "리뷰어 4회차",
+        "file": "docs/release/first-deploy-checklist.md",
+        "summary": "§5-2 SQL 주석 정확도 · §5 롤백 기준 참조 — 경미, 동작 결함 아님 → Phase 5 try 후보"
       }
     ]
   },
@@ -381,22 +406,22 @@
           "case": "§5 '옛 변수는 지워도 된다' — 지운 뒤 이전 배포로 롤백하면 옛 WriteGuardFilter 가 enabled=false 로 떠 공연 쓰기가 인증 없이 열림",
           "origin": "later",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "git show develop:backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java fromEnv 38-49 — 빈 값이면 enabled=false. checklist §5 100행"
+          "resolved": true,
+          "evidence": "git show develop:backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java fromEnv 38-49 — 빈 값이면 enabled=false. checklist §5 100행 → 해소: §5·§5-2·§9 (23f6e2f), Phase 4 4회차 리뷰 확인"
         },
         {
           "case": "HEAD /api/performances 와 Origin 없는 OPTIONS 가 permitAll → 401 — 모니터링·curl -I 영향 미서술",
           "origin": "later",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "임시 프로브(MockMvc, 커밋 안 함, 삭제) GET 200 · HEAD 401 · OPTIONS(Origin 없음) 401. 같은 규칙 PerformanceErrorResponseRegressionTest#test_sc12 i 행(DELETE 토큰 없음 401)"
+          "resolved": true,
+          "evidence": "임시 프로브(MockMvc, 커밋 안 함, 삭제) GET 200 · HEAD 401 · OPTIONS(Origin 없음) 401. 같은 규칙 PerformanceErrorResponseRegressionTest#test_sc12 i 행(DELETE 토큰 없음 401) → 해소: §5·§5-2·§9 (23f6e2f), Phase 4 4회차 리뷰 확인"
         },
         {
           "case": "§5-2 SQL 에 대소문자 섞인 이메일 → 서브쿼리 NULL → 오류 없는 무동작, 확인 쿼리 없음",
           "origin": "later",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "AuthService.java:267 email.trim().toLowerCase(Locale.ROOT) 로 저장 — checklist §5-2 SQL 은 email = '<입력 그대로>'"
+          "resolved": true,
+          "evidence": "AuthService.java:267 email.trim().toLowerCase(Locale.ROOT) 로 저장 — checklist §5-2 SQL 은 email = '<입력 그대로>' → 해소: §5·§5-2·§9 (23f6e2f), Phase 4 4회차 리뷰 확인"
         },
         {
           "case": "배포 전 발급 토큰의 동작",
@@ -474,6 +499,12 @@
         "decided_at": "2026-11-12",
         "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
       }
+    },
+    {
+      "round": 4,
+      "status": "WARN",
+      "summary": "[correctness] 0, RC-2 3회차 변종 3건 해소. 경미 문서 소견 2건(WARN)",
+      "human_review": null
     }
   ],
   "reject": {
