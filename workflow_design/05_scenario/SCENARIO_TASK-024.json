@@ -526,7 +526,8 @@
         "| c | `setItem` 이 예외를 던진다 | 소셜 로그인 콜백 `/oauth2/redirect?token=tok-soc` 에서 `/api/auth/me` 가 `ORG` 를 준다 | `Bearer tok-soc` | 주최자 로그인 |",
         "| d | 처음에 `tok-old` 가 저장돼 있고(복원 → `ORG`), `setItem`·`removeItem` 이 예외를 던진다 | 전역 헤더 「로그아웃」 | 없음 (저장소에는 `tok-old` 가 남아 있어도) | 비로그인 |",
         "| e | `tok-org` 로 `ORG` 로그인 상태 | 다른 탭이 저장소 값을 `tok-aud` 로 바꾼다(저장소를 직접 고친다) | `Bearer tok-org` | 주최자 로그인 |",
-        "| f | `tok-org` 로 `ORG` 로그인 상태 | 다른 탭이 저장소 값을 지운다(저장소를 직접 지운다) | `Bearer tok-org` | 주최자 로그인 |"
+        "| f | `tok-org` 로 `ORG` 로그인 상태 | 다른 탭이 저장소 값을 지운다(저장소를 직접 지운다) | `Bearer tok-org` | 주최자 로그인 |",
+        "| g | `tok-org` 로 `ORG` 로그인 상태(저장소 정상) | 전역 헤더 「로그아웃」 — 저장소에서도 지워진다 | 없음 | 비로그인 |"
       ],
       "covers": [
         "로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다"

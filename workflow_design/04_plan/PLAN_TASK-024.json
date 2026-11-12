@@ -74,7 +74,7 @@
       {
         "name": "session_token",
         "type": "string | null",
-        "source": "AuthProvider 세션 — login(token)·logout()·복원 결과",
+        "source": "AuthProvider 세션 — login(token)(이메일 로그인·가입 뒤 자동 로그인·소셜 콜백 OAuthRedirectPage·소셜 가입 완료가 모두 이 경로)·logout()·복원 결과",
         "constraints": [
           "저장소 setItem·removeItem 실패와 무관하게 세션 값이 요청에 실린다",
           "다른 탭의 저장소 변경은 이 탭의 세션을 바꾸지 않는다"
@@ -272,7 +272,7 @@
           "multi_param"
         ],
         "group": "token_source",
-        "note": "localStorage — 세션과 다를 때 세션이 이긴다"
+        "note": "design.inputs 의 stored_token 과 같은 localStorage 값 — token_source 묶음(세션 × 저장소)에서 쓰는 이름. auth_header 묶음(저장소 × 호출부)은 stored_token"
       }
     ]
   },

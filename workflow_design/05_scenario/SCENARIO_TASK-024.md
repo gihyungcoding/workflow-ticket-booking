@@ -3,7 +3,8 @@
 이 시나리오가 다루는 범위:
 - `frontend/src/api/http.ts` 의 `request()`
 - `frontend/src/api/performances.ts` 의 쓰기 3함수와 `UnauthorizedError`·`ForbiddenRoleError`
-- 새로 만드는 `frontend/src/auth/RequireOrganizer.tsx`
+- `frontend/src/auth/RequireOrganizer.tsx`(가드)
+- `frontend/src/auth/AuthContext.tsx` 의 세션(로그인·로그아웃·복원)이 요청 토큰의 정본이 되는 것
 - `App.tsx` 의 라우트
 - 등록·수정 화면
 - 인증 화면 세 곳(로그인·가입·소셜 역할 선택)의 쓰기 키 분기 제거
@@ -378,6 +379,7 @@ notes: 저장된 토큰은 복원 401 로 지워지므로, 공연 조회 요청�
 | d | 처음에 `tok-old` 가 저장돼 있고(복원 → `ORG`), `setItem`·`removeItem` 이 예외를 던진다 | 전역 헤더 「로그아웃」 | 없음 (저장소에는 `tok-old` 가 남아 있어도) | 비로그인 |
 | e | `tok-org` 로 `ORG` 로그인 상태 | 다른 탭이 저장소 값을 `tok-aud` 로 바꾼다(저장소를 직접 고친다) | `Bearer tok-org` | 주최자 로그인 |
 | f | `tok-org` 로 `ORG` 로그인 상태 | 다른 탭이 저장소 값을 지운다(저장소를 직접 지운다) | `Bearer tok-org` | 주최자 로그인 |
+| g | `tok-org` 로 `ORG` 로그인 상태(저장소 정상) | 전역 헤더 「로그아웃」 — 저장소에서도 지워진다 | 없음 | 비로그인 |
 
 covers: 로그인 상태에서 공연 쓰기 요청에 `Authorization: Bearer <토큰>` 이 실리고, `X-Write-Key` 는 어떤 요청에도 없다
 flow: F1
