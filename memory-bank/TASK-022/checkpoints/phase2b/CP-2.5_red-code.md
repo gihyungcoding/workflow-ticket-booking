@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-12T00:00:00Z
 summary: "Red 15건 — 새 시나리오 Red 11 · already_passing 4(SC-02·11·13·14). 전체 184 중 20 실패(새 11 + 바뀐 승인 테스트 9), 손대지 않은 기존 테스트 전부 통과. 스켈레톤: Performance getOwnerId·소유자 생성자 UOE. 통합 HITL 승인(2026-11-12)"
 
 next_steps:
-  - "Phase 3 — wf-develop. V7 → Performance ownerId → JwtTokenProvider role 검증·AccessClaims → SecurityConfig(GET 외 ORGANIZER, 403 FORBIDDEN_ROLE) → Service 소유권(404) → WriteGuard 삭제·CORS 헤더"
+  - "통합 HITL #1·2 재승인 → Phase 3 마무리(Step 4 리팩토링·린트·자체 리뷰)"
 
 decisions:
   - decision: "테스트 4파일 — OwnerMigration(SC-01, PostgreSQL) · Ownership(SC-02~08·11·13·14, MockMvc) · ErrorResponseRegression(SC-12, 실제 서버) · WriteGuardRemoval(SC-09·10·15, 가드 properties ON)"
@@ -16,7 +16,13 @@ decisions:
   - decision: "SC-14 의 '응답 cancelled true' 를 status == CANCELLED 로 관찰"
     rationale: "PerformanceResponse 에 cancelled 필드가 없다. 시나리오 문구 결함 — 2b 에서 SCENARIO 를 고치지 않고 HITL 에 올림"
 
-attempts: []
+  - decision: "RETRY(1/3) 2b 재진입 — SC-06 k·l 단언 400, SC-05 정리 순서·SC-13 재로그인 하네스 수정"
+    rationale: "Phase 3 Green 실행 결과. 구현이 이미 있어 변이 검증 2건으로 가짜 통과가 아님을 확인(TEST_TASK-022.json red_retry)"
+
+attempts:
+  - outcome: "Phase 3 Green 에서 3건 실패 — SC-06 k·l 400, SC-05 FK 위반(정리 순서), SC-13 401(토큰 만료)"
+    back_to: "2a (RETRY_SCENARIO 1/3) → 2b"
+
 ---
 
 # CP-2.5 Red — TASK-022

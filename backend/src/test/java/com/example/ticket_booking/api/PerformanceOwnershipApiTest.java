@@ -427,8 +427,9 @@ class PerformanceOwnershipApiTest {
         // And a 행에서 저장된 공연의 ownerId 는 O1 의 id 다
         Long id = ((Number) json(result).get("id")).longValue();
         soft.assertThat(reload(id).getOwnerId()).as(row.getKey() + " ownerId").isEqualTo(o1Id);
-        performanceRepository.deleteAll();
+        zoneRepository.deleteAll();
         seatRepository.deleteAll();
+        performanceRepository.deleteAll();
       } else {
         // And 201 이 아닌 행에서는 공연 수가 그대로다
         soft.assertThat(performanceRepository.count()).as(row.getKey() + " 공연 수").isEqualTo(before);
@@ -442,7 +443,8 @@ class PerformanceOwnershipApiTest {
   /**
    * SC-06 (error)
    *
-   * <p>Given O1 의 정상 토큰 t When 표의 헤더로 R0 을 등록한다 Then 상태가 표와 같고 401 행은 공연 수가 직전 값 그대로
+   * <p>Given O1 의 정상 토큰 t When 표의 헤더로 R0 을 등록한다 Then 상태가 표와 같고 201 이 아닌 행은 공연 수가 직전 값 그대로 — k·l(제어
+   * 문자 꼬리)은 요청 자체가 거부되는 400 이다
    */
   @Test
   void test_sc06_Authorization_헤더_앞뒤에_붙은_글자는_정상_토큰을_무효로_만든다() throws Exception {
@@ -459,8 +461,8 @@ class PerformanceOwnershipApiTest {
     rows.put("h 비 ASCII 꼬리", new Object[] {"Bearer " + t + "é", 401});
     rows.put("i Basic", new Object[] {"Basic " + t, 401});
     rows.put("j = 꼬리", new Object[] {"Bearer " + t + "=", 401});
-    rows.put("k LF 꼬리", new Object[] {"Bearer " + t + "\n", 401});
-    rows.put("l NUL 꼬리", new Object[] {"Bearer " + t + "\u0000", 401});
+    rows.put("k LF 꼬리", new Object[] {"Bearer " + t + "\n", 400});
+    rows.put("l NUL 꼬리", new Object[] {"Bearer " + t + "\u0000", 400});
     rows.put("m 서로게이트 꼬리", new Object[] {"Bearer " + t + "\uD800", 401});
     SoftAssertions soft = new SoftAssertions();
 
@@ -473,8 +475,8 @@ class PerformanceOwnershipApiTest {
 
       // Then 상태가 표와 같다
       soft.assertThat(status(result)).as(row.getKey() + " 상태").isEqualTo(expected);
-      // And 401 행에서는 공연 수가 그대로다
-      if (expected == 401) {
+      // And 201 이 아닌 행에서는 공연 수가 그대로다
+      if (expected != 201) {
         soft.assertThat(performanceRepository.count()).as(row.getKey() + " 공연 수").isEqualTo(before);
       } else {
         soft.assertThat(performanceRepository.count())
@@ -632,9 +634,11 @@ class PerformanceOwnershipApiTest {
     // Given
     Long p1 = registeredBy(o1);
     clock.setInstant(T.plus(Duration.ofDays(7)));
+    // 시계를 옮기면 T 에 받은 토큰(유효 24시간)은 만료된다 — 같은 O1 로 다시 로그인한다
+    String o1Now = accessTokenOf(login(mockMvc, "o1@example.com", PASSWORD));
 
     // When
-    MvcResult result = update(bearer(o1), p1, u0("다른 제목"));
+    MvcResult result = update(bearer(o1Now), p1, u0("다른 제목"));
 
     // Then 409 REGISTRATION_ALREADY_OPEN 이다
     assertThat(status(result)).isEqualTo(409);

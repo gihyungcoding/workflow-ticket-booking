@@ -42,14 +42,16 @@
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
       "test_function": "test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다",
       "status": "red",
-      "failure": "UnsupportedOperationException — a 행 getOwnerId 에서 중단. 나머지 행은 Green 에서 검증"
+      "failure": "UnsupportedOperationException — a 행 getOwnerId 에서 중단. 나머지 행은 Green 에서 검증",
+      "note": "RETRY 하네스 수정 — a 행 정리 순서를 zone→seat→performance 로(FK 위반). 단언 그대로"
     },
     {
       "scenario_id": "SC-06",
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
       "test_function": "test_sc06_Authorization_헤더_앞뒤에_붙은_글자는_정상_토큰을_무효로_만든다",
       "status": "red",
-      "failure": "20건 — c~m 행이 201 (토큰 없이도 등록됨), 공연 수 증가. a·b 는 이미 201"
+      "failure": "20건 — c~m 행이 201 (토큰 없이도 등록됨), 공연 수 증가. a·b 는 이미 201",
+      "note": "RETRY_SCENARIO(1/3) 뒤 k·l 기대 401→400, 공연 수 단언을 '201 이 아닌 행' 으로"
     },
     {
       "scenario_id": "SC-07",
@@ -71,7 +73,7 @@
       "test_function": "test_sc13_자기_공연이라도_오픈_시각이_되면_수정할_수_없다",
       "status": "already_passing",
       "failure": null,
-      "note": "기존 규칙(now < openAt) 보존 — 이 태스크가 바꾸지 않는 409. 소유권 검사가 이 경로를 잘못 404 로 바꾸면 Green 에서 실패한다"
+      "note": "기존 규칙(now < openAt) 보존 — 이 태스크가 바꾸지 않는 409. 소유권 검사가 이 경로를 잘못 404 로 바꾸면 Green 에서 실패한다 · RETRY 하네스 수정 — 시계를 T+7d 로 옮긴 뒤 O1 재로그인(T 발급 토큰은 24시간 만료). 단언 그대로"
     },
     {
       "scenario_id": "SC-14",
@@ -198,9 +200,64 @@
     ]
   },
   "human_review": {
-    "approved": true,
-    "decision": "APPROVE",
-    "reviewed_at": "2026-11-12",
-    "via": "AskUserQuestion — 통합(HITL#1·2)"
+    "approved": false,
+    "history": [
+      {
+        "approved": true,
+        "decision": "APPROVE",
+        "reviewed_at": "2026-11-12",
+        "via": "AskUserQuestion — 통합(HITL#1·2)"
+      }
+    ]
+  },
+  "red_retry": {
+    "reason": "RETRY_SCENARIO 1/3 — Phase 3 Green 실행에서 SC-06 k·l 400(요청 거부), SC-05·SC-13 하네스 결함. 사용자 선택: 2a 롤백",
+    "changed_tests": [
+      {
+        "scenario_id": "SC-06",
+        "change": "k·l 기대 400 · 201 이 아닌 행은 공연 수 그대로"
+      },
+      {
+        "scenario_id": "SC-05",
+        "change": "a 행 뒤 정리 순서(zone→seat→performance)"
+      },
+      {
+        "scenario_id": "SC-13",
+        "change": "시계 이동 뒤 재로그인한 토큰으로 수정"
+      }
+    ],
+    "result": {
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --continue",
+      "total": 184,
+      "failed": 0,
+      "passed": 184,
+      "note": "구현(46af97b)이 이미 있어 Red 를 관찰할 수 없다 — 변이 검증으로 대신한다"
+    },
+    "mutation_check": [
+      {
+        "mutation": "JwtTokenProvider.roleOf — equals → equalsIgnoreCase",
+        "applied": "git diff 1 file +1 -1 확인",
+        "failed_tests": [
+          "test_sc05 (j 소문자: 401 기대, 201)"
+        ],
+        "reverted": true
+      },
+      {
+        "mutation": "PerformanceService.updatePerformance — 오픈 시각 검사 3줄 삭제",
+        "applied": "git diff 1 file -3 확인",
+        "failed_tests": [
+          "test_sc13"
+        ],
+        "reverted": true
+      },
+      {
+        "mutation": "SC-06 k·l",
+        "applied": null,
+        "failed_tests": [],
+        "reverted": null,
+        "note": "거부는 보안 체인(프레임워크)이 한다 — 이 저장소 코드에 변이를 넣을 지점이 없다. 상태 400 과 공연 수 그대로를 함께 단언한다"
+      }
+    ],
+    "post_revert": "git status src/main 변경 없음"
   }
 }
