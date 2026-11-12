@@ -25,6 +25,8 @@ export function OrganizerOnlyNotice() {
           component={RouterLink}
           to="/"
           sx={{
+            // 시안 .block .btn { align-self: stretch } — 블록 안 버튼은 가로를 채운다
+            alignSelf: 'stretch',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
