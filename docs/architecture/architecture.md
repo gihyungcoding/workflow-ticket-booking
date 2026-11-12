@@ -85,6 +85,7 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
 |---|---|---|---|
 | PostgreSQL | 모든 영속 데이터, 좌석 선점 정합성 | 서비스 전체 중단 | 없음 |
 | Redis | 대기열 순번·입장권 (AOF 로 재시작에도 유지) | 대기열 진입·순번 조회 중단. 조회·선점·예매 관리는 동작 | 없음 — 대기열 저장소를 `QueueStore` 인터페이스 뒤에 둔다 (ADR-0023) |
+| 메일 발송(SMTP) | 이메일 인증·비밀번호 재설정·변경 알림 메일 | 인증·재설정 메일이 나가지 않는다. 가입·소셜 로그인·이미 인증된 계정의 로그인은 동작하고, 인증 전 이메일 로그인과 비밀번호 찾기가 막힌다 | 없음 — `MailGateway` 인터페이스 뒤에 두어 발송 서비스를 바꾼다 (ADR-0031) |
 
 ## 6. 이 구조를 고른 이유
 
@@ -134,6 +135,12 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0029](../decisions/ADR-0029-replace-write-guard-with-role-and-ownership.md)
 - 프론트 요청 토큰은 앱에 하나뿐인 AuthProvider 의 세션에서 읽는다(저장소는 세션 전·Provider 밖에서만) →
   [ADR-0030](../decisions/ADR-0030-request-token-from-single-auth-session.md)
+- 계정 메일은 `MailGateway` 인터페이스 뒤에서 SMTP 로, 개발·테스트는 로그로 →
+  [ADR-0031](../decisions/ADR-0031-account-mail-via-mail-gateway-smtp.md)
+- 이메일 링크 토큰은 해시로 저장하고 링크는 fragment, 확인은 POST →
+  [ADR-0032](../decisions/ADR-0032-email-link-token-hashed-fragment-post.md)
+- 이메일(비밀번호) 로그인은 이메일 소유 확인 뒤에만 →
+  [ADR-0033](../decisions/ADR-0033-require-email-ownership-before-password-login.md)
 
 ## 7. 알려진 부채
 

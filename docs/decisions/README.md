@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-11-12 · 총 30건
+마지막 재생성: 2026-11-12 · 총 33건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -33,10 +33,13 @@
 | [ADR-0028](ADR-0028-user-url-validation-by-authority-parts.md) | 사용자가 입력하는 URL 은 https 이고, 권한 부분을 직접 나눠 하위 요소마다 판정한다 | 채택됨 | 2026-11-11 |
 | [ADR-0029](ADR-0029-replace-write-guard-with-role-and-ownership.md) | 쓰기 가드를 없애고, API 쓰기는 JWT 역할과 소유권으로만 보호한다 | 채택됨 | 2026-11-11 |
 | [ADR-0030](ADR-0030-request-token-from-single-auth-session.md) | 프론트 요청 토큰은 앱에 하나뿐인 AuthProvider 의 세션에서 읽는다 | 채택됨 | 2026-11-12 |
+| [ADR-0031](ADR-0031-account-mail-via-mail-gateway-smtp.md) | 계정 메일은 MailGateway 인터페이스 뒤에서 SMTP 로 보낸다 | 채택됨 | 2026-11-12 |
+| [ADR-0032](ADR-0032-email-link-token-hashed-fragment-post.md) | 이메일 링크 토큰은 해시로 저장하고, 링크는 URL fragment 로, 확인은 POST 로 한다 | 채택됨 | 2026-11-12 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다 | 2026-10-14 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로, 쓰기 가드 자체는 ADR-0029 로 대체됨) | 2026-10-14 |
 | [ADR-0017](ADR-0017-keep-write-guard-until-ownership-check.md) | 쓰기 가드는 공연 쓰기 API 에 소유권 검사가 붙을 때까지 유지한다 | ADR-0029 로 대체됨 | 2026-10-21 |
 | [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) | 자동 연결은 이메일 소유가 확인된 계정에만 한다 | 채택됨 (ADR-0014 의 "이메일이 같으면 이메일 가입 계정에도 연결" 부분을 대체) | 2026-10-23 |
 | [ADR-0025](ADR-0025-bank-transfer-only-with-internal-confirm-api.md) | 결제는 무통장 입금만 두고, 입금 확인은 쓰기 키로 보호한 내부 API 로 처리한다 | 채택됨 (입금 확인 API 의 보호 수단 `X-Write-Key` 는 ADR-0029 로 대체됨 — 운영자 역할 + JWT 방향) | 2026-11-04 |
+| [ADR-0033](ADR-0033-require-email-ownership-before-password-login.md) | 이메일(비밀번호) 로그인은 이메일 소유를 확인한 뒤에만 허용한다 | 채택됨 (ADR-0020 의 「이메일 가입은 소유 확인이 없다」는 전제를 보완) | 2026-11-12 |
 
 대체된 ADR 도 목록에 남깁니다. 과거에 왜 그렇게 판단했는지가 지워지면 같은 논의를 다시 하게 됩니다.
