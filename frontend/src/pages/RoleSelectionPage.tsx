@@ -11,7 +11,7 @@ import {
   fetchPendingSignup,
 } from '../api/auth'
 import type { PendingSignup, UserRole } from '../api/auth'
-import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected } from '../api/performances'
+import { ApiError } from '../api/performances'
 import { useAuth } from '../auth/AuthContext'
 import { MoreLink, TopNotice } from '../auth/AuthParts'
 import { AUTH_MESSAGES } from '../auth/messages'
@@ -32,12 +32,12 @@ const ROLE_ROWS = [
 
 type View =
   | { kind: 'loading' }
-  | { kind: 'failed'; rejected: boolean }
+  | { kind: 'failed' }
   | { kind: 'ready'; pending: PendingSignup }
   // 화면에 머물다 만료되면 대기 정보를 안다 — 서버가 처음부터 만료라고 하면 모른다
   | { kind: 'expired'; pending: PendingSignup | null }
 
-type ServerError = 'exists' | 'rejected' | 'failed' | null
+type ServerError = 'exists' | 'failed' | null
 
 // 콜백 페이지가 이동하면서 넘긴 pendingToken. 없거나 문자열이 아니면 이 화면은 열지 않는다. 값은 바꾸지 않고 보낸다.
 function pendingTokenFrom(state: unknown): string | null {
@@ -80,7 +80,7 @@ export function RoleSelectionPage() {
       })
       .catch((error: unknown) => {
         if (cancelled) return
-        setView(isExpiredError(error) ? { kind: 'expired', pending: null } : { kind: 'failed', rejected: isWriteKeyRejected(error) })
+        setView(isExpiredError(error) ? { kind: 'expired', pending: null } : { kind: 'failed' })
       })
     return () => {
       cancelled = true
@@ -126,8 +126,6 @@ export function RoleSelectionPage() {
       // 서버가 만료라고 하거나, 응답을 기다리는 사이 이미 시간이 지났으면 만료 상태
       if (isExpiredError(error) || Date.now() >= pending.expiresAt) {
         setView({ kind: 'expired', pending })
-      } else if (isWriteKeyRejected(error)) {
-        setServerError('rejected')
       } else if (error instanceof ApiError && (error.code === EMAIL_ALREADY_EXISTS || error.code === SOCIAL_ACCOUNT_ALREADY_LINKED)) {
         setServerError('exists')
       } else {
@@ -164,7 +162,7 @@ export function RoleSelectionPage() {
       <>
         {back}
         <Page plain hasCta>
-          <Hero title={view.rejected ? WRITE_REJECTED_MESSAGE : AUTH_MESSAGES.pendingFailed} />
+          <Hero title={AUTH_MESSAGES.pendingFailed} />
         </Page>
         <CtaBar
           onClick={() => {
@@ -216,7 +214,6 @@ export function RoleSelectionPage() {
               {AUTH_MESSAGES.alreadyJoined} <MoreLink to="/login">로그인하기</MoreLink>
             </TopNotice>
           )}
-          {serverError === 'rejected' && <TopNotice>{WRITE_REJECTED_MESSAGE}</TopNotice>}
           {serverError === 'failed' && <TopNotice>{AUTH_MESSAGES.completeFailed}</TopNotice>}
           <Hero
             eyebrow={`${providerNameOf(pending.provider)}로 처음 가입`}

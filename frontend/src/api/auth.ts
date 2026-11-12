@@ -1,10 +1,10 @@
-import { request } from './http'
+import { ACCESS_TOKEN_KEY, request } from './http'
 import { throwIfApiError } from './performances'
 import { SOCIAL_PROVIDERS } from '../auth/socialProvider'
 import type { SocialProviderCode } from '../auth/socialProvider'
 
-// 토큰은 localStorage 의 이 키에 저장한다 (ADR-0015).
-export const ACCESS_TOKEN_KEY = 'accessToken'
+// 토큰은 localStorage 의 이 키에 저장한다 (ADR-0015). 상수는 http.ts 에 있다 — 순환 import 를 피한다.
+export { ACCESS_TOKEN_KEY }
 
 export type UserRole = 'AUDIENCE' | 'ORGANIZER'
 

@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -8,7 +8,9 @@ import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected, registerPerformance } from '../api/performances'
+import { ApiError, ForbiddenRoleError, UnauthorizedError, registerPerformance } from '../api/performances'
+import { useAuth } from '../auth/AuthContext'
+import { OrganizerOnlyNotice } from '../auth/RequireOrganizer'
 import { fromDatetimeLocalInput } from '../utils/datetime'
 
 interface SectionForm {
@@ -47,6 +49,8 @@ function seatCountOf(section: SectionForm): number {
 
 export function PerformanceRegisterPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const auth = useAuth()
   const formRef = useRef<HTMLFormElement>(null)
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
@@ -58,8 +62,16 @@ export function PerformanceRegisterPage() {
   const [timeFieldsError, setTimeFieldsError] = useState<string | null>(null)
   const [sectionErrors, setSectionErrors] = useState<Record<number, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
-  const [writeRejected, setWriteRejected] = useState(false)
+  const [forbidden, setForbidden] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  // 화면을 떠난 뒤 도착한 응답은 로그아웃·이동·표시 어디에도 쓰지 않는다 (ADR-0018)
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
 
   const seatCounts = sections.map(seatCountOf)
   const totalSeats = seatCounts.reduce((sum, count) => sum + count, 0)
@@ -77,7 +89,6 @@ export function PerformanceRegisterPage() {
     setTimeFieldsError(null)
     setSectionErrors({})
     setFormError(null)
-    setWriteRejected(false)
     setSubmitting(true)
     try {
       const performance = await registerPerformance({
@@ -97,10 +108,15 @@ export function PerformanceRegisterPage() {
           seatsPerRow: Number(section.seatsPerRow),
         })),
       })
+      if (!mounted.current) return
       navigate(`/performances/${performance.id}`)
     } catch (error) {
-      if (isWriteKeyRejected(error)) {
-        setWriteRejected(true)
+      if (!mounted.current) return
+      if (error instanceof UnauthorizedError) {
+        auth.logout()
+        navigate('/login', { replace: true, state: { from: location.pathname + location.search + location.hash } })
+      } else if (error instanceof ForbiddenRoleError) {
+        setForbidden(true)
       } else if (error instanceof ApiError && error.code === 'INVALID_TIME_ORDER') {
         setTimeFieldsError('예매 오픈·마감·공연 일시 순서가 올바르지 않습니다')
       } else if (error instanceof ApiError && error.code === 'SEAT_LIMIT_EXCEEDED') {
@@ -115,7 +131,7 @@ export function PerformanceRegisterPage() {
         setFormError('등록하지 못했습니다. 다시 시도해 주세요')
       }
     } finally {
-      setSubmitting(false)
+      if (mounted.current) setSubmitting(false)
     }
   }
 
@@ -124,16 +140,11 @@ export function PerformanceRegisterPage() {
     void submit()
   }
 
+  if (forbidden) return <OrganizerOnlyNotice />
+
   return (
     <Stack component="form" ref={formRef} spacing={2} onSubmit={handleSubmit}>
       <Typography variant="h5">공연 등록</Typography>
-
-      {writeRejected && (
-        // 키가 틀린 상태에서는 다시 시도해도 같은 결과라 재시도 버튼을 두지 않는다.
-        <Alert severity="error" data-testid="write-rejected">
-          {WRITE_REJECTED_MESSAGE}
-        </Alert>
-      )}
 
       {formError && (
         <Alert

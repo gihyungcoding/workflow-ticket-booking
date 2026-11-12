@@ -130,6 +130,7 @@ export const componentSizes = {
   waitSpin: '32px', // oauth-callback .wait-spin 32px
   waitSpinBorder: '3px', // .wait-spin border 3px
   rowArt: '36px', // .row-art img 36px (components.css 165행)
+  emptySubMax: '240px', // .empty .row-sub max-width 240px (components.css 136행)
   moreIcon: '18px', // .hero-more svg 18px (47행)
   fieldMsgIcon: '18px', // .field-msg svg 18px (130행)
   moreGap: '2px', // .hero-more gap 2px (46행)

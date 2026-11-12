@@ -4,7 +4,7 @@ import Box from '@mui/material/Box'
 import { useNavigate } from 'react-router-dom'
 import { EMAIL_ALREADY_EXISTS, login, signUp } from '../api/auth'
 import type { UserRole } from '../api/auth'
-import { ApiError, WRITE_REJECTED_MESSAGE, isWriteKeyRejected } from '../api/performances'
+import { ApiError } from '../api/performances'
 import { useAuth } from '../auth/AuthContext'
 import { LinkLine, MoreLink, TopNotice } from '../auth/AuthParts'
 import { AUTH_MESSAGES } from '../auth/messages'
@@ -30,7 +30,7 @@ interface FieldErrors {
   role: string | null
 }
 
-type ServerError = 'duplicate' | 'rejected' | 'failed' | null
+type ServerError = 'duplicate' | 'failed' | null
 
 // 길이는 서버 @Size 와 같게 UTF-16 코드 유닛 수(string.length)로 센다. 입력은 변환하지 않는다 (ADR-0019).
 // 이메일만 앞뒤 공백을 걷고, 길이도 걷은 값으로 센다.
@@ -90,9 +90,7 @@ export function SignUpPage() {
       inFlight.current = false
       if (!mounted.current) return
       setSubmitting(false)
-      if (isWriteKeyRejected(error)) {
-        setServerError('rejected')
-      } else if (error instanceof ApiError && error.code === EMAIL_ALREADY_EXISTS) {
+      if (error instanceof ApiError && error.code === EMAIL_ALREADY_EXISTS) {
         setServerError('duplicate')
       } else {
         setServerError('failed')
@@ -129,7 +127,6 @@ export function SignUpPage() {
       <AppBar plain onBack={() => navigate('/login')} />
       <Page plain hasCta>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-m') }}>
-          {serverError === 'rejected' && <TopNotice>{WRITE_REJECTED_MESSAGE}</TopNotice>}
           {serverError === 'failed' && <TopNotice>{AUTH_MESSAGES.signUpFailed}</TopNotice>}
           <Hero title="이메일로 가입" lead="이메일과 역할은 가입한 뒤에 바꿀 수 없어요" />
         </Box>
