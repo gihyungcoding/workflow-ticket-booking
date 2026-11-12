@@ -51,6 +51,13 @@ public class JwtTokenProvider {
   private static final Pattern COMPACT_JWS =
       Pattern.compile("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
 
+  /**
+   * 이 서버가 발급하는 sub — String.valueOf(userId) 의 모양(1 이상, 부호·앞자리 0 없음, ASCII 숫자). Long.parseLong 은
+   * '+7'·'07'·유니코드 숫자·음수도 받아서 같은 사용자의 다른 표기가 통과했다(TASK-022 RC-1). 19자리 중 long 을 넘는 값은 parseLong 이
+   * 거부한다.
+   */
+  private static final Pattern CANONICAL_USER_ID = Pattern.compile("[1-9][0-9]{0,18}");
+
   /** 페이로드에 같은 키가 두 번 있으면 읽기에서 실패한다 — 파서마다 어느 쪽 값을 쓰는지가 달라 판정이 갈리는 것을 막는다. */
   private static final ObjectMapper PAYLOAD_READER =
       JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
@@ -117,8 +124,8 @@ public class JwtTokenProvider {
   }
 
   /**
-   * 서명·만료·용도(typ=access)가 유효하고, sub 가 long 범위의 정수 문자열이며, role 이 UserRole 이름과 정확히 같은 문자열이면 그 값을
-   * 돌려준다. role 이 없거나 정의 밖이면 토큰 전체를 무효로 본다 — 역할 없는 인증 주체를 만들지 않는다(ADR-0029).
+   * 서명·만료·용도(typ=access)가 유효하고, sub 가 1 이상의 정수를 정규형 10진으로 적은 문자열(long 범위)이며, role 이 UserRole 이름과
+   * 정확히 같은 문자열이면 그 값을 돌려준다. role 이 없거나 정의 밖이면 토큰 전체를 무효로 본다 — 역할 없는 인증 주체를 만들지 않는다(ADR-0029).
    */
   public Optional<AccessClaims> verifyAccessClaims(String token) {
     JsonNode payload = readPayload(token);
@@ -132,7 +139,11 @@ public class JwtTokenProvider {
       if (role.isEmpty()) {
         return Optional.empty();
       }
-      return Optional.of(new AccessClaims(Long.parseLong(jwt.getSubject()), role.get()));
+      String subject = jwt.getSubject();
+      if (subject == null || !CANONICAL_USER_ID.matcher(subject).matches()) {
+        return Optional.empty();
+      }
+      return Optional.of(new AccessClaims(Long.parseLong(subject), role.get()));
     } catch (JwtException | IllegalArgumentException exception) {
       return Optional.empty();
     }
