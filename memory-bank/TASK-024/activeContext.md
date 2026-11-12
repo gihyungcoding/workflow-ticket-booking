@@ -15,6 +15,11 @@ branch: "feature/task-024-frontend-token-guard"
 
 last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/organizer-flow.md (Task C)"
+pull_request:
+  number: 46
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/46"
+  base: develop
+  opened_at: 2026-11-12
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-024.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-024.md"
@@ -31,7 +36,7 @@ DONE (2026-11-12). Phase 4 2회차 예외 승인(verified_commit 57ff928), 회�
 
 ## 다음 한 걸음
 
-`/wf-ship` 으로 PR. TASK-022(머지됨)와 같은 배포 — 체크리스트 §5-1 프론트 먼저. TASK-025 에 follow_ups(복원 중 logout → restoring 영구) 전달. 회고 승인은 `/wf-retro`.
+PR #46 리뷰 후 사람이 머지. TASK-022(머지됨)와 같은 배포 — 체크리스트 §5-1 프론트 먼저. TASK-025 에 follow_ups(복원 중 logout → restoring 영구) 전달. 회고 승인은 `/wf-retro`.
 
 ## 알아둬야 할 것
 
