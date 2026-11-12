@@ -200,13 +200,22 @@
     ]
   },
   "human_review": {
-    "approved": false,
+    "approved": true,
+    "decision": "APPROVE",
+    "reviewed_at": "2026-11-12",
+    "via": "AskUserQuestion — RETRY_SCENARIO 1/3 뒤 통합 재승인(HITL#1·2)",
     "history": [
       {
         "approved": true,
         "decision": "APPROVE",
         "reviewed_at": "2026-11-12",
         "via": "AskUserQuestion — 통합(HITL#1·2)"
+      },
+      {
+        "approved": true,
+        "decision": "APPROVE",
+        "reviewed_at": "2026-11-12",
+        "via": "AskUserQuestion — RETRY_SCENARIO 1/3 뒤 통합 재승인(HITL#1·2)"
       }
     ]
   },
