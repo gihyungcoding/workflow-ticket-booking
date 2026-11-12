@@ -68,7 +68,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 `postgresql://` 주소를 통째로 `SPRING_DATASOURCE_URL` 에 넣으면 기동에 실패한다.
 사용자·비밀번호는 URL 에서 분리해 따로 넣는다.
 
-- [ ] 마이그레이션은 V1·V2 두 개다 (`V1__create_performance`, `V2__create_seat`). 빈 DB 라 기동 시 Flyway 가 둘 다 적용해야 한다
+- [ ] 마이그레이션은 `backend/src/main/resources/db/migration` 의 V1~V7 이다. 기동 시 Flyway 가 아직 적용되지 않은 것만 적용한다 — 빈 DB 면 V1~V7 전부, 2026-10-20 첫 배포의 DB(V1·V2 까지)면 V3~V7. V7 의 운영 영향은 §5-2
 
 ### 4-2. 백엔드 — Render  `사람`(계정·연동) + `에이전트`(설정값)
 
@@ -77,7 +77,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 - [ ] 웹 서비스 생성: 런타임 **Docker**, 인스턴스 유형 **Free**, `backend/Dockerfile` 경로를 TASK-014 가 만든 위치에 맞춘다
 - [ ] 환경변수 입력 (§6 표)
 - [ ] **헬스체크 경로는 비워둔다.** 지금 백엔드에는 DB 를 타지 않는 헬스 엔드포인트가 없다 (§8)
-- [ ] 첫 배포 로그에서 확인: 이미지 빌드 성공 → JVM 기동 → Flyway 가 `V1`·`V2` 적용 → `Started` 로그
+- [ ] 배포 로그에서 확인: 이미지 빌드 성공 → JVM 기동 → Flyway 가 §4-1 의 남은 마이그레이션을 적용(마지막이 `V7`) → `Started` 로그
 
 ### 4-3. 프론트 — Cloudflare Pages  `사람`
 
@@ -119,6 +119,23 @@ TASK-024 전까지 프론트 코드(`frontend/src/api/http.ts`)는 `VITE_WRITE_K
 
 TASK-024 전까지는 프론트가 로그인 토큰을 쓰기 요청에 싣지 않는다. 그래서 이 백엔드가 나간 뒤에는
 **브라우저에서 공연을 등록·수정·취소할 수 없다**(401). 의도된 공백이다 — 쓰기 확인은 §7 의 `curl` 스모크로 한다.
+
+### 5-2. 이미 있는 공연은 소유자가 없다  `사람`
+
+V7 은 공연에 소유자(`owner_id`)를 더하고 **기존 행은 비워 둔다**(NULL). 소유자를 지정하는 화면이나 API 는 없다.
+그래서 이 백엔드를 배포하면 그 전에 등록된 공연(2026-10-20 스모크로 만든 것 등)은 **누구도 수정·취소할 수 없다**
+(남의 공연과 같은 404). 조회는 그대로 된다.
+
+- [ ] 연습 데이터라면 그대로 둔다
+- [ ] 계속 관리해야 할 공연이 있으면, 그 주최자 계정으로 가입한 뒤 DB 에서 직접 소유자를 넣는다
+
+```sql
+UPDATE performance
+   SET owner_id = (SELECT id FROM users WHERE email = '<주최자 이메일>')
+ WHERE id IN (<공연 id 목록>) AND owner_id IS NULL;
+```
+
+그 주최자의 `role` 이 `ORGANIZER` 여야 수정·취소가 된다 (`users.role`).
 
 ## 6. 환경변수 한눈에
 
