@@ -42,7 +42,7 @@
       "test_file": "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
       "test_function": "test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다",
       "status": "red",
-      "failure": "UnsupportedOperationException — a 행 getOwnerId 에서 중단. 나머지 행은 Green 에서 검증",
+      "failure": "RETRY 2 — w(+)·x(앞자리 0)·y(아라비아-인도)·z(음수)·aa(\"0\")·ad(전각) 6행이 201·공연 수 증가 (Long.parseLong 이 받아들임). ab(소수)·ac(앞 공백)는 이미 401",
       "note": "RETRY 하네스 수정 — a 행 정리 순서를 zone→seat→performance 로(FK 위반). 단언 그대로"
     },
     {
@@ -200,16 +200,19 @@
     ]
   },
   "human_review": {
-    "approved": true,
-    "decision": "APPROVE",
-    "reviewed_at": "2026-11-12",
-    "via": "AskUserQuestion — RETRY_SCENARIO 1/3 뒤 통합 재승인(HITL#1·2)",
+    "approved": false,
     "history": [
       {
         "approved": true,
         "decision": "APPROVE",
         "reviewed_at": "2026-11-12",
         "via": "AskUserQuestion — 통합(HITL#1·2)"
+      },
+      {
+        "approved": true,
+        "decision": "APPROVE",
+        "reviewed_at": "2026-11-12",
+        "via": "AskUserQuestion — RETRY_SCENARIO 1/3 뒤 통합 재승인(HITL#1·2)"
       },
       {
         "approved": true,
@@ -268,5 +271,33 @@
       }
     ],
     "post_revert": "git status src/main 변경 없음"
+  },
+  "red_retry_2": {
+    "reason": "RETRY_SCENARIO 2/3 — Phase 3 자체 리뷰 1R [correctness] RC-1(sub 비정규 정수 표기), 사용자 선택: 2a 롤백",
+    "changed_tests": [
+      {
+        "scenario_id": "SC-05",
+        "change": "두 번째 표에 w~ad 8행 — O1 의 실제 id 로 만든 표기 변형, digitsFrom 헬퍼"
+      }
+    ],
+    "result": {
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --tests '*PerformanceOwnershipApiTest'",
+      "total": 10,
+      "failed": 1,
+      "passed": 9,
+      "red_rows": [
+        "w",
+        "x",
+        "y",
+        "z",
+        "aa",
+        "ad"
+      ],
+      "already_401_rows": [
+        "ab",
+        "ac"
+      ],
+      "note": "구현(46af97b) 위에서 새 행이 실제로 실패한다 — 변이 검증이 아니라 Red 관찰. 첫 실행은 테스트 컴파일 오류(변수 id 중복)였고 남아 있던 이전 결과 XML 을 잘못 읽을 뻔했다 — 결과 디렉터리를 지우고 다시 실행"
+    }
   }
 }

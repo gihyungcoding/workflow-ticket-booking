@@ -176,6 +176,15 @@ class PerformanceOwnershipApiTest {
     return PendingTokenTestHelper.signedRaw(secret, claims);
   }
 
+  /** ASCII 숫자 문자열의 각 자리를 zero 로 시작하는 다른 숫자 체계로 옮긴다(예: '\u0660' 아라비아-인도, '\uFF10' 전각). */
+  private static String digitsFrom(String asciiDigits, char zero) {
+    StringBuilder out = new StringBuilder();
+    for (char c : asciiDigits.toCharArray()) {
+      out.append((char) (zero + (c - '0')));
+    }
+    return out.toString();
+  }
+
   // ---------- 호출 ----------
 
   private static MockHttpServletRequestBuilder withAuthorization(
@@ -406,6 +415,18 @@ class PerformanceOwnershipApiTest {
     rows.put("t sub long 초과", new Object[] {"sub", "9223372036854775808", 401, "UNAUTHORIZED"});
     rows.put("u typ pending", new Object[] {"typ", "pending", 401, "UNAUTHORIZED"});
     rows.put("v 만료", new Object[] {"exp", T.minusSeconds(1), 401, "UNAUTHORIZED"});
+    // w~z·ac·ad 는 O1 의 id 를 다르게 적은 것 — 정규형 10진이 아니면 같은 사용자로 읽혀도 거부한다
+    String o1Sub = String.valueOf(o1Id);
+    rows.put("w sub 부호", new Object[] {"sub", "+" + o1Sub, 401, "UNAUTHORIZED"});
+    rows.put("x sub 앞자리 0", new Object[] {"sub", "0" + o1Sub, 401, "UNAUTHORIZED"});
+    rows.put(
+        "y sub 아라비아-인도 숫자", new Object[] {"sub", digitsFrom(o1Sub, '\u0660'), 401, "UNAUTHORIZED"});
+    rows.put("z sub 음수", new Object[] {"sub", "-" + o1Sub, 401, "UNAUTHORIZED"});
+    rows.put("aa sub 0", new Object[] {"sub", "0", 401, "UNAUTHORIZED"});
+    rows.put("ab sub 소수", new Object[] {"sub", o1Sub + ".5", 401, "UNAUTHORIZED"});
+    rows.put("ac sub 앞 공백", new Object[] {"sub", " " + o1Sub, 401, "UNAUTHORIZED"});
+    rows.put(
+        "ad sub 전각 숫자", new Object[] {"sub", digitsFrom(o1Sub, '\uFF10'), 401, "UNAUTHORIZED"});
     SoftAssertions soft = new SoftAssertions();
 
     for (Map.Entry<String, Object[]> row : rows.entrySet()) {
