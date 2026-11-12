@@ -1,8 +1,8 @@
 ---
 task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -26,7 +26,7 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 1회차 FAIL(RC-2) → HITL#3 에서 Phase 3 롤백. 배포 체크리스트 수정 중.
+Phase 4 2회차 FAIL — RC-2 later 변종 2(배포 체크리스트). HITL #3 대기.
 
 ## 다음 한 걸음
 

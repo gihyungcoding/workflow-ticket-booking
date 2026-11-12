@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-12T00:00:00Z
-summary: "VERIFY 1회차 FAIL — RC-2(배포 체크리스트가 X-Write-Key 제거의 브라우저 쪽 결과를 반영 못함, 변종 4 reproduced). 테스트 184/184, spotless 0, 제약 error 0·no_target 0, 리뷰 [correctness] 0, RC-1 해소."
+summary: "VERIFY 2회차 FAIL — RC-2 1회차 변종 4·전환 구간 해소, later 변종 2 재현(V7 기존 공연 소유자 없음 운영 영향 · 마이그레이션 V1·V2 서술). 코드 결함 0, 184/184, 제약 error 0."
 
 next_steps:
-  - "Phase 3 롤백(사용자 결정 2026-11-12) — 체크리스트 수정 → 수정 커밋 재리뷰 → Phase 4 2회차"
+  - "HITL #3 — FAIL 이라 롤백만. 권장 Phase 3: 체크리스트 §5-1 에 기존 공연 소유자 없음 영향, §4 마이그레이션 V1~V7"
 
 decisions:
   - decision: "리뷰어 [info](프론트 X-Write-Key)를 검증자가 확인 — 이 태스크가 고친 docs/release/first-deploy-checklist.md 102행 '넣어도 서버가 무시한다' 가 사실과 다르다. [correctness] RC-2 로 판정, status FAIL"
@@ -18,6 +18,9 @@ attempts:
   - round: 1
     result: FAIL
     detail: "RC-2 변종 4 reproduced(§5 문장·배포 순서·§7 등록 단계·§7 키 오빌드 단계). 코드 결함 0"
+  - round: 2
+    result: FAIL
+    detail: "RC-2 later 변종 2 reproduced — V7 운영 영향 미서술 · §4 마이그레이션 V1·V2. 1회차 4건·전환 구간 해소"
 ---
 
 # CP-4.2 Verification — TASK-022
