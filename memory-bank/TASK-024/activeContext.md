@@ -13,18 +13,19 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-024-frontend-token-guard"
 
-last_checkpoint: null
+last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
 source: "docs/product/features/organizer-flow.md (Task C)"
-artifacts: {}
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-024.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-워크플로우 시작. Phase 1 진입 전.
+Phase 1 완료 — PLAN_TASK-024 (flows 4 · AC 6 · input_fields 8). Phase 2a 진입.
 
 ## 다음 한 걸음
 
-`wf-plan` 으로 코드베이스를 조사해 `PLAN_TASK-024.json` 을 만든다. 출발점은 기능 문서 §3-7·§5 Task C·§6 프론트(Task C).
+`wf-scenario` — coverage_matrix 로 칸을 닫고 독립검증. 승인 테스트 수정 5파일(PLAN unresolved #1)을 회귀 시나리오로.
 
 ## 알아둬야 할 것
 
