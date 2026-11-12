@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-12T00:00:00Z
-summary: "Red — 새 파일 68 케이스 중 52 실패, SC-13 기존 행 9 실패. already_passing: SC-12·14·16(회귀). 기존 테스트 그 밖 실패 0. 통합 HITL#1·2 대기"
+summary: "Red — 새 파일 68 케이스 중 52 실패, SC-13 기존 행 9 실패. already_passing: SC-12·14·16(회귀). 기존 테스트 그 밖 실패 0. 통합 HITL#1·2 승인"
 
 next_steps:
-  - "통합 HITL#1·2 — 시나리오 16건 + Red + 승인 테스트 6파일 변경"
+  - "Phase 3 — wf-develop. 순서: http.ts(Bearer·키 제거) → performances.ts(401/403 오류) → RequireOrganizer·App 라우트 → 등록·수정 화면 401/403 처리 → 인증 화면 rejected 분기·env 제거"
 
 decisions:
   - decision: "SC-01~12·15·16 은 새 파일 frontend/src/auth/task024.organizer.test.tsx 하나에, SC-13·14 는 기존 승인 테스트의 행·Given 을 바꿔 옮긴다"

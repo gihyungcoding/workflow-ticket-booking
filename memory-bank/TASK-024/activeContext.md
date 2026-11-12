@@ -1,8 +1,8 @@
 ---
 task_id: TASK-024
 title: "프론트 토큰 전송·주최자 가드"
-phase: "2b"
-phase_name: "Phase 2b - Red"
+phase: "3"
+phase_name: "Phase 3 - Green"
 status: ACTIVE
 track: light
 created_at: 2026-11-12
@@ -13,21 +13,22 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-024-frontend-token-guard"
 
-last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
 source: "docs/product/features/organizer-flow.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-024.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-024.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-024.json"
+  test: "workflow_design/05_scenario/TEST_TASK-024.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a 완료 — 시나리오 16건, 독립검증 1회차 PASS(경고 7). Phase 2b 진입.
+Phase 2b 완료 — Red 61 실패, 통합 HITL#1·2 승인(adfc932). Phase 3 진입.
 
 ## 다음 한 걸음
 
-`wf-red` — 16건을 Red 로, 승인 테스트 6파일 변경을 함께 통합 HITL 로.
+`wf-develop` — Red 를 Green 으로. 승인 테스트는 고치지 않는다.
 
 ## 알아둬야 할 것
 
