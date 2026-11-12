@@ -127,6 +127,7 @@ public class PerformanceService {
 
   @Transactional
   public PerformanceResponse registerPerformance(
+      Long ownerId,
       String title,
       String venue,
       Instant startAt,
@@ -168,7 +169,16 @@ public class PerformanceService {
     Performance performance =
         performanceRepository.save(
             new Performance(
-                title, venue, startAt, openAt, closeAt, totalSeats, totalSeats, false, posterUrl));
+                ownerId,
+                title,
+                venue,
+                startAt,
+                openAt,
+                closeAt,
+                totalSeats,
+                totalSeats,
+                false,
+                posterUrl));
     seatRepository.saveAll(generateSeats(performance, sections));
     zoneRepository.saveAll(
         placements.stream()
@@ -187,9 +197,14 @@ public class PerformanceService {
 
   @Transactional
   public PerformanceResponse updatePerformance(
-      Long id, String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
-    Performance performance =
-        performanceRepository.findById(id).orElseThrow(() -> new PerformanceNotFoundException(id));
+      Long ownerId,
+      Long id,
+      String title,
+      String venue,
+      Instant startAt,
+      Instant openAt,
+      Instant closeAt) {
+    Performance performance = findOwned(ownerId, id);
     Instant now = clock.instant();
     if (!now.isBefore(performance.getOpenAt())) {
       throw new RegistrationAlreadyOpenException(id);
@@ -202,12 +217,22 @@ public class PerformanceService {
   }
 
   @Transactional
-  public PerformanceResponse cancelPerformance(Long id) {
-    Performance performance =
-        performanceRepository.findById(id).orElseThrow(() -> new PerformanceNotFoundException(id));
+  public PerformanceResponse cancelPerformance(Long ownerId, Long id) {
+    Performance performance = findOwned(ownerId, id);
     performance.cancel();
     performanceRepository.save(performance);
     return toResponse(performance, clock.instant());
+  }
+
+  /**
+   * 요청자가 소유한 공연만 돌려준다. 남의 공연·소유자를 모르는 공연(owner_id NULL)·없는 공연을 같은 404 로 묶는다 — 응답으로 공연의 존재나 소유자를 알 수
+   * 없게(ADR-0029).
+   */
+  private Performance findOwned(Long ownerId, Long id) {
+    return performanceRepository
+        .findById(id)
+        .filter(performance -> ownerId.equals(performance.getOwnerId()))
+        .orElseThrow(() -> new PerformanceNotFoundException(id));
   }
 
   /**

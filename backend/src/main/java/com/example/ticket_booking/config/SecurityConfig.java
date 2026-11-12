@@ -1,13 +1,17 @@
 package com.example.ticket_booking.config;
 
 import com.example.ticket_booking.api.dto.ErrorResponse;
+import com.example.ticket_booking.domain.UserRole;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,13 +23,15 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 접근 정책의 단일 지점(ADR-0013). 공연 API 는 permitAll 로 유지한다 — 소유권 검사는 이 태스크의 범위 밖이고 쓰기 가드(ADR-0017)가 그 사이의
- * 방어다. CORS 는 서블릿 필터 수준(CorsFilter, 최우선)이라 이 체인보다 먼저 처리된다(ADR-0016).
+ * 접근 정책의 단일 지점(ADR-0013). 공연 API 는 GET 만 누구나 쓰고, 그 밖의 메서드는 ROLE_ORGANIZER 가 있어야 한다(ADR-0029) — 토큰이
+ * 없거나 무효면 401, 역할이 다르면 403. 자기 공연인지는 서비스가 판정한다(남의 공연은 404). CORS 는 서블릿 필터 수준(CorsFilter, 최우선)이라 이
+ * 체인보다 먼저 처리된다(ADR-0016).
  */
 @Configuration
 public class SecurityConfig {
@@ -68,8 +74,12 @@ public class SecurityConfig {
                     // 이것까지 인증을 요구하면 기존 오류 응답이 모두 401 로 바뀐다. 원래 요청의 인가는 REQUEST 디스패치에서 이미 끝났다.
                     .dispatcherTypeMatchers(DispatcherType.ERROR)
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/performances/**")
+                    .permitAll()
+                    // GET 밖의 모든 메서드 — 미지원 메서드(DELETE·PATCH)도 여기서 먼저 인가되고, 통과한 뒤에야 405 가 된다
+                    .requestMatchers("/api/performances/**")
+                    .hasRole(UserRole.ORGANIZER.name())
                     .requestMatchers(
-                        "/api/performances/**",
                         "/api/time",
                         "/api/auth/signup",
                         "/api/auth/login",
@@ -81,7 +91,11 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-        .exceptionHandling(handling -> handling.authenticationEntryPoint(unauthorizedEntryPoint()))
+        .exceptionHandling(
+            handling ->
+                handling
+                    .authenticationEntryPoint(unauthorizedEntryPoint())
+                    .accessDeniedHandler(forbiddenRoleHandler()))
         .addFilterBefore(
             new JwtAuthenticationFilter(jwtTokenProvider),
             UsernamePasswordAuthenticationFilter.class);
@@ -109,15 +123,25 @@ public class SecurityConfig {
 
   /** 인증이 필요한 경로에 유효한 토큰 없이 들어오면 기존 ErrorResponse 형식으로 401 을 돌려준다. */
   private static AuthenticationEntryPoint unauthorizedEntryPoint() {
-    return (request, response, exception) -> {
-      response.setStatus(HttpStatus.UNAUTHORIZED.value());
-      response.setContentType("application/json");
-      response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-      response
-          .getWriter()
-          .write(
-              OBJECT_MAPPER.writeValueAsString(
-                  new ErrorResponse("UNAUTHORIZED", "인증이 필요합니다. 토큰이 없거나 올바르지 않습니다")));
-    };
+    return (request, response, exception) ->
+        writeError(
+            response,
+            HttpStatus.UNAUTHORIZED,
+            new ErrorResponse("UNAUTHORIZED", "인증이 필요합니다. 토큰이 없거나 올바르지 않습니다"));
+  }
+
+  /** 유효한 토큰이지만 주최자가 아니면 403 FORBIDDEN_ROLE — 401 과 같은 ErrorResponse 형식이다. */
+  private static AccessDeniedHandler forbiddenRoleHandler() {
+    return (request, response, exception) ->
+        writeError(
+            response, HttpStatus.FORBIDDEN, new ErrorResponse("FORBIDDEN_ROLE", "주최자만 이용할 수 있습니다"));
+  }
+
+  private static void writeError(
+      HttpServletResponse response, HttpStatus status, ErrorResponse body) throws IOException {
+    response.setStatus(status.value());
+    response.setContentType("application/json");
+    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+    response.getWriter().write(OBJECT_MAPPER.writeValueAsString(body));
   }
 }

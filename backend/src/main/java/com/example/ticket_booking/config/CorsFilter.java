@@ -14,7 +14,7 @@ import java.util.List;
 public class CorsFilter implements Filter {
 
   private static final String ALLOW_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
-  private static final String ALLOW_HEADERS = "Content-Type, Authorization, X-Write-Key";
+  private static final String ALLOW_HEADERS = "Content-Type, Authorization";
 
   private final List<String> allowedOrigins;
 
