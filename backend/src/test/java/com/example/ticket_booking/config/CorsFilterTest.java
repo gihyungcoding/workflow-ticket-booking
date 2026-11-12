@@ -39,9 +39,11 @@ class CorsFilterTest {
     // Then 응답에 Access-Control-Allow-Origin: https://admin.example.com 이 포함된다
     assertThat(response.getHeader("Access-Control-Allow-Origin"))
         .isEqualTo("https://admin.example.com");
-    // Then Access-Control-Allow-Headers 에 Content-Type, Authorization, X-Write-Key 가 포함된다
+    // Then Access-Control-Allow-Headers 가 정확히 Content-Type, Authorization 이다
+    // (TASK-022 SC-15 — 쓰기 가드 제거로 X-Write-Key 를 허용하지 않는다)
     assertThat(response.getHeader("Access-Control-Allow-Headers"))
-        .contains("Content-Type", "Authorization", "X-Write-Key");
+        .isEqualTo("Content-Type, Authorization")
+        .doesNotContainIgnoringCase("X-Write-Key");
     // Then 응답 상태가 2xx다
     assertThat(response.getStatus()).isBetween(200, 299);
   }

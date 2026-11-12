@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Authorization: Bearer 토큰을 검증해 인증 정보를 SecurityContext 에 넣는다. 인증에 실패해도 요청을 막지 않는다 — 인증이 필요한 경로는 보안
- * 체인의 EntryPoint 가 401 로 끊고, permitAll 경로(공연 API 등)는 만료·위조 토큰이 실려 와도 그대로 통과한다.
+ * Authorization: Bearer 토큰을 검증해 인증 정보(principal 은 사용자 id, 권한은 ROLE_&lt;역할&gt;)를 SecurityContext 에
+ * 넣는다. 인증에 실패해도 요청을 막지 않는다 — 인증이 필요한 경로는 보안 체인의 EntryPoint 가 401 로 끊고, permitAll 경로(공연 API 등)는
+ * 만료·위조 토큰이 실려 와도 그대로 통과한다.
  *
  * <p>빈으로 등록하지 않는다 — 서블릿 필터 빈은 Boot 가 보안 체인과 별도로 한 번 더 등록한다. SecurityConfig 가 체인에 직접 끼운다.
  */
@@ -39,12 +41,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       Matcher matcher = BEARER.matcher(header);
       if (matcher.matches()) {
         jwtTokenProvider
-            .verifyAccessToken(matcher.group(1))
+            .verifyAccessClaims(matcher.group(1))
             .ifPresent(
-                userId ->
+                claims ->
                     SecurityContextHolder.getContext()
                         .setAuthentication(
-                            new UsernamePasswordAuthenticationToken(userId, null, List.of())));
+                            new UsernamePasswordAuthenticationToken(
+                                claims.userId(),
+                                null,
+                                List.of(
+                                    new SimpleGrantedAuthority("ROLE_" + claims.role().name())))));
       }
     }
     chain.doFilter(request, response);

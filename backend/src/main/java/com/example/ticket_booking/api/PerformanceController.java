@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,9 +55,13 @@ public class PerformanceController {
     return performanceService.getPerformance(id);
   }
 
+  /**
+   * 쓰기는 보안 체인이 ROLE_ORGANIZER 를 확인한 뒤에만 여기 온다(SecurityConfig). principal 은 토큰의 사용자 id 다 — 등록하면 그
+   * 사람이 소유자다.
+   */
   @PostMapping
   public ResponseEntity<PerformanceResponse> register(
-      @Valid @RequestBody RegisterPerformanceRequest request) {
+      @Valid @RequestBody RegisterPerformanceRequest request, Authentication authentication) {
     List<SectionSpec> sections =
         request.sections() == null
             ? null
@@ -69,6 +74,7 @@ public class PerformanceController {
                 .toList();
     PerformanceResponse response =
         performanceService.registerPerformance(
+            (Long) authentication.getPrincipal(),
             request.title(),
             request.venue(),
             request.startAt(),
@@ -82,8 +88,11 @@ public class PerformanceController {
 
   @PutMapping("/{id}")
   public PerformanceResponse update(
-      @PathVariable Long id, @Valid @RequestBody UpdatePerformanceRequest request) {
+      @PathVariable Long id,
+      @Valid @RequestBody UpdatePerformanceRequest request,
+      Authentication authentication) {
     return performanceService.updatePerformance(
+        (Long) authentication.getPrincipal(),
         id,
         request.title(),
         request.venue(),
@@ -93,8 +102,8 @@ public class PerformanceController {
   }
 
   @PostMapping("/{id}/cancel")
-  public PerformanceResponse cancel(@PathVariable Long id) {
-    return performanceService.cancelPerformance(id);
+  public PerformanceResponse cancel(@PathVariable Long id, Authentication authentication) {
+    return performanceService.cancelPerformance((Long) authentication.getPrincipal(), id);
   }
 
   private SectionSpec toSectionSpec(SectionRequest request) {

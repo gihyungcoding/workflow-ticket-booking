@@ -1,5 +1,8 @@
 package com.example.ticket_booking.api;
 
+import static com.example.ticket_booking.support.AuthTestHelper.accessTokenOf;
+import static com.example.ticket_booking.support.AuthTestHelper.login;
+import static com.example.ticket_booking.support.AuthTestHelper.signUp;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -8,6 +11,7 @@ import com.example.ticket_booking.domain.Seat;
 import com.example.ticket_booking.repository.PerformanceRepository;
 import com.example.ticket_booking.repository.PerformanceZoneRepository;
 import com.example.ticket_booking.repository.SeatRepository;
+import com.example.ticket_booking.repository.UserRepository;
 import com.example.ticket_booking.support.ClockTestConfig;
 import com.example.ticket_booking.support.JsonText;
 import com.example.ticket_booking.support.MutableClock;
@@ -50,14 +54,20 @@ class PerformanceBrowseResponseApiTest {
   @Autowired private PerformanceRepository performanceRepository;
   @Autowired private SeatRepository seatRepository;
   @Autowired private PerformanceZoneRepository zoneRepository;
+  @Autowired private UserRepository userRepository;
   @Autowired private MutableClock clock;
 
   private final ObjectMapper objectMapper = JsonMapper.builder().build();
 
+  /** TASK-022 — 공연 등록은 주최자 토큰이 있어야 한다(ADR-0029). */
+  private String organizerToken;
+
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
     clock.setInstant(T);
     clearTables();
+    signUp(mockMvc, "organizer@example.com", "password123", "한도윤", "ORGANIZER");
+    organizerToken = accessTokenOf(login(mockMvc, "organizer@example.com", "password123"));
   }
 
   @AfterEach
@@ -69,6 +79,7 @@ class PerformanceBrowseResponseApiTest {
     zoneRepository.deleteAll();
     seatRepository.deleteAll();
     performanceRepository.deleteAll();
+    userRepository.deleteAll();
   }
 
   @SuppressWarnings("unchecked")
@@ -99,6 +110,7 @@ class PerformanceBrowseResponseApiTest {
         mockMvc
             .perform(
                 post("/api/performances")
+                    .header("Authorization", "Bearer " + organizerToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(JsonText.of(body)))
             .andReturn();

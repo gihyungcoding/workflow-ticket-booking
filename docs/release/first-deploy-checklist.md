@@ -1,6 +1,6 @@
 # 첫 배포 체크리스트 — 연습 · 무료 인프라
 
-**상태**: 부분 완료 (2026-10-20) — 배포·스모크 완료, 롤백·알림 확인과 틀린 키 빌드 검증은 남음
+**상태**: 부분 완료 (2026-10-20) — 배포·스모크 완료, 롤백·알림 확인은 남음. 틀린 키 빌드 검증은 TASK-022 로 쓰기 키가 없어져 해당 없음 — 다음 배포는 §5-1 순서를 따른다
 **근거**: ADR-0016 · TASK-014 · TASK-015
 **목적**: 서비스를 내는 것이 아니라 **배포 절차에서 겪는 마찰을 기록하는 것.**
 여기서 겪은 것이 `docs/release/` 의 릴리스 문서·런북의 원료가 된다 — 써보지 않은 절차를
@@ -22,7 +22,7 @@
 - [ ] `cd backend && ./gradlew test` 통과
 - [ ] `cd frontend && npm test && npm run lint && npm run build` 통과
 - [ ] `python3 scripts/check_architecture.py` 에 error 없음 (특히 `DEPLOY-001`·`DEPLOY-002`)
-- [ ] 쓰기 키를 만들어 비밀번호 관리자에 보관했다 — `openssl rand -hex 24`. **저장소에 커밋하지 않는다**
+- [ ] `JWT_SECRET`(32바이트 이상)을 만들어 비밀번호 관리자에 보관했다 — `openssl rand -hex 32`. **저장소에 커밋하지 않는다**
 - [ ] 이 체크리스트를 기록하며 진행할 준비 (아래 §9 표)
 
 ## 2. 과금 가드 — 이 중 하나라도 보이면 멈춘다
@@ -68,7 +68,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 `postgresql://` 주소를 통째로 `SPRING_DATASOURCE_URL` 에 넣으면 기동에 실패한다.
 사용자·비밀번호는 URL 에서 분리해 따로 넣는다.
 
-- [ ] 마이그레이션은 V1·V2 두 개다 (`V1__create_performance`, `V2__create_seat`). 빈 DB 라 기동 시 Flyway 가 둘 다 적용해야 한다
+- [ ] 마이그레이션은 `backend/src/main/resources/db/migration` 의 V1~V7 이다. 기동 시 Flyway 가 아직 적용되지 않은 것만 적용한다 — 빈 DB 면 V1~V7 전부, 2026-10-20 첫 배포의 DB(V1·V2 까지)면 V3~V7. V7 의 운영 영향은 §5-2
 
 ### 4-2. 백엔드 — Render  `사람`(계정·연동) + `에이전트`(설정값)
 
@@ -77,7 +77,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 - [ ] 웹 서비스 생성: 런타임 **Docker**, 인스턴스 유형 **Free**, `backend/Dockerfile` 경로를 TASK-014 가 만든 위치에 맞춘다
 - [ ] 환경변수 입력 (§6 표)
 - [ ] **헬스체크 경로는 비워둔다.** 지금 백엔드에는 DB 를 타지 않는 헬스 엔드포인트가 없다 (§8)
-- [ ] 첫 배포 로그에서 확인: 이미지 빌드 성공 → JVM 기동 → Flyway 가 `V1`·`V2` 적용 → `Started` 로그
+- [ ] 배포 로그에서 확인: 이미지 빌드 성공 → JVM 기동 → Flyway 가 §4-1 의 남은 마이그레이션을 적용(마지막이 `V7`) → `Started` 로그
 
 ### 4-3. 프론트 — Cloudflare Pages  `사람`
 
@@ -93,11 +93,58 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 - [ ] 실제 발급된 두 주소가 §3 의 예상과 같은가. 다르면 `CORS_ALLOWED_ORIGINS`·`VITE_API_BASE_URL` 을 고치고 둘 다 재배포
 - [ ] **Pages 미리보기 배포(`<해시>.<프로젝트>.pages.dev`)는 허용 출처가 아니다.** 미리보기에서 API 를 부르면 CORS 로 막히는 것이 정상이다
 
-## 5. 쓰기 키는 비밀이 아니다
+## 5. 공연 쓰기는 주최자 토큰으로 보호된다
 
-`VITE_WRITE_KEY` 는 빌드 시 번들에 들어가서 **누구에게나 보인다.** 이 가드는 보안이 아니라
-"주소를 우연히 알게 된 요청"을 거르는 수준이다 (ADR-0016). 연습용 데이터라는 전제에서만
-성립하므로, **실제 개인정보나 의미 있는 데이터를 넣지 않는다.**
+예전의 공유 쓰기 키(`WRITE_GUARD_ENABLED`·`WRITE_API_KEY`·`X-Write-Key`)는 없어졌다 (ADR-0029, TASK-022).
+공연 등록·수정·취소는 `ORGANIZER` 역할의 로그인 토큰이 있어야 하고, 수정·취소는 자기 공연만 된다.
+조회(`GET`)는 지금처럼 누구나 쓴다. `HEAD`·Origin 없는 `OPTIONS` 는 이제 공개가 아니다(토큰 없으면 401) — 모니터링·`curl` 확인은 `GET` 으로 한다 (§9).
+
+백엔드에 남아 있는 옛 변수(`WRITE_GUARD_ENABLED`·`WRITE_API_KEY`)는 새 코드가 읽지 않지만, **이전 배포로 롤백할 수 있는 동안은 지우지 않는다.**
+옛 코드는 이 변수가 비어 있으면 쓰기 가드를 끈 채 기동해서, 롤백한 순간 공연 쓰기가 인증 없이 열린다.
+이 배포가 안정된 것을 확인한 뒤(§9 롤백 항목)에 지운다. 롤백해도 V7 의 `owner_id` 컬럼은 남지만 옛 코드는 그 컬럼을 쓰지 않아 영향이 없다.
+
+### 5-1. 배포 순서 — 프론트에서 `VITE_WRITE_KEY` 를 먼저 지운다  `사람`
+
+TASK-024 전까지 프론트 코드(`frontend/src/api/http.ts`)는 `VITE_WRITE_KEY` 가 있으면 **모든 쓰기 요청**(가입·로그인 포함)에
+`X-Write-Key` 헤더를 붙인다. 이 백엔드는 CORS 허용 헤더에서 그 헤더를 뺐으므로(`Content-Type, Authorization` 만),
+브라우저가 사전 요청(OPTIONS) 단계에서 그 요청을 **보내지 않는다** — 서버가 무시하는 것이 아니라 브라우저가 막는다.
+
+그래서 이 백엔드를 배포하기 전에:
+
+- [ ] Pages 빌드 환경변수에서 `VITE_WRITE_KEY` 를 **지우고** 프론트를 다시 빌드·배포했다
+- [ ] 다시 배포한 프론트에서 로그인 요청의 사전 요청 헤더(`Access-Control-Request-Headers`)에 `x-write-key` 가 없다 (Network 탭)
+- [ ] 그 다음에 백엔드를 배포했다
+
+순서를 거꾸로 하면 프론트를 다시 배포할 때까지 **로그인·가입이 브라우저에서 실패**한다 (콘솔에 CORS 오류).
+
+이 순서에도 짧은 공백이 있다. 프론트를 다시 배포한 뒤 백엔드 배포가 끝날 때까지는 옛 백엔드의 쓰기 가드가 살아 있어서
+키 없는 쓰기(로그인·가입 포함)를 `401 WRITE_KEY_INVALID` 로 거부한다. 점검 구간으로 보고 두 배포를 이어서 한다.
+`VITE_WRITE_KEY` 를 읽는 코드 자체는 TASK-024 에서 없앤다.
+
+TASK-024 전까지는 프론트가 로그인 토큰을 쓰기 요청에 싣지 않는다. 그래서 이 백엔드가 나간 뒤에는
+**브라우저에서 공연을 등록·수정·취소할 수 없다**(401). 의도된 공백이다 — 쓰기 확인은 §7 의 `curl` 스모크로 한다.
+
+### 5-2. 이미 있는 공연은 소유자가 없다  `사람`
+
+V7 은 공연에 소유자(`owner_id`)를 더하고 **기존 행은 비워 둔다**(NULL). 소유자를 지정하는 화면이나 API 는 없다.
+그래서 이 백엔드를 배포하면 그 전에 등록된 공연(2026-10-20 스모크로 만든 것 등)은 **누구도 수정·취소할 수 없다**
+(남의 공연과 같은 404). 조회는 그대로 된다.
+
+- [ ] 연습 데이터라면 그대로 둔다
+- [ ] 계속 관리해야 할 공연이 있으면, 그 주최자 계정으로 가입한 뒤 DB 에서 직접 소유자를 넣는다
+
+```sql
+-- 이메일은 가입 시 앞뒤 공백을 지우고 소문자로 저장된다 — 같은 규칙으로 찾는다
+UPDATE performance
+   SET owner_id = (SELECT id FROM users WHERE email = lower(trim('<주최자 이메일>')))
+ WHERE id IN (<공연 id 목록>) AND owner_id IS NULL;
+
+-- 확인: owner_id 가 비어 있으면 이메일이 틀렸다 (위 UPDATE 는 오류 없이 NULL 을 넣는다)
+SELECT id, owner_id FROM performance WHERE id IN (<공연 id 목록>);
+```
+
+그 주최자의 `role` 이 `ORGANIZER` 여야 수정·취소가 된다 (`users.role`). 역할은 로그인할 때 토큰에 담기므로,
+`users.role` 을 바꿨다면 그 사람이 **다시 로그인해야** 반영된다 (이미 받은 토큰은 최대 24시간 옛 역할로 동작한다).
 
 ## 6. 환경변수 한눈에
 
@@ -109,8 +156,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 | `SPRING_DATASOURCE_USERNAME` | Neon 사용자 | |
 | `SPRING_DATASOURCE_PASSWORD` | Neon 비밀번호 | 비밀 |
 | `CORS_ALLOWED_ORIGINS` | `https://<Pages 이름>.pages.dev` | 쉼표로 여러 개. 와일드카드 금지 |
-| `WRITE_GUARD_ENABLED` | `true` | 켜고 키가 비면 기동 실패 |
-| `WRITE_API_KEY` | §1 에서 만든 키 | 비밀 |
+| `JWT_SECRET` | §1 에서 만든 값 | 비밀. 비었거나 32바이트 미만이면 기동 실패 (`SecurityConfig`) |
 | `PORT` | **직접 넣지 않는다** | Render 가 주입한다 |
 
 **프론트 (Pages 빌드 환경변수)**
@@ -118,7 +164,6 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 | 이름 | 값 | 비고 |
 |---|---|---|
 | `VITE_API_BASE_URL` | `https://<Render 이름>.onrender.com` | **끝에 `/` 없이** |
-| `VITE_WRITE_KEY` | 위 `WRITE_API_KEY` 와 같은 값 | 번들에 노출됨 (§5) |
 | `NODE_VERSION` | `22` | §4-3 |
 
 ### 6-1. 소셜 로그인 (선택)  `사람`
@@ -168,7 +213,6 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 ```bash
 BACKEND="https://<Render 이름>.onrender.com"
 FRONT="https://<Pages 이름>.pages.dev"
-KEY="<WRITE_API_KEY>"
 JSON='Content-Type: application/json'
 
 # 1. 조회 — 첫 요청이라면 콜드스타트 시간이 여기서 측정된다. 기대: 200
@@ -177,32 +221,48 @@ time curl -s -o /dev/null -w "%{http_code}\n" "$BACKEND/api/performances"
 # 2. 허용된 출처의 사전 요청. 기대: 2xx + access-control-allow-origin: $FRONT
 curl -s -i -X OPTIONS "$BACKEND/api/performances" \
   -H "Origin: $FRONT" -H "Access-Control-Request-Method: POST" \
-  -H "Access-Control-Request-Headers: content-type,x-write-key" | grep -iE '^HTTP|access-control'
+  -H "Access-Control-Request-Headers: content-type,authorization" | grep -iE '^HTTP|access-control'
 
 # 3. 허용되지 않은 출처. 기대: access-control-allow-origin 이 출력되지 않음
 curl -s -i -X OPTIONS "$BACKEND/api/performances" \
   -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" | grep -i 'access-control-allow-origin' \
   || echo "(헤더 없음 — 정상)"
 
-# 4. 키 없는 쓰기. 기대: 401
+# 4. 토큰 없는 쓰기. 기대: 401
 curl -s -o /dev/null -w "%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -d '{}'
 
-# 5. 키가 있는 쓰기, 일부러 잘못된 본문. 기대: 400 — 가드는 통과했고 본문 검증에서 걸렸다는 뜻
-curl -s -o /dev/null -w "%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -H "X-Write-Key: $KEY" -d '{}'
+# 5. 스모크용 주최자·관객 계정을 만들고 토큰을 받는다 (이메일은 매번 새 값으로)
+SUFFIX=$(date +%s)
+login() { # $1=email $2=role — 가입 후 로그인해 accessToken 을 출력한다
+  curl -s -o /dev/null -X POST "$BACKEND/api/auth/signup" -H "$JSON" \
+    -d "{\"email\":\"$1\",\"password\":\"smoke-pass-1\",\"passwordConfirm\":\"smoke-pass-1\",\"name\":\"스모크\",\"role\":\"$2\"}"
+  curl -s -X POST "$BACKEND/api/auth/login" -H "$JSON" \
+    -d "{\"email\":\"$1\",\"password\":\"smoke-pass-1\"}" | sed -E 's/.*"accessToken":"([^"]+)".*/\1/'
+}
+ORG=$(login "smoke-org-$SUFFIX@example.com" ORGANIZER)
+AUD=$(login "smoke-aud-$SUFFIX@example.com" AUDIENCE)
 
-# 6. 조회는 키 없이 통과. 기대: 200
+# 6. 주최자 토큰, 일부러 잘못된 본문. 기대: 400 — 인가는 통과했고 본문 검증에서 걸렸다는 뜻
+curl -s -o /dev/null -w "%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -H "Authorization: Bearer $ORG" -d '{}'
+
+# 7. 관객 토큰. 기대: 403 (code FORBIDDEN_ROLE)
+curl -s -w "\n%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -H "Authorization: Bearer $AUD" -d '{}'
+
+# 8. 조회는 토큰 없이 통과. 기대: 200
 curl -s -o /dev/null -w "%{http_code}\n" "$BACKEND/api/performances"
 ```
 
-4번이 401, 5번이 400 이면 가드가 의도대로다. 5번이 401 이면 키가 어긋났고(`VITE_WRITE_KEY` 와 `WRITE_API_KEY`), 4번이 400 이면 **가드가 꺼져 있다** — 환경변수를 확인한다.
+4번이 401, 6번이 400, 7번이 403 이면 역할 인가가 의도대로다. 6번이 401 이면 로그인 토큰을 못 받았다
+(5번의 응답과 `JWT_SECRET` 을 확인한다). 4번이 401 이 아니면 **쓰기가 열려 있다** — 배포된 버전을 확인한다.
+스모크 계정은 연습용 데이터에 남는다.
 
 **브라우저에서** (개발자 도구 Network 탭을 열고)
 
 - [ ] 목록 화면이 뜨고, 요청이 `$BACKEND` 로 나간다 (상대 경로가 아니다)
 - [ ] 콘솔에 CORS 오류가 없다
 - [ ] 상세 화면에서 **새로고침** — `/performances/1` 에서 404 가 아니라 화면이 열린다
-- [ ] 공연 등록을 하나 해본다 — 사전 요청(OPTIONS)이 2xx, 등록이 성공한다
-- [ ] 키를 일부러 틀리게 빌드해보면 "쓰기 거부" 안내가 일반 오류와 다르게 보인다 (TASK-015 의 완료 조건)
+- [ ] 로그인을 해본다 — 사전 요청(OPTIONS)이 2xx 이고 그 요청 헤더에 `x-write-key` 가 없다, 로그인이 성공한다 (§5-1)
+- [ ] 공연 등록·수정·취소의 브라우저 확인은 **TASK-024 뒤에** 한다 — 그 전에는 프론트가 토큰을 싣지 않아 401 이 정상이다 (§5-1). 지금은 위 `curl` 6·7번으로 확인한다
 
 ## 8. 확인하지 못한 가설 세 가지 (ADR-0016)
 
@@ -216,8 +276,8 @@ curl -s -o /dev/null -w "%{http_code}\n" "$BACKEND/api/performances"
 
 ## 9. 알려진 공백 — 체크리스트를 쓰며 발견한 것
 
-- [ ] **DB 를 타지 않는 헬스 엔드포인트가 없다.** `actuator` 의존성도 없다. Render 의 헬스체크를 `/api/performances` 로 걸면 **주기적으로 DB 를 깨워** Neon 의 무료 연산 시간(월 100 CU-hours)을 소모할 수 있다. 첫 배포에서는 헬스체크를 비우고, 필요성이 확인되면 별도 태스크로 만든다
-- [ ] **배포 순서 규칙이 없다.** 프론트와 백엔드가 따로 배포되므로, API 를 **추가**하는 변경은 백엔드를 먼저, **제거**하는 변경은 프론트를 먼저 배포해야 안전하다 (일반적인 관행이고 이 프로젝트에서 검증한 것은 아니다)
+- [ ] **DB 를 타지 않는 헬스 엔드포인트가 없다.** `actuator` 의존성도 없다. Render 의 헬스체크를 `/api/performances` 로 걸면 **주기적으로 DB 를 깨워** Neon 의 무료 연산 시간(월 100 CU-hours)을 소모할 수 있다. 첫 배포에서는 헬스체크를 비우고, 필요성이 확인되면 별도 태스크로 만든다. 외부 업타임 모니터를 붙인다면 `GET` 으로 건다 — TASK-022 부터 `/api/performances` 의 `HEAD` 는 토큰 없이 401 이다 (§5)
+- [ ] **배포 순서 규칙이 없다.** 프론트와 백엔드가 따로 배포되므로, API 를 **추가**하는 변경은 백엔드를 먼저, **제거**하는 변경은 프론트를 먼저 배포해야 안전하다 (일반적인 관행이고 이 프로젝트에서 검증한 것은 아니다). 첫 구체 사례: TASK-022 의 `X-Write-Key` 허용 헤더 제거 — §5-1
 - [ ] **롤백을 해본 적이 없다.** 이전 배포로 되돌리는 기능이 Render 에 있는지, 어디서 하는지 이번에 확인한다 — **2026-10-20: 첫 배포라 이전 배포가 없어 롤백 메뉴를 확인하지 못했다.** 두 번째 배포 뒤 다시 확인한다 (이전 배포가 있어야 보이는지는 확인 못함)
 - [ ] **로그를 어디서 보는지, 알림이 오는지** 확인한다. 지금 운영 단계 자산은 비어 있다 — **확인함(2026-10-20)**: Render 는 Monitor → Logs. Cloudflare Pages 는 Workers & Pages → br-ticket-booking → Deployment details 에서 **빌드·배포 로그만** 보이고 웹 서비스(런타임) 로그는 확인되지 않았다 (정적 호스팅이라 서버 로그가 없는 것으로 보이나 확인한 사실은 아니다). 알림 수신 여부는 아직 확인하지 않았다
 - [ ] **비밀값 보관 방식이 정해져 있지 않다.** 지금은 사람이 대시보드에 직접 입력한다

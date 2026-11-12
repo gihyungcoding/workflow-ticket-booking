@@ -60,6 +60,10 @@ public class Performance {
   @Column(name = "poster_url", length = 500)
   private String posterUrl;
 
+  /** 등록한 주최자의 사용자 id(V7). 연관을 맺지 않고 값으로만 둔다 — NULL 은 소유자를 모르는 기존 공연이다(ADR-0029). */
+  @Column(name = "owner_id")
+  private Long ownerId;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -97,6 +101,21 @@ public class Performance {
     this.availableSeats = availableSeats;
     this.cancelled = cancelled;
     this.posterUrl = posterUrl;
+  }
+
+  public Performance(
+      Long ownerId,
+      String title,
+      String venue,
+      Instant startAt,
+      Instant openAt,
+      Instant closeAt,
+      Integer totalSeats,
+      Integer availableSeats,
+      Boolean cancelled,
+      String posterUrl) {
+    this(title, venue, startAt, openAt, closeAt, totalSeats, availableSeats, cancelled, posterUrl);
+    this.ownerId = ownerId;
   }
 
   public Long getId() {
@@ -137,6 +156,10 @@ public class Performance {
 
   public String getPosterUrl() {
     return posterUrl;
+  }
+
+  public Long getOwnerId() {
+    return ownerId;
   }
 
   public void updateSchedule(

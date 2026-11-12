@@ -1,0 +1,559 @@
+{
+  "task_id": "TASK-022",
+  "status": "WARN",
+  "status_reason": "4회차 — 코드·테스트·제약 통과, [correctness] 0, RC-1·RC-2 재현 변종 전부 해소. WARN 사유: (1) 배포 문서 경미 소견 2건(§5-2 SQL 주석 '같은 규칙' 이 탭·비 ASCII 대문자에서 Java 정규화와 다를 수 있음 — 확인 SELECT 가 드러냄 / §5 '§9 롤백 항목' 참조가 지우는 기준 없이 비어 있고 롤백 시 프론트도 함께 되돌려야 한다는 서술 없음) (2) AUTH-001 warn 5건(프론트, TASK-024 범위) (3) 이 백엔드 배포 뒤 TASK-024 전까지 브라우저 공연 쓰기 401 — 의도된 공백, 체크리스트 §5-1 에 명시 (4) HEAD·Origin 없는 OPTIONS 401 — 시나리오 결정, 문서 §5·§9 에 명시",
+  "evidence": {
+    "tests": {
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --continue (build/test-results 를 지우고 실행)",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL in 1m 41s — 39 classes, 184 tests, 0 failed, 0 skipped (96.9s)",
+      "round": 4
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "출력 없음(통과)",
+      "round": 4
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "49 files changed, 4809 insertions(+), 819 deletions(-). 461f8f5...HEAD -- backend frontend 비어 있음 — 1회차 이후 바뀐 것은 docs/release/first-deploy-checklist.md 와 workflow 산출물",
+      "round": 4
+    },
+    "head": "26895458cbbbeef4e365a96d996a76b796f7ed45",
+    "worktree_clean": true
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "마이그레이션 후 기존 performance 행의 owner_id 가 NULL 이고, 기존 관객 조회 API 응답이 마이그레이션 전과 같다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnerMigrationTest#test_sc01(PostgreSQL 16 Testcontainers, V6→V7, owner_id NULL·다른 열 같음·FK 23503·ON DELETE SET NULL) · PerformanceOwnershipApiTest#test_sc02(키 집합·ownerId 부재) · PerformanceBrowseResponseApiTest 통과"
+    },
+    {
+      "criterion": "주최자 토큰으로 POST /api/performances 를 보내면 201 이고, 저장된 행의 owner_id 가 그 사용자 id 다 (비트랜잭션 조회로 확인)",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc03·test_sc05 a 행 — 클래스 레벨 @Transactional 없음, performanceRepository.findById 로 재조회"
+    },
+    {
+      "criterion": "토큰 없이 POST·PUT /api/performances/** 를 보내면 401, 관객 토큰이면 403 FORBIDDEN_ROLE 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc04(6행×3경로, 403 본문·Content-Type, count·title·cancelled 재조회)·test_sc05(30행)·test_sc06(13행) · PerformanceErrorResponseRegressionTest#test_sc12 i~l(실제 서버)"
+    },
+    {
+      "criterion": "다른 주최자의 공연, 소유자가 NULL 인 공연, 없는 id 에 수정·취소를 보내면 모두 같은 형태의 404 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc07 — 404 본문 키 집합 1종, message id 만 다름, P2·P0 재조회 그대로, 빈 title 은 세 경우 모두 400"
+    },
+    {
+      "criterion": "자기 공연의 수정·취소는 지금 규칙(수정은 now < openAt) 그대로 동작하고 DB 에 반영된다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc08·test_sc13·test_sc14 (비트랜잭션 재조회). PerformanceRegistrationApiTest 기존 수정·취소 테스트 통과(클래스 @Transactional — 반영은 위 비트랜잭션 테스트가 덮음, 리뷰어 확인)"
+    },
+    {
+      "criterion": "X-Write-Key 없이 가입·로그인·소셜 가입 완료가 성공한다. WRITE_GUARD_ENABLED=true 를 줘도 쓰기 요청이 키 때문에 거부되지 않는다",
+      "verdict": "PASS",
+      "evidence": "WriteGuardRemovalApiTest#test_sc09 — @SpringBootTest(properties) 로 가드 변수 주입, Environment.getProperty 로 적용 확인, 201·200·200·201. 단 브라우저 경로는 RC-2 참고(서버 쪽 기준은 충족)"
+    },
+    {
+      "criterion": "WriteGuardFilter·WriteGuardConfig 와 그 테스트가 저장소에 없고, CORS 허용 헤더에 X-Write-Key 가 없다",
+      "verdict": "PASS",
+      "evidence": "WriteGuardRemovalApiTest#test_sc10·test_sc15, CorsFilterTest#test_sc01. `git ls-files | grep -i writeguard` → WriteGuardRemovalApiTest.java 1건뿐(삭제 대상 테스트 5개 없음)"
+    },
+    {
+      "criterion": "GET /api/performances/** 는 토큰 없이 지금처럼 200 이다",
+      "verdict": "PASS",
+      "evidence": "PerformanceOwnershipApiTest#test_sc11(토큰 없음·무효 토큰, 목록·상세·next-opening) · AuthRegressionApiTest 조회 행"
+    }
+  ],
+  "screens": [],
+  "screens_skipped_reason": "route=Backend — 화면 변경 없음",
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 8,
+    "no_target": [],
+    "files_scanned": 525,
+    "overdue_promotions": [],
+    "violations": [
+      {
+        "id": "AUTH-001",
+        "severity": "warn",
+        "count": 5,
+        "files": [
+          "frontend/.env.example",
+          "frontend/src/api/http.ts",
+          "frontend/src/vite-env.d.ts"
+        ]
+      },
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "count": 3,
+        "files": [
+          "frontend/src/pages/PerformanceDetailPage.tsx",
+          "frontend/src/pages/PerformanceEditPage.tsx",
+          "frontend/src/pages/PerformanceListPage.tsx"
+        ]
+      }
+    ],
+    "auth_001_delta": "develop 10건(backend CorsFilter·WriteGuardConfig·WriteGuardFilter + frontend 3파일) → 5건(frontend .env.example·http.ts·vite-env.d.ts). 백엔드 위반 0 — 남은 것은 TASK-024 범위(promote_after)",
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직 하지 않음",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "PerformanceController 는 principal 을 꺼내 넘기기만 한다 — 소유권 판정은 Service(findOwned)"
+      },
+      {
+        "rule": "API: DB 접근 하지 않음",
+        "constraint": "ARCH-001",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: HTTP 관심사 하지 않음",
+        "constraint": "ARCH-002",
+        "state": "✓",
+        "note": "api 패키지 import 만 검사. PerformanceService 는 ownerId(Long)만 받는다 — Authentication 타입을 쓰지 않음"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용",
+        "constraint": "ARCH-003",
+        "state": "✓"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어 하지 않음",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "Performance 는 ownerId 필드·생성자만 — 위반 없음. Phase 5 rule_proposals 후보(TASK-019 와 같은 갭)"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단 하지 않음",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "이번 변경에 Repository 수정 없음"
+      },
+      {
+        "rule": "Frontend: 도메인 규칙",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "이번 변경 없음"
+      }
+    ],
+    "round2": {
+      "command": "python3 scripts/check_architecture.py --json",
+      "status": "pass",
+      "error_count": 0,
+      "warn_count": 8,
+      "files_scanned": 525,
+      "no_target": [],
+      "overdue_promotions": []
+    },
+    "round3": {
+      "status": "pass",
+      "error_count": 0,
+      "warn_count": 8,
+      "files_scanned": 525,
+      "no_target": [],
+      "overdue_promotions": []
+    },
+    "round4": {
+      "status": "pass",
+      "error_count": 0,
+      "warn_count": 8,
+      "files_scanned": 525,
+      "no_target": [],
+      "overdue_promotions": []
+    }
+  },
+  "regression": {
+    "full_suite": "184/184 passed",
+    "callers_checked": true,
+    "callers": "registerPerformance·updatePerformance·cancelPerformance 의 호출부는 PerformanceController 3곳뿐(Grep). verifyAccessToken 은 verifyAccessClaims 위임 — JwtTokenFormatTest·OAuth2SocialLoginCallbackTest 통과. sub 를 사용자 id 로 읽는 곳은 verifyAccessClaims 1곳"
+  },
+  "scope_deviations": [],
+  "code_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "phase": 3,
+        "scope": "develop...HEAD (ebcb3e5)",
+        "findings": "[correctness] RC-1(sub 비정규 표기, reproduced 4) — 시나리오 밖 → RETRY_SCENARIO 2/3 · [design] HEAD 401/403 · [info] 프론트 X-Write-Key"
+      },
+      {
+        "n": 2,
+        "phase": 3,
+        "scope": "ebcb3e5...HEAD · 같은 카테고리 전수",
+        "findings": "결함 없음 — RC-1 해소(7f812e0), 새 변종 없음"
+      },
+      {
+        "n": 3,
+        "phase": 4,
+        "scope": "develop...HEAD 전체 · RC-1 not_probed 변종 프로브",
+        "findings": [
+          "결함 없음([correctness] 0) — RC-1 not_probed 변종 전부 서명된 토큰으로 프로브해 not_reproduced(뒤 개행·빈 문자열·0·19자리 경계·20자리 이상·공백·JSON 숫자·전각·아라비아-인도). role·SecurityConfig 경로 변형도 우회 없음",
+          "[design] HEAD /api/performances 비로그인 401·관객 403 — 시나리오 결정과 같고 fail-closed. 저장소에 HEAD 사용처 없음. 결함 아님",
+          "[info] frontend/src/api/http.ts:12-17 이 VITE_WRITE_KEY 가 있으면 X-Write-Key 를 붙인다 — 백엔드가 Allow-Headers 에서 뺐으므로 그 값이 설정된 프론트의 브라우저 쓰기(가입·로그인 포함)는 preflight 에서 실패. '프론트에서 VITE_WRITE_KEY 제거 후 백엔드 배포' 순서가 체크리스트에 있는지 확인 권고 → 검증자 확인 결과 RC-2"
+        ],
+        "test_integrity": "PerformanceOwnershipApiTest·WriteGuardRemovalApiTest 클래스 레벨 @Transactional 없음, 거부 경로 count·reload 비트랜잭션. WriteGuardRemovalApiTest properties 실제 주입 + Environment 단언. SC-05 w~ad 는 실제 필터·디코더 경로, o1Id 변형 — 가짜 통과 아님",
+        "probe_location": "/private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java"
+      },
+      {
+        "n": 4,
+        "phase": 3,
+        "scope": "40767bc (RC-2 수정 커밋)",
+        "findings": "RC-2 변종 4 해소 · [doc] 정방향 순서의 전환 구간 미서술 → c3d9a57 반영"
+      },
+      {
+        "n": 5,
+        "phase": 4,
+        "scope": "461f8f5...HEAD 수정 범위 + develop...HEAD 전체 · RC-2 같은 부류 전수",
+        "findings": [
+          "결함 없음(코드) — 소스는 1회차 이후 변경 없음",
+          "RC-2 변종 1~4·전환 구간 해소 확인(develop WriteGuardFilter·WriteGuardAuthApiTest#test_sc19 대조)",
+          "[doc] V7 로 기존 공연 owner NULL → 배포 후 수정·취소 불가가 체크리스트에 없음 (reproduced)",
+          "[doc] §4-1·§4-2 '마이그레이션은 V1·V2' — 실제 V1~V7 (reproduced)",
+          "JWT_SECRET 필수 서술 — §1·§6·§6-1 과 코드 일치(not_reproduced)"
+        ]
+      },
+      {
+        "n": 6,
+        "phase": 4,
+        "scope": "870f43e + develop...HEAD · RC-2 를 DEV changed_files 항목마다 운영 결과와 대조(표)",
+        "findings": [
+          "2회차 변종 2건 해소(§5-2 SQL·스키마·역할, §4-1·§4-2)",
+          "[doc] §5 옛 변수 '지워도 된다' — 롤백 시 옛 가드 OFF 로 쓰기 개방",
+          "[doc] HEAD·Origin 없는 OPTIONS 401 — 모니터링 영향 미서술",
+          "[doc] §5-2 SQL 대소문자 이메일 무동작·검증 쿼리 없음",
+          "불필요 판정: 배포 전 발급 토큰(develop 도 role 클레임 발급), sub 정규형(발급분은 정규형), 롤백 시 V7 컬럼(nullable·옛 코드 무시)"
+        ],
+        "changed_files_sweep": "V7·ownerId·소유권·AccessClaims/role·sub·SecurityConfig 인가/403·HEAD/OPTIONS·CorsFilter·WriteGuard 삭제·JWT_SECRET — 11 항목 전부 대조"
+      },
+      {
+        "n": 7,
+        "phase": 4,
+        "scope": "23f6e2f (3회차 갭 3건 수정) · 같은 문서 다른 절과의 모순",
+        "findings": [
+          "결함 없음 — root_causes []",
+          "(a) 롤백 시 옛 가드 변수 보존·(b) HEAD/OPTIONS 401·(c) SQL lower(trim())+확인 SELECT 해소",
+          "[docs 경미] §5-2 주석 '같은 규칙' 은 탭·비 ASCII 대문자에서 Java trim/toLowerCase 와 다를 수 있다 — 확인 SELECT 가 드러냄",
+          "[docs 경미] §5 '§9 롤백 항목' 참조에 옛 변수 삭제 기준이 없음, 롤백 시 프론트도 함께 되돌려야 한다는 서술 없음"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "category": "correctness",
+        "source": "검증자(리뷰어 [info] 확인)",
+        "file": "docs/release/first-deploy-checklist.md",
+        "line": 102,
+        "summary": "'프론트의 VITE_WRITE_KEY 는 … 그 전까지는 넣어도 서버가 무시한다' — 사실과 다름(RC-2)"
+      },
+      {
+        "category": "design",
+        "source": "리뷰어",
+        "file": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+        "summary": "HEAD 공개 경로 401/403 — 시나리오 결정과 같음, 결함 아님(HITL 판단 항목)"
+      },
+      {
+        "category": "docs",
+        "source": "리뷰어 4회차",
+        "file": "docs/release/first-deploy-checklist.md",
+        "summary": "§5-2 SQL 주석 정확도 · §5 롤백 기준 참조 — 경미, 동작 결함 아님 → Phase 5 try 후보"
+      }
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "sub 의 정수 판정을 Long.parseLong 에 위임해 정규형이 아닌 표기(부호·앞자리 0·유니코드 숫자)도 같은 사용자로 받아들인다",
+      "found_in_round": 1,
+      "found_in_phase": 3,
+      "variants": [
+        {
+          "case": "sub \"+7\"",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 w 행 · 7f812e0 CANONICAL_USER_ID · Phase 4 리뷰 재프로브 거부"
+        },
+        {
+          "case": "sub \"07\"",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 x 행"
+        },
+        {
+          "case": "sub \"٧\" (유니코드 숫자)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 y 행"
+        },
+        {
+          "case": "sub \"-7\" (음수 userId)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 z 행"
+        },
+        {
+          "case": "sub \" 7\" (공백)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 ac 행"
+        },
+        {
+          "case": "sub \"9223372036854775808\" (long 초과)",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 t 행"
+        },
+        {
+          "case": "sub 숫자 7 / 이스케이프 \"\\u0037\"",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 q 행(숫자) · 이스케이프는 디코딩 후 \"7\" 과 같은 값이라 통과가 의도 — Phase 4 리뷰 프로브 /private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java"
+        },
+        {
+          "case": "role 대소문자·공백·배열·null·중복 키·이스케이프",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 b~o 행 · Phase 4 리뷰 프로브"
+        },
+        {
+          "case": "2R: 뒤 개행 \"7\\n\"·빈 문자열·\"0\"·19자리 경계(…807 통과/…808 거부)·99999… 19자리 초과값",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 aa(0)·t(…808) 행 · 뒤 개행·빈 문자열·…807·20자리 이상은 Phase 4 리뷰 프로브 /private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java (서명된 토큰, verifyAccessClaims + MockMvc)"
+        },
+        {
+          "case": "전각 숫자, 앞뒤 공백, JSON 숫자 7.0",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "PerformanceOwnershipApiTest#test_sc05_역할_클레임이_정확한_값이_아니면_토큰이_무효다 ad·ac·r 행"
+        },
+        {
+          "case": "SecurityConfig 경로 변형(끝 슬래시, %31, 대문자, 미지원 메서드, ;x=1, //)",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "Phase 4 리뷰 프로브 /private/tmp/claude-501/-Users-gihyung-workspace-ticket-booking/e9987eec-518f-434c-ac69-f8e60d92be1d/scratchpad/probe1/src/test/java/com/example/ticket_booking/probe/ProbeTest.java · PerformanceErrorResponseRegressionTest#test_sc12"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "배포 체크리스트가 '백엔드가 X-Write-Key 를 더 이상 허용하지 않는다' 는 변경의 브라우저 쪽 결과를 반영하지 않았다 — 프론트가 아직 그 헤더를 보내는 동안(TASK-024 전)의 배포 순서와 확인 단계가 틀렸다",
+      "found_in_round": 3,
+      "found_in_phase": 4,
+      "variants": [
+        {
+          "case": "§5: 'VITE_WRITE_KEY 는 … 그 전까지는 넣어도 서버가 무시한다'",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "frontend/src/api/http.ts:10-18 — VITE_WRITE_KEY 가 있으면 POST·PUT·PATCH·DELETE 에 X-Write-Key 를 붙인다(가입·로그인 포함). CorsFilter ALLOW_HEADERS = \"Content-Type, Authorization\" — WriteGuardRemovalApiTest#test_sc15·CorsFilterTest#test_sc01 가 단언. 요청 헤더가 Allow-Headers 에 없으면 브라우저가 preflight 를 실패로 본다(Fetch 표준 CORS-preflight) → 해소: docs/release/first-deploy-checklist.md §5-1·§7·§9·상태 줄 (40767bc), Phase 4 2회차 리뷰 확인"
+        },
+        {
+          "case": "배포 순서 없음 — 프론트 빌드에서 VITE_WRITE_KEY 를 지우고 재배포한 뒤 백엔드 배포",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "`grep -n '순서' docs/release/first-deploy-checklist.md` — 235행의 일반 관행('제거하는 변경은 프론트 먼저') 외에 이 변경의 순서가 없다 → 해소: docs/release/first-deploy-checklist.md §5-1·§7·§9·상태 줄 (40767bc), Phase 4 2회차 리뷰 확인"
+        },
+        {
+          "case": "§7 브라우저: '공연 등록을 하나 해본다 — 등록이 성공한다'",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "등록은 이제 ROLE_ORGANIZER 토큰이 필요하다(PerformanceOwnershipApiTest#test_sc04 a 행 401). 프론트는 TASK-024 전까지 Authorization 을 보내지 않는다(http.ts·organizer-flow.md §5 TASK-024 표) — 브라우저에서 등록은 401 → 해소: docs/release/first-deploy-checklist.md §5-1·§7·§9·상태 줄 (40767bc), Phase 4 2회차 리뷰 확인"
+        },
+        {
+          "case": "§7 브라우저: '키를 일부러 틀리게 빌드해보면 \"쓰기 거부\" 안내'",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "가드 삭제 — WriteGuardRemovalApiTest#test_sc10. WRITE_KEY_INVALID 를 내는 서버 코드가 없어 확인 단계가 성립하지 않는다 → 해소: docs/release/first-deploy-checklist.md §5-1·§7·§9·상태 줄 (40767bc), Phase 4 2회차 리뷰 확인"
+        },
+        {
+          "case": "정방향 순서의 전환 구간 — 프론트 재배포 후 백엔드 배포 완료 전 옛 가드가 키 없는 쓰기를 401 WRITE_KEY_INVALID",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "develop:backend/src/test/java/com/example/ticket_booking/api/WriteGuardAuthApiTest.java#test_sc19 (signup·login 키 없음 401) → 해소: §5-1 (c3d9a57)"
+        },
+        {
+          "case": "V7 로 기존 공연이 owner NULL — 배포 후 기존 공연을 아무도 수정·취소 못 함이 체크리스트에 없다",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "`grep -n 'owner\\|소유' docs/release/first-deploy-checklist.md` 결과 없음. 동작은 PerformanceOwnerMigrationTest#test_sc01(owner NULL)·PerformanceOwnershipApiTest#test_sc07 b 행(소유자 NULL → 404) → 해소: §5-2·§4-1·§4-2 (870f43e), Phase 4 3회차 리뷰 확인"
+        },
+        {
+          "case": "§4-1·§4-2 '마이그레이션은 V1·V2 두 개 / Flyway 가 V1·V2 적용' — 실제 V1~V7",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "checklist 71·80행 vs `ls backend/src/main/resources/db/migration` (V1~V7) → 해소: §5-2·§4-1·§4-2 (870f43e), Phase 4 3회차 리뷰 확인"
+        },
+        {
+          "case": "JWT_SECRET 필수 서술(§1·§6·§6-1)과 코드 불일치",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "SecurityConfig#jwtTokenProvider — JwtSecretConfigTest 가 빈 값·짧은 값 기동 실패를 단언"
+        },
+        {
+          "case": "§5 '옛 변수는 지워도 된다' — 지운 뒤 이전 배포로 롤백하면 옛 WriteGuardFilter 가 enabled=false 로 떠 공연 쓰기가 인증 없이 열림",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "git show develop:backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java fromEnv 38-49 — 빈 값이면 enabled=false. checklist §5 100행 → 해소: §5·§5-2·§9 (23f6e2f), Phase 4 4회차 리뷰 확인"
+        },
+        {
+          "case": "HEAD /api/performances 와 Origin 없는 OPTIONS 가 permitAll → 401 — 모니터링·curl -I 영향 미서술",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "임시 프로브(MockMvc, 커밋 안 함, 삭제) GET 200 · HEAD 401 · OPTIONS(Origin 없음) 401. 같은 규칙 PerformanceErrorResponseRegressionTest#test_sc12 i 행(DELETE 토큰 없음 401) → 해소: §5·§5-2·§9 (23f6e2f), Phase 4 4회차 리뷰 확인"
+        },
+        {
+          "case": "§5-2 SQL 에 대소문자 섞인 이메일 → 서브쿼리 NULL → 오류 없는 무동작, 확인 쿼리 없음",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "AuthService.java:267 email.trim().toLowerCase(Locale.ROOT) 로 저장 — checklist §5-2 SQL 은 email = '<입력 그대로>' → 해소: §5·§5-2·§9 (23f6e2f), Phase 4 4회차 리뷰 확인"
+        },
+        {
+          "case": "배포 전 발급 토큰의 동작",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "develop 의 JwtTokenProvider.issueAccessToken 도 role 클레임을 싣는다 — JwtTokenFormatTest 통과(발급 토큰 검증)"
+        },
+        {
+          "case": "롤백 시 V7 컬럼 잔존",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "V7 owner_id nullable·ON DELETE SET NULL — PerformanceOwnerMigrationTest#test_sc01 (NULL 허용·사용자 삭제 시 NULL)"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "sub(정규형 10진)·role(정확 일치)·typ·exp 를 디코더 전 원문/디코더 후 값으로 검증. 본문 검증(@Valid)이 소유권보다 먼저(SC-07)라 소유 여부가 드러나지 않음",
+    "authorization": "/api/performances/** 쓰기는 hasRole(ORGANIZER), 소유권은 Service findOwned(남의 공연·NULL·없음 같은 404). ERROR 디스패치 permitAll 은 기존(원 요청의 인가는 REQUEST 디스패치에서 끝남). HEAD 는 fail-closed",
+    "secrets": "해당 없음 — 하드코딩 비밀 없음. 테스트 키(guard-key-0123456789)는 테스트 properties 뿐",
+    "logging": "해당 없음 — 새 로그 없음",
+    "deploy": "RC-2 — 배포 순서를 틀리면 가용성 문제(로그인 불가). 보안 우회는 아님"
+  },
+  "human_review": {
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "8ea4ac98767601cd51d566b05b1fd2154aa72ce5",
+    "verified_at": "2026-11-12T04:34:55Z",
+    "via": "AskUserQuestion — HITL#3 '예외 승인'"
+  },
+  "round_history": [
+    {
+      "round": 1,
+      "status": "FAIL",
+      "summary": "RC-2 — 배포 체크리스트(PLAN target_files)가 X-Write-Key 제거의 브라우저 쪽 결과를 반영하지 못함. 코드 결함 0",
+      "rollback": {
+        "to": "3",
+        "reason_code": "IMPL_DEFECT",
+        "why": "결함은 문서 산출물에만 있고 시나리오·코드는 맞다 — Phase 3 에서 문서를 고친다",
+        "summary": "뿌리 1 · 변종 4, 재현 4(해소 0)"
+      },
+      "human_review": {
+        "decision": "REJECT",
+        "reject_to": "Phase 3 (구현 결함 — reject-state-machine §1 HITL#3 REJECT)",
+        "decided_at": "2026-11-12",
+        "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
+      }
+    },
+    {
+      "round": 2,
+      "status": "FAIL",
+      "summary": "RC-2 1회차 변종 4·전환 구간 해소. 같은 뿌리 later 변종 2건 재현(V7 소유자 없는 기존 공연의 운영 영향, 마이그레이션 개수 서술). 코드 결함 0",
+      "rollback": {
+        "to": "3",
+        "reason_code": "IMPL_DEFECT",
+        "summary": "뿌리 1 · 새 변종 2, 재현 2(해소 0)"
+      },
+      "human_review": {
+        "decision": "REJECT",
+        "reject_to": "Phase 3 (구현 결함)",
+        "decided_at": "2026-11-12",
+        "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
+      }
+    },
+    {
+      "round": 3,
+      "status": "FAIL",
+      "summary": "RC-2 2회차 변종 해소, later 변종 3 재현(롤백 시 가드 OFF, HEAD/OPTIONS 401, SQL 대소문자). 이번 리뷰가 DEV changed_files 11 항목 전부를 운영 결과와 대조 — 남은 갭이 이 3건뿐",
+      "rollback": {
+        "to": "3",
+        "reason_code": "IMPL_DEFECT",
+        "summary": "뿌리 1 · 새 변종 3, 재현 3(해소 0)"
+      },
+      "human_review": {
+        "decision": "REJECT",
+        "reject_to": "Phase 3 (구현 결함)",
+        "decided_at": "2026-11-12",
+        "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
+      }
+    },
+    {
+      "round": 4,
+      "status": "WARN",
+      "summary": "[correctness] 0, RC-2 3회차 변종 3건 해소. 경미 문서 소견 2건(WARN)",
+      "human_review": {
+        "decision": "EXCEPTION_APPROVE",
+        "verified_commit": "8ea4ac98767601cd51d566b05b1fd2154aa72ce5",
+        "verified_at": "2026-11-12T04:34:55Z",
+        "via": "AskUserQuestion — HITL#3 '예외 승인'"
+      }
+    }
+  ],
+  "reject": {
+    "to": "Phase 3",
+    "attempt": 3,
+    "history": [
+      {
+        "attempt": 1,
+        "from": "Phase 4 VERIFY 1회차 FAIL",
+        "note": "RC-2 배포 체크리스트 — 시나리오·코드는 그대로"
+      },
+      {
+        "attempt": 2,
+        "from": "Phase 4 VERIFY 2회차 FAIL",
+        "note": "RC-2 later 변종 2 — V7 운영 영향, 마이그레이션 개수"
+      },
+      {
+        "attempt": 3,
+        "from": "Phase 4 VERIFY 3회차 FAIL",
+        "note": "RC-2 later 변종 3 — 롤백 시 가드, HEAD 401, SQL 대소문자. changed_files 대조 완료"
+      }
+    ]
+  },
+  "exceptions": [
+    {
+      "item": "배포 체크리스트 경미 소견 — §5-2 SQL 주석 '같은 규칙' 의 정확도(탭·비 ASCII 대문자)",
+      "handling": "Phase 5 try 후보 — 확인 SELECT 가 실패를 드러내므로 위험 낮음"
+    },
+    {
+      "item": "배포 체크리스트 경미 소견 — §5 옛 가드 변수 삭제 기준(§9 참조) 부재, 롤백 시 프론트 동반 롤백 서술 없음",
+      "handling": "Phase 5 try 후보"
+    },
+    {
+      "item": "TASK-024 전까지 브라우저 공연 쓰기 401",
+      "handling": "의도된 공백 — AUTH-001 promote_after TASK-024, 체크리스트 §5-1. TASK-024 와 같은 배포로"
+    },
+    {
+      "item": "HEAD·Origin 없는 OPTIONS /api/performances 401",
+      "handling": "시나리오 결정('GET 외 모든 메서드는 ROLE_ORGANIZER') — 문서 §5·§9 에 GET 모니터링 명시"
+    },
+    {
+      "item": "AUTH-001 warn 5건(frontend)",
+      "handling": "TASK-024 범위"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +51,13 @@ public class JwtTokenProvider {
   private static final Pattern COMPACT_JWS =
       Pattern.compile("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
 
+  /**
+   * 이 서버가 발급하는 sub — String.valueOf(userId) 의 모양(1 이상, 부호·앞자리 0 없음, ASCII 숫자). Long.parseLong 은
+   * '+7'·'07'·유니코드 숫자·음수도 받아서 같은 사용자의 다른 표기가 통과했다(TASK-022 RC-1). 19자리 중 long 을 넘는 값은 parseLong 이
+   * 거부한다.
+   */
+  private static final Pattern CANONICAL_USER_ID = Pattern.compile("[1-9][0-9]{0,18}");
+
   /** 페이로드에 같은 키가 두 번 있으면 읽기에서 실패한다 — 파서마다 어느 쪽 값을 쓰는지가 달라 판정이 갈리는 것을 막는다. */
   private static final ObjectMapper PAYLOAD_READER =
       JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
@@ -77,7 +85,7 @@ public class JwtTokenProvider {
 
   /**
    * JWT_SECRET 환경변수 원문과 Clock 으로 만든다. 비었거나 공백이거나 UTF-8 32바이트 미만이면 IllegalStateException(메시지에
-   * JWT_SECRET) 을 던져 기동을 실패시킨다 — 서명 키가 약한 채로 뜨지 않는다(WriteGuardFilter.fromEnv 와 같은 관례).
+   * JWT_SECRET) 을 던져 기동을 실패시킨다 — 서명 키가 약한 채로 뜨지 않는다.
    */
   public static JwtTokenProvider fromEnv(String secret, Clock clock) {
     if (secret == null || secret.isBlank()) {
@@ -110,17 +118,43 @@ public class JwtTokenProvider {
     return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
   }
 
-  /** 서명·만료·용도(typ=access)가 모두 유효하면 사용자 id 를, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. */
+  /** 서명·만료·용도(typ=access)·역할이 모두 유효하면 사용자 id 를, 하나라도 어긋나면 비어 있는 Optional 을 돌려준다. */
   public Optional<Long> verifyAccessToken(String token) {
-    if (readPayload(token) == null) {
+    return verifyAccessClaims(token).map(AccessClaims::userId);
+  }
+
+  /**
+   * 서명·만료·용도(typ=access)가 유효하고, sub 가 1 이상의 정수를 정규형 10진으로 적은 문자열(long 범위)이며, role 이 UserRole 이름과
+   * 정확히 같은 문자열이면 그 값을 돌려준다. role 이 없거나 정의 밖이면 토큰 전체를 무효로 본다 — 역할 없는 인증 주체를 만들지 않는다(ADR-0029).
+   */
+  public Optional<AccessClaims> verifyAccessClaims(String token) {
+    JsonNode payload = readPayload(token);
+    // 디코더는 숫자 sub 를 문자열로 바꿔 읽는다 — 발급하는 sub 는 문자열이므로 원문에서 본다
+    if (payload == null || !payload.path("sub").isString()) {
       return Optional.empty();
     }
     try {
       Jwt jwt = decoder.decode(token);
-      return Optional.of(Long.parseLong(jwt.getSubject()));
+      Optional<UserRole> role = roleOf(jwt.getClaims().get("role"));
+      if (role.isEmpty()) {
+        return Optional.empty();
+      }
+      String subject = jwt.getSubject();
+      if (subject == null || !CANONICAL_USER_ID.matcher(subject).matches()) {
+        return Optional.empty();
+      }
+      return Optional.of(new AccessClaims(Long.parseLong(subject), role.get()));
     } catch (JwtException | IllegalArgumentException exception) {
       return Optional.empty();
     }
+  }
+
+  /** 대소문자·공백·보이지 않는 문자까지 그대로 비교한다 — 이름이 정확히 같은 문자열만 역할이다. */
+  private static Optional<UserRole> roleOf(Object claim) {
+    if (!(claim instanceof String name)) {
+      return Optional.empty();
+    }
+    return Arrays.stream(UserRole.values()).filter(role -> role.name().equals(name)).findFirst();
   }
 
   /** pendingToken 이 담는 값. expiresAt 은 역할 선택 화면이 남은 시간을 보여 주는 데 쓴다. */
