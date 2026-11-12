@@ -189,9 +189,9 @@
     "reason": "SC-09 의 Then '전역 헤더가 비로그인 모양이다(「로그인」 링크)' 는 /login 이 인증 화면이라 헤더를 그리지 않아(TASK-018 사용자 결정) 어떤 구현에서도 관찰할 수 없다 → '로그인 화면(제목)이 보인다' 로 고치고 검증자 2회차 PASS"
   },
   "human_review": {
-    "approved": false,
-    "approved_at": "2026-11-12T09:56:29Z",
-    "via": "AskUserQuestion — 승인 (통합 HITL#1·2)",
+    "approved": true,
+    "approved_at": "2026-11-12T11:48:16Z",
+    "via": "AskUserQuestion — 승인 (통합 HITL#1·2 재승인, SC-17)",
     "reopened": "Phase 4 1회차 RC-1 → 2a 롤백(RETRY_SCENARIO 2/3). SC-17 추가로 재승인 필요"
   },
   "red_retry_2": {

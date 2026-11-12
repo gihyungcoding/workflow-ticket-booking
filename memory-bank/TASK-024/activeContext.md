@@ -1,8 +1,8 @@
 ---
 task_id: TASK-024
 title: "프론트 토큰 전송·주최자 가드"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (RETRY_SCENARIO 2/3)"
+phase: "3"
+phase_name: "Phase 3 - Green (RC-1 수정)"
 status: ACTIVE
 track: light
 created_at: 2026-11-12
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 1회차 FAIL — RC-1(가드=메모리 user, 헤더=localStorage). HITL#3 시나리오로 롤백 — RETRY_SCENARIO 2/3.
+Phase 4 1회차 FAIL — RC-1(가드=메모리 user, 헤더=localStorage). HITL#3 시나리오로 롤백 — RETRY_SCENARIO 2/3. SC-17 추가·재승인(HITL#1·2).
 
 ## 다음 한 걸음
 
-`wf-scenario` — RC-1 변종 4개를 시나리오로(저장 실패 상태의 쓰기). 검증자 3회차 → 2b → 3 → 4 재검증.
+`wf-develop` — SC-17 Green: 요청 토큰의 정본을 AuthProvider 세션으로.
 
 ## 알아둬야 할 것
 
