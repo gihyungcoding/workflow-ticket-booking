@@ -22,7 +22,7 @@
 - [ ] `cd backend && ./gradlew test` 통과
 - [ ] `cd frontend && npm test && npm run lint && npm run build` 통과
 - [ ] `python3 scripts/check_architecture.py` 에 error 없음 (특히 `DEPLOY-001`·`DEPLOY-002`)
-- [ ] 쓰기 키를 만들어 비밀번호 관리자에 보관했다 — `openssl rand -hex 24`. **저장소에 커밋하지 않는다**
+- [ ] `JWT_SECRET`(32바이트 이상)을 만들어 비밀번호 관리자에 보관했다 — `openssl rand -hex 32`. **저장소에 커밋하지 않는다**
 - [ ] 이 체크리스트를 기록하며 진행할 준비 (아래 §9 표)
 
 ## 2. 과금 가드 — 이 중 하나라도 보이면 멈춘다
@@ -93,11 +93,13 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 - [ ] 실제 발급된 두 주소가 §3 의 예상과 같은가. 다르면 `CORS_ALLOWED_ORIGINS`·`VITE_API_BASE_URL` 을 고치고 둘 다 재배포
 - [ ] **Pages 미리보기 배포(`<해시>.<프로젝트>.pages.dev`)는 허용 출처가 아니다.** 미리보기에서 API 를 부르면 CORS 로 막히는 것이 정상이다
 
-## 5. 쓰기 키는 비밀이 아니다
+## 5. 공연 쓰기는 주최자 토큰으로 보호된다
 
-`VITE_WRITE_KEY` 는 빌드 시 번들에 들어가서 **누구에게나 보인다.** 이 가드는 보안이 아니라
-"주소를 우연히 알게 된 요청"을 거르는 수준이다 (ADR-0016). 연습용 데이터라는 전제에서만
-성립하므로, **실제 개인정보나 의미 있는 데이터를 넣지 않는다.**
+예전의 공유 쓰기 키(`WRITE_GUARD_ENABLED`·`WRITE_API_KEY`·`X-Write-Key`)는 없어졌다 (ADR-0029, TASK-022).
+공연 등록·수정·취소는 `ORGANIZER` 역할의 로그인 토큰이 있어야 하고, 수정·취소는 자기 공연만 된다.
+조회(`GET`)는 지금처럼 누구나 쓴다. 백엔드에 남아 있는 옛 변수는 읽지 않으므로 지워도 된다.
+
+프론트의 `VITE_WRITE_KEY` 는 TASK-024 에서 코드와 함께 없앤다 — 그 전까지는 넣어도 서버가 무시한다.
 
 ## 6. 환경변수 한눈에
 
@@ -109,8 +111,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 | `SPRING_DATASOURCE_USERNAME` | Neon 사용자 | |
 | `SPRING_DATASOURCE_PASSWORD` | Neon 비밀번호 | 비밀 |
 | `CORS_ALLOWED_ORIGINS` | `https://<Pages 이름>.pages.dev` | 쉼표로 여러 개. 와일드카드 금지 |
-| `WRITE_GUARD_ENABLED` | `true` | 켜고 키가 비면 기동 실패 |
-| `WRITE_API_KEY` | §1 에서 만든 키 | 비밀 |
+| `JWT_SECRET` | §1 에서 만든 값 | 비밀. 비었거나 32바이트 미만이면 기동 실패 (`SecurityConfig`) |
 | `PORT` | **직접 넣지 않는다** | Render 가 주입한다 |
 
 **프론트 (Pages 빌드 환경변수)**
@@ -118,7 +119,6 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 | 이름 | 값 | 비고 |
 |---|---|---|
 | `VITE_API_BASE_URL` | `https://<Render 이름>.onrender.com` | **끝에 `/` 없이** |
-| `VITE_WRITE_KEY` | 위 `WRITE_API_KEY` 와 같은 값 | 번들에 노출됨 (§5) |
 | `NODE_VERSION` | `22` | §4-3 |
 
 ### 6-1. 소셜 로그인 (선택)  `사람`
@@ -168,7 +168,6 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 ```bash
 BACKEND="https://<Render 이름>.onrender.com"
 FRONT="https://<Pages 이름>.pages.dev"
-KEY="<WRITE_API_KEY>"
 JSON='Content-Type: application/json'
 
 # 1. 조회 — 첫 요청이라면 콜드스타트 시간이 여기서 측정된다. 기대: 200
@@ -177,24 +176,40 @@ time curl -s -o /dev/null -w "%{http_code}\n" "$BACKEND/api/performances"
 # 2. 허용된 출처의 사전 요청. 기대: 2xx + access-control-allow-origin: $FRONT
 curl -s -i -X OPTIONS "$BACKEND/api/performances" \
   -H "Origin: $FRONT" -H "Access-Control-Request-Method: POST" \
-  -H "Access-Control-Request-Headers: content-type,x-write-key" | grep -iE '^HTTP|access-control'
+  -H "Access-Control-Request-Headers: content-type,authorization" | grep -iE '^HTTP|access-control'
 
 # 3. 허용되지 않은 출처. 기대: access-control-allow-origin 이 출력되지 않음
 curl -s -i -X OPTIONS "$BACKEND/api/performances" \
   -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" | grep -i 'access-control-allow-origin' \
   || echo "(헤더 없음 — 정상)"
 
-# 4. 키 없는 쓰기. 기대: 401
+# 4. 토큰 없는 쓰기. 기대: 401
 curl -s -o /dev/null -w "%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -d '{}'
 
-# 5. 키가 있는 쓰기, 일부러 잘못된 본문. 기대: 400 — 가드는 통과했고 본문 검증에서 걸렸다는 뜻
-curl -s -o /dev/null -w "%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -H "X-Write-Key: $KEY" -d '{}'
+# 5. 스모크용 주최자·관객 계정을 만들고 토큰을 받는다 (이메일은 매번 새 값으로)
+SUFFIX=$(date +%s)
+login() { # $1=email $2=role — 가입 후 로그인해 accessToken 을 출력한다
+  curl -s -o /dev/null -X POST "$BACKEND/api/auth/signup" -H "$JSON" \
+    -d "{\"email\":\"$1\",\"password\":\"smoke-pass-1\",\"passwordConfirm\":\"smoke-pass-1\",\"name\":\"스모크\",\"role\":\"$2\"}"
+  curl -s -X POST "$BACKEND/api/auth/login" -H "$JSON" \
+    -d "{\"email\":\"$1\",\"password\":\"smoke-pass-1\"}" | sed -E 's/.*"accessToken":"([^"]+)".*/\1/'
+}
+ORG=$(login "smoke-org-$SUFFIX@example.com" ORGANIZER)
+AUD=$(login "smoke-aud-$SUFFIX@example.com" AUDIENCE)
 
-# 6. 조회는 키 없이 통과. 기대: 200
+# 6. 주최자 토큰, 일부러 잘못된 본문. 기대: 400 — 인가는 통과했고 본문 검증에서 걸렸다는 뜻
+curl -s -o /dev/null -w "%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -H "Authorization: Bearer $ORG" -d '{}'
+
+# 7. 관객 토큰. 기대: 403 (code FORBIDDEN_ROLE)
+curl -s -w "\n%{http_code}\n" -X POST "$BACKEND/api/performances" -H "$JSON" -H "Authorization: Bearer $AUD" -d '{}'
+
+# 8. 조회는 토큰 없이 통과. 기대: 200
 curl -s -o /dev/null -w "%{http_code}\n" "$BACKEND/api/performances"
 ```
 
-4번이 401, 5번이 400 이면 가드가 의도대로다. 5번이 401 이면 키가 어긋났고(`VITE_WRITE_KEY` 와 `WRITE_API_KEY`), 4번이 400 이면 **가드가 꺼져 있다** — 환경변수를 확인한다.
+4번이 401, 6번이 400, 7번이 403 이면 역할 인가가 의도대로다. 6번이 401 이면 로그인 토큰을 못 받았다
+(5번의 응답과 `JWT_SECRET` 을 확인한다). 4번이 401 이 아니면 **쓰기가 열려 있다** — 배포된 버전을 확인한다.
+스모크 계정은 연습용 데이터에 남는다.
 
 **브라우저에서** (개발자 도구 Network 탭을 열고)
 
