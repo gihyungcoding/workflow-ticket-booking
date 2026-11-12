@@ -1,26 +1,26 @@
 {
   "task_id": "TASK-022",
   "status": "FAIL",
-  "status_reason": "2회차 — RC-2 의 1회차 변종 4건과 전환 구간은 해소. 같은 뿌리의 변종 2건이 새로 재현: 체크리스트에 V7 로 기존 공연이 소유자 없이 남아 수정·취소 불가가 되는 운영 영향이 없고, §4 가 마이그레이션을 'V1·V2' 로 적는다(실제 V1~V7). 코드·테스트·제약은 통과, 소스는 1회차 이후 변경 없음",
+  "status_reason": "3회차 — RC-2 2회차 변종 2건 해소. 같은 뿌리 later 변종 3건 재현: 롤백 시 옛 가드가 꺼진 채 뜨는데 §5 가 옛 변수를 '지워도 된다' 고 함 · HEAD·Origin 없는 OPTIONS 가 401 로 바뀐 것(모니터링) 미서술 · §5-2 SQL 이 대소문자 이메일에서 조용히 무동작. 소스 변경 없음, 184/184",
   "evidence": {
     "tests": {
       "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --continue (build/test-results 를 지우고 실행)",
       "exit_code": 0,
-      "summary": "BUILD SUCCESSFUL in 1m 42s — 39 classes, 184 tests, 0 failed, 0 skipped (98.2s)",
-      "round": 2
+      "summary": "BUILD SUCCESSFUL in 1m 37s — 39 classes, 184 tests, 0 failed, 0 skipped (92.1s)",
+      "round": 3
     },
     "lint": {
       "command": "cd backend && ./gradlew spotlessCheck",
       "exit_code": 0,
       "summary": "출력 없음(통과)",
-      "round": 2
+      "round": 3
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "49 files changed, 4574 insertions(+), 816 deletions(-). git diff 461f8f5...HEAD -- backend frontend 는 비어 있음(1회차 이후 소스 변경 없음 — docs/release·workflow 산출물만)",
-      "round": 2
+      "summary": "49 files changed, 4697 insertions(+), 818 deletions(-). 461f8f5...HEAD -- backend frontend 비어 있음",
+      "round": 3
     },
-    "head": "2eaaddb9410486a6f3f393aedd612d294c222a0a",
+    "head": "9bc976540b2b41c4b600caec31d1ede41e9d65d8",
     "worktree_clean": true
   },
   "acceptance_criteria": [
@@ -147,6 +147,14 @@
       "files_scanned": 525,
       "no_target": [],
       "overdue_promotions": []
+    },
+    "round3": {
+      "status": "pass",
+      "error_count": 0,
+      "warn_count": 8,
+      "files_scanned": 525,
+      "no_target": [],
+      "overdue_promotions": []
     }
   },
   "regression": {
@@ -198,6 +206,19 @@
           "[doc] §4-1·§4-2 '마이그레이션은 V1·V2' — 실제 V1~V7 (reproduced)",
           "JWT_SECRET 필수 서술 — §1·§6·§6-1 과 코드 일치(not_reproduced)"
         ]
+      },
+      {
+        "n": 6,
+        "phase": 4,
+        "scope": "870f43e + develop...HEAD · RC-2 를 DEV changed_files 항목마다 운영 결과와 대조(표)",
+        "findings": [
+          "2회차 변종 2건 해소(§5-2 SQL·스키마·역할, §4-1·§4-2)",
+          "[doc] §5 옛 변수 '지워도 된다' — 롤백 시 옛 가드 OFF 로 쓰기 개방",
+          "[doc] HEAD·Origin 없는 OPTIONS 401 — 모니터링 영향 미서술",
+          "[doc] §5-2 SQL 대소문자 이메일 무동작·검증 쿼리 없음",
+          "불필요 판정: 배포 전 발급 토큰(develop 도 role 클레임 발급), sub 정규형(발급분은 정규형), 롤백 시 V7 컬럼(nullable·옛 코드 무시)"
+        ],
+        "changed_files_sweep": "V7·ownerId·소유권·AccessClaims/role·sub·SecurityConfig 인가/403·HEAD/OPTIONS·CorsFilter·WriteGuard 삭제·JWT_SECRET — 11 항목 전부 대조"
       }
     ],
     "findings": [
@@ -340,21 +361,54 @@
           "case": "V7 로 기존 공연이 owner NULL — 배포 후 기존 공연을 아무도 수정·취소 못 함이 체크리스트에 없다",
           "origin": "later",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "`grep -n 'owner\\|소유' docs/release/first-deploy-checklist.md` 결과 없음. 동작은 PerformanceOwnerMigrationTest#test_sc01(owner NULL)·PerformanceOwnershipApiTest#test_sc07 b 행(소유자 NULL → 404)"
+          "resolved": true,
+          "evidence": "`grep -n 'owner\\|소유' docs/release/first-deploy-checklist.md` 결과 없음. 동작은 PerformanceOwnerMigrationTest#test_sc01(owner NULL)·PerformanceOwnershipApiTest#test_sc07 b 행(소유자 NULL → 404) → 해소: §5-2·§4-1·§4-2 (870f43e), Phase 4 3회차 리뷰 확인"
         },
         {
           "case": "§4-1·§4-2 '마이그레이션은 V1·V2 두 개 / Flyway 가 V1·V2 적용' — 실제 V1~V7",
           "origin": "later",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "checklist 71·80행 vs `ls backend/src/main/resources/db/migration` (V1~V7)"
+          "resolved": true,
+          "evidence": "checklist 71·80행 vs `ls backend/src/main/resources/db/migration` (V1~V7) → 해소: §5-2·§4-1·§4-2 (870f43e), Phase 4 3회차 리뷰 확인"
         },
         {
           "case": "JWT_SECRET 필수 서술(§1·§6·§6-1)과 코드 불일치",
           "origin": "predicted",
           "probe": "not_reproduced",
           "evidence": "SecurityConfig#jwtTokenProvider — JwtSecretConfigTest 가 빈 값·짧은 값 기동 실패를 단언"
+        },
+        {
+          "case": "§5 '옛 변수는 지워도 된다' — 지운 뒤 이전 배포로 롤백하면 옛 WriteGuardFilter 가 enabled=false 로 떠 공연 쓰기가 인증 없이 열림",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "git show develop:backend/src/main/java/com/example/ticket_booking/config/WriteGuardFilter.java fromEnv 38-49 — 빈 값이면 enabled=false. checklist §5 100행"
+        },
+        {
+          "case": "HEAD /api/performances 와 Origin 없는 OPTIONS 가 permitAll → 401 — 모니터링·curl -I 영향 미서술",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "임시 프로브(MockMvc, 커밋 안 함, 삭제) GET 200 · HEAD 401 · OPTIONS(Origin 없음) 401. 같은 규칙 PerformanceErrorResponseRegressionTest#test_sc12 i 행(DELETE 토큰 없음 401)"
+        },
+        {
+          "case": "§5-2 SQL 에 대소문자 섞인 이메일 → 서브쿼리 NULL → 오류 없는 무동작, 확인 쿼리 없음",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "AuthService.java:267 email.trim().toLowerCase(Locale.ROOT) 로 저장 — checklist §5-2 SQL 은 email = '<입력 그대로>'"
+        },
+        {
+          "case": "배포 전 발급 토큰의 동작",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "develop 의 JwtTokenProvider.issueAccessToken 도 role 클레임을 싣는다 — JwtTokenFormatTest 통과(발급 토큰 검증)"
+        },
+        {
+          "case": "롤백 시 V7 컬럼 잔존",
+          "origin": "predicted",
+          "probe": "not_reproduced",
+          "evidence": "V7 owner_id nullable·ON DELETE SET NULL — PerformanceOwnerMigrationTest#test_sc01 (NULL 허용·사용자 삭제 시 NULL)"
         }
       ]
     }
@@ -404,6 +458,17 @@
         "decided_at": "2026-11-12",
         "via": "AskUserQuestion — HITL#3 '구현으로 롤백'"
       }
+    },
+    {
+      "round": 3,
+      "status": "FAIL",
+      "summary": "RC-2 2회차 변종 해소, later 변종 3 재현(롤백 시 가드 OFF, HEAD/OPTIONS 401, SQL 대소문자). 이번 리뷰가 DEV changed_files 11 항목 전부를 운영 결과와 대조 — 남은 갭이 이 3건뿐",
+      "rollback": {
+        "to": "3",
+        "reason_code": "IMPL_DEFECT",
+        "summary": "뿌리 1 · 새 변종 3, 재현 3(해소 0)"
+      },
+      "human_review": null
     }
   ],
   "reject": {

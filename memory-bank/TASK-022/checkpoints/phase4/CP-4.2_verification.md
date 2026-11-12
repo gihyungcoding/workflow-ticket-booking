@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-12T00:00:00Z
-summary: "VERIFY 2회차 FAIL — RC-2 1회차 변종 4·전환 구간 해소, later 변종 2 재현(V7 기존 공연 소유자 없음 운영 영향 · 마이그레이션 V1·V2 서술). 코드 결함 0, 184/184, 제약 error 0."
+summary: "VERIFY 3회차 FAIL — RC-2 later 변종 3 재현(롤백 시 가드 OFF · HEAD/OPTIONS 401 · §5-2 SQL 대소문자). 리뷰가 changed_files 11 항목 전부를 운영 결과와 대조 — 남은 갭은 이 3건. 코드 결함 0."
 
 next_steps:
   - "HITL #3 — FAIL 이라 롤백만. 권장 Phase 3: 체크리스트 §5-1 에 기존 공연 소유자 없음 영향, §4 마이그레이션 V1~V7"
@@ -21,6 +21,9 @@ attempts:
   - round: 2
     result: FAIL
     detail: "RC-2 later 변종 2 reproduced — V7 운영 영향 미서술 · §4 마이그레이션 V1·V2. 1회차 4건·전환 구간 해소"
+  - round: 3
+    result: FAIL
+    detail: "RC-2 later 변종 3 reproduced. 같은 뿌리 3라운드 연속 — 리뷰가 라운드마다 새 운영 결과를 찾음(목표가 움직임). 3회차에서 changed_files 전수 표로 닫음"
 ---
 
 # CP-4.2 Verification — TASK-022
