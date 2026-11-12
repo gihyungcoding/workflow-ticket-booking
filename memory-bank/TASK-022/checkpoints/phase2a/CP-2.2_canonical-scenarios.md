@@ -1,9 +1,10 @@
 ---
 status: ARCHIVED
-saved_at: 2026-11-11T00:00:00Z
-summary: "SCENARIO_TASK-022 — 15건(happy 5·error 5·regression 5), AC 8/8, 입력 경계 57/57. 독립검증 3회차 PASS(경고 6)"
+saved_at: 2026-11-12T00:00:00Z
+summary: "SCENARIO_TASK-022 — 15건(happy 5·error 5·regression 5), AC 8/8, 입력 경계 57/57. Phase 3 에서 RETRY_SCENARIO(1/3) — SC-06 k·l 기대 401→400. 독립검증 4회차 PASS(경고 6)"
 
 next_steps:
+  - "Phase 2b 재진입 — SC-06 k·l 단언을 400 으로, SC-05(행 a 정리 순서)·SC-13(시계 이동 뒤 재로그인) 하네스를 고쳐 통합 HITL 재승인"
   - "Phase 2b — wf-red. 승인 테스트 변경 6건을 Red 와 함께 통합 HITL 에 올린다"
 
 decisions:
@@ -29,6 +30,12 @@ decisions:
     rationale: "PASS 후 경고는 재검증하지 않는다"
   - decision: "2회차 경고 보류(HITL 에서 판단): V5 SC-02·12 의 기존 테스트 위임 — SC-12 는 표로 적었고 SC-02 는 기존 승인 테스트 단언을 그대로 쓴다. V6 SC-09 연쇄(가입→로그인→등록은 앞 응답이 다음 입력이라 하나의 흐름)·SC-07 마지막 And(2b 에서 별도 테스트 메서드로 나눈다). V7 ownerId(관찰 대상이 DB 값이라 필드명이 곧 관찰 지점). V9 중복. V12 (1) typ/exp·pendingToken 은 기존 규칙 그대로라 칸을 두지 않음 (2) exp 정각 경계는 기존 notExpiredValidator 규칙 — 이 태스크가 바꾸지 않음 (4) sub 사용자 없음 500 은 PLAN unresolved (5) 재취소는 TASK-023"
     rationale: "경고는 사람 판단 몫"
+  - decision: "RETRY_SCENARIO(1/3, Phase 3 → 2a, 사용자 선택) — SC-06 k(LF 꼬리)·l(NUL 꼬리)의 기대를 401 → 400 · 공연 수 그대로로. Then 두 번째 문장을 '201 이 아닌 행' 으로, notes 에 'k·l 은 상태만 단언' 추가"
+    rationale: "Green 실행에서 400·본문 없음. 같은 헤더를 MockMvc 프로브로 보내면 LF·NUL 은 400, 제어 문자 없는 무효 토큰은 401. Red 실행(구현 전)에서도 k·l 만 상태 단언 1건씩 실패(20 = 9행×2 + 2행×1)해 이 태스크 전부터 같은 거부였다. 보안 체인이 요청을 컨트롤러 전에 거부해 DB 가 바뀌지 않으므로 시나리오 의도(거부·DB 그대로)는 유지된다"
+  - decision: "정책 바뀜 대조 — '401' 기대를 쓰는 다른 시나리오(SC-04·05·12)는 제어 문자 헤더를 쓰지 않아 고치지 않음"
+    rationale: "SC-06 표의 다른 행·SC-05 의 클레임 변형은 헤더에 제어 문자가 들어가지 않는다(클레임 안의 제어 문자는 base64url 로 인코딩됨)"
+  - decision: "4회차 경고 반영(재검증 없음): V7 신규 — SC-06 k 의 괄호 사유에서 '보안 체인의 요청 방화벽' 을 '요청 자체가 거부된다' 로. V12 신규(400 근거) — 위 프로브·Red 실행 기록이 실제 요청 확인이다. 2b Red 재실행에서 다시 관찰한다"
+    rationale: "PASS 후 경고는 재검증하지 않는다"
 attempts:
   - round: 1
     result: FAIL
@@ -39,6 +46,11 @@ attempts:
   - round: 3
     result: PASS
     detail: "경고 6(V5·V6·V7·V9·V12). 2b Red 작성 중 발견 — SC-09 c 의 social/complete 기대 201 이 실제 응답(200, AuthController·WriteGuardSocialCompleteTest)과 다르다. 200 으로 고치고 재검증"
+  - round: 4
+    result: PASS
+    detail: "RETRY_SCENARIO(1/3, Phase 3 → 2a) — SC-06 k·l 401→400. 경고 6(V5·V6·V7·V9·V12, 신규 V7 k 행 구현 설명·V12 400 근거)"
+    outcome: "Phase 3 Green 에서 SC-06 k·l 이 400"
+    back_to: "2a"
 ---
 
 # CP-2.2 시나리오 — TASK-022
