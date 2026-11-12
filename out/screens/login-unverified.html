@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>로그인 · 인증 필요</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .form { display: flex; flex-direction: column; gap: var(--stack-m); }
+  .or { display: flex; align-items: center; gap: var(--stack-m); font-size: var(--fs-sub); color: var(--c-text-3); }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--c-line); }
+  .social { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--stack-s); }
+  .social .btn { padding: 0; background: var(--c-surface); color: var(--c-text-1); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-sub); }
+  .join { display: flex; justify-content: center; align-items: center; gap: var(--stack-s); font-size: var(--fs-sub); color: var(--c-text-2); }
+  .forgot { align-self: flex-end; }
+  .notice { display: flex; flex-direction: column; gap: var(--stack-s); padding: var(--stack-m); border-radius: var(--r-m); background: var(--c-brand-tint); color: var(--c-brand-tint-text); }
+  .notice .info { color: inherit; font-weight: 600; }
+</style>
+</head>
+<body class="plain">
+<!-- 정책: 이메일·비밀번호가 맞고 아직 인증하지 않았을 때만 알린다. 서버가 인증 메일을 이미 보냈다 -->
+<!-- 정책: 비밀번호가 틀렸거나 없는 이메일이면 이 안내 없이 '이메일 또는 비밀번호가 올바르지 않아요' — 계정 상태를 알려 주지 않는다 -->
+<!-- 정책: 소셜 로그인은 인증과 무관하게 들어갈 수 있다 -->
+<!-- 상태: 인증 필요 — 맨 위 안내 + 「메일 다시 보내기」. 보낸 뒤에는 '인증 메일을 다시 보냈어요' -->
+<main class="page">
+  <div class="notice" role="status" data-anchor>
+    <p class="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>이메일 인증이 필요해요. 인증 메일을 보냈어요</span></p>
+    <button class="btn small secondary" data-stay="인증 메일을 다시 보냈어요 — 메일함을 확인해 주세요">메일 다시 보내기</button>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">티켓온</p>
+    <h1 class="title">쓰던 계정으로 바로 들어와요</h1>
+    <p class="lead">카카오·네이버·구글·애플 계정이면 처음이어도 버튼 한 번으로 시작해요</p>
+  </header>
+
+  <form class="form" action="home.html">
+    <div class="field"><label class="label" for="email">이메일</label><input class="input" id="email" type="email" autocomplete="email" placeholder="이메일 주소" value="minji.jung@gmail.com"></div>
+    <div class="field"><label class="label" for="pw">비밀번호</label><input class="input" id="pw" type="password" autocomplete="current-password" placeholder="비밀번호" autofocus></div>
+    <a class="hero-more forgot" href="forgot-password.html">비밀번호 찾기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    <a class="btn primary full" href="home.html">로그인하기</a>
+  </form>
+
+  <p class="or">또는</p>
+
+  <nav class="social" aria-label="소셜 계정으로 계속하기">
+    <a class="btn" href="oauth-callback.html" aria-label="카카오로 계속하기">카카오</a>
+    <a class="btn" href="oauth-callback.html" aria-label="네이버로 계속하기">네이버</a>
+    <a class="btn" href="oauth-callback.html" aria-label="구글로 계속하기">구글</a>
+    <a class="btn" href="oauth-callback.html" aria-label="애플로 계속하기">애플</a>
+  </nav>
+
+  <p class="join">계정이 없나요?<a class="hero-more" href="signup.html">이메일로 가입<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></p>
+</main>
+</body></html>

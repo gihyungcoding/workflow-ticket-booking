@@ -12,6 +12,7 @@
 <!-- 정책: 비밀번호 확인이 다르면 그 칸 아래 '비밀번호가 일치하지 않아요' -->
 <!-- 정책: 이미 가입된 이메일이면 이메일 칸에서 '이미 가입된 이메일이에요. 로그인해 주세요' + 로그인 링크 강조 -->
 <!-- 정책: 이메일·역할은 가입 뒤 바꿀 수 없다 -->
+<!-- 정책: 가입하면 자동 로그인하지 않고 인증 메일 안내로 간다 — 인증한 뒤 로그인한다(소셜 가입은 지금처럼 가입 완료로) -->
 <header class="appbar"><a class="appbar-btn" href="login.html" aria-label="뒤로 — 로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><span></span><span></span></header>
 <main class="page">
   <header class="hero">
@@ -19,7 +20,7 @@
     <p class="lead">이메일과 역할은 가입한 뒤에 바꿀 수 없어요</p>
   </header>
 
-  <form class="form" action="joined.html">
+  <form class="form" action="verify-email-sent.html">
     <div class="field"><label class="label" for="email">이메일</label><input class="input" id="email" type="email" autocomplete="email" placeholder="이메일 주소" autofocus></div>
     <div class="field"><label class="label" for="pw">비밀번호</label><input class="input" id="pw" type="password" autocomplete="new-password" placeholder="비밀번호" aria-describedby="pw-help"><p class="block-note" id="pw-help">8자 이상 72자 이하로 정해요</p></div>
     <div class="field"><label class="label" for="pw2">비밀번호 확인</label><input class="input" id="pw2" type="password" autocomplete="new-password" placeholder="한 번 더 입력"></div>
@@ -34,5 +35,5 @@
 
   <p class="login">이미 계정이 있나요?<a class="hero-more" href="login.html">로그인<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></p>
 </main>
-<div class="cta"><a class="btn primary full" href="joined.html">가입하기</a></div>
+<div class="cta"><a class="btn primary full" href="verify-email-sent.html">가입하기</a></div>
 </body></html>

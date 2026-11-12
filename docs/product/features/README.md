@@ -1,6 +1,6 @@
 # 기능 요구사항 문서
 
-마지막 재생성: 2026-11-12 · 총 7건
+마지막 재생성: 2026-11-13 · 총 7건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | [booking-ux-01-auth.md](booking-ux-01-auth.md) | [관객] 흐름 1 — 로그인·가입을 시안대로 (booking-ux-01) | 확정 | TASK-016, TASK-017, TASK-018 | 2026-11-04 (아이디 생성 규칙 변경) |
 | [booking-ux-02-browse.md](booking-ux-02-browse.md) | [관객] 흐름 2 — 공연 찾기와 오픈 전 대기를 시안대로 (booking-ux-02) | 확정 | TASK-019, TASK-020, TASK-021 | 2026-11-10 |
-| [email-verification-password-reset.md](email-verification-password-reset.md) | [관객/주최자] 이메일 인증과 비밀번호 찾기 | 초안 | 5건 (미생성) | 2026-11-12 |
+| [email-verification-password-reset.md](email-verification-password-reset.md) | [관객/주최자] 이메일 인증과 비밀번호 찾기 | 초안 | 5건 (미생성) | 2026-11-13 |
 | [organizer-flow.md](organizer-flow.md) | [주최자] 주최자 흐름 — 진입·내 공연 관리·공개 전환 | 초안 | TASK-022, TASK-023, TASK-024, TASK-025, TASK-026 | 2026-11-11 |
 | [performance-availability.md](performance-availability.md) | [관객] 공연 목록과 예매 상태 | 확정 | TASK-001, TASK-002 | 2026-09-02 |
 | [performance-registration.md](performance-registration.md) | [주최자] 공연 등록 | 초안 | TASK-004, TASK-005 | 2026-09-11 |
