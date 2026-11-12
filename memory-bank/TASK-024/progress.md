@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.2 | 16건 · 경계 34 · 검증 2회차 PASS |
 | 2b Red | ✅ 완료 | CP-2.5 | 61 실패 · already_passing 3 · HITL#1·2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 767/767 · 자체 리뷰 1R 결함 0 |
-| 4 Verify | 🔶 2회차 WARN | CP-4.2 | RC-1 해소 · HITL#3 대기 |
+| 4 Verify | ✅ 예외 승인 | CP-4.2 | 2회차 WARN · RC-1 해소 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

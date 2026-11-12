@@ -4,7 +4,7 @@ saved_at: 2026-11-12T00:00:00Z
 summary: "Phase 4 2회차 WARN — RC-1 해소(재현 7: 해소 6·ADR-0030 수용 1), 차단급 결함 0, 기존 결함 1 TASK-025 이관(사용자 결정). 화면 9상태(복원 중·저장소 차단 포함). (1회차) FAIL — RC-1(인증 정본 둘: 가드=메모리, 헤더=localStorage). 뿌리 1 · 변종 4, 재현 2·미프로브 2. 테스트 767/767·린트·빌드·제약(error 0, AUTH-001 위반 0) 통과. 실제 백엔드 화면 6상태 PASS"
 
 next_steps:
-  - "HITL#3 2회차 — WARN, 예외 후보 4(기존 결함 이관·ADR-0030·시안 셸·AUTH-001 승격)"
+  - "HITL#3 2회차 예외 승인 — verified_commit 57ff9280e80f22bcfd553d78dbf072d942ca863a. Phase 5 — wf-reflect (track light: 리포트 Artifact 생략)"
   - "HITL#3 REJECT → Phase 2a (RETRY_SCENARIO 2/3). RC-1 변종 4개를 시나리오로 — 저장 실패(setItem throw·쿼터) 상태의 쓰기, 다른 탭 로그아웃, 소셜 로그인 경로"
 
 decisions:

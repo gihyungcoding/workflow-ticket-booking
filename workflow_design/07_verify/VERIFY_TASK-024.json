@@ -362,9 +362,9 @@
     }
   ],
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null,
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "57ff9280e80f22bcfd553d78dbf072d942ca863a",
+    "verified_at": "2026-11-12T12:52:18Z",
     "round1": {
       "decision": "REJECT",
       "reject_to": "Phase 2a (시나리오 결함 — reject-state-machine §1 HITL#3 REJECT)",
@@ -372,7 +372,8 @@
       "decided_at": "2026-11-12",
       "via": "AskUserQuestion — HITL#3 \"시나리오로 롤백\"",
       "verified_commit": null
-    }
+    },
+    "via": "AskUserQuestion — HITL#3 2회차 \"예외 승인\""
   },
   "reject": {
     "to": "Phase 2a",
@@ -392,7 +393,7 @@
       }
     ]
   },
-  "exceptions_candidates": [
+  "exceptions": [
     {
       "item": "기존 결함 — 복원 중 logout 시 restoring 영구 true(도달 불가)",
       "handling": "TASK-025 로 이관(사용자 결정)"

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-024
 title: "프론트 토큰 전송·주최자 가드"
-phase: "4"
-phase_name: "Phase 4 - Verify (2회차)"
+phase: "5"
+phase_name: "Phase 5 - Reflect"
 status: ACTIVE
 track: light
 created_at: 2026-11-12
@@ -30,7 +30,7 @@ Phase 4 1회차 FAIL — RC-1(가드=메모리 user, 헤더=localStorage). HITL#
 
 ## 다음 한 걸음
 
-`wf-verify` 2회차 — RC-1 수정(13f1ed9·13ac45b)·ADR-0030 재검증.
+`wf-reflect` — Phase 4 예외 승인(verified_commit 57ff928). 기존 결함(복원 중 logout) TASK-025 이관 메모.
 
 ## 알아둬야 할 것
 
