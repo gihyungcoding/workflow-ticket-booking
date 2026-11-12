@@ -97,7 +97,11 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 
 예전의 공유 쓰기 키(`WRITE_GUARD_ENABLED`·`WRITE_API_KEY`·`X-Write-Key`)는 없어졌다 (ADR-0029, TASK-022).
 공연 등록·수정·취소는 `ORGANIZER` 역할의 로그인 토큰이 있어야 하고, 수정·취소는 자기 공연만 된다.
-조회(`GET`)는 지금처럼 누구나 쓴다. 백엔드에 남아 있는 옛 변수는 읽지 않으므로 지워도 된다.
+조회(`GET`)는 지금처럼 누구나 쓴다. `HEAD`·Origin 없는 `OPTIONS` 는 이제 공개가 아니다(토큰 없으면 401) — 모니터링·`curl` 확인은 `GET` 으로 한다 (§9).
+
+백엔드에 남아 있는 옛 변수(`WRITE_GUARD_ENABLED`·`WRITE_API_KEY`)는 새 코드가 읽지 않지만, **이전 배포로 롤백할 수 있는 동안은 지우지 않는다.**
+옛 코드는 이 변수가 비어 있으면 쓰기 가드를 끈 채 기동해서, 롤백한 순간 공연 쓰기가 인증 없이 열린다.
+이 배포가 안정된 것을 확인한 뒤(§9 롤백 항목)에 지운다. 롤백해도 V7 의 `owner_id` 컬럼은 남지만 옛 코드는 그 컬럼을 쓰지 않아 영향이 없다.
 
 ### 5-1. 배포 순서 — 프론트에서 `VITE_WRITE_KEY` 를 먼저 지운다  `사람`
 
@@ -130,12 +134,17 @@ V7 은 공연에 소유자(`owner_id`)를 더하고 **기존 행은 비워 둔�
 - [ ] 계속 관리해야 할 공연이 있으면, 그 주최자 계정으로 가입한 뒤 DB 에서 직접 소유자를 넣는다
 
 ```sql
+-- 이메일은 가입 시 앞뒤 공백을 지우고 소문자로 저장된다 — 같은 규칙으로 찾는다
 UPDATE performance
-   SET owner_id = (SELECT id FROM users WHERE email = '<주최자 이메일>')
+   SET owner_id = (SELECT id FROM users WHERE email = lower(trim('<주최자 이메일>')))
  WHERE id IN (<공연 id 목록>) AND owner_id IS NULL;
+
+-- 확인: owner_id 가 비어 있으면 이메일이 틀렸다 (위 UPDATE 는 오류 없이 NULL 을 넣는다)
+SELECT id, owner_id FROM performance WHERE id IN (<공연 id 목록>);
 ```
 
-그 주최자의 `role` 이 `ORGANIZER` 여야 수정·취소가 된다 (`users.role`).
+그 주최자의 `role` 이 `ORGANIZER` 여야 수정·취소가 된다 (`users.role`). 역할은 로그인할 때 토큰에 담기므로,
+`users.role` 을 바꿨다면 그 사람이 **다시 로그인해야** 반영된다 (이미 받은 토큰은 최대 24시간 옛 역할로 동작한다).
 
 ## 6. 환경변수 한눈에
 
@@ -267,7 +276,7 @@ curl -s -o /dev/null -w "%{http_code}\n" "$BACKEND/api/performances"
 
 ## 9. 알려진 공백 — 체크리스트를 쓰며 발견한 것
 
-- [ ] **DB 를 타지 않는 헬스 엔드포인트가 없다.** `actuator` 의존성도 없다. Render 의 헬스체크를 `/api/performances` 로 걸면 **주기적으로 DB 를 깨워** Neon 의 무료 연산 시간(월 100 CU-hours)을 소모할 수 있다. 첫 배포에서는 헬스체크를 비우고, 필요성이 확인되면 별도 태스크로 만든다
+- [ ] **DB 를 타지 않는 헬스 엔드포인트가 없다.** `actuator` 의존성도 없다. Render 의 헬스체크를 `/api/performances` 로 걸면 **주기적으로 DB 를 깨워** Neon 의 무료 연산 시간(월 100 CU-hours)을 소모할 수 있다. 첫 배포에서는 헬스체크를 비우고, 필요성이 확인되면 별도 태스크로 만든다. 외부 업타임 모니터를 붙인다면 `GET` 으로 건다 — TASK-022 부터 `/api/performances` 의 `HEAD` 는 토큰 없이 401 이다 (§5)
 - [ ] **배포 순서 규칙이 없다.** 프론트와 백엔드가 따로 배포되므로, API 를 **추가**하는 변경은 백엔드를 먼저, **제거**하는 변경은 프론트를 먼저 배포해야 안전하다 (일반적인 관행이고 이 프로젝트에서 검증한 것은 아니다). 첫 구체 사례: TASK-022 의 `X-Write-Key` 허용 헤더 제거 — §5-1
 - [ ] **롤백을 해본 적이 없다.** 이전 배포로 되돌리는 기능이 Render 에 있는지, 어디서 하는지 이번에 확인한다 — **2026-10-20: 첫 배포라 이전 배포가 없어 롤백 메뉴를 확인하지 못했다.** 두 번째 배포 뒤 다시 확인한다 (이전 배포가 있어야 보이는지는 확인 못함)
 - [ ] **로그를 어디서 보는지, 알림이 오는지** 확인한다. 지금 운영 단계 자산은 비어 있다 — **확인함(2026-10-20)**: Render 는 Monitor → Logs. Cloudflare Pages 는 Workers & Pages → br-ticket-booking → Deployment details 에서 **빌드·배포 로그만** 보이고 웹 서비스(런타임) 로그는 확인되지 않았다 (정적 호스팅이라 서버 로그가 없는 것으로 보이나 확인한 사실은 아니다). 알림 수신 여부는 아직 확인하지 않았다
