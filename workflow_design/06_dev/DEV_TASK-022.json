@@ -140,6 +140,16 @@
         "0bd89e0",
         "7f812e0"
       ]
+    },
+    {
+      "type": "PHASE4_REJECT_TO_PHASE3",
+      "attempt": 1,
+      "trigger": "VERIFY 1회차 FAIL — RC-2",
+      "commits": [
+        "461f8f5",
+        "46843f7",
+        "40767bc"
+      ]
     }
   ],
   "rollback_fixes": [
@@ -160,6 +170,23 @@
       "sites": [
         "backend/src/main/java/com/example/ticket_booking/config/JwtTokenProvider.java#verifyAccessClaims"
       ]
+    },
+    {
+      "root_cause": "RC-2",
+      "from": "Phase 4 VERIFY 1회차 FAIL",
+      "variants": [
+        "§5 '넣어도 서버가 무시한다'",
+        "배포 순서 부재",
+        "§7 브라우저 등록 성공 단계",
+        "§7 키 오빌드 단계"
+      ],
+      "tests": [],
+      "tests_note": "문서 결함 — 자동 테스트 대상이 아니다. 근거 사실(Allow-Headers)은 WriteGuardRemovalApiTest#test_sc15 가 단언",
+      "fix_locus": "common",
+      "sites": [
+        "docs/release/first-deploy-checklist.md §5-1(새 절 — 순서·근거 한곳) · §7 브라우저 2행 · §9 배포 순서 · 상태 줄 — 모두 §5-1 을 가리킨다"
+      ],
+      "fix_commit": "40767bc"
     }
   ],
   "pre_review": {
