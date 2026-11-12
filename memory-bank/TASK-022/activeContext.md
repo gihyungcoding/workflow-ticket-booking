@@ -1,8 +1,8 @@
 ---
 task_id: TASK-022
 title: "공연 소유자·역할 인가, 쓰기 가드 제거"
-phase: "3"
-phase_name: "Phase 3 - Green"
+phase: "4"
+phase_name: "Phase 4 - Verify"
 status: ACTIVE
 track: standard
 created_at: 2026-11-11
@@ -20,15 +20,16 @@ artifacts:
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-022.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-022.json"
   test: "workflow_design/05_scenario/TEST_TASK-022.json"
+  dev: "workflow_design/06_dev/DEV_TASK-022.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-RETRY_SCENARIO(2/3) 뒤 통합 재승인(2026-11-12). Phase 3 — sub 정규형 검사 구현 중.
+Phase 3 완료 — 184/184, 자체 리뷰 2R(RC-1 수정, unresolved 0). Phase 4 진입 전.
 
 ## 다음 한 걸음
 
-verifyAccessClaims 에 sub 정규형 검사 → 전체 스위트 → 자체 리뷰 2R → DEV_TASK-022.json → Phase 4.
+`wf-verify` — RC-1 root_causes(not_probed 변종 프로브)·deferred HEAD 를 리뷰어에 넘기고, CLAUDE.md JPA 지시 포함. SC-10 은 `git ls-files` 로 WriteGuard 테스트 5개 부재 확인.
 
 ## 알아둬야 할 것
 

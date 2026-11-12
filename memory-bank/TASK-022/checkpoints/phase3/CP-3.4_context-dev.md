@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
-summary: "Green 184/184, spotless 0, 제약 error 0. 자체 리뷰 1R — [correctness] RC-1(sub 비정규 정수 표기) 시나리오 밖 변종 → RETRY_SCENARIO 2/3 으로 2a."
+summary: "Green 184/184, spotless 0, 제약 error 0. RETRY_SCENARIO 2회(SC-06 k·l 400 · sub 정규형). 자체 리뷰 2R — RC-1 공통 지점 수정(7f812e0), unresolved 0, deferred 3."
 
 next_steps:
-  - "2a — SC-05 에 sub '+7'·'07'·'٧'·'-7' 행(401), PLAN input_fields 보완 → 검증자 → 2b Red(변종 먼저 실패) → 재승인 → 3 에서 sub 정규형 검사 → 자체 리뷰 2R"
+  - "Phase 4 — wf-verify. 이전 라운드 root_causes(RC-1, not_probed 변종 포함)와 deferred(HEAD) 를 리뷰어에 넘긴다"
 
 decisions:
   - decision: "구현 순서: V7 → Performance.ownerId → AccessClaims·verifyAccessClaims(role·sub 원문) → JwtAuthenticationFilter ROLE_ → SecurityConfig(GET 만 공개, 403 FORBIDDEN_ROLE) → Service findOwned(404) → WriteGuard 삭제·CORS 헤더 → 배포 체크리스트"
@@ -22,6 +22,9 @@ decisions:
   - decision: "자체 리뷰 1R RC-1 은 시나리오 밖 변종 — Phase 3 에서 테스트를 만들지 않고 2a 로(사용자 결정, RETRY_SCENARIO 2/3). [design] HEAD 401/403 은 시나리오 결정('GET 외 모든 메서드는 ORGANIZER')과 같아 deferred. [정보] 프론트 X-Write-Key 는 TASK-024 와 같은 배포로"
     rationale: "wf-develop Step 5.5 표"
 
+  - decision: "RC-1 수정 — verifyAccessClaims 에 CANONICAL_USER_ID([1-9][0-9]{0,18}) 를 parseLong 앞에. 공통 지점 1곳(verifyAccessToken 은 위임)"
+    rationale: "자체 리뷰 2R: 결함 없음, 같은 카테고리 전수 확인"
+
 attempts:
   - round: "green 1"
     result: "184 중 3 실패 — SC-06 k·l 400, SC-05 FK(정리 순서), SC-13 401(토큰 만료) → 2a·2b 왕복"
@@ -29,11 +32,15 @@ attempts:
     result: "184/184"
   - round: "pre_review 1"
     result: "[correctness] 1 (RC-1, 변종 4 reproduced) · [design] 1 deferred · 정보 1"
+  - round: "green 3"
+    result: "RETRY 2/3 재승인 뒤 sub 정규형 검사 — 184/184"
+  - round: "pre_review 2"
+    result: "결함 없음 — RC-1 reproduced 4건 해소, not_probed 변종은 Phase 4 로"
 ---
 
 # CP-3.4 Dev — TASK-022
 
-자체 리뷰 1R root_causes (원문 — DEV_TASK-022.json 의 pre_review.root_causes 로 옮긴다):
+자체 리뷰 1R root_causes (원문 — 2R 원문은 DEV_TASK-022.json 의 pre_review.root_causes):
 
 ```json
 { "root_causes": [
