@@ -667,6 +667,95 @@ describe('TASK-024 F3 — 쓰기 API 401/403', () => {
   )
 })
 
+// ---------- F1 요청 토큰의 정본 (Phase 4 1회차 RC-1) ----------
+
+describe('TASK-024 F1 — 요청 토큰의 정본은 화면의 로그인 세션', () => {
+  type Storage17 = 'setItem-throws' | 'quota' | 'set-remove-throw' | 'ok'
+  const SC17: { row: string; storage: Storage17; then: string; expected: string | null; shows: 'organizer' | 'anon' }[] = [
+    { row: 'a 저장 실패 · 이메일 로그인 → 등록', storage: 'setItem-throws', then: 'email-register', expected: 'Bearer tok-mem', shows: 'organizer' },
+    { row: 'b 쿼터 초과 · 이메일 로그인', storage: 'quota', then: 'email', expected: 'Bearer tok-mem', shows: 'organizer' },
+    { row: 'c 저장 실패 · 소셜 콜백', storage: 'setItem-throws', then: 'social', expected: 'Bearer tok-soc', shows: 'organizer' },
+    { row: 'd 저장·삭제 실패 · 로그아웃', storage: 'set-remove-throw', then: 'logout', expected: null, shows: 'anon' },
+    { row: 'e 다른 탭이 저장소를 다른 토큰으로', storage: 'ok', then: 'other-tab-set', expected: 'Bearer tok-org', shows: 'organizer' },
+    { row: 'f 다른 탭이 저장소를 지움', storage: 'ok', then: 'other-tab-remove', expected: 'Bearer tok-org', shows: 'organizer' },
+    { row: 'g 정상 로그아웃', storage: 'ok', then: 'logout', expected: null, shows: 'anon' },
+  ]
+  test.each(SC17)(
+    'SC-17 (boundary) 저장소와 화면의 로그인 상태가 갈라져도 요청에는 화면의 로그인 상태가 실린다 — $row',
+    async ({ storage, then, expected, shows }) => {
+      // Given 표의 저장소 상태와 로그인 경로
+      const throwOn = (method: 'setItem' | 'removeItem', error: Error) =>
+        vi.spyOn(Storage.prototype, method).mockImplementation(() => {
+          throw error
+        })
+      try {
+        if (then === 'email-register' || then === 'email') {
+          stubServer({ [LOGIN]: () => res(200, loginBody('tok-mem', ORG)) })
+        } else if (then === 'social') {
+          stubServer({ [ME]: () => res(200, ORG) })
+        } else if (storage === 'set-remove-throw') {
+          localStorage.setItem('accessToken', 'tok-old')
+          stubServer({ [ME]: () => res(200, ORG) })
+        } else {
+          stubServer({ ...signedInAs(ORG, 'tok-org') })
+        }
+        if (storage === 'setItem-throws') throwOn('setItem', new Error('storage blocked'))
+        if (storage === 'quota') throwOn('setItem', new DOMException('quota exceeded', 'QuotaExceededError'))
+        if (storage === 'set-remove-throw') {
+          throwOn('setItem', new Error('storage blocked'))
+          throwOn('removeItem', new Error('storage blocked'))
+        }
+
+        // When 그다음
+        if (then === 'email-register') {
+          renderAt('/performances/new')
+          await waitFor(() => expect(where()).toBe('/login'))
+          await loginWith()
+          await waitFor(() => expect(where()).toBe('/performances/new'))
+          await screen.findByLabelText(/^공연명/)
+          await doWrite('register')
+          await waitFor(() => expect(callsTo(REGISTER)).toHaveLength(1))
+        } else if (then === 'email') {
+          renderAt('/login')
+          await loginWith()
+          await waitFor(() => expect(where()).toBe('/'))
+        } else if (then === 'social') {
+          renderAt('/oauth2/redirect?token=tok-soc')
+          await waitFor(() => expect(where()).toBe('/'))
+        } else {
+          renderAt('/')
+          const logoutButton = await screen.findByRole('button', { name: '로그아웃' })
+          if (then === 'logout') fireEvent.click(logoutButton)
+          // 다른 탭의 일 — 이 탭 화면을 거치지 않고 저장소만 바뀐다
+          if (then === 'other-tab-set') localStorage.setItem('accessToken', 'tok-aud')
+          if (then === 'other-tab-remove') localStorage.removeItem('accessToken')
+        }
+        // 행 a 는 등록 요청 자체, 나머지는 그 뒤 request()
+        const sent = then === 'email-register' ? callsTo(REGISTER)[0] : (await request('/api/performances', { method: 'POST' }), calls[calls.length - 1])
+
+        // Then 실린 Authorization
+        const headers = headersOf(sent)
+        if (expected === null) expect(headers.has('Authorization')).toBe(false)
+        else expect(headers.get('Authorization')).toBe(expected)
+        if (then === 'email-register') await waitFor(() => expect(where()).toBe('/performances/42'))
+        // And 화면의 로그인 상태
+        if (shows === 'organizer') {
+          expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+          expect(screen.getByText('주최자')).toBeInTheDocument()
+        } else {
+          expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument()
+        }
+        if (storage === 'set-remove-throw') {
+          vi.restoreAllMocks()
+          expect(localStorage.getItem('accessToken')).toBe('tok-old')
+        }
+      } finally {
+        vi.restoreAllMocks()
+      }
+    },
+  )
+})
+
 // ---------- F4 쓰기 키 흔적 ----------
 
 /** 저장소 루트 — vitest 의 URL 해석은 /@fs 접두를 붙이므로 문자열로 자른다 (task017.static.test.ts 관례) */

@@ -109,6 +109,13 @@
       "status": "already_passing",
       "failure": null,
       "note": "지금 코드는 공개 조회에 토큰을 싣지 않아 통과한다. 구현이 Bearer 를 GET 에도 실은 뒤 공개 화면이 깨지지 않는지 지키는 회귀 — 구조적으로 Red 불가"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_function": "SC-17 (boundary) 저장소와 화면의 로그인 상태가 갈라져도 요청에는 화면의 로그인 상태가 실린다",
+      "status": "red",
+      "rows": "a·b·c 실패(expected null to be Bearer tok-mem/tok-soc — 저장 실패로 저장소가 비어 지금 request() 는 토큰 없음). d 실패(로그아웃했는데 저장소에 남은 tok-old 가 실림). e 실패(expected Bearer tok-aud to be Bearer tok-org — 다른 탭 값이 실림). f 실패(다른 탭이 지운 뒤 토큰 없음). g 통과(정상 로그아웃 — 저장소도 비어 지금도 토큰 없음, 구현 뒤 회귀를 지킨다). 실패 행은 Authorization 단언에서 멈춰 뒤의 화면 상태 단언(헤더의 로그아웃·이름)과 행 a 의 /performances/42 이동은 실행되지 않음 — 로그인 화면 복귀·등록 이동은 SC-04·05 가 같은 하네스로 통과한다",
+      "note": "구현이 이미 있는 상태의 Red — 지금 구현(c109808)에서 실제로 실패한다. 변이 검증 불필요"
     }
   ],
   "red_result": {
@@ -135,10 +142,10 @@
     ]
   },
   "inventory_check": {
-    "scenarios": 16,
-    "test_functions": 16,
+    "scenarios": 17,
+    "test_functions": 17,
     "match": true,
-    "how": "task024.organizer.test.tsx 의 'SC-NN (' 제목 14종(SC-01~12·15·16) + SC-13(기존 3파일의 행) + SC-14(기존 3파일의 테스트). grep -oE \"'SC-[0-9]+ \\(\" | sort -u = 14"
+    "how": "task024.organizer.test.tsx 의 SC 제목 15종(SC-01~12·15·16·17) + SC-13(기존 3파일의 행) + SC-14(기존 3파일의 테스트)"
   },
   "testing_preferences": {
     "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
@@ -186,5 +193,21 @@
     "approved_at": "2026-11-12T09:56:29Z",
     "via": "AskUserQuestion — 승인 (통합 HITL#1·2)",
     "reopened": "Phase 4 1회차 RC-1 → 2a 롤백(RETRY_SCENARIO 2/3). SC-17 추가로 재승인 필요"
+  },
+  "red_retry_2": {
+    "attempt": 2,
+    "type": "RETRY_SCENARIO",
+    "from": "Phase 4 VERIFY 1회차 FAIL — RC-1",
+    "added": [
+      "SC-17"
+    ],
+    "red_result": {
+      "command": "cd frontend && npx vitest run",
+      "total": 775,
+      "failed": 6,
+      "passed": 768,
+      "todo": 1,
+      "note": "실패 6 = SC-17 a~f. 그 밖 실패 0"
+    }
   }
 }

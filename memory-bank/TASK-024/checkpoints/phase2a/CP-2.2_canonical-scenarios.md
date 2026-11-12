@@ -37,6 +37,9 @@ attempts:
   - n: 2
     result: PASS
     note: "2b 에서 RETRY_SCENARIO 1/3 — SC-09 Then '전역 헤더 비로그인 모양' 이 /login(인증 화면, 헤더 없음)에서 관찰 불가 → 로그인 화면 제목으로. fail 0 · warn 5(V5·V6·V7·V9·V12)"
+  - n: 3
+    result: PASS
+    note: "Phase 4 1회차 RC-1 → RETRY_SCENARIO 2/3. SC-17 추가. fail 0 · warn 8"
 
 ---
 
