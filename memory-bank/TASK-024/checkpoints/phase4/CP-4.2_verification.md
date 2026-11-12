@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "Phase 4 2회차 WARN — RC-1 해소(재현 7: 해소 6·ADR-0030 수용 1), 차단급 결함 0, 기존 결함 1 TASK-025 이관(사용자 결정). 화면 9상태(복원 중·저장소 차단 포함). (1회차) FAIL — RC-1(인증 정본 둘: 가드=메모리, 헤더=localStorage). 뿌리 1 · 변종 4, 재현 2·미프로브 2. 테스트 767/767·린트·빌드·제약(error 0, AUTH-001 위반 0) 통과. 실제 백엔드 화면 6상태 PASS"
 

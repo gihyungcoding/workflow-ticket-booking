@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "PLAN_TASK-024.json — route Frontend, flows 4건이 AC 6건을 전부 덮음. input_fields 8. 변경 대상 17(신규 1·삭제 1, 승인 테스트 5파일 포함)."
 

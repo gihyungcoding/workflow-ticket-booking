@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "RC-1 수정 Green — 775/775(+todo 1), SC-17·보강 통과, 자체 리뷰 2R(later 변종 2: 1 수정·1 ADR-0030 수용). (1회차) Green — 767/767(+todo 1), 대상 68 케이스 전부 통과, 린트 error 0, 제약 error 0(AUTH-001 위반 0). 자체 리뷰 1R 결함 0. 시안 대조 차이 1건 수정(9558a67)"
 

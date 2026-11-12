@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "Red — 새 파일 68 케이스 중 52 실패, SC-13 기존 행 9 실패. already_passing: SC-12·14·16(회귀). 기존 테스트 그 밖 실패 0. 통합 HITL#1·2 승인"
 

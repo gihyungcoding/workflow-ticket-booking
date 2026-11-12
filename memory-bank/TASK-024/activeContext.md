@@ -3,7 +3,7 @@ task_id: TASK-024
 title: "프론트 토큰 전송·주최자 가드"
 phase: "5"
 phase_name: "Phase 5 - Reflect"
-status: ACTIVE
+status: DONE
 track: light
 created_at: 2026-11-12
 last_updated: 2026-11-12
@@ -13,7 +13,7 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-024-frontend-token-guard"
 
-last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
+last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/organizer-flow.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-024.json"
@@ -22,15 +22,16 @@ artifacts:
   test: "workflow_design/05_scenario/TEST_TASK-024.json"
   dev: "workflow_design/06_dev/DEV_TASK-024.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-024.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-024.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 1회차 FAIL — RC-1(가드=메모리 user, 헤더=localStorage). HITL#3 시나리오로 롤백 — RETRY_SCENARIO 2/3. SC-17 추가·재승인(HITL#1·2).
+DONE (2026-11-12). Phase 4 2회차 예외 승인(verified_commit 57ff928), 회고 작성 — 승인 대기(/wf-retro).
 
 ## 다음 한 걸음
 
-`wf-reflect` — Phase 4 예외 승인(verified_commit 57ff928). 기존 결함(복원 중 logout) TASK-025 이관 메모.
+`/wf-ship` 으로 PR. TASK-022(머지됨)와 같은 배포 — 체크리스트 §5-1 프론트 먼저. TASK-025 에 follow_ups(복원 중 logout → restoring 영구) 전달. 회고 승인은 `/wf-retro`.
 
 ## 알아둬야 할 것
 

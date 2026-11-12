@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-12T00:00:00Z
 summary: "SCENARIO_TASK-024 — 17건(happy 3 / error 4 / boundary 6 / regression 4), AC 6/6, 입력 경계 40칸. 독립검증 3회차 PASS(경고 8) — Phase 4 RC-1 롤백 반영"
 
