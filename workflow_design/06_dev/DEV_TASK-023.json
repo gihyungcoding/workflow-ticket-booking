@@ -80,6 +80,21 @@
       "path": "docs/release/first-deploy-checklist.md",
       "change": "V1~V8, §5-3 V8 운영 영향·롤백",
       "lines_changed": 19
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepository.java",
+      "change": "[Phase 4 롤백] findByIdForUpdate — PESSIMISTIC_WRITE 쓰기용 조회",
+      "lines_changed": 22
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "[Phase 4 롤백] findOwnedForUpdate(수정·취소·publish·unpublish), pageRequestOf 공통 검증(관객·주최자 목록)",
+      "lines_changed": 40
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "[Phase 4 롤백] 관객 목록의 Math.min(size,100) 제거 — 서비스 공통 검증으로 이동",
+      "lines_changed": 2
     }
   ],
   "reused": [
@@ -98,15 +113,20 @@
     {
       "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidRequestException.java",
       "symbol": "InvalidRequestException (400 INVALID_REQUEST)"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidRequestException.java",
+      "symbol": "INVALID_REQUEST 400 — 관객 목록 검증에도 재사용"
     }
   ],
   "test_status": "green",
   "test_result": {
     "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --offline",
-    "total": 203,
-    "passed": 203,
+    "total": 205,
+    "passed": 205,
     "failed": 0,
-    "target_tests_passed": 19
+    "target_tests_passed": 21,
+    "note": "SC-20(PerformanceConcurrentWriteTest)·SC-21(PerformanceListPagingApiTest) 를 클래스 단독으로 3회 더 돌려 모두 통과 — 시간 의존 테스트의 안정성 확인"
   },
   "lint": {
     "command": "cd backend && ./gradlew spotlessCheck --offline",
@@ -115,8 +135,8 @@
   },
   "refactoring": [
     {
-      "what": "없음 — 리팩토링하지 않았다",
-      "why": "최소 구현이 기존 관례(findOwned·statusSpecification 재사용, 서비스 private 헬퍼)를 따라 중복이 없다. 응답 조립은 toResponse·toOrganizerResponse 로 이미 분리됨"
+      "what": "page·size 검증을 pageRequestOf 한 곳으로 모음",
+      "why": "RC-2 의 뿌리가 호출부별 검증이었다 — 공통 지점에서 관객·주최자 목록을 덮는다"
     }
   ],
   "plan_unresolved_resolution": [
@@ -191,6 +211,24 @@
       "how": "first-deploy-checklist §4-1·4-2·5-3 갱신",
       "fact": "V1~V8, 롤백 창 등록 공연 서술",
       "impact": "없음"
+    },
+    {
+      "item": "[Phase 4 롤백] RC-1 동시성 테스트 방식",
+      "how": "SC-20 Red 에서 H2 의 JPA 표준 잠금이 UPDATE 를 실제로 막는지 확인 — 'B 가 진행 중에는 끝나지 않는다' 단언이 통과",
+      "fact": "H2 에서 PESSIMISTIC_WRITE 가 SELECT … FOR UPDATE 로 동작, 잠금 없는 구현은 취소·title·공개를 되돌림(26 단언 실패)",
+      "impact": "없음"
+    },
+    {
+      "item": "[Phase 4 롤백] 시각 판정 시점",
+      "how": "코드 대조 + SC-20 f·h·i",
+      "fact": "수정·publish·unpublish 모두 findOwnedForUpdate 뒤에 clock.instant() 를 읽는다",
+      "impact": "시나리오와 일치"
+    },
+    {
+      "item": "[Phase 4 롤백] RC-2 기존 승인 테스트의 500 단언",
+      "how": "Grep page=-1·size=0·size=-1 (OrganizerVisibilityApiTest 제외)",
+      "fact": "없음",
+      "impact": "없음"
     }
   ],
   "test_modifications": [
@@ -225,35 +263,86 @@
         "findings": 2,
         "tests_added": [],
         "fix_commit": null
+      },
+      {
+        "n": 2,
+        "scope": "Phase 4 롤백 수정 커밋 09c5933...HEAD · 같은 카테고리 전수(쓰기 경로·목록 경로 호출부)",
+        "findings": 2,
+        "tests_added": [],
+        "fix_commit": null
       }
     ],
     "root_causes": [
       {
         "id": "RC-1",
-        "summary": "버전·동적 UPDATE 없이 전 컬럼을 저장하는 read-modify-write 라 동시 변경이 서로를 덮는다",
+        "summary": "잠금 없이 읽고 전 컬럼을 저장하는 쓰기 경로가 동시 변경을 덮어씀",
         "found_in_round": 1,
         "variants": [
           {
-            "case": "publish/unpublish 와 cancel 동시 실행 시 cancelled 가 false 로 되돌아감",
+            "case": "publish/unpublish 와 cancel",
             "origin": "found",
-            "probe": "not_probed",
-            "reason": "동시성 프로브용 환경 없음"
+            "probe": "reproduced",
+            "resolved": true,
+            "evidence": "PerformanceConcurrentWriteTest#test_sc20 (Red 실행에서 취소 되돌림 재현 → 잠금으로 Green)"
           },
           {
-            "case": "update 와 cancel 동시 실행(기존 경로)",
-            "origin": "predicted",
+            "case": "update 와 cancel",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true,
+            "evidence": "PerformanceConcurrentWriteTest#test_sc20 c"
+          },
+          {
+            "case": "publish 와 update",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true,
+            "evidence": "PerformanceConcurrentWriteTest#test_sc20 d·e"
+          },
+          {
+            "case": "unpublish 시각 틈 (잠금 전 clock 읽기)",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true,
+            "evidence": "PerformanceConcurrentWriteTest#test_sc20 f·h·i"
+          },
+          {
+            "case": "잠금 대기 무한(lock timeout 없음)과 락 예외의 기본 500 응답",
+            "origin": "later",
             "probe": "not_probed",
-            "reason": "같은 사유"
+            "reason": "PostgreSQL·동시 요청 환경이 없어 재현하지 못함 — 위험도 낮음. 시나리오에 없는 동작(타임아웃값·409/503 매핑)이라 이번에 만들지 않는다",
+            "deferred_to": "별도 태스크(락 타임아웃 힌트와 응답 매핑)"
+          }
+        ]
+      },
+      {
+        "id": "RC-2",
+        "summary": "page·size 검증이 호출부별로 흩어져 경로마다 다르게 걸러짐",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "size=0, page=-1",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true,
+            "evidence": "PerformanceListPagingApiTest#test_sc21"
+          },
+          {
+            "case": "page * size 가 int 범위 초과",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true,
+            "evidence": "PerformanceListPagingApiTest#test_sc21 h"
           }
         ]
       }
     ],
     "unresolved": [
       {
-        "category": "correctness",
+        "category": "correctness-risk",
         "severity": "낮음",
-        "summary": "publish/unpublish 와 cancel 이 동시에 오면 cancel 이 덮일 수 있다(@Version·@DynamicUpdate 없음)",
-        "note": "이번 변경 이전부터 있던 update·cancel 경쟁과 같은 뿌리. 시나리오에 없는 동작이라 이 태스크에서 만들지 않는다 — 사용자 판단(별도 태스크 또는 수용)"
+        "summary": "@Lock(PESSIMISTIC_WRITE) 에 lock.timeout 힌트가 없고 락 예외(PessimisticLockingFailureException)를 매핑하는 핸들러가 없다 — PostgreSQL 기본은 무한 대기이고 잠금을 오래 쥐면 커넥션 풀이 찰 수 있다",
+        "note": "쓰기 트랜잭션이 짧아 지금은 위험이 낮다. 한 요청이 잠그는 행이 하나라 데드락 경로 없음. 시나리오에 없는 동작이라 이번 수정에서 만들지 않는다 — 사용자 판단(별도 태스크)"
       }
     ],
     "deferred": [
@@ -264,7 +353,44 @@
       {
         "category": "reference",
         "summary": "관객 목록은 page<0·size<1·offset 초과가 여전히 미처리 예외 — 범위 밖, 주최자 목록과 비대칭"
+      },
+      {
+        "category": "test",
+        "summary": "SC-20 의 300ms 대기 후 B 미완료 단언은 느린 환경에서 B 가 늦게 행을 읽으면 가짜 통과(탐지력 저하)를 만들 수 있다 — 거짓 실패는 없다. B 가 잠금 대기에 들어간 것을 확인(DB 대기 상태 폴링)하면 보강되나 승인된 테스트라 고치지 않았다"
       }
     ]
-  }
+  },
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-1 — 잠금·버전 없이 전 컬럼을 저장하는 read-modify-write 라 동시 변경이 서로를 덮는다",
+      "variants": [
+        "publish/unpublish 와 cancel",
+        "update 와 cancel",
+        "publish 와 update",
+        "unpublish 시각 틈"
+      ],
+      "tests": [
+        "PerformanceConcurrentWriteTest#test_sc20 (a~i)"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "PerformanceService.findOwnedForUpdate ← updatePerformance·cancelPerformance·changeVisibility(publish·unpublish)"
+      ]
+    },
+    {
+      "root_cause": "RC-2 — page·size 검증이 주최자 목록에만 있고 관객 목록에는 없었다",
+      "variants": [
+        "관객 목록 size=0·size=-1",
+        "page=-1",
+        "page×size int 초과"
+      ],
+      "tests": [
+        "PerformanceListPagingApiTest#test_sc21"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "PerformanceService.pageRequestOf ← getPerformances·getMyPerformances"
+      ]
+    }
+  ]
 }

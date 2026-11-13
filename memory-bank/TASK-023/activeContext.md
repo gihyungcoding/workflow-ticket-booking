@@ -1,8 +1,8 @@
 ---
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
-phase: "2b"
-phase_name: "Phase 2b - Red (재승인 완료)"
+phase: "3"
+phase_name: "Phase 3 - Green (Phase 4 롤백 수정 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-023-organizer-visibility-api"
 
-last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
+last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
 source: "docs/product/features/organizer-flow.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-023.json"
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-추가 시나리오 SC-20·SC-21 과 Red 를 재승인받았다. Phase 3 로 간다.
+Phase 4 FAIL(RC-1·RC-2) 수정을 마쳤다 — 205/205, 자체 리뷰 2R.
 
 ## 다음 한 걸음
 
-`wf-develop` — Phase 4 FAIL(RC-1·RC-2) 수정.
+Phase 4 재검증(`wf-verify`).
 
 ## 알아둬야 할 것
 
