@@ -1,11 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "Red 테스트 19건 작성·실행 — 신규 18 red + 1 already_passing(SC-18), 수정한 승인 테스트 6건 red, 인벤토리 19==19, 사람 승인 대기"
+summary: "Red 테스트 19건 작성·실행 — 신규 18 red + 1 already_passing(SC-18), 수정한 승인 테스트 6건 red, 인벤토리 19==19, 사람 승인 완료(HITL#1·2)"
 
 next_steps:
-  - "HITL #1·2 — 시나리오 + Red 통합 승인 (AskUserQuestion)"
-  - "승인되면 Phase 3 — V8 마이그레이션, 서비스·리포지토리·컨트롤러·SecurityConfig, Performance 규칙 구현"
+  - "Phase 3 — wf-develop: V8 마이그레이션, 리포지토리 published 조건·주최자 목록, 서비스 publish/unpublish/조회·수정 규칙, PerformanceStatusRules 플래그, 컨트롤러·예외 매핑·SecurityConfig, first-deploy-checklist V8"
+  - "Phase 3 자체 리뷰·Phase 4 에서 code-reviewer 에 JPA 지시(CLAUDE.md) 포함 — 비트랜잭션 프로브, 거부 경로 DB 변경 없음, Given 설정 적용 여부"
 
 decisions:
   - decision: "승인 테스트 3개 파일을 Red 단계에서 수정한다 (PerformanceOwnerMigrationTest 7→8, PerformanceOwnershipApiTest SC-11 에 publish 단계, PerformanceZoneRegistrationApiTest 의 detail() 을 주최자 단건 조회로 + 응답 키 3개)"

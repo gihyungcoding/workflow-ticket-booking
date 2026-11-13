@@ -166,6 +166,9 @@
     "mock_strategy": "모킹 없음 — H2 + 리포지토리, MutableClock 고정, 클래스 레벨 @Transactional 없음(비트랜잭션 재조회)"
   },
   "human_review": {
-    "approved": false
+    "approved": true,
+    "approved_at": "2026-11-13",
+    "scope": "시나리오 19건 + Red 테스트 + 승인 테스트 수정 3건(6테스트) + F11(AC 밖 쓰기 응답 타입)",
+    "channel": "AskUserQuestion"
   }
 }

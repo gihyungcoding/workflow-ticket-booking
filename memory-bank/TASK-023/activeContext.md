@@ -2,7 +2,7 @@
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
 phase: "2b"
-phase_name: "Phase 2b - Red"
+phase_name: "Phase 2b - Red (승인 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Red 테스트 19건을 작성·커밋했고 시나리오+Red 통합 승인(HITL#1·2)을 기다린다.
+시나리오·Red 통합 승인(HITL#1·2)을 받았다. Phase 3 로 넘어간다.
 
 ## 다음 한 걸음
 
-승인되면 Phase 3 (`wf-develop`).
+`wf-develop` — Red 를 통과시키는 최소 구현.
 
 ## 알아둬야 할 것
 
