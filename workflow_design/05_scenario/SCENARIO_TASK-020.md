@@ -206,7 +206,7 @@ flow: F1
 | 진입 뒤 흐른 시간 | 카운트다운 문구 | CTA |
 |---|---|---|
 | 0초 | 4분 32초 | 꺼짐 「예매하기 · 오후 6:00에 열려요」 |
-| 271.999초 (기기 시계로는 openAt 을 이미 2.999초 넘긴 시점) | 0초 | 꺼짐 |
+| 271.999초 (기기 시계로는 openAt 을 이미 2.999초 넘긴 시점) | (문구는 단언하지 않는다 — 표시는 1초 주기로 바뀐다) | 꺼짐 |
 | 272.000초 | (카운트다운 없음) 머리글 「지금 예매할 수 있어요」 | 켜짐 「예매하기」 |
 
 > 이 표의 마지막 두 행이 AC-1 의 "CTA 가 서버 시각의 openAt 에 켜진다" 오프셋 주입 테스트다.
@@ -316,11 +316,11 @@ flow: F2
 - **And** 그 뒤 서버 시각 스텁의 `SKEW` 가 0 으로 바뀌었다
 - **When** `document.visibilityState` 를 표의 값으로 바꾸고 `visibilitychange` 를 보낸다
 - **Then** 시각 호출 수는 표의 값이다
-- **And** `visible` 행은 카운트다운이 새 오프셋을 반영한다 — 기준 시각이 3초 늦어져 남은 시간이 3초 늘어난다
+- **And** `visible` 행은 카운트다운이 새 오프셋을 반영한다 — 서버 시각이 기기 시계보다 3초 느리던 것이 같아져 기준 시각이 3초 앞당겨지고 남은 시간이 3초 줄어든다
 
 | 행 | 바꾼 값 | 시각 호출 수(누적) | 카운트다운 |
 |---|---|---|---|
-| a | `'visible'` | 6 | 측정 직전보다 3초 늘어난 값 |
+| a | `'visible'` | 6 | 측정 직전보다 3초 줄어든 값 (4분 32초 → 4분 29초) |
 | b | `'hidden'` | 3 | 그대로(시간만 흐른다) |
 | c | `'prerender'` (정의 밖 값) | 3 | 그대로 |
 
@@ -361,7 +361,7 @@ flow: F4
 | f | 같은 재측정 결과가 openAt 미만이다 | 재측정 결과 < openAt | 예정 유지, 남은 시간만 새로 계산 |
 | g | 이미 예매 가능으로 바뀐 뒤 탭이 다시 보인다 | (해당 없음) | 예매 가능 유지, 시각 호출 수 늘지 않는다 (예정일 때만 잰다) |
 | h | 행 b 와 같지만 `availableSeats` 가 0 이다 | openAt (같음) | 처음부터 매진 (「모든 좌석이 팔렸어요」·꺼짐 「매진」) |
-| i | 진입 때 측정 결과가 그 값이다 (openAt 이 서버 시각보다 30일 뒤 — 타이머 지연 상한 2^31−1ms ≈ 24.8일을 넘는다) | openAt − 30일 | 예정 유지 (카운트다운 「30일 0시간」), 곧바로 예매 가능으로 바뀌지 않는다. 24.8일 뒤 시점에도 예정 |
+| i | 진입 때 측정 결과가 그 값이다 (openAt 이 서버 시각보다 30일 뒤 — 타이머 지연 상한 2^31−1ms ≈ 24.8일을 넘는다) | openAt − 30일 | 예정 유지 — 진입 직후와 5초 뒤에도 카운트다운 「30일 0시간」, CTA 꺼짐 (곧바로 예매 가능으로 바뀌지 않는다) |
 
 covers: AC-2 기준 시각이 `openAt` 에 닿으면 상세 API 를 다시 부르지 않고(그 순간 호출 0회 — ADR-0026) 머리글이 "지금 예매할 수 있어요", CTA 가 켜진 "예매하기"로 바뀐다. 남은 좌석이 0 이면 「매진」으로 바뀐다
 flow: F4
@@ -841,9 +841,10 @@ flow: F8
 |---|---|---|
 | `frontend/src/pages/PerformanceDetailPage.test.tsx` | 파일 전체를 새 화면 기준으로 교체한다 — 옛 `toLocaleString`·「잔여 좌석」·「존재하지 않는 공연입니다」 단언은 SC-01·02·03·15·16 이 대신한다 | SC-01·02·03·15·16 |
 | `frontend/src/components/ui/task017.ui.test.tsx` :388-390·436-437 | `AppBar` 의 빈 `h1` 이 있다는 단언을 「`h1` 없음」으로 뒤집는다 (`title` 없음·`''`·공백만) | SC-27 a~c |
-| `frontend/src/pages/task017.regression.test.tsx` :80-83 | 상세에서 「예매 가능」 글자 요소가 1개라는 단언을 0개로 바꾼다 (상세에 배지가 없다) | SC-15 a |
+| `frontend/src/pages/task017.regression.test.tsx` :33·80-83 | 상세에서 「예매 가능」 글자 요소가 1개라는 단언을 0개(머리글 「지금 예매할 수 있어요」)로 바꾼다 (상세에 배지가 없다). 상세 픽스처의 sections 원소에 area·stageOrder 를 더한다 (없으면 계약 위반 — SC-04) | SC-15 a, SC-04 |
 | `frontend/src/task017.static.test.ts` :30-34 | DESIGN-003 위반 파일 목록에서 `PerformanceDetailPage.tsx` 를 뺀다 | SC-31 |
 | `frontend/src/auth/AuthScreens.test.tsx` SC-13(:602)·SC-22 두 행(:856) | 시작 화면을 `/performances/3` 에서 `/` 로 옮긴다 — 헤더 링크로 로그인·가입에 가는 흐름은 홈에서 한다 | SC-29 a·b |
 | `frontend/src/auth/AuthScreens.test.tsx` SC-20 의 `/performances/3` 행(:820) | `/performances/3` 행을 뺀다 — 상세에는 헤더가 없다. `/` 행은 그대로 | SC-29 c·d, SC-28 |
-| `frontend/src/auth/AuthScreens.test.tsx` 공개 조회 단언(:~1000 `link '로그인'`) | `/performances/3` 에서 `link '로그인'` 이 있다는 단언을 뺀다(없다로 바꾼다) | SC-28 a |
+| `frontend/src/auth/AuthScreens.test.tsx` SC-28 (:~1000 `link '로그인'`) | `/performances/3` 에서 `link '로그인'` 이 있다는 단언을 없다로 바꾼다. 같은 파일의 공연 픽스처(:48) sections 원소에 area·stageOrder 를 더한다 (상세가 제목을 그리려면 계약을 지켜야 한다) | SC-28 a, SC-04 |
+| `frontend/src/auth/task024.organizer.test.tsx` 공연 픽스처(:47) | sections 원소에 area·stageOrder 를 더한다 — SC-16 b 가 `/performances/3` 에서 제목을 찾는다 | SC-04 |
 | `frontend/src/auth/task018.auth.test.tsx` SC-32 의 `/performances/1` 행(:1591) | `header: true` → `false` 로 바꾼다 | SC-28 a |
