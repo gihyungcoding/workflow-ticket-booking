@@ -43,11 +43,13 @@
 
 | Task | 범위 | 산출물 | 포함하지 않음 | 선행 | 추정 | 태스크 ID |
 |---|---|---|---|---|---|---|
-| A. 백엔드 — 메일 발송 기반·일회용 이메일 토큰 | `MailGateway`(SMTP·로그)와 설정·기동 검증, `email_token`·`users.account_mail_sent_at` 마이그레이션, 토큰 발급·소모·간격 제한, 메일 문구 4종, 메일 발송 ADR(ADR-0031)·아키텍처 문서 | `V<n>__add_email_token.sql`, `EmailToken`·`EmailTokenRepository`, `MailGateway`·`SmtpMailGateway`·`LoggingMailGateway`, `EmailTokenService`, `MailConfig`, `architecture.md` §5 | 엔드포인트, 가입·로그인 변경, 프론트 | — | 12h | |
-| B. 백엔드 — 이메일 인증 API·인증 전 로그인 차단 | 가입 시 인증 메일·미인증 덮어쓰기, 로그인 403, 인증 재발송·확인 API, 기존 가입자 재인증, `AuthTestHelper` 인증 처리, 배포 체크리스트 | `AuthService`·`AuthController`·`AuthExceptionHandler` 변경, `EmailVerificationService`, DTO, `SecurityConfig`, `first-deploy-checklist.md` | 비밀번호 찾기, 프론트 | A | 14h | |
-| C. 백엔드 — 비밀번호 찾기·재설정 API | 재설정 요청·확인, 소셜 안내 메일, 변경 알림 메일, 인증 겸함 | `PasswordResetService`, `AuthController` 경로 2개, DTO | 이메일 인증, 프론트 | A | 8h | |
-| D. 프론트 — 인증 메일 안내·인증 결과·로그인 인증 필요 | ① 안내(재발송 카운트다운) · ② 인증 결과 · ③ 로그인 403 안내, 가입 뒤 자동 로그인 제거 | `VerifyEmailSentPage`·`VerifyEmailPage`, `SignUpPage`·`LoginPage`·`api/auth.ts`·`authPaths.ts`·`App.tsx` 변경 | 비밀번호 찾기 화면·링크, 시안 제작 | B | 10h | |
-| E. 프론트 — 비밀번호 찾기·재설정 화면 | ④ 비밀번호 찾기 · ⑤ 재설정, 로그인 화면의 「비밀번호 찾기」 링크 | `ForgotPasswordPage`·`ResetPasswordPage`, `LoginPage` 링크 | 인증 화면, 시안 제작 | C | 8h | |
+| A. 백엔드 — 메일 발송 기반·일회용 이메일 토큰 | `MailGateway`(SMTP·로그)와 설정·기동 검증, `email_token`·`users.account_mail_sent_at` 마이그레이션, 토큰 발급·소모·간격 제한, 메일 문구 4종, 메일 발송 ADR(ADR-0031)·아키텍처 문서 | `V<n>__add_email_token.sql`, `EmailToken`·`EmailTokenRepository`, `MailGateway`·`SmtpMailGateway`·`LoggingMailGateway`, `EmailTokenService`, `MailConfig`, `architecture.md` §5 | 엔드포인트, 가입·로그인 변경, 프론트 | — | 12h | TASK-027 |
+| B. 백엔드 — 이메일 인증 API·인증 전 로그인 차단 | 가입 시 인증 메일·미인증 덮어쓰기, 로그인 403, 인증 재발송·확인 API, 기존 가입자 재인증, `AuthTestHelper` 인증 처리, 배포 체크리스트 | `AuthService`·`AuthController`·`AuthExceptionHandler` 변경, `EmailVerificationService`, DTO, `SecurityConfig`, `first-deploy-checklist.md` | 비밀번호 찾기, 프론트 | A | 14h | TASK-028 |
+| C. 백엔드 — 비밀번호 찾기·재설정 API | 재설정 요청·확인, 소셜 안내 메일, 변경 알림 메일, 인증 겸함 | `PasswordResetService`, `AuthController` 경로 2개, DTO | 이메일 인증, 프론트 | A | 8h | TASK-029 |
+| D. 프론트 — 인증 메일 안내·인증 결과·로그인 인증 필요 | ① 안내(재발송 카운트다운) · ② 인증 결과 · ③ 로그인 403 안내, 가입 뒤 자동 로그인 제거 | `VerifyEmailSentPage`·`VerifyEmailPage`, `SignUpPage`·`LoginPage`·`api/auth.ts`·`authPaths.ts`·`App.tsx` 변경 | 비밀번호 찾기 화면·링크, 시안 제작 | B | 10h | TASK-030 |
+| E. 프론트 — 비밀번호 찾기·재설정 화면 | ④ 비밀번호 찾기 · ⑤ 재설정, 로그인 화면의 「비밀번호 찾기」 링크 | `ForgotPasswordPage`·`ResetPasswordPage`, `LoginPage` 링크 | 인증 화면, 시안 제작 | C | 8h | TASK-031 |
+
+[태스크 생성 2026-11-13]
 
 **분리 이유**: 메일 발송과 일회용 토큰은 인증과 재설정이 함께 쓰는 기반이라 먼저 떼어(A) 두 기능을 병렬로 얹는다. 이메일 인증(B)은
 가입·로그인 동작이 바뀌어 기존 테스트 19개 파일의 Given 이 흔들리는 일이라 위험이 따로 있고, 비밀번호 재설정(C)은 새 경로
