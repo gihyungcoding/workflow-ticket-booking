@@ -15,6 +15,11 @@ branch: "feature/task-023-organizer-visibility-api"
 
 last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/organizer-flow.md (Task B)"
+pull_request:
+  number: 52
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/52"
+  base: develop
+  opened_at: 2026-11-13
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-023.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-023.md"
