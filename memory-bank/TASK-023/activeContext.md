@@ -1,8 +1,8 @@
 ---
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
-phase: "3"
-phase_name: "Phase 3 - Green (Phase 4 롤백 수정 완료)"
+phase: "4"
+phase_name: "Phase 4 - Verify (2회차 WARN — HITL#3 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-023-organizer-visibility-api"
 
-last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
+last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
 source: "docs/product/features/organizer-flow.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-023.json"
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 FAIL(RC-1·RC-2) 수정을 마쳤다 — 205/205, 자체 리뷰 2R.
+Phase 4 2회차 WARN. HITL#3 승인을 기다린다.
 
 ## 다음 한 걸음
 
-Phase 4 재검증(`wf-verify`).
+승인되면 verified_commit 기록 후 Phase 5.
 
 ## 알아둬야 할 것
 

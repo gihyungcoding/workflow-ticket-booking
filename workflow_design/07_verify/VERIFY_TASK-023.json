@@ -1,12 +1,13 @@
 {
   "task_id": "TASK-023",
-  "status": "FAIL",
-  "status_reason": "코드 리뷰어가 [correctness] 2건을 냈다. RC-1: Performance 에 @Version·@DynamicUpdate·락이 없어 publish/unpublish(이번에 늘어난 경로)가 동시 cancel 을 되돌려 취소된 공연이 공개될 수 있다 — 시나리오·AC 에 없는 동작이라 규칙상 2a 롤백 후보. RC-2: 새 page·size 방어가 주최자 목록에만 있고 관객 목록(기존 동작)은 size=0·page=-1 에서 여전히 500 이다. AC 12건·테스트 203/203·린트·아키텍처는 통과했고, 위 두 소견만이 FAIL 사유다",
+  "status": "WARN",
+  "status_reason": "2회차 — 1회차 FAIL 의 RC-1·RC-2 를 Phase 3 에서 공통 지점으로 고쳤고 리뷰어가 결함 없음으로 판정했다. AC 12/12·추가 시나리오 SC-20·21 포함 205/205·린트·아키텍처 통과. WARN 사유: (1) 쓰기 잠금의 lock.timeout 힌트·락 예외 매핑이 없다 — 개선 제안(낮음), 시나리오 밖이라 후속 태스크 후보 (2) SC-20 의 300ms 대기 단언이 느린 환경에서 탐지력이 약해질 수 있다(거짓 실패는 없음) (3) 동시성은 H2 에서만 확인했고 PostgreSQL 은 SELECT … FOR UPDATE 표준이라 같은 의미이나 이 태스크에서 프로브하지 않았다 (4) 주최자 화면 전까지 프론트의 등록 후 이동·수정 값 로드는 비공개 공연에서 404 (AC 밖, 배포 순서 영향)",
   "evidence": {
     "tests": {
       "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --offline",
       "exit_code": 0,
-      "summary": "BUILD SUCCESSFUL in 2m 2s — 203 tests, 0 failed, 0 skipped (신규 19 포함)"
+      "summary": "BUILD SUCCESSFUL in 2m 9s — 205 tests, 0 failed, 0 skipped (SC-20 동시 쓰기·SC-21 관객 목록 포함)",
+      "note": "2회차 실행. 리뷰어는 저장소 밖에서 정적 분석만 했다(결과 디렉터리 공유 없음). 롤백 수정 직후 SC-20·SC-21 은 단독으로 3회 더 통과해 안정성 확인"
     },
     "lint": {
       "command": "cd backend && ./gradlew spotlessCheck --offline",
@@ -15,7 +16,7 @@
     },
     "diff": {
       "command": "git diff --stat develop...HEAD",
-      "summary": "40 files changed, 4196 insertions(+), 23 deletions(-) — 프로덕션 16 files +351 -18, 테스트 6 files +1407 -5, 나머지 워크플로우 산출물"
+      "summary": "45 files changed, 5429 insertions(+), 29 deletions(-) — 프로덕션 16 files +367 -22"
     }
   },
   "acceptance_criteria": [
@@ -141,9 +142,9 @@
     ]
   },
   "regression": {
-    "full_suite": "203/203 passed",
+    "full_suite": "205/205 passed",
     "callers_checked": true,
-    "callers_note": "registerPerformance·updatePerformance·cancelPerformance 의 호출부는 PerformanceController 하나(반환 타입을 함께 바꿈). getPerformance 는 관객 단건(공개 필터) 하나. published 를 읽는 경로는 PerformanceRepositoryImpl 의 publishedSpecification(목록·next-opening)과 PerformanceService.getPerformance 의 필터뿐이다"
+    "callers_note": "쓰기 경로 3곳(updatePerformance·cancelPerformance·changeVisibility)이 모두 findOwnedForUpdate 를 쓰고 findOwned 는 읽기 경로(getMyPerformance)만 남음. getPerformances·getMyPerformances 는 pageRequestOf 를 공유하고 컨트롤러의 size 자르기는 제거됨(리뷰어 Grep 전수). main 안에서 Performance 를 바꾸는 다른 경로(예매·좌석 차감)는 없다"
   },
   "scope_deviations": [
     {
@@ -153,11 +154,15 @@
     {
       "path": "backend/.../domain/PerformanceFilter.java",
       "reason": "PLAN 밖 신규 enum — 쿼리 파라미터 바인딩과 ARCH-003 때문"
+    },
+    {
+      "path": "backend/.../repository/PerformanceRepository.java",
+      "reason": "[Phase 4 롤백] 쓰기용 잠금 조회 — PLAN F12 target_files 에 추가"
     }
   ],
   "test_modifications_review": "승인 테스트 수정 5건(2b 3건: PerformanceOwnerMigrationTest 7→8·PerformanceOwnershipApiTest SC-11·PerformanceZoneRegistrationApiTest, Green 2건: PerformanceBrowseResponseApiTest SC-10·PerformanceOwnershipApiTest SC-13)을 리뷰어가 줄 단위로 대조 — 모두 Given 에 publish 를 더하거나 값·헬퍼를 바꾼 것뿐이며 단언은 약해지지 않았다",
   "code_review": {
-    "reviewer": "code-reviewer 서브에이전트 (Phase 3 자체 리뷰 1라운드 이어받음 · JPA 지시 포함 · 정적 분석 — 저장소 밖 프로브 환경에 PostgreSQL 없음)",
+    "reviewer": "code-reviewer 서브에이전트 (Phase 3 자체 리뷰 2회·Phase 4 2회, 롤백 후 수정 커밋 dcbee21 재리뷰, 정적 분석 — 저장소 밖 DB 프로브 환경 없음)",
     "rounds": [
       {
         "n": 1,
@@ -170,27 +175,25 @@
         "phase": 4,
         "scope": "전체 develop...HEAD · pre_review.root_causes 이어받음 · 같은 카테고리 전수",
         "findings": 3
-      }
-    ],
-    "findings": [
-      {
-        "category": "correctness",
-        "where": "PerformanceService.changeVisibility (121-136)",
-        "summary": "전 컬럼 UPDATE 의 read-modify-write 라 publish/unpublish 가 동시 cancel 을 되돌린다 — 취소가 사라지고 취소된 공연이 공개된다. 기존 update·cancel 경쟁과 같은 뿌리이나 이번 변경이 경로를 늘렸다. 공통 지점은 findOwned 한 곳(@Version 또는 PESSIMISTIC_WRITE)"
       },
       {
-        "category": "correctness",
-        "where": "PerformanceService.getPerformances·PerformanceController.list",
-        "summary": "새 page·size 검증이 getMyPerformances 에만 있다. 관객 목록은 size=0·page=-1 에서 IllegalArgumentException(운영 500), 큰 page 에서 offset 초과. 기존 동작이며 2a 프로브(2026-11-13)로 확인된 사실"
+        "n": 3,
+        "phase": 3,
+        "scope": "롤백 수정 커밋 09c5933...HEAD · 같은 카테고리 전수(쓰기 경로·목록 경로 호출부)",
+        "findings": 2
       },
       {
-        "category": "design",
-        "where": "PerformanceService.updatePerformance",
-        "summary": "취소된 공연 수정이 409 로 바뀜 — 확인 결과 AC 8·PLAN F7 이 정한 동작이라 범위 확장 아님"
+        "n": 4,
+        "phase": 4,
+        "scope": "전체 develop...HEAD · 이전 root_causes·unresolved/deferred 이어받음",
+        "findings": 0
       }
     ],
+    "findings": [],
     "suggestions": [
-      "주최자 화면(TASK-025·026) 전까지 프론트의 등록 성공 후 이동(/performances/:id)과 수정 화면의 값 로드(getPerformance)는 비공개 공연에서 404 가 된다 — AC 밖이지만 배포 순서·사용자 영향이다 (first-deploy-checklist §5-3 에 curl 공개를 안내함)"
+      "@Lock(PESSIMISTIC_WRITE) 에 jakarta.persistence.lock.timeout 힌트와 PessimisticLockingFailureException 의 409/503 매핑 — 장애 상황 대비 개선, 후속 태스크 후보",
+      "SC-20 의 300ms 대기 후 미완료 단언을 DB 대기 상태 폴링으로 보강하면 느린 환경의 탐지력이 유지된다 — 승인된 테스트라 이번에 고치지 않음",
+      "주최자 화면(TASK-025·026) 전까지 프론트의 등록 성공 후 이동(/performances/:id)과 수정 화면 값 로드(getPerformance)는 비공개 공연에서 404 — first-deploy-checklist §5-3 에 curl 공개를 안내함"
     ],
     "confirmed_ok": [
       "published 읽기 경로 전수 — 공개 조건 누락 없음",
@@ -199,6 +202,10 @@
       "JPA 지시 — OrganizerVisibilityApiTest 와 수정한 승인 테스트에 클래스 레벨 @Transactional 없음, 반영·거부 단언이 비트랜잭션 재조회, Given(MutableClock·published)이 실제 적용",
       "V8 마이그레이션·운영 문서 일치(롤백 서술 포함)",
       "SecurityConfig 인가 겹침 없음, 소유자 id 응답 미노출"
+    ],
+    "previous_findings_resolved": [
+      "RC-1 [correctness] 동시 변경 덮어쓰기 — 쓰기 조회 한 곳(findOwnedForUpdate)으로 닫힘",
+      "RC-2 [correctness] 관객 목록 page·size — pageRequestOf 공통화로 닫힘"
     ]
   },
   "root_causes": [
@@ -210,26 +217,37 @@
         {
           "case": "publish/unpublish 와 cancel 동시 실행 시 cancelled 가 false 로 되돌아감",
           "origin": "found",
-          "probe": "not_probed",
-          "reason": "동시성 프로브용 PostgreSQL/Docker 환경을 리뷰어 샌드박스에 띄우지 못했다 — Hibernate 전 컬럼 UPDATE 와 @Version·@DynamicUpdate·Lock 부재를 코드·grep 으로 확인"
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 a·b — Red 실행에서 취소가 되돌아감 재현 → findOwnedForUpdate 로 Green"
         },
         {
           "case": "update 와 cancel 동시 실행(기존 경로)",
           "origin": "predicted",
-          "probe": "not_probed",
-          "reason": "같은 사유"
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 c (취소된 공연에 PUT 이 200 으로 통과해 title 이 바뀜 — Red 에서 재현)"
         },
         {
           "case": "publish 와 update 동시 실행으로 title·openAt 등 일정 변경이나 published 값이 서로 덮인다",
           "origin": "predicted",
-          "probe": "not_probed",
-          "reason": "같은 사유"
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 d·e·g (title·published 되돌림 재현)"
         },
         {
           "case": "unpublish 가 읽은 뒤 openAt 이 지나 VisibilityLocked 검사를 통과한 상태로 커밋된다 (시각 검사와 쓰기 사이 틈)",
           "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 f·h·i (옛 시각 T-1ms 로 판정해 200 — Red 에서 재현, 잠근 뒤 시각 판정으로 해소)"
+        },
+        {
+          "case": "잠금 대기 무한(lock timeout 없음)과 락 예외의 기본 500 응답",
+          "origin": "later",
           "probe": "not_probed",
-          "reason": "시각 기반이라 영향이 작을 것이나 프로브하지 않았음"
+          "reason": "PostgreSQL·장시간 잠금 환경을 띄워 프로브하지 못했다. 정상 경로 오동작이 아니라 장애 시 대비(개선 제안, 낮음)이며 시나리오에 없는 동작이라 이번에 만들지 않았다",
+          "deferred_to": "별도 태스크 — 락 타임아웃 힌트와 응답 매핑"
         }
       ]
     },
@@ -242,22 +260,22 @@
           "case": "GET /api/performances?size=0 또는 ?page=-1 이 PageRequest.of 의 IllegalArgumentException 으로 500 이 된다 (기존 동작)",
           "origin": "found",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "2a 프로브 2026-11-13 — PROBE /api/performances?page=-1 -> EXC IllegalArgumentException: Page index must not be less than zero, ?size=0·-1 -> Page size must not be less than one, ?page=2147483647 -> Page offset exceeds Integer.MAX_VALUE (TmpProbe023Test 임시 실행, 삭제됨)"
+          "resolved": true,
+          "evidence": "PerformanceListPagingApiTest#test_sc21 a·b·c — Red 에서 500 재현 → PerformanceService.pageRequestOf 공통화로 400"
         },
         {
           "case": "관객 목록의 매우 큰 page 에서 offset 이 int 범위를 넘는다",
           "origin": "predicted",
           "probe": "reproduced",
-          "resolved": false,
-          "evidence": "같은 2a 프로브 — ?page=2147483647 → InvalidDataAccessApiUsageException: Page offset exceeds Integer.MAX_VALUE"
+          "resolved": true,
+          "evidence": "PerformanceListPagingApiTest#test_sc21 h (page=2147483647 → 400)"
         }
       ]
     }
   ],
   "security": {
-    "input_validation": "주최자 목록 page·size·filter 는 400 으로 거른다(SC-06·07). 관객 목록 page·size 는 기존대로 미검증(RC-2). id 는 Long 변환 실패 400",
-    "authorization": "/api/organizer/** 와 POST /api/performances/** 는 hasRole(ORGANIZER)(SC-10), 소유권은 findOwned 로 404(SC-09). 소유자 id 는 응답에 없음",
+    "input_validation": "주최자·관객 목록의 page·size 는 pageRequestOf 한 곳에서 400 으로 거른다(SC-07·SC-21), filter 정의 밖은 400(SC-06), id 는 Long 변환 실패 400(SC-17)",
+    "authorization": "/api/organizer/** 와 POST /api/performances/** 는 hasRole(ORGANIZER)(SC-10), 소유권은 findOwned·findOwnedForUpdate 가 404(SC-09). 소유자 id 는 응답에 없음. 쓰기 경로 행 잠금으로 동시 요청이 서로의 변경을 덮지 않음(SC-20)",
     "secrets": "해당 없음",
     "logging": "해당 없음"
   },
@@ -265,5 +283,22 @@
     "decision": null,
     "verified_commit": null,
     "verified_at": null
-  }
+  },
+  "acceptance_criteria_extra": [
+    {
+      "criterion": "[AC 밖 · PLAN F11] 등록·수정·취소 응답이 주최자 응답 형태",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc02·test_sc19"
+    },
+    {
+      "criterion": "[AC 밖 · PLAN F12 · Phase 4 RC-1] 같은 공연의 동시 쓰기가 서로의 변경을 덮어쓰지 않는다",
+      "verdict": "PASS",
+      "evidence": "PerformanceConcurrentWriteTest#test_sc20 (a~i, H2 행 잠금, 단독 3회 재실행 통과)"
+    },
+    {
+      "criterion": "[AC 밖 · PLAN F13 · Phase 4 RC-2] 관객 목록의 page·size 경계가 400",
+      "verdict": "PASS",
+      "evidence": "PerformanceListPagingApiTest#test_sc21 (a~o)"
+    }
+  ]
 }

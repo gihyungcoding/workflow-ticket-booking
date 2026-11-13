@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.2 | 21건 · 3회차 검증 통과 (Phase 4 롤백) |
 | 2b Red | ✅ 완료 | CP-2.5 | SC-20·21 재승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | Phase 4 롤백 수정 — 205/205 · 리뷰 2R |
-| 4 Verify | 🔄 재검증 | CP-4.2 | 1회차 FAIL(RC-1·2) 수정 후 재검증 |
+| 4 Verify | 🔄 HITL#3 대기 | CP-4.2 | 2회차 WARN — RC-1·2 수정 확인
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건
