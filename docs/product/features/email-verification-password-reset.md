@@ -1,7 +1,7 @@
 # [관객/주최자] 이메일 인증과 비밀번호 찾기
 
 **상태**: 초안
-**최종 갱신**: 2026-11-12
+**최종 갱신**: 2026-11-13
 
 ---
 
@@ -46,19 +46,19 @@
 | A. 백엔드 — 메일 발송 기반·일회용 이메일 토큰 | `MailGateway`(SMTP·로그)와 설정·기동 검증, `email_token`·`users.account_mail_sent_at` 마이그레이션, 토큰 발급·소모·간격 제한, 메일 문구 4종, 메일 발송 ADR(ADR-0031)·아키텍처 문서 | `V<n>__add_email_token.sql`, `EmailToken`·`EmailTokenRepository`, `MailGateway`·`SmtpMailGateway`·`LoggingMailGateway`, `EmailTokenService`, `MailConfig`, `architecture.md` §5 | 엔드포인트, 가입·로그인 변경, 프론트 | — | 12h | |
 | B. 백엔드 — 이메일 인증 API·인증 전 로그인 차단 | 가입 시 인증 메일·미인증 덮어쓰기, 로그인 403, 인증 재발송·확인 API, 기존 가입자 재인증, `AuthTestHelper` 인증 처리, 배포 체크리스트 | `AuthService`·`AuthController`·`AuthExceptionHandler` 변경, `EmailVerificationService`, DTO, `SecurityConfig`, `first-deploy-checklist.md` | 비밀번호 찾기, 프론트 | A | 14h | |
 | C. 백엔드 — 비밀번호 찾기·재설정 API | 재설정 요청·확인, 소셜 안내 메일, 변경 알림 메일, 인증 겸함 | `PasswordResetService`, `AuthController` 경로 2개, DTO | 이메일 인증, 프론트 | A | 8h | |
-| D. 프론트 — 인증 메일 안내·인증 결과·로그인 인증 필요 | ① 안내(재발송 카운트다운) · ② 인증 결과 · ③ 로그인 403 안내, 가입 뒤 자동 로그인 제거 | `VerifyEmailSentPage`·`VerifyEmailPage`, `SignUpPage`·`LoginPage`·`api/auth.ts`·`authPaths.ts`·`App.tsx` 변경 | 비밀번호 찾기 화면·링크, 시안 제작 | B, 시안 | 10h | |
-| E. 프론트 — 비밀번호 찾기·재설정 화면 | ④ 비밀번호 찾기 · ⑤ 재설정, 로그인 화면의 「비밀번호 찾기」 링크 | `ForgotPasswordPage`·`ResetPasswordPage`, `LoginPage` 링크 | 인증 화면, 시안 제작 | C, 시안 | 8h | |
+| D. 프론트 — 인증 메일 안내·인증 결과·로그인 인증 필요 | ① 안내(재발송 카운트다운) · ② 인증 결과 · ③ 로그인 403 안내, 가입 뒤 자동 로그인 제거 | `VerifyEmailSentPage`·`VerifyEmailPage`, `SignUpPage`·`LoginPage`·`api/auth.ts`·`authPaths.ts`·`App.tsx` 변경 | 비밀번호 찾기 화면·링크, 시안 제작 | B | 10h | |
+| E. 프론트 — 비밀번호 찾기·재설정 화면 | ④ 비밀번호 찾기 · ⑤ 재설정, 로그인 화면의 「비밀번호 찾기」 링크 | `ForgotPasswordPage`·`ResetPasswordPage`, `LoginPage` 링크 | 인증 화면, 시안 제작 | C | 8h | |
 
 **분리 이유**: 메일 발송과 일회용 토큰은 인증과 재설정이 함께 쓰는 기반이라 먼저 떼어(A) 두 기능을 병렬로 얹는다. 이메일 인증(B)은
 가입·로그인 동작이 바뀌어 기존 테스트 19개 파일의 Given 이 흔들리는 일이라 위험이 따로 있고, 비밀번호 재설정(C)은 새 경로
 두 개뿐이라 가볍다. 프론트는 B·C 각각의 화면(D·E)에 붙이고, 「비밀번호 찾기」 링크는 갈 화면이 생기는 E 에 둬 갈 곳 없는
-링크가 D 에 남지 않게 한다. 새 화면 시안이 없어 **시안 추가가 D·E 의 선행**이다(주최자 흐름과 같다).
+링크가 D 에 남지 않게 한다. 새 화면 시안이 없어 먼저 추가했다 [완료 2026-11-13, 화면 12장 + 기존 4장 수정 — §2 「시안 파일」](주최자 흐름과 같은 순서).
 
 ```
 흐름
   A(메일·토큰 기반) ──┬──► B(이메일 인증 API) ──► D(인증 화면)
                       └──► C(비밀번호 재설정 API) ──► E(재설정 화면)
-          [새 화면 시안 out/screens/ — D·E 를 만들기 전에 추가한다]
+          [새 화면 시안 out/screens/ — 완료 2026-11-13]
 ```
 
 ### 1-3. 상세
@@ -78,7 +78,21 @@
 
 **UI 라이브러리**: MUI (ADR-0002)
 **디자인 정본**: `docs/product/design.md` · `design-tokens.css`
-**시안**: 이 문서의 새 화면(2-5)에는 `out/screens/` 시안이 없다 — 프론트 태스크 전에 추가한다(ADR-0022)
+**시안**: `out/screens/` 에 추가했다 [완료 2026-11-13] — 아래 「시안 파일」. 화면은 시안과 같아야 한다(ADR-0022)
+
+### 시안 파일
+
+| 이 문서의 화면 | `out/screens/` 의 시안 |
+|---|---|
+| ① 인증 메일 안내 | `verify-email-sent` |
+| ② 인증 링크 결과 | `verify-email-checking`(확인 중) · `verify-email`(인증됨) · `verify-email-invalid`(링크 무효) |
+| ③ 로그인 — 인증 필요 | `login-unverified` (안내 박스 + 「메일 다시 보내기」) |
+| ④ 비밀번호 찾기 | `forgot-password` · `forgot-password--error`(이메일 칸 오류) · `forgot-password--done`(접수) |
+| ⑤ 비밀번호 재설정 | `reset-password` · `reset-password--error`(확인란 불일치) · `reset-password--done`(완료) · `reset-link-invalid`(링크 무효) |
+| 기존 화면 변경 | `login`·`login--error` 에 「비밀번호 찾기」 링크, `signup`·`signup--error` 의 이동이 `joined` 에서 `verify-email-sent` 로 |
+
+시안에 그리지 않은 상태는 이 문서의 문구를 따른다 — ① 「재발송 가능」(버튼이 켜진 모습)과 접수 문구, ② 서버 오류,
+④⑤ 서버 오류, ③ 재발송 접수. 시안의 이메일 주소(`minji.jung@gmail.com`)는 예시 값이다.
 
 ### 2-1. 이 화면에서 사용자가 하려는 일
 
@@ -487,7 +501,7 @@ record ResetPasswordRequest(
 **문서·시안**
 
 - `docs/product/features/user-authentication.md` §7 — 「비밀번호 찾기」「이메일 인증」 두 줄을 이 문서로 옮긴다(Task B 마무리)
-- `out/screens/` — 새 시안 추가가 프론트 태스크의 선행이다(§1-2). 가입 완료 시안 `joined.html` 은 소셜 가입에만 남는다
+- `out/screens/` — 새 시안 추가 [완료 2026-11-13]. 가입 완료 시안 `joined.html` 은 소셜 가입에만 남는다(§2 「시안 파일」)
 
 ---
 
@@ -537,6 +551,6 @@ record ResetPasswordRequest(
 | 인증·재설정이 끝나도 자동 로그인하지 않는다 | 메일을 가진 사람이 곧 로그인되지 않게 한다. 선점 가입 때 피해자가 비밀번호 불일치를 알게 한다 | 이 기능만 | — |
 | 토큰 만료는 인증 24시간·재설정 30분이다 | OWASP 가 기간을 정하지 않아 우리가 정했다 — 인증은 메일을 늦게 여는 일이 흔하고, 재설정은 탈취 위험이 커 짧게 둔다 | 이 기능만 | — |
 | 소셜 전용 계정에는 비밀번호를 추가하지 않고 안내 메일만 보낸다 | 소셜 전용 계정에 비밀번호를 추가하지 않는 기존 결정(`user-authentication.md` §7)을 유지한다 | 이 기능만 | — |
-| 새 화면 시안을 프론트 태스크 전에 `out/screens/` 에 추가한다 | 화면은 시안과 같아야 한다(ADR-0022). 인증·재설정·안내 화면에 시안이 없다 | 이 기능만 | — |
+| 새 화면 시안을 프론트 태스크 전에 `out/screens/` 에 추가한다 [완료 2026-11-13, 12장] | 화면은 시안과 같아야 한다(ADR-0022). 인증·재설정·안내 화면에 시안이 없었다 | 이 기능만 | — |
 
 **ADR 로 남겼다**: 메일 발송 방식(ADR-0031) · 이메일 링크 토큰 설계(ADR-0032) · 이메일 소유 확인 정책 — 인증 전 차단·재인증·선점 덮어쓰기(ADR-0033).

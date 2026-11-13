@@ -5,7 +5,8 @@
   "대기열 — 순번은 지켜진다",
   "예매 4단계 — 매수 먼저, 연석은 한 번에",
   "예매 뒤 — 입금·확정·정리",
-  "주최자 — 내 공연 관리 (2026-11-11 추가)"
+  "주최자 — 내 공연 관리 (2026-11-11 추가)",
+  "이메일 인증·비밀번호 찾기 (2026-11-12 추가)"
  ],
  "story": {
   "headline": "가입은 <em>버튼 한 번</em>, 오픈은 <em>같은 시계</em>, 일행 자리는 <em>한 번에</em>",
@@ -226,7 +227,8 @@
    "policies": [
     "틀리면 '이메일 또는 비밀번호가 올바르지 않아요' — 어느 쪽이 틀렸는지 알려 주지 않는다",
     "소셜 로그인이 취소·실패하면 이 화면으로 돌아와 위에 안내",
-    "아이디·비밀번호 찾기는 이번 범위 밖"
+    "비밀번호 찾기는 비밀번호 칸 아래 링크 — 아이디 찾기는 범위 밖",
+    "이메일 가입 계정은 이메일 인증 전에는 로그인할 수 없다 — 비밀번호가 맞을 때만 「인증이 필요해요」"
    ],
    "traits": {
     "list_first_use": false,
@@ -247,6 +249,14 @@
     {
      "to": "home",
      "label": "이메일로 로그인"
+    },
+    {
+     "to": "forgot-password",
+     "label": "비밀번호를 잊었으면"
+    },
+    {
+     "to": "login-unverified",
+     "label": "비밀번호가 맞고 인증 전이면"
     }
    ],
    "states": [
@@ -352,7 +362,8 @@
    "role": "everyone",
    "purpose": "가입이 끝났고 내 아이디가 무엇인지 안다",
    "policies": [
-    "아이디는 눌러서 복사 — 일행에게 보내 표를 받는다"
+    "아이디는 눌러서 복사 — 일행에게 보내 표를 받는다",
+    "소셜 가입만 이 화면을 거친다 — 이메일 가입은 인증 메일 안내로 간다"
    ],
    "traits": {
     "list_first_use": false,
@@ -380,7 +391,8 @@
    "policies": [
     "비밀번호 8자 이상 72자 이하",
     "이미 가입된 이메일이면 그 칸에서 알리고 로그인으로 안내",
-    "이메일·역할은 가입 뒤 바꿀 수 없다"
+    "이메일·역할은 가입 뒤 바꿀 수 없다",
+    "가입하면 자동 로그인하지 않고 인증 메일 안내로 간다 — 인증한 뒤 로그인한다"
    ],
    "traits": {
     "list_first_use": false,
@@ -393,6 +405,10 @@
     {
      "to": "login",
      "label": "이미 계정이 있으면"
+    },
+    {
+     "to": "verify-email-sent",
+     "label": "가입하면(자동 로그인 없음)"
     }
    ],
    "states": [
@@ -1161,6 +1177,300 @@
    "kind": "form",
    "state_of": "organizer-edit",
    "state": "error"
+  },
+  {
+   "id": "verify-email-sent",
+   "file": "screens/verify-email-sent.html",
+   "title": "인증 메일 안내",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "가입 뒤 메일함을 확인해야 한다는 것을 안다",
+   "policies": [
+    "가입하면 자동 로그인하지 않고 이 화면으로 온다 — 인증 전에는 이메일로 로그인할 수 없다",
+    "「메일 다시 보내기」는 60초 동안 비활성이고 남은 초를 센다 — 간격 안이라 서버가 보내지 않아도 같은 문구",
+    "새로고침으로 보낸 주소를 잃으면 로그인으로 보낸다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "login",
+     "label": "로그인으로"
+    },
+    {
+     "to": "verify-email-checking",
+     "label": "메일의 링크를 누르면"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "verify-email",
+   "file": "screens/verify-email.html",
+   "title": "인증 결과 · 인증됨",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "메일의 링크로 이메일 인증이 끝났다는 것을 안다",
+   "policies": [
+    "토큰은 읽는 즉시 주소에서 지우고 POST 로 확인한다",
+    "인증이 끝나도 자동 로그인하지 않는다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "login",
+     "label": "로그인하기"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "verify-email-checking",
+   "file": "screens/verify-email-checking.html",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "title": "인증 확인 중",
+   "purpose": "링크를 확인하는 동안 기다린다",
+   "role": "everyone",
+   "kind": "result",
+   "policies": [
+    "진행 표시만 — 끝나면 인증 결과로 넘어간다",
+    "토큰은 읽는 즉시 주소에서 지운다"
+   ],
+   "branches": [
+    {
+     "to": "verify-email",
+     "label": "확인되면"
+    },
+    {
+     "to": "verify-email-invalid",
+     "label": "링크가 무효이면"
+    }
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "states": []
+  },
+  {
+   "id": "verify-email-invalid",
+   "file": "screens/verify-email-invalid.html",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "title": "인증 링크 무효",
+   "purpose": "링크를 쓸 수 없으니 로그인해 다시 받아야 한다는 것을 안다",
+   "role": "everyone",
+   "kind": "result",
+   "policies": [
+    "잘못됨·만료·이미 사용·토큰 없음을 구분하지 않는다",
+    "아직 인증 전이면 로그인할 때 인증 메일을 다시 보낸다"
+   ],
+   "branches": [
+    {
+     "to": "login-unverified",
+     "label": "로그인하기"
+    }
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "states": []
+  },
+  {
+   "id": "login-unverified",
+   "file": "screens/login-unverified.html",
+   "title": "로그인 · 인증 필요",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "인증이 안 된 계정이라 메일을 확인해야 한다는 것을 안다",
+   "policies": [
+    "비밀번호가 맞을 때만 알린다 — 틀리면 지금처럼 '이메일 또는 비밀번호가 올바르지 않아요'",
+    "서버가 인증 메일을 이미 보냈고, 「메일 다시 보내기」로 다시 보낼 수 있다",
+    "소셜 로그인은 인증과 무관하게 들어갈 수 있다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "forgot-password",
+     "label": "비밀번호를 잊었으면"
+    },
+    {
+     "to": "home",
+     "label": "로그인하기"
+    }
+   ],
+   "states": []
+  },
+  {
+   "id": "forgot-password",
+   "file": "screens/forgot-password.html",
+   "title": "비밀번호 찾기",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "가입한 이메일로 새 비밀번호를 정할 링크를 받는다",
+   "policies": [
+    "가입된 이메일이든 아니든, 소셜 전용 계정이든 같은 접수 문구",
+    "소셜 전용 계정에는 재설정 대신 소셜 로그인 안내 메일",
+    "같은 이메일에는 60초에 한 번만 메일이 나간다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": true,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "login",
+     "label": "뒤로"
+    }
+   ],
+   "states": [
+    "error",
+    "done"
+   ]
+  },
+  {
+   "id": "forgot-password--error",
+   "file": "screens/forgot-password--error.html",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "title": "비밀번호 찾기 · 오류",
+   "purpose": "이메일 칸이 비었거나 형식이 틀림",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "forgot-password",
+   "state": "error",
+   "policies": [
+    "칸 아래 오류, 요청은 가지 않는다"
+   ]
+  },
+  {
+   "id": "forgot-password--done",
+   "file": "screens/forgot-password--done.html",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "title": "비밀번호 찾기 · 접수",
+   "purpose": "계정 유무와 무관한 같은 접수 문구",
+   "role": "everyone",
+   "kind": "result",
+   "state_of": "forgot-password",
+   "state": "done",
+   "policies": [
+    "링크는 30분 동안 쓸 수 있다"
+   ]
+  },
+  {
+   "id": "reset-password",
+   "file": "screens/reset-password.html",
+   "title": "비밀번호 재설정",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "kind": "form",
+   "role": "everyone",
+   "purpose": "메일의 링크로 새 비밀번호를 정한다",
+   "policies": [
+    "토큰은 읽는 즉시 주소에서 지운다",
+    "가입과 같은 규칙 — 8자 이상 72자 이하, 확인란과 같아야 한다",
+    "바꾸고 나서 자동 로그인하지 않는다. 인증 전 계정이면 이 재설정이 인증도 겸한다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": true,
+    "shares": true,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "reset-link-invalid",
+     "label": "링크가 무효이면"
+    }
+   ],
+   "states": [
+    "error",
+    "done"
+   ]
+  },
+  {
+   "id": "reset-password--error",
+   "file": "screens/reset-password--error.html",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "title": "비밀번호 재설정 · 오류",
+   "purpose": "확인란 불일치·길이 정책",
+   "role": "everyone",
+   "kind": "form",
+   "state_of": "reset-password",
+   "state": "error",
+   "policies": [
+    "그 칸 아래 오류"
+   ]
+  },
+  {
+   "id": "reset-password--done",
+   "file": "screens/reset-password--done.html",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "title": "비밀번호 재설정 · 완료",
+   "purpose": "새 비밀번호로 직접 로그인한다",
+   "role": "everyone",
+   "kind": "result",
+   "state_of": "reset-password",
+   "state": "done",
+   "policies": [
+    "변경 알림 메일이 나간다(비밀번호는 담지 않는다)",
+    "기존에 로그인한 기기는 그대로 둔다"
+   ]
+  },
+  {
+   "id": "reset-link-invalid",
+   "file": "screens/reset-link-invalid.html",
+   "title": "재설정 링크 무효",
+   "group": "이메일 인증·비밀번호 찾기 (2026-11-12 추가)",
+   "kind": "result",
+   "role": "everyone",
+   "purpose": "링크를 쓸 수 없으니 다시 요청해야 한다는 것을 안다",
+   "policies": [
+    "잘못됨·만료(30분)·이미 사용·토큰 없음을 구분하지 않는다"
+   ],
+   "traits": {
+    "list_first_use": false,
+    "form": false,
+    "shares": false,
+    "large_list": false,
+    "long_task": false
+   },
+   "branches": [
+    {
+     "to": "forgot-password",
+     "label": "다시 요청하기"
+    }
+   ],
+   "states": []
   }
  ],
  "prd_coverage": {
@@ -1274,6 +1584,20 @@
    "organizer-cancel-sheet",
    "organizer-cancelled",
    "organizer-only"
+  ],
+  "AUTH-recovery": [
+   "verify-email-sent",
+   "verify-email",
+   "verify-email-checking",
+   "verify-email-invalid",
+   "login-unverified",
+   "forgot-password",
+   "forgot-password--error",
+   "forgot-password--done",
+   "reset-password",
+   "reset-password--error",
+   "reset-password--done",
+   "reset-link-invalid"
   ]
  },
  "stage": "max",

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>이메일을 확인하고 있어요</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .wait { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--stack-l); min-height: calc(100vh - var(--h-appbar) * 2); text-align: center; color: inherit; text-decoration: none; }
+  .wait-art { width: 72px; height: 72px; }
+  .wait-art img { width: 100%; height: 100%; }
+  .wait .lead { max-width: 280px; }
+  .wait-spin { width: 32px; height: 32px; border-radius: var(--r-pill); border: 3px solid var(--c-line); border-top-color: var(--c-brand); animation: spin .8s linear infinite; }
+  .addr { font-size: var(--fs-strong); font-weight: var(--fw-strong); color: var(--c-text-1); overflow-wrap: anywhere; }
+</style>
+</head>
+<body class="plain">
+<!-- 정책: 링크의 토큰을 읽는 즉시 주소에서 지우고 확인 요청을 보낸다 -->
+<!-- 상태: 확인 중 — 진행 표시만. 끝나면 인증 결과로 넘어간다 -->
+<main class="page">
+  <a class="wait" href="verify-email.html" aria-label="확인이 끝나면 인증 결과로 넘어가요">
+    <span class="wait-art"><img src="../assets/fluent/idcard.svg" alt=""></span>
+    <h1 class="title">이메일을 확인하고 있어요</h1>
+    <span class="wait-spin" role="progressbar" aria-label="확인 중"></span>
+  </a>
+</main>
+</body></html>

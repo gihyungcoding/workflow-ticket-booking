@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>인증 메일을 보냈어요</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+<style>
+  .wait { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--stack-l); min-height: calc(100vh - var(--h-appbar) * 2); text-align: center; color: inherit; text-decoration: none; }
+  .wait-art { width: 72px; height: 72px; }
+  .wait-art img { width: 100%; height: 100%; }
+  .wait .lead { max-width: 280px; }
+  .wait-spin { width: 32px; height: 32px; border-radius: var(--r-pill); border: 3px solid var(--c-line); border-top-color: var(--c-brand); animation: spin .8s linear infinite; }
+  .addr { font-size: var(--fs-strong); font-weight: var(--fw-strong); color: var(--c-text-1); overflow-wrap: anywhere; }
+</style>
+</head>
+<body class="plain has-cta">
+<!-- 정책: 가입이 끝나면 자동 로그인하지 않고 이 화면으로 온다 — 인증하기 전에는 이메일로 로그인할 수 없다 -->
+<!-- 정책: 「메일 다시 보내기」는 60초 동안 비활성이고 남은 초를 센다. 0초가 되면 켜진다. 서버가 간격 안이라 보내지 않았어도 같은 문구 -->
+<!-- 정책: 새로고침으로 보낸 주소를 잃으면 로그인으로 보낸다 -->
+<header class="appbar"><a class="appbar-btn" href="signup.html" aria-label="뒤로 — 가입"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><span></span><span></span></header>
+<main class="page">
+  <div class="wait">
+    <span class="wait-art"><img src="../assets/fluent/invite.svg" alt=""></span>
+    <h1 class="title">인증 메일을 보냈어요</h1>
+    <p class="addr code" data-anchor>minji.jung@gmail.com</p>
+    <p class="lead">메일의 링크를 누르면 로그인할 수 있어요</p>
+    <p class="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>메일이 안 보이면 스팸함도 확인해 보세요</span></p>
+    <button class="btn secondary full" aria-disabled="true" data-stay="52초 뒤에 다시 보낼 수 있어요">메일 다시 보내기 · 52초</button>
+  </div>
+</main>
+<div class="cta"><a class="btn primary full" href="login.html">로그인으로</a></div>
+</body></html>

@@ -8,13 +8,15 @@
   .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--c-line); }
   .social { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--stack-s); }
   .social .btn { padding: 0; background: var(--c-surface); color: var(--c-text-1); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-sub); }
+  .forgot { align-self: flex-end; }
   .join { display: flex; justify-content: center; align-items: center; gap: var(--stack-s); font-size: var(--fs-sub); color: var(--c-text-2); }
 </style>
 </head>
 <body class="plain">
 <!-- 정책: 틀리면 '이메일 또는 비밀번호가 올바르지 않아요' — 어느 쪽이 틀렸는지 알려 주지 않는다(계정 존재 여부 비노출) -->
 <!-- 정책: 소셜 로그인이 취소·실패하면 이 화면으로 돌아와 위에 '로그인이 취소됐거나 실패했어요' 안내 -->
-<!-- 정책: 아이디·비밀번호 찾기는 이번 범위 밖 -->
+<!-- 정책: 비밀번호 찾기는 비밀번호 칸 아래 링크로 — 아이디 찾기는 범위 밖 -->
+<!-- 정책: 이메일 가입 계정은 이메일 인증 전에는 로그인할 수 없다 — 비밀번호가 맞을 때만 「인증이 필요해요」(login-unverified) -->
 <!-- 상태: 자격 증명 오류 [R4] — 두 칸을 함께 표시하고 어느 칸이 틀렸는지 구분하지 않는다 -->
 <main class="page">
   <header class="hero">
@@ -26,6 +28,7 @@
   <form class="form" action="home.html">
     <div class="field is-error"><label class="label" for="email">이메일</label><input class="input" id="email" type="email" autocomplete="email" placeholder="이메일 주소" value="minji.jung@gmail.com" aria-invalid="true" aria-describedby="login-msg"></div>
     <div class="field is-error"><label class="label" for="pw">비밀번호</label><input class="input" id="pw" type="password" autocomplete="current-password" placeholder="비밀번호" aria-invalid="true" aria-describedby="login-msg" autofocus><p class="field-msg" id="login-msg" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>이메일 또는 비밀번호가 올바르지 않아요</p></div>
+    <a class="hero-more forgot" href="forgot-password.html">비밀번호 찾기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     <a class="btn primary full" href="home.html">로그인하기</a>
   </form>
 
