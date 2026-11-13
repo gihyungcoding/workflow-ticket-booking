@@ -27,11 +27,12 @@
 | `editable` | `!cancelled && (!published || now < openAt)` — 지금 수정 요청이 성공하는가 |
 | `visibilityChangeable` | `!cancelled && now < openAt` — 지금 publish·unpublish 요청이 성공하는가 |
 | 검사 순서 | 인가(401·403) → 소유(404) → 취소(409 `PERFORMANCE_CANCELLED`) → 시각(공개 전환 409 `VISIBILITY_LOCKED`, 수정 409 `REGISTRATION_ALREADY_OPEN`). 앞 단계에서 걸리면 뒤 단계 오류는 나오지 않는다 |
+| 동시 쓰기 | 같은 공연에 대한 쓰기(수정·취소·publish·unpublish)는 한 번에 하나씩 처리된다. 다른 요청이 그 공연을 변경 중이면 끝날 때까지 기다리고, 기다린 뒤의 **최신 행과 그때의 시각**으로 위 검사 순서를 밟는다. 변경은 최신 행 위에 반영돼 다른 요청의 변경을 덮어쓰지 않는다(Phase 4 RC-1) |
 | 401 / 403 본문 | TASK-022 규약 그대로 — 401 `{"code":"UNAUTHORIZED",…}`, 403 `{"code":"FORBIDDEN_ROLE","message":"주최자만 이용할 수 있습니다"}`. 이 태스크는 값을 바꾸지 않고 `/api/organizer/**` 에도 같은 규칙을 건다 |
 | 404 본문 | `{"code":"PERFORMANCE_NOT_FOUND","message":"Performance not found: <요청한 id>"}` — 남의 공연·소유자 없음·없는 id·(관객 단건 조회의) 비공개가 같은 형태다. 근거: `PerformanceExceptionHandler.handleNotFound`, TASK-022 규약 |
 | 409 본문 | `code` 가 각각 `VISIBILITY_LOCKED`·`PERFORMANCE_CANCELLED`·`REGISTRATION_ALREADY_OPEN` 이다. 메시지 문구는 단언하지 않는다 |
 | 목록 응답 | `{"items":[…],"page":n,"size":n,"totalElements":n}` — 관객 목록의 `content` 키와 다르다. 항목에는 `sections` 키가 없다 |
-| 목록 요청 오류 | `page < 0` 또는 `size < 1`, 또는 `page × size` 가 int 범위를 넘으면 **400 `INVALID_REQUEST`** 다. `size > 100` 은 100 으로 자른다. 숫자가 아닌 값·소수·long 초과는 프레임워크 타입 불일치로 400(본문 없음)이다. 근거: 관객 목록은 `page=-1`·`size=0`·`page=2147483647` 에서 처리되지 않은 예외(운영 500)가 나는 것을 프로브로 확인했다(2026-11-13) — 이 태스크의 새 목록은 그렇게 두지 않는다. 관객 목록은 이 태스크가 고치지 않는다 |
+| 목록 요청 오류 | `page < 0` 또는 `size < 1`, 또는 `page × size` 가 int 범위를 넘으면 **400 `INVALID_REQUEST`** 다. `size > 100` 은 100 으로 자른다. 숫자가 아닌 값·소수·long 초과는 프레임워크 타입 불일치로 400(본문 없음)이다. 근거: 관객 목록은 `page=-1`·`size=0`·`page=2147483647` 에서 처리되지 않은 예외(운영 500)가 나는 것을 프로브로 확인했다(2026-11-13) — 이 태스크의 새 목록은 그렇게 두지 않는다. 관객 목록(`GET /api/performances`)도 같은 규칙이다 — SC-21 (Phase 4 RC-2 로 이번 태스크에 포함, 사용자 결정 2026-11-13) |
 
 ## SC-01 (happy) V8 은 기존 공연이 있는 PostgreSQL 에 적용되고 기존 행을 공개로 둔다
 
@@ -391,13 +392,67 @@ flow: F11
 
 회귀(승인 테스트 점검): 등록·수정·취소 응답의 키 집합을 단언하는 `PerformanceRegistrationApiTest`·`PerformanceErrorResponseRegressionTest` 의 행이 새 키(`published`·`editable`·`visibilityChangeable`)에 걸리는지 2b 에서 확인한다.
 
+## SC-20 (error) 같은 공연의 쓰기가 겹치면 하나씩 처리돼 서로의 변경을 덮어쓰지 않는다
+
+- **Given** `O1` 소유 공연 `P` 가 표의 상태(공개 여부)로 있다(openAt `T+7d`, f 행만 openAt `T`)
+- **And** 다른 요청이 `P` 를 변경하는 중이다 — 진행 중인 쓰기를 흉내 내는 별도 트랜잭션이 `P` 의 행을 잠그고 표의 변경을 반영했지만 아직 끝내지 않았다(테스트가 JPA 표준 잠금으로 만든다)
+- **When** 그 트랜잭션이 끝나기 전에 `O1` 이 표의 요청 `B` 를 보낸다(별도 스레드)
+- **Then** `B` 는 그 트랜잭션이 끝나기 전에는 응답하지 않는다(300ms 뒤에도 끝나지 않았다)
+- **And** 그 트랜잭션을 끝내면 `B` 가 응답하고, 상태와 `code` 가 표와 같다
+- **And** 트랜잭션 밖에서 다시 읽은 `P` 의 `cancelled`·`published`·title 이 표의 최종 값과 같다
+
+| # | P 의 공개 | 진행 중인 변경 | 요청 B | B 의 결과 | 최종 DB |
+|---|---|---|---|---|---|
+| a | 비공개 | 취소 | publish | 409 `PERFORMANCE_CANCELLED` | cancelled true, published false |
+| b | 공개 | 취소 | unpublish | 409 `PERFORMANCE_CANCELLED` | cancelled true, published true (그대로) |
+| c | 비공개 | 취소 | PUT(`U0`) | 409 `PERFORMANCE_CANCELLED` | cancelled true, title 그대로 |
+| d | 비공개 | title 을 `다른 제목` 으로 변경 | publish | 200 | published true, title `다른 제목` (둘 다 반영) |
+| e | 비공개 | 공개로 변경(published true) | PUT(`U0`) | 200 | published true, title `앙코르`(`U0` 의 title) (둘 다 반영) |
+| f | 공개, openAt `T`, 시각 `T-1ms` 에 B 를 보낸 뒤 대기 중 `T` 로 옮김 | title 변경 | unpublish | 409 `VISIBILITY_LOCKED` (잠금을 얻은 뒤의 시각 `T == openAt` 으로 판정) | published true (그대로), title 변경 반영 |
+
+covers: (AC 밖 — Phase 4 1회차 RC-1. PLAN F12)
+flow: F12
+
+근거: 잠금이 없으면 a~e 에서 B 가 읽은 옛 행으로 전 컬럼을 저장해 진행 중이던 변경(취소·title·공개)을 되돌린다. 잠금 대기 시간(H2 기본 2초)보다 짧게 쥔다.
+
+## SC-21 (error) 관객 목록의 `page`·`size` 경계도 400 이거나 자른 값으로 응답한다
+
+- **Given** 공개 공연 25개가 있다(openAt 모두 미래)
+- **When** 토큰 없이 아래 표의 쿼리로 `GET /api/performances` 를 호출한다
+- **Then** 상태와 응답이 표와 같다(주최자 목록 SC-07 과 같은 규칙)
+- **And** 요청 뒤 공연 수는 25 그대로다
+
+| # | 쿼리 | 기대 |
+|---|---|---|
+| a | `page=-1` | 400 `INVALID_REQUEST` |
+| b | `size=0` | 400 `INVALID_REQUEST` |
+| c | `size=-1` | 400 `INVALID_REQUEST` |
+| d | `page=0` | 200, `page` 0, `content` 20개 |
+| e | `page=1` | 200, `content` 5개, `totalElements` 25 |
+| f | `page=1000` | 200, `content` 빈 배열, `totalElements` 25 |
+| g | `size=101` | 200, 응답 `size` 가 100 이고 `content` 25개 |
+| h | `page=2147483647` | 400 `INVALID_REQUEST` (`page × size` 가 int 범위 초과) |
+| i | `page=2147483648` | 400 (int 초과 — 타입 불일치) |
+| j | `page=1.5` | 400 |
+| k | `size=1.5` | 400 |
+| l | `page=9223372036854775808` | 400 (long 초과) |
+| m | `page=` 또는 `size=` (빈 값) | 200, 기본값 0·20 |
+| n | `size=9223372036854775808` | 400 (long 초과) |
+| o | `size=2147483648` | 400 (int 초과) |
+
+covers: (AC 밖 — Phase 4 1회차 RC-2. PLAN F13)
+flow: F13
+
+근거: a~c·h 는 2a 프로브(2026-11-13)가 처리되지 않은 예외(운영 500)로 확인한 기존 동작을 고치는 행이다. i~l·n·o·m·d~g 는 기존 응답 그대로(프로브 확인) — 회귀로 지킨다.
+
 ## 입력 제약 대조 (PLAN `design.inputs[].constraints`)
 
 | 제약 | 단언하는 시나리오 |
 |---|---|
 | `/api/organizer/**`·`POST /api/performances/**` 는 ROLE_ORGANIZER — 없거나 무효 401, 관객 403 | SC-10 |
 | `filter` 는 7개 값, 생략하면 ALL | SC-05, SC-06 |
-| `page`·`size` 기본 0·20, size 는 100 으로 자른다 | SC-07 |
+| `page`·`size` 기본 0·20, size 는 100 으로 자른다 | SC-07, SC-21(관객 목록) |
+| 같은 공연의 쓰기는 한 번에 하나씩, 시각은 잠근 뒤 | SC-20 |
 | `id` 는 요청자 소유여야 한다 — 아니면 같은 404 | SC-09, SC-17 |
 | publish·unpublish 는 `now < openAt` 에서만 | SC-11, SC-12, SC-13 |
 | 수정은 공개 공연에서만 `now < openAt` | SC-15 |

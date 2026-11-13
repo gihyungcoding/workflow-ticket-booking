@@ -55,6 +55,15 @@
         "constraints": [
           "published 는 NOT NULL — 기존 행 TRUE, 새 등록 FALSE"
         ]
+      },
+      {
+        "name": "page / size (관객 목록)",
+        "type": "int",
+        "source": "쿼리 파라미터 (GET /api/performances)",
+        "constraints": [
+          "주최자 목록과 같은 검증 — page>=0, size>=1, page×min(size,100) 은 int 범위 안",
+          "size 는 100 으로 자른다"
+        ]
       }
     ],
     "outputs": [
@@ -92,6 +101,11 @@
         "name": "관객 응답 형태 불변",
         "type": "contract",
         "description": "PerformanceResponse 에 published·editable·visibilityChangeable·ownerId 키가 없다"
+      },
+      {
+        "name": "관객 목록 400 INVALID_REQUEST",
+        "type": "error",
+        "description": "GET /api/performances 의 page<0·size<1·page×size int 초과 (F13)"
       }
     ],
     "flows": [
@@ -232,6 +246,29 @@
         ],
         "covers": [],
         "note": "acceptance_criteria 에 없다. 기능 문서 §3-6 표(기존 — 동작만 바뀜)가 정한 것을 따랐다 — 넓히기 싫으면 F11 만 빼면 되고, 그 경우 TASK-026 의 '취소 성공 후 같은 화면 갱신' 은 재조회로 한다"
+      },
+      {
+        "id": "F12",
+        "name": "[Phase 4 RC-1] 같은 공연의 동시 쓰기는 직렬로 처리된다",
+        "steps": [
+          "쓰기 경로(수정·취소·publish·unpublish)는 공연 행을 잠근 채 읽는다",
+          "다른 요청이 그 행을 변경 중이면 끝날 때까지 기다린다",
+          "기다린 뒤 최신 행으로 검사한다 — 소유 → 취소 → 시각(시각은 잠근 뒤에 읽는다)",
+          "변경은 읽은 최신 행 위에 반영돼 다른 요청의 변경을 덮어쓰지 않는다"
+        ],
+        "covers": [],
+        "note": "AC 밖 — Phase 4 1회차 리뷰어 RC-1(변종 4건). 사용자 결정(2026-11-13)으로 이번 태스크에 포함"
+      },
+      {
+        "id": "F13",
+        "name": "[Phase 4 RC-2] 관객 목록도 잘못된 page·size 를 400 으로 거른다",
+        "steps": [
+          "GET /api/performances 의 page<0, size<1, page×size 가 int 범위 초과면 400 INVALID_REQUEST",
+          "size>100 은 100 으로 자른다 (기존)",
+          "주최자 목록과 같은 검증을 공유한다"
+        ],
+        "covers": [],
+        "note": "AC 밖 — Phase 4 1회차 리뷰어 RC-2. 기존 동작(미처리 예외, 운영 500)을 고친다. 사용자 결정(2026-11-13)으로 이번 태스크에 포함"
       }
     ],
     "input_fields": [
@@ -260,22 +297,24 @@
       {
         "field": "page",
         "flows": [
+          "F13",
           "F3"
         ],
         "kinds": [
           "integer"
         ],
-        "note": "음수·소수·long 초과. 관객 목록과 같은 처리(unresolved 참고)"
+        "note": "음수·소수·long 초과. 관객 목록과 같은 처리(unresolved 참고) · 관객 목록 — SC-21. 주최자 목록(SC-07)과 같은 표"
       },
       {
         "field": "size",
         "flows": [
+          "F13",
           "F3"
         ],
         "kinds": [
           "integer"
         ],
-        "note": "0·음수·101(100 으로 자름)·초과"
+        "note": "0·음수·101(100 으로 자름)·초과 · 관객 목록 — SC-21"
       },
       {
         "field": "id",
@@ -297,12 +336,13 @@
           "F5",
           "F6",
           "F8",
-          "F9"
+          "F9",
+          "F12"
         ],
         "kinds": [
           "datetime"
         ],
-        "note": "now == openAt 경계를 경로마다(publish·unpublish·수정·플래그 4곳) 확인"
+        "note": "now == openAt 경계를 경로마다(publish·unpublish·수정·플래그 4곳) 확인 F12: 잠금 대기 중 now 가 openAt 에 닿는 경계(SC-20 f)"
       },
       {
         "field": "closeAt",
@@ -350,8 +390,7 @@
     "target_files": [
       {
         "path": "backend/src/main/resources/db/migration/V8__add_performance_published.sql",
-        "change": "published BOOLEAN NOT NULL DEFAULT TRUE 로 추가한 뒤 기본값을 FALSE 로 (기존 행 TRUE)",
-        "new": true
+        "change": "published BOOLEAN NOT NULL DEFAULT TRUE 로 추가한 뒤 기본값을 FALSE 로 (기존 행 TRUE) (Phase 3 에서 신규 생성 — 롤백 시점에는 기존 파일)"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
@@ -371,27 +410,23 @@
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
-        "change": "getPerformance 비공개 404, publish()·unpublish()·getMyPerformances()·getMyPerformance() 신규, registerPerformance 는 published=false, updatePerformance 의 취소 409·비공개 시각 제한 해제, toOrganizerResponse"
+        "change": "getPerformance 비공개 404, publish()·unpublish()·getMyPerformances()·getMyPerformance() 신규, registerPerformance 는 published=false, updatePerformance 의 취소 409·비공개 시각 제한 해제, toOrganizerResponse · [Phase 4 롤백] 쓰기 경로 잠금 조회, 관객·주최자 목록 page·size 공통 검증"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceResponse.java",
-        "change": "주최자 응답 record",
-        "new": true
+        "change": "주최자 응답 record (Phase 3 에서 신규 생성 — 롤백 시점에는 기존 파일)"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceListResponse.java",
-        "change": "{items,page,size,totalElements}. implementation_spec.paths 에 없던 파일 — 목록 키가 items 라 PerformanceListResponse(content) 를 못 쓴다",
-        "new": true
+        "change": "{items,page,size,totalElements}. implementation_spec.paths 에 없던 파일 — 목록 키가 items 라 PerformanceListResponse(content) 를 못 쓴다 (Phase 3 에서 신규 생성 — 롤백 시점에는 기존 파일)"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/VisibilityLockedException.java",
-        "change": "409 VISIBILITY_LOCKED",
-        "new": true
+        "change": "409 VISIBILITY_LOCKED (Phase 3 에서 신규 생성 — 롤백 시점에는 기존 파일)"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceCancelledException.java",
-        "change": "409 PERFORMANCE_CANCELLED",
-        "new": true
+        "change": "409 PERFORMANCE_CANCELLED (Phase 3 에서 신규 생성 — 롤백 시점에는 기존 파일)"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
@@ -399,12 +434,11 @@
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/api/OrganizerPerformanceController.java",
-        "change": "GET /api/organizer/performances[?filter&page&size], GET /{id}",
-        "new": true
+        "change": "GET /api/organizer/performances[?filter&page&size], GET /{id} (Phase 3 에서 신규 생성 — 롤백 시점에는 기존 파일)"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
-        "change": "POST /{id}/publish·unpublish 추가, register·update·cancel 반환 타입을 OrganizerPerformanceResponse 로 (F11)"
+        "change": "POST /{id}/publish·unpublish 추가, register·update·cancel 반환 타입을 OrganizerPerformanceResponse 로 (F11) · [Phase 4 롤백] 관객 목록 size 자르기를 서비스 공통 검증으로 옮김"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
@@ -413,6 +447,10 @@
       {
         "path": "docs/release/first-deploy-checklist.md",
         "change": "V1~V8 로 갱신, V8 운영 영향(기존 행 공개 유지·롤백 시 새 등록이 비공개로 저장) 절 추가 — design.ops_impacts 참고"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepository.java",
+        "change": "쓰기용 잠금 조회(PESSIMISTIC_WRITE) 추가 — findOwned 의 쓰기 경로(수정·취소·publish·unpublish)가 쓴다"
       }
     ],
     "reusable": [
@@ -462,7 +500,8 @@
       "backend/src/test/java/com/example/ticket_booking/api/PerformanceSectionSummaryApiTest.java",
       "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
       "backend/src/test/java/com/example/ticket_booking/repository/PerformanceOwnerMigrationTest.java",
-      "backend/src/test/java/com/example/ticket_booking/domain/PerformanceStatusRulesTest.java"
+      "backend/src/test/java/com/example/ticket_booking/domain/PerformanceStatusRulesTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/OrganizerVisibilityApiTest.java"
     ],
     "unresolved": [
       "승인 테스트 수정 필요(2b 승인에 함께 올린다): PerformanceOwnerMigrationTest:192 — 끝까지 적용한 버전을 \"7\" 로 단언. V8 이 생기면 \"8\" 로 바뀐다. 새 FK 자식 테이블은 없어 정리 쪽 영향은 없다",
@@ -476,7 +515,11 @@
       "JPA 리뷰 지시(CLAUDE.md): publish·unpublish·수정은 dirty checking UPDATE 경로다 — 테스트 클래스 레벨 @Transactional 을 쓰지 말고 비트랜잭션 재조회로 반영·거부 시 변경 없음을 확인한다. 통합 테스트의 Given(고정 Clock·published 값)이 실제 적용됐는지도 확인한다",
       "테스트 DB 와 운영 DB 가 다르다(H2 ddl-auto vs PostgreSQL Flyway): published 컬럼의 NOT NULL·기본값·기존 행 TRUE 는 H2 로 확인되지 않는다 — PerformanceOwnerMigrationTest 와 같은 Testcontainers PostgreSQL 마이그레이션 테스트를 필수로 둔다 (ADR-0006)",
       "implementation_spec.paths 에 SecurityConfig·Performance.java·OrganizerPerformanceListResponse 가 없고 SeatRepository 는 변경이 불필요하다 — 이 PLAN 의 target_files 가 정본이다. tasks.json 은 직접 고치지 않는다(CLAUDE.md)",
-      "운영 영향: 아래 design.ops_impacts 참고"
+      "운영 영향: 아래 design.ops_impacts 참고",
+      "[Phase 4 롤백] RC-1 동시성: 테스트는 다른 트랜잭션이 행을 잠근 채 변경 중인 상황을 JPA 표준 락(EntityManager.find + PESSIMISTIC_WRITE)으로 만들고, 별도 스레드의 HTTP 요청이 기다린 뒤 최신 행으로 처리되는지 본다 — H2 와 PostgreSQL 모두 SELECT … FOR UPDATE 를 지원한다. 잠금 대기 시간(H2 기본 2초)보다 짧게 잠금을 쥔다",
+      "[Phase 4 롤백] 시각 판정 시점: 잠금을 얻은 뒤의 시각으로 판정한다(요청이 대기한 뒤 openAt 에 닿았으면 VISIBILITY_LOCKED) — SC-20 f 가 못박는다. 요청 시작 시각으로 판정하는 대안은 오픈 뒤에 비공개 전환이 커밋될 수 있어 버렸다",
+      "[Phase 4 롤백] RC-2 는 관객 목록의 기존 동작 변경이다 — 기존 승인 테스트 중 page=-1·size=0 의 500 을 단언하는 것은 없음(Grep 확인 필요: PerformanceErrorResponseRegressionTest 는 page=abc 400 만)",
+      "[Phase 4 롤백] 변종 중 'unpublish 가 읽은 뒤 openAt 이 지나 통과' 는 위 시각 판정 결정으로 SC-20 f 가 덮는다. 'update 와 cancel'·'publish 와 update' 는 SC-20 c·d"
     ],
     "exploration": {
       "method": "inline",
