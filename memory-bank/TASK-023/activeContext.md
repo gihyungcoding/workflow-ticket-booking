@@ -1,8 +1,8 @@
 ---
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
-phase: "2b"
-phase_name: "Phase 2b - Red (승인 완료)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -13,22 +13,23 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-023-organizer-visibility-api"
 
-last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
+last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
 source: "docs/product/features/organizer-flow.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-023.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-023.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-023.json"
   test: "workflow_design/05_scenario/TEST_TASK-023.json"
+  dev: "workflow_design/06_dev/DEV_TASK-023.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-시나리오·Red 통합 승인(HITL#1·2)을 받았다. Phase 3 로 넘어간다.
+Phase 3 Green 완료 — 203/203, spotless 0, 자체 리뷰 1라운드.
 
 ## 다음 한 걸음
 
-`wf-develop` — Red 를 통과시키는 최소 구현.
+Phase 4 — `wf-verify`.
 
 ## 알아둬야 할 것
 

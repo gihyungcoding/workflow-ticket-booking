@@ -1,0 +1,270 @@
+{
+  "task_id": "TASK-023",
+  "changed_files": [
+    {
+      "path": "backend/src/main/resources/db/migration/V8__add_performance_published.sql",
+      "change": "published BOOLEAN NOT NULL DEFAULT TRUE 후 기본값 FALSE",
+      "lines_changed": 5
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+      "change": "published 필드(nullable=false, 기본 TRUE)·getter·changePublished·published 생성자",
+      "lines_changed": 40
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceFilter.java",
+      "change": "주최자 목록 필터 enum (신규)",
+      "lines_changed": 14
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java",
+      "change": "editable·visibilityChangeable 순수 함수",
+      "lines_changed": 14
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryCustom.java",
+      "change": "findOwnedPerformances",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+      "change": "관객 조회 published 조건, 주최자 목록·filterSpecification",
+      "lines_changed": 36
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "change": "비공개 404, 주최자 목록·단건, publish/unpublish, 수정 규칙, 쓰기 응답 타입",
+      "lines_changed": 120
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceResponse.java",
+      "change": "신규",
+      "lines_changed": 28
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceListResponse.java",
+      "change": "신규",
+      "lines_changed": 7
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/VisibilityLockedException.java",
+      "change": "신규",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceCancelledException.java",
+      "change": "신규",
+      "lines_changed": 8
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/OrganizerPerformanceController.java",
+      "change": "신규 — 목록·단건",
+      "lines_changed": 42
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+      "change": "publish·unpublish, 쓰기 응답 타입",
+      "lines_changed": 24
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+      "change": "409 두 건 매핑",
+      "lines_changed": 16
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+      "change": "/api/organizer/** hasRole(ORGANIZER)",
+      "lines_changed": 3
+    },
+    {
+      "path": "docs/release/first-deploy-checklist.md",
+      "change": "V1~V8, §5-3 V8 운영 영향·롤백",
+      "lines_changed": 19
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+      "symbol": "findOwned·sectionsOf"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+      "symbol": "statusSpecification"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java",
+      "symbol": "of"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/InvalidRequestException.java",
+      "symbol": "InvalidRequestException (400 INVALID_REQUEST)"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --offline",
+    "total": 203,
+    "passed": 203,
+    "failed": 0,
+    "target_tests_passed": 19
+  },
+  "lint": {
+    "command": "cd backend && ./gradlew spotlessCheck --offline",
+    "errors": 0,
+    "warnings": 0
+  },
+  "refactoring": [
+    {
+      "what": "없음 — 리팩토링하지 않았다",
+      "why": "최소 구현이 기존 관례(findOwned·statusSpecification 재사용, 서비스 private 헬퍼)를 따라 중복이 없다. 응답 조립은 toResponse·toOrganizerResponse 로 이미 분리됨"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "PerformanceOwnerMigrationTest:192 최신 버전 단언",
+      "how": "2b 에서 7→8 로 수정, V8 추가 후 통과",
+      "fact": "승인 테스트 수정(2b HITL 승인)",
+      "impact": "없음"
+    },
+    {
+      "item": "PerformanceZoneRegistrationApiTest:173 등록 직후 관객 조회",
+      "how": "2b 에서 detail() 을 주최자 단건 조회로 변경, 구현 후 통과",
+      "fact": "승인 테스트 수정(2b HITL 승인)",
+      "impact": "없음"
+    },
+    {
+      "item": "등록·수정·취소 응답 키 단언 점검",
+      "how": "Grep + 전체 스위트 실행",
+      "fact": "PerformanceZoneRegistrationApiTest 키 집합만 걸렸고 2b 에서 수정. 나머지는 contains 단언이라 영향 없음",
+      "impact": "없음"
+    },
+    {
+      "item": "엔티티 기본값 TRUE 결정",
+      "how": "전체 스위트(기존 픽스처 9개 파일) 통과로 확인",
+      "fact": "11인자 생성자만 운영 등록 경로(registerPerformance)가 쓴다 — 리뷰어도 확인",
+      "impact": "없음"
+    },
+    {
+      "item": "경계 판단 3건(취소>잠금>멱등)",
+      "how": "SC-13 d·SC-14 f·g 테스트",
+      "fact": "changeVisibility 가 취소→잠금→변경 순으로 검사, 수정은 취소→editable 순",
+      "impact": "시나리오와 일치"
+    },
+    {
+      "item": "PERFORMANCE_CANCELLED 코드명",
+      "how": "PerformanceExceptionHandler 에 매핑",
+      "fact": "문서에 없던 이름을 관례(PERFORMANCE_NOT_FOUND)에 맞춰 정함 — TASK-026 계약",
+      "impact": "TASK-026 이 이 코드로 분기하면 계약이 된다"
+    },
+    {
+      "item": "page·size 잘못된 값 처리",
+      "how": "2a 프로브(관객 목록 미처리 예외) + SC-07 통과",
+      "fact": "새 목록은 400 INVALID_REQUEST, 관객 목록은 그대로",
+      "impact": "관객/주최자 목록 비대칭 — 리뷰어가 참고로 지적"
+    },
+    {
+      "item": "비공개 수정의 INVALID_TIME_ORDER",
+      "how": "SC-15 통과",
+      "fact": "validateTimeOrder 는 그대로라 비공개+오픈 뒤에도 본문 검증이 걸린다",
+      "impact": "없음"
+    },
+    {
+      "item": "JPA 리뷰 지시",
+      "how": "OrganizerVisibilityApiTest 에 클래스 레벨 @Transactional 없음 — 리포지토리 재조회로 반영·거부 단언, 리뷰어에게 지시 포함",
+      "fact": "반영·거부 경로 모두 비트랜잭션 재조회. publish 서비스는 save 를 명시 호출",
+      "impact": "없음"
+    },
+    {
+      "item": "테스트 DB≠운영 DB — V8 NOT NULL·기본값",
+      "how": "PerformancePublishedMigrationTest(Testcontainers PostgreSQL) 통과",
+      "fact": "기존 행 TRUE, 기본값 FALSE, NULL 거부(23502)",
+      "impact": "없음"
+    },
+    {
+      "item": "implementation_spec.paths 보정",
+      "how": "실제 변경 파일 대조",
+      "fact": "SecurityConfig·Performance.java·OrganizerPerformanceListResponse·PerformanceFilter 추가, SeatRepository 는 변경 없음",
+      "impact": "scope_deviations 에 기록"
+    },
+    {
+      "item": "운영 영향(ops_impacts)",
+      "how": "first-deploy-checklist §4-1·4-2·5-3 갱신",
+      "fact": "V1~V8, 롤백 창 등록 공연 서술",
+      "impact": "없음"
+    }
+  ],
+  "test_modifications": [
+    {
+      "file": "PerformanceBrowseResponseApiTest.java",
+      "scenario": "SC-10 (TASK-017/브라우즈)",
+      "reason": "API 로 등록한 공연을 관객 목록에서 읽는데 등록이 비공개가 되어 전제가 깨짐 — Given 에 publish 호출 추가, 단언 불변",
+      "approval": "AskUserQuestion '테스트 수정 — 승인' (2026-11-13)"
+    },
+    {
+      "file": "PerformanceOwnershipApiTest.java",
+      "scenario": "SC-13 (TASK-022)",
+      "reason": "비공개 공연은 오픈 뒤에도 수정되는 새 규칙(AC10)이라 '오픈 시각 이후 수정 409' 전제가 깨짐 — 시계를 옮기기 전 publish 추가, 단언 불변",
+      "approval": "AskUserQuestion '테스트 수정 — 승인' (2026-11-13)"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "config/SecurityConfig.java",
+      "reason": "/api/organizer/** 인가 — implementation_spec.paths 에 빠졌으나 PLAN target_files 에 포함"
+    },
+    {
+      "path": "domain/PerformanceFilter.java",
+      "reason": "PLAN target_files 에 없던 신규 enum — 목록 필터 쿼리 파라미터 바인딩(잘못된 값 400)과 Repository 의 도메인 언어 인터페이스(ARCH-003)를 위해 필요"
+    }
+  ],
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체 develop...HEAD (프로덕션·테스트·문서)",
+        "findings": 2,
+        "tests_added": [],
+        "fix_commit": null
+      }
+    ],
+    "root_causes": [
+      {
+        "id": "RC-1",
+        "summary": "버전·동적 UPDATE 없이 전 컬럼을 저장하는 read-modify-write 라 동시 변경이 서로를 덮는다",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "publish/unpublish 와 cancel 동시 실행 시 cancelled 가 false 로 되돌아감",
+            "origin": "found",
+            "probe": "not_probed",
+            "reason": "동시성 프로브용 환경 없음"
+          },
+          {
+            "case": "update 와 cancel 동시 실행(기존 경로)",
+            "origin": "predicted",
+            "probe": "not_probed",
+            "reason": "같은 사유"
+          }
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "category": "correctness",
+        "severity": "낮음",
+        "summary": "publish/unpublish 와 cancel 이 동시에 오면 cancel 이 덮일 수 있다(@Version·@DynamicUpdate 없음)",
+        "note": "이번 변경 이전부터 있던 update·cancel 경쟁과 같은 뿌리. 시나리오에 없는 동작이라 이 태스크에서 만들지 않는다 — 사용자 판단(별도 태스크 또는 수용)"
+      }
+    ],
+    "deferred": [
+      {
+        "category": "design",
+        "summary": "비공개 공연은 오픈 뒤에도 수정되지만 공개는 못 한다 — PLAN·AC 와 일치, 수정으로 openAt 을 미루면 해소됨"
+      },
+      {
+        "category": "reference",
+        "summary": "관객 목록은 page<0·size<1·offset 초과가 여전히 미처리 예외 — 범위 밖, 주최자 목록과 비대칭"
+      }
+    ]
+  }
+}

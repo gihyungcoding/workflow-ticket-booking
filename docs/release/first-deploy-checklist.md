@@ -157,7 +157,7 @@ V8 은 공연에 공개 여부(`published`)를 더한다 (organizer-flow Task B,
 롤백: 이전 배포로 되돌리면 `published` 컬럼은 남고 옛 코드는 그 컬럼을 쓰지 않는다. 옛 코드는 공개 여부를 모르므로 **롤백 중에 등록한 공연은 컬럼 기본값(`FALSE`)이 들어가지만 옛 코드는 그 조건 없이 관객에게 보여 준다.** 다시 새 코드로 올리면 그 공연들이 비공개로 숨는다 — 롤백 창에서 등록한 공연은 올린 뒤 `publish` 로 다시 공개한다.
 
 ```sql
--- 롤백 창에서 등록돼 숨겨진 공연 찾기 (다시 올린 뒤)
+-- 롤백 창에서 등록돼 숨겨진 공연 찾기 (다시 올린 뒤) — 정상 비공개 초안도 함께 나오니 created_at 으로 롤백 창만 거른다
 SELECT id, title, created_at FROM performance WHERE published = FALSE AND cancelled = FALSE ORDER BY created_at DESC;
 ```
 
