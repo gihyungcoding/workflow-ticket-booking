@@ -1720,5 +1720,384 @@
         }
       ]
     }
+  },
+  {
+    "id": "TASK-027",
+    "title": "메일 발송 기반·일회용 이메일 토큰",
+    "description": "이메일 가입에는 이메일 소유 확인이 없고 비밀번호를 잊으면 복구 수단이 없다. 두 기능은 같은 재료 — 메일 발송과 일회용 링크 토큰 — 를 쓰는데 백엔드에는 메일을 보낼 코드도 의존성도 없다. 이 태스크가 그 기반을 만든다. 범위: MailGateway 인터페이스와 SMTP·로그 구현(MAIL_TRANSPORT 로 선택, 운영에서 비면 기동 실패), FRONTEND_BASE_URL 을 소셜 제공자 없이도 항상 필수로 검증, email_token 테이블과 users.account_mail_sent_at 마이그레이션, 토큰 발급(해시 저장·만료 24시간/30분·이전 토큰 삭제)·소모(조건부 UPDATE 로 한 번만)·60초 간격 제한(조건부 UPDATE), 메일 문구 4종(인증·재설정·변경 알림·소셜 안내). 메일 발송 방식은 ADR-0031, 토큰 설계는 ADR-0032. 포함하지 않음: 엔드포인트, 가입·로그인 변경, 프론트.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "메일 발송 인터페이스·토큰 저장·간격 제한은 모두 서버 범위",
+    "priority": "High",
+    "depends_on": [],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 12
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다",
+        "운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다",
+        "발급한 토큰의 원문은 43자이고, DB 에는 SHA-256 해시만 있다(DB 조회로 원문이 없음을 확인)",
+        "만료는 인증 24시간, 재설정 30분이다. 만료 시각 정각에는 이미 만료다",
+        "유효한 토큰은 한 번만 소모된다 — 동시에 두 요청을 보내면 한 쪽만 성공한다",
+        "같은 사용자·용도로 새 토큰을 발급하면 이전 토큰은 사라진다",
+        "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)",
+        "메일의 링크는 `FRONTEND_BASE_URL` 로 만들어지고, 위조한 `Host` 헤더를 실어도 바뀌지 않는다",
+        "마이그레이션이 기존 `users` 행(이메일 가입·소셜 가입)을 그대로 두고 적용된다 — `email_verified` 값이 바뀌지 않는다",
+        "`architecture.md` §5 에 메일 발송 행이 있다(ADR-0031 의 결정과 같은 내용)"
+      ],
+      "absorbed_steps": [
+        "architecture.md §5 외부 의존의 메일 발송 행(ADR-0031 과 같은 내용인지 확인)"
+      ],
+      "implementation_spec": {
+        "paths": [
+          "backend/build.gradle",
+          "backend/src/main/resources/db/migration/V<다음 번호>__add_email_token.sql",
+          "backend/src/main/java/com/example/ticket_booking/domain/EmailToken.java",
+          "backend/src/main/java/com/example/ticket_booking/domain/EmailTokenPurpose.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/EmailTokenRepository.java",
+          "backend/src/main/java/com/example/ticket_booking/service/MailGateway.java",
+          "backend/src/main/java/com/example/ticket_booking/service/MailMessage.java",
+          "backend/src/main/java/com/example/ticket_booking/service/EmailTokenService.java",
+          "backend/src/main/java/com/example/ticket_booking/config/SmtpMailGateway.java",
+          "backend/src/main/java/com/example/ticket_booking/config/LoggingMailGateway.java",
+          "backend/src/main/java/com/example/ticket_booking/config/MailConfig.java",
+          "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
+          "docs/architecture/architecture.md"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/email-verification-password-reset.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task A"
+        },
+        {
+          "section": "5",
+          "range": "Task A"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-028",
+    "title": "이메일 인증 API·인증 전 로그인 차단",
+    "description": "이메일 가입은 메일 소유를 확인하지 않아 남의 이메일로 선점 가입할 수 있고(ADR-0020), 인증을 안 한 계정도 로그인된다. TASK-027 의 메일·토큰 기반 위에 이메일 인증을 얹고 인증 전 이메일(비밀번호) 로그인을 막는다(ADR-0033). 범위: 가입 시 인증 메일 발송과 미인증 이메일 재가입 덮어쓰기(비밀번호·이름·역할, 이전 토큰 삭제), 로그인의 403 EMAIL_NOT_VERIFIED(비밀번호가 맞을 때만, 인증 메일 자동 발송), 인증 재발송·확인 API 2개, 기존 가입자 재인증(email_verified 를 바꾸지 않는다), 소셜 자동 연결(ADR-0020) 회귀 확인. 가입 뒤 바로 로그인하던 기존 테스트가 많아(AuthTestHelper 사용 19개 파일) 헬퍼가 인증 단계까지 거치게 한다. 포함하지 않음: 비밀번호 찾기, 프론트.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "가입·로그인 규칙 변경과 인증 확인 API, 기존 테스트 Given 변경이 모두 서버 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-027"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 14
+      },
+      "risk": "high",
+      "acceptance_criteria": [
+        "가입하면 201 이고 `email_verified=false` 행이 생기고 인증 메일이 한 통 나간다. 응답에 로그인 토큰은 없다",
+        "인증 전 계정이 비밀번호를 맞게 로그인하면 403 `EMAIL_NOT_VERIFIED` 이고 인증 메일이 나간다. 비밀번호가 틀리거나 없는 이메일이거나 소셜 전용이면 지금처럼 401 `INVALID_CREDENTIALS` 이고 메일이 나가지 않는다",
+        "인증 확인에 성공하면 200 이고 `email_verified=true` 가 되고 이후 로그인이 200 이다. 로그인 토큰은 이 응답으로 주지 않는다",
+        "없는 토큰 · 만료 · 이미 사용 · 재설정용 토큰 · 빈 값 · 짧게 잘린 토큰은 모두 같은 400 `TOKEN_INVALID` 이고 DB 가 바뀌지 않는다",
+        "재발송은 미인증이면 새 토큰(이전 것 무효)으로 메일을 보내고, 인증됨·없는 이메일·소셜 전용·간격 안이면 보내지 않는다. 모두 같은 200 본문이다",
+        "미인증 이메일로 다시 가입하면 비밀번호·이름·역할이 새 값이 되고(옛 비밀번호로는 로그인 불가) 이전 토큰이 무효가 되고 새 메일이 나간다",
+        "인증된 이메일 · 소셜 전용 · 소셜 연결이 있는 미인증 이메일로 가입하면 409 이고 행이 바뀌지 않는다",
+        "마이그레이션 전부터 있던 이메일 가입 행(`email_verified=false`)이 로그인하면 403 과 메일을 받고, 인증한 뒤 로그인된다",
+        "소셜 로그인은 막히지 않는다. 인증된 이메일 계정과 제공자가 검증한 같은 이메일의 소셜 로그인은 자동 연결되고, 제공자가 검증하지 않았으면 연결되지 않는다(ADR-0020 회귀)",
+        "기존 백엔드 테스트가 모두 통과한다 — 가입 뒤 바로 로그인하던 `AuthTestHelper` 사용 테스트가 인증 단계를 거친다",
+        "`docs/release/first-deploy-checklist.md` 에 SMTP 환경변수·`FRONTEND_BASE_URL` 필수화·기존 가입자 재인증 안내가 있다"
+      ],
+      "absorbed_steps": [
+        "AuthTestHelper 의 가입 뒤 인증 처리(기존 테스트 19개 파일의 Given)",
+        "배포 체크리스트(first-deploy-checklist.md) 갱신 — SMTP 환경변수·FRONTEND_BASE_URL 필수화·기존 가입자 재인증 안내",
+        "user-authentication.md §7 의 비밀번호 찾기·이메일 인증 두 줄 이관"
+      ],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/java/com/example/ticket_booking/service/AuthService.java",
+          "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+          "backend/src/main/java/com/example/ticket_booking/service/EmailVerificationService.java",
+          "backend/src/main/java/com/example/ticket_booking/service/EmailNotVerifiedException.java",
+          "backend/src/main/java/com/example/ticket_booking/service/TokenInvalidException.java",
+          "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+          "backend/src/main/java/com/example/ticket_booking/api/AuthExceptionHandler.java",
+          "backend/src/main/java/com/example/ticket_booking/api/dto/EmailRequest.java",
+          "backend/src/main/java/com/example/ticket_booking/api/dto/ConfirmEmailRequest.java",
+          "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+          "backend/src/test/java/com/example/ticket_booking/support/AuthTestHelper.java",
+          "docs/release/first-deploy-checklist.md",
+          "docs/product/features/user-authentication.md"
+        ]
+      },
+      "complexity": {
+        "size_score": 5,
+        "risk_score": 4,
+        "total_score": 80,
+        "level": "복잡"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/email-verification-password-reset.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task B"
+        },
+        {
+          "section": "5",
+          "range": "Task B"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-029",
+    "title": "비밀번호 찾기·재설정 API",
+    "description": "비밀번호를 잊으면 되찾을 방법이 없고 같은 이메일로 다시 가입해도 중복(409)이라 계정을 잃는다. TASK-027 의 메일·토큰 기반 위에 비밀번호 재설정 API 를 만든다. 범위: 재설정 요청(비밀번호가 있으면 재설정 메일, 소셜 전용이면 소셜 안내 메일, 없는 이메일이면 아무것도 안 함 — 응답은 항상 같은 200, 60초 간격 안은 조용히 건너뜀), 재설정 확인(비밀번호 규칙은 가입과 같다, 성공하면 비밀번호 해시 교체·email_verified=true·남은 재설정 토큰 삭제·변경 알림 메일). 이미 발급된 로그인 토큰은 무효화하지 않는다(범위 밖으로 수용). 포함하지 않음: 이메일 인증, 프론트.",
+    "primary_category": "Backend",
+    "sub_categories": [],
+    "reason_primary": "재설정 요청·확인 규칙과 메일 발송이 모두 서버 범위",
+    "priority": "Medium",
+    "depends_on": [
+      "TASK-027"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 8
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "요청하면 비밀번호가 있는 계정(미인증 포함)에는 재설정 메일이 한 통, 소셜 전용에는 소셜 안내 메일이 한 통(재설정 링크 없음), 없는 이메일에는 메일이 없다. 응답은 모두 같은 200 본문이다",
+        "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않는다",
+        "유효한 토큰과 올바른 비밀번호로 확인하면 200 이고 새 비밀번호로 로그인되고 옛 비밀번호는 401 이다. `email_verified=true` 가 되고, 남은 재설정 토큰이 사라지고, 변경 알림 메일이 한 통 나간다(본문에 비밀번호가 없다)",
+        "같은 토큰으로 두 번째 확인은 400 `TOKEN_INVALID` 이다. 만료 · 인증용 토큰도 같다. 동시에 두 번 보내면 한 번만 성공한다",
+        "비밀번호가 7자 · 73자 · 72바이트 초과 · 확인란 불일치 · NUL·짝 없는 서로게이트이면 400 `INVALID_REQUEST` 이고 토큰이 소모되지 않는다(DB 변경 없음)",
+        "재설정 전에 발급한 로그인 토큰은 재설정 뒤에도 쓸 수 있다(§7 에서 수용한 동작을 고정한다)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "backend/src/main/java/com/example/ticket_booking/service/PasswordResetService.java",
+          "backend/src/main/java/com/example/ticket_booking/api/AuthController.java",
+          "backend/src/main/java/com/example/ticket_booking/api/dto/ResetPasswordRequest.java"
+        ]
+      },
+      "complexity": {
+        "size_score": 3,
+        "risk_score": 3,
+        "total_score": 48,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/email-verification-password-reset.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task C"
+        },
+        {
+          "section": "5",
+          "range": "Task C"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-030",
+    "title": "인증 메일 안내·인증 결과·로그인 인증 필요 화면",
+    "description": "이메일 가입이 자동 로그인 대신 인증 메일 안내로 가고, 인증 전 로그인은 403 으로 막힌다(TASK-028). 가입 직후 자동 로그인을 없애고 메일 확인 흐름의 화면을 만든다. 범위: ① 인증 메일 안내(재발송 60초 카운트다운) ② 인증 링크 결과(확인 중·인증됨·링크 무효, 토큰은 URL fragment 로 읽는 즉시 주소에서 지우고 POST 로 확인) ③ 로그인의 403 EMAIL_NOT_VERIFIED 안내와 메일 다시 보내기. 시안은 out/screens/ 에 있다(verify-email-sent·verify-email*·login-unverified). 소셜 가입·가입 완료 화면은 바꾸지 않는다. 포함하지 않음: 비밀번호 찾기 화면·링크, 시안 제작.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience",
+      "organizer"
+    ],
+    "reason_primary": "가입 뒤 이동·인증 결과 화면·로그인 오류 분기는 프론트 범위",
+    "priority": "High",
+    "depends_on": [
+      "TASK-028"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 10
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "가입이 201 이면 `/verify-email/sent` 로 가고 이메일이 보인다. 자동 로그인 요청은 가지 않는다",
+        "① 「다시 보내기」는 60초부터 줄어들다 0 에서 켜진다. 누르면 재발송 요청이 가고 「메일을 다시 보냈어요」와 함께 다시 60초 비활성이 된다. 요청이 실패하면 오류 문구가 보인다. 새로고침해 주소를 잃으면 `/login` 으로 간다",
+        "② 링크의 토큰을 읽는 즉시 주소에서 지우고, 확인 중 → 성공(「로그인하기」) 또는 무효(같은 버튼과 안내)로 간다. 토큰이 없어도 무효 화면이다. 요청이 서버 오류·네트워크 오류로 실패하면 「확인하지 못했어요. 잠시 후 다시 시도해 주세요」와 「다시 시도」가 보인다. 자동 로그인은 하지 않는다",
+        "③ 로그인이 403 `EMAIL_NOT_VERIFIED` 이면 「이메일 인증이 필요해요」 안내가 맨 위에 보인다. 안내의 「메일 다시 보내기」를 누르면 재발송 요청이 가고 접수 문구가 보인다. 401 이면 지금 문구 그대로다",
+        "소셜 가입·로그인과 가입 완료 화면(`/joined`)은 지금처럼 동작한다",
+        "화면을 떠난 뒤 도착한 응답은 이동·표시에 쓰이지 않는다(ADR-0018)",
+        "인증 화면은 시안과 같다(Phase 4 화면 확인 — 상태를 실제로 만들어)"
+      ],
+      "absorbed_steps": [
+        "가입 뒤 자동 로그인(login → /joined)을 단언하던 승인 테스트 수정"
+      ],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/pages/SignUpPage.tsx",
+          "frontend/src/pages/LoginPage.tsx",
+          "frontend/src/pages/VerifyEmailSentPage.tsx",
+          "frontend/src/pages/VerifyEmailPage.tsx",
+          "frontend/src/auth/authPaths.ts",
+          "frontend/src/api/auth.ts",
+          "frontend/src/auth/messages.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/auth/AuthScreens.test.tsx",
+          "frontend/src/auth/task018.auth.test.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 4,
+        "risk_score": 3,
+        "total_score": 60,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/email-verification-password-reset.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "2",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task D"
+        },
+        {
+          "section": "5",
+          "range": "Task D"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TASK-031",
+    "title": "비밀번호 찾기·재설정 화면",
+    "description": "비밀번호를 잊었을 때의 진입점과 재설정 화면이 없다. TASK-029 의 API 위에 화면을 만든다. 범위: ④ 비밀번호 찾기(계정 유무와 무관한 같은 접수 문구, 형식 오류 시 요청하지 않음) ⑤ 비밀번호 재설정(토큰은 fragment 로 읽는 즉시 지움, 가입과 같은 비밀번호 규칙·문구, 성공 뒤 자동 로그인 없이 로그인으로, 링크 무효 시 다시 요청), 로그인 화면의 「비밀번호 찾기」 링크, 인증·재설정 화면의 Referrer-Policy no-referrer. 시안은 out/screens/ 에 있다(forgot-password*·reset-password*·reset-link-invalid). 포함하지 않음: 인증 화면, 시안 제작.",
+    "primary_category": "Frontend",
+    "sub_categories": [
+      "audience",
+      "organizer"
+    ],
+    "reason_primary": "비밀번호 찾기·재설정 입력 화면과 로그인 링크는 프론트 범위",
+    "priority": "Medium",
+    "depends_on": [
+      "TASK-029"
+    ],
+    "status": "todo",
+    "meta": {
+      "estimate": {
+        "unit": "hour",
+        "value": 8
+      },
+      "risk": "medium",
+      "acceptance_criteria": [
+        "로그인 화면의 「비밀번호 찾기」가 `/forgot-password` 로 간다",
+        "④ 이메일을 제출하면 계정 유무와 무관하게 같은 접수 문구가 보인다. 형식이 틀리면 칸 아래 오류가 보이고 요청이 가지 않는다. 제출 중에는 다시 누를 수 없다. 요청 자체가 실패하면 오류 문구와 입력한 이메일이 남는다",
+        "⑤ 토큰을 읽는 즉시 주소에서 지운다. 비밀번호가 8자 미만·72자 초과이거나 확인란이 다르면 가입과 같은 문구의 오류가 보이고 요청이 가지 않는다",
+        "⑤ 성공하면 「비밀번호를 바꿨어요」와 「로그인하기」가 보이고 자동 로그인은 하지 않는다. 링크가 무효이거나 토큰이 없으면 「다시 요청하기」(→ ④)가 보인다. 요청이 서버 오류·네트워크 오류로 실패하면 오류 문구가 보이고 입력한 비밀번호는 남는다",
+        "인증·재설정 화면은 `Referrer-Policy: no-referrer` 를 적용한다",
+        "인증 화면은 시안과 같다(Phase 4 화면 확인 — 상태를 실제로 만들어)"
+      ],
+      "absorbed_steps": [],
+      "implementation_spec": {
+        "paths": [
+          "frontend/src/pages/ForgotPasswordPage.tsx",
+          "frontend/src/pages/ResetPasswordPage.tsx",
+          "frontend/src/pages/LoginPage.tsx",
+          "frontend/src/auth/authPaths.ts",
+          "frontend/src/api/auth.ts",
+          "frontend/src/auth/messages.ts",
+          "frontend/src/App.tsx"
+        ]
+      },
+      "complexity": {
+        "size_score": 3,
+        "risk_score": 3,
+        "total_score": 48,
+        "level": "보통"
+      }
+    },
+    "source_refs": {
+      "source_file": "docs/product/features/email-verification-password-reset.md",
+      "sections": [
+        "1-1",
+        "1-2",
+        "2",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "sections_with_ranges": [
+        {
+          "section": "1-2",
+          "range": "Task E"
+        },
+        {
+          "section": "5",
+          "range": "Task E"
+        }
+      ]
+    }
   }
 ]
