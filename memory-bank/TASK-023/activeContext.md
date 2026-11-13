@@ -2,7 +2,7 @@
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
 phase: "2a"
-phase_name: "Phase 2a - Scenario Design"
+phase_name: "Phase 2a - Scenario Design (완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -22,11 +22,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-시나리오 19건을 작성했고 독립검증자 호출을 준비 중이다.
+Phase 2a 를 마쳤다. 독립검증 2회차 통과, 게이트 통과.
 
 ## 다음 한 걸음
 
-`scenario-validator` 에 PLAN·SCENARIO 를 넘겨 검증 결과를 받는다.
+Phase 2b — `wf-red` 로 Red 테스트를 쓴다.
 
 ## 알아둬야 할 것
 

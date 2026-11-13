@@ -130,7 +130,7 @@ flow: F3
 covers: `filter=DRAFT` 는 취소되지 않은 비공개 공연만, `filter=UPCOMING|OPEN|SOLD_OUT|CLOSED|CANCELLED` 는 공개 여부와 무관하게 해당 상태만 돌려준다
 flow: F3
 
-## SC-06 (error) `filter` 가 정의 밖이면 400 이다
+## SC-06 (error) `filter` 가 정의 밖이면 400 이고, 빈 값은 전체로 본다
 
 - **Given** `O1` 이 로그인해 있다
 - **When** `O1` 이 아래 표의 `filter` 로 `GET /api/organizer/performances` 를 호출한다
