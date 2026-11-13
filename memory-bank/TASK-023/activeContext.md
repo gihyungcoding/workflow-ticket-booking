@@ -2,7 +2,7 @@
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
 phase: "4"
-phase_name: "Phase 4 - Verify (2회차 WARN — HITL#3 대기)"
+phase_name: "Phase 4 - Verify (승인 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 2회차 WARN. HITL#3 승인을 기다린다.
+Phase 4 2회차 WARN 을 승인받았다(APPROVE).
 
 ## 다음 한 걸음
 
-승인되면 verified_commit 기록 후 Phase 5.
+Phase 5 — `wf-reflect`.
 
 ## 알아둬야 할 것
 
