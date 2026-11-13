@@ -1,0 +1,33 @@
+---
+status: ACTIVE
+saved_at: 2026-11-13T00:00:00Z
+summary: "시나리오 39건(happy 16·error 5·boundary·regression) 작성, 입력 경계 칸 120/120 판정(n/a 11) — 독립검증 대기"
+
+next_steps:
+  - "독립검증자 호출(scenario-validator) → VALIDATION_TASK-020.json 원문 저장"
+  - "통과하면 Phase 2b — HITL 요약에 아래 decisions 와 「승인된 테스트 변경」 8행을 보여준다"
+
+decisions:
+  - decision: "새로 작성(기존 확장 아님). MD·JSON·행렬을 한 데이터 스크립트에서 생성해 일치시킨다"
+    rationale: "시나리오 39건·칸 120개라 손으로 맞추면 V1(MD↔JSON) 어긋남이 난다. 이후 수정은 스크립트 데이터를 고쳐 다시 생성"
+  - decision: "응답 계약 위반(status·시각·availableSeats·sections 원소)은 오류 화면 — SC-04"
+    rationale: "PLAN 이 입력으로 올렸으나 동작을 정하지 않았다. 흰 화면·예외 대신 기존 오류 화면을 쓴다. sections 키 없음·null·[] 는 오류가 아니라 가격 줄·구역 행 숨김(SC-18)"
+  - decision: "표시 문자열 공백 판정은 ADR-0027(유니코드 공백·NBSP·U+200B) — grade·area 공백은 계약 위반, areaNote 공백은 설명 줄 없음, AppBar title 공백은 h1 없음"
+    rationale: "현재 isBlank 는 trim() 이라 U+200B 를 못 거른다 — 구현이 ADR-0027 판정을 따라야 한다(SC-04 note)"
+  - decision: "카운트다운 경계 표기: 두 단위를 보이고 작은 단위가 0 이어도 적는다('1일 0시간'·'1시간 0분'·'1분 0초'), 초 이하는 버린다"
+    rationale: "시안·기능 문서는 예 네 개만 정한다(SC-08). 2b 승인에서 사람이 본다"
+  - decision: "화면 복귀 재측정이 전부 실패하면 이전 오프셋을 유지한다(SC-30 d)"
+    rationale: "일시적 실패가 잘 돌던 카운트다운을 죽이지 않게. 기기 시계 대체가 아니므로 기능 문서 §8 과 충돌하지 않는다. 처음 측정이 전부 실패한 경우만 '기준 시각을 맞추지 못했어요'(SC-10)"
+  - decision: "배치도 접근성 이름은 일반 규칙('<공연장> 구역 위치. 무대 바로 앞부터 <첫 묶음 등급> 순서이고, 바깥으로 <묶음 이름들> 순서예요')"
+    rationale: "시안 문장은 한 공연에 맞춘 것이고 조사(이/가)를 임의 이름에 맞출 수 없다"
+  - decision: "묶음 계산: stageOrder 숫자 오름차순(같은 값은 응답 순서), 이어진 같은 area 만 한 묶음, 묶음 안 가격이 다르면 '최소~최대원'. 배치도 라벨은 12자 초과 시 11자 + '…'"
+    rationale: "PLAN unresolved — 문서에 없는 규칙을 이 문서가 정한다(SC-22·23·24)"
+  - decision: "id 는 요청 경로에 encodeURIComponent 로 끼운다(SC-06). 상세 앱바 뒤로 → '/', 대기열 뒤로·공연으로 돌아가기 → /performances/:id"
+    rationale: "id 에 ?·#·/ 가 있으면 요청이 갈라진다. 뒤로 목적지는 시안 링크(home.html)를 따른다"
+  - decision: "AC-14(375px 시안 대조)는 jsdom 이 계산하는 스타일(SC-33)과 Phase 4 브라우저 증거로 나눈다"
+    rationale: "레이아웃·겹침은 jsdom 이 계산하지 않는다"
+  - decision: "상태 표 대조 — 상세 12상태(예정·0초 전환·예매 가능·매진·마감·취소·로딩·없는 공연·오류·시각 실패·포스터 없음·구역 1개)와 시트 3상태(기본·미등록·묶음 5개 이상)가 모두 시나리오에 걸린다"
+    rationale: "§2-5 표 한 행씩 대조: SC-07·09·13·15·01·02·03·10·17·18·19·22·21"
+
+attempts: []
+---
