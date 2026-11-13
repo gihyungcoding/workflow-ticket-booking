@@ -77,7 +77,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/performances/**")
                     .permitAll()
                     // GET 밖의 모든 메서드 — 미지원 메서드(DELETE·PATCH)도 여기서 먼저 인가되고, 통과한 뒤에야 405 가 된다
-                    .requestMatchers("/api/performances/**")
+                    // /api/organizer/** 는 GET 포함 전부 주최자 전용이다(TASK-023)
+                    .requestMatchers("/api/performances/**", "/api/organizer/**")
                     .hasRole(UserRole.ORGANIZER.name())
                     .requestMatchers(
                         "/api/time",

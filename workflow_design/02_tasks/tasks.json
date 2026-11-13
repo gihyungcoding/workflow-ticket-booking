@@ -1406,7 +1406,7 @@
     "depends_on": [
       "TASK-022"
     ],
-    "status": "todo",
+    "status": "done",
     "meta": {
       "estimate": {
         "unit": "hour",

@@ -616,8 +616,11 @@ class PerformanceOwnershipApiTest {
    */
   @Test
   void test_sc11_공연_조회는_토큰_없이도_무효_토큰이_실려도_열린다() throws Exception {
-    // Given
+    // Given (TASK-023: 등록한 공연은 비공개라 관객 조회에 보이도록 공개 전환한다)
     Long p1 = registeredBy(o1);
+    assertThat(status(send(post("/api/performances/" + p1 + "/publish"), bearer(o1))))
+        .as("픽스처 공개 전환")
+        .isEqualTo(200);
     SoftAssertions soft = new SoftAssertions();
 
     for (String authorization : new String[] {null, "Bearer invalid.token.value"}) {
@@ -654,6 +657,10 @@ class PerformanceOwnershipApiTest {
   void test_sc13_자기_공연이라도_오픈_시각이_되면_수정할_수_없다() throws Exception {
     // Given
     Long p1 = registeredBy(o1);
+    // TASK-023: 비공개 공연은 오픈 뒤에도 수정되므로, 공개 공연으로 만든 뒤 시계를 옮긴다
+    assertThat(status(send(post("/api/performances/" + p1 + "/publish"), bearer(o1))))
+        .as("픽스처 공개 전환")
+        .isEqualTo(200);
     clock.setInstant(T.plus(Duration.ofDays(7)));
     // 시계를 옮기면 T 에 받은 토큰(유효 24시간)은 만료된다 — 같은 O1 로 다시 로그인한다
     String o1Now = accessTokenOf(login(mockMvc, "o1@example.com", PASSWORD));

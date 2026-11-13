@@ -4,6 +4,7 @@ import com.example.ticket_booking.api.dto.RegisterPerformanceRequest;
 import com.example.ticket_booking.api.dto.SectionRequest;
 import com.example.ticket_booking.api.dto.UpdatePerformanceRequest;
 import com.example.ticket_booking.domain.PerformanceStatus;
+import com.example.ticket_booking.service.OrganizerPerformanceResponse;
 import com.example.ticket_booking.service.PerformanceListResponse;
 import com.example.ticket_booking.service.PerformanceResponse;
 import com.example.ticket_booking.service.PerformanceService;
@@ -38,7 +39,7 @@ public class PerformanceController {
       @RequestParam(required = false) PerformanceStatus status,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
-    return performanceService.getPerformances(status, page, Math.min(size, 100));
+    return performanceService.getPerformances(status, page, size);
   }
 
   /** 홈 머리글 후보. 리터럴 경로라 /{id} 보다 먼저 매칭된다. */
@@ -60,7 +61,7 @@ public class PerformanceController {
    * 사람이 소유자다.
    */
   @PostMapping
-  public ResponseEntity<PerformanceResponse> register(
+  public ResponseEntity<OrganizerPerformanceResponse> register(
       @Valid @RequestBody RegisterPerformanceRequest request, Authentication authentication) {
     List<SectionSpec> sections =
         request.sections() == null
@@ -72,7 +73,7 @@ public class PerformanceController {
             : request.zones().stream()
                 .map(zone -> new ZoneSpec(zone.area(), zone.note(), zone.grades()))
                 .toList();
-    PerformanceResponse response =
+    OrganizerPerformanceResponse response =
         performanceService.registerPerformance(
             (Long) authentication.getPrincipal(),
             request.title(),
@@ -87,7 +88,7 @@ public class PerformanceController {
   }
 
   @PutMapping("/{id}")
-  public PerformanceResponse update(
+  public OrganizerPerformanceResponse update(
       @PathVariable Long id,
       @Valid @RequestBody UpdatePerformanceRequest request,
       Authentication authentication) {
@@ -102,8 +103,20 @@ public class PerformanceController {
   }
 
   @PostMapping("/{id}/cancel")
-  public PerformanceResponse cancel(@PathVariable Long id, Authentication authentication) {
+  public OrganizerPerformanceResponse cancel(@PathVariable Long id, Authentication authentication) {
     return performanceService.cancelPerformance((Long) authentication.getPrincipal(), id);
+  }
+
+  @PostMapping("/{id}/publish")
+  public OrganizerPerformanceResponse publish(
+      @PathVariable Long id, Authentication authentication) {
+    return performanceService.publish((Long) authentication.getPrincipal(), id);
+  }
+
+  @PostMapping("/{id}/unpublish")
+  public OrganizerPerformanceResponse unpublish(
+      @PathVariable Long id, Authentication authentication) {
+    return performanceService.unpublish((Long) authentication.getPrincipal(), id);
   }
 
   private SectionSpec toSectionSpec(SectionRequest request) {

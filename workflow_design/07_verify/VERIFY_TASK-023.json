@@ -1,0 +1,306 @@
+{
+  "task_id": "TASK-023",
+  "status": "WARN",
+  "status_reason": "2회차 — 1회차 FAIL 의 RC-1·RC-2 를 Phase 3 에서 공통 지점으로 고쳤고 리뷰어가 결함 없음으로 판정했다. AC 12/12·추가 시나리오 SC-20·21 포함 205/205·린트·아키텍처 통과. WARN 사유: (1) 쓰기 잠금의 lock.timeout 힌트·락 예외 매핑이 없다 — 개선 제안(낮음), 시나리오 밖이라 후속 태스크 후보 (2) SC-20 의 300ms 대기 단언이 느린 환경에서 탐지력이 약해질 수 있다(거짓 실패는 없음) (3) 동시성은 H2 에서만 확인했고 PostgreSQL 은 SELECT … FOR UPDATE 표준이라 같은 의미이나 이 태스크에서 프로브하지 않았다 (4) 주최자 화면 전까지 프론트의 등록 후 이동·수정 값 로드는 비공개 공연에서 404 (AC 밖, 배포 순서 영향)",
+  "evidence": {
+    "tests": {
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --offline",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL in 2m 9s — 205 tests, 0 failed, 0 skipped (SC-20 동시 쓰기·SC-21 관객 목록 포함)",
+      "note": "2회차 실행. 리뷰어는 저장소 밖에서 정적 분석만 했다(결과 디렉터리 공유 없음). 롤백 수정 직후 SC-20·SC-21 은 단독으로 3회 더 통과해 안정성 확인"
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck --offline",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL (spotless 위반 없음)"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "45 files changed, 5429 insertions(+), 29 deletions(-) — 프로덕션 16 files +367 -22"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "마이그레이션 후 기존 행은 `published = true` 이고, 새로 등록한 공연은 `published = false` 다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc02 · PerformancePublishedMigrationTest#test_sc01 (PostgreSQL V7→V8: 기존 행 TRUE, 기본값 FALSE, NULL 거부)"
+    },
+    {
+      "criterion": "비공개 공연은 `GET /api/performances` 목록·`/next-opening` 에 나오지 않고 `GET /api/performances/{id}` 는 404 다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc03 (목록·status 필터·next-opening 제외, 단건 404, 공개 취소는 CANCELLED)"
+    },
+    {
+      "criterion": "`GET /api/organizer/performances` 는 요청자 소유 공연만 `start_at DESC` 로 돌려주고, 다른 주최자 공연·소유자 NULL 공연은 없다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc04·test_sc07 (소유 범위·정렬·페이지 경계)"
+    },
+    {
+      "criterion": "`filter=DRAFT` 는 취소되지 않은 비공개 공연만, `filter=UPCOMING|OPEN|SOLD_OUT|CLOSED|CANCELLED` 는 공개 여부와 무관하게 해당 상태만 돌려준다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc05·test_sc06 (filter 7값 + now==closeAt 경계, 정의 밖 400)"
+    },
+    {
+      "criterion": "`GET /api/organizer/performances/{id}` 는 자기 공연이면 `sections`·`published`·`editable`·`visibilityChangeable` 을 담고, 남의 공연·없는 공연은 404 다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc08·test_sc09·test_sc17 (sections·플래그, 같은 404, id 경계)"
+    },
+    {
+      "criterion": "`now < openAt` 인 자기 공연에 `publish` 를 보내면 `published = true` 로 DB 에 반영되고 관객 목록에 나타난다. `unpublish` 는 반대",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc10·test_sc11 (401/403, publish/unpublish 가 DB·관객 목록에 반영 — 비트랜잭션 재조회)"
+    },
+    {
+      "criterion": "`now >= openAt` 이면 `publish`·`unpublish` 가 409 `VISIBILITY_LOCKED` 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc13 (now==openAt 포함 7행, 409 뒤 DB 그대로)"
+    },
+    {
+      "criterion": "취소된 공연에 `publish`·`unpublish`·수정을 보내면 409 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc14 (publish·unpublish·PUT 7행 409 PERFORMANCE_CANCELLED, DB 그대로)"
+    },
+    {
+      "criterion": "이미 공개된 공연에 `publish` 를 보내면 200 이고 값이 그대로다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc12"
+    },
+    {
+      "criterion": "비공개 공연은 `now >= openAt` 이어도 수정이 200 이고 반영된다. 공개 공연은 기존처럼 409",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc15 (비공개 now>=openAt 200 반영, 공개 409)"
+    },
+    {
+      "criterion": "`editable`·`visibilityChangeable` 값이 같은 시각에 실제 수정·전환 요청의 성공 여부와 일치한다 (고정 `Clock` 으로 경계 시각 전후 확인)",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc16 (8조합 플래그 = 실제 요청 결과, 목록·단건 일치)"
+    },
+    {
+      "criterion": "관객 응답(`PerformanceResponse`) JSON 에 `published`·`editable`·`visibilityChangeable`·`ownerId` 키가 없다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc18 (관객 키 집합 불변, 주최자 필드 문자열 없음)"
+    }
+  ],
+  "screens": [],
+  "screens_note": "Backend 태스크 — 화면 없음. 주최자 화면은 TASK-025·026",
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 552,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend PerformanceDetailPage.tsx:36·PerformanceEditPage.tsx:135·PerformanceListPage.tsx:45 — 이 태스크가 건드리지 않은 기존 프론트 파일"
+      }
+    ],
+    "overdue_promotions": [
+      {
+        "id": "AUTH-001",
+        "promote_after": "TASK-024",
+        "note": "위반 0건(files_scanned 131) — 승격 여부는 사람이 정한다"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "API: DB 접근",
+        "constraint": "ARCH-001",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: HTTP 관심사",
+        "constraint": "ARCH-002",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용",
+        "constraint": "ARCH-003",
+        "state": "✓"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어",
+        "constraint": null,
+        "state": "⚠ 미인코딩"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "검사 불가 — 이번 diff 의 filterSpecification 은 PerformanceStatusRules 의 상태 규칙을 WHERE 절로 다시 표현한다(기존 statusSpecification 과 같은 패턴, 동치는 SC-05·SC-16 이 지킴)"
+      },
+      {
+        "rule": "Frontend: 도메인 규칙",
+        "constraint": null,
+        "state": "검사 불가"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "205/205 passed",
+    "callers_checked": true,
+    "callers_note": "쓰기 경로 3곳(updatePerformance·cancelPerformance·changeVisibility)이 모두 findOwnedForUpdate 를 쓰고 findOwned 는 읽기 경로(getMyPerformance)만 남음. getPerformances·getMyPerformances 는 pageRequestOf 를 공유하고 컨트롤러의 size 자르기는 제거됨(리뷰어 Grep 전수). main 안에서 Performance 를 바꾸는 다른 경로(예매·좌석 차감)는 없다"
+  },
+  "scope_deviations": [
+    {
+      "path": "backend/.../config/SecurityConfig.java",
+      "reason": "/api/organizer/** 인가 — tasks.json implementation_spec.paths 에 빠졌으나 PLAN target_files 에 포함"
+    },
+    {
+      "path": "backend/.../domain/PerformanceFilter.java",
+      "reason": "PLAN 밖 신규 enum — 쿼리 파라미터 바인딩과 ARCH-003 때문"
+    },
+    {
+      "path": "backend/.../repository/PerformanceRepository.java",
+      "reason": "[Phase 4 롤백] 쓰기용 잠금 조회 — PLAN F12 target_files 에 추가"
+    }
+  ],
+  "test_modifications_review": "승인 테스트 수정 5건(2b 3건: PerformanceOwnerMigrationTest 7→8·PerformanceOwnershipApiTest SC-11·PerformanceZoneRegistrationApiTest, Green 2건: PerformanceBrowseResponseApiTest SC-10·PerformanceOwnershipApiTest SC-13)을 리뷰어가 줄 단위로 대조 — 모두 Given 에 publish 를 더하거나 값·헬퍼를 바꾼 것뿐이며 단언은 약해지지 않았다",
+  "code_review": {
+    "reviewer": "code-reviewer 서브에이전트 (Phase 3 자체 리뷰 2회·Phase 4 2회, 롤백 후 수정 커밋 dcbee21 재리뷰, 정적 분석 — 저장소 밖 DB 프로브 환경 없음)",
+    "rounds": [
+      {
+        "n": 1,
+        "phase": 3,
+        "scope": "전체 develop...HEAD",
+        "findings": 2
+      },
+      {
+        "n": 2,
+        "phase": 4,
+        "scope": "전체 develop...HEAD · pre_review.root_causes 이어받음 · 같은 카테고리 전수",
+        "findings": 3
+      },
+      {
+        "n": 3,
+        "phase": 3,
+        "scope": "롤백 수정 커밋 09c5933...HEAD · 같은 카테고리 전수(쓰기 경로·목록 경로 호출부)",
+        "findings": 2
+      },
+      {
+        "n": 4,
+        "phase": 4,
+        "scope": "전체 develop...HEAD · 이전 root_causes·unresolved/deferred 이어받음",
+        "findings": 0
+      }
+    ],
+    "findings": [],
+    "suggestions": [
+      "@Lock(PESSIMISTIC_WRITE) 에 jakarta.persistence.lock.timeout 힌트와 PessimisticLockingFailureException 의 409/503 매핑 — 장애 상황 대비 개선, 후속 태스크 후보",
+      "SC-20 의 300ms 대기 후 미완료 단언을 DB 대기 상태 폴링으로 보강하면 느린 환경의 탐지력이 유지된다 — 승인된 테스트라 이번에 고치지 않음",
+      "주최자 화면(TASK-025·026) 전까지 프론트의 등록 성공 후 이동(/performances/:id)과 수정 화면 값 로드(getPerformance)는 비공개 공연에서 404 — first-deploy-checklist §5-3 에 curl 공개를 안내함"
+    ],
+    "confirmed_ok": [
+      "published 읽기 경로 전수 — 공개 조건 누락 없음",
+      "쓰기 응답 타입 변경의 호출부·테스트",
+      "승인 테스트 수정 5건 단언 불변",
+      "JPA 지시 — OrganizerVisibilityApiTest 와 수정한 승인 테스트에 클래스 레벨 @Transactional 없음, 반영·거부 단언이 비트랜잭션 재조회, Given(MutableClock·published)이 실제 적용",
+      "V8 마이그레이션·운영 문서 일치(롤백 서술 포함)",
+      "SecurityConfig 인가 겹침 없음, 소유자 id 응답 미노출"
+    ],
+    "previous_findings_resolved": [
+      "RC-1 [correctness] 동시 변경 덮어쓰기 — 쓰기 조회 한 곳(findOwnedForUpdate)으로 닫힘",
+      "RC-2 [correctness] 관객 목록 page·size — pageRequestOf 공통화로 닫힘"
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "버전·동적 UPDATE·잠금 없이 전 컬럼을 저장하는 read-modify-write 라 동시 변경이 서로를 덮는다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "publish/unpublish 와 cancel 동시 실행 시 cancelled 가 false 로 되돌아감",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 a·b — Red 실행에서 취소가 되돌아감 재현 → findOwnedForUpdate 로 Green"
+        },
+        {
+          "case": "update 와 cancel 동시 실행(기존 경로)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 c (취소된 공연에 PUT 이 200 으로 통과해 title 이 바뀜 — Red 에서 재현)"
+        },
+        {
+          "case": "publish 와 update 동시 실행으로 title·openAt 등 일정 변경이나 published 값이 서로 덮인다",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 d·e·g (title·published 되돌림 재현)"
+        },
+        {
+          "case": "unpublish 가 읽은 뒤 openAt 이 지나 VisibilityLocked 검사를 통과한 상태로 커밋된다 (시각 검사와 쓰기 사이 틈)",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceConcurrentWriteTest#test_sc20 f·h·i (옛 시각 T-1ms 로 판정해 200 — Red 에서 재현, 잠근 뒤 시각 판정으로 해소)"
+        },
+        {
+          "case": "잠금 대기 무한(lock timeout 없음)과 락 예외의 기본 500 응답",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "PostgreSQL·장시간 잠금 환경을 띄워 프로브하지 못했다. 정상 경로 오동작이 아니라 장애 시 대비(개선 제안, 낮음)이며 시나리오에 없는 동작이라 이번에 만들지 않았다",
+          "deferred_to": "별도 태스크 — 락 타임아웃 힌트와 응답 매핑"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "page·size 검증이 주최자 목록 서비스 메서드에만 있고 관객 목록 경로에는 없다 (입력 방어가 공통 지점이 아닌 호출부별로 추가됨)",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "GET /api/performances?size=0 또는 ?page=-1 이 PageRequest.of 의 IllegalArgumentException 으로 500 이 된다 (기존 동작)",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceListPagingApiTest#test_sc21 a·b·c — Red 에서 500 재현 → PerformanceService.pageRequestOf 공통화로 400"
+        },
+        {
+          "case": "관객 목록의 매우 큰 page 에서 offset 이 int 범위를 넘는다",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "PerformanceListPagingApiTest#test_sc21 h (page=2147483647 → 400)"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "주최자·관객 목록의 page·size 는 pageRequestOf 한 곳에서 400 으로 거른다(SC-07·SC-21), filter 정의 밖은 400(SC-06), id 는 Long 변환 실패 400(SC-17)",
+    "authorization": "/api/organizer/** 와 POST /api/performances/** 는 hasRole(ORGANIZER)(SC-10), 소유권은 findOwned·findOwnedForUpdate 가 404(SC-09). 소유자 id 는 응답에 없음. 쓰기 경로 행 잠금으로 동시 요청이 서로의 변경을 덮지 않음(SC-20)",
+    "secrets": "해당 없음",
+    "logging": "해당 없음"
+  },
+  "human_review": {
+    "decision": "APPROVE",
+    "verified_commit": "1495125639a2d686ff8d7fb0f937d8c3a952f1c2",
+    "verified_at": "2026-11-13T04:54:32Z",
+    "channel": "AskUserQuestion",
+    "note": "WARN 4건(락 타임아웃 후속 태스크 후보·SC-20 대기 보강·PostgreSQL 미프로브·프론트 주최자 화면 전 공백)을 알고 승인"
+  },
+  "acceptance_criteria_extra": [
+    {
+      "criterion": "[AC 밖 · PLAN F11] 등록·수정·취소 응답이 주최자 응답 형태",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc02·test_sc19"
+    },
+    {
+      "criterion": "[AC 밖 · PLAN F12 · Phase 4 RC-1] 같은 공연의 동시 쓰기가 서로의 변경을 덮어쓰지 않는다",
+      "verdict": "PASS",
+      "evidence": "PerformanceConcurrentWriteTest#test_sc20 (a~i, H2 행 잠금, 단독 3회 재실행 통과)"
+    },
+    {
+      "criterion": "[AC 밖 · PLAN F13 · Phase 4 RC-2] 관객 목록의 page·size 경계가 400",
+      "verdict": "PASS",
+      "evidence": "PerformanceListPagingApiTest#test_sc21 (a~o)"
+    }
+  ]
+}

@@ -169,8 +169,8 @@ class PerformanceOwnerMigrationTest {
    * SC-01 (regression)
    *
    * <p>Given PostgreSQL 에 V6 까지 적용, 기존 공연 1행 + 좌석 20행, 사용자 1행, 기존 공연 행의 열 값을 읽어 두었다 When Flyway 를
-   * 끝까지 적용한다 Then 성공·현재 버전 7, owner_id NULL, 다른 열은 읽어 둔 값과 같다, 없는 사용자 id 로 갱신하면 외래 키 위반, 있는 사용자로
-   * 갱신한 뒤 그 사용자를 지우면 owner_id 가 NULL(공연 행은 남는다)
+   * 끝까지 적용한다 Then 성공·현재 버전 8(V8 추가 — TASK-023), owner_id NULL, 다른 열은 읽어 둔 값과 같다, 없는 사용자 id 로 갱신하면
+   * 외래 키 위반, 있는 사용자로 갱신한 뒤 그 사용자를 지우면 owner_id 가 NULL(공연 행은 남는다)
    */
   @Test
   void test_sc01_V7_은_기존_공연이_있는_PostgreSQL_에_적용되고_소유자를_비워_둔다() throws SQLException {
@@ -189,7 +189,7 @@ class PerformanceOwnerMigrationTest {
     flyway(null).migrate();
 
     // Then 적용에 성공하고 현재 버전은 7 이다
-    assertThat(flyway(null).info().current().getVersion().getVersion()).isEqualTo("7");
+    assertThat(flyway(null).info().current().getVersion().getVersion()).isEqualTo("8");
     try (Connection connection = connect()) {
       // And 기존 공연의 owner_id 는 NULL 이다
       assertThat(ownerId(connection, performanceId)).isNull();

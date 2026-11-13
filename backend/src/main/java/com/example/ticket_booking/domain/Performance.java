@@ -64,6 +64,13 @@ public class Performance {
   @Column(name = "owner_id")
   private Long ownerId;
 
+  /**
+   * 관객 조회에 보이는가(V8). 기존 생성자로 만든 공연은 공개다 — 등록 경로만 false 를 명시한다(PerformanceService). 이 값은 서버 시각 규칙과
+   * 함께 판정한다(PerformanceStatusRules).
+   */
+  @Column(name = "published", nullable = false)
+  private Boolean published = Boolean.TRUE;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -118,6 +125,32 @@ public class Performance {
     this.ownerId = ownerId;
   }
 
+  public Performance(
+      Long ownerId,
+      String title,
+      String venue,
+      Instant startAt,
+      Instant openAt,
+      Instant closeAt,
+      Integer totalSeats,
+      Integer availableSeats,
+      Boolean cancelled,
+      String posterUrl,
+      Boolean published) {
+    this(
+        ownerId,
+        title,
+        venue,
+        startAt,
+        openAt,
+        closeAt,
+        totalSeats,
+        availableSeats,
+        cancelled,
+        posterUrl);
+    this.published = published;
+  }
+
   public Long getId() {
     return id;
   }
@@ -162,6 +195,10 @@ public class Performance {
     return ownerId;
   }
 
+  public Boolean getPublished() {
+    return published;
+  }
+
   public void updateSchedule(
       String title, String venue, Instant startAt, Instant openAt, Instant closeAt) {
     this.title = title;
@@ -173,5 +210,9 @@ public class Performance {
 
   public void cancel() {
     this.cancelled = true;
+  }
+
+  public void changePublished(boolean published) {
+    this.published = published;
   }
 }

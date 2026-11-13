@@ -68,7 +68,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 `postgresql://` 주소를 통째로 `SPRING_DATASOURCE_URL` 에 넣으면 기동에 실패한다.
 사용자·비밀번호는 URL 에서 분리해 따로 넣는다.
 
-- [ ] 마이그레이션은 `backend/src/main/resources/db/migration` 의 V1~V7 이다. 기동 시 Flyway 가 아직 적용되지 않은 것만 적용한다 — 빈 DB 면 V1~V7 전부, 2026-10-20 첫 배포의 DB(V1·V2 까지)면 V3~V7. V7 의 운영 영향은 §5-2
+- [ ] 마이그레이션은 `backend/src/main/resources/db/migration` 의 V1~V8 이다. 기동 시 Flyway 가 아직 적용되지 않은 것만 적용한다 — 빈 DB 면 V1~V8 전부, 2026-10-20 첫 배포의 DB(V1·V2 까지)면 V3~V8. V7 의 운영 영향은 §5-2, V8 은 §5-3
 
 ### 4-2. 백엔드 — Render  `사람`(계정·연동) + `에이전트`(설정값)
 
@@ -77,7 +77,7 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 - [ ] 웹 서비스 생성: 런타임 **Docker**, 인스턴스 유형 **Free**, `backend/Dockerfile` 경로를 TASK-014 가 만든 위치에 맞춘다
 - [ ] 환경변수 입력 (§6 표)
 - [ ] **헬스체크 경로는 비워둔다.** 지금 백엔드에는 DB 를 타지 않는 헬스 엔드포인트가 없다 (§8)
-- [ ] 배포 로그에서 확인: 이미지 빌드 성공 → JVM 기동 → Flyway 가 §4-1 의 남은 마이그레이션을 적용(마지막이 `V7`) → `Started` 로그
+- [ ] 배포 로그에서 확인: 이미지 빌드 성공 → JVM 기동 → Flyway 가 §4-1 의 남은 마이그레이션을 적용(마지막이 `V8`) → `Started` 로그
 
 ### 4-3. 프론트 — Cloudflare Pages  `사람`
 
@@ -145,6 +145,21 @@ SELECT id, owner_id FROM performance WHERE id IN (<공연 id 목록>);
 
 그 주최자의 `role` 이 `ORGANIZER` 여야 수정·취소가 된다 (`users.role`). 역할은 로그인할 때 토큰에 담기므로,
 `users.role` 을 바꿨다면 그 사람이 **다시 로그인해야** 반영된다 (이미 받은 토큰은 최대 24시간 옛 역할로 동작한다).
+
+### 5-3. 공연은 비공개로 등록되고, 기존 공연은 공개로 남는다  `사람`
+
+V8 은 공연에 공개 여부(`published`)를 더한다 (organizer-flow Task B, TASK-023).
+
+- 이미 있는 공연은 모두 `TRUE` 로 채워져 **관객 목록이 배포 전과 같다**. 배포 직후 관객 `GET /api/performances` 의 건수가 갑자기 줄었다면 이 채움이 안 된 것이다
+- 새로 등록한 공연은 `FALSE`(비공개)다. 주최자가 `POST /api/performances/{id}/publish` 로 공개해야 관객에게 보인다. **주최자 화면(TASK-025·026)이 나가기 전까지는 `curl` 로만 공개할 수 있다**
+- 공개·비공개 전환은 예매 오픈(`openAt`) 전에만 된다. 오픈 뒤에는 409 `VISIBILITY_LOCKED`
+
+롤백: 이전 배포로 되돌리면 `published` 컬럼은 남고 옛 코드는 그 컬럼을 쓰지 않는다. 옛 코드는 공개 여부를 모르므로 **롤백 중에 등록한 공연은 컬럼 기본값(`FALSE`)이 들어가지만 옛 코드는 그 조건 없이 관객에게 보여 준다.** 다시 새 코드로 올리면 그 공연들이 비공개로 숨는다 — 롤백 창에서 등록한 공연은 올린 뒤 `publish` 로 다시 공개한다.
+
+```sql
+-- 롤백 창에서 등록돼 숨겨진 공연 찾기 (다시 올린 뒤) — 정상 비공개 초안도 함께 나오니 created_at 으로 롤백 창만 거른다
+SELECT id, title, created_at FROM performance WHERE published = FALSE AND cancelled = FALSE ORDER BY created_at DESC;
+```
 
 ## 6. 환경변수 한눈에
 

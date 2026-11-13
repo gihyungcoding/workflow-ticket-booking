@@ -1,0 +1,180 @@
+{
+  "task_id": "TASK-023",
+  "track": "standard",
+  "keep": [
+    {
+      "what": "Phase 1 에서 tasks.json 의 implementation_spec.paths 를 실제 코드와 대조해 빠진 변경 파일을 찾았다",
+      "evidence": "PLAN 의 scope 보정 — SecurityConfig(/api/organizer/** 인가)·Performance.java·OrganizerPerformanceListResponse 누락. SecurityConfig 가 없으면 anyRequest().authenticated() 로 관객 토큰이 200 을 받는 결함이 Phase 3 이 아니라 설계에서 막혔다 (SC-10 b)"
+    },
+    {
+      "what": "2a 에서 던져 버릴 프로브(TmpProbe023Test)로 기존 동작을 코드로 확정한 뒤 시나리오를 썼다",
+      "evidence": "관객 목록 page=-1·size=0·page=2147483647 이 미처리 예외(운영 500), size=101→100, 타입 불일치 400, id 경계를 프로브 — 이 사실이 SC-07 규약과 이후 RC-2 재현 근거(VERIFY evidence)가 됐다. 프로브는 커밋하지 않고 삭제"
+    },
+    {
+      "what": "동시성 시나리오를 결정적으로 만들었다 — 별도 트랜잭션이 JPA 표준 잠금으로 행을 쥔 채 별도 스레드의 HTTP 요청이 기다리게 함",
+      "evidence": "PerformanceConcurrentWriteTest#test_sc20 — Red 실행에서 취소·title·공개 되돌림과 옛 시각 판정 변종 26 단언이 실제로 재현됐고, 구현은 findOwnedForUpdate 한 곳으로 닫혔다. 단독 3회 재실행에서도 안정"
+    },
+    {
+      "what": "독립검증의 입력 경계 칸 판정(V11)이 1회차에 size 초과 칸의 false_cover 를 잡았다",
+      "evidence": "VALIDATION 1회차 FAIL — size@F3:integer.overflow 에 근거 행 없음 → SC-07 에 n·o 행 추가, 2회차 PASS. 칸이 PLAN input_fields 에서 기계적으로 펼쳐져 1회차에 닫힘"
+    }
+  ],
+  "problem": [
+    {
+      "what": "쓰기·상태 전이 API 를 추가하면서 '같은 공연에 쓰기가 겹치면' 을 Phase 1~3 어디서도 묻지 않아 Phase 4 1회차가 FAIL 했다",
+      "evidence": "VERIFY 1회차 RC-1 — Performance 에 락·버전이 없어 publish/unpublish 가 동시 cancel 을 되돌린다. 기존 update·cancel 도 같은 뿌리인데 TASK-022 도 지나쳤다. 2a 롤백 → SC-20 추가 → 2b 재승인 → 3 수정 → 4 재검증 한 바퀴(변종 4건)",
+      "phase": 4
+    },
+    {
+      "what": "Phase 3 자체 리뷰가 낸 동시성 소견을 '낮음' 으로 적어 Phase 4 로 넘겼다 — 규칙은 시나리오 밖 [correctness] 를 지금 사용자에게 알리라고 하는데 심각도를 이유로 미뤘다",
+      "evidence": "DEV pre_review.unresolved(낮음) → Phase 4 리뷰어가 '취소가 사라지고 취소된 공연이 공개된다' 로 심각도를 올려 FAIL. 롤백 비용(2a·2b·3·4 재진입)을 자체 리뷰 시점에 치렀다면 한 바퀴를 줄일 수 있었다",
+      "phase": 3
+    },
+    {
+      "what": "새 입력 방어(page·size 검증)를 새 목록에만 넣고 같은 서비스의 기존 형제 경로(관객 목록)를 보지 않았다",
+      "evidence": "Phase 3 자체 리뷰 1라운드는 관객 목록 비대칭을 '[참고, 변경 범위 밖]' 으로만 냈고 Phase 4 가 RC-2 [correctness] 로 격상(2a 프로브로 이미 재현된 사실). 방어 코드가 공유 함수의 호출부가 아니라 같은 입력을 받는 형제 엔드포인트에 있었다",
+      "phase": 3
+    },
+    {
+      "what": "2b 의 Grep 이 '헬퍼 안에서 API 로 등록한 뒤 관객 조회로 읽는' 테스트 경로를 놓쳐 Green 에서 승인 테스트 2건을 고쳐야 했다",
+      "evidence": "DEV test_modifications — PerformanceBrowseResponseApiTest SC-10(등록한 공연을 관객 목록에서 읽음)·PerformanceOwnershipApiTest SC-13(등록 직후 오픈 시각 수정 409 기대). 2b 는 '관객 GET 호출' 문자열만 Grep 해 registerR0()·registeredBy() 헬퍼를 통한 경로를 못 찾았다. 사용자 승인(AskUserQuestion)을 한 번 더 받았다",
+      "phase": "2b"
+    }
+  ],
+  "try": [
+    {
+      "what": "쓰기·상태 전이를 만드는 태스크는 Phase 1 에서 '같은 자원에 쓰기가 겹치면' 을 PLAN unresolved 에 적고, 쓰기 경로가 잠금·버전 없는 read-modify-write 면 2a 에 동시 쓰기 시나리오(별도 트랜잭션 잠금 + 별도 스레드 요청)를 넣는다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "자체 리뷰의 [correctness] 가 시나리오 밖이면 심각도를 '낮음' 으로 적어도 Phase 4 로 넘기지 않고 같은 응답에서 AskUserQuestion(2a 롤백 / 위험 수용 + 후속 태스크)으로 묻는다. 형제 경로 비대칭도 [참고] 가 아니라 [correctness] 로 다룬다",
+      "target": ".claude/skills/wf-develop/SKILL.md"
+    },
+    {
+      "what": "새 입력 검증·방어 코드를 넣을 때 같은 서비스에서 같은 입력을 받는 형제 엔드포인트(관객·주최자 목록처럼)를 Grep 으로 열거해 2a 칸에 포함한다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "등록 직후 상태가 바뀌는 태스크(비공개 등록 등)면 2b 에서 fixture 헬퍼(register*·registeredBy) 를 호출하는 모든 테스트를 Grep 해 그 상태에 기대는 읽기를 찾아 HITL 요약의 '같이 바뀌어야 하는 기존 테스트' 에 올린다",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "API 태스크의 implementation_spec.paths 에 SecurityConfig(인가 경로)·응답 record·엔티티 변경이 빠지지 않게, 새 경로 접두사(/api/organizer/**)가 생기면 SecurityConfig 를 필수 항목으로 둔다",
+      "target": ".claude/skills/task-authoring/SKILL.md"
+    }
+  ],
+  "insights": [
+    "동시성은 '구현이 맞으면 통과' 가 아니라 결함을 결정적으로 만들 수 있어야 시나리오가 된다 — 별도 트랜잭션 잠금으로 B 요청을 기다리게 하면 구현 방식(락·버전)과 무관하게 최종 DB 값으로 단언할 수 있다",
+    "롤백 변종을 한 번에 가져가는 규칙(not_probed 포함)이 2회차 PASS 를 가능하게 했다 — 6변종이 모두 SC-20·21 에 들어와 재검증이 한 번에 끝났다",
+    "Phase 3 자체 리뷰의 [참고, 변경 범위 밖] 은 흘리기 쉽다 — 같은 서비스 안의 형제 경로 비대칭이면 범위 안으로 본다",
+    "2회차 이후의 Phase 4 는 변종 evidence 를 테스트 식별자로 적게 하는 check_root_causes 덕분에 '재현 6 · 미확인 1' 이 한눈에 보였다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "PLAN 1회 + 롤백 시 F12·F13 보완(분류 보완 아님 — 사용자 결정으로 범위 추가). 파일 목록 정정 포함"
+    },
+    "2a": {
+      "retries": 2,
+      "note": "독립검증 3회(FAIL 1 → PASS, 3회차 PASS) — 1회차 V11 false_cover(size 초과). Phase 4 FAIL 로 2a 재진입 1회(SC-20·21 추가)"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "통합 HITL 2회 승인(초기 19건 + 롤백 후 SC-20·21). 승인 테스트 수정 3건 선승인"
+    },
+    "3": {
+      "retries": 1,
+      "note": "Green 첫 실행에서 기존 승인 테스트 2건 충돌(사용자 승인 후 수정). 자체 리뷰 2R — 1R 결함 없음(낮은 동시성 소견), 2R(롤백 수정) 결함 없음. Phase 4 FAIL 로 재진입 1회"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1회차 FAIL(RC-1 동시성·RC-2 관객 목록) → 2회차 WARN → APPROVE (verified_commit 1495125)"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "같은 자원에 대한 쓰기(수정·취소·공개 전환)는 행 잠금(PESSIMISTIC_WRITE)으로 직렬화하고, 시각 기반 판정은 잠금을 얻은 뒤에 한다",
+      "why_broader": "입금 확인·예매 상태 전이처럼 앞으로의 모든 소유·상태 자원 쓰기가 같은 read-modify-write 위험을 가진다. @Version 이 아니라 행 잠금을 고른 이유(컬럼·마이그레이션·409 매핑 불필요, 대기 후 최신 행으로 검사)와 락 타임아웃·예외 매핑 정책(후속)을 함께 남겨야 한다",
+      "evidence": "CP-3.4 decisions · VERIFY_TASK-023 RC-1 · SC-20",
+      "suggested_title": "쓰기 경로는 행 잠금으로 직렬화하고 시각은 잠근 뒤에 읽는다"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "warn 제약 AUTH-001 이 승격 기한(promote_after TASK-024)을 넘겼다 — 위반 0건(files_scanned 131)이라 error 로 올릴 수 있다",
+      "where": "docs/architecture/constraints.yaml AUTH-001",
+      "found_how": "check_architecture.py overdue_promotions",
+      "suggestion": "severity warn → error, promote_after 제거 (ADR-0029 가 근거)"
+    },
+    {
+      "what": "architecture.md §2 는 Repository 가 '도메인 규칙 판단' 을 하지 않는다고 하는데, PerformanceRepositoryImpl 의 statusSpecification·filterSpecification 은 PerformanceStatusRules 의 상태 규칙을 WHERE 절로 다시 표현한다(이번 DRAFT 필터 추가로 한 곳 늘었다)",
+      "where": "backend/.../repository/PerformanceRepositoryImpl.java",
+      "found_how": "Phase 4 prose_coverage 대조 — '검사 불가'",
+      "suggestion": "architecture.md 에 예외를 문서화한다(규칙의 SQL 표현은 Repository 가 소유하고, 동치는 PerformanceStatusRulesTest·HTTP 시나리오가 지킨다)"
+    },
+    {
+      "what": "DESIGN-003 warn 위반 3건이 promote_after 없이 남아 있다",
+      "where": "frontend/src/pages/PerformanceDetailPage.tsx:36 · PerformanceEditPage.tsx:135 · PerformanceListPage.tsx:45",
+      "found_how": "check_architecture.py",
+      "suggestion": "TASK-025·026 이 이 파일들을 고칠 때 위반을 없애고 promote_after 에 그 태스크 ID 를 적는다"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 2 — 코드베이스 조사",
+      "change": "① 쓰기·상태 전이 API 를 추가하면 '같은 자원에 쓰기가 겹치면' 을 unresolved 에 적고, 쓰기 경로가 락·@Version 없는 read-modify-write 면 2a 에 동시 쓰기 시나리오(별도 트랜잭션의 JPA 표준 잠금 + 별도 스레드 요청, 최종 DB 값 단언)를 넣는다 ② 새 입력 검증·방어 코드를 넣으면 같은 서비스에서 같은 입력을 받는 형제 엔드포인트를 Grep 으로 열거해 input_fields 칸에 포함한다",
+      "evidence": "TASK-023 — Phase 4 1회차 FAIL RC-1(동시성)·RC-2(관객 목록 page·size), 2a·2b·3·4 한 바퀴",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-develop/SKILL.md",
+      "section": "Step 5.5 — 자체 리뷰",
+      "change": "자체 리뷰의 [correctness] 가 시나리오 밖이면 심각도를 '낮음' 으로 적었더라도 Phase 4 로 넘기지 않고 같은 응답에서 AskUserQuestion(2a 롤백 / 위험 수용 + 후속 태스크)으로 묻는다. '[참고, 변경 범위 밖]' 으로 나온 소견이 같은 서비스의 형제 경로 비대칭이면 범위 안으로 본다",
+      "evidence": "TASK-023 — Phase 3 가 동시성을 '낮음' 으로 unresolved 에 두고 관객 목록 비대칭을 [참고] 로 넘겼다가 Phase 4 가 둘 다 [correctness] 로 FAIL",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 2 — 테스트 작성 (기존 테스트가 이 태스크의 변경과 부딪히는지)",
+      "change": "등록 직후 상태가 바뀌는 태스크(비공개 등록 등)면 fixture 헬퍼(register*·registeredBy 등 API 로 등록하는 도우미)를 호출하는 모든 테스트를 Grep 해 그 상태에 기대는 읽기(관객 조회·오픈 시각 수정)를 찾아 HITL 요약의 '같이 바뀌어야 하는 기존 테스트' 에 올린다",
+      "evidence": "TASK-023 — 2b Grep 이 헬퍼 경로를 놓쳐 Green 에서 승인 테스트 2건(BrowseResponse SC-10·Ownership SC-13)을 사용자 승인 후 수정",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/task-authoring/SKILL.md",
+      "section": "implementation_spec.paths 채우기",
+      "change": "새 인가 경로 접두사(/api/organizer/** 등)가 생기는 API 태스크는 SecurityConfig 를, 응답 형태·필드가 바뀌면 응답 record·엔티티를 implementation_spec.paths 에 포함한다",
+      "evidence": "TASK-023 — tasks.json 의 spec paths 에 SecurityConfig·Performance.java·OrganizerPerformanceListResponse 가 빠져 Phase 1 PLAN 이 보정",
+      "status": "pending",
+      "recurring": 0
+    }
+  ],
+  "follow_ups": [
+    {
+      "what": "쓰기 잠금의 lock.timeout 힌트(jakarta.persistence.lock.timeout)와 PessimisticLockingFailureException 의 409/503 매핑",
+      "why": "VERIFY RC-1 변종 later 1건(not_probed) — PostgreSQL 기본은 무한 대기라 장시간 잠금 시 커넥션 풀이 찰 수 있다. 시나리오에 없는 동작이라 이번에 만들지 않음",
+      "suggested": "별도 태스크로 만든다(/wf-task-new)"
+    },
+    {
+      "what": "SC-20 의 300ms 대기 단언 보강(DB 대기 상태 폴링)",
+      "why": "느린 환경에서 잠금 없는 구현도 우연히 통과할 수 있다(거짓 실패는 없음)",
+      "suggested": "락 타임아웃 후속 태스크와 함께"
+    },
+    {
+      "what": "주최자 화면 전까지의 프론트 공백 — 등록 성공 후 /performances/:id 이동과 수정 화면 getPerformance 가 비공개 공연에서 404",
+      "why": "AC 밖이지만 배포 순서 영향 — TASK-025·026 에서 해소, 그 전 배포는 first-deploy-checklist §5-3 의 curl 공개",
+      "suggested": "TASK-023·025·026 을 함께 배포"
+    }
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  }
+}

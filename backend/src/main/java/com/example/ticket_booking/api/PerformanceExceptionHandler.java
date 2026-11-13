@@ -7,9 +7,11 @@ import com.example.ticket_booking.service.InvalidPosterUrlException;
 import com.example.ticket_booking.service.InvalidRequestException;
 import com.example.ticket_booking.service.InvalidSectionException;
 import com.example.ticket_booking.service.InvalidTimeOrderException;
+import com.example.ticket_booking.service.PerformanceCancelledException;
 import com.example.ticket_booking.service.PerformanceNotFoundException;
 import com.example.ticket_booking.service.RegistrationAlreadyOpenException;
 import com.example.ticket_booking.service.SeatLimitExceededException;
+import com.example.ticket_booking.service.VisibilityLockedException;
 import com.example.ticket_booking.service.ZoneGradeDuplicatedException;
 import com.example.ticket_booking.service.ZoneGradeUnknownException;
 import java.util.List;
@@ -63,6 +65,19 @@ public class PerformanceExceptionHandler {
       RegistrationAlreadyOpenException exception) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(new ErrorResponse("REGISTRATION_ALREADY_OPEN", exception.getMessage()));
+  }
+
+  @ExceptionHandler(PerformanceCancelledException.class)
+  public ResponseEntity<ErrorResponse> handlePerformanceCancelled(
+      PerformanceCancelledException exception) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ErrorResponse("PERFORMANCE_CANCELLED", exception.getMessage()));
+  }
+
+  @ExceptionHandler(VisibilityLockedException.class)
+  public ResponseEntity<ErrorResponse> handleVisibilityLocked(VisibilityLockedException exception) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ErrorResponse("VISIBILITY_LOCKED", exception.getMessage()));
   }
 
   @ExceptionHandler(InvalidRequestException.class)

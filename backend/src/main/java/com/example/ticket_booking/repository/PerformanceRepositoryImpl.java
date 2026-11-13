@@ -1,6 +1,7 @@
 package com.example.ticket_booking.repository;
 
 import com.example.ticket_booking.domain.Performance;
+import com.example.ticket_booking.domain.PerformanceFilter;
 import com.example.ticket_booking.domain.PerformanceStatus;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
@@ -29,7 +30,7 @@ public class PerformanceRepositoryImpl extends SimpleJpaRepository<Performance, 
   @Override
   public Page<Performance> findVisiblePerformances(
       PerformanceStatus status, Instant now, Pageable pageable) {
-    Specification<Performance> spec = notPastSpecification(now);
+    Specification<Performance> spec = publishedSpecification().and(notPastSpecification(now));
     if (status != null) {
       spec = spec.and(statusSpecification(status, now));
     }
@@ -39,9 +40,38 @@ public class PerformanceRepositoryImpl extends SimpleJpaRepository<Performance, 
   @Override
   public Optional<Performance> findNextOpening(Instant now) {
     Specification<Performance> spec =
-        notPastSpecification(now).and(statusSpecification(PerformanceStatus.UPCOMING, now));
+        publishedSpecification()
+            .and(notPastSpecification(now))
+            .and(statusSpecification(PerformanceStatus.UPCOMING, now));
     PageRequest first = PageRequest.of(0, 1, Sort.by("openAt").ascending().and(Sort.by("id")));
     return findAll(spec, first).stream().findFirst();
+  }
+
+  @Override
+  public Page<Performance> findOwnedPerformances(
+      Long ownerId, PerformanceFilter filter, Instant now, Pageable pageable) {
+    Specification<Performance> spec = (root, query, cb) -> cb.equal(root.get("ownerId"), ownerId);
+    return findAll(spec.and(filterSpecification(filter, now)), pageable);
+  }
+
+  /** 관객 조회는 공개된 공연만 본다. */
+  private Specification<Performance> publishedSpecification() {
+    return (root, query, cb) -> cb.isTrue(root.get("published"));
+  }
+
+  /** DRAFT 는 취소되지 않은 비공개 공연이고, 나머지는 공개 여부와 무관하게 상태 조건 그대로다. */
+  private Specification<Performance> filterSpecification(PerformanceFilter filter, Instant now) {
+    return switch (filter) {
+      case ALL -> (root, query, cb) -> cb.conjunction();
+      case DRAFT ->
+          (root, query, cb) ->
+              cb.and(cb.isFalse(root.get("published")), cb.isFalse(root.get("cancelled")));
+      case UPCOMING -> statusSpecification(PerformanceStatus.UPCOMING, now);
+      case OPEN -> statusSpecification(PerformanceStatus.OPEN, now);
+      case SOLD_OUT -> statusSpecification(PerformanceStatus.SOLD_OUT, now);
+      case CLOSED -> statusSpecification(PerformanceStatus.CLOSED, now);
+      case CANCELLED -> statusSpecification(PerformanceStatus.CANCELLED, now);
+    };
   }
 
   /** 목록은 status 필터와 무관하게 항상 지난 공연(startAt < now)을 제외한다 (F4). */
