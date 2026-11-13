@@ -1,0 +1,506 @@
+{
+  "task_id": "TASK-023",
+  "route": "Backend",
+  "route_reason": "published 컬럼(Flyway)·노출 필터(Repository)·상태 전이 판정과 소유권(Service)·인가 경로(SecurityConfig)·조회/전환 API 가 모두 서버 범위. 프론트(내 공연 화면)는 TASK-025·026",
+  "design": {
+    "inputs": [
+      {
+        "name": "Authorization",
+        "type": "str",
+        "source": "요청 헤더",
+        "constraints": [
+          "Bearer <access 토큰>",
+          "/api/organizer/** 와 POST /api/performances/** 는 ROLE_ORGANIZER 필요 — 없거나 무효 401, 관객 403 FORBIDDEN_ROLE (TASK-022 의 SecurityConfig 규칙 재사용)"
+        ]
+      },
+      {
+        "name": "filter",
+        "type": "enum",
+        "source": "쿼리 파라미터 (GET /api/organizer/performances)",
+        "constraints": [
+          "ALL|DRAFT|UPCOMING|OPEN|SOLD_OUT|CLOSED|CANCELLED",
+          "생략하면 ALL"
+        ]
+      },
+      {
+        "name": "page / size",
+        "type": "int",
+        "source": "쿼리 파라미터 (주최자 목록)",
+        "constraints": [
+          "기본 0 / 20",
+          "size 는 100 으로 자른다 — 관객 목록(PerformanceController.list)과 같은 관례"
+        ]
+      },
+      {
+        "name": "id",
+        "type": "long",
+        "source": "경로 변수 (/api/organizer/performances/{id}, /api/performances/{id}/publish·unpublish)",
+        "constraints": [
+          "요청자 소유 공연이어야 한다 — 남의 공연·owner_id NULL·없는 id 는 같은 404"
+        ]
+      },
+      {
+        "name": "now (서버 Clock)",
+        "type": "Instant",
+        "source": "주입된 Clock (ADR-0005·0026)",
+        "constraints": [
+          "publish·unpublish 는 now < openAt 에서만 허용",
+          "수정은 공개 공연에서만 now < openAt"
+        ]
+      },
+      {
+        "name": "performance 행 상태",
+        "type": "published/cancelled/openAt/closeAt/availableSeats/owner_id",
+        "source": "DB",
+        "constraints": [
+          "published 는 NOT NULL — 기존 행 TRUE, 새 등록 FALSE"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "OrganizerPerformanceResponse",
+        "type": "record",
+        "description": "id·title·venue·startAt·openAt·closeAt·totalSeats·availableSeats·status·posterUrl·published·editable·visibilityChangeable, 단건에서만 sections. 관객 응답(PerformanceResponse)과 별개 타입"
+      },
+      {
+        "name": "OrganizerPerformanceListResponse",
+        "type": "record",
+        "description": "{items, page, size, totalElements} — 관객 목록의 content 키와 다르다(문서 §3-6)"
+      },
+      {
+        "name": "404 PERFORMANCE_NOT_FOUND",
+        "type": "error",
+        "description": "남의 공연·소유자 NULL·없는 id, 그리고 관객 단건 조회의 비공개 공연"
+      },
+      {
+        "name": "409 VISIBILITY_LOCKED",
+        "type": "error",
+        "description": "now >= openAt 에서 publish·unpublish"
+      },
+      {
+        "name": "409 PERFORMANCE_CANCELLED",
+        "type": "error",
+        "description": "취소된 공연에 publish·unpublish·수정 (코드 이름은 이 PLAN 의 결정 — unresolved 참고)"
+      },
+      {
+        "name": "409 REGISTRATION_ALREADY_OPEN",
+        "type": "error",
+        "description": "공개 공연이 now >= openAt 에서 수정 (기존 규칙 유지)"
+      },
+      {
+        "name": "관객 응답 형태 불변",
+        "type": "contract",
+        "description": "PerformanceResponse 에 published·editable·visibilityChangeable·ownerId 키가 없다"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "V8 마이그레이션과 등록 기본값",
+        "steps": [
+          "V7 까지 적용한 PostgreSQL 에 기존 공연 행",
+          "V8 적용 → 기존 행 published=TRUE, 컬럼 기본값은 FALSE",
+          "주최자가 POST /api/performances 로 등록",
+          "저장된 행 published=false (비트랜잭션 재조회)"
+        ],
+        "covers": [
+          "마이그레이션 후 기존 행은 `published = true` 이고, 새로 등록한 공연은 `published = false` 다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "관객 조회는 공개된 것만",
+        "steps": [
+          "비공개 공연과 공개 공연 존재",
+          "GET /api/performances 목록·/next-opening 에서 비공개 제외",
+          "GET /api/performances/{id} 는 비공개면 404 (PerformanceNotFoundException)",
+          "공개 후 취소된 공연은 지금처럼 CANCELLED 로 보인다"
+        ],
+        "covers": [
+          "비공개 공연은 `GET /api/performances` 목록·`/next-opening` 에 나오지 않고 `GET /api/performances/{id}` 는 404 다"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "주최자 목록(소유·정렬·필터)",
+        "steps": [
+          "요청자 소유 공연만 조회 (다른 주최자·owner NULL 제외)",
+          "start_at DESC, id DESC, 지난 공연도 포함 (notPast 조건 없음)",
+          "filter=DRAFT: published=false AND cancelled=false",
+          "filter=UPCOMING|OPEN|SOLD_OUT|CLOSED|CANCELLED: 공개 여부 무관, statusSpecification 과 같은 조건",
+          "OrganizerPerformanceListResponse 로 반환"
+        ],
+        "covers": [
+          "`GET /api/organizer/performances` 는 요청자 소유 공연만 `start_at DESC` 로 돌려주고, 다른 주최자 공연·소유자 NULL 공연은 없다",
+          "`filter=DRAFT` 는 취소되지 않은 비공개 공연만, `filter=UPCOMING|OPEN|SOLD_OUT|CLOSED|CANCELLED` 는 공개 여부와 무관하게 해당 상태만 돌려준다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "주최자 단건 조회",
+        "steps": [
+          "findOwned(ownerId,id) — 소유 확인",
+          "sectionsOf(id) 로 좌석 요약",
+          "published·editable·visibilityChangeable 서버 계산",
+          "남의 공연·없는 공연은 404"
+        ],
+        "covers": [
+          "`GET /api/organizer/performances/{id}` 는 자기 공연이면 `sections`·`published`·`editable`·`visibilityChangeable` 을 담고, 남의 공연·없는 공연은 404 다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "공개 전환(publish·unpublish)과 멱등",
+        "steps": [
+          "findOwned → 취소 확인 → now < openAt 확인",
+          "published 값을 바꾸고 저장 (이미 그 값이면 변경 없이 200)",
+          "응답은 OrganizerPerformanceResponse",
+          "publish 후 관객 목록에 나타나고 unpublish 후 사라진다"
+        ],
+        "covers": [
+          "`now < openAt` 인 자기 공연에 `publish` 를 보내면 `published = true` 로 DB 에 반영되고 관객 목록에 나타난다. `unpublish` 는 반대",
+          "이미 공개된 공연에 `publish` 를 보내면 200 이고 값이 그대로다"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "예매 오픈 뒤에는 전환 잠금",
+        "steps": [
+          "now >= openAt (경계 now == openAt 포함)",
+          "publish·unpublish → 409 VISIBILITY_LOCKED",
+          "published 값은 DB 에서 변하지 않는다"
+        ],
+        "covers": [
+          "`now >= openAt` 이면 `publish`·`unpublish` 가 409 `VISIBILITY_LOCKED` 이고 DB 가 바뀌지 않는다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "취소된 공연은 변경 불가",
+        "steps": [
+          "cancelled=true 인 자기 공연",
+          "publish·unpublish·수정 → 409 PerformanceCancelledException",
+          "DB 변경 없음"
+        ],
+        "covers": [
+          "취소된 공연에 `publish`·`unpublish`·수정을 보내면 409 이고 DB 가 바뀌지 않는다"
+        ]
+      },
+      {
+        "id": "F8",
+        "name": "수정 시각 규칙 (비공개는 제한 없음)",
+        "steps": [
+          "findOwned → 취소 확인",
+          "비공개: now >= openAt 이어도 수정 200 + 반영",
+          "공개: now >= openAt 이면 기존대로 409 REGISTRATION_ALREADY_OPEN"
+        ],
+        "covers": [
+          "비공개 공연은 `now >= openAt` 이어도 수정이 200 이고 반영된다. 공개 공연은 기존처럼 409"
+        ]
+      },
+      {
+        "id": "F9",
+        "name": "editable·visibilityChangeable 서버 계산",
+        "steps": [
+          "PerformanceStatusRules 의 순수 함수 두 개로 판정 — 같은 함수를 수정·전환 경로가 쓴다",
+          "editable = !cancelled && (!published || now < openAt)",
+          "visibilityChangeable = !cancelled && now < openAt",
+          "고정 Clock 으로 openAt 경계 전·같음·후에 플래그와 실제 요청 결과 일치"
+        ],
+        "covers": [
+          "`editable`·`visibilityChangeable` 값이 같은 시각에 실제 수정·전환 요청의 성공 여부와 일치한다 (고정 `Clock` 으로 경계 시각 전후 확인)"
+        ]
+      },
+      {
+        "id": "F10",
+        "name": "관객 응답 키 불변",
+        "steps": [
+          "관객 목록·단건·next-opening 응답 JSON",
+          "published·editable·visibilityChangeable·ownerId 키 없음"
+        ],
+        "covers": [
+          "관객 응답(`PerformanceResponse`) JSON 에 `published`·`editable`·`visibilityChangeable`·`ownerId` 키가 없다"
+        ]
+      },
+      {
+        "id": "F11",
+        "name": "[AC 밖·문서 §3-6] 등록·수정·취소 응답 타입",
+        "steps": [
+          "POST /api/performances, PUT /{id}, POST /{id}/cancel 의 응답을 OrganizerPerformanceResponse 로",
+          "등록 201 본문에 published=false"
+        ],
+        "covers": [],
+        "note": "acceptance_criteria 에 없다. 기능 문서 §3-6 표(기존 — 동작만 바뀜)가 정한 것을 따랐다 — 넓히기 싫으면 F11 만 빼면 되고, 그 경우 TASK-026 의 '취소 성공 후 같은 화면 갱신' 은 재조회로 한다"
+      }
+    ],
+    "input_fields": [
+      {
+        "field": "Authorization",
+        "flows": [
+          "F3",
+          "F4",
+          "F5"
+        ],
+        "kinds": [
+          "required"
+        ],
+        "note": "신규 경로의 401(없음)·403(관객). 토큰 형식 변형(opaque)은 TokenFormatApiTest·JwtTokenFormatTest 가 이미 덮어 n/a 로 인용"
+      },
+      {
+        "field": "filter",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "enum"
+        ],
+        "note": "undefined: 정의 밖·소문자·빈 문자열 → 400(타입 불일치 /error 디스패치). each: 7개 값 전부"
+      },
+      {
+        "field": "page",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "integer"
+        ],
+        "note": "음수·소수·long 초과. 관객 목록과 같은 처리(unresolved 참고)"
+      },
+      {
+        "field": "size",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "integer"
+        ],
+        "note": "0·음수·101(100 으로 자름)·초과"
+      },
+      {
+        "field": "id",
+        "flows": [
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8"
+        ],
+        "kinds": [
+          "integer"
+        ],
+        "note": "경로 변수 Long — 음수·0·long 초과·숫자 아님"
+      },
+      {
+        "field": "openAt",
+        "flows": [
+          "F5",
+          "F6",
+          "F8",
+          "F9"
+        ],
+        "kinds": [
+          "datetime"
+        ],
+        "note": "now == openAt 경계를 경로마다(publish·unpublish·수정·플래그 4곳) 확인"
+      },
+      {
+        "field": "closeAt",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "datetime"
+        ],
+        "note": "CLOSED/OPEN 필터의 now == closeAt 경계 — statusSpecification 재사용이라 관객 쪽 기존 시나리오 인용 가능한지 2a 에서 판단"
+      }
+    ],
+    "ops_impacts": [
+      {
+        "item": "V8 마이그레이션 (performance.published)",
+        "deploy_order": "백엔드만 바뀐다. Flyway 가 기동 시 적용하고, 컬럼 추가는 NOT NULL DEFAULT TRUE 라 기존 행이 즉시 채워진다. 프론트 호환: 관객 조회 응답 형태가 안 바뀌어 옛 프론트가 그대로 동작한다. 다만 신규 주최자 화면(TASK-025·026)이 없는 동안 새로 등록한 공연은 비공개라 관객에게 안 보이고, 공개 전환은 API(curl)로만 가능하다",
+        "existing_data": "기존 공연은 모두 published=TRUE — 관객 목록이 마이그레이션 전과 같다",
+        "rollback": "이전 배포로 롤백하면 컬럼은 남고 옛 코드는 그 컬럼을 INSERT 에 쓰지 않아 DEFAULT FALSE 가 들어간다 — 롤백한 뒤 등록된 공연은 옛 코드가 published 를 모르므로 DB 에선 FALSE 지만 옛 코드는 그 조건 없이 관객에게 보여 준다. 그 뒤 다시 새 코드로 올리면 그 공연이 비공개로 숨는다(롤백 창에서 등록된 공연만)",
+        "monitoring": "공개 메서드 범위 — 관객 GET 목록의 건수가 배포 직후 급감하지 않는지(기존 행이 TRUE 로 채워졌는지) 확인",
+        "doc": "docs/release/first-deploy-checklist.md §4-1·§4-2(V1~V8), §5 에 V8 절 추가"
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "config(SecurityConfig) / API(OrganizerPerformanceController·PerformanceController) / Service(PerformanceService) / Repository(PerformanceRepositoryImpl) / domain(Performance·PerformanceStatusRules) / db(V8)",
+    "note": "Controller 는 Service 만 호출(ARCH-001) — 조회 조건 조립은 Repository(ARCH-003), 소유권·상태 전이 판정은 Service, 플래그 계산은 domain 순수 함수. /api/organizer/** 는 SecurityConfig 한 곳에서 hasRole(ORGANIZER)(ADR-0013·0029). 아키텍처에 없는 새 계층은 없다",
+    "constraints_applied": [
+      "ARCH-001",
+      "ARCH-002",
+      "ARCH-003",
+      "ARCH-004",
+      "AUTH-001"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0029",
+    "ADR-0013",
+    "ADR-0005",
+    "ADR-0026",
+    "ADR-0006",
+    "ADR-0010",
+    "ADR-0009"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "backend/src/main/resources/db/migration/V8__add_performance_published.sql",
+        "change": "published BOOLEAN NOT NULL DEFAULT TRUE 로 추가한 뒤 기본값을 FALSE 로 (기존 행 TRUE)",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/Performance.java",
+        "change": "published 필드(Boolean, 기본 TRUE) + publish()/unpublish() + 생성자에 published 를 받는 오버로드. 기존 생성자는 유지(published=true)해 승인 테스트 9개 파일의 new Performance(...) 를 고치지 않는다"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java",
+        "change": "editable(cancelled, published, now, openAt)·visibilityChangeable(cancelled, now, openAt) 순수 함수 추가"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryCustom.java",
+        "change": "findOwnedPerformances(ownerId, filter, now, pageable) 추가"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+        "change": "findVisiblePerformances·findNextOpening 에 published=true 조건, 주최자 목록 조회(owner 일치 + DRAFT/상태 필터, notPast 없음)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+        "change": "getPerformance 비공개 404, publish()·unpublish()·getMyPerformances()·getMyPerformance() 신규, registerPerformance 는 published=false, updatePerformance 의 취소 409·비공개 시각 제한 해제, toOrganizerResponse"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceResponse.java",
+        "change": "주최자 응답 record",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceListResponse.java",
+        "change": "{items,page,size,totalElements}. implementation_spec.paths 에 없던 파일 — 목록 키가 items 라 PerformanceListResponse(content) 를 못 쓴다",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/VisibilityLockedException.java",
+        "change": "409 VISIBILITY_LOCKED",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceCancelledException.java",
+        "change": "409 PERFORMANCE_CANCELLED",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceExceptionHandler.java",
+        "change": "두 신규 예외를 409 로 매핑"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/OrganizerPerformanceController.java",
+        "change": "GET /api/organizer/performances[?filter&page&size], GET /{id}",
+        "new": true
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+        "change": "POST /{id}/publish·unpublish 추가, register·update·cancel 반환 타입을 OrganizerPerformanceResponse 로 (F11)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java",
+        "change": "/api/organizer/** 에 hasRole(ORGANIZER) — implementation_spec.paths 에 없던 파일. 이 줄이 없으면 anyRequest().authenticated() 에 걸려 관객 토큰이 200 을 받는다"
+      },
+      {
+        "path": "docs/release/first-deploy-checklist.md",
+        "change": "V1~V8 로 갱신, V8 운영 영향(기존 행 공개 유지·롤백 시 새 등록이 비공개로 저장) 절 추가 — design.ops_impacts 참고"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/service/PerformanceService.java",
+        "symbol": "findOwned·sectionsOf·toResponse",
+        "note": "소유 확인 404 와 좌석 요약 조립을 그대로 쓴다. toOrganizerResponse 는 toResponse 와 같은 status 계산을 공유"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+        "symbol": "statusSpecification",
+        "note": "주최자 상태 필터가 같은 조건을 재사용 — 새 조건 식을 만들지 말 것"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/repository/SeatRepository.java",
+        "symbol": "findSectionCounts",
+        "note": "좌석 집계는 변경 없이 재사용 (implementation_spec.paths 에 SeatRepository 가 있으나 변경 불필요로 판단)"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java",
+        "symbol": "of",
+        "note": "status 계산 단일 출처"
+      },
+      {
+        "path": "backend/src/main/java/com/example/ticket_booking/api/PerformanceController.java",
+        "symbol": "cancel",
+        "note": "Authentication principal(Long) 을 서비스로 넘기는 방식을 publish·unpublish·조회에도 그대로"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+        "symbol": "MutableClock",
+        "note": "고정 Clock 으로 openAt 경계 확인 — ClockTestConfig 가 @Primary 로 주입"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/AuthTestHelper.java",
+        "symbol": "AuthTestHelper",
+        "note": "주최자·관객 토큰 발급"
+      }
+    ],
+    "existing_tests": [
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceOwnershipApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceRegistrationApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceZoneRegistrationApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceBrowseResponseApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceNextOpeningApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceSectionSummaryApiTest.java",
+      "backend/src/test/java/com/example/ticket_booking/api/PerformanceErrorResponseRegressionTest.java",
+      "backend/src/test/java/com/example/ticket_booking/repository/PerformanceOwnerMigrationTest.java",
+      "backend/src/test/java/com/example/ticket_booking/domain/PerformanceStatusRulesTest.java"
+    ],
+    "unresolved": [
+      "승인 테스트 수정 필요(2b 승인에 함께 올린다): PerformanceOwnerMigrationTest:192 — 끝까지 적용한 버전을 \"7\" 로 단언. V8 이 생기면 \"8\" 로 바뀐다. 새 FK 자식 테이블은 없어 정리 쪽 영향은 없다",
+      "승인 테스트 수정 필요: PerformanceZoneRegistrationApiTest:173 — 등록 직후 관객으로 GET /api/performances/{id} 를 부른다. 등록이 비공개가 되면 404. 주최자 단건 조회로 바꾸거나 등록 후 publish 를 거쳐야 한다",
+      "점검 필요: PerformanceRegistrationApiTest·PerformanceErrorResponseRegressionTest·PerformanceOwnershipApiTest 의 등록·수정·취소 응답 키 단언 — F11 로 응답 타입이 바뀌어 published·editable·visibilityChangeable 키가 새로 생긴다(PerformanceOwnershipApiTest:288-291 의 키 집합은 관객 조회 응답이라 불변이어야 한다 = F10)",
+      "엔티티 기본값 결정: Performance 의 기존 생성자(9개 테스트 파일이 사용)는 published=true 로 둔다 — 이 선택이 없으면 repository.save 로 만든 픽스처가 전부 관객 조회에서 사라져 승인 테스트가 대량으로 깨진다. 운영 코드의 등록 경로만 published=false 를 명시한다. 이 결정은 2a 시나리오(F1)에서 '서비스 등록은 false' 로 고정한다. DB 기본값(FALSE)은 JPA 가 항상 값을 넣어 쓰이지 않지만 ADR 없는 직접 INSERT 의 안전 기본이다",
+      "경계 판단 3건을 2a 에서 못박는다: (1) 취소된 공연이 now>=openAt 일 때 publish → 409 PERFORMANCE_CANCELLED 와 VISIBILITY_LOCKED 중 어느 쪽 — 취소를 먼저 검사한다(종료된 상태가 시각 규칙보다 우선) (2) 이미 공개된 공연이 now>=openAt 에서 publish → AC 의 두 문장이 부딪힌다 — 잠금이 먼저라 409, 멱등 200 은 now<openAt 에서만 (3) 취소된 공연의 수정이 공개 && now>=openAt 이면 409 PERFORMANCE_CANCELLED 가 REGISTRATION_ALREADY_OPEN 보다 우선",
+      "PERFORMANCE_CANCELLED 코드 문자열은 문서에 없다(VISIBILITY_LOCKED 만 명시) — 기존 PERFORMANCE_NOT_FOUND 관례에 맞춰 정했다. 프론트(TASK-026)가 이 코드로 분기하면 계약이 된다",
+      "page·size 의 잘못된 값(page<0, size<=0)은 기존 관객 목록이 PageRequest.of 에 그대로 넘긴다 — 현재 동작을 실제로 확인하고 주최자 목록이 같게 가는지 2a 에서 정한다(500 이면 이 태스크에서 새로 400 을 만들지, 기존과 같이 둘지)",
+      "AC 밖 요청 필드: 수정 요청 본문(UpdatePerformanceRequest)의 필드 검증은 건드리지 않는다. 비공개 수정에서도 시간 순서(INVALID_TIME_ORDER) 검증은 그대로 걸린다 — 비공개면 openAt 이 과거여도 수정 가능하다는 점은 시나리오에 넣는다",
+      "JPA 리뷰 지시(CLAUDE.md): publish·unpublish·수정은 dirty checking UPDATE 경로다 — 테스트 클래스 레벨 @Transactional 을 쓰지 말고 비트랜잭션 재조회로 반영·거부 시 변경 없음을 확인한다. 통합 테스트의 Given(고정 Clock·published 값)이 실제 적용됐는지도 확인한다",
+      "테스트 DB 와 운영 DB 가 다르다(H2 ddl-auto vs PostgreSQL Flyway): published 컬럼의 NOT NULL·기본값·기존 행 TRUE 는 H2 로 확인되지 않는다 — PerformanceOwnerMigrationTest 와 같은 Testcontainers PostgreSQL 마이그레이션 테스트를 필수로 둔다 (ADR-0006)",
+      "implementation_spec.paths 에 SecurityConfig·Performance.java·OrganizerPerformanceListResponse 가 없고 SeatRepository 는 변경이 불필요하다 — 이 PLAN 의 target_files 가 정본이다. tasks.json 은 직접 고치지 않는다(CLAUDE.md)",
+      "운영 영향: 아래 design.ops_impacts 참고"
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 18
+    }
+  },
+  "acceptance_criteria": [
+    "마이그레이션 후 기존 행은 `published = true` 이고, 새로 등록한 공연은 `published = false` 다",
+    "비공개 공연은 `GET /api/performances` 목록·`/next-opening` 에 나오지 않고 `GET /api/performances/{id}` 는 404 다",
+    "`GET /api/organizer/performances` 는 요청자 소유 공연만 `start_at DESC` 로 돌려주고, 다른 주최자 공연·소유자 NULL 공연은 없다",
+    "`filter=DRAFT` 는 취소되지 않은 비공개 공연만, `filter=UPCOMING|OPEN|SOLD_OUT|CLOSED|CANCELLED` 는 공개 여부와 무관하게 해당 상태만 돌려준다",
+    "`GET /api/organizer/performances/{id}` 는 자기 공연이면 `sections`·`published`·`editable`·`visibilityChangeable` 을 담고, 남의 공연·없는 공연은 404 다",
+    "`now < openAt` 인 자기 공연에 `publish` 를 보내면 `published = true` 로 DB 에 반영되고 관객 목록에 나타난다. `unpublish` 는 반대",
+    "`now >= openAt` 이면 `publish`·`unpublish` 가 409 `VISIBILITY_LOCKED` 이고 DB 가 바뀌지 않는다",
+    "취소된 공연에 `publish`·`unpublish`·수정을 보내면 409 이고 DB 가 바뀌지 않는다",
+    "이미 공개된 공연에 `publish` 를 보내면 200 이고 값이 그대로다",
+    "비공개 공연은 `now >= openAt` 이어도 수정이 200 이고 반영된다. 공개 공연은 기존처럼 409",
+    "`editable`·`visibilityChangeable` 값이 같은 시각에 실제 수정·전환 요청의 성공 여부와 일치한다 (고정 `Clock` 으로 경계 시각 전후 확인)",
+    "관객 응답(`PerformanceResponse`) JSON 에 `published`·`editable`·`visibilityChangeable`·`ownerId` 키가 없다"
+  ],
+  "test_hints": {
+    "framework": "JUnit 5 + Spring Boot Test + MockMvc, 마이그레이션은 Testcontainers PostgreSQL + Flyway",
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --tests '*Performance*' --tests '*Organizer*' --tests '*Migration*'",
+    "mock_strategy": "모킹 없음 — 실제 H2 + 리포지토리, 시각은 ClockTestConfig 의 MutableClock 을 openAt 경계(전·같음·후)로 고정. 토큰은 AuthTestHelper 로 주최자·관객·다른 주최자를 발급. 반영·거부 시 'DB 변경 없음' 은 클래스 레벨 @Transactional 없이 리포지토리 재조회로. V8 은 PostgreSQL 에서 V7 까지 적용한 DB 에 기존 행을 넣고 최신으로 올려 published=TRUE 와 컬럼 기본값 FALSE 를 확인"
+  }
+}
