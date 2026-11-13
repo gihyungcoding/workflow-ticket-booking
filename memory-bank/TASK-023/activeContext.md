@@ -1,8 +1,8 @@
 ---
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design (Phase 4 FAIL 롤백)"
+phase: "2b"
+phase_name: "Phase 2b - Red (Phase 4 롤백 재승인 대기)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-023-organizer-visibility-api"
 
-last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
 source: "docs/product/features/organizer-flow.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-023.json"
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 FAIL(RC-1·RC-2)로 2a 로 돌아왔다. SC-20·SC-21 을 추가했고 독립검증을 다시 받는다.
+SC-20·SC-21 Red 테스트를 작성·커밋했고 재승인(HITL#1·2)을 기다린다.
 
 ## 다음 한 걸음
 
-`scenario-validator` 재호출(이전 판정 원문 첨부) → 통과하면 2b 에서 SC-20·21 Red.
+승인되면 Phase 3.
 
 ## 알아둬야 할 것
 

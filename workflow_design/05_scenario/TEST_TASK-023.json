@@ -1,7 +1,7 @@
 {
   "task_id": "TASK-023",
   "supersedes": "SCENARIO_TASK-023.json",
-  "test_file": "backend/src/test/java/com/example/ticket_booking/api/OrganizerVisibilityApiTest.java (SC-02~SC-19) + backend/src/test/java/com/example/ticket_booking/repository/PerformancePublishedMigrationTest.java (SC-01)",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/api/OrganizerVisibilityApiTest.java (SC-02~SC-19) + backend/src/test/java/com/example/ticket_booking/repository/PerformancePublishedMigrationTest.java (SC-01) + PerformanceConcurrentWriteTest.java (SC-20) + PerformanceListPagingApiTest.java (SC-21)",
   "red_scenarios": [
     {
       "scenario_id": "SC-01",
@@ -118,30 +118,38 @@
       "test_function": "test_sc19_수정_취소_응답도_주최자_응답_형태이고_취소_뒤_플래그가_바뀐다",
       "status": "red",
       "failure": "수정 응답 키에 editable·published·visibilityChangeable 없음"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_function": "test_sc20_같은_공연의_쓰기가_겹치면_하나씩_처리돼_서로의_변경을_덮어쓰지_않는다",
+      "status": "red",
+      "failure": "행별 실제값(26 단언 실패): a·b·c(진행 중 취소 위의 publish·unpublish·PUT)는 200 이고 취소가 사라짐(cancelled false)·c 는 title 까지 바뀜, d(진행 중 title 변경 + publish)는 title 이 옛 값으로 되돌아감, e(진행 중 공개 + PUT)는 published 가 false 로 되돌아감, f·h·i(시계가 T 로 옮겨진 뒤)는 B 가 옛 시각 T-1ms 로 판정해 200, g(진행 중 title + cancel)는 title 되돌림 — RC-1 변종이 실제로 재현됨. 'B 가 진행 중에는 끝나지 않는다'는 UPDATE 가 행 잠금에 걸려 이미 맞음",
+      "config_applied_via": "별도 스레드의 TransactionTemplate 이 EntityManager.find(PESSIMISTIC_WRITE) 로 실제 행 잠금을 쥔다(H2). MutableClock 으로 시각 고정. 클래스 레벨 @Transactional 없음 — 최종 값은 리포지토리 재조회"
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_function": "test_sc21_관객_목록의_page_size_경계도_400_이거나_자른_값으로_응답한다",
+      "status": "red",
+      "failure": "행별 실제값: a·b·c·h(page=-1·size=0·size=-1·page=2147483647)는 400 이어야 하는데 처리되지 않은 예외(운영 500) — 나머지 행(타입 불일치 400·size=101→100·빈 값·page=1000 등)은 기존 동작이라 이미 맞다. 시나리오 전체는 Red 행 때문에 Red"
     }
   ],
   "red_result": {
     "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --offline",
-    "total": 203,
-    "failed": 24,
-    "passed": 179,
+    "total": 205,
+    "failed": 2,
+    "passed": 203,
     "new_tests": {
-      "total": 19,
-      "failed": 18,
-      "already_passing": 1
+      "total": 2,
+      "failed": 2,
+      "already_passing": 0
     },
-    "modified_existing_tests_now_red": [
-      "PerformanceOwnerMigrationTest.test_sc01 (최신 버전 단언 7→8)",
-      "PerformanceOwnershipApiTest.test_sc11 (픽스처에 publish 추가)",
-      "PerformanceZoneRegistrationApiTest.test_sc02·sc03·sc04·sc06 (detail() 를 주최자 단건 조회로, 등록 응답 키 3개 추가)"
-    ],
+    "previous_round": "Phase 4 FAIL 이전 2b: 신규 19(red 18·already_passing 1) — Green 후 203/203 통과",
     "existing_tests_still_passing": true,
-    "note": "수정한 승인 테스트 6건은 V8·주최자 조회 구현 전까지 Red 다 — 나머지 기존 테스트는 통과. 정리·tail 이 실행되지 않은 테스트: SC-02·SC-03·SC-04·SC-08·SC-11·SC-12·SC-19 는 앞 단언에서 멈춰 뒷부분(sections 파싱, o3 가입, deleteById 후 next-opening 204, cancel 응답)이 아직 실행되지 않았다",
-    "table_rows_note": "표 테스트 행별 실제값은 각 failure 필드에 적었다 — '이미 맞는 행'은 SC-10 a, SC-15 a·d·e·f 다. 같은 시나리오의 다른 행이 실패하므로 시나리오 전체는 Red 다"
+    "note": "이번 롤백에서 추가한 SC-20·SC-21 만 Red. 승인 테스트 수정 없음. SC-20 의 뒷부분(모든 행)은 실행됐다(soft 단언)"
   },
   "inventory_check": {
-    "scenarios": 19,
-    "test_functions": 19,
+    "scenarios": 21,
+    "test_functions": 21,
     "match": true
   },
   "compile_skeleton": {
@@ -154,11 +162,11 @@
   "harness_probe": {
     "done": [
       "관객 목록 page=-1·size=0·page=2147483647 의 미처리 예외와 size=101→100·page=1.5→400·id 경계(2026-11-13)",
-      "임시 프로브 TmpProbe023Test 는 삭제했고 커밋하지 않았다"
+      "임시 프로브 TmpProbe023Test 는 삭제했고 커밋하지 않았다",
+      "SC-20 하네스: 별도 트랜잭션의 EntityManager 잠금이 H2 에서 실제로 B 의 UPDATE 를 막는지 — Red 실행에서 'B 가 진행 중에는 끝나지 않는다' 단언이 통과해 확인"
     ],
     "not_verified": [
-      "Spring 의 enum 변환이 앞뒤 공백을 trim 하는지 — SC-06 에서 뺀 행이라 단언 없음",
-      "SC-07 h(page=2147483647 → 400) 는 새 구현이 만들 동작이라 프로브 불가"
+      "PostgreSQL 에서의 잠금 동작(테스트는 H2). 운영 엔진 동시성은 SELECT … FOR UPDATE 표준이라 같은 의미이나 이 태스크의 테스트는 확인하지 않는다"
     ]
   },
   "testing_preferences": {
@@ -166,9 +174,6 @@
     "mock_strategy": "모킹 없음 — H2 + 리포지토리, MutableClock 고정, 클래스 레벨 @Transactional 없음(비트랜잭션 재조회)"
   },
   "human_review": {
-    "approved": true,
-    "approved_at": "2026-11-13",
-    "scope": "시나리오 19건 + Red 테스트 + 승인 테스트 수정 3건(6테스트) + F11(AC 밖 쓰기 응답 타입)",
-    "channel": "AskUserQuestion"
+    "approved": false
   }
 }
