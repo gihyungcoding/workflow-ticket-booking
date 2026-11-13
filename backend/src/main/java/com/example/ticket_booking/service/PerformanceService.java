@@ -1,6 +1,7 @@
 package com.example.ticket_booking.service;
 
 import com.example.ticket_booking.domain.Performance;
+import com.example.ticket_booking.domain.PerformanceFilter;
 import com.example.ticket_booking.domain.PerformanceStatus;
 import com.example.ticket_booking.domain.PerformanceStatusRules;
 import com.example.ticket_booking.domain.PerformanceZone;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PerformanceService {
 
   private static final int MAX_SEATS = 5000;
+  private static final int MAX_PAGE_SIZE = 100;
   private static final BigDecimal MAX_INT_VALUE = BigDecimal.valueOf(Integer.MAX_VALUE);
   private static final int MAX_POSTER_URL_LENGTH = 500;
   private static final Pattern CONTROL_OR_LONE_SURROGATE = Pattern.compile("[\\p{Cc}\\p{Cs}]");
@@ -69,8 +71,68 @@ public class PerformanceService {
 
   public PerformanceResponse getPerformance(Long id) {
     Performance performance =
-        performanceRepository.findById(id).orElseThrow(() -> new PerformanceNotFoundException(id));
+        performanceRepository
+            .findById(id)
+            .filter(found -> Boolean.TRUE.equals(found.getPublished()))
+            .orElseThrow(() -> new PerformanceNotFoundException(id));
     return toResponse(performance, clock.instant(), sectionsOf(id));
+  }
+
+  /**
+   * 요청자 소유 공연 목록. 공개 여부·지난 공연과 무관하게 startAt 내림차순(같으면 id 내림차순)이다. 잘못된 page·size 는 400 으로 거른다 — 관객
+   * 목록처럼 처리되지 않은 예외로 새지 않게(page × size 가 int 범위를 넘으면 JPA 의 offset 이 넘친다).
+   */
+  public OrganizerPerformanceListResponse getMyPerformances(
+      Long ownerId, PerformanceFilter filter, int page, int size) {
+    if (page < 0 || size < 1 || (long) page * Math.min(size, MAX_PAGE_SIZE) > Integer.MAX_VALUE) {
+      throw new InvalidRequestException("page 는 0 이상, size 는 1 이상이어야 합니다");
+    }
+    Instant now = clock.instant();
+    PageRequest pageRequest =
+        PageRequest.of(
+            page,
+            Math.min(size, MAX_PAGE_SIZE),
+            Sort.by(Sort.Order.desc("startAt"), Sort.Order.desc("id")));
+    Page<Performance> result =
+        performanceRepository.findOwnedPerformances(ownerId, filter, now, pageRequest);
+    List<OrganizerPerformanceResponse> items =
+        result.getContent().stream()
+            .map(performance -> toOrganizerResponse(performance, now, null))
+            .toList();
+    return new OrganizerPerformanceListResponse(
+        items, result.getNumber(), result.getSize(), result.getTotalElements());
+  }
+
+  public OrganizerPerformanceResponse getMyPerformance(Long ownerId, Long id) {
+    Performance performance = findOwned(ownerId, id);
+    return toOrganizerResponse(performance, clock.instant(), sectionsOf(id));
+  }
+
+  @Transactional
+  public OrganizerPerformanceResponse publish(Long ownerId, Long id) {
+    return changeVisibility(ownerId, id, true);
+  }
+
+  @Transactional
+  public OrganizerPerformanceResponse unpublish(Long ownerId, Long id) {
+    return changeVisibility(ownerId, id, false);
+  }
+
+  /** 취소 → 시각 순으로 검사한다. 이미 그 상태면 값을 그대로 두고 응답만 돌려준다(오픈 전에 한해). */
+  private OrganizerPerformanceResponse changeVisibility(Long ownerId, Long id, boolean published) {
+    Performance performance = findOwned(ownerId, id);
+    Instant now = clock.instant();
+    if (Boolean.TRUE.equals(performance.getCancelled())) {
+      throw new PerformanceCancelledException(id);
+    }
+    if (!PerformanceStatusRules.visibilityChangeable(false, now, performance.getOpenAt())) {
+      throw new VisibilityLockedException(id);
+    }
+    if (!Boolean.valueOf(published).equals(performance.getPublished())) {
+      performance.changePublished(published);
+      performanceRepository.save(performance);
+    }
+    return toOrganizerResponse(performance, now, null);
   }
 
   /** 홈 머리글 후보 — 선택 규칙은 여기 한 곳에 둔다(스크랩이 생기면 이 정렬의 1순위만 바뀐다). */
@@ -126,7 +188,7 @@ public class PerformanceService {
   }
 
   @Transactional
-  public PerformanceResponse registerPerformance(
+  public OrganizerPerformanceResponse registerPerformance(
       Long ownerId,
       String title,
       String venue,
@@ -178,7 +240,8 @@ public class PerformanceService {
                 totalSeats,
                 totalSeats,
                 false,
-                posterUrl));
+                posterUrl,
+                false));
     seatRepository.saveAll(generateSeats(performance, sections));
     zoneRepository.saveAll(
         placements.stream()
@@ -192,11 +255,11 @@ public class PerformanceService {
                         placement.stageOrder()))
             .toList());
 
-    return toResponse(performance, clock.instant());
+    return toOrganizerResponse(performance, clock.instant(), null);
   }
 
   @Transactional
-  public PerformanceResponse updatePerformance(
+  public OrganizerPerformanceResponse updatePerformance(
       Long ownerId,
       Long id,
       String title,
@@ -206,22 +269,26 @@ public class PerformanceService {
       Instant closeAt) {
     Performance performance = findOwned(ownerId, id);
     Instant now = clock.instant();
-    if (!now.isBefore(performance.getOpenAt())) {
+    if (Boolean.TRUE.equals(performance.getCancelled())) {
+      throw new PerformanceCancelledException(id);
+    }
+    if (!PerformanceStatusRules.editable(
+        false, Boolean.TRUE.equals(performance.getPublished()), now, performance.getOpenAt())) {
       throw new RegistrationAlreadyOpenException(id);
     }
     validateTimeOrder(openAt, closeAt, startAt);
 
     performance.updateSchedule(title, venue, startAt, openAt, closeAt);
     performanceRepository.save(performance);
-    return toResponse(performance, now);
+    return toOrganizerResponse(performance, now, null);
   }
 
   @Transactional
-  public PerformanceResponse cancelPerformance(Long ownerId, Long id) {
+  public OrganizerPerformanceResponse cancelPerformance(Long ownerId, Long id) {
     Performance performance = findOwned(ownerId, id);
     performance.cancel();
     performanceRepository.save(performance);
-    return toResponse(performance, clock.instant());
+    return toOrganizerResponse(performance, clock.instant(), null);
   }
 
   /**
@@ -446,6 +513,34 @@ public class PerformanceService {
         performance.getAvailableSeats(),
         status,
         performance.getPosterUrl(),
+        sections);
+  }
+
+  private OrganizerPerformanceResponse toOrganizerResponse(
+      Performance performance, Instant now, List<SectionSummaryResponse> sections) {
+    boolean cancelled = Boolean.TRUE.equals(performance.getCancelled());
+    boolean published = Boolean.TRUE.equals(performance.getPublished());
+    PerformanceStatus status =
+        PerformanceStatusRules.of(
+            cancelled,
+            now,
+            performance.getOpenAt(),
+            performance.getCloseAt(),
+            performance.getAvailableSeats());
+    return new OrganizerPerformanceResponse(
+        performance.getId(),
+        performance.getTitle(),
+        performance.getVenue(),
+        performance.getStartAt(),
+        performance.getOpenAt(),
+        performance.getCloseAt(),
+        performance.getTotalSeats(),
+        performance.getAvailableSeats(),
+        status,
+        performance.getPosterUrl(),
+        published,
+        PerformanceStatusRules.editable(cancelled, published, now, performance.getOpenAt()),
+        PerformanceStatusRules.visibilityChangeable(cancelled, now, performance.getOpenAt()),
         sections);
   }
 }

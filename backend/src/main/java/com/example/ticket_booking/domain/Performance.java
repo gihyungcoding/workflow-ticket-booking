@@ -64,8 +64,11 @@ public class Performance {
   @Column(name = "owner_id")
   private Long ownerId;
 
-  /** 관객 조회에 보이는가(V8, TASK-023). 기존 생성자로 만든 공연은 공개다 — 컬럼 매핑만 있고 규칙은 Phase 3 에서 채운다. */
-  @Column(name = "published")
+  /**
+   * 관객 조회에 보이는가(V8). 기존 생성자로 만든 공연은 공개다 — 등록 경로만 false 를 명시한다(PerformanceService). 이 값은 서버 시각 규칙과
+   * 함께 판정한다(PerformanceStatusRules).
+   */
+  @Column(name = "published", nullable = false)
   private Boolean published = Boolean.TRUE;
 
   @CreationTimestamp
@@ -207,5 +210,9 @@ public class Performance {
 
   public void cancel() {
     this.cancelled = true;
+  }
+
+  public void changePublished(boolean published) {
+    this.published = published;
   }
 }

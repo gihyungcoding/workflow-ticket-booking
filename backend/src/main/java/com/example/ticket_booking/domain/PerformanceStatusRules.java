@@ -48,4 +48,15 @@ public final class PerformanceStatusRules {
       case CLOSED -> !cancelled && !now.isBefore(openAt) && now.isAfter(closeAt);
     };
   }
+
+  /** 지금 수정 요청이 성공하는가 — 취소되지 않았고, 비공개이거나 아직 오픈 전이다. */
+  public static boolean editable(
+      boolean cancelled, boolean published, Instant now, Instant openAt) {
+    return !cancelled && (!published || now.isBefore(openAt));
+  }
+
+  /** 지금 공개·비공개 전환 요청이 성공하는가 — 취소되지 않았고 아직 오픈 전이다. */
+  public static boolean visibilityChangeable(boolean cancelled, Instant now, Instant openAt) {
+    return !cancelled && now.isBefore(openAt);
+  }
 }

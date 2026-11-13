@@ -117,6 +117,14 @@ class PerformanceBrowseResponseApiTest {
     return objectMapper.readValue(result.getResponse().getContentAsString(), Map.class).get("id");
   }
 
+  private void publish(Object id) throws Exception {
+    mockMvc
+        .perform(
+            post("/api/performances/" + id + "/publish")
+                .header("Authorization", "Bearer " + organizerToken))
+        .andReturn();
+  }
+
   @SuppressWarnings("unchecked")
   private static Map<String, Object> itemOf(Map<String, Object> list, Object id) {
     return ((List<Map<String, Object>>) list.get("content"))
@@ -139,6 +147,9 @@ class PerformanceBrowseResponseApiTest {
     String poster = "https://cdn.example.com/a.jpg";
     Object a = registerR0("공연 A", poster);
     Object b = registerR0("공연 B", null);
+    // TASK-023: 등록한 공연은 비공개라 관객 목록에 보이도록 공개 전환한다
+    publish(a);
+    publish(b);
 
     // When
     Map<String, Object> list = getJson("/api/performances");

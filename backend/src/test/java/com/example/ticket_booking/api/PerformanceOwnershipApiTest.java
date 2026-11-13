@@ -657,6 +657,10 @@ class PerformanceOwnershipApiTest {
   void test_sc13_자기_공연이라도_오픈_시각이_되면_수정할_수_없다() throws Exception {
     // Given
     Long p1 = registeredBy(o1);
+    // TASK-023: 비공개 공연은 오픈 뒤에도 수정되므로, 공개 공연으로 만든 뒤 시계를 옮긴다
+    assertThat(status(send(post("/api/performances/" + p1 + "/publish"), bearer(o1))))
+        .as("픽스처 공개 전환")
+        .isEqualTo(200);
     clock.setInstant(T.plus(Duration.ofDays(7)));
     // 시계를 옮기면 T 에 받은 토큰(유효 24시간)은 만료된다 — 같은 O1 로 다시 로그인한다
     String o1Now = accessTokenOf(login(mockMvc, "o1@example.com", PASSWORD));
