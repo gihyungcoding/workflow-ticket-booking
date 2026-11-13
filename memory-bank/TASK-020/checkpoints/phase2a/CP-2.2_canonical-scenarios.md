@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "시나리오 39건(happy 16·error 5·boundary·regression) 작성, 입력 경계 칸 120/120 판정(n/a 11) — 독립검증 대기"
+summary: "시나리오 39건 작성, 입력 경계 칸 120/120(n/a 11). 독립검증 1회차 FAIL(V11 1건) 수정 후 2회차 대기"
 
 next_steps:
   - "독립검증자 호출(scenario-validator) → VALIDATION_TASK-020.json 원문 저장"
@@ -28,6 +28,13 @@ decisions:
     rationale: "레이아웃·겹침은 jsdom 이 계산하지 않는다"
   - decision: "상태 표 대조 — 상세 12상태(예정·0초 전환·예매 가능·매진·마감·취소·로딩·없는 공연·오류·시각 실패·포스터 없음·구역 1개)와 시트 3상태(기본·미등록·묶음 5개 이상)가 모두 시나리오에 걸린다"
     rationale: "§2-5 표 한 행씩 대조: SC-07·09·13·15·01·02·03·10·17·18·19·22·21"
+  - decision: "경고 반영 — SC-14 오타(행 h)·SC-22 f 를 구역 둘로·SC-23 라벨 규칙(접미사 제외, areaNote 는 배치도에 없음)·SC-11 실패 표본 지연·SC-30 b 수치·When 단일화(SC-07·10·37)·SC-28 마지막 Then 을 SC-29 e 로·SC-04 에 closeAt/startAt 해석 불가 행·SC-17 에 문자열 아닌 posterUrl·SC-14 i 에 30일(타이머 상한)"
+    rationale: "1회차 V5·V6·V12 경고 중 값싸게 고칠 수 있는 것. 보류: V7 구현 누출(SC-31·33 은 정적·스타일 점검이라 규약 표로 근거를 단다)·V9 중복·V12 (4)(5) 왕복 음수·서버 불일치"
+  - decision: "보류한 경고 — V8: SC-04 '계약 위반 → 오류 화면'·SC-30 d '재측정 전부 실패 시 이전 오프셋 유지'·SC-39 '상세 뒤로 → /' 는 PLAN 이 정하지 않은 시나리오 단계의 결정이다 (PLAN 결정이라 쓴 규약 표 문구는 고쳤다)"
+    rationale: "2b 통합 HITL 요약에서 사람이 판단한다. SC-30 d 는 AC-4(처음 측정 실패)와 다른 경우(이미 성공한 뒤 재측정 실패)라 충돌하지 않는다고 본다"
 
-attempts: []
+attempts:
+  - n: 1
+    outcome: "독립검증 1회차 FAIL — V11 false_cover price@F7:integer.zero (SC-22 행 f 가 구역 1개라 SC-18 d 에 따라 시트를 열 수 없음)"
+    back_to: "2a"
 ---
