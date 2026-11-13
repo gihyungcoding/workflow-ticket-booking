@@ -64,6 +64,10 @@ public class Performance {
   @Column(name = "owner_id")
   private Long ownerId;
 
+  /** 관객 조회에 보이는가(V8, TASK-023). 기존 생성자로 만든 공연은 공개다 — 컬럼 매핑만 있고 규칙은 Phase 3 에서 채운다. */
+  @Column(name = "published")
+  private Boolean published = Boolean.TRUE;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -118,6 +122,32 @@ public class Performance {
     this.ownerId = ownerId;
   }
 
+  public Performance(
+      Long ownerId,
+      String title,
+      String venue,
+      Instant startAt,
+      Instant openAt,
+      Instant closeAt,
+      Integer totalSeats,
+      Integer availableSeats,
+      Boolean cancelled,
+      String posterUrl,
+      Boolean published) {
+    this(
+        ownerId,
+        title,
+        venue,
+        startAt,
+        openAt,
+        closeAt,
+        totalSeats,
+        availableSeats,
+        cancelled,
+        posterUrl);
+    this.published = published;
+  }
+
   public Long getId() {
     return id;
   }
@@ -160,6 +190,10 @@ public class Performance {
 
   public Long getOwnerId() {
     return ownerId;
+  }
+
+  public Boolean getPublished() {
+    return published;
   }
 
   public void updateSchedule(

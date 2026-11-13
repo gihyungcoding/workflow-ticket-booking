@@ -50,8 +50,12 @@ import tools.jackson.databind.json.JsonMapper;
 class PerformanceZoneRegistrationApiTest {
 
   private static final Instant T = Instant.parse("2026-11-11T08:00:00Z");
+  // TASK-023: 등록 응답이 주최자 응답이라 published·editable·visibilityChangeable 이 더해진다
   private static final Set<String> PERFORMANCE_KEYS =
       Set.of(
+          "published",
+          "editable",
+          "visibilityChangeable",
           "id",
           "title",
           "venue",
@@ -170,7 +174,13 @@ class PerformanceZoneRegistrationApiTest {
 
   @SuppressWarnings("unchecked")
   private Map<String, Object> detail(Object id) throws Exception {
-    MvcResult result = mockMvc.perform(get("/api/performances/" + id)).andReturn();
+    // TASK-023: 등록한 공연은 비공개라 관객 단건 조회는 404 다 — 주최자 단건 조회로 읽는다
+    MvcResult result =
+        mockMvc
+            .perform(
+                get("/api/organizer/performances/" + id)
+                    .header("Authorization", "Bearer " + organizerToken))
+            .andReturn();
     return objectMapper.readValue(result.getResponse().getContentAsString(), Map.class);
   }
 

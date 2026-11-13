@@ -1,0 +1,171 @@
+{
+  "task_id": "TASK-023",
+  "supersedes": "SCENARIO_TASK-023.json",
+  "test_file": "backend/src/test/java/com/example/ticket_booking/api/OrganizerVisibilityApiTest.java (SC-02~SC-19) + backend/src/test/java/com/example/ticket_booking/repository/PerformancePublishedMigrationTest.java (SC-01)",
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_function": "test_sc01_V8_은_기존_공연이_있는_PostgreSQL_에_적용되고_기존_행을_공개로_둔다",
+      "status": "red",
+      "failure": "AssertionFailedError: expected \"8\" but was \"7\" (V8 없음)",
+      "config_applied_via": "Testcontainers PostgreSQL + Flyway(target 7 → latest) — H2 아님"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_function": "test_sc02_등록한_공연은_비공개로_저장되고_응답이_그_상태를_알려_준다",
+      "status": "red",
+      "failure": "등록 응답 키에 editable·published·visibilityChangeable 없음 (기존 PerformanceResponse)"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_function": "test_sc03_비공개_공연은_관객_조회에_나오지_않고_공개된_공연은_나온다",
+      "status": "red",
+      "failure": "비공개 D 가 관객 목록에 그대로 보임 (published 조건 없음)"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_function": "test_sc04_주최자_목록은_요청자_소유_공연만_startAt_내림차순으로_돌려준다",
+      "status": "red",
+      "failure": "expected 200 but was 404 (/api/organizer/performances 없음)"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_function": "test_sc05_filter_는_값마다_정해진_조건으로_걸러지고_공개_여부와_무관하다",
+      "status": "red",
+      "failure": "전 행 404 — 집합 []"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_function": "test_sc06_filter_가_정의_밖이면_400_이고_빈_값은_전체로_본다",
+      "status": "red",
+      "failure": "NOPE·open·Draft expected 400 but was 404, filter= expected 200 but was 404"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_function": "test_sc07_page_size_의_경계는_400_이거나_자른_값으로_응답한다",
+      "status": "red",
+      "failure": "전 행 404 (400 INVALID_REQUEST 행·200 행 모두)"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_function": "test_sc08_주최자_단건_조회는_좌석_요약과_가능_여부_플래그를_담는다",
+      "status": "red",
+      "failure": "expected 200 but was 404"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_function": "test_sc09_남의_공연_소유자_없는_공연_없는_공연은_같은_404_이고_DB_는_그대로다",
+      "status": "red",
+      "failure": "조회·publish·unpublish 모두 code null (404 본문 없음 — 매핑 없는 경로)"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_function": "test_sc10_신규_경로는_토큰이_없으면_401_관객이면_403_이고_DB_는_그대로다",
+      "status": "red",
+      "failure": "행별 실제값: a(헤더 없음)는 401 로 이미 맞음(anyRequest().authenticated()), b(관객)는 403 이어야 하는데 404(경로 없음·인가 규칙 없음), c(주최자)는 200 이어야 하는데 404"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_function": "test_sc11_오픈_전_자기_공연은_공개_비공개_전환이_DB_와_관객_목록에_반영된다",
+      "status": "red",
+      "failure": "Given 단언 — 비공개 P1 이 이미 관객 목록에 보임 (published 무시). 뒤쪽 publish·unpublish 단언은 실행되지 않음"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_function": "test_sc12_이미_그_상태인_공연의_전환은_변경_없이_200_이다",
+      "status": "red",
+      "failure": "expected 200 but was 404 (publish·unpublish 경로 없음)"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_function": "test_sc13_오픈_뒤에는_공개_비공개_전환이_409_VISIBILITY_LOCKED_이고_DB_는_그대로다",
+      "status": "red",
+      "failure": "행별 실제값: a~g 전 행 404(publish·unpublish 경로 없음) — a 는 200 이어야 하고 b~g 는 409 VISIBILITY_LOCKED 이어야 함"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_function": "test_sc14_취소된_공연은_공개_전환_수정_모두_409_PERFORMANCE_CANCELLED_이고_DB_는_그대로다",
+      "status": "red",
+      "failure": "행별 실제값: a·b·f(publish·unpublish)는 404, c·d(비공개/공개 + 오픈 전 PUT)는 200 으로 취소된 공연이 수정됨(title 이 바뀜), e·g(오픈 뒤 PUT)는 409 REGISTRATION_ALREADY_OPEN — 상태는 맞고 code 가 PERFORMANCE_CANCELLED 가 아님. 주최자 단건 조회는 전 행 404"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_function": "test_sc15_수정은_비공개면_시각_제한이_없고_공개면_오픈_전에만_된다",
+      "status": "red",
+      "failure": "행별 실제값: a·d 는 200 으로 이미 통과, b·c(비공개 + now>=openAt)는 409 인데 200 이어야 함, e·f 는 409 로 이미 통과, 시간 순서 행은 400 이어야 하는데 409 REGISTRATION_ALREADY_OPEN — 실패 원인은 비공개 시각 제한 해제 없음"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_function": "test_sc16_editable_visibilityChangeable_은_같은_시각의_실제_요청_결과와_일치한다",
+      "status": "red",
+      "failure": "플래그 키 없음(null), 전환 요청 404"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_function": "test_sc17_경로의_id_가_이상하면_404_또는_400_이다",
+      "status": "red",
+      "failure": "404 행은 code null(본문 없음), 400 행은 404"
+    },
+    {
+      "scenario_id": "SC-18",
+      "test_function": "test_sc18_관객_응답에는_주최자_필드가_없다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "부정형 회귀 — 이 태스크가 바꾸지 않는 관객 응답 키 불변. 구현 전에도 참이라 구조적으로 Red 불가(주최자 필드를 관객 응답에 넣는 사고가 생기면 그때 실패한다)"
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_function": "test_sc19_수정_취소_응답도_주최자_응답_형태이고_취소_뒤_플래그가_바뀐다",
+      "status": "red",
+      "failure": "수정 응답 키에 editable·published·visibilityChangeable 없음"
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --offline",
+    "total": 203,
+    "failed": 24,
+    "passed": 179,
+    "new_tests": {
+      "total": 19,
+      "failed": 18,
+      "already_passing": 1
+    },
+    "modified_existing_tests_now_red": [
+      "PerformanceOwnerMigrationTest.test_sc01 (최신 버전 단언 7→8)",
+      "PerformanceOwnershipApiTest.test_sc11 (픽스처에 publish 추가)",
+      "PerformanceZoneRegistrationApiTest.test_sc02·sc03·sc04·sc06 (detail() 를 주최자 단건 조회로, 등록 응답 키 3개 추가)"
+    ],
+    "existing_tests_still_passing": true,
+    "note": "수정한 승인 테스트 6건은 V8·주최자 조회 구현 전까지 Red 다 — 나머지 기존 테스트는 통과. 정리·tail 이 실행되지 않은 테스트: SC-02·SC-03·SC-04·SC-08·SC-11·SC-12·SC-19 는 앞 단언에서 멈춰 뒷부분(sections 파싱, o3 가입, deleteById 후 next-opening 204, cancel 응답)이 아직 실행되지 않았다",
+    "table_rows_note": "표 테스트 행별 실제값은 각 failure 필드에 적었다 — '이미 맞는 행'은 SC-10 a, SC-15 a·d·e·f 다. 같은 시나리오의 다른 행이 실패하므로 시나리오 전체는 Red 다"
+  },
+  "inventory_check": {
+    "scenarios": 19,
+    "test_functions": 19,
+    "match": true
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/src/main/java/com/example/ticket_booking/domain/Performance.java"
+    ],
+    "contents": "published 필드(@Column(name=\"published\"), 기본값 TRUE)·getPublished()·published 를 받는 생성자 오버로드 — 규칙 없음. nullable=false 는 넣지 않았다(스키마 제약은 SC-01 이 검증)",
+    "purity_check": "새 UnsupportedOperationException 은 없다 — HTTP 경계 테스트는 엔드포인트 부재(404)·응답 키 부재로 실패한다. 스켈레톤에 로직은 없고, 기본값 TRUE 는 기존 승인 테스트 픽스처(9개 파일)가 관객 조회에서 사라지지 않게 하는 PLAN 결정이다"
+  },
+  "harness_probe": {
+    "done": [
+      "관객 목록 page=-1·size=0·page=2147483647 의 미처리 예외와 size=101→100·page=1.5→400·id 경계(2026-11-13)",
+      "임시 프로브 TmpProbe023Test 는 삭제했고 커밋하지 않았다"
+    ],
+    "not_verified": [
+      "Spring 의 enum 변환이 앞뒤 공백을 trim 하는지 — SC-06 에서 뺀 행이라 단언 없음",
+      "SC-07 h(page=2147483647 → 400) 는 새 구현이 만들 동작이라 프로브 불가"
+    ]
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + Spring Boot Test + MockMvc, Testcontainers PostgreSQL(마이그레이션)",
+    "mock_strategy": "모킹 없음 — H2 + 리포지토리, MutableClock 고정, 클래스 레벨 @Transactional 없음(비트랜잭션 재조회)"
+  },
+  "human_review": {
+    "approved": false
+  }
+}

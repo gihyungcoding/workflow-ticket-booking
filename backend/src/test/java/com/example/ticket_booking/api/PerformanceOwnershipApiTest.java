@@ -616,8 +616,11 @@ class PerformanceOwnershipApiTest {
    */
   @Test
   void test_sc11_공연_조회는_토큰_없이도_무효_토큰이_실려도_열린다() throws Exception {
-    // Given
+    // Given (TASK-023: 등록한 공연은 비공개라 관객 조회에 보이도록 공개 전환한다)
     Long p1 = registeredBy(o1);
+    assertThat(status(send(post("/api/performances/" + p1 + "/publish"), bearer(o1))))
+        .as("픽스처 공개 전환")
+        .isEqualTo(200);
     SoftAssertions soft = new SoftAssertions();
 
     for (String authorization : new String[] {null, "Bearer invalid.token.value"}) {

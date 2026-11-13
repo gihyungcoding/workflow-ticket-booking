@@ -1,8 +1,8 @@
 ---
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
-phase: "2a"
-phase_name: "Phase 2a - Scenario Design (완료)"
+phase: "2b"
+phase_name: "Phase 2b - Red"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -13,20 +13,22 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-023-organizer-visibility-api"
 
-last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
 source: "docs/product/features/organizer-flow.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-023.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-023.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-023.json"
+  test: "workflow_design/05_scenario/TEST_TASK-023.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a 를 마쳤다. 독립검증 2회차 통과, 게이트 통과.
+Red 테스트 19건을 작성·커밋했고 시나리오+Red 통합 승인(HITL#1·2)을 기다린다.
 
 ## 다음 한 걸음
 
-Phase 2b — `wf-red` 로 Red 테스트를 쓴다.
+승인되면 Phase 3 (`wf-develop`).
 
 ## 알아둬야 할 것
 
