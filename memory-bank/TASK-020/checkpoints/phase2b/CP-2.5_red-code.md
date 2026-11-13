@@ -1,11 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "Red 테스트 39건 작성 — 새 케이스 241(229 실패·12 구조적 통과), 승인 테스트 6건 새 정본으로 수정(실패). 통합 HITL 승인 대기"
+summary: "Red 테스트 39건 — 새 케이스 241(229 실패·12 구조적 통과), 승인 테스트 6건 새 정본으로 수정(실패). 통합 HITL 승인 완료"
 
 next_steps:
-  - "통합 HITL(AskUserQuestion) — 시나리오 39건·검증 3회차 경고·보류 결정·승인 테스트 변경 7건·already_passing 5개 시나리오를 보여준다"
-  - "승인 뒤 generate_red_trigger=true·human_review.approved=true, validate_phase2a_gate --require-hitl 확인, Phase 3"
+  - "Phase 3 — wf-develop. frontend 테스트는 --testTimeout=60000 으로 돌린다. 스켈레톤 8개를 구현으로 채우고 App.tsx 라우트·레이아웃 분기, AppBar·CtaBar(조건부) 수정"
+  - "Green 중 승인 테스트(특히 SC-33 SVG fill·stroke, 시트 가격 color)를 고쳐야 하면 훅이 사람에게 묻는다 — harness_probe.not_verified 참고"
 
 decisions:
   - decision: "가짜 타이머 사용법 — vi.useFakeTimers + vi.setSystemTime, settle(ms)=act 안의 advanceTimersByTimeAsync, findBy 는 쓰지 않는다, 가짜 타이머 파일에서는 userEvent 대신 fireEvent"

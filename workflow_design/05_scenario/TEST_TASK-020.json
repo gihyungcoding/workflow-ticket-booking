@@ -537,6 +537,8 @@
     }
   ],
   "human_review": {
-    "approved": false
+    "approved": true,
+    "approved_at": "2026-11-13T08:06:10Z",
+    "via": "AskUserQuestion — 승인 (통합 HITL#1·2, 시나리오 39건 + Red 테스트 + 승인 테스트 변경 7파일·삭제 1)"
   }
 }

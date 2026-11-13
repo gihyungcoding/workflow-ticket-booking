@@ -2,7 +2,7 @@
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
 phase: "2b"
-phase_name: "Phase 2b - Red (승인 대기)"
+phase_name: "Phase 2b - Red (승인 완료)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-13
@@ -24,11 +24,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b(Red) — 테스트 39건을 커밋했고 통합 HITL(시나리오 + Red) 승인을 기다린다. 독립검증은 3회차 PASS.
+Phase 2b(Red)를 마쳤다 — 통합 HITL(시나리오 + Red) 승인 완료. Phase 3(Green) 진입 직전.
 
 ## 다음 한 걸음
 
-통합 HITL 승인 → Phase 3(wf-develop). frontend 테스트는 `--testTimeout=60000` 으로 돌린다(시스템 부하).
+`wf-develop` — Phase 3. frontend 테스트는 `--testTimeout=60000` 으로 돌린다(시스템 부하).
 
 ## 알아둬야 할 것
 
