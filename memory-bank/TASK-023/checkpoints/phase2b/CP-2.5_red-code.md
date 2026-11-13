@@ -1,11 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "Phase 4 롤백 2b — SC-20·SC-21 Red 2건 작성·실행(205 중 2 실패), 인벤토리 21==21, 사람 승인 대기"
+summary: "Phase 4 롤백 2b — SC-20·SC-21 Red 2건 작성·실행(205 중 2 실패), 인벤토리 21==21, 사람 재승인 완료"
 
 next_steps:
-  - "HITL #1·2 재승인 — 추가 시나리오 SC-20·SC-21 과 Red 테스트"
-  - "승인되면 Phase 3 — 쓰기 경로 행 잠금(PESSIMISTIC_WRITE)·시각을 잠근 뒤에 읽기, 관객·주최자 목록 page·size 공통 검증"
+  - "Phase 3 — wf-develop (Phase 4 FAIL 롤백): PerformanceRepository 쓰기용 잠금 조회, 서비스 쓰기 경로(수정·취소·publish·unpublish) 잠근 뒤 읽기·시각, page·size 공통 검증을 관객 목록에도"
+  - "rollback_fixes 에 RC-1(fix_locus common — 쓰기 조회 한 곳)·RC-2(common — 공통 검증 헬퍼) 기록, 자체 리뷰에서 변종 전수 확인"
 
 decisions:
   - decision: "SC-20 은 별도 트랜잭션의 JPA 표준 잠금 + 별도 스레드 HTTP 요청으로 결정적으로 만든다"

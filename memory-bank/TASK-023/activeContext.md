@@ -2,7 +2,7 @@
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
 phase: "2b"
-phase_name: "Phase 2b - Red (Phase 4 롤백 재승인 대기)"
+phase_name: "Phase 2b - Red (재승인 완료)"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-SC-20·SC-21 Red 테스트를 작성·커밋했고 재승인(HITL#1·2)을 기다린다.
+추가 시나리오 SC-20·SC-21 과 Red 를 재승인받았다. Phase 3 로 간다.
 
 ## 다음 한 걸음
 
-승인되면 Phase 3.
+`wf-develop` — Phase 4 FAIL(RC-1·RC-2) 수정.
 
 ## 알아둬야 할 것
 
