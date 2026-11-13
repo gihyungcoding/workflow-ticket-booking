@@ -1,8 +1,8 @@
 ---
 task_id: TASK-023
 title: "비공개 상태·주최자 조회·공개 전환 API"
-phase: "1"
-phase_name: "Phase 1 - Plan (완료)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario Design"
 status: ACTIVE
 track: standard
 created_at: 2026-11-13
@@ -13,19 +13,20 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-023-organizer-visibility-api"
 
-last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/organizer-flow.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-023.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-023.md"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 을 마쳤다. PLAN_TASK-023.json 이 게이트를 통과했다.
+시나리오 19건을 작성했고 독립검증자 호출을 준비 중이다.
 
 ## 다음 한 걸음
 
-Phase 2a — `wf-scenario` 로 시나리오를 설계하고 독립검증을 받는다.
+`scenario-validator` 에 PLAN·SCENARIO 를 넘겨 검증 결과를 받는다.
 
 ## 알아둬야 할 것
 
