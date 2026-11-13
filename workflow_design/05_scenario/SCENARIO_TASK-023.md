@@ -396,7 +396,7 @@ flow: F11
 
 - **Given** `O1` 소유 공연 `P` 가 표의 상태(공개 여부)로 있다(openAt `T+7d`, f 행만 openAt `T`)
 - **And** 다른 요청이 `P` 를 변경하는 중이다 — 진행 중인 쓰기를 흉내 내는 별도 트랜잭션이 `P` 의 행을 잠그고 표의 변경을 반영했지만 아직 끝내지 않았다(테스트가 JPA 표준 잠금으로 만든다)
-- **When** 그 트랜잭션이 끝나기 전에 `O1` 이 표의 요청 `B` 를 보낸다(별도 스레드)
+- **When** 그 트랜잭션이 끝나기 전에 `O1` 이 표의 요청 `B` 를 보낸다(별도 스레드). 표가 시각을 옮긴다고 하면 `B` 를 보낸 직후, 트랜잭션을 끝내기 전에 옮긴다
 - **Then** `B` 는 그 트랜잭션이 끝나기 전에는 응답하지 않는다(300ms 뒤에도 끝나지 않았다)
 - **And** 그 트랜잭션을 끝내면 `B` 가 응답하고, 상태와 `code` 가 표와 같다
 - **And** 트랜잭션 밖에서 다시 읽은 `P` 의 `cancelled`·`published`·title 이 표의 최종 값과 같다
@@ -409,6 +409,9 @@ flow: F11
 | d | 비공개 | title 을 `다른 제목` 으로 변경 | publish | 200 | published true, title `다른 제목` (둘 다 반영) |
 | e | 비공개 | 공개로 변경(published true) | PUT(`U0`) | 200 | published true, title `앙코르`(`U0` 의 title) (둘 다 반영) |
 | f | 공개, openAt `T`, 시각 `T-1ms` 에 B 를 보낸 뒤 대기 중 `T` 로 옮김 | title 변경 | unpublish | 409 `VISIBILITY_LOCKED` (잠금을 얻은 뒤의 시각 `T == openAt` 으로 판정) | published true (그대로), title 변경 반영 |
+| g | 비공개 | title 을 `다른 제목` 으로 변경 | cancel | 200 | cancelled true, title `다른 제목` (둘 다 반영) |
+| h | 비공개, openAt `T`, 시각 `T-1ms` 에 B 를 보낸 뒤 대기 중 `T` 로 옮김 | title 변경 | publish | 409 `VISIBILITY_LOCKED` | published false (그대로), title 변경 반영 |
+| i | 공개, openAt `T`, 시각 `T-1ms` 에 B 를 보낸 뒤 대기 중 `T` 로 옮김 | title 변경 | PUT(`U0`) | 409 `REGISTRATION_ALREADY_OPEN` | published true, title 은 진행 중 변경 값(`다른 제목`) 그대로 |
 
 covers: (AC 밖 — Phase 4 1회차 RC-1. PLAN F12)
 flow: F12
