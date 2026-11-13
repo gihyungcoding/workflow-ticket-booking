@@ -6,7 +6,7 @@
 | 2a Scenario | ✅ 완료 | CP-2.2 | 시나리오 19건 · 독립검증 통과(2회차) |
 | 2b Red | ✅ 완료 | CP-2.5 | 신규 18 red·1 already_passing · 수정 승인 테스트 6 red |
 | 3 Green | ✅ 완료 | CP-3.4 | 203/203 · 승인 테스트 수정 5건 · 리뷰 1R |
-| 4 Verify | ⬜ 대기 | — | |
+| 4 Verify | ❌ FAIL | CP-4.2 | RC-1 동시성·RC-2 관객 page·size — 롤백 결정 대기 |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

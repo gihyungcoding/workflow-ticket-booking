@@ -1,0 +1,269 @@
+{
+  "task_id": "TASK-023",
+  "status": "FAIL",
+  "status_reason": "코드 리뷰어가 [correctness] 2건을 냈다. RC-1: Performance 에 @Version·@DynamicUpdate·락이 없어 publish/unpublish(이번에 늘어난 경로)가 동시 cancel 을 되돌려 취소된 공연이 공개될 수 있다 — 시나리오·AC 에 없는 동작이라 규칙상 2a 롤백 후보. RC-2: 새 page·size 방어가 주최자 목록에만 있고 관객 목록(기존 동작)은 size=0·page=-1 에서 여전히 500 이다. AC 12건·테스트 203/203·린트·아키텍처는 통과했고, 위 두 소견만이 FAIL 사유다",
+  "evidence": {
+    "tests": {
+      "command": "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test --offline",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL in 2m 2s — 203 tests, 0 failed, 0 skipped (신규 19 포함)"
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck --offline",
+      "exit_code": 0,
+      "summary": "BUILD SUCCESSFUL (spotless 위반 없음)"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "40 files changed, 4196 insertions(+), 23 deletions(-) — 프로덕션 16 files +351 -18, 테스트 6 files +1407 -5, 나머지 워크플로우 산출물"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "마이그레이션 후 기존 행은 `published = true` 이고, 새로 등록한 공연은 `published = false` 다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc02 · PerformancePublishedMigrationTest#test_sc01 (PostgreSQL V7→V8: 기존 행 TRUE, 기본값 FALSE, NULL 거부)"
+    },
+    {
+      "criterion": "비공개 공연은 `GET /api/performances` 목록·`/next-opening` 에 나오지 않고 `GET /api/performances/{id}` 는 404 다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc03 (목록·status 필터·next-opening 제외, 단건 404, 공개 취소는 CANCELLED)"
+    },
+    {
+      "criterion": "`GET /api/organizer/performances` 는 요청자 소유 공연만 `start_at DESC` 로 돌려주고, 다른 주최자 공연·소유자 NULL 공연은 없다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc04·test_sc07 (소유 범위·정렬·페이지 경계)"
+    },
+    {
+      "criterion": "`filter=DRAFT` 는 취소되지 않은 비공개 공연만, `filter=UPCOMING|OPEN|SOLD_OUT|CLOSED|CANCELLED` 는 공개 여부와 무관하게 해당 상태만 돌려준다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc05·test_sc06 (filter 7값 + now==closeAt 경계, 정의 밖 400)"
+    },
+    {
+      "criterion": "`GET /api/organizer/performances/{id}` 는 자기 공연이면 `sections`·`published`·`editable`·`visibilityChangeable` 을 담고, 남의 공연·없는 공연은 404 다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc08·test_sc09·test_sc17 (sections·플래그, 같은 404, id 경계)"
+    },
+    {
+      "criterion": "`now < openAt` 인 자기 공연에 `publish` 를 보내면 `published = true` 로 DB 에 반영되고 관객 목록에 나타난다. `unpublish` 는 반대",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc10·test_sc11 (401/403, publish/unpublish 가 DB·관객 목록에 반영 — 비트랜잭션 재조회)"
+    },
+    {
+      "criterion": "`now >= openAt` 이면 `publish`·`unpublish` 가 409 `VISIBILITY_LOCKED` 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc13 (now==openAt 포함 7행, 409 뒤 DB 그대로)"
+    },
+    {
+      "criterion": "취소된 공연에 `publish`·`unpublish`·수정을 보내면 409 이고 DB 가 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc14 (publish·unpublish·PUT 7행 409 PERFORMANCE_CANCELLED, DB 그대로)"
+    },
+    {
+      "criterion": "이미 공개된 공연에 `publish` 를 보내면 200 이고 값이 그대로다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc12"
+    },
+    {
+      "criterion": "비공개 공연은 `now >= openAt` 이어도 수정이 200 이고 반영된다. 공개 공연은 기존처럼 409",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc15 (비공개 now>=openAt 200 반영, 공개 409)"
+    },
+    {
+      "criterion": "`editable`·`visibilityChangeable` 값이 같은 시각에 실제 수정·전환 요청의 성공 여부와 일치한다 (고정 `Clock` 으로 경계 시각 전후 확인)",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc16 (8조합 플래그 = 실제 요청 결과, 목록·단건 일치)"
+    },
+    {
+      "criterion": "관객 응답(`PerformanceResponse`) JSON 에 `published`·`editable`·`visibilityChangeable`·`ownerId` 키가 없다",
+      "verdict": "PASS",
+      "evidence": "OrganizerVisibilityApiTest#test_sc18 (관객 키 집합 불변, 주최자 필드 문자열 없음)"
+    }
+  ],
+  "screens": [],
+  "screens_note": "Backend 태스크 — 화면 없음. 주최자 화면은 TASK-025·026",
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 3,
+    "no_target": [],
+    "files_scanned": 552,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend PerformanceDetailPage.tsx:36·PerformanceEditPage.tsx:135·PerformanceListPage.tsx:45 — 이 태스크가 건드리지 않은 기존 프론트 파일"
+      }
+    ],
+    "overdue_promotions": [
+      {
+        "id": "AUTH-001",
+        "promote_after": "TASK-024",
+        "note": "위반 0건(files_scanned 131) — 승격 여부는 사람이 정한다"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직",
+        "constraint": null,
+        "state": "검사 불가"
+      },
+      {
+        "rule": "API: DB 접근",
+        "constraint": "ARCH-001",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: HTTP 관심사",
+        "constraint": "ARCH-002",
+        "state": "✓"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용",
+        "constraint": "ARCH-003",
+        "state": "✓"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어",
+        "constraint": null,
+        "state": "⚠ 미인코딩"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "검사 불가 — 이번 diff 의 filterSpecification 은 PerformanceStatusRules 의 상태 규칙을 WHERE 절로 다시 표현한다(기존 statusSpecification 과 같은 패턴, 동치는 SC-05·SC-16 이 지킴)"
+      },
+      {
+        "rule": "Frontend: 도메인 규칙",
+        "constraint": null,
+        "state": "검사 불가"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "203/203 passed",
+    "callers_checked": true,
+    "callers_note": "registerPerformance·updatePerformance·cancelPerformance 의 호출부는 PerformanceController 하나(반환 타입을 함께 바꿈). getPerformance 는 관객 단건(공개 필터) 하나. published 를 읽는 경로는 PerformanceRepositoryImpl 의 publishedSpecification(목록·next-opening)과 PerformanceService.getPerformance 의 필터뿐이다"
+  },
+  "scope_deviations": [
+    {
+      "path": "backend/.../config/SecurityConfig.java",
+      "reason": "/api/organizer/** 인가 — tasks.json implementation_spec.paths 에 빠졌으나 PLAN target_files 에 포함"
+    },
+    {
+      "path": "backend/.../domain/PerformanceFilter.java",
+      "reason": "PLAN 밖 신규 enum — 쿼리 파라미터 바인딩과 ARCH-003 때문"
+    }
+  ],
+  "test_modifications_review": "승인 테스트 수정 5건(2b 3건: PerformanceOwnerMigrationTest 7→8·PerformanceOwnershipApiTest SC-11·PerformanceZoneRegistrationApiTest, Green 2건: PerformanceBrowseResponseApiTest SC-10·PerformanceOwnershipApiTest SC-13)을 리뷰어가 줄 단위로 대조 — 모두 Given 에 publish 를 더하거나 값·헬퍼를 바꾼 것뿐이며 단언은 약해지지 않았다",
+  "code_review": {
+    "reviewer": "code-reviewer 서브에이전트 (Phase 3 자체 리뷰 1라운드 이어받음 · JPA 지시 포함 · 정적 분석 — 저장소 밖 프로브 환경에 PostgreSQL 없음)",
+    "rounds": [
+      {
+        "n": 1,
+        "phase": 3,
+        "scope": "전체 develop...HEAD",
+        "findings": 2
+      },
+      {
+        "n": 2,
+        "phase": 4,
+        "scope": "전체 develop...HEAD · pre_review.root_causes 이어받음 · 같은 카테고리 전수",
+        "findings": 3
+      }
+    ],
+    "findings": [
+      {
+        "category": "correctness",
+        "where": "PerformanceService.changeVisibility (121-136)",
+        "summary": "전 컬럼 UPDATE 의 read-modify-write 라 publish/unpublish 가 동시 cancel 을 되돌린다 — 취소가 사라지고 취소된 공연이 공개된다. 기존 update·cancel 경쟁과 같은 뿌리이나 이번 변경이 경로를 늘렸다. 공통 지점은 findOwned 한 곳(@Version 또는 PESSIMISTIC_WRITE)"
+      },
+      {
+        "category": "correctness",
+        "where": "PerformanceService.getPerformances·PerformanceController.list",
+        "summary": "새 page·size 검증이 getMyPerformances 에만 있다. 관객 목록은 size=0·page=-1 에서 IllegalArgumentException(운영 500), 큰 page 에서 offset 초과. 기존 동작이며 2a 프로브(2026-11-13)로 확인된 사실"
+      },
+      {
+        "category": "design",
+        "where": "PerformanceService.updatePerformance",
+        "summary": "취소된 공연 수정이 409 로 바뀜 — 확인 결과 AC 8·PLAN F7 이 정한 동작이라 범위 확장 아님"
+      }
+    ],
+    "suggestions": [
+      "주최자 화면(TASK-025·026) 전까지 프론트의 등록 성공 후 이동(/performances/:id)과 수정 화면의 값 로드(getPerformance)는 비공개 공연에서 404 가 된다 — AC 밖이지만 배포 순서·사용자 영향이다 (first-deploy-checklist §5-3 에 curl 공개를 안내함)"
+    ],
+    "confirmed_ok": [
+      "published 읽기 경로 전수 — 공개 조건 누락 없음",
+      "쓰기 응답 타입 변경의 호출부·테스트",
+      "승인 테스트 수정 5건 단언 불변",
+      "JPA 지시 — OrganizerVisibilityApiTest 와 수정한 승인 테스트에 클래스 레벨 @Transactional 없음, 반영·거부 단언이 비트랜잭션 재조회, Given(MutableClock·published)이 실제 적용",
+      "V8 마이그레이션·운영 문서 일치(롤백 서술 포함)",
+      "SecurityConfig 인가 겹침 없음, 소유자 id 응답 미노출"
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "버전·동적 UPDATE·잠금 없이 전 컬럼을 저장하는 read-modify-write 라 동시 변경이 서로를 덮는다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "publish/unpublish 와 cancel 동시 실행 시 cancelled 가 false 로 되돌아감",
+          "origin": "found",
+          "probe": "not_probed",
+          "reason": "동시성 프로브용 PostgreSQL/Docker 환경을 리뷰어 샌드박스에 띄우지 못했다 — Hibernate 전 컬럼 UPDATE 와 @Version·@DynamicUpdate·Lock 부재를 코드·grep 으로 확인"
+        },
+        {
+          "case": "update 와 cancel 동시 실행(기존 경로)",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "같은 사유"
+        },
+        {
+          "case": "publish 와 update 동시 실행으로 title·openAt 등 일정 변경이나 published 값이 서로 덮인다",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "같은 사유"
+        },
+        {
+          "case": "unpublish 가 읽은 뒤 openAt 이 지나 VisibilityLocked 검사를 통과한 상태로 커밋된다 (시각 검사와 쓰기 사이 틈)",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "시각 기반이라 영향이 작을 것이나 프로브하지 않았음"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "page·size 검증이 주최자 목록 서비스 메서드에만 있고 관객 목록 경로에는 없다 (입력 방어가 공통 지점이 아닌 호출부별로 추가됨)",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "GET /api/performances?size=0 또는 ?page=-1 이 PageRequest.of 의 IllegalArgumentException 으로 500 이 된다 (기존 동작)",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "2a 프로브 2026-11-13 — PROBE /api/performances?page=-1 -> EXC IllegalArgumentException: Page index must not be less than zero, ?size=0·-1 -> Page size must not be less than one, ?page=2147483647 -> Page offset exceeds Integer.MAX_VALUE (TmpProbe023Test 임시 실행, 삭제됨)"
+        },
+        {
+          "case": "관객 목록의 매우 큰 page 에서 offset 이 int 범위를 넘는다",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "같은 2a 프로브 — ?page=2147483647 → InvalidDataAccessApiUsageException: Page offset exceeds Integer.MAX_VALUE"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "주최자 목록 page·size·filter 는 400 으로 거른다(SC-06·07). 관객 목록 page·size 는 기존대로 미검증(RC-2). id 는 Long 변환 실패 400",
+    "authorization": "/api/organizer/** 와 POST /api/performances/** 는 hasRole(ORGANIZER)(SC-10), 소유권은 findOwned 로 404(SC-09). 소유자 id 는 응답에 없음",
+    "secrets": "해당 없음",
+    "logging": "해당 없음"
+  },
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}
