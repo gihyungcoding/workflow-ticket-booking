@@ -56,9 +56,8 @@ public class PerformanceService {
   }
 
   public PerformanceListResponse getPerformances(PerformanceStatus status, int page, int size) {
+    PageRequest pageRequest = pageRequestOf(page, size, Sort.by("startAt").ascending());
     Instant now = clock.instant();
-
-    PageRequest pageRequest = PageRequest.of(page, size, Sort.by("startAt").ascending());
     Page<Performance> result =
         performanceRepository.findVisiblePerformances(status, now, pageRequest);
 
@@ -84,15 +83,9 @@ public class PerformanceService {
    */
   public OrganizerPerformanceListResponse getMyPerformances(
       Long ownerId, PerformanceFilter filter, int page, int size) {
-    if (page < 0 || size < 1 || (long) page * Math.min(size, MAX_PAGE_SIZE) > Integer.MAX_VALUE) {
-      throw new InvalidRequestException("page 는 0 이상, size 는 1 이상이어야 합니다");
-    }
-    Instant now = clock.instant();
     PageRequest pageRequest =
-        PageRequest.of(
-            page,
-            Math.min(size, MAX_PAGE_SIZE),
-            Sort.by(Sort.Order.desc("startAt"), Sort.Order.desc("id")));
+        pageRequestOf(page, size, Sort.by(Sort.Order.desc("startAt"), Sort.Order.desc("id")));
+    Instant now = clock.instant();
     Page<Performance> result =
         performanceRepository.findOwnedPerformances(ownerId, filter, now, pageRequest);
     List<OrganizerPerformanceResponse> items =
@@ -101,6 +94,18 @@ public class PerformanceService {
             .toList();
     return new OrganizerPerformanceListResponse(
         items, result.getNumber(), result.getSize(), result.getTotalElements());
+  }
+
+  /**
+   * 관객·주최자 목록이 같은 규칙으로 page·size 를 거른다 — page < 0, size < 1, page × size 가 int 범위를 넘으면 400 이다(JPA 의
+   * offset 이 int 라 넘치면 처리되지 않은 예외가 된다). size 는 100 으로 자른다.
+   */
+  private PageRequest pageRequestOf(int page, int size, Sort sort) {
+    int cappedSize = Math.min(size, MAX_PAGE_SIZE);
+    if (page < 0 || size < 1 || (long) page * cappedSize > Integer.MAX_VALUE) {
+      throw new InvalidRequestException("page 는 0 이상, size 는 1 이상이어야 합니다");
+    }
+    return PageRequest.of(page, cappedSize, sort);
   }
 
   public OrganizerPerformanceResponse getMyPerformance(Long ownerId, Long id) {
@@ -120,7 +125,7 @@ public class PerformanceService {
 
   /** 취소 → 시각 순으로 검사한다. 이미 그 상태면 값을 그대로 두고 응답만 돌려준다(오픈 전에 한해). */
   private OrganizerPerformanceResponse changeVisibility(Long ownerId, Long id, boolean published) {
-    Performance performance = findOwned(ownerId, id);
+    Performance performance = findOwnedForUpdate(ownerId, id);
     Instant now = clock.instant();
     if (Boolean.TRUE.equals(performance.getCancelled())) {
       throw new PerformanceCancelledException(id);
@@ -267,7 +272,7 @@ public class PerformanceService {
       Instant startAt,
       Instant openAt,
       Instant closeAt) {
-    Performance performance = findOwned(ownerId, id);
+    Performance performance = findOwnedForUpdate(ownerId, id);
     Instant now = clock.instant();
     if (Boolean.TRUE.equals(performance.getCancelled())) {
       throw new PerformanceCancelledException(id);
@@ -285,10 +290,18 @@ public class PerformanceService {
 
   @Transactional
   public OrganizerPerformanceResponse cancelPerformance(Long ownerId, Long id) {
-    Performance performance = findOwned(ownerId, id);
+    Performance performance = findOwnedForUpdate(ownerId, id);
     performance.cancel();
     performanceRepository.save(performance);
     return toOrganizerResponse(performance, clock.instant(), null);
+  }
+
+  /** 쓰기 경로용 — findOwned 와 같은 소유 규칙이되 행을 잠근 채 읽는다. 시각 판정은 이 메서드가 돌아온 뒤(잠금을 얻은 뒤)에 clock 을 읽어야 한다. */
+  private Performance findOwnedForUpdate(Long ownerId, Long id) {
+    return performanceRepository
+        .findByIdForUpdate(id)
+        .filter(performance -> ownerId.equals(performance.getOwnerId()))
+        .orElseThrow(() -> new PerformanceNotFoundException(id));
   }
 
   /**

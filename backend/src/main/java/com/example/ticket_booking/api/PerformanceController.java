@@ -39,7 +39,7 @@ public class PerformanceController {
       @RequestParam(required = false) PerformanceStatus status,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
-    return performanceService.getPerformances(status, page, Math.min(size, 100));
+    return performanceService.getPerformances(status, page, size);
   }
 
   /** 홈 머리글 후보. 리터럴 경로라 /{id} 보다 먼저 매칭된다. */
