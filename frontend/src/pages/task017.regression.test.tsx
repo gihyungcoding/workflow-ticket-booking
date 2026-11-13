@@ -30,7 +30,7 @@ function performance(id: number, status: PerformanceStatus): Performance {
     totalSeats: 100,
     availableSeats: status === 'SOLD_OUT' ? 0 : 10,
     status,
-    sections: [{ grade: 'VIP', price: 150000, seatCount: 100 }],
+    sections: [{ grade: 'VIP', price: 150000, seatCount: 100, area: 'VIP', stageOrder: 1 }],
   }
 }
 
@@ -78,7 +78,9 @@ describe('TASK-017 기존 화면 회귀', () => {
     // 공연 상세 — OPEN 하나
     vi.mocked(getPerformance).mockResolvedValue(performance(1, 'OPEN'))
     const detail = renderAt('/performances/1', '/performances/:id', <PerformanceDetailPage />)
-    expect(await screen.findAllByText('예매 가능')).toHaveLength(1)
+    // TASK-020 SC-15 — 상세에는 상태 배지가 없다: 머리글 「지금 예매할 수 있어요」, 「예매 가능」 글자 요소는 0개
+    expect(await screen.findByRole('heading', { level: 1, name: '지금 예매할 수 있어요' })).toBeInTheDocument()
+    expect(screen.queryAllByText('예매 가능')).toHaveLength(0)
     expect(screen.getByText('공연 1')).toBeInTheDocument()
     expectNoOldLabels()
     detail.unmount()

@@ -44,7 +44,7 @@ const P5 = {
   totalSeats: 20,
   availableSeats: 20,
   status: 'UPCOMING',
-  sections: [{ grade: 'VIP', price: 120000, seatCount: 20 }],
+  sections: [{ grade: 'VIP', price: 120000, seatCount: 20, area: 'VIP', stageOrder: 1 }],
 }
 const P3 = { ...P5, id: 3 }
 const CREATED = { ...P5, id: 42, sections: undefined }

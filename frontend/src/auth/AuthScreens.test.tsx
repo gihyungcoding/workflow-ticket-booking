@@ -45,7 +45,7 @@ const performance = {
   totalSeats: 20,
   availableSeats: 20,
   status: 'UPCOMING',
-  sections: [{ grade: 'VIP', price: 120000, seatCount: 20 }],
+  sections: [{ grade: 'VIP', price: 120000, seatCount: 20, area: 'VIP', stageOrder: 1 }],
 }
 const USER = { id: 1, email: 'hong@example.com', name: '홍길동', role: 'AUDIENCE', handle: 'wave7302' }
 const LOGIN_RESP = { accessToken: 'tok-1', tokenType: 'Bearer', expiresInSeconds: 86400, user: USER }
@@ -600,9 +600,9 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
   })
 
   test('SC-13 (happy) 헤더 링크로 온 로그인에 성공하면 토큰을 저장하고 이전 화면으로 이동한다', async () => {
-    // Given /performances/3 에서 헤더의 로그인 링크로 /login 에 왔다
+    // Given / 에서 헤더의 로그인 링크로 /login 에 왔다 (TASK-020 SC-29 a — 상세에는 전역 헤더가 없다)
     stubServer()
-    renderAt('/performances/3')
+    renderAt('/')
     await userEvent.click(await screen.findByRole('link', { name: '로그인' }))
     await waitFor(() => expect(where()).toBe('/login'))
     fillLogin()
@@ -614,7 +614,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     await waitFor(() => expect(callsTo('POST /api/auth/login')).toHaveLength(1))
     expect(bodyOf(callsTo('POST /api/auth/login')[0])).toEqual({ email: 'hong@example.com', password: 'password1!' })
     // And 토큰 저장, 이전 화면으로 이동
-    await waitFor(() => expect(where()).toBe('/performances/3'))
+    await waitFor(() => expect(where()).toBe('/'))
     expect(token()).toBe('tok-1')
   })
 
@@ -817,7 +817,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     stubServer({ 'GET /api/auth/me': () => res(200, USER) })
   }
 
-  test.each(['/', '/performances/3'])('SC-20 (happy) 로그인 상태의 헤더에는 이름과 로그아웃 버튼이 보인다 — %s', async (path) => {
+  test.each(['/'])('SC-20 (happy) 로그인 상태의 헤더에는 이름과 로그아웃 버튼이 보인다 — %s', async (path) => {
     // Given 홍길동으로 로그인한 상태
     loggedInServer()
 
@@ -859,7 +859,7 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
   ])('SC-22 (happy) 비로그인 헤더의 링크가 로그인·가입 화면으로 이어진다 — $link', async ({ link, path, button }) => {
     // Given
     stubServer()
-    renderAt('/performances/3')
+    renderAt('/') // TASK-020 SC-29 b — 상세에는 전역 헤더가 없다
 
     // When
     await userEvent.click(await screen.findByRole('link', { name: link }))
@@ -1000,7 +1000,8 @@ describe('TASK-010 이메일 회원가입/로그인 화면', () => {
     renderAt('/performances/3')
     await waitFor(() => expect(callsTo('GET /api/performances/3').length).toBeGreaterThan(0))
     expect(await screen.findByText('가을 재즈 콘서트')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument()
+    // TASK-020 SC-28·29 e — 상세에는 전역 헤더(로그인 링크)가 없다
+    expect(screen.queryByRole('link', { name: '로그인' })).not.toBeInTheDocument()
     cleanup()
 
     // And /login, /signup 은 공연 조회를 하지 않는다

@@ -1,8 +1,8 @@
 ---
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (완료)"
+phase: "2b"
+phase_name: "Phase 2b - Red (승인 대기)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-13
@@ -13,21 +13,22 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-020-detail-clock-zone-sheet"
 
-last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-020.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-020.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-020.json"
+  test: "workflow_design/05_scenario/TEST_TASK-020.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2a(시나리오)를 마쳤다 — 독립검증 2회차 PASS. Phase 2b(Red) 진입 직전.
+Phase 2b(Red) — 테스트 39건을 커밋했고 통합 HITL(시나리오 + Red) 승인을 기다린다. 독립검증은 3회차 PASS.
 
 ## 다음 한 걸음
 
-`wf-red` — 시나리오 39건을 실패하는 테스트로 옮긴다. 승인 테스트 8행 교체·수정은 통합 HITL 에 함께 올린다.
+통합 HITL 승인 → Phase 3(wf-develop). frontend 테스트는 `--testTimeout=60000` 으로 돌린다(시스템 부하).
 
 ## 알아둬야 할 것
 

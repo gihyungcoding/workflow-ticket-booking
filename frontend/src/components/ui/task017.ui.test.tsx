@@ -387,7 +387,8 @@ describe('TASK-017 공통 부품', () => {
     a1.unmount()
     const a2 = renderWithTheme(<AppBar onBack={() => {}} />)
     expect(screen.getByRole('button', { name: '뒤로' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('')
+    // TASK-020 SC-27 — 제목이 없으면 빈 h1 을 그리지 않는다
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
     a2.unmount()
 
     // CtaBar
@@ -434,7 +435,8 @@ describe('TASK-017 공통 부품', () => {
     e.unmount()
     for (const title of ['', '   ']) {
       const a = renderWithTheme(<AppBar title={title} onBack={() => {}} />)
-      expect(screen.getByRole('heading', { level: 1 }).textContent?.trim()).toBe('')
+      // TASK-020 SC-27 — 제목이 비었거나 공백뿐이면 빈 h1 을 그리지 않는다
+      expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
       expect(screen.getByRole('button', { name: '뒤로' })).toBeInTheDocument()
       a.unmount()
     }

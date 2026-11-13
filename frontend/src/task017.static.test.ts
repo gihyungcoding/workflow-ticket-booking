@@ -27,9 +27,9 @@ describe('TASK-017 정적 검사', () => {
     // Then DESIGN-001·002 위반 0건
     expect(files('DESIGN-001')).toEqual([])
     expect(files('DESIGN-002')).toEqual([])
-    // And DESIGN-003 은 기존 3건뿐이고 theme·components 위반 0건
+    // And DESIGN-003 은 기존 2건뿐이고 theme·components 위반 0건
+    // TASK-020 — PerformanceDetailPage 가 재작성되어 더는 위반이 아니다(SC-31)
     expect(files('DESIGN-003').sort()).toEqual([
-      'frontend/src/pages/PerformanceDetailPage.tsx',
       'frontend/src/pages/PerformanceEditPage.tsx',
       'frontend/src/pages/PerformanceListPage.tsx',
     ])

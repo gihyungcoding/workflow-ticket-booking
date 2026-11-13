@@ -6,6 +6,12 @@ export interface SectionSummary {
   grade: string
   price: number
   seatCount: number
+  /** 묶음 이름 — 구역 위치를 등록하지 않은 공연은 등급 이름과 같다. 서버는 항상 주지만 화면은 런타임에 검증한다(TASK-020 SC-04) */
+  area?: string
+  /** 묶음 설명 — 없으면 키가 없다 */
+  areaNote?: string
+  /** 무대에서 가까운 순 — 위와 같이 런타임에 검증한다 */
+  stageOrder?: number
 }
 
 export interface Performance {
@@ -18,6 +24,8 @@ export interface Performance {
   totalSeats: number
   availableSeats: number
   status: PerformanceStatus
+  /** 없으면 키가 없다 */
+  posterUrl?: string
   sections?: SectionSummary[]
 }
 

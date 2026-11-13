@@ -1,7 +1,7 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "시나리오 39건, 입력 경계 칸 120/120(n/a 11). 독립검증 2회차 PASS(경고 6) — Phase 2b 진입 가능"
+summary: "시나리오 39건, 칸 120/120(n/a 11). 독립검증 3회차 PASS(경고 6) — 2b 에서 찾은 결함 4건 수정 반영"
 
 next_steps:
   - "Phase 2b — wf-red. 프론트 가짜 타이머 선례가 없다(userEvent 는 advanceTimers 옵션) — 사용법을 먼저 정한다. 승인 테스트 8행 교체·수정 포함"
@@ -38,7 +38,13 @@ decisions:
   - decision: "남은 경고(V5 콘솔 오류 감시 방법·V6 SC-05 e·f·SC-30 b·c·V7·V9·V12 posterUrl 형식·왕복 음수·title/venue 키 없음)는 재검증 없이 보류"
     rationale: "경고만이면 재검증하지 않는다(wf-scenario Step 4). 콘솔 감시는 2b 에서 정한다"
 
+  - decision: "2b 에서 Red 를 옮기다 찾은 시나리오 결함 4건을 2a 로 돌아가 고쳤다(RETRY_SCENARIO, 검증 3회차 PASS) — SC-07 행 2(1초 주기 표시라 271.999초에 「0초」 보장 불가 → 문구 단언 삭제)·SC-12 방향(서버 시각이 3초 앞서면 남은 시간이 줄어든다)·SC-14 i(24.8일 뒤 시점은 검증 불가 → 삭제)·승인된 테스트 변경 표에 픽스처 3곳(area·stageOrder) 추가"
+    rationale: "테스트는 정정된 의미로 썼다. 승인 전에 시나리오와 테스트가 같은 말을 하게 했다. 3회차 [신규] 경고: SC-07 의 「티켓온 기준 오후 5:55:28」 단언은 0초 행에만 걸린다 — 테스트는 0초 행에서만 단언한다(보류, HITL 에서 알림)"
+
 attempts:
+  - n: 2
+    outcome: "2b Red 작성 중 시나리오 결함 4건(SC-07·SC-12·SC-14·승인 테스트 표) 발견"
+    back_to: "2a"
   - n: 1
     outcome: "독립검증 1회차 FAIL — V11 false_cover price@F7:integer.zero (SC-22 행 f 가 구역 1개라 SC-18 d 에 따라 시트를 열 수 없음)"
     back_to: "2a"

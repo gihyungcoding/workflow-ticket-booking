@@ -3,8 +3,8 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | flows 10 · AC 14 · 입력 17 |
-| 2a Scenario | ✅ 완료 | CP-2.2 | 39건 · 칸 120/120 · 검증 2회차 PASS |
-| 2b Red | ⏳ 다음 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.2 | 39건 · 칸 120/120 · 검증 3회차 PASS |
+| 2b Red | ⏳ HITL 대기 | CP-2.5 | 새 241케이스 229 실패 · already_passing 5건 |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
