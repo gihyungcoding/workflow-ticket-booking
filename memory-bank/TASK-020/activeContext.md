@@ -2,7 +2,7 @@
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
 phase: "1"
-phase_name: "Phase 1 - Plan"
+phase_name: "Phase 1 - Plan (완료)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-13
@@ -13,18 +13,19 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-020-detail-clock-zone-sheet"
 
-last_checkpoint: ""
+last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task B)"
-artifacts: {}
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-020.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-워크플로우를 막 시작했다. Phase 1(Plan) 진입 직전.
+Phase 1(Plan)을 마쳤다. Phase 2a(시나리오) 진입 직전.
 
 ## 다음 한 걸음
 
-`wf-plan` 으로 PLAN_TASK-020.json 작성 — 요구사항 문서 §2(화면)·§3(API)·§4(흐름)·§6(구현 참고)을 출발점으로 삼는다.
+`wf-scenario` — PLAN 의 flows F1~F10 과 input_fields 17개로 시나리오를 쓴다. 승인 테스트 수정(PLAN unresolved #1)을 회귀 시나리오로 명시한다.
 
 ## 알아둬야 할 것
 
@@ -38,3 +39,4 @@ artifacts: {}
 - 범위 외: 대기열 동작(흐름 3), 회차·매수 선택(흐름 4), 홈 화면(TASK-021), 오픈 5분 전 안내 문구
 - frontend 명령은 `export PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH"` 후 실행. 시작 시점 develop 에서 `npm test` 는 1회차 1건 실패(어느 테스트인지 미확인)·2회차 775 통과 — 간헐 실패 가능성, Phase 3·4 에서 재현되면 원인을 잡는다
 - 회고 개선안 중 이번에 해당: TASK-018 #0 design-checks(시안 모양 값 표), #5 screen-verification(iframe 클릭·서버 종료). 같은 대상 2건 이상 누적은 없음
+- 사용자 결정(2026-11-13): 상세·대기열 임시 화면은 전역 헤더 없이(시안대로). 승인 테스트 6건 안팎 수정은 2b 승인에 올린다
