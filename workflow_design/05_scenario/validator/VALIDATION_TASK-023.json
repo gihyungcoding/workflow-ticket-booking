@@ -1,0 +1,26 @@
+{
+  "task_id": "TASK-023",
+  "checks": [
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 SC-01~SC-19 의 19건이고 ID·type·flow 가 같다. GWT 문장도 일치한다. 다만 JSON 은 SC-11·SC-19 의 다중 When/Then 을 평탄화해 담았다. 문장은 같고 When 과 Then 의 짝 구조만 사라진다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 19건. happy 10건(SC-01·02·03·04·05·08·11·12·15·16·19 중 SC-19 포함), error 8건, regression 1건(SC-18). 하한(전체 ≥2, happy ≥1, error ≥1)을 충족한다."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "AC 12건을 직접 대조했다. 1→SC-01·02, 2→SC-03, 3→SC-04·07, 4→SC-05·06, 5→SC-08·09·17, 6→SC-10·11, 7→SC-13, 8→SC-14, 9→SC-12, 10→SC-15, 11→SC-16, 12→SC-18 로 모두 대응한다. 참고로 SC-10(401/403)은 AC6 의 covers 에 붙어 있지만 실제로는 인가 규칙 시나리오라 covers 매핑이 느슨하다."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오가 쓰는 F1~F11 이 모두 Plan design.flows 에 있다. F11 은 covers 가 빈 AC 밖 흐름인데 SC-02·SC-19 가 대응한다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "SC-06 d 의 기대 '200, UPCOMING 과 같은 결과 — 프로브로 2b 에서 확인' 은 확정되지 않은 기대를 담고 있어 지금은 단언으로 옮길 수 없다. SC-04 의 'Q1 만 나온다' 와 SC-09 의 '형태가 같다' 는 단언 가능하다. SC-05·SC-16 의 'Then' 에 시계를 바꾸는 후속 행동이 섞여 있다(V6 참고)."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "SC-11 은 When 이 둘이다(publish 와 unpublish). SC-19 도 둘이다(PUT 과 cancel). SC-12 는 한 When 안에서 P1 publish 와 P2 unpublish 를 함께 호출한다. SC-05 는 Then 안에서 'now 를 T+1ms 로 올리고 다시 부르면' 이라며 새 행동을 한다. SC-16 의 When 은 조회와 PUT·전환을 한꺼번에 묶는다. SC-03 은 한 When 에서 엔드포인트 세 개를 호출한다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "대부분 HTTP 경계로 서술했다. 그러나 SC-01 의 Flyway 와 컬럼명(published·open_at 등), 'repository findById()·count()' 같은 재조회 방식, 규약표의 `PerformanceExceptionHandler.handleNotFound` 는 구현 세부다. Then 에는 거의 없다(SC-01 의 DB 컬럼 단언은 마이그레이션 시나리오라 허용 범위)."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "warn", "detail": "SC-07 은 새 주최자 목록에 page<0, size<1, page×size int 초과일 때 400 INVALID_REQUEST 를 정한다. Plan outputs 에는 이 에러가 없고, inputs 도 '관객 목록과 같은 관례'(관객 쪽은 500)라고만 적었다. Plan unresolved 가 2a 에서 결정하라고 위임한 사항이긴 하다. 그래도 Plan 의 outputs 에 없는 응답 계약이므로 사람이 확인해야 한다. 또 SC-02·SC-14·SC-15·SC-19 가 쓰는 등록·수정 요청 본문(R0·U0, 특히 INVALID_TIME_ORDER 용 startAt·closeAt)은 design.inputs 에 없다. Plan 이 '본문 검증은 건드리지 않는다' 고 명시했으니 의도된 제외로 본다."},
+    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "SC-13(전환 잠금 표)과 SC-16(플래그 vs 실제 요청)이 같은 시각 경계의 전환 경로를 다시 탄다. SC-15 의 수정 경계와 SC-16 의 editable 도 겹친다. SC-12 의 'now>=openAt 은 SC-13' 서술은 SC-13 d 와 중복이다. 플래그와 요청의 일치 검증이라는 목적이 달라 제거까진 아니고 인지만 요청한다."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "기존 동작을 바꾸는 태스크다. SC-18 이 regression 으로 관객 응답 키 불변을 지키고, SC-01·02·19 에 기존 승인 테스트 수정 항목(PerformanceOwnerMigrationTest 버전 7→8, PerformanceZoneRegistrationApiTest:173)이 붙어 있다."},
+    {"id": "V11", "name": "입력 경계 판정", "verdict": "fail", "detail": "coverage_matrix 의 모든 칸을 확인했다. 칸 하나가 false_cover 다. 나머지 칸은 SC-07 의 page/size 행(a~m), SC-17 의 id 행, SC-10 의 헤더 부재, SC-13·15·16 의 now==openAt, SC-05 i 의 now==closeAt, SC-06 의 enum 변형으로 정당화된다. Authorization 의 null n/a 사유(HTTP 헤더에 null 이 없고 헤더 부재가 SC-10 a)는 Plan note 와 맞는다.", "note": "구체 내용은 v11_matrix 참고"},
+    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "칸 목록에 없지만 깨질 법한 경계다. (1) SC-17 은 F6·F7 의 id 경계를 잠금·취소 상태 없이 일반 상태로만 대표한다. (2) 요청 본문에 published 필드를 넣어 보내는 경우(mass assignment)가 PUT·POST 등록에 없다. (3) 공개 상태 공연의 cancel 과 그 뒤 published 값 유지는 SC-19 가 비공개 공연만 다룬다. (4) publish·unpublish 의 관객 403·무토큰 401 이 SC-10 에서 publish 위주이고 unpublish 는 'And' 한 줄이다. (5) filter 와 page/size 의 조합(예: filter=DRAFT&page=1). (6) publish 와 취소가 동시에 일어나는 경합. (7) PUT 본문에 소유자 변경 시도. 사람이 HITL 에서 판단한다."}
+  ],
+  "v11_matrix": [
+    {"cell": "size@F3:integer.overflow", "kind": "false_cover", "detail": "SC-07 로 covered 라고 적었지만 size 의 overflow 값(long 초과, 예 size=9223372036854775808 또는 int 초과 2147483648)을 쓰는 행이 없다. SC-07 의 l(9223372036854775808)·i(2147483648)는 모두 page 쪽 값이고, size 쪽은 0·-1·101·1.5 와 빈 값뿐이다. page@F3:integer.overflow 는 l 로 정당하지만 size 칸은 근거 값이 없다."}
+  ],
+  "overall": {
+    "pass": false,
+    "fail_count": 1,
+    "warn_count": 7,
+    "summary": "V1~V4 는 통과했다. AC 12건이 모두 대응하고 MD 와 JSON 도 일치한다. V11 은 size@F3:integer.overflow 가 false_cover 라서 fail 이다. SC-07 에 size 의 overflow 행(예 size=9223372036854775808)을 추가하거나, 근거를 갖춘 n/a 로 바꾸고 되돌려야 한다. 경고는 다음과 같다. When 단일성 위반(SC-11·12·19·05·16), 확정되지 않은 기대(SC-06 d '프로브로 확인'), Plan 에 없는 400 INVALID_REQUEST 계약(SC-07), 구현 용어(Flyway·repository), SC-13 과 SC-16 의 부분 중복, V12 제안 목록."
+  }
+}
