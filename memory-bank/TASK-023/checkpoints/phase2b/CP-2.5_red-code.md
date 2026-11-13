@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "Phase 4 롤백 2b — SC-20·SC-21 Red 2건 작성·실행(205 중 2 실패), 인벤토리 21==21, 사람 재승인 완료"
 

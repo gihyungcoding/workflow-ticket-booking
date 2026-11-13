@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "Phase 4 2회차 WARN — 승인(APPROVE) — AC 12/12 + 추가 시나리오(F11~F13) PASS, 205/205·spotless 0·아키텍처 error 0, 리뷰 결함 없음. 남은 것: 락 타임아웃·락 예외 매핑(개선 제안, 변종 later 1건 not_probed)"
 

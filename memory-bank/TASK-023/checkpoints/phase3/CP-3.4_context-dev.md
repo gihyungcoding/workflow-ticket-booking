@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "Phase 4 롤백 수정 — RC-1 쓰기 경로 행 잠금(잠근 뒤 시각)·RC-2 page·size 공통 검증, 전체 205/205, spotless 0, 자체 리뷰 2R(차단 결함 없음, 잠금 타임아웃 위험 낮음 unresolved)"
 

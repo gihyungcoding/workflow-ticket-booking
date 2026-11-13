@@ -7,7 +7,7 @@
 | 2b Red | ✅ 완료 | CP-2.5 | SC-20·21 재승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | Phase 4 롤백 수정 — 205/205 · 리뷰 2R |
 | 4 Verify | ✅ 완료 | CP-4.2 | 2회차 WARN 승인 (1회차 FAIL → 롤백)
-| 5 Reflect | ⬜ 대기 | — | |
+| 5 Reflect | ✅ 완료 | CP-5.2 | 회고 승인 대기 — /wf-retro
 
 ## 완료 조건
 

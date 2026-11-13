@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "Phase 4 FAIL 로 2a 롤백 — 시나리오 21건(SC-20 동시 쓰기·SC-21 관객 목록 page·size 추가)·경계 칸 59 판정, 독립검증 재호출 대기"
 

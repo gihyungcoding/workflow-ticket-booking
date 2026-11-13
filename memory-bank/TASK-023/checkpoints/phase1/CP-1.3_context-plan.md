@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "PLAN_TASK-023.json — route Backend, flows 11건(F1~F10 이 AC 12건을 덮고 F11 은 AC 밖 문서 §3-6). input_fields 7. 변경 대상 15(신규 6)."
 
