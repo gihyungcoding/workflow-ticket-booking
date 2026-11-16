@@ -1,8 +1,8 @@
 ---
 task_id: TASK-021
 title: "홈 화면을 시안대로"
-phase: "3"
-phase_name: "Phase 3 - Green 완료 (게이트 통과)"
+phase: "4"
+phase_name: "Phase 4 - Verify (HITL#3 승인 대기)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-16
@@ -13,7 +13,7 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-021-home-screen-redesign"
 
-last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
+last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-021.json"
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 3 완료 — 전체 1604 중 1603 통과(새 435 + 기존 1168, 실패 0)·tsc·build·린트 error 0. 자체 리뷰 1라운드(correctness 0).
+Phase 4 WARN — VERIFY 저장·커밋 완료. HITL#3 승인 대기(AC-9 시각 표기를 브라우저로 못 봄, 리뷰 권고 4건).
 
 ## 다음 한 걸음
 
-Phase 4 — `wf-verify`. 브라우저 증거: 긴 공연명 머리글 링크·빈 목록·375px 나란히(이 Chrome 은 UTC 로 표기).
+승인되면 `verified_commit` 기록 후 Phase 5(`wf-reflect`).
 
 ## 알아둬야 할 것
 
