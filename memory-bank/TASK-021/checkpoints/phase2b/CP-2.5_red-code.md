@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-16T12:30:00Z
 summary: "Red 테스트 29건(435케이스) 작성·커밋 — 424 실패·11 통과(전부 「바뀌지 않는 기존 동작」 행). 기존 테스트 1168 통과 유지. HITL#1·2 통합 승인 완료(2026-11-16, AskUserQuestion)."
 

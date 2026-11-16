@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-16T14:30:00Z
 summary: "Green — 전체 1604 중 1603 통과·실패 0(새 435 전부 통과, 기존 1168 유지). tsc·build·린트 error 0. 자체 리뷰 1라운드: [correctness] 0, design 1(낮음, 미재현) 보류."
 

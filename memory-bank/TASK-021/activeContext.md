@@ -1,9 +1,9 @@
 ---
 task_id: TASK-021
 title: "홈 화면을 시안대로"
-phase: "4"
-phase_name: "Phase 4 - Verify 완료 (예외 승인)"
-status: IN_PROGRESS
+phase: "5"
+phase_name: "Phase 5 - Reflect 완료 (DONE)"
+status: DONE
 track: standard
 created_at: 2026-11-16
 last_updated: 2026-11-16
@@ -13,7 +13,7 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-021-home-screen-redesign"
 
-last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
+last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-021.json"
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 완료 — WARN 을 예외 승인(HITL#3, 2026-11-16). `verified_commit` 기록.
+Phase 5 완료 — 태스크 DONE. 회고(KPT·ADR 후보 2·drift 3·규칙 개선안 4)와 완료 리포트 Artifact 를 남겼다. 회고 승인(HITL#4)은 /wf-retro 에서 받는다.
 
 ## 다음 한 걸음
 
-Phase 5 — `wf-reflect`. 회고 후보는 CP-4.2 next_steps 에 있다.
+`/wf-ship` — 푸시와 PR 생성(머지는 사람이). 회고 승인은 나중에 `/wf-retro`.
 
 ## 알아둬야 할 것
 

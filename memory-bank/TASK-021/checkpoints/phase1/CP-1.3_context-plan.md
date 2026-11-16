@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-16T10:00:00Z
 summary: "PLAN_TASK-021.json — route Frontend, flows 9건(AC 9건 전부 + Poster 추출 1건은 사용자 확인한 범위 확장). input_fields 16. 변경 대상 7(신규 3), 재사용 11, 승인 테스트 수정 대상은 unresolved #1·#2 에 정리."
 

@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-16T15:30:00Z
 summary: "Phase 4 WARN — 테스트 1603 통과·린트 error 0·제약 error 0·no_target 없음·리뷰 correctness 0. AC 9건 중 8 PASS·1 WARN(AC-9 한국 시간 표기를 이 Chrome 이 UTC 로 출력해 브라우저로 못 봄). HITL#3 예외 승인 완료(2026-11-16, AskUserQuestion)."
 

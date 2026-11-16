@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-16T11:00:00Z
 summary: "SCENARIO_TASK-021.md 29건 — AC 9건 전부 매핑, 입력 경계 칸 152/152. 독립검증 2회차 PASS(경고 6). 게이트 7/7."
 
