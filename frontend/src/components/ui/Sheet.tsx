@@ -6,11 +6,13 @@ import { token } from '../../theme/tokens'
 export interface SheetProps {
   open: boolean
   onClose?: () => void
+  /** dialog 의 접근성 이름 */
+  label?: string
   children?: ReactNode
 }
 
 /** 시안 .dim + .sheet — 아래에서 올라오는 시트. 바깥(어두운 막)·Esc 로 닫는다 */
-export function Sheet({ open, onClose, children }: SheetProps) {
+export function Sheet({ open, onClose, label, children }: SheetProps) {
   const onCloseRef = useRef(onClose)
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export function Sheet({ open, onClose, children }: SheetProps) {
       <Box
         role="dialog"
         aria-modal="true"
+        aria-label={label}
         sx={{
           position: 'fixed',
           left: 0,

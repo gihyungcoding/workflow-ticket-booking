@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box'
 import { componentSizes, token } from '../../theme/tokens'
+import { isBlankDisplay } from './text'
 
 export interface AppBarProps {
   title?: string
@@ -8,7 +9,7 @@ export interface AppBarProps {
   plain?: boolean
 }
 
-/** 시안 .appbar — 가운데 제목, 왼쪽 뒤로 버튼(onBack 이 있을 때만) */
+/** 시안 .appbar — 가운데 제목(없거나 비면 h1 을 그리지 않는다), 왼쪽 뒤로 버튼(onBack 이 있을 때만) */
 export function AppBar({ title, onBack, plain }: AppBarProps) {
   return (
     <Box
@@ -50,20 +51,24 @@ export function AppBar({ title, onBack, plain }: AppBarProps) {
           </Box>
         )}
       </Box>
-      <Box
-        component="h1"
-        sx={{
-          margin: 0,
-          textAlign: 'center',
-          fontSize: token('--fs-strong'),
-          fontWeight: Number(token('--fw-strong')),
-          lineHeight: Number(token('--lh-strong')),
-          overflowWrap: 'anywhere',
-          textWrap: 'balance',
-        }}
-      >
-        {title ?? ''}
-      </Box>
+      {isBlankDisplay(title) ? (
+        <Box />
+      ) : (
+        <Box
+          component="h1"
+          sx={{
+            margin: 0,
+            textAlign: 'center',
+            fontSize: token('--fs-strong'),
+            fontWeight: Number(token('--fw-strong')),
+            lineHeight: Number(token('--lh-strong')),
+            overflowWrap: 'anywhere',
+            textWrap: 'balance',
+          }}
+        >
+          {title}
+        </Box>
+      )}
       <Box />
     </Box>
   )

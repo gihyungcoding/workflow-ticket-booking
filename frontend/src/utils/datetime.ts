@@ -15,17 +15,67 @@ export function fromDatetimeLocalInput(value: string): string {
   return date.toISOString()
 }
 
+const KST = 'Asia/Seoul'
+
+// 기기 시간대와 무관하게 한국 시간으로 표기한다 — 기준 시각이 한국 시간이다 (기능 문서 §1-3)
+const dateTimeFormat = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: KST,
+  month: 'numeric',
+  day: 'numeric',
+  weekday: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
+  hourCycle: 'h12',
+})
+const clockFormat = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: KST,
+  hour: 'numeric',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h12',
+})
+const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone: KST })
+
+function partsOf(format: Intl.DateTimeFormat, time: number | string): Record<string, string> {
+  const parts: Record<string, string> = {}
+  for (const part of format.formatToParts(new Date(time))) parts[part.type] = part.value
+  // ICU 버전에 따라 「오전/오후」 대신 「AM/PM」 으로 온다 — 표기를 고정한다
+  if (parts.dayPeriod !== undefined) parts.dayPeriod = /^(AM|오전)$/i.test(parts.dayPeriod) ? '오전' : '오후'
+  return parts
+}
+
 /** 한국 시간 "11월 21일(토) 오후 7:00" */
-export function formatDateTime(_iso: string): string {
-  throw new Error('Not implemented')
+export function formatDateTime(iso: string): string {
+  const p = partsOf(dateTimeFormat, iso)
+  return `${p.month}월 ${p.day}일(${p.weekday}) ${p.dayPeriod} ${p.hour}:${p.minute}`
 }
 
 /** 한국 시간 "오후 5:55:28" */
-export function formatClock(_iso: string): string {
-  throw new Error('Not implemented')
+export function formatClock(iso: string): string {
+  const p = partsOf(clockFormat, iso)
+  return `${p.dayPeriod} ${p.hour}:${p.minute}:${p.second}`
 }
 
-/** 남은 시간(ms) → "3일 4시간" · "2시간 15분" · "4분 32초" · "32초" */
-export function formatCountdown(_remainingMs: number): string {
-  throw new Error('Not implemented')
+/** 한국 시간 "오후 6:00" — 날짜 없이 */
+export function formatTimeOfDay(iso: string): string {
+  const p = partsOf(dateTimeFormat, iso)
+  return `${p.dayPeriod} ${p.hour}:${p.minute}`
+}
+
+/** 한국 날짜 "2026-11-11" — 같은 날인지 비교한다 */
+export function kstDay(time: number | string): string {
+  return dayFormat.format(new Date(time))
+}
+
+/** 남은 시간(ms) → "3일 4시간" · "2시간 15분" · "4분 32초" · "32초". 초 이하는 버린다 */
+export function formatCountdown(remainingMs: number): string {
+  const total = Math.max(0, Math.floor(remainingMs / 1000))
+  const days = Math.floor(total / 86400)
+  const hours = Math.floor((total % 86400) / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const seconds = total % 60
+  if (days >= 1) return `${days}일 ${hours}시간`
+  if (hours >= 1) return `${hours}시간 ${minutes}분`
+  if (minutes >= 1) return `${minutes}분 ${seconds}초`
+  return `${seconds}초`
 }

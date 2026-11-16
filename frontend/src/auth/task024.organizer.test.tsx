@@ -713,6 +713,9 @@ describe('TASK-024 F1 — 요청 토큰의 정본은 화면의 로그인 세션'
           await loginWith()
           await waitFor(() => expect(where()).toBe('/performances/new'))
           await screen.findByLabelText(/^공연명/)
+          // 등록 뒤 이동하는 상세에는 전역 헤더가 없다(TASK-020) — 화면의 로그인 상태는 헤더가 있는 등록 화면에서 본다
+          expect(await screen.findByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+          expect(screen.getByText('주최자')).toBeInTheDocument()
           await doWrite('register')
           await waitFor(() => expect(callsTo(REGISTER)).toHaveLength(1))
         } else if (then === 'email') {
@@ -738,8 +741,10 @@ describe('TASK-024 F1 — 요청 토큰의 정본은 화면의 로그인 세션'
         if (expected === null) expect(headers.has('Authorization')).toBe(false)
         else expect(headers.get('Authorization')).toBe(expected)
         if (then === 'email-register') await waitFor(() => expect(where()).toBe('/performances/42'))
-        // And 화면의 로그인 상태
-        if (shows === 'organizer') {
+        // And 화면의 로그인 상태 (행 a 는 위에서 등록 화면에서 이미 확인했다 — 이동한 상세에는 헤더가 없다)
+        if (then === 'email-register') {
+          // 위에서 확인
+        } else if (shows === 'organizer') {
           expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
           expect(screen.getByText('주최자')).toBeInTheDocument()
         } else {
@@ -823,12 +828,12 @@ describe('TASK-024 F4 — 쓰기 키 흔적', () => {
 
 describe('TASK-024 — 공개 조회 회귀', () => {
   const SC16 = [
-    { row: 'a', path: '/', key: 'GET /api/performances' },
-    { row: 'b', path: '/performances/3', key: 'GET /api/performances/3' },
+    { row: 'a', path: '/', key: 'GET /api/performances', header: true },
+    { row: 'b', path: '/performances/3', key: 'GET /api/performances/3', header: false }, // TASK-020 SC-28 — 상세에는 전역 헤더가 없다
   ]
   test.each(SC16)(
     'SC-16 (regression) 무효 토큰이 저장돼 있어도 공개 조회 화면은 지금처럼 열린다 — $row $path',
-    async ({ path, key }) => {
+    async ({ path, key, header }) => {
       // Given 무효 토큰 tok-stale, /me 401, 공개 조회는 200
       localStorage.setItem('accessToken', 'tok-stale')
       stubServer({ [ME]: () => res(401, { code: 'UNAUTHORIZED' }) })
@@ -842,8 +847,9 @@ describe('TASK-024 — 공개 조회 회귀', () => {
       // And 공연 조회는 그 주소의 것만, 오류 문구 없음
       expect(calls.filter((c) => c.key.startsWith('GET /api/performances')).map((c) => c.key)).toEqual([key])
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-      // And 전역 헤더는 비로그인 모양
-      expect(within(document.body).getByRole('link', { name: '로그인' })).toBeInTheDocument()
+      // And 전역 헤더는 비로그인 모양(헤더가 있는 화면에서)
+      if (header) expect(within(document.body).getByRole('link', { name: '로그인' })).toBeInTheDocument()
+      else expect(within(document.body).queryByRole('link', { name: '로그인' })).not.toBeInTheDocument()
     },
   )
 })

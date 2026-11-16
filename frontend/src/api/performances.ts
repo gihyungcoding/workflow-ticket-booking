@@ -1,3 +1,4 @@
+import { isBlankDisplay } from '../components/ui/text'
 import { request } from './http'
 
 export type PerformanceStatus = 'UPCOMING' | 'OPEN' | 'SOLD_OUT' | 'CLOSED' | 'CANCELLED'
@@ -87,7 +88,7 @@ export async function getPerformances(): Promise<PerformanceListResponse> {
 }
 
 export async function getPerformance(id: string): Promise<Performance> {
-  const response = await request(`/api/performances/${id}`)
+  const response = await request(`/api/performances/${encodeURIComponent(id)}`)
   if (response.status === 404) {
     throw new PerformanceNotFoundError(`공연을 찾을 수 없습니다: ${id}`)
   }
@@ -148,4 +149,34 @@ export async function cancelPerformance(id: string): Promise<Performance> {
     await throwWriteError(response)
   }
   return response.json()
+}
+
+const STATUSES: readonly string[] = ['UPCOMING', 'OPEN', 'SOLD_OUT', 'CLOSED', 'CANCELLED']
+const isTime = (value: unknown): value is string => typeof value === 'string' && !Number.isNaN(Date.parse(value))
+const isCount = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0
+
+/**
+ * 상세 응답이 계약을 지키는지 본다 — 어기면 null (화면은 오류 화면으로 간다, TASK-020 SC-04).
+ * sections 가 없거나 비어 있으면 구역 정보가 없는 것이지 위반이 아니다.
+ */
+export function parseDetail(value: unknown): Performance | null {
+  if (typeof value !== 'object' || value === null) return null
+  const p = value as Record<string, unknown>
+  if (typeof p.status !== 'string' || !STATUSES.includes(p.status)) return null
+  if (!isTime(p.startAt) || !isTime(p.openAt) || !isTime(p.closeAt)) return null
+  if (!isCount(p.availableSeats) || !isCount(p.totalSeats)) return null
+  if (typeof p.title !== 'string' || typeof p.venue !== 'string') return null
+  let sections: SectionSummary[] | undefined
+  if (p.sections !== undefined && p.sections !== null) {
+    if (!Array.isArray(p.sections)) return null
+    for (const element of p.sections) {
+      if (typeof element !== 'object' || element === null) return null
+      const s = element as Record<string, unknown>
+      if (isBlankDisplay(s.grade) || isBlankDisplay(s.area)) return null
+      if (!isCount(s.price)) return null
+      if (typeof s.stageOrder !== 'number' || !Number.isInteger(s.stageOrder)) return null
+    }
+    sections = p.sections as SectionSummary[]
+  }
+  return { ...(value as Performance), sections }
 }

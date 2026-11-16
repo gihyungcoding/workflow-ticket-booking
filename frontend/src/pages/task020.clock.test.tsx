@@ -211,6 +211,7 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
 
     // When /performances/7 을 열고 세 번의 측정이 모두 끝난 직후를 본다
     renderAt('/performances/7')
+    await settle(0) // 상세 응답이 먼저 처리돼야 측정이 시작된다 — 그 뒤부터 시간을 흘린다
     await settle(total)
 
     // Then 카운트다운 문구가 표의 값이다 — 왕복이 가장 짧은(같으면 먼저 잰) 표본의 오프셋
@@ -344,7 +345,8 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
       expect(timer()).toHaveTextContent('30일 0시간')
       await settle(5000)
       expect(h1()).not.toHaveTextContent('지금 예매할 수 있어요')
-      expect(cta(UP_CTA)).toBeDisabled()
+      // openAt 이 오늘이 아니라 CTA 문구에 날짜가 붙는다
+      expect(cta(/^예매하기 · /)).toBeDisabled()
     }
     // And 상태가 바뀌는 행에서도 상세 호출 수는 늘지 않는다
     expect(callsTo(DETAIL)).toHaveLength(1)
@@ -555,6 +557,7 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
       await act(async () => setDocumentVisibility('visible'))
       await settle(0)
     } else if (row === 'e') {
+      await settle(0) // 상세 응답이 먼저 처리돼야 측정이 시작된다
       await settle(600)
       await act(async () => authApi().login('tok-1', USER as never))
       await settle(1000)
