@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-11-12 · 총 33건
+마지막 재생성: 2026-11-16 · 총 34건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -35,6 +35,7 @@
 | [ADR-0030](ADR-0030-request-token-from-single-auth-session.md) | 프론트 요청 토큰은 앱에 하나뿐인 AuthProvider 의 세션에서 읽는다 | 채택됨 | 2026-11-12 |
 | [ADR-0031](ADR-0031-account-mail-via-mail-gateway-smtp.md) | 계정 메일은 MailGateway 인터페이스 뒤에서 SMTP 로 보낸다 | 채택됨 | 2026-11-12 |
 | [ADR-0032](ADR-0032-email-link-token-hashed-fragment-post.md) | 이메일 링크 토큰은 해시로 저장하고, 링크는 URL fragment 로, 확인은 POST 로 한다 | 채택됨 | 2026-11-12 |
+| [ADR-0034](ADR-0034-accept-detail-minor-variants-history-dup-and-time-order.md) | 공연 상세의 경미한 변종 두 건(시트 재진입 뒤 중복 history 칸, 시각 순서 미검증)은 고치지 않고 수용한다 | 채택됨 | 2026-11-16 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다 | 2026-10-14 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로, 쓰기 가드 자체는 ADR-0029 로 대체됨) | 2026-10-14 |
 | [ADR-0017](ADR-0017-keep-write-guard-until-ownership-check.md) | 쓰기 가드는 공연 쓰기 API 에 소유권 검사가 붙을 때까지 유지한다 | ADR-0029 로 대체됨 | 2026-10-21 |
