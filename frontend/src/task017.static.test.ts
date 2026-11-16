@@ -29,10 +29,8 @@ describe('TASK-017 정적 검사', () => {
     expect(files('DESIGN-002')).toEqual([])
     // And DESIGN-003 은 기존 2건뿐이고 theme·components 위반 0건
     // TASK-020 — PerformanceDetailPage 가 재작성되어 더는 위반이 아니다(SC-31)
-    expect(files('DESIGN-003').sort()).toEqual([
-      'frontend/src/pages/PerformanceEditPage.tsx',
-      'frontend/src/pages/PerformanceListPage.tsx',
-    ])
+    // TASK-021 — 홈(PerformanceListPage)이 토큰으로 다시 쓰여 더는 위반이 아니다(SC-26)
+    expect(files('DESIGN-003').sort()).toEqual(['frontend/src/pages/PerformanceEditPage.tsx'])
     expect(files('DESIGN-003').filter((f) => /frontend\/src\/(theme|components)\//.test(f))).toEqual([])
     // And 세 제약 모두 no_target 에 없다
     expect(report.no_target).not.toContain('DESIGN-001')

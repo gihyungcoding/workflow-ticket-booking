@@ -43,6 +43,7 @@ import {
   startHome,
   timeRoute,
   urlsOf,
+  within,
 } from '../test/task021'
 import type { Item, Responder } from '../test/task021'
 import { calls, css, resetDocumentVisibility, squash, where } from '../test/task020'
@@ -66,7 +67,6 @@ afterEach(() => {
 })
 
 const moreButton = () => screen.queryByRole('button', { name: MORE })
-const countOf = (n: number) => new RegExp(`공연 ${n}(?!\\d)`)
 const titlesAre = (items: Item[]) => items.forEach((item, i) => expect(cardTitles()[i]).toContain(String(item.title)))
 const lastUrl = () => pathAndQuery(urlsOf(calls, LIST_KEY).at(-1)!)
 const noMoreFail = () => expect(screen.queryByText(MORE_FAIL)).not.toBeInTheDocument()
@@ -207,7 +207,7 @@ describe('TASK-021 — 홈 목록 (칩·더 보기·상태별 화면)', () => {
       await click(moreButton()!)
       // Then 카드는 25개이며 순서는 「공연 1」~「공연 25」다(앞 20개는 그대로)
       expect(cardLinks()).toHaveLength(25)
-      cardTitles().forEach((title, i) => expect(title).toMatch(countOf(i + 1)))
+      cardLinks().forEach((card, i) => expect(within(card).getByText(`공연 ${i + 1}`)).toBeInTheDocument())
       // And 「더 보기」는 없다. 목록 호출 수는 (칩 행은 칩을 누른 호출을 더해) 2 이고 두 번째 요청 URL 은 ?page=1 이다
       expect(moreButton()).not.toBeInTheDocument()
       const lists = urlsOf(calls, LIST_KEY).map(pathAndQuery)
@@ -301,7 +301,7 @@ describe('TASK-021 — 홈 목록 (칩·더 보기·상태별 화면)', () => {
       page1 = () => res(200, listBody(range(20, 24), 25))
       await click(more)
       // Then 「공연 20」은 한 번만 보이고(먼저 보인 쪽 유지) 카드는 24개이며 「더 보기」가 남아 있다
-      expect(cardTitles().filter((t) => countOf(20).test(t))).toHaveLength(1)
+      expect(cardLinks().filter((card) => within(card).queryByText('공연 20') !== null)).toHaveLength(1)
       expect(cardLinks()).toHaveLength(24)
       expect(moreButton()).toBeInTheDocument()
       if (row === 'h') {

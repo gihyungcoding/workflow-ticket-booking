@@ -828,12 +828,13 @@ describe('TASK-024 F4 — 쓰기 키 흔적', () => {
 
 describe('TASK-024 — 공개 조회 회귀', () => {
   const SC16 = [
-    { row: 'a', path: '/', key: 'GET /api/performances', header: true },
-    { row: 'b', path: '/performances/3', key: 'GET /api/performances/3', header: false }, // TASK-020 SC-28 — 상세에는 전역 헤더가 없다
+    // TASK-021 — 홈은 목록과 함께 머리글 후보(next-opening)를 부른다
+    { row: 'a', path: '/', keys: ['GET /api/performances', 'GET /api/performances/next-opening'], header: true },
+    { row: 'b', path: '/performances/3', keys: ['GET /api/performances/3'], header: false }, // TASK-020 SC-28 — 상세에는 전역 헤더가 없다
   ]
   test.each(SC16)(
     'SC-16 (regression) 무효 토큰이 저장돼 있어도 공개 조회 화면은 지금처럼 열린다 — $row $path',
-    async ({ path, key, header }) => {
+    async ({ path, keys, header }) => {
       // Given 무효 토큰 tok-stale, /me 401, 공개 조회는 200
       localStorage.setItem('accessToken', 'tok-stale')
       stubServer({ [ME]: () => res(401, { code: 'UNAUTHORIZED' }) })
@@ -845,7 +846,7 @@ describe('TASK-024 — 공개 조회 회귀', () => {
       expect(await screen.findByText('가을 재즈 콘서트')).toBeInTheDocument()
       await settle()
       // And 공연 조회는 그 주소의 것만, 오류 문구 없음
-      expect(calls.filter((c) => c.key.startsWith('GET /api/performances')).map((c) => c.key)).toEqual([key])
+      expect(calls.filter((c) => c.key.startsWith('GET /api/performances')).map((c) => c.key)).toEqual(keys)
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
       // And 전역 헤더는 비로그인 모양(헤더가 있는 화면에서)
       if (header) expect(within(document.body).getByRole('link', { name: '로그인' })).toBeInTheDocument()

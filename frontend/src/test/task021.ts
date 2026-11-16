@@ -90,7 +90,7 @@ export function startHome(options: HomeOptions = {}) {
   startFakeClock(options.device ?? S0)
   stubServer({
     [LIST_KEY]: listRoute(options.list ?? sianList()),
-    [NEXT_KEY]: asResponder(options.next ?? L4),
+    [NEXT_KEY]: asResponder(options.next === undefined ? L4 : options.next),
     [TIME]: options.time ?? timeRoute({ skew: options.skew ?? 0 }),
     ...(options.routes ?? {}),
   })
