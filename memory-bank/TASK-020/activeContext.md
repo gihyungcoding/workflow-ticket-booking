@@ -1,8 +1,8 @@
 ---
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
-phase: "4"
-phase_name: "Phase 4 - Verify (FAIL, 롤백 결정 대기)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario (Phase 4 FAIL → 시나리오 롤백)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-13
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 1회차 FAIL — 리뷰어 [correctness] 3건(RC-2 잔여·RC-3·RC-4). 롤백 대상(Phase 3 / 2a)을 사람에게 묻는 중.
+Phase 4 1회차 FAIL — 리뷰어 [correctness] 3건(RC-2 잔여·RC-3·RC-4). 사용자가 시나리오 롤백(2a)을 선택했다(2026-11-16, AskUserQuestion). 뿌리 4·변종 9 전부(RC-1~4)를 시나리오로 가져간다.
 
 ## 다음 한 걸음
 
-롤백 결정 후 해당 Phase. frontend 테스트는 `--testTimeout=60000` 으로 돌린다(시스템 부하).
+Phase 2a — VERIFY root_causes 변종 전부를 시나리오로. 이후 검증자 → 2b(HITL#1·2 재승인) → 3 → 4. frontend 테스트는 `--testTimeout=60000` 으로 돌린다(시스템 부하).
 
 ## 알아둬야 할 것
 
