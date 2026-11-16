@@ -136,7 +136,7 @@ export function PerformanceDetailPage() {
   const [state, setState] = useState<DetailState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
   // 시트는 history 칸 하나로 연다 — 뒤로 가기가 시트를 닫고 상세를 떠나지 않는다.
-  // 닫기 입력이 같은 갱신 안에 겹쳐도 한 칸만 되돌리도록, 시트가 닫힐 때까지 첫 입력만 받는다
+  // 닫기 입력이 같은 갱신 안에 겹쳐도 한 칸만 되돌리도록, 같은 틱에서는 첫 입력만 받는다
   const zoneSheetState = (location.state as { zoneSheet?: boolean } | null)?.zoneSheet === true
   const closing = useRef(false)
   useEffect(() => {
@@ -146,6 +146,10 @@ export function PerformanceDetailPage() {
     if (closing.current) return
     closing.current = true
     navigate(-1)
+    // 같은 틱의 중복만 막는다 — 되돌릴 칸이 없어 시트가 그대로면 다음 입력은 다시 시도한다
+    setTimeout(() => {
+      closing.current = false
+    }, 0)
   }
   // 기준 시각이 openAt 에 닿으면 그 뒤로는 시계가 필요 없다 — 시계를 끄고 이 사실만 기억한다(예정 → 예매 가능, 한 방향)
   const [opened, setOpened] = useState(false)
