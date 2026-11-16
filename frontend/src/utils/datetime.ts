@@ -91,7 +91,8 @@ export function isInstant(value: unknown): value is string {
   if (m === null) return false
   const [year, month, day, hour, minute, second] = m.slice(1, 7).map(Number)
   // Date.parse 는 2026-02-30 을 3월 2일로, T24:00:00 을 다음 날 0시로 읽는다 — 달력에 있는 값인지 되돌려 대조한다
-  const date = new Date(Date.UTC(year, month - 1, day))
+  const date = new Date(0)
+  date.setUTCFullYear(year, month - 1, day) // Date.UTC 는 연도 0~99 를 1900 년대로 읽는다
   if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return false
   if (hour > 23 || minute > 59 || second > 59) return false
   if (m[7] !== undefined && (Number(m[7]) > 23 || Number(m[8]) > 59)) return false
