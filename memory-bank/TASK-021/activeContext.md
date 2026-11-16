@@ -1,8 +1,8 @@
 ---
 task_id: TASK-021
 title: "홈 화면을 시안대로"
-phase: "1"
-phase_name: "Phase 1 - Plan 완료 (게이트 통과)"
+phase: "2a"
+phase_name: "Phase 2a - Scenario 완료 (게이트 통과)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-16
@@ -13,7 +13,7 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-021-home-screen-redesign"
 
-last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-021.json"
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 완료 — `PLAN_TASK-021.json`(flows 9 · input_fields 16 · 변경 대상 7). `check_plan.py` 통과.
+Phase 2a 완료 — 시나리오 29건(AC 9/9)·입력 경계 칸 152/152·독립검증 2회차 PASS. `validate_phase2a_gate.py` 7/7.
 
 ## 다음 한 걸음
 
-Phase 2a — `wf-scenario`. `coverage_matrix.py` 로 칸을 닫고 PLAN unresolved 10건(승인 테스트 수정 목록 포함)을 시나리오로 가져간다.
+Phase 2b — `wf-red`. Red 테스트 작성 후 시나리오와 함께 HITL#1·2 통합 승인. 승인 테스트 수정 7행(시나리오 맨 아래 표)도 같이 올린다.
 
 ## 알아둬야 할 것
 

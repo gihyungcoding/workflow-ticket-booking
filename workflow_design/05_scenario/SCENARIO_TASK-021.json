@@ -464,7 +464,7 @@
       "then": [
         "카드는 25개이며 순서는 「공연 1」~「공연 25」다(앞 20개는 그대로)",
         "「더 보기」는 없다. 목록 호출 수는 2이고 두 번째 요청 URL 은 `/api/performances?page=1` 이다",
-        "칩이 「예정」·「예매 가능」·「매진」·「마감」·「취소」일 때 같은 일을 하면 두 번째 요청 URL 은 각각 `?status=UPCOMING&page=1`·`?status=OPEN&page=1`·`?status=SOLD_OUT&page=1`·`?status=CLOSED&page=1`·`?status=CANCELLED&page=1` 이다(앞은 모두 `/api/performances`)"
+        "칩이 「예정」·「예매 가능」·「매진」·「마감」·「취소」일 때 같은 일을 하면 두 번째 요청 URL 은 각각 `?status=UPCOMING&page=1`·`?status=OPEN&page=1`·`?status=SOLD_OUT&page=1`·`?status=CLOSED&page=1`·`?status=CANCELLED&page=1` 이다(칩을 누른 뒤의 첫 요청은 `?status=<상태>` 이고, 두 번째가 `?status=<상태>&page=1` 이다. 칩을 누르기 전 초기 로드의 첫 요청만 쿼리 없는 `/api/performances` 다)"
       ],
       "covers": [
         "AC-5 공연이 20개를 넘으면 \"더 보기\"가 보이고 누르면 다음 20개가 아래에 붙는다. 다 불러오면 버튼이 없다. 실패하면 이미 보인 카드는 그대로이고 \"불러오지 못했어요 · 다시 시도\"가 보인다"
@@ -479,13 +479,13 @@
       "type": "boundary",
       "title": "「더 보기」는 불러온 개수가 전체보다 적을 때만 보인다",
       "given": [
-        "목록 첫 응답이 표의 `content`·`totalElements` 다"
+        "목록 첫 응답이 표의 `content`·`totalElements` 다 (`?page=1` 응답은 행이 적은 대로)"
       ],
       "when": [
-        "홈을 연다"
+        "홈을 연다 — 행 e·f·h 는 이어서 「더 보기」를 한 번 누른다"
       ],
       "then": [
-        "「더 보기」 표시는 표와 같다"
+        "「더 보기」 표시는 표와 같다(행 e·f·h 는 누른 뒤)"
       ],
       "table": [
         "| 행 | 불러온 개수 | `totalElements` | 「더 보기」 |",

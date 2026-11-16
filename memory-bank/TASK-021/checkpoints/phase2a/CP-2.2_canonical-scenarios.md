@@ -1,12 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-16T11:00:00Z
-summary: "SCENARIO_TASK-021.md 29건 — AC 9건 전부 매핑, 입력 경계 칸 152/152. 독립검증 1회차 FAIL(V11 false_cover 1건) 반영 후 2회차 요청."
+summary: "SCENARIO_TASK-021.md 29건 — AC 9건 전부 매핑, 입력 경계 칸 152/152. 독립검증 2회차 PASS(경고 6). 게이트 7/7."
 
 next_steps:
-  - "(2회차 진행 중) scenario-validator 2회차 — 이전 판정 원문을 붙인다. 통과하면 아래로"
-  - "[1회차 이전] scenario-validator 호출 → VALIDATION_TASK-021.json 에 그대로 저장. FAIL 이면 지적 kind(false_cover·bad_na·plan_gap)대로 고치고 같은 시나리오를 근거로 든 다른 칸도 전부 다시 본다"
-  - "통과하면 Phase 2b — 승인 테스트 수정 7행(시나리오 맨 아래 표)을 2b 통합 승인(HITL#1·2)에 함께 올린다"
+  - "Phase 2b — wf-red. 시나리오 29건·승인 테스트 수정 7행을 Red 테스트와 함께 2b 통합 승인(HITL#1·2)에 올린다"
+  - "2b 승인에서 사람이 볼 것: 아래 decisions 중 기준 시각 없을 때 기기 날짜 대체·선택된 칩 재클릭 무동작·목록 원소 하나 위반 시 전체 오류, 그리고 attempts 의 보류 경고"
 
 decisions:
   - decision: "새로 쓴 시나리오다(확장 아님). 규약 표 + 계약 위반 표 CV 를 정본으로 두고 후보·칩 응답·더 보기·첫 응답이 같은 표를 쓴다"
@@ -35,6 +34,9 @@ decisions:
     rationale: "기존 동작을 단언하는 행의 근거(TASK-022 교훈)"
 
 attempts:
+  - round: 2
+    result: PASS
+    detail: "fail 0·warn 6(V5·6·7·9·12 + 신규 2건은 문구 수정). 1회차 false_cover·V8 두 건 해소 확인. 게이트 validate_phase2a_gate 7/7"
   - round: 1
     result: FAIL
     detail: "V11 false_cover 1건 — content@F6:array.max+1 을 SC-16 d 가 덮는다고 적었으나 그 행은 첫 응답. 경고 6(V5·6·7·8·9·12)"
@@ -46,6 +48,8 @@ attempts:
       - "V5 — SC-06 의 OR 조건을 overflow-wrap anywhere|break-word 로 좁혔다"
       - "V6 — SC-15·17·18 의 When 을 하나로(홈이 열려 있다는 Given 로 이동)"
     warnings_deferred:
+      - "(2회차 신규) SC-15 세 번째 Then 의 모호한 「앞은 모두 /api/performances」와 SC-16 의 When 에 더 보기 조작이 없던 것은 2회차 통과 뒤 문구만 고쳤다 — 칩 뒤 첫 요청 ?status=<상태>, 초기 로드만 쿼리 없음 / 행 e·f·h 는 이어서 더 보기를 누른다. 검증자 재호출은 하지 않았다(경고만 있는 통과 — wf-scenario Step 4)"
+      - "(2회차) V12(1) 기기 시계는 design.inputs 에만 있고 input_fields 에는 없다 — datetime 칸을 새로 만들면 판정할 칸이 늘고 SC-02 g·SC-09 가 이미 그 경계(서버·기기 날짜 불일치, 자정)를 값으로 쓴다. 2b 승인에서 사람이 보강 여부를 본다"
       - "V6 나머지(SC-09 두 시점·SC-14·18·23 의 순서 있는 다단계 조작·SC-19·21·24) — 늦은 응답 폐기·세션 변화는 순서가 곧 검사 대상이라 표 행으로 둔다. 2b 승인에서 사람이 본다"
       - "V7 구현 누출 — SC-28(API 클라이언트)·SC-26(정적 제약)은 화면 밖 계약을 직접 시험하는 시나리오라 함수명·스크립트명이 불가피하다"
       - "V9 중복 — 같은 가드(늦은 응답 폐기)를 호출 지점별로 보는 의도적 반복"
