@@ -79,3 +79,10 @@ export function formatCountdown(remainingMs: number): string {
   if (minutes >= 1) return `${minutes}분 ${seconds}초`
   return `${seconds}초`
 }
+
+/**
+ * 서버가 주는 시각(ISO-8601 순간 — `Z` 또는 `±hh:mm` 이 붙은 `YYYY-MM-DDThh:mm:ss`)인가.
+ * `Date.parse` 는 '1'·'2026'·날짜만·오프셋 없는 시각도 받는다 — 오프셋이 없으면 기기 시간대에 따라 다른 순간이 된다.
+ */
+const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+export const isInstant = (value: unknown): value is string => typeof value === 'string' && INSTANT.test(value) && !Number.isNaN(Date.parse(value))

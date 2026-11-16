@@ -637,7 +637,10 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
 
     // When 표의 시간만큼 기기 시계를 흘린다 (e·f 는 해당 입력)
     if (row === 'a') await settle(15_000)
-    if (row === 'b') await settle(5_000)
+    if (row === 'b') {
+      await settle(5_000)
+      await settle(10) // 첫 표본 중단 뒤 둘째·셋째 표본(0ms 응답)이 도착할 시간
+    }
     if (row === 'c') await settle(15_000)
     if (row === 'd') await settle(16_000)
     if (row === 'e') {

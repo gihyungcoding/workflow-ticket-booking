@@ -10,7 +10,6 @@ import pinArt from '../assets/fluent/pin.svg'
 import ticketArt from '../assets/fluent/ticket.svg'
 import { ZoneMapSheet } from '../components/ZoneMapSheet'
 import { AppBar, CtaBar, Hero, Info, Page, Row } from '../components/ui'
-import { isBlankDisplay } from '../components/ui/text'
 import { useServerClock } from '../hooks/useServerClock'
 import { componentSizes, token } from '../theme/tokens'
 import { formatClock, formatCountdown, formatDateTime, formatTimeOfDay, kstDay } from '../utils/datetime'
@@ -41,7 +40,8 @@ const eyebrowStyle = {
 /** 포스터 — 없거나 불러오지 못하면 같은 크기의 회색 면과 아이콘 (시안 .photo) */
 function Poster({ title, url }: { title: string; url: unknown }) {
   const [broken, setBroken] = useState(false)
-  const usable = !broken && typeof url === 'string' && !isBlankDisplay(url)
+  // http·https 만 그린다 — javascript:·data: 같은 스킴은 포스터 없음으로 본다(서버는 https 만 받는다 — ADR-0028)
+  const usable = !broken && typeof url === 'string' && /^https?:\/\//i.test(url.trim())
   const alt = `${title} 포스터`
   return (
     <Box
@@ -136,20 +136,32 @@ export function PerformanceDetailPage() {
   const [state, setState] = useState<DetailState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
   // 시트는 history 칸 하나로 연다 — 뒤로 가기가 시트를 닫고 상세를 떠나지 않는다.
-  // 닫기 입력이 같은 갱신 안에 겹쳐도 한 칸만 되돌리도록, 같은 틱에서는 첫 입력만 받는다
+  // 이 화면에서 눌러 연 시트(pressed)는 그 칸을 한 칸 뒤로 닫는다. 열린 채 들어온 주소(새로고침·복원·붙여넣기)는
+  // 되돌아갈 칸이 상세라는 보장이 없어 그 칸을 시트 없는 상세로 바꿔 닫는다(SC-41).
+  // 닫기 입력은 시트가 실제로 닫힐 때까지 한 번만 받는다 — 한 칸 뒤로 가기는 브라우저에서 다음 태스크에 반영된다
   const zoneSheetState = (location.state as { zoneSheet?: boolean } | null)?.zoneSheet === true
-  const closing = useRef(false)
+  const pressed = useRef(false)
+  const closing = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
-    if (!zoneSheetState) closing.current = false
+    if (zoneSheetState) return
+    pressed.current = false
+    if (closing.current !== null) {
+      clearTimeout(closing.current)
+      closing.current = null
+    }
   }, [zoneSheetState])
+  const openSheet = () => {
+    pressed.current = true
+    navigate(location.pathname + location.search, { state: { zoneSheet: true } })
+  }
   const closeSheet = () => {
-    if (closing.current) return
-    closing.current = true
-    navigate(-1)
-    // 같은 틱의 중복만 막는다 — 되돌릴 칸이 없어 시트가 그대로면 다음 입력은 다시 시도한다
-    setTimeout(() => {
-      closing.current = false
-    }, 0)
+    if (closing.current !== null) return
+    // 안전망 — 닫히지 않은 채 오래 남으면 다음 입력을 다시 받는다
+    closing.current = setTimeout(() => {
+      closing.current = null
+    }, 1000)
+    if (pressed.current) navigate(-1)
+    else navigate(location.pathname + location.search, { replace: true, state: null })
   }
   // 기준 시각이 openAt 에 닿으면 그 뒤로는 시계가 필요 없다 — 시계를 끄고 이 사실만 기억한다(예정 → 예매 가능, 한 방향)
   const [opened, setOpened] = useState(false)
@@ -328,7 +340,7 @@ export function PerformanceDetailPage() {
             <Box
               component="button"
               type="button"
-              onClick={() => navigate(location.pathname + location.search, { state: { zoneSheet: true } })}
+              onClick={openSheet}
               sx={{ all: 'unset', display: 'block', cursor: 'pointer', width: '100%', '&:focus-visible': { outline: `2px solid ${token('--c-focus')}`, outlineOffset: '2px' } }}
             >
               <Row

@@ -1,4 +1,10 @@
-/** '' · 공백만 · null · undefined 는 "문구 없음"이다 (PLAN prop_schema 의 무효값) */
+import type { ReactNode } from 'react'
+
+/**
+ * '' · 공백만 · null · undefined 는 "문구 없음"이다 (PLAN prop_schema 의 무효값).
+ * 개발자가 넘기는 부품 문구(Field·Badge·Segmented·Toast)용 trim 판정이다. 서버가 준 표시 값은 `isBlankDisplay`(ADR-0027)를 쓴다 —
+ * 두 판정은 U+FEFF·U+200B·U+0085 에서 다르고 그것이 의도다(TASK-020 Phase 4 RC-1 — 부품 문구에는 서버 값이 들어오지 않는다).
+ */
 export function isBlank(value: string | null | undefined): value is '' | null | undefined {
   return value == null || value.trim() === ''
 }
@@ -10,4 +16,12 @@ export function isBlank(value: string | null | undefined): value is '' | null | 
  */
 export function isBlankDisplay(value: unknown): boolean {
   return typeof value !== 'string' || value.replace(/[\p{Z}\t-\r\u0085\u200b]/gu, '') === ''
+}
+
+/**
+ * 부품이 받은 문구(ReactNode)가 그릴 만한 내용인가 — 문자열은 isBlankDisplay 로(ADR-0027), 그 밖의 노드는 있으면 내용이다.
+ * 표시 문구의 「없음」 판정을 한 곳에 둔다(TASK-020 RC-1).
+ */
+export function hasContent(node: ReactNode): boolean {
+  return typeof node === 'string' ? !isBlankDisplay(node) : Boolean(node)
 }

@@ -14,6 +14,8 @@ export interface ServerClock {
 // setTimeout 은 2^31-1ms(약 24.8일)를 넘기면 바로 실행된다 — 먼 시각은 나눠서 기다린다
 const MAX_TIMER_MS = 2_147_483_647
 const SAMPLES = 3
+// 표본 하나가 이 시간 안에 오지 않으면 실패로 보고 요청을 끊는다 — 서버가 응답을 붙들어도 안내·재시도로 간다(TASK-020 SC-40)
+const SAMPLE_TIMEOUT_MS = 5000
 
 /**
  * 서버 시각과 기기 시각의 차이(오프셋)로 기준 시각을 센다 (ADR-0024) — 오프셋 계산은 이 훅 하나에 둔다.
@@ -27,22 +29,37 @@ export function useServerClock(options: { enabled: boolean; deadline?: number })
   const [, bump] = useState(0)
   const generation = useRef(0)
   const offsetRef = useRef<number | null>(null)
+  const inFlight = useRef<AbortController | null>(null)
+
+  // 진행 중인 측정을 오래된 것으로 만든다 — 결과는 버리고 요청도 끊는다
+  const invalidate = useCallback(() => {
+    generation.current += 1
+    inFlight.current?.abort()
+    inFlight.current = null
+  }, [])
 
   const measure = useCallback(async (showProgress: boolean) => {
-    const mine = ++generation.current
+    invalidate()
+    const mine = generation.current
     if (showProgress) setFailed(false)
     let best: { rtt: number; offset: number } | null = null
     for (let i = 0; i < SAMPLES; i += 1) {
       if (mine !== generation.current) return
       const sentAt = Date.now()
+      const controller = new AbortController()
+      inFlight.current = controller
+      const timer = setTimeout(() => controller.abort(), SAMPLE_TIMEOUT_MS)
       try {
-        const { now } = await getServerTime()
+        const { now } = await getServerTime(controller.signal)
         const receivedAt = Date.now()
         const rtt = receivedAt - sentAt
         const sample = { rtt, offset: Date.parse(now) + rtt / 2 - receivedAt }
         if (best === null || sample.rtt < best.rtt) best = sample
       } catch {
-        // 이 표본은 버린다 — 성공한 표본만으로 센다
+        // 이 표본은 버린다 — 성공한 표본만으로 센다 (시간 제한·중단도 여기로 온다)
+      } finally {
+        clearTimeout(timer)
+        if (inFlight.current === controller) inFlight.current = null
       }
     }
     if (mine !== generation.current) return
@@ -56,7 +73,7 @@ export function useServerClock(options: { enabled: boolean; deadline?: number })
       // 처음부터 못 맞췄다 — 기기 시계로 대신하지 않는다. 이미 맞춘 적이 있으면 그 오프셋을 유지한다
       setFailed(true)
     }
-  }, [])
+  }, [invalidate])
 
   // 측정: 화면에 들어올 때 한 번, 탭이 다시 보일 때마다 다시
   useEffect(() => {
@@ -69,10 +86,10 @@ export function useServerClock(options: { enabled: boolean; deadline?: number })
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
-      generation.current += 1
+      invalidate()
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [enabled, measure])
+  }, [enabled, measure, invalidate])
 
   // 표시: 1초마다, 그리고 deadline 이 되는 순간에 다시 그린다
   useEffect(() => {

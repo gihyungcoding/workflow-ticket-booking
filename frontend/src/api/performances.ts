@@ -1,4 +1,5 @@
 import { isBlankDisplay } from '../components/ui/text'
+import { isInstant } from '../utils/datetime'
 import { request } from './http'
 
 export type PerformanceStatus = 'UPCOMING' | 'OPEN' | 'SOLD_OUT' | 'CLOSED' | 'CANCELLED'
@@ -152,7 +153,6 @@ export async function cancelPerformance(id: string): Promise<Performance> {
 }
 
 const STATUSES: readonly string[] = ['UPCOMING', 'OPEN', 'SOLD_OUT', 'CLOSED', 'CANCELLED']
-const isTime = (value: unknown): value is string => typeof value === 'string' && !Number.isNaN(Date.parse(value))
 const isCount = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0
 
 /**
@@ -163,9 +163,10 @@ export function parseDetail(value: unknown): Performance | null {
   if (typeof value !== 'object' || value === null) return null
   const p = value as Record<string, unknown>
   if (typeof p.status !== 'string' || !STATUSES.includes(p.status)) return null
-  if (!isTime(p.startAt) || !isTime(p.openAt) || !isTime(p.closeAt)) return null
+  if (!isInstant(p.startAt) || !isInstant(p.openAt) || !isInstant(p.closeAt)) return null
   if (!isCount(p.availableSeats) || !isCount(p.totalSeats)) return null
-  if (typeof p.title !== 'string' || typeof p.venue !== 'string') return null
+  if (isBlankDisplay(p.title) || isBlankDisplay(p.venue)) return null
+  if (p.availableSeats > p.totalSeats) return null
   let sections: SectionSummary[] | undefined
   if (p.sections !== undefined && p.sections !== null) {
     if (!Array.isArray(p.sections)) return null
