@@ -2,147 +2,702 @@
   "task_id": "TASK-020",
   "route": "Frontend",
   "route_reason": "카운트다운·화면 상태 전이·시트는 프론트 범위. 서버 쪽(GET /api/time · posterUrl · sections[].area/areaNote/stageOrder)은 TASK-019 로 develop 에 있다 — TimeController.java:24-28, PerformanceResponse.java:23, SectionSummaryResponse.java:11-13 를 열어 확인했다. 화면 간 이동(예매하기 → 대기열 임시 화면)이 있어 F8 로 적었다.",
-
   "design": {
     "inputs": [
-      { "name": "id", "type": "string", "source": "주소 /performances/:id", "constraints": ["요청 경로 /api/performances/{id} 에 그대로 끼운다", "없는 공연이면 404"] },
-      { "name": "공연 상세 응답", "type": "Performance", "source": "외부 서버 응답 — GET /api/performances/{id}", "constraints": ["status·openAt·closeAt·availableSeats·totalSeats·venue·title·startAt", "posterUrl 은 없으면 키 생략", "sections 는 stageOrder 순, 원소에 area·areaNote(없으면 키 생략)·stageOrder"] },
-      { "name": "서버 시각 응답", "type": "{ now: ISO-8601 UTC }", "source": "외부 서버 응답 — GET /api/time", "constraints": ["Cache-Control: no-store", "한 번의 측정에 3회 호출", "상세가 예정(UPCOMING)일 때만 호출"] },
-      { "name": "기기 시각", "type": "number(ms)", "source": "Date.now()", "constraints": ["서버보다 빠르거나 느릴 수 있다(예: +3초)", "측정 왕복의 시작·끝 시각으로 오프셋을 구한다"] },
-      { "name": "문서 가시성", "type": "visible | hidden", "source": "document visibilitychange", "constraints": ["visible 로 바뀌면 오프셋 재측정"] },
-      { "name": "포스터 이미지 로드 결과", "type": "load | error", "source": "브라우저 img", "constraints": ["posterUrl 이 있어도 로드 실패 가능"] },
-      { "name": "사용자 동작", "type": "click / Esc / 뒤로 가기", "source": "관객", "constraints": ["예매하기(켜졌을 때만)", "구역 위치 보기", "시트 확인·흐린 바탕·Esc·뒤로 가기", "다시 시도·다시 맞추기·홈으로·공연으로 돌아가기"] },
-      { "name": "pathname", "type": "string", "source": "브라우저 주소", "constraints": ["상세·대기열 임시 화면은 전역 헤더 없이, /performances/new·/performances/:id/edit 는 지금처럼 헤더 포함"] }
+      {
+        "name": "id",
+        "type": "string",
+        "source": "주소 /performances/:id",
+        "constraints": [
+          "요청 경로 /api/performances/{id} 에 그대로 끼운다",
+          "없는 공연이면 404"
+        ]
+      },
+      {
+        "name": "공연 상세 응답",
+        "type": "Performance",
+        "source": "외부 서버 응답 — GET /api/performances/{id}",
+        "constraints": [
+          "status·openAt·closeAt·availableSeats·totalSeats·venue·title·startAt",
+          "posterUrl 은 없으면 키 생략",
+          "sections 는 stageOrder 순, 원소에 area·areaNote(없으면 키 생략)·stageOrder"
+        ]
+      },
+      {
+        "name": "서버 시각 응답",
+        "type": "{ now: ISO-8601 UTC }",
+        "source": "외부 서버 응답 — GET /api/time",
+        "constraints": [
+          "Cache-Control: no-store",
+          "한 번의 측정에 3회 호출",
+          "상세가 예정(UPCOMING)일 때만 호출"
+        ]
+      },
+      {
+        "name": "기기 시각",
+        "type": "number(ms)",
+        "source": "Date.now()",
+        "constraints": [
+          "서버보다 빠르거나 느릴 수 있다(예: +3초)",
+          "측정 왕복의 시작·끝 시각으로 오프셋을 구한다"
+        ]
+      },
+      {
+        "name": "문서 가시성",
+        "type": "visible | hidden",
+        "source": "document visibilitychange",
+        "constraints": [
+          "visible 로 바뀌면 오프셋 재측정"
+        ]
+      },
+      {
+        "name": "포스터 이미지 로드 결과",
+        "type": "load | error",
+        "source": "브라우저 img",
+        "constraints": [
+          "posterUrl 이 있어도 로드 실패 가능"
+        ]
+      },
+      {
+        "name": "사용자 동작",
+        "type": "click / Esc / 뒤로 가기",
+        "source": "관객",
+        "constraints": [
+          "예매하기(켜졌을 때만)",
+          "구역 위치 보기",
+          "시트 확인·흐린 바탕·Esc·뒤로 가기",
+          "다시 시도·다시 맞추기·홈으로·공연으로 돌아가기"
+        ]
+      },
+      {
+        "name": "pathname",
+        "type": "string",
+        "source": "브라우저 주소",
+        "constraints": [
+          "상세·대기열 임시 화면은 전역 헤더 없이, /performances/new·/performances/:id/edit 는 지금처럼 헤더 포함"
+        ]
+      }
     ],
     "outputs": [
-      { "name": "상세 화면 상태", "type": "예정 | 예매 가능 | 매진 | 마감 | 공연 취소 | 로딩 | 없는 공연 | 오류 | 기준 시각 실패", "description": "§2-5 표의 머리글·아랫줄·CTA. 예정은 role=timer 카운트다운, 기준 시각이 openAt 에 닿으면 재조회 없이 예매 가능(남은 좌석 0 이면 매진)" },
-      { "name": "구역 위치 시트", "type": "dialog", "description": "배치도(묶음 4개 이하) + 묶음 행(stageOrder 순) + 확인. 확인·흐린 바탕·Esc·뒤로 가기로 닫힌다. 구역 1개면 진입 행이 없다" },
-      { "name": "대기열 임시 화면", "type": "route /performances/:id/queue", "description": "앱바 뒤로 + '대기열을 준비하고 있어요' + 공연으로 돌아가기" },
-      { "name": "서버 호출 계약", "type": "요청 횟수", "description": "예정 상세 진입 시 GET /api/time ×3(+ 상세 ×1), 0초 전환 순간 상세 재조회 0회, 화면 복귀 시 GET /api/time ×3 다시, 예정이 아니면 /api/time 호출 0회" },
-      { "name": "AppBar", "type": "컴포넌트 계약", "description": "title 이 없거나 비면 h1 을 그리지 않는다(상세·가입·역할 선택)" }
+      {
+        "name": "상세 화면 상태",
+        "type": "예정 | 예매 가능 | 매진 | 마감 | 공연 취소 | 로딩 | 없는 공연 | 오류 | 기준 시각 실패",
+        "description": "§2-5 표의 머리글·아랫줄·CTA. 예정은 role=timer 카운트다운, 기준 시각이 openAt 에 닿으면 재조회 없이 예매 가능(남은 좌석 0 이면 매진)"
+      },
+      {
+        "name": "구역 위치 시트",
+        "type": "dialog",
+        "description": "배치도(묶음 4개 이하) + 묶음 행(stageOrder 순) + 확인. 확인·흐린 바탕·Esc·뒤로 가기로 닫힌다. 구역 1개면 진입 행이 없다"
+      },
+      {
+        "name": "대기열 임시 화면",
+        "type": "route /performances/:id/queue",
+        "description": "앱바 뒤로 + '대기열을 준비하고 있어요' + 공연으로 돌아가기"
+      },
+      {
+        "name": "서버 호출 계약",
+        "type": "요청 횟수",
+        "description": "예정 상세 진입 시 GET /api/time ×3(+ 상세 ×1), 0초 전환 순간 상세 재조회 0회, 화면 복귀 시 GET /api/time ×3 다시, 예정이 아니면 /api/time 호출 0회"
+      },
+      {
+        "name": "AppBar",
+        "type": "컴포넌트 계약",
+        "description": "title 이 없거나 비면 h1 을 그리지 않는다(상세·가입·역할 선택)"
+      }
     ],
     "flows": [
       {
-        "id": "F1", "name": "상세 진입·로딩·불러오기 실패",
-        "steps": ["id 로 GET /api/performances/{id} (로딩 중 머리글·포스터 자리 스켈레톤)", "404 → '찾는 공연이 없어요' + 홈으로(/)", "그 밖의 실패 → '공연 정보를 불러오지 못했어요' + 다시 시도(재조회)", "화면을 떠나거나 id 가 바뀐 뒤 늦게 온 응답은 버린다(ADR-0018)"],
-        "covers": ["AC-13 없는 공연 404 → '찾는 공연이 없어요' + 홈으로, 그 밖의 실패 → '공연 정보를 불러오지 못했어요' + 다시 시도"]
+        "id": "F1",
+        "name": "상세 진입·로딩·불러오기 실패",
+        "steps": [
+          "id 로 GET /api/performances/{id} (로딩 중 머리글·포스터 자리 스켈레톤)",
+          "404 → '찾는 공연이 없어요' + 홈으로(/)",
+          "그 밖의 실패 → '공연 정보를 불러오지 못했어요' + 다시 시도(재조회)",
+          "화면을 떠나거나 id 가 바뀐 뒤 늦게 온 응답은 버린다(ADR-0018)",
+          "시각 필드는 ISO 순간 형식, title·venue 는 공백이 아닌 문자열, totalSeats 는 0 이상 정수이고 availableSeats ≤ totalSeats — 어기면 오류 화면 (Phase 4 리뷰 RC-4·RC-1)"
+        ],
+        "covers": [
+          "AC-13 없는 공연 404 → '찾는 공연이 없어요' + 홈으로, 그 밖의 실패 → '공연 정보를 불러오지 못했어요' + 다시 시도"
+        ]
       },
       {
-        "id": "F2", "name": "기준 시각 측정(useServerClock)",
-        "steps": ["상세 status 가 UPCOMING 이면 GET /api/time 을 순차 3회", "표본마다 rtt = 끝−시작(기기 시각), offset = serverNow + rtt/2 − 끝", "가장 짧은 rtt 표본의 offset 채택 — 일부 실패는 성공한 표본만으로", "3회 모두 실패 → failed('기준 시각을 맞추지 못했어요' + 다시 맞추기) — 기기 시계로 대신하지 않는다", "다시 맞추기 → 재측정", "document 가 다시 visible 이 되면 재측정", "오래된 측정 결과(언마운트·재측정 세대)는 버린다"],
-        "covers": ["AC-1 기기 시계가 서버보다 3초 빠르게 설정돼 있어도 카운트다운이 서버 시각 기준", "AC-4 GET /api/time 이 실패하면 '기준 시각을 맞추지 못했어요' + 다시 맞추기, CTA 꺼짐", "AC-5 탭이 다시 보이면 GET /api/time 을 다시 호출한다"]
+        "id": "F2",
+        "name": "기준 시각 측정(useServerClock)",
+        "steps": [
+          "상세 status 가 UPCOMING 이면 GET /api/time 을 순차 3회",
+          "표본마다 rtt = 끝−시작(기기 시각), offset = serverNow + rtt/2 − 끝",
+          "가장 짧은 rtt 표본의 offset 채택 — 일부 실패는 성공한 표본만으로",
+          "3회 모두 실패 → failed('기준 시각을 맞추지 못했어요' + 다시 맞추기) — 기기 시계로 대신하지 않는다",
+          "다시 맞추기 → 재측정",
+          "document 가 다시 visible 이 되면 재측정",
+          "오래된 측정 결과(언마운트·재측정 세대)는 버린다",
+          "표본 하나는 5초 안에 응답이 없으면 실패로 보고 요청을 중단한다 — 화면을 떠나거나 오래된 측정이 되어도 진행 중인 요청을 중단한다 (Phase 4 리뷰 RC-3)"
+        ],
+        "covers": [
+          "AC-1 기기 시계가 서버보다 3초 빠르게 설정돼 있어도 카운트다운이 서버 시각 기준",
+          "AC-4 GET /api/time 이 실패하면 '기준 시각을 맞추지 못했어요' + 다시 맞추기, CTA 꺼짐",
+          "AC-5 탭이 다시 보이면 GET /api/time 을 다시 호출한다"
+        ]
       },
       {
-        "id": "F3", "name": "예정 — 카운트다운 표시",
-        "steps": ["기준 시각 = 기기 시각 + offset", "eyebrow '11월 11일(수) 오후 6:00 예매 오픈', 제목 '오픈까지 <timer>', 아랫줄 '티켓온 기준 오후 5:55:28 · 폰과 PC가 같은 순간에 열려요'", "남은 시간 표기 — 1일 이상 '3일 4시간', 1시간 이상 '2시간 15분', 1시간 미만 '4분 32초', 1분 미만 '32초'", "role=timer 와 aria-label 이 같은 문구('오픈까지 …')", "1초마다 갱신", "CTA 꺼짐 '예매하기 · 오후 6:00에 열려요'(기준 시각의 한국 날짜가 오늘이 아니면 '11월 14일(토) 오후 2:00에 열려요')"],
-        "covers": ["AC-1 CTA 가 서버 시각의 openAt 에 켜진다 (오프셋 주입 테스트)", "AC-3 카운트다운이 1일 이상·1시간 이상·1시간 미만·1분 미만에서 각각 '3일 4시간'·'2시간 15분'·'4분 32초'·'32초' 형식이고 role=timer 의 aria-label 이 같다"]
+        "id": "F3",
+        "name": "예정 — 카운트다운 표시",
+        "steps": [
+          "기준 시각 = 기기 시각 + offset",
+          "eyebrow '11월 11일(수) 오후 6:00 예매 오픈', 제목 '오픈까지 <timer>', 아랫줄 '티켓온 기준 오후 5:55:28 · 폰과 PC가 같은 순간에 열려요'",
+          "남은 시간 표기 — 1일 이상 '3일 4시간', 1시간 이상 '2시간 15분', 1시간 미만 '4분 32초', 1분 미만 '32초'",
+          "role=timer 와 aria-label 이 같은 문구('오픈까지 …')",
+          "1초마다 갱신",
+          "CTA 꺼짐 '예매하기 · 오후 6:00에 열려요'(기준 시각의 한국 날짜가 오늘이 아니면 '11월 14일(토) 오후 2:00에 열려요')"
+        ],
+        "covers": [
+          "AC-1 CTA 가 서버 시각의 openAt 에 켜진다 (오프셋 주입 테스트)",
+          "AC-3 카운트다운이 1일 이상·1시간 이상·1시간 미만·1분 미만에서 각각 '3일 4시간'·'2시간 15분'·'4분 32초'·'32초' 형식이고 role=timer 의 aria-label 이 같다"
+        ]
       },
       {
-        "id": "F4", "name": "0초 전환 — 재조회 없이 예매 가능",
-        "steps": ["기준 시각이 openAt 에 닿는 순간(openAt − 기준 시각 만큼 setTimeout) 화면 상태만 바꾼다", "상세 API 호출 0회", "availableSeats > 0 → 예매 가능('지금 예매할 수 있어요', CTA 켜진 '예매하기'), 0 → 매진", "전환은 예정 → 예매 가능/매진 한 방향만 — 다른 상태는 서버 응답 그대로(ADR-0026)", "이미 기준 시각 ≥ openAt 으로 진입하면 처음부터 전환된 모습"],
-        "covers": ["AC-2 기준 시각이 openAt 에 닿으면 상세 API 를 다시 부르지 않고(그 순간 호출 0회 — ADR-0026) '지금 예매할 수 있어요', CTA 가 켜진 '예매하기'로 바뀐다. 남은 좌석이 0 이면 「매진」으로 바뀐다"]
+        "id": "F4",
+        "name": "0초 전환 — 재조회 없이 예매 가능",
+        "steps": [
+          "기준 시각이 openAt 에 닿는 순간(openAt − 기준 시각 만큼 setTimeout) 화면 상태만 바꾼다",
+          "상세 API 호출 0회",
+          "availableSeats > 0 → 예매 가능('지금 예매할 수 있어요', CTA 켜진 '예매하기'), 0 → 매진",
+          "전환은 예정 → 예매 가능/매진 한 방향만 — 다른 상태는 서버 응답 그대로(ADR-0026)",
+          "이미 기준 시각 ≥ openAt 으로 진입하면 처음부터 전환된 모습"
+        ],
+        "covers": [
+          "AC-2 기준 시각이 openAt 에 닿으면 상세 API 를 다시 부르지 않고(그 순간 호출 0회 — ADR-0026) '지금 예매할 수 있어요', CTA 가 켜진 '예매하기'로 바뀐다. 남은 좌석이 0 이면 「매진」으로 바뀐다"
+        ]
       },
       {
-        "id": "F5", "name": "서버가 준 상태별 머리글·CTA",
-        "steps": ["OPEN — '지금 예매할 수 있어요' / '11월 18일(수) 오후 11:59에 마감돼요'(closeAt) / 켜진 '예매하기'", "SOLD_OUT — '모든 좌석이 팔렸어요' / 꺼짐 '매진'", "CLOSED — '예매가 마감됐어요' / 꺼짐 '예매 마감'", "CANCELLED — '공연이 취소됐어요' / CTA 없음", "이 상태들은 /api/time 을 부르지 않는다"],
-        "covers": ["AC-6 예매 가능·매진·마감·공연 취소 상태가 §2-5 표의 머리글·CTA 로 보인다"]
+        "id": "F5",
+        "name": "서버가 준 상태별 머리글·CTA",
+        "steps": [
+          "OPEN — '지금 예매할 수 있어요' / '11월 18일(수) 오후 11:59에 마감돼요'(closeAt) / 켜진 '예매하기'",
+          "SOLD_OUT — '모든 좌석이 팔렸어요' / 꺼짐 '매진'",
+          "CLOSED — '예매가 마감됐어요' / 꺼짐 '예매 마감'",
+          "CANCELLED — '공연이 취소됐어요' / CTA 없음",
+          "이 상태들은 /api/time 을 부르지 않는다"
+        ],
+        "covers": [
+          "AC-6 예매 가능·매진·마감·공연 취소 상태가 §2-5 표의 머리글·CTA 로 보인다"
+        ]
       },
       {
-        "id": "F6", "name": "공연 정보 표시",
-        "steps": ["포스터(4:3, 없음·로드 실패면 같은 크기 회색 면 + 아이콘, 대체 텍스트 '<공연명> 포스터')", "'고척스카이돔 · 21,000석' · 공연명 · 가격 · 공연 일시 · 1인 최대 4장", "가격 — sections 최솟값~최댓값 '110,000~150,000원', 한 가격이면 '150,000원'", "'열리면 이 순서로 골라요' 4단계 안내(고정 문구)", "'구역 위치 보기' 행(아랫줄 '<첫> 무대 바로 앞 → <끝> 맨 뒤') — 구역이 1개면 행을 숨긴다"],
-        "covers": ["AC-8 가격이 sections 의 최솟값~최댓값('110,000~150,000원'), 한 가격이면 '150,000원'", "AC-11 포스터가 없거나 이미지 로드가 실패하면 회색 면 + 아이콘이 같은 크기", "AC-10 구역이 1개인 공연은 '구역 위치 보기' 행이 없다", "AC-14 375px 에서 concert.html 과 나란히 띄워 구조·문구·색이 같다"]
+        "id": "F6",
+        "name": "공연 정보 표시",
+        "steps": [
+          "포스터(4:3, 없음·로드 실패면 같은 크기 회색 면 + 아이콘, 대체 텍스트 '<공연명> 포스터')",
+          "'고척스카이돔 · 21,000석' · 공연명 · 가격 · 공연 일시 · 1인 최대 4장",
+          "가격 — sections 최솟값~최댓값 '110,000~150,000원', 한 가격이면 '150,000원'",
+          "'열리면 이 순서로 골라요' 4단계 안내(고정 문구)",
+          "'구역 위치 보기' 행(아랫줄 '<첫> 무대 바로 앞 → <끝> 맨 뒤') — 구역이 1개면 행을 숨긴다"
+        ],
+        "covers": [
+          "AC-8 가격이 sections 의 최솟값~최댓값('110,000~150,000원'), 한 가격이면 '150,000원'",
+          "AC-11 포스터가 없거나 이미지 로드가 실패하면 회색 면 + 아이콘이 같은 크기",
+          "AC-10 구역이 1개인 공연은 '구역 위치 보기' 행이 없다",
+          "AC-14 375px 에서 concert.html 과 나란히 띄워 구조·문구·색이 같다"
+        ]
       },
       {
-        "id": "F7", "name": "구역 위치 시트",
-        "steps": ["'구역 위치 보기' → 시트 열림(history 엔트리 하나 추가)", "sections 를 stageOrder 순으로 같은 area 끼리 묶는다(묶음)", "묶음 4개 이하 → 배치도(무대 + 첫 묶음 등급을 앞→뒤로 쌓기 + 나머지 묶음은 바깥 고리) + 묶음 행", "묶음 5개 이상 → 배치도 없이 묶음 행만", "묶음 행 — '플로어 F1~F4' / areaNote / '150,000원'(없으면 설명 줄 없음)", "확인·흐린 바탕·Esc → 닫힘, 브라우저 뒤로 가기 → 닫힘(화면 이탈 아님)"],
-        "covers": ["AC-9 '구역 위치 보기'를 누르면 시트가 열리고, 배치도와 묶음 행이 stageOrder 순('플로어 F1~F4 / 무대 앞 바닥, F1이 가장 앞 / 150,000원')으로 보인다. 확인·흐린 바탕·뒤로 가기로 닫힌다", "AC-10 묶음이 5개 이상이면 배치도 없이 행만 보인다", "AC-14 375px 에서 zone-map.html 과 나란히 띄워 구조·문구·색이 같다"]
+        "id": "F7",
+        "name": "구역 위치 시트",
+        "steps": [
+          "'구역 위치 보기' → 시트 열림(history 엔트리 하나 추가)",
+          "sections 를 stageOrder 순으로 같은 area 끼리 묶는다(묶음)",
+          "묶음 4개 이하 → 배치도(무대 + 첫 묶음 등급을 앞→뒤로 쌓기 + 나머지 묶음은 바깥 고리) + 묶음 행",
+          "묶음 5개 이상 → 배치도 없이 묶음 행만",
+          "묶음 행 — '플로어 F1~F4' / areaNote / '150,000원'(없으면 설명 줄 없음)",
+          "확인·흐린 바탕·Esc → 닫힘, 브라우저 뒤로 가기 → 닫힘(화면 이탈 아님)",
+          "닫기 입력은 시트가 실제로 닫힐 때까지 한 번만 처리한다(비동기 history 포함). 이 화면에서 눌러 연 시트는 한 칸 뒤로, 열린 채 들어온 주소는 시트 칸을 시트 없는 상세로 바꾸어 닫는다 (Phase 4 리뷰 RC-2)"
+        ],
+        "covers": [
+          "AC-9 '구역 위치 보기'를 누르면 시트가 열리고, 배치도와 묶음 행이 stageOrder 순('플로어 F1~F4 / 무대 앞 바닥, F1이 가장 앞 / 150,000원')으로 보인다. 확인·흐린 바탕·뒤로 가기로 닫힌다",
+          "AC-10 묶음이 5개 이상이면 배치도 없이 행만 보인다",
+          "AC-14 375px 에서 zone-map.html 과 나란히 띄워 구조·문구·색이 같다"
+        ]
       },
       {
-        "id": "F8", "name": "화면 이동 — 예매하기 · 대기열 임시 화면 · 홈으로",
-        "steps": ["켜진 '예매하기' 클릭 → /performances/:id/queue (꺼진 CTA 는 이동하지 않는다)", "대기열 임시 화면 — 앱바 뒤로, '대기열을 준비하고 있어요', '공연으로 돌아가기' → /performances/:id", "없는 공연 '홈으로' → /"],
-        "covers": ["AC-7 켜진 '예매하기'를 누르면 /performances/:id/queue 로 가고 '대기열을 준비하고 있어요'가 보인다"]
+        "id": "F8",
+        "name": "화면 이동 — 예매하기 · 대기열 임시 화면 · 홈으로",
+        "steps": [
+          "켜진 '예매하기' 클릭 → /performances/:id/queue (꺼진 CTA 는 이동하지 않는다)",
+          "대기열 임시 화면 — 앱바 뒤로, '대기열을 준비하고 있어요', '공연으로 돌아가기' → /performances/:id",
+          "없는 공연 '홈으로' → /"
+        ],
+        "covers": [
+          "AC-7 켜진 '예매하기'를 누르면 /performances/:id/queue 로 가고 '대기열을 준비하고 있어요'가 보인다"
+        ]
       },
       {
-        "id": "F9", "name": "제목 없는 AppBar 의 빈 h1 제거",
-        "steps": ["AppBar title 이 undefined·''·공백만이면 h1 을 그리지 않는다", "제목이 있으면 지금처럼 h1", "상세·가입·역할 선택 화면의 h1 은 Hero 하나뿐"],
-        "covers": ["AC-12 제목이 없는 앱바(상세·가입·역할 선택)에 빈 h1 이 없다 (TASK-018 drift)"]
+        "id": "F9",
+        "name": "제목 없는 AppBar 의 빈 h1 제거",
+        "steps": [
+          "AppBar title 이 undefined·''·공백만이면 h1 을 그리지 않는다",
+          "제목이 있으면 지금처럼 h1",
+          "상세·가입·역할 선택 화면의 h1 은 Hero 하나뿐"
+        ],
+        "covers": [
+          "AC-12 제목이 없는 앱바(상세·가입·역할 선택)에 빈 h1 이 없다 (TASK-018 drift)"
+        ]
       },
       {
-        "id": "F10", "name": "상세·대기열 임시 화면의 레이아웃 — 전역 헤더 없음",
-        "steps": ["/performances/:id 와 /performances/:id/queue 는 Container·AppHeader 없이 시안처럼 한 장으로 그린다(사용자 결정 2026-11-13)", "/performances/new · /performances/:id/edit · / 는 지금처럼 헤더 포함", "판별은 라우터와 같은 순위 규칙으로 — 끝 슬래시·대소문자·퍼센트 인코딩·깨진 인코딩"],
-        "covers": ["AC-14 375px 에서 concert.html·zone-map.html 과 나란히 띄워 구조·문구·색이 같다 (회차·5분 전 안내는 §8 의 차이)"]
+        "id": "F10",
+        "name": "상세·대기열 임시 화면의 레이아웃 — 전역 헤더 없음",
+        "steps": [
+          "/performances/:id 와 /performances/:id/queue 는 Container·AppHeader 없이 시안처럼 한 장으로 그린다(사용자 결정 2026-11-13)",
+          "/performances/new · /performances/:id/edit · / 는 지금처럼 헤더 포함",
+          "판별은 라우터와 같은 순위 규칙으로 — 끝 슬래시·대소문자·퍼센트 인코딩·깨진 인코딩"
+        ],
+        "covers": [
+          "AC-14 375px 에서 concert.html·zone-map.html 과 나란히 띄워 구조·문구·색이 같다 (회차·5분 전 안내는 §8 의 차이)"
+        ]
       }
     ],
     "input_fields": [
-      { "field": "id", "flows": ["F1", "F8"], "kinds": ["required", "opaque"], "note": "주소 파라미터 — 요청 경로에 끼워 넣는다" },
-      { "field": "detailResponse", "flows": ["F1"], "kinds": ["server_response", "async_result"], "note": "GET /api/performances/{id} — 404 와 그 밖의 실패를 가른다, 늦은 응답은 버린다" },
-      { "field": "timeResponse", "flows": ["F2"], "kinds": ["server_response", "async_result"], "note": "GET /api/time — 3회 중 일부 실패·전부 실패, 측정 중 언마운트·재측정" },
-      { "field": "now", "flows": ["F2", "F3"], "kinds": ["required", "json_field"], "note": "시각 응답의 now — 키 없음·문자열이 아닌 값·해석 못 하는 시각" },
-      { "field": "openAt", "flows": ["F3", "F4"], "kinds": ["required", "json_field", "datetime"], "note": "기준 시각 == openAt 경계 — 처음부터 닿은 진입·타이머 전환·화면 복귀 재측정이 같은 비교" },
-      { "field": "closeAt", "flows": ["F5"], "kinds": ["required", "json_field"], "note": "예매 가능 아랫줄 '…에 마감돼요'" },
-      { "field": "availableSeats", "flows": ["F4", "F5"], "kinds": ["required", "json_field", "integer"], "note": "0 이면 매진 — 전환 경계 0·1" },
-      { "field": "status", "flows": ["F1", "F4", "F5"], "kinds": ["required", "enum"], "note": "UPCOMING·OPEN·SOLD_OUT·CLOSED·CANCELLED 다섯 값과 정의 밖 값(배지는 null 이었다)" },
-      { "field": "posterUrl", "flows": ["F6"], "kinds": ["required"], "note": "키 생략 = 포스터 없음. url 형식은 서버가 판정(ADR-0028) — 로드 실패는 img 이벤트" },
-      { "field": "sections", "flows": ["F6", "F7"], "kinds": ["required", "array", "json_field"], "note": "상세에서만 채워진다(목록 응답엔 없음) — 비어 있음·구역 1개·묶음 5개 이상" },
-      { "field": "price", "flows": ["F6", "F7"], "kinds": ["required", "integer"], "note": "sections[].price — 최솟값~최댓값, 모두 같으면 한 가격, 천 단위 표기" },
-      { "field": "grade", "flows": ["F7"], "kinds": ["required", "string"], "note": "sections[].grade — 묶음 제목 'F1~F4' 와 배치도 라벨, 서버 상한 20자" },
-      { "field": "area", "flows": ["F7"], "kinds": ["required", "string"], "note": "sections[].area — 묶음 이름, 옛 공연은 등급 이름과 같다" },
-      { "field": "areaNote", "flows": ["F7"], "kinds": ["string"], "note": "sections[].areaNote — 키 생략이면 설명 줄 없음, 서버 상한 60자" },
-      { "field": "stageOrder", "flows": ["F7"], "kinds": ["required", "integer"], "note": "sections[].stageOrder — 무대에서 가까운 순, 서버가 정렬해 주지만 화면도 이 순서를 정본으로 쓴다" },
-      { "field": "visibilityState", "flows": ["F2"], "kinds": ["enum"], "note": "visible·hidden — 예정이 아니면 재측정하지 않는다" },
-      { "field": "pathname", "flows": ["F10"], "kinds": ["route_path"], "note": "상세·대기열은 헤더 없음, /performances/new·/edit 는 헤더 있음 — TASK-018 RC-2 선례" }
+      {
+        "field": "id",
+        "flows": [
+          "F1",
+          "F8"
+        ],
+        "kinds": [
+          "required",
+          "opaque"
+        ],
+        "note": "주소 파라미터 — 요청 경로에 끼워 넣는다"
+      },
+      {
+        "field": "detailResponse",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result"
+        ],
+        "note": "GET /api/performances/{id} — 404 와 그 밖의 실패를 가른다, 늦은 응답은 버린다"
+      },
+      {
+        "field": "timeResponse",
+        "flows": [
+          "F2"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result"
+        ],
+        "note": "GET /api/time — 3회 중 일부 실패·전부 실패, 측정 중 언마운트·재측정"
+      },
+      {
+        "field": "now",
+        "flows": [
+          "F2",
+          "F3"
+        ],
+        "kinds": [
+          "required",
+          "json_field"
+        ],
+        "note": "시각 응답의 now — 키 없음·문자열이 아닌 값·해석 못 하는 시각"
+      },
+      {
+        "field": "openAt",
+        "flows": [
+          "F3",
+          "F4"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "datetime"
+        ],
+        "note": "기준 시각 == openAt 경계 — 처음부터 닿은 진입·타이머 전환·화면 복귀 재측정이 같은 비교"
+      },
+      {
+        "field": "closeAt",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field"
+        ],
+        "note": "예매 가능 아랫줄 '…에 마감돼요'"
+      },
+      {
+        "field": "availableSeats",
+        "flows": [
+          "F4",
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "integer"
+        ],
+        "note": "0 이면 매진 — 전환 경계 0·1"
+      },
+      {
+        "field": "status",
+        "flows": [
+          "F1",
+          "F4",
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "enum"
+        ],
+        "note": "UPCOMING·OPEN·SOLD_OUT·CLOSED·CANCELLED 다섯 값과 정의 밖 값(배지는 null 이었다)"
+      },
+      {
+        "field": "posterUrl",
+        "flows": [
+          "F6"
+        ],
+        "kinds": [
+          "required"
+        ],
+        "note": "키 생략 = 포스터 없음. url 형식은 서버가 판정(ADR-0028) — 로드 실패는 img 이벤트"
+      },
+      {
+        "field": "sections",
+        "flows": [
+          "F6",
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "array",
+          "json_field"
+        ],
+        "note": "상세에서만 채워진다(목록 응답엔 없음) — 비어 있음·구역 1개·묶음 5개 이상"
+      },
+      {
+        "field": "price",
+        "flows": [
+          "F6",
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "integer"
+        ],
+        "note": "sections[].price — 최솟값~최댓값, 모두 같으면 한 가격, 천 단위 표기"
+      },
+      {
+        "field": "grade",
+        "flows": [
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "string"
+        ],
+        "note": "sections[].grade — 묶음 제목 'F1~F4' 와 배치도 라벨, 서버 상한 20자"
+      },
+      {
+        "field": "area",
+        "flows": [
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "string"
+        ],
+        "note": "sections[].area — 묶음 이름, 옛 공연은 등급 이름과 같다"
+      },
+      {
+        "field": "areaNote",
+        "flows": [
+          "F7"
+        ],
+        "kinds": [
+          "string"
+        ],
+        "note": "sections[].areaNote — 키 생략이면 설명 줄 없음, 서버 상한 60자"
+      },
+      {
+        "field": "stageOrder",
+        "flows": [
+          "F7"
+        ],
+        "kinds": [
+          "required",
+          "integer"
+        ],
+        "note": "sections[].stageOrder — 무대에서 가까운 순, 서버가 정렬해 주지만 화면도 이 순서를 정본으로 쓴다"
+      },
+      {
+        "field": "visibilityState",
+        "flows": [
+          "F2"
+        ],
+        "kinds": [
+          "enum"
+        ],
+        "note": "visible·hidden — 예정이 아니면 재측정하지 않는다"
+      },
+      {
+        "field": "pathname",
+        "flows": [
+          "F10"
+        ],
+        "kinds": [
+          "route_path"
+        ],
+        "note": "상세·대기열은 헤더 없음, /performances/new·/edit 는 헤더 있음 — TASK-018 RC-2 선례"
+      },
+      {
+        "field": "startAt",
+        "flows": [
+          "F6"
+        ],
+        "kinds": [
+          "required",
+          "json_field"
+        ],
+        "note": "공연 일시 — 시각 형식은 ISO 순간(Date.parse 만으로 판정하지 않는다)"
+      },
+      {
+        "field": "title",
+        "flows": [
+          "F6"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ],
+        "note": "공연명 — 공백 판정은 ADR-0027 과 같은 한 판정"
+      },
+      {
+        "field": "venue",
+        "flows": [
+          "F6"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ],
+        "note": "장소 — 공백 판정은 ADR-0027 과 같은 한 판정"
+      },
+      {
+        "field": "totalSeats",
+        "flows": [
+          "F6"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "integer"
+        ],
+        "note": "'21,000석' 표기 — availableSeats ≤ totalSeats"
+      }
     ],
     "prop_schema": [
-      { "part": "카운트다운 숫자(.clock-num)", "context_dependent": "font-size: calc(var(--fs-title) * 1.75) · font-weight 800 · line-height 1.12 · letter-spacing -0.03em · font-variant-numeric: tabular-nums · display:block", "check": "토큰 계산식으로 표현(DESIGN-003 매직 넘버 아님). 숫자가 바뀌어도 폭이 흔들리지 않는지 브라우저에서" },
-      { "part": "상세 흰 바탕(.plain) 위 채움 부품", "context_dependent": ".plain, .block, .sheet { --c-fill: var(--c-bg) } — 채움색을 쓰는 Row 의 lead·시트 안 견본(sw)이 흰 면에서 사라지지 않게", "check": "Page plain · Sheet 가 이미 --c-fill 을 정의한다 — 시트 안 Row 로 확인" },
-      { "part": "하단 CTA(.cta)", "context_dependent": ".plain .cta { background: linear-gradient(to top, var(--c-surface) 70%, transparent) } — 흰 바탕 위에서는 --c-surface, CtaBar.tsx 는 --c-bg 고정", "check": "상세(흰 바탕)에서 CTA 뒤에 회색 띠가 비치는지 Phase 4 브라우저로. 비치면 CtaBar 에 plain 면 지원 추가(조건부 target)" },
-      { "part": "꺼진 예매하기(.btn[aria-disabled=true])", "context_dependent": "pointer-events: none · 배경 --c-disabled-bg · 글자 --c-text-disabled", "check": "꺼진 CTA 를 눌러도 이동하지 않는다(시나리오), CtaBar disabled 는 button disabled 로 같은 효과" },
-      { "part": "시트(.sheet + .dim)", "context_dependent": "dim z-index 20 · sheet z-index 21 · 하단 고정 CTA 와 앱바(z 5) 위에 뜬다 · 시트 안 .row-trail 은 color --c-text-1 · font-weight 700(가격이 도드라진다)", "check": "시트가 열려 있을 때 CTA 가 시트 위로 올라오지 않는지, 시트 안 가격이 바깥 Row 의 trail(--c-text-2)과 다르게 진하게 나오는지" },
-      { "part": "Row(.row-art·.row-trail·.row-main)", "context_dependent": ".row-art flex:none 44px(img 36px) · .row-trail flex:none · .row-main flex:1 min-width:0", "check": "긴 묶음 이름·설명이 옆 가격을 밀어내지 않고 줄어든다" },
-      { "part": "포스터(.photo)", "context_dependent": "aspect-ratio 4/3 · overflow hidden · border-radius --r-m · background var(--c-bg)(회색) · img object-fit cover", "check": "포스터 없음·로드 실패의 회색 면도 같은 4/3. 흰 바탕 상세에서 --c-surface(흰색)로 칠하면 사라진다 — 문서 §2-5 의 '--c-surface' 는 시안과 다르다(unresolved 참고)" },
-      { "part": "배치도 SVG(.zmap)", "context_dependent": "width 100% · height auto · max-height 280px · color var(--c-text-1) · font-family inherit · text-anchor middle · 색은 클래스(.stage·.fl·.l1·.l2)별 토큰 — l2 만 stroke-dasharray 4 3", "check": "색은 token()/var() 만(DESIGN-002), 좌표 숫자는 JSX width={N} 형태 금지(DESIGN-003 정규식)" }
+      {
+        "part": "카운트다운 숫자(.clock-num)",
+        "context_dependent": "font-size: calc(var(--fs-title) * 1.75) · font-weight 800 · line-height 1.12 · letter-spacing -0.03em · font-variant-numeric: tabular-nums · display:block",
+        "check": "토큰 계산식으로 표현(DESIGN-003 매직 넘버 아님). 숫자가 바뀌어도 폭이 흔들리지 않는지 브라우저에서"
+      },
+      {
+        "part": "상세 흰 바탕(.plain) 위 채움 부품",
+        "context_dependent": ".plain, .block, .sheet { --c-fill: var(--c-bg) } — 채움색을 쓰는 Row 의 lead·시트 안 견본(sw)이 흰 면에서 사라지지 않게",
+        "check": "Page plain · Sheet 가 이미 --c-fill 을 정의한다 — 시트 안 Row 로 확인"
+      },
+      {
+        "part": "하단 CTA(.cta)",
+        "context_dependent": ".plain .cta { background: linear-gradient(to top, var(--c-surface) 70%, transparent) } — 흰 바탕 위에서는 --c-surface, CtaBar.tsx 는 --c-bg 고정",
+        "check": "상세(흰 바탕)에서 CTA 뒤에 회색 띠가 비치는지 Phase 4 브라우저로. 비치면 CtaBar 에 plain 면 지원 추가(조건부 target)"
+      },
+      {
+        "part": "꺼진 예매하기(.btn[aria-disabled=true])",
+        "context_dependent": "pointer-events: none · 배경 --c-disabled-bg · 글자 --c-text-disabled",
+        "check": "꺼진 CTA 를 눌러도 이동하지 않는다(시나리오), CtaBar disabled 는 button disabled 로 같은 효과"
+      },
+      {
+        "part": "시트(.sheet + .dim)",
+        "context_dependent": "dim z-index 20 · sheet z-index 21 · 하단 고정 CTA 와 앱바(z 5) 위에 뜬다 · 시트 안 .row-trail 은 color --c-text-1 · font-weight 700(가격이 도드라진다)",
+        "check": "시트가 열려 있을 때 CTA 가 시트 위로 올라오지 않는지, 시트 안 가격이 바깥 Row 의 trail(--c-text-2)과 다르게 진하게 나오는지"
+      },
+      {
+        "part": "Row(.row-art·.row-trail·.row-main)",
+        "context_dependent": ".row-art flex:none 44px(img 36px) · .row-trail flex:none · .row-main flex:1 min-width:0",
+        "check": "긴 묶음 이름·설명이 옆 가격을 밀어내지 않고 줄어든다"
+      },
+      {
+        "part": "포스터(.photo)",
+        "context_dependent": "aspect-ratio 4/3 · overflow hidden · border-radius --r-m · background var(--c-bg)(회색) · img object-fit cover",
+        "check": "포스터 없음·로드 실패의 회색 면도 같은 4/3. 흰 바탕 상세에서 --c-surface(흰색)로 칠하면 사라진다 — 문서 §2-5 의 '--c-surface' 는 시안과 다르다(unresolved 참고)"
+      },
+      {
+        "part": "배치도 SVG(.zmap)",
+        "context_dependent": "width 100% · height auto · max-height 280px · color var(--c-text-1) · font-family inherit · text-anchor middle · 색은 클래스(.stage·.fl·.l1·.l2)별 토큰 — l2 만 stroke-dasharray 4 3",
+        "check": "색은 token()/var() 만(DESIGN-002), 좌표 숫자는 JSX width={N} 형태 금지(DESIGN-003 정규식)"
+      }
     ]
   },
-
   "architecture_refs": {
     "layer": "Frontend (React)",
     "note": "화면 렌더링·사용자 입력·API 호출만. 오픈 여부의 최종 판정은 서버의 주입된 Clock(ADR-0024) — 화면의 0초 전환은 표시일 뿐이고 서버 판정은 흐름 3 의 대기열 진입이 한다. 새 계층·컴포넌트 종류는 없다(훅 디렉터리 신설뿐).",
-    "constraints_applied": ["DESIGN-001", "DESIGN-002", "DESIGN-003", "DEPLOY-001"]
+    "constraints_applied": [
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003",
+      "DEPLOY-001"
+    ]
   },
-  "adr_refs": ["ADR-0002", "ADR-0007", "ADR-0008", "ADR-0018", "ADR-0022", "ADR-0024", "ADR-0026"],
-
+  "adr_refs": [
+    "ADR-0002",
+    "ADR-0007",
+    "ADR-0008",
+    "ADR-0018",
+    "ADR-0022",
+    "ADR-0024",
+    "ADR-0026"
+  ],
   "codebase_analysis": {
     "target_files": [
-      { "path": "frontend/src/pages/PerformanceDetailPage.tsx", "change": "재작성 — 로딩·없는 공연·오류, 예정/예매 가능/매진/마감/취소 머리글·CTA, 카운트다운, 포스터·가격·일시, 4단계 안내, 구역 위치 행·시트, 예매하기 이동. MUI Stack·Typography 대신 components/ui 부품" },
-      { "path": "frontend/src/api/performances.ts", "change": "Performance.posterUrl?, SectionSummary.area·areaNote?·stageOrder 타입 추가" },
-      { "path": "frontend/src/utils/datetime.ts", "change": "한국 시간(Asia/Seoul) 표기 formatDateTime·formatClock·formatCountdown 추가, 기존 toDatetimeLocalInput 옆" },
-      { "path": "frontend/src/components/ui/AppBar.tsx", "change": "title 이 없거나 비면 h1 을 그리지 않는다(지금은 {title ?? ''} 로 빈 h1)" },
-      { "path": "frontend/src/App.tsx", "change": "/performances/:id/queue 라우트 추가, 상세·대기열은 Container·AppHeader 없이 그리도록 레이아웃 분기(/performances/new·/edit 는 유지)" },
-      { "path": "frontend/src/components/ui/CtaBar.tsx", "change": "조건부 — 흰 바탕 상세에서 CTA 뒤 회색 띠가 비치면 plain 면의 --c-surface 그라데이션 지원(prop_schema 참고, Phase 4 브라우저 확인 뒤 필요할 때만)" },
-      { "path": "frontend/src/api/time.ts", "change": "GET /api/time 호출 getServerTime() — 토큰 없이 fetch(apiUrl), cache: no-store", "new": true },
-      { "path": "frontend/src/hooks/useServerClock.ts", "change": "3회 측정·최소 왕복 표본 오프셋·visibilitychange 재측정·실패 상태·다시 맞추기·세대로 늦은 결과 폐기(hooks/ 디렉터리 신설)", "new": true },
-      { "path": "frontend/src/utils/zones.ts", "change": "sections → 묶음(stageOrder 순·같은 area 연속)·묶음 제목·가격·'<첫> 무대 바로 앞 → <끝> 맨 뒤' 계산 — 시트·상세 행·배치도가 같이 쓴다(spec paths 에 없는 순수 헬퍼)", "new": true },
-      { "path": "frontend/src/components/ZoneMap.tsx", "change": "배치도 SVG — 무대 + 첫 묶음 쌓기 + 바깥 고리, 색은 토큰", "new": true },
-      { "path": "frontend/src/components/ZoneMapSheet.tsx", "change": "Sheet 안에 그립·제목·ZoneMap·묶음 행·확인, 뒤로 가기로 닫힘", "new": true },
-      { "path": "frontend/src/pages/QueuePlaceholderPage.tsx", "change": "대기열 임시 화면 — 앱바 뒤로 + '대기열을 준비하고 있어요' + 공연으로 돌아가기(흐름 3 이 교체)", "new": true },
-      { "path": "frontend/src/assets/fluent/calendar.svg", "change": "시안 info 아이콘 — out/assets/fluent/calendar.svg 복사(라이선스 LICENSE.md 는 이미 있음)", "new": true },
-      { "path": "frontend/src/assets/fluent/pin.svg", "change": "시안 '구역 위치 보기' row-art — out/assets/fluent/pin.svg 복사", "new": true }
+      {
+        "path": "frontend/src/pages/PerformanceDetailPage.tsx",
+        "change": "재작성 — 로딩·없는 공연·오류, 예정/예매 가능/매진/마감/취소 머리글·CTA, 카운트다운, 포스터·가격·일시, 4단계 안내, 구역 위치 행·시트, 예매하기 이동. MUI Stack·Typography 대신 components/ui 부품"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "change": "Performance.posterUrl?, SectionSummary.area·areaNote?·stageOrder 타입 추가"
+      },
+      {
+        "path": "frontend/src/utils/datetime.ts",
+        "change": "한국 시간(Asia/Seoul) 표기 formatDateTime·formatClock·formatCountdown 추가, 기존 toDatetimeLocalInput 옆"
+      },
+      {
+        "path": "frontend/src/components/ui/AppBar.tsx",
+        "change": "title 이 없거나 비면 h1 을 그리지 않는다(지금은 {title ?? ''} 로 빈 h1)"
+      },
+      {
+        "path": "frontend/src/App.tsx",
+        "change": "/performances/:id/queue 라우트 추가, 상세·대기열은 Container·AppHeader 없이 그리도록 레이아웃 분기(/performances/new·/edit 는 유지)"
+      },
+      {
+        "path": "frontend/src/components/ui/CtaBar.tsx",
+        "change": "조건부 — 흰 바탕 상세에서 CTA 뒤 회색 띠가 비치면 plain 면의 --c-surface 그라데이션 지원(prop_schema 참고, Phase 4 브라우저 확인 뒤 필요할 때만)"
+      },
+      {
+        "path": "frontend/src/api/time.ts",
+        "change": "GET /api/time 호출 getServerTime() — 토큰 없이 fetch(apiUrl), cache: no-store",
+        "new": true
+      },
+      {
+        "path": "frontend/src/hooks/useServerClock.ts",
+        "change": "3회 측정·최소 왕복 표본 오프셋·visibilitychange 재측정·실패 상태·다시 맞추기·세대로 늦은 결과 폐기(hooks/ 디렉터리 신설)",
+        "new": true
+      },
+      {
+        "path": "frontend/src/utils/zones.ts",
+        "change": "sections → 묶음(stageOrder 순·같은 area 연속)·묶음 제목·가격·'<첫> 무대 바로 앞 → <끝> 맨 뒤' 계산 — 시트·상세 행·배치도가 같이 쓴다(spec paths 에 없는 순수 헬퍼)",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ZoneMap.tsx",
+        "change": "배치도 SVG — 무대 + 첫 묶음 쌓기 + 바깥 고리, 색은 토큰",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ZoneMapSheet.tsx",
+        "change": "Sheet 안에 그립·제목·ZoneMap·묶음 행·확인, 뒤로 가기로 닫힘",
+        "new": true
+      },
+      {
+        "path": "frontend/src/pages/QueuePlaceholderPage.tsx",
+        "change": "대기열 임시 화면 — 앱바 뒤로 + '대기열을 준비하고 있어요' + 공연으로 돌아가기(흐름 3 이 교체)",
+        "new": true
+      },
+      {
+        "path": "frontend/src/assets/fluent/calendar.svg",
+        "change": "시안 info 아이콘 — out/assets/fluent/calendar.svg 복사(라이선스 LICENSE.md 는 이미 있음)",
+        "new": true
+      },
+      {
+        "path": "frontend/src/assets/fluent/pin.svg",
+        "change": "시안 '구역 위치 보기' row-art — out/assets/fluent/pin.svg 복사",
+        "new": true
+      }
     ],
     "reusable": [
-      { "path": "frontend/src/components/ui/Hero.tsx", "symbol": "Hero", "note": "eyebrow·title·lead — title 에 카운트다운 span 을 넣을 수 있다(ReactNode). h1 을 그린다" },
-      { "path": "frontend/src/components/ui/Page.tsx", "symbol": "Page", "note": "plain·hasCta — 흰 바탕 한 장 + CTA 아래 여백" },
-      { "path": "frontend/src/components/ui/CtaBar.tsx", "symbol": "CtaBar", "note": "disabled 로 꺼진 예매하기. 이동은 onClick 에서" },
-      { "path": "frontend/src/components/ui/Sheet.tsx", "symbol": "Sheet", "note": "dim + 시트, 막·Esc 로 닫힘, role=dialog — 그립·제목은 안에 넣는다" },
-      { "path": "frontend/src/components/ui/Row.tsx", "symbol": "Row", "note": "lead·title·sub·trail — 구역 위치 보기 행, 묶음 행" },
-      { "path": "frontend/src/components/ui/Info.tsx", "symbol": "Info", "note": "icon + 안내 한 줄 — 일시·1인 최대 4장" },
-      { "path": "frontend/src/components/ui/AppBar.tsx", "symbol": "AppBar", "note": "plain·onBack" },
-      { "path": "frontend/src/components/ui/text.ts", "symbol": "isBlank", "note": "AppBar 제목이 비었는지·area/areaNote 가 비었는지 같은 판정" },
-      { "path": "frontend/src/api/http.ts", "symbol": "apiUrl", "note": "time.ts 가 VITE_API_BASE_URL 을 쓰는 방법(DEPLOY-001). request() 는 토큰을 싣는다 — 시각 측정에는 쓰지 않는다" },
-      { "path": "frontend/src/api/performances.ts", "symbol": "getPerformance", "note": "404 → PerformanceNotFoundError. 상세의 로딩·없는 공연·오류 분기가 이미 이것에 기대고 있다" },
-      { "path": "frontend/src/theme/tokens.ts", "symbol": "token", "note": "색·치수는 token()/componentSizes — componentSizes.touch·iconSmall·rowArt·titleTracking 를 그대로 쓴다" },
-      { "path": "frontend/src/auth/authPaths.ts", "symbol": "isOneOf", "note": "matchRoutes 로 라우터와 같은 규칙으로 경로를 판별하는 선례 — 단 AUTH_PATHS 에는 상세를 넣지 않는다(로그인 뒤 이동 판별과 공유)" },
-      { "path": "frontend/src/assets/fluent/ticket.svg", "symbol": "ticket.svg", "note": "1인 최대 4장 info 아이콘, 포스터 없음 면의 티켓 아이콘" },
-      { "path": "frontend/src/test/task017.tsx", "symbol": "renderWithTheme", "note": "테마를 씌운 렌더 도우미" }
+      {
+        "path": "frontend/src/components/ui/Hero.tsx",
+        "symbol": "Hero",
+        "note": "eyebrow·title·lead — title 에 카운트다운 span 을 넣을 수 있다(ReactNode). h1 을 그린다"
+      },
+      {
+        "path": "frontend/src/components/ui/Page.tsx",
+        "symbol": "Page",
+        "note": "plain·hasCta — 흰 바탕 한 장 + CTA 아래 여백"
+      },
+      {
+        "path": "frontend/src/components/ui/CtaBar.tsx",
+        "symbol": "CtaBar",
+        "note": "disabled 로 꺼진 예매하기. 이동은 onClick 에서"
+      },
+      {
+        "path": "frontend/src/components/ui/Sheet.tsx",
+        "symbol": "Sheet",
+        "note": "dim + 시트, 막·Esc 로 닫힘, role=dialog — 그립·제목은 안에 넣는다"
+      },
+      {
+        "path": "frontend/src/components/ui/Row.tsx",
+        "symbol": "Row",
+        "note": "lead·title·sub·trail — 구역 위치 보기 행, 묶음 행"
+      },
+      {
+        "path": "frontend/src/components/ui/Info.tsx",
+        "symbol": "Info",
+        "note": "icon + 안내 한 줄 — 일시·1인 최대 4장"
+      },
+      {
+        "path": "frontend/src/components/ui/AppBar.tsx",
+        "symbol": "AppBar",
+        "note": "plain·onBack"
+      },
+      {
+        "path": "frontend/src/components/ui/text.ts",
+        "symbol": "isBlank",
+        "note": "AppBar 제목이 비었는지·area/areaNote 가 비었는지 같은 판정"
+      },
+      {
+        "path": "frontend/src/api/http.ts",
+        "symbol": "apiUrl",
+        "note": "time.ts 가 VITE_API_BASE_URL 을 쓰는 방법(DEPLOY-001). request() 는 토큰을 싣는다 — 시각 측정에는 쓰지 않는다"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "getPerformance",
+        "note": "404 → PerformanceNotFoundError. 상세의 로딩·없는 공연·오류 분기가 이미 이것에 기대고 있다"
+      },
+      {
+        "path": "frontend/src/theme/tokens.ts",
+        "symbol": "token",
+        "note": "색·치수는 token()/componentSizes — componentSizes.touch·iconSmall·rowArt·titleTracking 를 그대로 쓴다"
+      },
+      {
+        "path": "frontend/src/auth/authPaths.ts",
+        "symbol": "isOneOf",
+        "note": "matchRoutes 로 라우터와 같은 규칙으로 경로를 판별하는 선례 — 단 AUTH_PATHS 에는 상세를 넣지 않는다(로그인 뒤 이동 판별과 공유)"
+      },
+      {
+        "path": "frontend/src/assets/fluent/ticket.svg",
+        "symbol": "ticket.svg",
+        "note": "1인 최대 4장 info 아이콘, 포스터 없음 면의 티켓 아이콘"
+      },
+      {
+        "path": "frontend/src/test/task017.tsx",
+        "symbol": "renderWithTheme",
+        "note": "테마를 씌운 렌더 도우미"
+      }
     ],
     "existing_tests": [
       "frontend/src/pages/PerformanceDetailPage.test.tsx",
@@ -174,12 +729,15 @@
       "ADR-0018 — 측정·조회의 늦은 응답은 버린다(언마운트·id 변경·재측정 세대). React StrictMode 이중 effect 에서도 측정 결과는 한 번만 적용",
       "DESIGN-002·003 — ZoneMap SVG 의 색은 token()/var(--c-…) 만, 좌표 숫자를 JSX width={128} 형태로 쓰면 DESIGN-003 정규식(\\b(height|width|…)=\\{[0-9]+\\})에 걸려 components/ 위반이 생기고 task017.static 은 components 위반 0건을 단언한다 — 문자열 속성이나 상수 변수로 쓴다",
       "StatusBadge.tsx 는 기능 문서 §6 의 파일 목록에 있으나 변경 대상이 아니다 — 상세에 배지를 두지 않는다(시안·AC-6). 홈(TASK-021)이 쓴다. PerformanceListPage:83 의 toLocaleString 도 TASK-021 범위라 이번에 새 유틸로 바꾸지 않는다",
-      "표시 전용 값 — title·venue·totalSeats·startAt 은 서버가 검증해 준 값을 그대로 보인다(입력 경계표에서 제외). 긴 공연명 줄바꿈·말줄임은 Phase 4 브라우저에서 시안과 대조. 운영 영향(ops_impacts) 없음 — 환경변수·설정·마이그레이션·docs/release 변경 없음. 단 상세 진입·화면 복귀마다 예정 공연에 GET /api/time 이 3회씩 늘어난다(서버 응답이 가벼워 모니터링 대상은 아님)",
+      "표시 값 — title·venue·totalSeats·startAt 도 응답 계약 검사를 받는다(Phase 4 리뷰 RC-1·RC-4 — input_fields 에 포함). 길이 상한은 서버 판정이다. 긴 공연명 줄바꿈·말줄임은 Phase 4 브라우저에서 시안과 대조. 운영 영향(ops_impacts) 없음 — 환경변수·설정·마이그레이션·docs/release 변경 없음. 단 상세 진입·화면 복귀마다 예정 공연에 GET /api/time 이 3회씩 늘어난다(서버 응답이 가벼워 모니터링 대상은 아님)",
       "시작 시점 develop 에서 npm test 가 첫 실행에 1건 실패했고(어느 테스트인지 못 잡음) 재실행은 775 통과였다 — 간헐 실패 가능성. Phase 3·4 에서 재현되면 원인을 잡는다"
     ],
-    "exploration": { "method": "explore", "calls": 1, "main_reads": 24 }
+    "exploration": {
+      "method": "explore",
+      "calls": 1,
+      "main_reads": 24
+    }
   },
-
   "acceptance_criteria": [
     "AC-1 기기 시계가 서버보다 3초 빠르게 설정돼 있어도 카운트다운이 서버 시각 기준으로 표시되고, CTA 가 서버 시각의 `openAt` 에 켜진다 (오프셋 주입 테스트)",
     "AC-2 기준 시각이 `openAt` 에 닿으면 상세 API 를 다시 부르지 않고(그 순간 호출 0회 — ADR-0026) 머리글이 \"지금 예매할 수 있어요\", CTA 가 켜진 \"예매하기\"로 바뀐다. 남은 좌석이 0 이면 「매진」으로 바뀐다",
@@ -196,7 +754,6 @@
     "AC-13 없는 공연 404 → \"찾는 공연이 없어요\" + 홈으로, 그 밖의 실패 → \"공연 정보를 불러오지 못했어요\" + 다시 시도",
     "AC-14 375px 에서 `concert.html`·`zone-map.html` 과 나란히 띄워 구조·문구·색이 같다 (회차·5분 전 안내는 §8 의 차이)"
   ],
-
   "test_hints": {
     "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
     "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npm test",

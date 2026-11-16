@@ -11,9 +11,10 @@
     "| 기준 시각 예 | 서버 시각 `2026-11-11T08:55:28Z`(한국 오후 5:55:28), `P_UP` 의 openAt `2026-11-11T09:00:00Z` 이면 남은 시간은 272초(4분 32초) |",
     "| 호출 수 | \"상세 호출 수\" = 스텁이 받은 `GET /api/performances/7` 횟수, \"시각 호출 수\" = `GET /api/time` 횟수. 두 수 모두 스텁의 호출 기록으로 센다 |",
     "| 꺼진·켜진 CTA | 화면 아래 고정 주 버튼. 꺼짐 = `disabled`, 켜짐 = 눌러서 이동할 수 있다. CTA 문구는 §2-5 표 그대로 |",
+    "| 시각 측정 제한 | `GET /api/time` 표본 하나는 5초 안에 응답이 오지 않으면 실패로 본다 — 요청은 중단(`AbortSignal`)된다. 화면을 떠나거나 새 측정이 시작돼 오래된 측정이 되면 진행 중인 요청도 중단된다. 스텁은 `init.signal` 로 중단 여부를 기록한다 (2b 에서 `signal.aborted` 로 센다). 5초는 이 문서가 정한 값이다 — 2b 승인에서 사람이 본다 |",
     "| 문구 정본 | 없는 공연: 「찾는 공연이 없어요」 + 「홈으로」(누르면 `/`). 오류: 「공연 정보를 불러오지 못했어요」 + 「다시 시도」. 시각 실패: 「기준 시각을 맞추지 못했어요」 + 「다시 맞추기」. 대기열 임시 화면: 「대기열을 준비하고 있어요」 + 「공연으로 돌아가기」. 시트 제목: 「구역 위치」 |",
     "| 전역 헤더 | 비로그인이면 「로그인」·「가입」 링크, 로그인이면 이름과 「로그아웃」 버튼이 있는 줄(`AppHeader`). `App.tsx` 가 인증 화면 5곳을 뺀 모든 경로에서 그린다 — 이 태스크가 상세·대기열도 뺀다(사용자 결정 2026-11-13) |",
-    "| 계약 위반 | 서버 응답이 `GET /api/performances/{id}` 의 계약(status 다섯 값 중 하나, startAt·openAt·closeAt 해석 가능한 시각, availableSeats 0 이상 정수, sections 의 각 원소는 grade·area 가 공백이 아닌 문자열이고 price 0 이상 정수·stageOrder 정수)을 어기는 것. 화면은 오류 화면으로 간다 — 비거나 깨지지 않는다 (PLAN 에 없는 규칙을 이 문서가 정했다 — CP-2.2 decisions, 2b 승인에서 사람이 본다) |",
+    "| 계약 위반 | 서버 응답이 `GET /api/performances/{id}` 의 계약(status 다섯 값 중 하나, startAt·openAt·closeAt 해석 가능한 시각, availableSeats 0 이상 정수, sections 의 각 원소는 grade·area 가 공백이 아닌 문자열이고 price 0 이상 정수·stageOrder 정수, title·venue 가 공백이 아닌 문자열, totalSeats 0 이상 정수이고 availableSeats 는 totalSeats 이하)을 어기는 것. 「해석 가능한 시각」은 ISO-8601 순간 — `YYYY-MM-DDThh:mm:ss`(소수 초 허용) 뒤에 `Z` 또는 `±hh:mm` 이 붙은 문자열이다(`Date.parse` 가 받아 주는 `'1'`·`'2026'`·날짜만·오프셋 없는 시각은 아니다 — 서버 `Instant` 는 항상 `Z` 로 나간다). 화면이 쓰지 않는 필드(seatCount 등)는 계약에 넣지 않는다. 화면은 오류 화면으로 간다 — 비거나 깨지지 않는다 (PLAN 에 없는 규칙을 이 문서가 정했다 — CP-2.2 decisions, 2b 승인에서 사람이 본다) |",
     "| 승인 테스트 이전 | 이 시나리오가 바꾸는 승인 테스트는 맨 아래 「승인된 테스트 변경」 표에 있다. 그 행의 SC 번호가 새 정본이다 |"
   ],
   "scenarios": [
@@ -163,13 +164,38 @@
         "| at | `closeAt: '내일'` (해석할 수 없는 시각) |",
         "| au | `startAt` 키 없음 |",
         "| av | `startAt: null` |",
-        "| aw | `startAt: '내일'` (해석할 수 없는 시각) |"
+        "| aw | `startAt: '내일'` (해석할 수 없는 시각) |",
+        "| ax | `openAt`·`closeAt`·`startAt` 각각 `'1'` (`Date.parse` 는 받지만 ISO 순간이 아니다) — 세 필드를 따로 한 행씩 |",
+        "| ay | `openAt`·`closeAt`·`startAt` 각각 `'2026'` |",
+        "| az | `openAt`·`closeAt`·`startAt` 각각 `'2026-11-11'` (날짜만) |",
+        "| ba | `openAt`·`closeAt`·`startAt` 각각 `'2026-11-11T09:00:00'` (오프셋 없음 — 기기 시간대에 따라 다른 순간이 된다) |",
+        "| bb | `title` 키 없음 |",
+        "| bc | `title: null` |",
+        "| bd | `title: ''` |",
+        "| be | `title: '   '` |",
+        "| bf | `title: '\\u3000'`(전각 공백) |",
+        "| bg | `title: '\\u200b'`(제로폭 공백) |",
+        "| bh | `title: 123` (문자열이 아님) |",
+        "| bi | `venue` 키 없음 |",
+        "| bj | `venue: null` |",
+        "| bk | `venue: ''` |",
+        "| bl | `venue: '   '` |",
+        "| bm | `venue: '\\u3000'` |",
+        "| bn | `venue: '\\u200b'` |",
+        "| bo | `venue: 123` |",
+        "| bp | `totalSeats` 키 없음 |",
+        "| bq | `totalSeats: null` |",
+        "| br | `totalSeats: '21000'` (문자열) |",
+        "| bs | `totalSeats: -1` |",
+        "| bt | `totalSeats: 1.9` |",
+        "| bu | `totalSeats: 1e400` |",
+        "| bv | `totalSeats: 100`, `availableSeats: 101` (남은 좌석이 총 좌석보다 많다) |"
       ],
       "covers": [
         "AC-13 없는 공연 404 → \"찾는 공연이 없어요\" + 홈으로, 그 밖의 실패 → \"공연 정보를 불러오지 못했어요\" + 다시 시도"
       ],
       "flow": "F1",
-      "note": "근거: 표시 문자열의 「공백 아님」은 유니코드 공백·NBSP·U+200B 를 공백으로 본다 — ADR-0027. 화면의 `isBlank`(`frontend/src/components/ui/text.ts`)는 `trim()` 이라 U+200B 를 공백으로 보지 않는다 — 구현이 ADR-0027 판정을 따라야 한다."
+      "note": "근거: 표시 문자열의 「공백 아님」은 유니코드 공백·NBSP·U+200B 를 공백으로 본다 — ADR-0027. 화면의 `isBlank`(`frontend/src/components/ui/text.ts`)는 `trim()` 이라 U+200B 를 공백으로 보지 않는다 — 구현이 ADR-0027 판정을 따라야 한다. 시각 문자열의 형식은 규약 「계약 위반」 — `Date.parse` 만으로 판정하지 않는다(행 ax~ba)."
     },
     {
       "id": "SC-05",
@@ -364,7 +390,11 @@
         "| i | 200 + `{ now: 1731315328000 }` (숫자) |",
         "| j | 200 + `{ now: ['2026-11-11T08:55:28Z'] }` (배열) |",
         "| k | 200 + `{ now: true }` |",
-        "| l | 200 + `{ now: '어제' }` (해석할 수 없는 시각) |"
+        "| l | 200 + `{ now: '어제' }` (해석할 수 없는 시각) |",
+        "| m | 200 + `{ now: '1' }` (`Date.parse` 는 받지만 ISO 순간이 아니다) |",
+        "| n | 200 + `{ now: '2026' }` |",
+        "| o | 200 + `{ now: '2026-11-11' }` (날짜만) |",
+        "| p | 200 + `{ now: '2026-11-11T08:55:28' }` (오프셋 없음) |"
       ],
       "covers": [
         "AC-4 `GET /api/time` 이 실패하면 카운트다운 대신 \"기준 시각을 맞추지 못했어요\" + 다시 맞추기가 보이고 CTA 는 꺼짐이다"
@@ -552,7 +582,7 @@
       "then": [
         "이름이 「루미너스 콘서트 〈WAVELENGTH〉 서울 포스터」 인 이미지 역할 요소가 하나 있다",
         "포스터 칸의 `aspect-ratio` 는 `4 / 3`, 배경색은 `--c-bg`, 모서리는 `--r-m` 이다 — 포스터가 있을 때와 같다",
-        "포스터가 없는 행(b~h)은 그 요소가 `<img>` 가 아니라 아이콘 면이다 (문자열이 아닌 값도 포스터 없음으로 본다)"
+        "포스터가 없는 행(b~k)은 그 요소가 `<img>` 가 아니라 아이콘 면이다 (문자열이 아닌 값도 포스터 없음으로 본다)"
       ],
       "table": [
         "| 행 | posterUrl | 조건 |",
@@ -564,7 +594,11 @@
         "| e | `'   '` | — |",
         "| f | `'https://cdn.example.com/luminous.jpg'` | 그 이미지에서 `error` 이벤트가 난다 (로드 실패) |",
         "| g | `123` (문자열이 아닌 값) | — |",
-        "| h | `{}` (문자열이 아닌 값) | — |"
+        "| h | `{}` (문자열이 아닌 값) | — |",
+        "| i | `'javascript:alert(1)'` (http·https 가 아닌 스킴) | — |",
+        "| j | `'data:image/png;base64,AAAA'` | — |",
+        "| k | `'ftp://cdn.example.com/luminous.jpg'` | — |",
+        "| l | `'http://cdn.example.com/luminous.jpg'` (https 가 아닌 http) | 이미지가 로드된다 — 이 행은 이미지로 보인다(서버가 https 만 받는 것은 서버 판정, ADR-0028) |"
       ],
       "covers": [
         "AC-11 포스터가 없거나 이미지 로드가 실패하면 회색 면 + 아이콘이 같은 크기로 보인다"
@@ -1194,6 +1228,134 @@
         "AC-7 켜진 \"예매하기\"를 누르면 `/performances/:id/queue` 로 가고 \"대기열을 준비하고 있어요\"가 보인다"
       ],
       "flow": "F8"
+    },
+    {
+      "id": "SC-40",
+      "type": "error",
+      "title": "시각 응답이 오지 않으면 5초 뒤 그 표본을 실패로 보고 요청을 중단한다 — 영원히 「맞추고 있어요」에 머물지 않는다",
+      "given": [
+        "`P_UP`(openAt 은 서버 시각 + 272초) 이다",
+        "`GET /api/time` 이 표의 응답을 준다 (응답이 오지 않는 표본은 스텁이 붙들어 둔다)",
+        "`/performances/7` 을 열었다 (머리글은 「기준 시각을 맞추고 있어요」)"
+      ],
+      "when": [
+        "표의 시간만큼 기기 시계를 흘린다"
+      ],
+      "then": [
+        "표의 Then 이다"
+      ],
+      "table": [
+        "| 행 | 표본 응답 | 흘리는 시간 | Then |",
+        "|---|---|---|---|",
+        "| a | 세 표본 모두 응답이 오지 않는다 | 15초 (표본 하나 5초 × 3) | 「기준 시각을 맞추지 못했어요」와 「다시 맞추기」가 보이고 `role=\"timer\"` 는 없다. CTA 는 꺼짐이다. 시각 호출 수는 3이고 세 요청 모두 중단됐다. 그 뒤로 시각 호출이 더 나가지 않는다 |",
+        "| b | 첫 표본만 응답이 오지 않고 둘째·셋째는 정상 (서버 시각 = 기기 시각) | 5초 + 정상 표본 둘 | 5초 시점에 첫 요청이 중단되고, 둘째·셋째 표본으로 측정이 끝나 카운트다운이 보인다. 「기준 시각을 맞추지 못했어요」는 나타나지 않는다 |",
+        "| c | 세 표본 모두 응답이 4.999초에 온다 (서버 시각 = 기기 시각) | 15초 | 세 표본이 모두 성공으로 쓰인다 — 요청은 중단되지 않았다. 카운트다운이 보이고 「기준 시각을 맞추지 못했어요」는 나타나지 않는다. 보정 값은 단언하지 않는다 — 카운트다운이 보이는지만 본다 |",
+        "| d | 세 표본 모두 응답이 5.001초에 온다 | 16초 | 표본은 모두 실패다 — 뒤늦게 온 응답은 버려지고 오프셋에 쓰이지 않는다. 「기준 시각을 맞추지 못했어요」와 「다시 맞추기」가 보인다 |",
+        "| e | 첫 표본의 응답이 오기 전에 홈(`/`)으로 이동한다 | 0초 (이동 직후) | 진행 중이던 시각 요청이 중단된다(`signal.aborted`). 이후 시각 호출이 더 나가지 않고 홈에 카운트다운이 나타나지 않는다 |",
+        "| f | 첫 측정이 응답을 못 받고 있을 때 탭이 숨겨졌다가 다시 보여 재측정이 시작된다 | 0초 | 먼저 시작한 측정의 요청은 중단되고 새 측정만 남는다 |"
+      ],
+      "covers": [
+        "AC-4 `GET /api/time` 이 실패하면 카운트다운 대신 \"기준 시각을 맞추지 못했어요\" + 다시 맞추기가 보이고 CTA 는 꺼짐이다"
+      ],
+      "flow": "F2",
+      "note": "5초와 「표본 하나마다」라는 단위는 PLAN 이 정하지 않은 값이다(F2 steps 에 시간 제한이 없다). 시간 제한이 없으면 서버가 응답을 붙들 때 화면이 안내도 재시도 버튼도 없이 멈춘다 — 이 문서가 정했다(Phase 4 리뷰 RC-3). 2b 승인에서 사람이 본다."
+    },
+    {
+      "id": "SC-41",
+      "type": "boundary",
+      "title": "시트 닫기 입력이 반복되거나 시트가 이미 열린 채 들어온 주소에서도 상세를 떠나지 않는다",
+      "given": [
+        "`P_OPEN` 상세에서 시트가 열려 있다. 시트가 열린 경위와 history 는 표의 Given 이다 (비동기 history = 한 칸 뒤로 가기가 그 틱에 끝나지 않고 다음 태스크에 반영되는, 브라우저 `history.go` 와 같은 history)"
+      ],
+      "when": [
+        "표의 방법으로 닫는 입력을 준다"
+      ],
+      "then": [
+        "`dialog` 가 사라진다",
+        "주소는 `/performances/7` 이고 상세 화면(`h1` 「지금 예매할 수 있어요」)이 그대로 있다 — 홈이나 그 앞 화면으로 가지 않는다",
+        "이어서 브라우저 뒤로 가기를 한 번 누르면 표의 Then 의 주소가 된다"
+      ],
+      "table": [
+        "| 행 | Given — history·시트가 열린 경위 | 닫는 입력 | 뒤로 가기 한 번 뒤 주소 |",
+        "|---|---|---|---|",
+        "| a | [`/`, `/performances/7`] 에서 「구역 위치 보기」를 눌러 열었다 (동기 history) | `Escape` 를 한 번에 두 번 (같은 틱) | `/` |",
+        "| b | 같은 경위, 비동기 history | `Escape` 를 두 번 — 첫 입력의 뒤로 가기가 반영되기 전에 둘째가 온다 | `/` |",
+        "| c | 같은 경위, 비동기 history | 흐린 바탕을 두 번 누른다 (더블 탭) | `/` |",
+        "| d | 같은 경위, 비동기 history | 「확인」을 두 번 누른다 | `/` |",
+        "| e | 같은 경위, 비동기 history | 「확인」 뒤 바로 `Escape` | `/` |",
+        "| f | 같은 경위, 비동기 history | `Escape` 뒤 바로 흐린 바탕 | `/` |",
+        "| g | [`/performances/7` + `{ zoneSheet: true }` 상태] 한 칸뿐이다 (새로고침·복원·붙여넣기로 시트가 열린 채 들어왔다) | 「확인」을 누른다 | `/performances/7` — 앞 칸이 없어 이동하지 않는다 |",
+        "| h | 같은 Given | `Escape` 를 한 번에 두 번 | `/performances/7` — 앞 칸이 없어 이동하지 않는다 |",
+        "| i | [`/`, `/performances/7` + `{ zoneSheet: true }` 상태] 에서 열린 채 들어왔다 (시트 칸 바로 앞이 홈이다) | 「확인」을 누른다 | `/` — 시트 칸이 시트 없는 상세로 바뀌었을 뿐 칸이 남지는 않는다 |"
+      ],
+      "covers": [
+        "AC-9 \"구역 위치 보기\"를 누르면 시트가 열리고, 배치도와 묶음 행이 `stageOrder` 순(\"플로어 F1~F4 / 무대 앞 바닥, F1이 가장 앞 / 150,000원\")으로 보인다. 확인·흐린 바탕·뒤로 가기로 닫힌다"
+      ],
+      "flow": "F7",
+      "note": "근거: Phase 4 리뷰 RC-2 — 닫기를 history 한 칸 뒤로 구현하면서 가드를 타이머로 풀면 브라우저의 비동기 popstate 구간에 둘째 입력이 한 번 더 뒤로 가고(상세를 떠난다), 시트가 첫 칸이면 앞 문서로 나갈 수 있다. 정해 둔 규칙: 이 화면에서 「구역 위치 보기」를 눌러 연 시트는 한 칸 뒤로(SC-37 — 칸을 남기지 않는다), 열린 채 들어온 주소(g~i)는 시트 칸을 시트 없는 상세로 바꾸어 닫는다. 2b 에서 비동기 history 하네스 방법을 정한다. 이 문서가 정한 규칙이다 — 2b 승인에서 사람이 본다."
+    },
+    {
+      "id": "SC-42",
+      "type": "boundary",
+      "title": "표시 값의 공백 판정이 화면 어디서나 같다 — 앱바 제목·히어로 윗줄·설명·행 아랫줄이 같은 규칙을 쓴다",
+      "given": [
+        "공용 부품이 표의 값을 받아 렌더한다 (상세 화면에서는 해당하는 필드가 표의 값인 응답으로)"
+      ],
+      "when": [
+        "그린다"
+      ],
+      "then": [
+        "그 값이 공백으로 판정되는 행(a~f)은 해당 줄·요소가 없다 — 빈 `h1`·`p`·`div` 도 없다",
+        "공백이 아닌 글자가 섞인 행(g~i)은 그 글자가 그대로 보인다"
+      ],
+      "table": [
+        "| 행 | 값 | 받는 곳 |",
+        "|---|---|---|",
+        "| a | `''` | `AppBar` title · `Hero` eyebrow · `Hero` lead · `Row` sub |",
+        "| b | `'   '` | 같다 |",
+        "| c | `'\\u3000'`(전각 공백) | 같다 |",
+        "| d | `'\\u00a0'`(NBSP) | 같다 |",
+        "| e | `'\\u200b'`(제로폭 공백) | 같다 |",
+        "| f | `'\\u0085'`(NEL) | 같다 |",
+        "| g | `'\\ufeff'` (서식 문자 — 글자로 본다, ADR-0027) | 같다 — 요소가 있다 |",
+        "| h | `'\\u200d'`·`'\\u2800'`·`'\\u3164'` 각각 (글자로 본다) | 같다 — 요소가 있다 |",
+        "| i | `' 공연 '` (앞뒤 공백 + 글자) | 같다 — 글자가 보인다 |"
+      ],
+      "covers": [
+        "AC-12 제목이 없는 앱바(상세·가입·역할 선택)에 빈 `h1` 이 없다 (TASK-018 drift)"
+      ],
+      "flow": "F9",
+      "note": "근거: ADR-0027 — 「공백」은 `\\p{Z}`·탭·줄바꿈 계열·U+0085·U+200B 이고 서식 문자(Cf)는 글자다. 서버·화면이 같은 한 판정을 쓴다(RC-1). 범위: 이 화면이 거치는 부품 — `AppBar` title, `Hero` eyebrow·lead, `Row` sub (표시용). 사용자가 입력하는 폼 검증(`Field`·`Segmented` 의 `isBlank`)과 `Badge`·`Toast` 문구는 이번에 바꾸지 않는다 — 입력 검증은 별도 규칙이다. 2b 승인에서 사람이 본다."
+    },
+    {
+      "id": "SC-43",
+      "type": "boundary",
+      "title": "화면이 쓰지 않는 필드가 이상해도 상세 화면은 그대로 보이고, 좌석 수가 0 이어도 계약 위반이 아니다",
+      "given": [
+        "`GET /api/performances/7` 이 200 으로 `P_OPEN` 에서 표의 값만 바꾼 본문을 준다"
+      ],
+      "when": [
+        "`/performances/7` 을 연다"
+      ],
+      "then": [
+        "「공연 정보를 불러오지 못했어요」가 아니라 상세 화면이 보인다 (`h1` 「지금 예매할 수 있어요」 또는 표의 머리글)",
+        "표의 Then 이다"
+      ],
+      "table": [
+        "| 행 | 바꾼 값 | Then |",
+        "|---|---|---|",
+        "| a | 첫 원소의 `seatCount` 키 없음 | 구역 행·배치도가 그대로 보인다 |",
+        "| b | 첫 원소의 `seatCount: null` | 같다 |",
+        "| c | 첫 원소의 `seatCount: '100'` (문자열) | 같다 |",
+        "| d | 첫 원소의 `seatCount: -1` | 같다 |",
+        "| e | 본문에 계약에 없는 키(`extra: 1`)가 더 있다 | 같다 |",
+        "| f | `totalSeats: 0`, `availableSeats: 0` (`status: 'OPEN'`) | 머리글은 「지금 예매할 수 있어요」(서버 status 가 OPEN 이다 — SC-15 와 같다)이고 `고척스카이돔 · 0석` 이 보인다 — 0 은 계약 안의 값이라 오류 화면이 아니다 |"
+      ],
+      "covers": [
+        "AC-13 없는 공연 404 → \"찾는 공연이 없어요\" + 홈으로, 그 밖의 실패 → \"공연 정보를 불러오지 못했어요\" + 다시 시도"
+      ],
+      "flow": "F6",
+      "note": "근거: 이 화면은 sections 의 seatCount 를 그리지 않는다 — 쓰지 않는 값을 계약 위반으로 보면 서버가 그 필드를 바꿀 때 멀쩡한 화면이 오류 화면이 된다. 규약 「계약 위반」에 들어 있지 않다."
     }
   ],
   "approved_test_changes": [
@@ -1508,8 +1670,10 @@
     },
     {
       "cell": "availableSeats@F4:integer.max+1",
-      "state": "n/a",
-      "reason": "화면은 상한과 비교하지 않고 0 인지만 본다 — 상한(totalSeats)은 서버 판정이다 (architecture.md §2, PLAN F4)"
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
     },
     {
       "cell": "availableSeats@F4:integer.fraction",
@@ -1541,8 +1705,10 @@
     },
     {
       "cell": "availableSeats@F5:integer.max+1",
-      "state": "n/a",
-      "reason": "화면은 상한과 비교하지 않고 0 인지만 본다 — 상한(totalSeats)은 서버 판정이다 (architecture.md §2, PLAN F5)"
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
     },
     {
       "cell": "availableSeats@F5:integer.fraction",
@@ -2032,6 +2198,175 @@
       "by": [
         "SC-28"
       ]
+    },
+    {
+      "cell": "startAt@F6:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "startAt@F6:required.null",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "startAt@F6:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "title@F6:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "title@F6:required.null",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "title@F6:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "title@F6:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "title@F6:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "title@F6:string.unicode_blank",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "title@F6:string.max+1",
+      "state": "n/a",
+      "reason": "화면은 제목 길이 상한을 두지 않는다 — 상한은 서버가 등록 때 검증한다(TASK-006). 긴 제목의 줄바꿈은 SC-33"
+    },
+    {
+      "cell": "venue@F6:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "venue@F6:required.null",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "venue@F6:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "venue@F6:string.empty",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "venue@F6:string.blank",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "venue@F6:string.unicode_blank",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "venue@F6:string.max+1",
+      "state": "n/a",
+      "reason": "화면은 장소 길이 상한을 두지 않는다 (위와 같다)"
+    },
+    {
+      "cell": "totalSeats@F6:required.missing",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "totalSeats@F6:required.null",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "totalSeats@F6:json_field.wrong_type",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "totalSeats@F6:integer.negative",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "totalSeats@F6:integer.zero",
+      "state": "covered",
+      "by": [
+        "SC-43"
+      ]
+    },
+    {
+      "cell": "totalSeats@F6:integer.max+1",
+      "state": "n/a",
+      "reason": "화면은 총 좌석 상한과 비교하지 않고 천 단위로 표기만 한다 — 상한은 서버가 등록 때 검증한다"
+    },
+    {
+      "cell": "totalSeats@F6:integer.fraction",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
+    },
+    {
+      "cell": "totalSeats@F6:integer.overflow",
+      "state": "covered",
+      "by": [
+        "SC-04"
+      ]
     }
   ],
   "coverage": {
@@ -2040,6 +2375,6 @@
     "uncovered": []
   },
   "human_input": {
-    "generate_red_trigger": true
+    "generate_red_trigger": false
   }
 }

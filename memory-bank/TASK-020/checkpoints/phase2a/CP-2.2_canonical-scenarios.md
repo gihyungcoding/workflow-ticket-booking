@@ -1,13 +1,15 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "시나리오 39건, 칸 120/120(n/a 11). 독립검증 3회차 PASS(경고 6) — 2b 에서 찾은 결함 4건 수정 반영"
+summary: "Phase 4 FAIL 롤백(2026-11-16) — 시나리오 43건(SC-40~43 추가, SC-04·10·17 행 추가), 칸 145/145. 롤백 재검증 1회차 V11 fail(availableSeats 상한 n/a 모순) → 수정, 2회차 대기"
 
 next_steps:
   - "Phase 2b — wf-red. 프론트 가짜 타이머 선례가 없다(userEvent 는 advanceTimers 옵션) — 사용법을 먼저 정한다. 승인 테스트 8행 교체·수정 포함"
   - "통합 HITL 요약에 아래 decisions 와 보류한 경고를 보여준다 — 특히 SC-04(계약 위반 → 오류 화면, startAt 행 au~aw 는 PLAN 이 표시 전용으로 둔 값이라 범위 판단 필요)·SC-30 d·SC-39·카운트다운 경계 표기"
 
 decisions:
+  - decision: "롤백(Phase 4 FAIL RC-1~4)의 변종 전부를 시나리오로: 시각 형식은 ISO 순간(SC-04 ax~ba·SC-10 m~p), title·venue 공백·totalSeats·availableSeats≤totalSeats(SC-04 bb~bv), 시각 응답 5초 제한·요청 중단(SC-40), 시트 닫기 반복·열린 채 들어온 주소(SC-41), 공백 판정 한 규칙(SC-42), 쓰지 않는 필드 무시(SC-43), 포스터 스킴(SC-17 i~l)"
+    rationale: "PLAN 밖 결정이 늘었다 — 5초·표본 단위, 열린 채 들어온 주소의 닫기 규칙(시트 칸을 시트 없는 상세로 교체), ISO 강제, 포스터 스킴, Hero·Row 공백 판정 범위(Field·Badge·Segmented·Toast 는 제외). 2b 승인에서 사람이 판단한다"
   - decision: "새로 작성(기존 확장 아님). MD·JSON·행렬을 한 데이터 스크립트에서 생성해 일치시킨다"
     rationale: "시나리오 39건·칸 120개라 손으로 맞추면 V1(MD↔JSON) 어긋남이 난다. 이후 수정은 스크립트 데이터를 고쳐 다시 생성"
   - decision: "응답 계약 위반(status·시각·availableSeats·sections 원소)은 오류 화면 — SC-04"
