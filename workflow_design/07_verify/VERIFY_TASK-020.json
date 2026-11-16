@@ -1,0 +1,274 @@
+{
+  "task_id": "TASK-020",
+  "status": "FAIL",
+  "status_reason": "code-reviewer [correctness] 3건 — 닫기 가드가 실제 브라우저의 비동기 popstate 구간을 못 덮음(RC-2 잔여), /api/time 측정에 시간 제한이 없음(RC-3), 시각 검증이 Date.parse 의 관대한 해석에 기댐(RC-4, 'Date.parse(\"1\")' 실행으로 재현). 테스트·린트·빌드·아키텍처·화면은 통과.",
+  "evidence": {
+    "tests": {
+      "command": "cd frontend && npm test -- --run --testTimeout=60000",
+      "exit_code": 0,
+      "summary": "Test Files 26 passed (26); Tests 1029 passed | 1 todo (1030)"
+    },
+    "lint": {
+      "command": "cd frontend && npm run lint",
+      "exit_code": 0,
+      "summary": "error 0, 경고만(react purity·set-state-in-effect, only-export-components)"
+    },
+    "build": {
+      "command": "cd frontend && npm run build && npx tsc -b",
+      "exit_code": 0,
+      "summary": "build·tsc 통과(청크 500kB 경고만)"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "43 files changed, 7671 insertions(+), 199 deletions(-)"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "AC-1~14 (PLAN_TASK-020.json)",
+      "verdict": "WARN",
+      "evidence": "시나리오 39건 전부 통과(1029/1029). 화면에서 확인한 것: 상태 5종(UPCOMING 카운트다운·OPEN·SOLD_OUT·CANCELLED·구역 1개), 404, 오류+다시 시도, 구역 위치 시트 열기·확인으로 닫기, /queue 임시 화면, 전역 헤더 없음, 0초 전환(약 5분 대기 뒤 새 요청 없이 「지금 예매할 수 있어요」·CTA 활성, 타이머 사라짐). 미확인: 한국 시간 값(브라우저가 시간대를 무시 — Node SC-32 로만 확인), 실제 백엔드 연동. 리뷰 결함 3건이 AC 에 걸리는 동작(AC-4 측정 실패·AC-5 시트 닫기)을 훼손할 수 있어 WARN."
+    }
+  ],
+  "screens": [
+    {
+      "name": "공연 상세",
+      "state": "UPCOMING 카운트다운",
+      "verdict": "PASS",
+      "evidence": "모의 서버 검증 — 스키마 출처: 이전 Phase 3 모의 서버(mock020.mjs, PLAN 응답 계약). 375px 폭, 오픈까지 카운트다운·'티켓온 기준' 줄·CTA 비활성 확인. html lang=ko, title '공연 예매'."
+    },
+    {
+      "name": "공연 상세",
+      "state": "0초 전환",
+      "verdict": "PASS",
+      "evidence": "모의 서버 검증 — 카운트다운이 0 을 지나자 h1 이 '지금 예매할 수 있어요', CTA 활성, [role=timer] 제거. 전환 구간에 /api/time·상세 재요청 없음(window.fetch 래퍼 0회)."
+    },
+    {
+      "name": "공연 상세",
+      "state": "OPEN·SOLD_OUT·CANCELLED·구역 1개",
+      "verdict": "PASS",
+      "evidence": "머리글 지금 예매할 수 있어요/모든 좌석이 팔렸어요/공연이 취소됐어요, CTA 예매하기/매진(비활성)/없음, 구역 1개는 구역 행 없음·가격 150,000원, 가로 스크롤 없음, 전역 헤더 없음"
+    },
+    {
+      "name": "공연 상세",
+      "state": "오류·404",
+      "verdict": "PASS",
+      "evidence": "500 응답 → '공연 정보를 불러오지 못했어요'+다시 시도, 없는 id → '찾는 공연이 없어요'+홈으로"
+    },
+    {
+      "name": "구역 위치 시트",
+      "state": "열림·확인으로 닫힘",
+      "verdict": "PASS",
+      "evidence": "aria-label '구역 위치', 배치도+묶음 3행(플로어 F1~F4·1층·2층), history state zoneSheet, 확인 후 경로 유지·시트 닫힘"
+    },
+    {
+      "name": "대기열 임시 화면",
+      "state": "기본",
+      "verdict": "PASS",
+      "evidence": "/performances/7/queue → '대기열을 준비하고 있어요'+공연으로 돌아가기, 전역 헤더 없음"
+    }
+  ],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 2,
+    "no_target": [],
+    "files_scanned": 606,
+    "violations": [],
+    "overdue_promotions": [
+      {
+        "id": "AUTH-001",
+        "promote_after": "TASK-024"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "Frontend 계층 「하지 않는 것」",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "이번 변경에서 위반을 찾지 못했다 — 이 태스크의 디자인 제약 DESIGN-001·002·003 은 check_architecture 가 통과"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "1029 passed, 0 failed, 1 todo",
+    "callers_checked": true
+  },
+  "scope_deviations": [],
+  "code_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "phase": 3,
+        "findings": 2,
+        "note": "자체 리뷰 1라운드 — RC-1·RC-2 (fix af33abd)"
+      },
+      {
+        "n": 2,
+        "phase": 3,
+        "findings": 1,
+        "note": "자체 리뷰 2라운드 — RC-2 가드 고착 (fix 26489ae)"
+      },
+      {
+        "n": 3,
+        "phase": 4,
+        "findings": 4,
+        "note": "correctness 3, design 1, security 경미 1 — 아래 findings"
+      }
+    ],
+    "findings": [
+      {
+        "tag": "correctness",
+        "file": "frontend/src/pages/PerformanceDetailPage.tsx",
+        "summary": "closeSheet 가드를 setTimeout 0 으로 풀어 실제 브라우저의 비동기 popstate 구간(타이머 이후·popstate 이전)의 두 번째 닫기 입력이 navigate(-1)을 한 번 더 호출 — 상세를 떠난다. history 첫 칸이면 no-op 이 아니라 앞 문서로 나갈 수 있다",
+        "root_cause": "RC-2"
+      },
+      {
+        "tag": "correctness",
+        "file": "frontend/src/api/time.ts · frontend/src/hooks/useServerClock.ts",
+        "summary": "/api/time fetch 에 AbortController·timeout 이 없어 서버가 응답을 붙들면 measuring 에 영원히 머문다 — failed·다시 맞추기가 나오지 않는다",
+        "root_cause": "RC-3"
+      },
+      {
+        "tag": "correctness",
+        "file": "frontend/src/api/performances.ts:155 · frontend/src/api/time.ts:16",
+        "summary": "isTime·now 검사가 Date.parse 에만 기대 '1'·'2026' 같은 비 ISO 문자열을 유효로 본다(Date.parse('1')=978274800000 실행 확인). title·venue 공백, availableSeats>totalSeats 도 미검증",
+        "root_cause": "RC-4"
+      },
+      {
+        "tag": "design",
+        "file": "frontend/src/components/ui/text.ts",
+        "summary": "isBlank(trim)와 isBlankDisplay(ADR-0027 집합)가 공존 — Field·Badge·Segmented·Toast 는 isBlank, Hero eyebrow·lead·Row sub 는 truthiness",
+        "root_cause": "RC-1"
+      },
+      {
+        "tag": "security",
+        "file": "frontend/src/pages/PerformanceDetailPage.tsx:44",
+        "summary": "posterUrl 스킴을 클라이언트에서 거르지 않는다 (서버 ADR-0028 이 https 만 받고 img src 에서 javascript: 는 실행되지 않아 경미)"
+      }
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "표시 문자열의 공백 판정을 호출부마다 따로 구현해 ADR-0027 집합과 어긋남",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "클라이언트 isBlank/trim 이 U+FEFF 를 공백, U+200B·U+0085 를 글자로 봄 (isBlankDisplay 로 수정)",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "frontend/src/components/ui/task020.text.test.ts"
+        },
+        {
+          "case": "Field·Badge·Segmented·Toast 가 여전히 isBlank(trim)를 써 두 판정이 공존",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "이번 diff 가 건드리지 않은 기존 컴포넌트 — Phase 3 테스트가 프로브한다"
+        },
+        {
+          "case": "Hero eyebrow·lead, Row sub 가 truthiness 만 봐 공백 문자열이 빈 p 로 렌더",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "현재 호출부는 공백 문자열을 넘기지 않는다 — Phase 3 테스트가 프로브한다"
+        },
+        {
+          "case": "공백 title/venue 가 parseDetail 을 통과해 빈 h2 와 alt ' 포스터'",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "코드상 typeof string 검사만 — Phase 3 테스트가 프로브한다"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "시트 닫기 입력 가드가 '타이머' 로 풀려 실제 history 전이(비동기 popstate)와 동기화되지 않음",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "같은 틱의 Esc 연타",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": true,
+          "evidence": "frontend/src/pages/task020.sheet-close.test.tsx"
+        },
+        {
+          "case": "타이머 이후·popstate 이전 구간의 두 번째 닫기 입력(키 반복, 백드롭 더블 탭)",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "MemoryRouter 는 동기라 재현 불가 — 비동기 history 를 흉내 내는 테스트를 Phase 3 에서 쓴다"
+        },
+        {
+          "case": "history 첫 칸에서 시트가 열릴 때 navigate(-1)이 앞 문서로 나감",
+          "origin": "later",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "Phase 3 자체 리뷰 createMemoryRouter 프로브(no-op) — 브라우저에서는 앞 문서로 나갈 수 있다는 리뷰어 지적"
+        },
+        {
+          "case": "백드롭 클릭·확인 버튼 경로(테스트는 Esc 만 관찰)",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "같은 closeSheet 공유를 코드로만 확인 — Phase 3 테스트가 프로브한다"
+        }
+      ]
+    },
+    {
+      "id": "RC-3",
+      "summary": "외부 I/O(시계 측정)에 시간 제한이 없어 지연 시 종료·실패 상태로 가지 못함",
+      "found_in_round": 3,
+      "variants": [
+        {
+          "case": "/api/time 이 응답하지 않으면 status 가 measuring 에 영원히 머물고 retry 도 안 뜸",
+          "origin": "found",
+          "probe": "not_probed",
+          "reason": "코드상 fetch 에 AbortController·timeout 없음을 확인 — Phase 3 테스트가 프로브한다(시나리오 밖 동작이면 2a)"
+        },
+        {
+          "case": "언마운트·세대 폐기 후에도 진행 중인 요청을 중단하지 않음",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "자원 낭비일 뿐 상태 오염은 세대 가드가 막는다 — Phase 3 테스트가 프로브한다"
+        }
+      ]
+    },
+    {
+      "id": "RC-4",
+      "summary": "parseDetail·getServerTime 의 시각 검증이 Date.parse 의 관대한 해석에 기댐",
+      "found_in_round": 3,
+      "variants": [
+        {
+          "case": "startAt/openAt/closeAt/now 가 '1'·'2026' 같은 비 ISO 문자열이어도 통과",
+          "origin": "found",
+          "probe": "reproduced",
+          "resolved": false,
+          "evidence": "node -e Date.parse('1')=978274800000, Date.parse('2026')=1767225600000 (isTime 이 이 값을 유효로 봄: performances.ts:155)"
+        },
+        {
+          "case": "availableSeats > totalSeats, seatCount 미검증",
+          "origin": "predicted",
+          "probe": "not_probed",
+          "reason": "코드상 검사 없음 — Phase 3 테스트가 프로브한다"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "parseDetail 계약 검증 있음. 시각 문자열은 Date.parse 에만 의존(RC-4). posterUrl 스킴 미검사(경미, 서버 ADR-0028 이 https 만 받음)",
+    "authorization": "해당 없음 — /api/time·상세 조회는 공개, 토큰 미사용",
+    "secrets": "해당 없음",
+    "logging": "해당 없음"
+  },
+  "environment_notes": [
+    "브라우저가 시간대를 무시해 한국 시간 값은 Node 테스트(SC-32, 3개 시간대)로만 확인",
+    "모의 서버 검증 — 실제 백엔드와의 연동은 확인하지 못했다",
+    "승인 테스트 5곳 수정(clock 3, task024 2)은 AskUserQuestion 승인을 받았다",
+    "추가 테스트 task020.text·sheet-close(16케이스)는 HITL 미승인 — Phase 4 리뷰어가 가짜 통과가 아님을 확인"
+  ],
+  "human_review": {
+    "decision": null,
+    "verified_commit": null,
+    "verified_at": null
+  }
+}
