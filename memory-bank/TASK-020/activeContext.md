@@ -45,3 +45,13 @@ Phase 2a — VERIFY root_causes 변종 전부를 시나리오로. 이후 검증�
 - frontend 명령은 `export PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH"` 후 실행. 시작 시점 develop 에서 `npm test` 는 1회차 1건 실패(어느 테스트인지 미확인)·2회차 775 통과 — 간헐 실패 가능성, Phase 3·4 에서 재현되면 원인을 잡는다
 - 회고 개선안 중 이번에 해당: TASK-018 #0 design-checks(시안 모양 값 표), #5 screen-verification(iframe 클릭·서버 종료). 같은 대상 2건 이상 누적은 없음
 - 사용자 결정(2026-11-13): 상세·대기열 임시 화면은 전역 헤더 없이(시안대로). 승인 테스트 6건 안팎 수정은 2b 승인에 올린다
+
+## Pull Request
+
+```yaml
+pull_request:
+  number: 53
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/53"
+  base: develop
+  opened_at: 2026-11-16
+```
