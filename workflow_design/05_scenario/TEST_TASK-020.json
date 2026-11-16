@@ -1,0 +1,613 @@
+{
+  "task_id": "TASK-020",
+  "supersedes": "SCENARIO_TASK-020.json",
+  "test_file": "frontend/src/pages/task020.detail.test.tsx",
+  "test_files": [
+    "frontend/src/components/ui/task020.blank.test.tsx",
+    "frontend/src/pages/task020.clock.test.tsx",
+    "frontend/src/pages/task020.close.test.tsx",
+    "frontend/src/pages/task020.detail.test.tsx",
+    "frontend/src/pages/task020.zone.test.tsx",
+    "frontend/src/task020.layout.test.tsx",
+    "frontend/src/task020.static.test.ts",
+    "frontend/src/utils/datetime.test.ts"
+  ],
+  "test_files_changed": [
+    "frontend/src/components/ui/task017.ui.test.tsx",
+    "frontend/src/pages/task017.regression.test.tsx",
+    "frontend/src/task017.static.test.ts",
+    "frontend/src/auth/AuthScreens.test.tsx",
+    "frontend/src/auth/task018.auth.test.tsx",
+    "frontend/src/auth/task024.organizer.test.tsx",
+    "frontend/src/pages/PerformanceDetailPage.test.tsx (삭제)"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "type": "happy",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"뒤로\""
+    },
+    {
+      "scenario_id": "SC-02",
+      "type": "error",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 4,
+      "rows_red": 4,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 찾는 공연이 없어요. This could be because the text is broken up by multiple elements. In this case, "
+    },
+    {
+      "scenario_id": "SC-03",
+      "type": "error",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 7,
+      "rows_red": 7,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 공연 정보를 불러오지 못했어요. This could be because the text is broken up by multiple elements. In this "
+    },
+    {
+      "scenario_id": "SC-04",
+      "type": "error",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 82,
+      "rows_red": 21,
+      "rows_already_passing": 61,
+      "status": "red",
+      "failure": "Unable to find an element with the text: 공연 정보를 불러오지 못했어요 (새 행 33개 중 21 Red — 시각 형식 12·title/venue 공백 8·availableSeats>totalSeats 1. 옛 행 49 + 새 행 12(null·키 없음·숫자)는 이미 통과)"
+    },
+    {
+      "scenario_id": "SC-05",
+      "type": "boundary",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 9,
+      "rows_red": 8,
+      "rows_already_passing": 1,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"heading\" and name \"다른 공연\"",
+      "note": "행 c(홈으로 이동한 뒤 7 의 늦은 성공)는 옛 구현도 언마운트로 통과한다 — 이 태스크가 바꾸지 않는 방향의 부정형 회귀라 구조적으로 Red 불가",
+      "already_passing_rows": [
+        "7 의 늦은 성공(P_UP)"
+      ]
+    },
+    {
+      "scenario_id": "SC-06",
+      "type": "boundary",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 11,
+      "rows_red": 11,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 찾는 공연이 없어요. This could be because the text is broken up by multiple elements. In this case, "
+    },
+    {
+      "scenario_id": "SC-07",
+      "type": "happy",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"timer\""
+    },
+    {
+      "scenario_id": "SC-08",
+      "type": "boundary",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 12,
+      "rows_red": 12,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"timer\""
+    },
+    {
+      "scenario_id": "SC-09",
+      "type": "happy",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 4,
+      "rows_red": 4,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 11월 11일(수) 오후 6:00 예매 오픈. This could be because the text is broken up b"
+    },
+    {
+      "scenario_id": "SC-10",
+      "type": "error",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 16,
+      "rows_red": 4,
+      "rows_already_passing": 12,
+      "status": "red",
+      "failure": "행 m~p(now 가 '1'·'2026'·날짜만·오프셋 없음) — 「기준 시각을 맞추지 못했어요」 대신 카운트다운이 보인다"
+    },
+    {
+      "scenario_id": "SC-11",
+      "type": "boundary",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 5,
+      "rows_red": 5,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"timer\""
+    },
+    {
+      "scenario_id": "SC-12",
+      "type": "happy",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 3,
+      "rows_red": 3,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected [] to have a length of 3 but got +0"
+    },
+    {
+      "scenario_id": "SC-13",
+      "type": "happy",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 3,
+      "rows_red": 3,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected [] to have a length of 3 but got +0"
+    },
+    {
+      "scenario_id": "SC-14",
+      "type": "boundary",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 9,
+      "rows_red": 9,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"timer\""
+    },
+    {
+      "scenario_id": "SC-15",
+      "type": "happy",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 4,
+      "rows_red": 4,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-16",
+      "type": "happy",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-17",
+      "type": "boundary",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 12,
+      "rows_red": 3,
+      "rows_already_passing": 9,
+      "status": "red",
+      "failure": "행 i~k(javascript:·data:·ftp: 스킴) — 아이콘 면이 아니라 <img> 로 그린다. 행 l(http)은 이미지 그대로라 통과"
+    },
+    {
+      "scenario_id": "SC-18",
+      "type": "boundary",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 5,
+      "rows_red": 5,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"루미너스 콘서트 〈WAVELENGTH〉 서울\""
+    },
+    {
+      "scenario_id": "SC-19",
+      "type": "happy",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-20",
+      "type": "happy",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 4,
+      "rows_red": 4,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-21",
+      "type": "boundary",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 6,
+      "rows_red": 6,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-22",
+      "type": "boundary",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 8,
+      "rows_red": 8,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-23",
+      "type": "boundary",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 7,
+      "rows_red": 7,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-24",
+      "type": "happy",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 4,
+      "rows_red": 4,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: F1 무대 바로 앞 → F4 맨 뒤. This could be because the text is broken up by multiple elements. In th"
+    },
+    {
+      "scenario_id": "SC-25",
+      "type": "happy",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 2,
+      "rows_red": 2,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예매하기\""
+    },
+    {
+      "scenario_id": "SC-26",
+      "type": "error",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 5,
+      "rows_red": 4,
+      "rows_already_passing": 1,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예매하기 · 오후 6:00에 열려요\"",
+      "note": "행 e(P_CANCEL — CTA 없음)는 옛 화면에 버튼이 아예 없어 통과한다 — 부정형이라 구조적으로 Red 불가",
+      "already_passing_rows": [
+        "e P_CANCEL"
+      ]
+    },
+    {
+      "scenario_id": "SC-27",
+      "type": "happy",
+      "test_file": "src/task020.layout.test.tsx",
+      "rows": 8,
+      "rows_red": 7,
+      "rows_already_passing": 1,
+      "status": "red",
+      "failure": "AssertionError: expected [ <h1 …(1)></h1> ] to have a length of +0 but got 1",
+      "note": "행 e(title 있는 AppBar 는 h1 을 그린다)는 바뀌지 않는 기존 동작 회귀 — 구조적으로 Red 불가",
+      "already_passing_rows": [
+        "title='예매 확인'"
+      ]
+    },
+    {
+      "scenario_id": "SC-28",
+      "type": "regression",
+      "test_file": "src/task020.layout.test.tsx",
+      "rows": 14,
+      "rows_red": 8,
+      "rows_already_passing": 6,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\"",
+      "note": "행 i~n(등록·수정·홈은 전역 헤더 유지)은 바뀌지 않는 기존 동작 회귀 — 구조적으로 Red 불가. 행 a~h(상세·대기열은 헤더 없음)가 Red",
+      "already_passing_rows": [
+        "i /performances/new",
+        "j /performances/new/",
+        "k /Performances/NEW",
+        "l /performances/7/edit",
+        "m /performances/7/edit/",
+        "n /"
+      ]
+    },
+    {
+      "scenario_id": "SC-29",
+      "type": "regression",
+      "test_file": "src/task020.layout.test.tsx",
+      "rows": 5,
+      "rows_red": 2,
+      "rows_already_passing": 3,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\"",
+      "note": "행 a~c(홈에서 로그인·가입 진입·로그인 상태 헤더)는 옛 승인 테스트를 홈으로 옮긴 기존 동작 회귀 — 구조적으로 Red 불가. 행 d·e(상세에는 헤더 없음)가 Red",
+      "already_passing_rows": [
+        "a 비로그인, / 에서 헤더의 「로그인」 링크로 로그인에 성공한다",
+        "b 비로그인, / 에서 헤더의 「가입」 링크를 누른다",
+        "c 로그인 상태(홍길동), / 를 연다"
+      ]
+    },
+    {
+      "scenario_id": "SC-30",
+      "type": "boundary",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 8,
+      "rows_red": 8,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected [] to have a length of 1 but got +0"
+    },
+    {
+      "scenario_id": "SC-31",
+      "type": "regression",
+      "test_file": "src/task020.static.test.ts",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected [ …(3) ] to deeply equal [ …(2) ]"
+    },
+    {
+      "scenario_id": "SC-32",
+      "type": "boundary",
+      "test_file": "src/utils/datetime.test.ts",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Not implemented"
+    },
+    {
+      "scenario_id": "SC-33",
+      "type": "regression",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"timer\""
+    },
+    {
+      "scenario_id": "SC-34",
+      "type": "happy",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 2,
+      "rows_red": 2,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"heading\""
+    },
+    {
+      "scenario_id": "SC-35",
+      "type": "boundary",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 7,
+      "rows_red": 7,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find an element with the text: 110,000~150,000원. This could be because the text is broken up by multiple elements. In this "
+    },
+    {
+      "scenario_id": "SC-36",
+      "type": "happy",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 3,
+      "rows_red": 3,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"button\" and name \"다시 시도\""
+    },
+    {
+      "scenario_id": "SC-37",
+      "type": "boundary",
+      "test_file": "src/pages/task020.zone.test.tsx",
+      "rows": 3,
+      "rows_red": 3,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-38",
+      "type": "happy",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 2,
+      "rows_red": 2,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"대기열을 준비하고 있어요\""
+    },
+    {
+      "scenario_id": "SC-39",
+      "type": "happy",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-40",
+      "type": "error",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 6,
+      "rows_red": 5,
+      "rows_already_passing": 1,
+      "status": "red",
+      "failure": "행 a·b·d·e·f: 요청에 중단 신호(init.signal)가 없고 5초 제한이 없어 「기준 시각을 맞추지 못했어요」가 안 나오고 요청이 중단되지 않는다. 행 c(4.999초 응답)는 제한이 없어도 성공이라 통과(구조적 — 경계 아래쪽을 지키는 행)"
+    },
+    {
+      "scenario_id": "SC-41",
+      "type": "boundary",
+      "test_file": "src/pages/task020.close.test.tsx",
+      "rows": 9,
+      "rows_red": 8,
+      "rows_already_passing": 1,
+      "status": "red",
+      "failure": "행 b~f(비동기 history): 첫 반영 전 둘째 입력이 뒤로 가기를 한 번 더 해 주소가 /performances/7 이 아니라 / 가 된다. 행 g·h(시트가 열린 한 칸뿐): navigate(-1) 이 no-op 이라 dialog 가 남는다. 행 i([/, 시트 상세]): -1 로 / 로 나가 상세를 떠난다. 행 a(동기)는 Phase 3 가드로 이미 통과"
+    },
+    {
+      "scenario_id": "SC-42",
+      "type": "boundary",
+      "test_file": "src/components/ui/task020.blank.test.tsx",
+      "rows": 44,
+      "rows_red": 15,
+      "rows_already_passing": 29,
+      "status": "red",
+      "failure": "Hero eyebrow·lead, Row sub 가 공백 값(행 b~f)을 빈 요소로 그린다(truthiness 만 본다). AppBar title(5행)과 글자로 보는 행(g·h·i)은 이미 통과"
+    },
+    {
+      "scenario_id": "SC-43",
+      "type": "boundary",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 6,
+      "rows_red": 0,
+      "rows_already_passing": 6,
+      "status": "already_passing",
+      "failure": null,
+      "note": "구조적 Red 불가 — 계약 위반 규칙을 좁히지 않는 부정형 회귀(쓰지 않는 필드·좌석 0). 변이 확인: parseDetail 에 seatCount 정수 검사를 넣으면 행 a~d 4건이 실패한다(커밋하지 않고 원복)"
+    }
+  ],
+  "red_result": {
+    "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npx vitest run --testTimeout=60000",
+    "total": 1013,
+    "failed": 235,
+    "passed": 777,
+    "new_cases": 241,
+    "new_cases_failed": 229,
+    "new_cases_passed": 12,
+    "breakdown": "새 테스트 241케이스(시나리오 39건) 중 229 실패·12 통과(구조적 Red 불가 행). 기존 테스트 실패 6건은 전부 이 태스크가 새 정본으로 고친 승인 테스트의 행이다(아래 existing_failures)",
+    "existing_tests_still_passing": true,
+    "existing_failures": [
+      "task017.static.test.ts :: TASK-017 정적 검사 TASK-017 SC-10 (happy) 테마 밖 색·매직 치수가 없다",
+      "AuthScreens.test.tsx :: TASK-010 이메일 회원가입/로그인 화면 SC-28 (regression) 헤더와 새 라우트가 기존 공연 화면을 해치지 않는다",
+      "task018.auth.test.tsx :: ASK-018 인증 화면 5종을 시안대로 SC-32 (regression) 전역 헤더는 인증 화면에서만 사라진다 — /performances/1",
+      "task017.regression.test.tsx :: TASK-017 기존 화면 회귀 TASK-017 SC-13 (regression) 기존 화면이 새 테마에서 깨지지 않고 새 배지 문구로 나온다",
+      "task017.ui.test.tsx :: TASK-017 공통 부품 TASK-017 SC-16 (error) 부품 prop 의 경계값과 전환·정리가 PLAN prop_schema 대로다",
+      "task017.ui.test.tsx :: TASK-017 공통 부품 TASK-017 SC-18 (error) 문구가 비었거나 길어도 부품이 칸을 벗어나지 않는다"
+    ],
+    "existing_note": "고치지 않은 기존 테스트는 전부 통과. 승인 테스트 6건은 새 기대를 단언하도록 바꿔 구현 전에는 실패한다(Red). 제한 시간 5초 기본값에서는 시스템 부하(load 30+)로 PerformanceRegisterPage SC-01·02, task024 SC-04·05·09 등 타이핑이 많은 기존 테스트가 간헐 타임아웃/waitFor 초과로 실패했다 — --testTimeout=30000 이상 또는 단독 실행에서는 통과. 이 태스크와 무관한 환경 문제"
+  },
+  "harness_probe": {
+    "method": "버린 프로브 테스트 2건(src/zz_probe020*.test.tsx, 커밋하지 않고 삭제)",
+    "verified": [
+      "jsdom getComputedStyle 이 MUI sx 의 aspect-ratio('4/3' — 공백 없음)·font-variant-numeric·z-index·calc(var) font-size(49px)·max-height·width 를 계산한다 → squash()로 공백을 없애 비교",
+      "SVG 인라인 style 의 var(--c-x) 는 해석되지 않고 문자열 그대로 나온다 → isTokenColor 가 토큰 계산색과 var(--토큰) 표기를 모두 같은 색으로 본다",
+      "vi.useFakeTimers + act 로 감싼 advanceTimersByTimeAsync 가 순차 fetch(왕복 지연)를 정해진 순서·시각 [0,400,500]에 처리한다",
+      "vi.setSystemTime 은 대기 중인 setInterval 을 터뜨리지 않는다(숨겨진 탭 모사)",
+      "document.visibilityState 재정의 + visibilitychange 는 React 효과 안 리스너에 닿는다",
+      "StrictMode 는 효과를 두 번 실행해 시각 호출이 6번 나간다 — 측정 결과는 한 번만 적용돼야 한다(SC-30 f)"
+    ],
+    "not_verified": [
+      "배치도 SVG 도형의 fill·stroke 가 클래스·스타일시트 규칙으로 주어질 때 jsdom 이 계산하는지(SC-33 은 인라인 style 또는 token() 값을 가정) — Green 구현 방식에 따라 단언을 고쳐야 할 수 있다",
+      "시트 안 Row 의 가격 color·font-weight 의 상속 계산(SC-33)",
+      "process.env.TZ 변경이 vitest 워커에서 Intl 에 반영되는지(SC-32 는 Asia/Seoul 고정이라 구현이 맞으면 어느 쪽이든 통과)",
+      "SC-04 의 console.error 0건 — React 가 오류 화면 경로에서 내는 경고가 있으면 Green 에서 조정"
+    ]
+  },
+  "inventory_check": {
+    "scenarios": 43,
+    "test_functions": 43,
+    "match": true,
+    "how": "테스트 제목의 'SC-NN (type)' — 표 시나리오는 test.each 한 줄. SC-41·42 는 한 test.each 로 합쳤다(시나리오당 함수 하나)"
+  },
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/api/time.ts",
+      "frontend/src/hooks/useServerClock.ts",
+      "frontend/src/utils/zones.ts",
+      "frontend/src/components/ZoneMap.tsx",
+      "frontend/src/components/ZoneMapSheet.tsx",
+      "frontend/src/pages/QueuePlaceholderPage.tsx",
+      "frontend/src/utils/datetime.ts (formatDateTime·formatClock·formatCountdown 추가)",
+      "frontend/src/api/performances.ts (타입만: posterUrl?·SectionSummary.area?·areaNote?·stageOrder?)"
+    ],
+    "contents": "시그니처·타입. 본문은 전부 throw new Error('Not implemented') — 컴포넌트는 반환형 never",
+    "purity_check": "tsc -b 오류 0. 스켈레톤은 라우트에 연결하지 않았다(App.tsx 불변) — 새 화면은 렌더되지 않으므로 새 테스트의 실패는 요소 없음 단언이고, 스켈레톤의 throw 는 datetime SC-32 에서만 직접 드러난다. SectionSummary 의 area·stageOrder 를 선택으로 둔 것은 응답을 런타임에 검증하기 때문(SC-04)이며 기존 픽스처를 깨지 않는다"
+  },
+  "testing_preferences": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "mock_strategy": "fetch 를 'METHOD path' 표로 스텁(응답마다 새 Response, 호출 기록 calls). 화면은 App + MemoryRouter(+AuthProvider·NavProbe·AuthProbe)로 실제 라우트를 지난다. 시간은 vi.useFakeTimers + vi.setSystemTime, settle(ms)=act 안의 advanceTimersByTimeAsync(findBy 는 가짜 타이머 파일에서 쓰지 않는다). 포스터 칸은 data-testid=\"poster\" 로 단다는 약속"
+  },
+  "approved_test_changes": [
+    {
+      "file": "frontend/src/pages/PerformanceDetailPage.test.tsx",
+      "change": "파일 삭제 — 새 화면 기준 테스트가 대신한다",
+      "scenario": "SC-01·02·03·15·16"
+    },
+    {
+      "file": "frontend/src/components/ui/task017.ui.test.tsx",
+      "change": "AppBar 빈 h1 단언 2곳을 「h1 없음」으로 뒤집음",
+      "scenario": "SC-27 a~c"
+    },
+    {
+      "file": "frontend/src/pages/task017.regression.test.tsx",
+      "change": "상세 「예매 가능」 글자 요소 1개 → 0개(머리글 「지금 예매할 수 있어요」), 픽스처 sections 에 area·stageOrder 추가",
+      "scenario": "SC-15 a, SC-04"
+    },
+    {
+      "file": "frontend/src/task017.static.test.ts",
+      "change": "DESIGN-003 위반 파일 목록에서 PerformanceDetailPage.tsx 제거(3→2건)",
+      "scenario": "SC-31"
+    },
+    {
+      "file": "frontend/src/auth/AuthScreens.test.tsx",
+      "change": "SC-13·SC-22 시작 화면을 /performances/3 → /, SC-20 의 /performances/3 행 제거, SC-28 의 상세 로그인 링크 단언을 「없음」으로, 픽스처 sections 에 area·stageOrder 추가",
+      "scenario": "SC-29 a·b, SC-28 a, SC-04"
+    },
+    {
+      "file": "frontend/src/auth/task018.auth.test.tsx",
+      "change": "SC-32 의 /performances/1 행 header true → false",
+      "scenario": "SC-28 a"
+    },
+    {
+      "file": "frontend/src/auth/task024.organizer.test.tsx",
+      "change": "공연 픽스처 sections 에 area·stageOrder 추가",
+      "scenario": "SC-04"
+    }
+  ],
+  "human_review": {
+    "approved": true,
+    "approved_at": "2026-11-16T08:17:36Z",
+    "via": "AskUserQuestion — 승인 (통합 HITL#1·2 재승인, 롤백 재진입: 시나리오 43건 + Red 새 행 56 실패, PLAN 밖 결정 6가지 포함)"
+  },
+  "red_retry": {
+    "reason": "Phase 4 FAIL(1회차) → 시나리오 롤백(2a) → 재진입 2b. 구현이 이미 있어 새 행은 구현 부재가 아니라 구현의 결함·누락으로 실패한다",
+    "red_result": {
+      "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npx vitest run --testTimeout=60000",
+      "total": 1135,
+      "failed": 56,
+      "passed": 1078,
+      "todo": 1,
+      "breakdown": "새·바뀐 행 SC-04 +33(21 Red)·SC-10 +4(4)·SC-17 +4(3)·SC-40 6(5)·SC-41 9(8)·SC-42 44(15)·SC-43 6(0). 실패 56건은 모두 위 새 행이고 기존 1029건은 계속 통과"
+    },
+    "mutation_check": [
+      {
+        "mutation": "parseDetail 에 seatCount 정수 검사 추가",
+        "tests": "SC-43 a~d",
+        "result": "4건 실패 — 쓰지 않는 필드를 계약에 넣는 변이를 잡는다",
+        "reverted": true
+      }
+    ],
+    "harness": "test/task020.tsx renderAt({ asyncHistory }) — unstable_HistoryRouter + UNSAFE_createMemoryHistory({ v5Compat: true }) 에 history.go 를 20ms 뒤에 반영하도록 감싼다. v5Compat 없이는 push 가 listener 를 부르지 않아 시트가 안 열린다(프로브로 확인)",
+    "removed": [
+      "frontend/src/pages/task020.sheet-close.test.tsx — SC-41 a~f 가 대신한다(Phase 3 에서 HITL 없이 추가했던 것)"
+    ],
+    "kept_unapproved": [
+      "frontend/src/components/ui/task020.text.test.ts — isBlankDisplay 단위 16케이스(Phase 3 추가, 시나리오 밖). SC-42 가 부품 수준 판정을 덮는다"
+    ]
+  }
+}

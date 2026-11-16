@@ -1588,7 +1588,7 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
   // ---------- SC-32 ----------
   test.each([
     { path: '/', header: true },
-    { path: '/performances/1', header: true },
+    { path: '/performances/1', header: false }, // TASK-020 SC-28 — 상세에는 전역 헤더가 없다
     { path: '/login', header: false },
     { path: '/signup', header: false },
     { path: '/oauth2/redirect', header: false },

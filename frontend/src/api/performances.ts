@@ -1,3 +1,5 @@
+import { isBlankDisplay } from '../components/ui/text'
+import { isInstant } from '../utils/datetime'
 import { request } from './http'
 
 export type PerformanceStatus = 'UPCOMING' | 'OPEN' | 'SOLD_OUT' | 'CLOSED' | 'CANCELLED'
@@ -6,6 +8,12 @@ export interface SectionSummary {
   grade: string
   price: number
   seatCount: number
+  /** 묶음 이름 — 구역 위치를 등록하지 않은 공연은 등급 이름과 같다. 서버는 항상 주지만 화면은 런타임에 검증한다(TASK-020 SC-04) */
+  area?: string
+  /** 묶음 설명 — 없으면 키가 없다 */
+  areaNote?: string
+  /** 무대에서 가까운 순 — 위와 같이 런타임에 검증한다 */
+  stageOrder?: number
 }
 
 export interface Performance {
@@ -18,6 +26,8 @@ export interface Performance {
   totalSeats: number
   availableSeats: number
   status: PerformanceStatus
+  /** 없으면 키가 없다 */
+  posterUrl?: string
   sections?: SectionSummary[]
 }
 
@@ -79,7 +89,7 @@ export async function getPerformances(): Promise<PerformanceListResponse> {
 }
 
 export async function getPerformance(id: string): Promise<Performance> {
-  const response = await request(`/api/performances/${id}`)
+  const response = await request(`/api/performances/${encodeURIComponent(id)}`)
   if (response.status === 404) {
     throw new PerformanceNotFoundError(`공연을 찾을 수 없습니다: ${id}`)
   }
@@ -140,4 +150,34 @@ export async function cancelPerformance(id: string): Promise<Performance> {
     await throwWriteError(response)
   }
   return response.json()
+}
+
+const STATUSES: readonly string[] = ['UPCOMING', 'OPEN', 'SOLD_OUT', 'CLOSED', 'CANCELLED']
+const isCount = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0
+
+/**
+ * 상세 응답이 계약을 지키는지 본다 — 어기면 null (화면은 오류 화면으로 간다, TASK-020 SC-04).
+ * sections 가 없거나 비어 있으면 구역 정보가 없는 것이지 위반이 아니다.
+ */
+export function parseDetail(value: unknown): Performance | null {
+  if (typeof value !== 'object' || value === null) return null
+  const p = value as Record<string, unknown>
+  if (typeof p.status !== 'string' || !STATUSES.includes(p.status)) return null
+  if (!isInstant(p.startAt) || !isInstant(p.openAt) || !isInstant(p.closeAt)) return null
+  if (!isCount(p.availableSeats) || !isCount(p.totalSeats)) return null
+  if (isBlankDisplay(p.title) || isBlankDisplay(p.venue)) return null
+  if (p.availableSeats > p.totalSeats) return null
+  let sections: SectionSummary[] | undefined
+  if (p.sections !== undefined && p.sections !== null) {
+    if (!Array.isArray(p.sections)) return null
+    for (const element of p.sections) {
+      if (typeof element !== 'object' || element === null) return null
+      const s = element as Record<string, unknown>
+      if (isBlankDisplay(s.grade) || isBlankDisplay(s.area)) return null
+      if (!isCount(s.price)) return null
+      if (typeof s.stageOrder !== 'number' || !Number.isInteger(s.stageOrder)) return null
+    }
+    sections = p.sections as SectionSummary[]
+  }
+  return { ...(value as Performance), sections }
 }

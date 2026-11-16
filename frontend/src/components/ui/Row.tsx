@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box'
 import type { ReactNode } from 'react'
 import { componentSizes, token } from '../../theme/tokens'
+import { hasContent } from './text'
 
 export interface RowProps {
   lead?: ReactNode
@@ -22,7 +23,7 @@ export function Row({ lead, title, sub, trail }: RowProps) {
         padding: `${token('--row-py')} 0`,
       }}
     >
-      {lead && (
+      {hasContent(lead) && (
         <Box
           sx={{
             flex: 'none',
@@ -42,11 +43,11 @@ export function Row({ lead, title, sub, trail }: RowProps) {
         <Box sx={{ fontSize: token('--fs-strong'), fontWeight: Number(token('--fw-strong')), lineHeight: Number(token('--lh-strong')) }}>
           {title}
         </Box>
-        {sub && (
+        {hasContent(sub) && (
           <Box sx={{ fontSize: token('--fs-sub'), lineHeight: Number(token('--lh-sub')), color: token('--c-text-2') }}>{sub}</Box>
         )}
       </Box>
-      {trail && (
+      {hasContent(trail) && (
         <Box sx={{ flex: 'none', fontSize: token('--fs-sub'), color: token('--c-text-2'), display: 'flex', alignItems: 'center', gap: token('--stack-s') }}>
           {trail}
         </Box>

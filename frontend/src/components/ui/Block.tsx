@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box'
 import type { ReactNode } from 'react'
 import { token } from '../../theme/tokens'
+import { hasContent } from './text'
 
 export interface BlockProps {
   title?: string
@@ -27,7 +28,7 @@ export function Block({ title, note, list, children }: BlockProps) {
         ...(list && { paddingTop: token('--stack-m'), paddingBottom: token('--stack-s'), gap: 0 }),
       }}
     >
-      {title && (
+      {hasContent(title) && (
         <Box
           component="h2"
           sx={{
@@ -42,7 +43,7 @@ export function Block({ title, note, list, children }: BlockProps) {
         </Box>
       )}
       {children}
-      {note && (
+      {hasContent(note) && (
         <Box component="p" sx={{ margin: 0, fontSize: token('--fs-sub'), lineHeight: Number(token('--lh-sub')), color: token('--c-text-2') }}>
           {note}
         </Box>

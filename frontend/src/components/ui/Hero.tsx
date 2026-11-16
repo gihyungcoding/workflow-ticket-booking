@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box'
 import type { ReactNode } from 'react'
 import { componentSizes, token } from '../../theme/tokens'
+import { hasContent } from './text'
 
 export interface HeroProps {
   eyebrow?: ReactNode
@@ -12,7 +13,7 @@ export interface HeroProps {
 export function Hero({ eyebrow, title, lead }: HeroProps) {
   return (
     <Box component="header" sx={{ padding: `${token('--stack-l')} 0 ${token('--stack-m')}`, display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
-      {eyebrow && (
+      {hasContent(eyebrow) && (
         <Box component="p" sx={{ margin: 0, fontSize: token('--fs-sub'), fontWeight: Number(token('--fw-strong')), lineHeight: Number(token('--lh-sub')), color: token('--c-text-2') }}>
           {eyebrow}
         </Box>
@@ -31,7 +32,7 @@ export function Hero({ eyebrow, title, lead }: HeroProps) {
       >
         {title}
       </Box>
-      {lead && (
+      {hasContent(lead) && (
         <Box component="p" sx={{ margin: 0, fontSize: token('--fs-body'), lineHeight: Number(token('--lh-body')), color: token('--c-text-2'), textWrap: 'pretty' }}>
           {lead}
         </Box>

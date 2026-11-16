@@ -1,0 +1,193 @@
+{
+  "task_id": "TASK-020",
+  "track": "standard",
+  "keep": [
+    {
+      "what": "뿌리 4개의 변종을 위치마다가 아니라 공통 지점(isInstant·hasContent·useServerClock.invalidate·closeSheet)에서 고쳤다",
+      "evidence": "Phase 4 2회차 리뷰가 막힐 결함 0건 — 자체 리뷰 3·4R 이 later 변종 3건(달력 날짜·Block/Row·연도 0~99)을 같은 지점에서 닫음 (DEV rollback_fixes, VERIFY 2회차)"
+    },
+    {
+      "what": "브라우저 history 의 비동기 popstate 를 테스트에서 재현하는 하네스를 프로브로 먼저 확인했다",
+      "evidence": "renderAt({ asyncHistory }) — unstable_HistoryRouter 에 v5Compat:true 가 없으면 push 가 listener 를 안 부름을 프로브로 확인(CP-2.5). SC-41 b~f 가 Red 에서 정확히 실패했고 실제 브라우저에서도 Esc 3연타·새로고침 복원이 같은 결과"
+    },
+    {
+      "what": "시안 나란히 대조를 Phase 3 자체 리뷰 전에 했다(TASK-018 회고 제안 반영)",
+      "evidence": "차이 3건(타임라인 연결선·공연명 줄바꿈·포스터 여백)을 Phase 3 에서 고쳤고 Phase 4 에서 시안 값 차이로 FAIL 한 적이 없다"
+    },
+    {
+      "what": "2b 에서 Red 를 옮기다 찾은 시나리오 결함 4건을 승인 전에 2a 로 돌아가 고쳤다",
+      "evidence": "SC-07·SC-12·SC-14·승인 테스트 표 (CP-2.2 decisions, 검증 3회차 PASS) — 승인 뒤가 아니라 앞에서 잡아 Green 롤백이 되지 않았다"
+    }
+  ],
+  "problem": [
+    {
+      "what": "Phase 4 1회차가 FAIL — 외부 I/O 시간 제한·시각 파서의 관대함·history 비동기를 PLAN·시나리오 단계에서 묻지 않았다",
+      "evidence": "VERIFY 1회차 root_causes RC-1~4, 변종 21 중 later 10건. 자체 리뷰 2라운드를 통과하고도 Phase 4 가 correctness 3건을 찾음. 2a→2b→3→4 한 바퀴 추가(약 하루)",
+      "phase": 4
+    },
+    {
+      "what": "PLAN input_fields 에 시간 응답·표시 필드(startAt·title·venue·totalSeats)와 「응답이 오지 않을 때」 종류가 없어 시나리오가 PLAN 밖 결정 6가지를 떠안았다",
+      "evidence": "롤백 2a 에서 PLAN 에 4필드를 추가하고 시나리오 SC-40~43 신설. VALIDATION V8 PLAN 밖 결정 6건 경고",
+      "phase": 1
+    },
+    {
+      "what": "승인된 테스트를 6곳 고쳐야 했다 — clock 하네스 4곳은 가짜 타이머의 시간 진행 부족, task024 2곳은 시나리오의 승인 테스트 표에서 빠졌던 행",
+      "evidence": "DEV test_modifications 6건(모두 AskUserQuestion 승인). Red 단계에서 0ms 응답 표본이 여러 개일 때 settle 한 번으로 모두 도착하지 않는 하네스 결함을 확인하지 않았다",
+      "phase": 3
+    },
+    {
+      "what": "이 브라우저가 모든 시간대를 무시해 한국 시간 값을 화면에서 확인하지 못했다 — 두 번의 Phase 4 모두 WARN 사유로 남음",
+      "evidence": "VERIFY status_reason, environment_notes (SC-32 Node 세 시간대로만 확인)",
+      "phase": 4
+    },
+    {
+      "what": "자체 리뷰의 「같은 카테고리 전수」가 hasContent 도입 때 Block·Row.lead/trail 을 놓쳤다 — 공유 판정 함수를 만들 때 부품 디렉터리 전수 Grep 을 구현 시점에 하지 않았다",
+      "evidence": "자체 리뷰 3R [correctness] RC-1 later 변종, fix 1886b6b",
+      "phase": 3
+    }
+  ],
+  "try": [
+    {
+      "what": "coverage_matrix.py 에 종류 두 개를 추가한다: `timeout`(응답이 오지 않음 — 시간 제한·요청 중단·언마운트 중단)과 `instant`(ISO 순간 — '1'·연도만·날짜만·오프셋 없음·달력에 없는 날짜·24시)",
+      "target": "scripts/coverage_matrix.py"
+    },
+    {
+      "what": "Phase 1 에서 외부 서버 응답이 시각·요청 지연에 기대면 input_fields 에 위 두 종류를 고르게 한다. 시각을 받는 필드(startAt·openAt 등)는 표시 전용이어도 필드로 올린다",
+      "target": ".claude/skills/wf-plan/SKILL.md"
+    },
+    {
+      "what": "가짜 타이머로 비동기 응답을 흘리는 테스트는 0ms 응답이 연이어 오는 경우를 프로브(settle 한 번에 몇 개의 setTimeout(0) 응답이 흐르는지)로 하네스 확인에 넣는다. history 를 쓰는 오버레이(시트·모달)는 비동기 history 하네스(v5Compat)를 쓴다",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "공유 판정 함수(isBlank 계열·isInstant 등)를 새로 만들거나 호출부를 바꿀 때는 구현 시점에 해당 디렉터리 전체를 Grep 해 truthiness·trim 으로 따로 판정하는 곳을 열거하고 DEV 의 reused/changed 에 남기게 한다",
+      "target": ".claude/skills/wf-develop/SKILL.md"
+    },
+    {
+      "what": "화면 확인에서 브라우저가 시간대를 무시하면 시각 값은 Node(TZ 환경변수 3종) 테스트를 증거로 쓴다고 미리 적고, 시간대 확인용 한 줄 프로브(Intl.DateTimeFormat().resolvedOptions().timeZone)를 첫 단계에 둔다",
+      "target": ".claude/skills/wf-verify/references/screen-verification.md"
+    }
+  ],
+  "insights": [
+    "Phase 3 자체 리뷰가 같은 뿌리의 변종을 모두 찾지는 못한다 — 네 개의 뿌리가 모두 「외부에서 오는 값·지연」(시각 파서, 응답 지연, history 전이, 서버 문구)이었다. PLAN 이 외부 입력을 필드 종류로 열거하면 시나리오·Red 단계에서 잡힌다",
+    "경미한 변종을 수용하려면 ADR 이 필요한데, 결정 과정(AskUserQuestion → ADR → accepted_risk → EXCEPTION_APPROVE)이 한 번에 이어지면 롤백 한 바퀴를 아낄 수 있었다",
+    "프론트 계약 검증(parseDetail)·시각 판정(isInstant)·문구 판정(hasContent)이 TASK-020 에서 처음 한 곳에 모였다 — 목록·등록·수정 화면(TASK-021)이 같은 함수를 쓰게 해야 같은 변종이 되돌아오지 않는다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "사용자 결정 1건(상세 전역 헤더 제거, 승인 테스트 6건 안팎 영향을 정정해 두 번 확인). 롤백 2a 때 PLAN input_fields 4필드·flow 한 줄씩 보완(분류 보완)"
+    },
+    "2a": {
+      "retries": 4,
+      "note": "독립검증 FAIL 2(V11 false_cover·롤백 재검증 V11 bad_na) + 2b 에서 시나리오 결함 4건 복귀 + Phase 4 롤백 1 — 시나리오 39 → 43건"
+    },
+    "2b": {
+      "retries": 1,
+      "note": "통합 HITL#1·2 2회 승인(재진입 재승인). 승인 테스트 표에서 task024 2행 누락 발견은 Phase 3"
+    },
+    "3": {
+      "retries": 1,
+      "note": "Phase 4 FAIL 로 재진입 1회. 자체 리뷰 4라운드(1~2R 1차, 3~4R 재진입), 승인 테스트 수정 6곳(AskUserQuestion)"
+    },
+    "4": {
+      "retries": 1,
+      "note": "1회차 FAIL(correctness 3·뿌리 4·변종 21), 2회차 WARN — 경미 변종 2건 ADR-0034 수용 + 예외 승인"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "프론트의 외부 요청에는 시간 제한과 중단(AbortController)을 둔다 — 표본 단위 5초",
+      "why_broader": "request()(api/http.ts)는 시간 제한이 없고 live 플래그로 늦은 응답만 버린다(ADR-0018). 목록·등록·결제 요청에도 같은 질문이 생긴다",
+      "evidence": "CP-2.2·3.4 decisions, SC-40, VERIFY RC-3",
+      "suggested_title": "프론트 요청의 시간 제한과 중단"
+    },
+    {
+      "decision": "서버가 주는 시각은 ISO 순간(Z 또는 ±hh:mm, 달력에 있는 값)만 받고 Date.parse 에 맡기지 않는다",
+      "why_broader": "PerformanceListPage 등 다른 화면이 new Date(startAt) 를 검증 없이 쓴다. auth.ts 도 비슷한 칸별 검증을 따로 갖고 있다",
+      "evidence": "VERIFY RC-4, utils/datetime.ts isInstant, 리뷰어 지적(auth.ts:116-127·PerformanceListPage.tsx:83)",
+      "suggested_title": "프론트가 받는 시각의 형식 판정"
+    },
+    {
+      "decision": "시트·모달은 history 칸 하나로 열고, 이 화면에서 눌러 연 것은 한 칸 뒤로·열린 채 들어온 주소는 교체로 닫는다",
+      "why_broader": "등록·수정 화면의 다이얼로그가 같은 질문을 갖는다",
+      "evidence": "SC-41, PerformanceDetailPage.closeSheet, ADR-0034 의 수용 범위",
+      "suggested_title": "오버레이의 history 규칙"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "warn 제약 AUTH-001 의 승격 기한(promote_after TASK-024)이 지났다",
+      "where": "docs/architecture/constraints.yaml",
+      "found_how": "check_architecture.py overdue_promotions (Phase 4 마다)",
+      "suggestion": "severity error 로 올리고 ADR 로 남기거나 promote_after 를 다시 정한다 — 회고 개선안 TASK-024 #3 과 같다"
+    },
+    {
+      "what": "isFullPage 의 경로 목록(App.tsx PAGE_ROUTES)이 Routes 와 따로 중복돼 있어 새 라우트가 생기면 어긋날 수 있다",
+      "where": "frontend/src/App.tsx",
+      "found_how": "Phase 4 1회차 리뷰어 지적(현재는 일치, 표기 변종 프로브 통과)",
+      "suggestion": "라우트 정의 하나에서 둘을 만든다 — 후속 정리 태스크"
+    },
+    {
+      "what": "PerformanceListPage 가 new Date(startAt) 를 검증 없이 쓴다",
+      "where": "frontend/src/pages/PerformanceListPage.tsx:83",
+      "found_how": "Phase 4 2회차 리뷰어",
+      "suggestion": "TASK-021(홈) 에서 isInstant·parseDetail 계열 검증을 적용한다"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": "scripts/coverage_matrix.py",
+      "section": "종류 목록",
+      "change": "`timeout`(응답이 오지 않음 — 시간 제한·요청 중단·언마운트 중단)과 `instant`(ISO 순간 — '1'·'2026'·날짜만·오프셋 없음·달력에 없는 날짜·24시·연도 0~99) 종류 추가",
+      "evidence": "TASK-020 Phase 4 FAIL — RC-3(시간 제한)·RC-4(Date.parse 관대함) 변종이 칸으로 없어 시나리오에서 빠졌다",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-plan/SKILL.md",
+      "section": "Step 4 — 구조 정규화(input_fields)",
+      "change": "외부 서버 응답이 시각이나 요청 지연에 기대면 input_fields 에 `timeout`·`instant` 종류를 고르게 하고, 표시 전용 시각·문구(startAt·title·venue)도 필드로 올리게 한다",
+      "evidence": "TASK-020 롤백 2a 에서 PLAN 에 4필드 추가, V8 PLAN 밖 결정 6건",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 3 하네스 가정 확인",
+      "change": "가짜 타이머로 0ms 응답이 연이어 오는 경우 settle 한 번에 몇 개가 흐르는지 프로브하고, history 를 쓰는 오버레이는 비동기 history 하네스(unstable_HistoryRouter + v5Compat:true)를 쓴다",
+      "evidence": "TASK-020 승인 테스트 clock 하네스 4곳 수정(AskUserQuestion 4회), SC-41 하네스",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-develop/SKILL.md",
+      "section": "Step 5.5 자체 리뷰",
+      "change": "공유 판정 함수를 새로 만들거나 호출부를 바꿀 때 구현 시점에 해당 디렉터리를 전체 Grep 해 truthiness·trim 으로 따로 판정하는 곳을 열거해 DEV 에 남긴다",
+      "evidence": "TASK-020 자체 리뷰 3R — hasContent 도입 때 Block·Row.lead/trail 누락",
+      "status": "pending",
+      "recurring": 1
+    },
+    {
+      "target": ".claude/skills/wf-verify/references/screen-verification.md",
+      "section": "모바일 폭·시각 값",
+      "change": "브라우저가 시간대를 무시하는지 첫 단계에서 한 줄 프로브하고, 무시하면 시각 값 증거는 TZ 3종 Node 테스트로 쓴다고 VERIFY screens 에 미리 적는다",
+      "evidence": "TASK-020 Phase 4 두 번 모두 WARN 사유",
+      "status": "pending",
+      "recurring": 1
+    }
+  ],
+  "follow_ups": [
+    "ADR-0034 의 수용 2건(시트 앞으로 가기 재진입 중복 칸·시각 순서 미검증)을 되돌리려면 새 시나리오가 필요하다 — 증상이 보이면 2a 부터",
+    "TASK-021(홈) 이 PerformanceListPage 의 시각 검증과 상세와 같은 parse 계열을 쓰게 한다",
+    "실제 백엔드와의 연동은 확인하지 못했다 — 통합 환경에서 /api/time·상세 계약을 한 번 확인",
+    "SC-41 h 가 부하에서 1회 flake — 반복되면 실제 타이머 대기를 가짜 타이머로 바꾸는 후속 정리"
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  }
+}
