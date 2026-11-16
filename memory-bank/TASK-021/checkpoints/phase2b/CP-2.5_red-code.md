@@ -1,11 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-16T12:30:00Z
-summary: "Red 테스트 29건(435케이스) 작성·커밋 — 424 실패·11 통과(전부 「바뀌지 않는 기존 동작」 행). 기존 테스트 1168 통과 유지. HITL#1·2 통합 승인 대기."
+summary: "Red 테스트 29건(435케이스) 작성·커밋 — 424 실패·11 통과(전부 「바뀌지 않는 기존 동작」 행). 기존 테스트 1168 통과 유지. HITL#1·2 통합 승인 완료(2026-11-16, AskUserQuestion)."
 
 next_steps:
-  - "AskUserQuestion — 시나리오 29건 + Red 테스트 + 승인 테스트 수정 7행 통합 승인(HITL#1·2). 승인되면 SCENARIO json generate_red_trigger=true, TEST json human_review.approved=true, validate_phase2a_gate --require-hitl 0, 커밋"
-  - "승인 뒤 Phase 3 — wf-develop. 새 컴포넌트(PerformanceCard·StatusChips·Poster)·getNextOpening·parseList·formatWhen 구현, 상세의 Poster 추출, 승인 테스트 수정 7행"
+  - "Phase 3 — wf-develop. 새 컴포넌트(PerformanceCard·StatusChips·Poster)·getNextOpening·parseList·formatWhen 구현, 상세의 Poster 추출, 승인 테스트 수정 7행"
 
 decisions:
   - decision: "새 테스트 파일 3개 + 공용 헬퍼 1개 — pages/task021.home.test.tsx(SC-01~12)·task021.list.test.tsx(SC-13~23)·task021.misc.test.tsx(SC-24~29), test/task021.ts"

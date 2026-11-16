@@ -1,8 +1,8 @@
 ---
 task_id: TASK-021
 title: "홈 화면을 시안대로"
-phase: "2b"
-phase_name: "Phase 2b - Red (HITL#1·2 승인 대기)"
+phase: "3"
+phase_name: "Phase 3 - Green (2b 승인 완료)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-16
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b — Red 테스트 29건(435케이스, 424 실패·11 기존 동작 통과) 커밋 완료. 시나리오 + Red + 승인 테스트 수정 7행의 통합 승인(HITL#1·2) 대기.
+Phase 2b 완료 — 시나리오 29건·Red 테스트·승인 테스트 수정 7행을 통합 승인받았다(2026-11-16).
 
 ## 다음 한 걸음
 
-승인되면 Phase 3(`wf-develop`). 승인 전에는 구현하지 않는다.
+Phase 3 — `wf-develop`. 새 컴포넌트·API·유틸 구현, 상세의 Poster 추출, 승인 테스트 수정 7행 반영. frontend 테스트는 `--testTimeout=60000` 으로 돌린다.
 
 ## 알아둬야 할 것
 

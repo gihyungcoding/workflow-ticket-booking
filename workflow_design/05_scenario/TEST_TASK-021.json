@@ -450,6 +450,8 @@
     "| `frontend/src/pages/task020.detail.test.tsx` SC-17·33 | 변경 없음 — `Poster` 추출 뒤에도 그대로 통과해야 한다(회귀 확인) | SC-27 |"
   ],
   "human_review": {
-    "approved": false
+    "approved": true,
+    "approved_at": "2026-11-16T12:45:00Z",
+    "via": "AskUserQuestion — 승인 (통합 HITL#1·2: 시나리오 29건 + Red 435케이스 중 424 실패 + 승인 테스트 수정 7행, 결정 4가지 포함)"
   }
 }
