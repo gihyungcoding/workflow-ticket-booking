@@ -1,10 +1,11 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "Phase 4 FAIL 롤백(2026-11-16) — 시나리오 43건(SC-40~43 추가, SC-04·10·17 행 추가), 칸 145/145. 롤백 재검증 1회차 V11 fail(availableSeats 상한 n/a 모순) → 수정, 2회차 대기"
+summary: "Phase 4 FAIL 롤백(2026-11-16) — 시나리오 43건(SC-40~43 추가, SC-04·10·17 행 추가), 칸 145/145. 롤백 재검증 1회차 V11 fail(availableSeats 상한 n/a 모순) → 수정, 2회차 PASS(경고 6)"
 
 next_steps:
-  - "Phase 2b — wf-red. 프론트 가짜 타이머 선례가 없다(userEvent 는 advanceTimers 옵션) — 사용법을 먼저 정한다. 승인 테스트 8행 교체·수정 포함"
+  - "[롤백 재진입] Phase 2b — wf-red: 신규 SC-40~43 과 SC-04·10·17 추가 행의 Red, 기존 구현이 이미 통과하는 행은 already_passing 으로 밝힌다. Phase 3 에서 만든 미승인 테스트(task020.text·sheet-close)를 SC-41·42 로 흡수할지 정한다"
+  - "(이전) Phase 2b — wf-red. 프론트 가짜 타이머 선례가 없다(userEvent 는 advanceTimers 옵션) — 사용법을 먼저 정한다. 승인 테스트 8행 교체·수정 포함"
   - "통합 HITL 요약에 아래 decisions 와 보류한 경고를 보여준다 — 특히 SC-04(계약 위반 → 오류 화면, startAt 행 au~aw 는 PLAN 이 표시 전용으로 둔 값이라 범위 판단 필요)·SC-30 d·SC-39·카운트다운 경계 표기"
 
 decisions:
