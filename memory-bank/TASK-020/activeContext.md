@@ -2,7 +2,7 @@
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
 phase: "4"
-phase_name: "Phase 4 - Verify 2회차 WARN (HITL#3 대기)"
+phase_name: "Phase 4 - Verify 완료 (예외 승인) — 다음 wf-reflect"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-13

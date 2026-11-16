@@ -355,9 +355,10 @@
     "SC-41 h 가 부하(load 10)에서 전체 실행 중 1회 실패했다 — 단독·전체 반복에서는 통과(시간 의존 flake 가능성)"
   ],
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "79e1dcf08c777557a6f0659c76b3c4b29eb8f3b8",
+    "verified_at": "2026-11-16T09:01:42Z",
+    "via": "AskUserQuestion — 예외 승인 (HITL#3, 2회차 WARN)"
   },
   "exceptions": [
     {

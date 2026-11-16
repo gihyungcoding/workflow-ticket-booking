@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-16T00:00:00Z
-summary: "Phase 4 2회차 WARN — 테스트 1168/1168·린트 0·빌드·아키텍처 error 0·화면(상태·0초 전환·시각 응답 불능·시트 닫기) PASS. 경미한 변종 2건 ADR-0034 로 수용. HITL#3 대기"
+summary: "Phase 4 2회차 WARN — 테스트 1168/1168·린트 0·빌드·아키텍처 error 0·화면(상태·0초 전환·시각 응답 불능·시트 닫기) PASS. 경미한 변종 2건 ADR-0034 로 수용. HITL#3 예외 승인 완료(verified_commit 79e1dcf)"
 
 next_steps:
-  - "HITL#3 승인(AskUserQuestion) → verified_commit 기록 → Phase 5 wf-reflect → /wf-ship(푸시·PR 까지만, 머지는 사람)"
+  - "Phase 5 wf-reflect → /wf-ship(푸시·PR 까지만, 머지는 사람)"
   - "회고에 넘길 것: later 변종 10건(스윕이 놓친 것), 롤백 1회(2a), 수용한 변종 2건(ADR-0034), 승인 테스트 6곳 수정, 미승인 추가 테스트, 부하에서 SC-41 h flake 1회"
 
 decisions:
