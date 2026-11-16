@@ -52,6 +52,7 @@ function Poster({ title, url }: { title: string; url: unknown }) {
         borderRadius: token('--r-m'),
         backgroundColor: token('--c-bg'),
         aspectRatio: '4 / 3',
+        marginBottom: token('--stack-s'), // 시안 .show .photo
       }}
     >
       {usable ? (
@@ -102,6 +103,16 @@ function Steps() {
                 backgroundColor: token('--c-surface'),
                 border: `2px solid ${token('--c-line-strong')}`,
                 zIndex: 1,
+              },
+              // 점과 점을 잇는 세로선 — 마지막 칸에는 없다 (시안 .tl-item::after)
+              '&:not(:last-child)::after': {
+                content: '""',
+                position: 'absolute',
+                left: 0,
+                top: `calc(${token('--fs-sub')} * ${token('--lh-sub')} / 2)`,
+                bottom: `calc(${token('--fs-sub')} * ${token('--lh-sub')} / -2)`,
+                width: '12px',
+                background: `linear-gradient(${token('--c-line-strong')}, ${token('--c-line-strong')}) center / 2px 100% no-repeat`,
               },
             }}
           >
@@ -275,7 +286,7 @@ export function PerformanceDetailPage() {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
           <Poster title={p.title} url={(p as { posterUrl?: unknown }).posterUrl} />
           <Box component="p" sx={eyebrowStyle}>{`${p.venue} · ${p.totalSeats.toLocaleString('ko-KR')}석`}</Box>
-          <Box component="h2" sx={{ margin: 0, fontSize: token('--fs-h2'), fontWeight: Number(token('--fw-h2')), lineHeight: Number(token('--lh-h2')) }}>
+          <Box component="h2" sx={{ margin: 0, fontSize: token('--fs-h2'), fontWeight: Number(token('--fw-h2')), lineHeight: Number(token('--lh-h2')), textWrap: 'balance' }}>
             {p.title}
           </Box>
           {sections.length > 0 && (
