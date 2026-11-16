@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "Phase 4 FAIL 롤백(2026-11-16) — 시나리오 43건(SC-40~43 추가, SC-04·10·17 행 추가), 칸 145/145. 롤백 재검증 1회차 V11 fail(availableSeats 상한 n/a 모순) → 수정, 2회차 PASS(경고 6)"
 

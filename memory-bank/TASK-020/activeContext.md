@@ -1,9 +1,9 @@
 ---
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
-phase: "4"
-phase_name: "Phase 4 - Verify 완료 (예외 승인) — 다음 wf-reflect"
-status: IN_PROGRESS
+phase: "5"
+phase_name: "Phase 5 - Reflect 완료 (DONE)"
+status: DONE
 track: standard
 created_at: 2026-11-13
 last_updated: 2026-11-13
@@ -13,7 +13,7 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-020-detail-clock-zone-sheet"
 
-last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
+last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-020.json"

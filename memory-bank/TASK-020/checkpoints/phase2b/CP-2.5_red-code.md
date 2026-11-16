@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "[롤백 재진입] 시나리오 43건 — 새·바뀐 행 중 56 실패(SC-04 21·SC-10 4·SC-17 3·SC-40 5·SC-41 8·SC-42 15), 기존 1029 통과. 통합 HITL#1·2 재승인 완료"
 

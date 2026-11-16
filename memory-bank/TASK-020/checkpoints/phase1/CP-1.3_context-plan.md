@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-13T00:00:00Z
 summary: "PLAN_TASK-020.json — route Frontend, flows 10건이 AC 14건을 전부 덮음. input_fields 17. 변경 대상 14(신규 8, 조건부 1). 전역 헤더 제거는 사용자 결정."
 

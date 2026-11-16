@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-16T00:00:00Z
 summary: "Phase 4 2회차 WARN — 테스트 1168/1168·린트 0·빌드·아키텍처 error 0·화면(상태·0초 전환·시각 응답 불능·시트 닫기) PASS. 경미한 변종 2건 ADR-0034 로 수용. HITL#3 예외 승인 완료(verified_commit 79e1dcf)"
 

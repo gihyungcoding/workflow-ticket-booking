@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-16T00:00:00Z
 summary: "[롤백 재진입] Green — 전체 1168 통과·0 실패(시나리오 43건), 린트 error 0, 자체 리뷰 4라운드(1~2R Phase 3 1차, 3~4R 재진입: 결함 3건 수정, unresolved 0). RC-1~4 뿌리를 공통 지점에서 고침"
 
