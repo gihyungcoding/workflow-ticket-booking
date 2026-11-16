@@ -1,0 +1,293 @@
+{
+  "task_id": "TASK-021",
+  "changed_files": [
+    {
+      "path": "frontend/src/pages/PerformanceListPage.tsx",
+      "change": "재작성(→ 홈) — 머리글(후보·기준 시각 줄)·상태 칩·2열 카드·더 보기·상태별 화면. 세대 ref 로 늦은 응답 폐기, moreInFlight ref 로 중복 더 보기 차단",
+      "lines_changed": 280
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "change": "getPerformances(status?, page?) — 인자 검증·쿼리 구성·parseList 검증, getNextOpening(204 → null), parseListItem·parseList(홈이 쓰는 계약만)",
+      "lines_changed": 60
+    },
+    {
+      "path": "frontend/src/components/PerformanceCard.tsx",
+      "change": "신규 — memo 카드. today(한국 날짜 문자열)만 받아 매초 다시 그려지지 않는다",
+      "lines_changed": 47
+    },
+    {
+      "path": "frontend/src/components/StatusChips.tsx",
+      "change": "신규 — 칩 6개(role=group, aria-pressed, 가로 스크롤), STATUS_CHIPS 상수",
+      "lines_changed": 69
+    },
+    {
+      "path": "frontend/src/components/Poster.tsx",
+      "change": "신규 — 상세의 비공개 Poster 를 꺼냄. aspectRatio·marginBottom prop",
+      "lines_changed": 47
+    },
+    {
+      "path": "frontend/src/pages/PerformanceDetailPage.tsx",
+      "change": "로컬 Poster 를 지우고 공용 Poster 사용(동작 불변)",
+      "lines_changed": 38
+    },
+    {
+      "path": "frontend/src/utils/datetime.ts",
+      "change": "formatWhen(iso, today) — 「오늘 오후 6:00」/「11월 14일(토) 오후 2:00」",
+      "lines_changed": 8
+    }
+  ],
+  "reused": [
+    {
+      "path": "frontend/src/hooks/useServerClock.ts",
+      "symbol": "useServerClock"
+    },
+    {
+      "path": "frontend/src/utils/datetime.ts",
+      "symbol": "formatDateTime·formatTimeOfDay·kstDay·isInstant"
+    },
+    {
+      "path": "frontend/src/components/StatusBadge.tsx",
+      "symbol": "StatusBadge"
+    },
+    {
+      "path": "frontend/src/components/ui/Hero.tsx",
+      "symbol": "Hero"
+    },
+    {
+      "path": "frontend/src/components/ui/Block.tsx",
+      "symbol": "Block"
+    },
+    {
+      "path": "frontend/src/components/ui/Page.tsx",
+      "symbol": "Page"
+    },
+    {
+      "path": "frontend/src/auth/AuthParts.tsx",
+      "symbol": "MoreLink"
+    },
+    {
+      "path": "frontend/src/components/ui/text.ts",
+      "symbol": "isBlankDisplay"
+    },
+    {
+      "path": "frontend/src/api/http.ts",
+      "symbol": "request"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npx vitest run --testTimeout=60000",
+    "total": 1604,
+    "passed": 1603,
+    "failed": 0,
+    "todo": 1,
+    "target_tests_passed": 435,
+    "new_cases": 435,
+    "existing_passed": 1168,
+    "note": "전체 1604 = 기존 1169(통과 1168·todo 1) + 새 435. 승인 수정 반영 후 실패 0"
+  },
+  "lint": {
+    "command": "cd frontend && npm run lint",
+    "errors": 0,
+    "warnings": null,
+    "exit_code": 0,
+    "note": "경고만 있다. 이 태스크 신규 파일의 경고는 StatusChips.tsx 의 only-export-components(상수 export)와 PerformanceListPage.tsx 의 react(purity) Date.now — 상세 PerformanceDetailPage.tsx:249 와 같은 선례. 그 밖은 기존 파일의 기존 경고"
+  },
+  "typecheck": {
+    "command": "cd frontend && npx tsc -b",
+    "errors": 0
+  },
+  "build": {
+    "command": "cd frontend && npm run build",
+    "result": "성공(청크 크기 경고는 기존)"
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py",
+    "result": "error 0 — DESIGN-003 위반은 PerformanceEditPage 하나(SC-26 단언과 일치). AUTH-001 승격 기한 경고는 이 태스크와 무관"
+  },
+  "refactoring": [
+    {
+      "what": "마운트 때 첫 쪽 요청(fetchFirst)과 상태를 loading 으로 되돌리는 loadFirst 를 나눔",
+      "why": "초기 상태가 이미 loading 이라 효과 안에서 setState 를 부르지 않아도 된다 — react(set-state-in-effect) 경고 제거"
+    },
+    {
+      "what": "카드에 today(kstDay 문자열)만 넘기고 PerformanceCard 를 memo 로 감쌈",
+      "why": "useServerClock 이 deadline 없이 켜지면 매초 다시 그려진다 — 시각 줄만 갱신되고 카드 N장은 건너뛴다(PLAN unresolved 결정)"
+    },
+    {
+      "what": "formatWhen(iso, today) 을 datetime.ts 에 두고 머리글·카드가 같이 씀",
+      "why": "같은 날 비교가 두 곳에 있으면 갈라진다(상세에는 인라인 사본이 있으나 상세는 건드리지 않았다)"
+    },
+    {
+      "what": "홈 루트에서 Container 거터를 음수 마진으로 상쇄하고 머리글에 --page-x 를 줌",
+      "why": "375px 시안 대조에서 블록 가장자리가 시안(16px)보다 16px 더 안쪽이었다(Container 거터와 시안 마진이 겹침)"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "[승인 테스트 수정·교체] PerformanceListPage.test 5건·task017.regression·static 두 개",
+      "how": "새 구현 뒤 전체 스위트로 실패 8건을 확인하고 승인된 7행만 고쳤다",
+      "fact": "7행 외에 4건(task024 SC-16, task020.clock SC-05·30·40)이 더 깨졌다 — 홈이 기준 시각 3회와 후보 1회를 부르기 때문",
+      "impact": "4건은 AskUserQuestion 으로 별도 승인받아 기대 호출 수만 홈 몫만큼 늘렸다(test_modifications)"
+    },
+    {
+      "item": "[홈을 렌더하는 기존 테스트의 fetch 스텁]",
+      "how": "AuthScreens·SocialLoginScreens·task024 의 스텁은 후보·시각 키가 없어 404 를 준다 — 스위트를 돌려 확인",
+      "fact": "AuthScreens·SocialLoginScreens 는 수정 없이 통과. task024 SC-16 만 호출 목록을 단언해 깨졌다",
+      "impact": "위 4건에 포함"
+    },
+    {
+      "item": "[useServerClock 을 deadline 없이 켠다 — 매초 재렌더]",
+      "how": "PerformanceCard 를 memo + today 문자열로 전환(구현), SC-10 이 시계를 10분 흘려도 목록·후보 재호출 0을 단언",
+      "fact": "훅은 그대로 두고 카드만 건너뛴다",
+      "impact": "없음"
+    },
+    {
+      "item": "[기준 시각이 없을 때 「오늘」 문구]",
+      "how": "kstDay(clock.now ?? Date.now()) — SC-08·09 통과",
+      "fact": "상세와 같은 규칙(기기 날짜는 문구용)",
+      "impact": "없음"
+    },
+    {
+      "item": "[목록 응답 런타임 검증 — 원소 하나 위반·정의 밖 status]",
+      "how": "parseList 가 원소 하나라도 위반이면 null → 오류. SC-22(67행)·SC-05(56행)·SC-17·SC-13 통과",
+      "fact": "정의 밖 status 는 오류(상세와 같다). StatusBadge 의 null 방어는 별개로 남았다",
+      "impact": "없음"
+    },
+    {
+      "item": "[칩 라벨 vs 배지 문구]",
+      "how": "테스트는 칩을 role=button 으로, 배지를 카드 안(within)에서 찾는다. task017.regression 은 칩(button) 밖의 배지만 센다",
+      "fact": "칩 「예정」「예매 가능」「매진」「마감」이 배지와 같은 글자",
+      "impact": "승인 수정 행에 포함"
+    },
+    {
+      "item": "[Poster 추출이 승인 테스트에 닿는 곳]",
+      "how": "task020.detail SC-17·33 을 포함한 전체 스위트 통과",
+      "fact": "상세의 포스터 칸은 aspect-ratio 4/3·--c-bg·--r-m 그대로",
+      "impact": "없음"
+    },
+    {
+      "item": "[MoreLink 위치 — auth 폴더]",
+      "how": "auth/AuthParts.tsx 의 MoreLink 를 그대로 import",
+      "fact": "홈이 auth 폴더를 import 하는 방향이 어색하나 옮기면 인증 화면 5곳의 import 도 바뀐다 — 범위 밖",
+      "impact": "후속 정리 후보(pre_review.deferred)"
+    },
+    {
+      "item": "[전역 헤더 유지 — 좌우 여백 이중]",
+      "how": "375px 에서 시안과 같은 출처가 아니라 별도 페이지의 iframe 두 장으로 나란히 봤다(mock API 는 PerformanceResponse DTO 필드 그대로)",
+      "fact": "Container 거터(16px)와 시안 마진이 겹쳐 블록이 16px 안쪽이었다 → 홈 루트 음수 마진으로 상쇄, 머리글 --page-x. 이후 블록 16px·머리글 24px 가 시안과 같다",
+      "impact": "차이로 남는 것은 전역 헤더 한 줄(사용자 결정)뿐"
+    },
+    {
+      "item": "[설정·마이그레이션·환경변수 없음]·[선점 가능성 해당 없음]",
+      "how": "변경 파일 목록 확인",
+      "fact": "백엔드·설정 변경 없음",
+      "impact": "없음"
+    }
+  ],
+  "test_modifications": [
+    {
+      "file": "frontend/src/pages/PerformanceListPage.test.tsx",
+      "scenarios": "기존 SC-01·02·03·05·06 (새 정본 TASK-021 SC-01·11·19·20·21·25)",
+      "change": "getNextOpening 목 추가, 오류·빈 목록 문구를 시안 문구로, GlobalTokens 를 렌더에 추가(앱과 같은 body 폰트)",
+      "reason": "승인 7행 — 옛 화면 문구 교체. Pretendard 단언은 새 요소가 body 폰트를 상속하므로 앱처럼 GlobalTokens 가 있어야 관찰된다(단언 그대로)",
+      "approval": "2b 통합 승인(2026-11-16, AskUserQuestion) — 승인된 테스트 수정 7행"
+    },
+    {
+      "file": "frontend/src/pages/task017.regression.test.tsx",
+      "scenarios": "TASK-017 SC-13",
+      "change": "배지 개수를 칩(button) 밖에서만 세고 카드 로딩을 기다림, 빈 목록 문구 교체",
+      "reason": "승인 7행 — 칩이 배지와 같은 글자",
+      "approval": "2b 통합 승인(2026-11-16)"
+    },
+    {
+      "file": "frontend/src/task017.static.test.ts · frontend/src/task020.static.test.ts",
+      "scenarios": "TASK-017 SC-10 · TASK-020 SC-31",
+      "change": "DESIGN-003 위반 파일 목록에서 PerformanceListPage.tsx 를 뺌",
+      "reason": "승인 7행 — 홈이 토큰으로 다시 쓰여 더는 위반이 아니다",
+      "approval": "2b 통합 승인(2026-11-16)"
+    },
+    {
+      "file": "frontend/src/auth/task024.organizer.test.tsx",
+      "scenarios": "TASK-024 SC-16 행 a",
+      "change": "홈 조회 호출 목록에 GET /api/performances/next-opening 추가(keys 배열)",
+      "reason": "홈이 머리글 후보를 부른다(AC-1) — 7행에 없던 영향",
+      "approval": "AskUserQuestion 별도 승인(2026-11-16, Phase 3)"
+    },
+    {
+      "file": "frontend/src/pages/task020.clock.test.tsx",
+      "scenarios": "TASK-020 SC-05 행 c · SC-30 행 a · SC-40 행 e",
+      "change": "홈으로 이동하는 행의 기대 시각 호출 수를 홈의 측정 3회만큼 늘림(0→3, 1→4, 1→4)",
+      "reason": "홈이 기준 시각을 잰다(AC-2). 늦은 상세 응답이 추가 호출을 만들면 3을 넘어 여전히 잡힌다",
+      "approval": "AskUserQuestion 별도 승인(2026-11-16, Phase 3)"
+    },
+    {
+      "file": "frontend/src/test/task021.ts · frontend/src/pages/task021.list.test.tsx",
+      "scenarios": "TASK-021 SC-05 body-null · SC-15 · SC-18 b·h",
+      "change": "후보 본문 null 이 L4 로 바뀌던 `??` 를 undefined 일 때만 L4 로, 카드 제목 매칭을 textContent 정규식에서 카드 안 정확 일치 요소로",
+      "reason": "2b 에서 쓴 하네스 결함 — 단언 의도는 그대로, 관찰 방법만 바꿨다",
+      "approval": "AskUserQuestion 별도 승인(2026-11-16, Phase 3)"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "frontend/src/pages/PerformanceDetailPage.tsx",
+      "reason": "Poster 공용 추출 — PLAN F9·사용자 확인(2026-11-16)"
+    },
+    {
+      "path": "frontend/src/components/Poster.tsx",
+      "reason": "위와 같다 — PLAN target_files 에 있다"
+    }
+  ],
+  "visual_check": {
+    "method": "모의 API(PerformanceResponse DTO 필드 그대로, 시안 이미지 서빙)와 별도 포트 vite, 375px iframe 두 장(시안 home.html · 구현)을 한 페이지에 나란히",
+    "states_made": [
+      "기본",
+      "더 보기(25건)",
+      "오류",
+      "로딩(느린 응답)"
+    ],
+    "found": "좌우 여백 이중(블록이 시안보다 16px 안쪽) — 고침. 이 브라우저는 Intl timeZone 을 무시하고 UTC 로 출력한다(순수 Intl 호출로도 재현) — 구현 결함이 아니라 환경 한계이므로 시각 표기는 jsdom 테스트가 지킨다",
+    "not_checked": [
+      "빈 목록·칩별 빈 목록(같은 Notice 컴포넌트, 테스트가 지킴)",
+      "긴 공연명의 머리글 링크 줄바꿈(자체 리뷰 design 소견 — Phase 4 브라우저 확인)",
+      "한국 시간 표기(이 브라우저가 UTC)"
+    ],
+    "servers": "모의 API 8099·vite 5199 를 PID 로 종료했다. 5173 의 기존 서버는 건드리지 않았다"
+  },
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체 develop...HEAD (frontend)",
+        "findings": 1,
+        "tests_added": [],
+        "fix_commit": null,
+        "note": "[correctness] 0 · [security] 0 · [design] 1(낮음, 미재현) · [test] 참고 1"
+      }
+    ],
+    "root_causes": [],
+    "unresolved": [],
+    "deferred": [
+      {
+        "category": "design",
+        "where": "PerformanceListPage.tsx 머리글 링크(MoreLink)",
+        "finding": "공백 없는 아주 긴 공연명이면 링크가 가로로 넘칠 수 있다(낮음). 브라우저에서 재현하지 못했다 — body 의 overflow-wrap: anywhere 상속이 막을 가능성이 크다",
+        "why_deferred": "재현 없이 auth 컴포넌트를 건드리지 않는다. Phase 4 브라우저에서 201자 공연명으로 확인한다"
+      },
+      {
+        "category": "test",
+        "where": "더 보기·칩 경쟁 경로",
+        "finding": "코드 추적으로만 확인됨 — 승인 테스트(SC-14·18)가 덮는다",
+        "why_deferred": "추가 테스트 불필요"
+      },
+      {
+        "category": "reuse",
+        "where": "auth/AuthParts.tsx MoreLink",
+        "finding": "홈이 auth 폴더에서 import — 위치가 어색하다",
+        "why_deferred": "옮기면 인증 화면 5곳의 import 가 바뀐다(범위 밖)"
+      }
+    ]
+  }
+}

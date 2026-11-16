@@ -2,7 +2,7 @@
 task_id: TASK-021
 title: "홈 화면을 시안대로"
 phase: "3"
-phase_name: "Phase 3 - Green (2b 승인 완료)"
+phase_name: "Phase 3 - Green 완료 (게이트 통과)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-16
@@ -13,7 +13,7 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-021-home-screen-redesign"
 
-last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
+last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task C)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-021.json"
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b 완료 — 시나리오 29건·Red 테스트·승인 테스트 수정 7행을 통합 승인받았다(2026-11-16).
+Phase 3 완료 — 전체 1604 중 1603 통과(새 435 + 기존 1168, 실패 0)·tsc·build·린트 error 0. 자체 리뷰 1라운드(correctness 0).
 
 ## 다음 한 걸음
 
-Phase 3 — `wf-develop`. 새 컴포넌트·API·유틸 구현, 상세의 Poster 추출, 승인 테스트 수정 7행 반영. frontend 테스트는 `--testTimeout=60000` 으로 돌린다.
+Phase 4 — `wf-verify`. 브라우저 증거: 긴 공연명 머리글 링크·빈 목록·375px 나란히(이 Chrome 은 UTC 로 표기).
 
 ## 알아둬야 할 것
 
