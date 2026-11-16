@@ -134,24 +134,27 @@
       "section": "Step 2 코드베이스 조사",
       "change": "기존 화면이 새 API 를 부르게 되면 그 화면을 거치는 기존 테스트의 호출 수·키 목록 단언을 Grep 해 unresolved 에 적는다(「라우트 진입을 바꾸는 변경」 항목 옆에)",
       "evidence": "TASK-021 Phase 3 — task024 SC-16·task020.clock SC-05·30·40 이 홈의 새 호출 때문에 깨져 별도 승인 4건",
-      "status": "pending",
-      "recurring": 2
+      "status": "applied",
+      "recurring": 2,
+      "applied_in": "c41f02c"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",
       "section": "Step 2 테스트 작성 — 승인 테스트를 고치게 만드는 작성 실수",
       "change": "「'없음' 행을 기본 매개변수 도우미로 넘기지 않는다」를 `??`·`||` 기본값까지 넓히고 카드 목록은 textContent 정규식 대신 within 요소 매칭을 쓴다. Red 실행 직후 스켈레톤의 throw 로 통과한 거부 단언을 확인한다",
       "evidence": "TASK-021 2b — SC-05 body-null 이 `?? L4` 로 L4 가 됨, SC-15·18 textContent 정규식 실패(구현 뒤 승인 2건), SC-28 행 l 가짜 Red",
-      "status": "pending",
-      "recurring": 2
+      "status": "applied",
+      "recurring": 2,
+      "applied_in": "c41f02c"
     },
     {
       "target": ".claude/skills/wf-verify/references/screen-verification.md",
       "section": "지연으로 만드는 상태 / 모바일 폭에서 보기",
       "change": "모의 서버 모드 전환 + 같은 출처 iframe 에서 한 번의 JS 로 상태별 DOM 사실을 읽는 방법, dev StrictMode 이중 요청 + 같은 URL 캐시 락이 지연 응답을 두 배로 보이게 한다는 주의를 더한다. (TASK-020 #4 의 시간대 프로브 제안은 이번에도 같은 환경 한계로 재현됐다 — 반영 권고)",
       "evidence": "TASK-021 Phase 4 — 4초 지연 모의 응답의 로딩이 8초로 보임(앱 요청 둘째 8007ms), Chrome Intl timeZone 무시로 AC-9 WARN",
-      "status": "pending",
-      "recurring": 2
+      "status": "applied",
+      "recurring": 2,
+      "applied_in": "c41f02c"
     },
     {
       "target": "docs/product/features/booking-ux-02-browse.md",
@@ -163,6 +166,9 @@
     }
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-16T17:30:00Z",
+    "reviewed_in": "batch",
+    "note": "일괄 검토(/wf-retro) — 승인(2026-11-16). 규칙 제안 3건은 이 retro 브랜치의 문서 반영 커밋에서 반영. 제안 #3(booking-ux-02-browse.md §8 한 줄)은 pending. 승인 기록이 PR #54 에 들어가지 못해(푸시 전 머지) 여기서 남긴다"
   }
 }
