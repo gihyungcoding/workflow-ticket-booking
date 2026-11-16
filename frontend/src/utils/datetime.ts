@@ -84,5 +84,16 @@ export function formatCountdown(remainingMs: number): string {
  * 서버가 주는 시각(ISO-8601 순간 — `Z` 또는 `±hh:mm` 이 붙은 `YYYY-MM-DDThh:mm:ss`)인가.
  * `Date.parse` 는 '1'·'2026'·날짜만·오프셋 없는 시각도 받는다 — 오프셋이 없으면 기기 시간대에 따라 다른 순간이 된다.
  */
-const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
-export const isInstant = (value: unknown): value is string => typeof value === 'string' && INSTANT.test(value) && !Number.isNaN(Date.parse(value))
+const INSTANT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/
+export function isInstant(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const m = INSTANT.exec(value)
+  if (m === null) return false
+  const [year, month, day, hour, minute, second] = m.slice(1, 7).map(Number)
+  // Date.parse 는 2026-02-30 을 3월 2일로, T24:00:00 을 다음 날 0시로 읽는다 — 달력에 있는 값인지 되돌려 대조한다
+  const date = new Date(Date.UTC(year, month - 1, day))
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return false
+  if (hour > 23 || minute > 59 || second > 59) return false
+  if (m[7] !== undefined && (Number(m[7]) > 23 || Number(m[8]) > 59)) return false
+  return !Number.isNaN(Date.parse(value))
+}
