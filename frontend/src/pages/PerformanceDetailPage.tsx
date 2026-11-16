@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Skeleton from '@mui/material/Skeleton'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getPerformance, parseDetail, PerformanceNotFoundError } from '../api/performances'
 import type { Performance } from '../api/performances'
@@ -135,6 +135,18 @@ export function PerformanceDetailPage() {
   const location = useLocation()
   const [state, setState] = useState<DetailState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
+  // 시트는 history 칸 하나로 연다 — 뒤로 가기가 시트를 닫고 상세를 떠나지 않는다.
+  // 닫기 입력이 같은 갱신 안에 겹쳐도 한 칸만 되돌리도록, 시트가 닫힐 때까지 첫 입력만 받는다
+  const zoneSheetState = (location.state as { zoneSheet?: boolean } | null)?.zoneSheet === true
+  const closing = useRef(false)
+  useEffect(() => {
+    if (!zoneSheetState) closing.current = false
+  }, [zoneSheetState])
+  const closeSheet = () => {
+    if (closing.current) return
+    closing.current = true
+    navigate(-1)
+  }
   // 기준 시각이 openAt 에 닿으면 그 뒤로는 시계가 필요 없다 — 시계를 끄고 이 사실만 기억한다(예정 → 예매 가능, 한 방향)
   const [opened, setOpened] = useState(false)
   const performance = state.status === 'success' ? state.performance : null
@@ -267,8 +279,7 @@ export function PerformanceDetailPage() {
     title = '공연이 취소됐어요'
   }
 
-  // 시트는 history 칸 하나로 연다 — 뒤로 가기가 시트를 닫고 상세를 떠나지 않는다
-  const sheetOpen = sections.length >= 2 && (location.state as { zoneSheet?: boolean } | null)?.zoneSheet === true
+  const sheetOpen = sections.length >= 2 && zoneSheetState
 
   return (
     <>
@@ -336,7 +347,7 @@ export function PerformanceDetailPage() {
           {ctaLabel}
         </CtaBar>
       )}
-      {sections.length >= 2 && <ZoneMapSheet open={sheetOpen} venue={p.venue} sections={sections} onClose={() => navigate(-1)} />}
+      {sections.length >= 2 && <ZoneMapSheet open={sheetOpen} venue={p.venue} sections={sections} onClose={closeSheet} />}
     </>
   )
 }
