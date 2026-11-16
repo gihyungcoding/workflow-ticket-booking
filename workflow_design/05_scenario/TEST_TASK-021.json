@@ -1,0 +1,455 @@
+{
+  "task_id": "TASK-021",
+  "supersedes": "SCENARIO_TASK-021.json",
+  "test_file": "frontend/src/pages/task021.home.test.tsx",
+  "test_files": [
+    "frontend/src/pages/task021.home.test.tsx",
+    "frontend/src/pages/task021.list.test.tsx",
+    "frontend/src/pages/task021.misc.test.tsx",
+    "frontend/src/test/task021.ts"
+  ],
+  "test_files_changed": [],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "type": "happy",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-01 (happy) 홈이 로딩 뒤에 시안 구조로 보인다",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '오늘 오후 6:00에 루미너스 콘서트 〈WAVELENGTH〉 서울 …' // Object.is equality"
+    },
+    {
+      "scenario_id": "SC-02",
+      "type": "happy",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-02 (happy) 머리글은 오픈 날짜가 오늘이면 「오늘 …」, 아니면 날짜로 쓴다",
+      "rows": 7,
+      "rows_red": 7,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '오늘 오후 6:00에 루미너스 콘서트 〈WAVELENGTH〉 서울 …' // Object.is equality",
+      "failure_variants": [
+        "AssertionError: expected null to be '오늘 오후 6:00에 루미너스 콘서트 〈WAVELENGTH〉 서울 …' // Object.is equality",
+        "AssertionError: expected null to be '11월 14일(토) 오후 2:00에 재즈 나잇 인 서울 예매가 열려요' // Object.is equality",
+        "AssertionError: expected null to be '오늘 오전 9:00에 루미너스 콘서트 〈WAVELENGTH〉 서울 …' // Object.is equality",
+        "AssertionError: expected null to be '오늘 오후 11:59에 루미너스 콘서트 〈WAVELENGTH〉 서울…' // Object.is equality"
+      ]
+    },
+    {
+      "scenario_id": "SC-03",
+      "type": "happy",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-03 (happy) 「공연 보기」와 카드를 누르면 그 상세로 간다",
+      "rows": 4,
+      "rows_red": 2,
+      "rows_already_passing": 2,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"link\" and name \"루미너스 콘서트 〈WAVELENGTH〉 서울 공연 보기\"",
+      "failure_variants": [
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"link\" and name \"루미너스 콘서트 〈WAVELENGTH〉 서울 공연 보기\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"link\" and name \"재즈 나잇 인 서울 공연 보기\""
+      ],
+      "note": "행 b·c — 카드를 누르면 상세로 가는 동작은 이 태스크가 바꾸지 않는 기존 동작(현 목록의 CardActionArea 링크)이다. 행 a·d(「공연 보기」)가 Red"
+    },
+    {
+      "scenario_id": "SC-04",
+      "type": "error",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-04 (error) 후보가 없거나 못 가져오면 일반 문구만 보이고 목록은 그대로다",
+      "rows": 10,
+      "rows_red": 10,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '다가오는 공연을 골라 보세요' // Object.is equality"
+    },
+    {
+      "scenario_id": "SC-05",
+      "type": "error",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-05 (error) 후보 응답이 계약을 어기면 후보 없음으로 본다",
+      "rows": 56,
+      "rows_red": 56,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '다가오는 공연을 골라 보세요' // Object.is equality"
+    },
+    {
+      "scenario_id": "SC-06",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-06 (boundary) 공연명이 아주 길어도 잘리지 않은 전체가 화면에 있다",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '오늘 오후 6:00에 가가가가가가가가가가가가가가가가가가가가가가가가가…' // Object.is equality"
+    },
+    {
+      "scenario_id": "SC-07",
+      "type": "happy",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-07 (happy) 머리글 위에 기준 시각이 한국 시간으로 보이고 시간이 흐르면 갱신된다",
+      "rows": 4,
+      "rows_red": 4,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '티켓온 · 11월 11일(수) 오후 5:50' // Object.is equality",
+      "failure_variants": [
+        "AssertionError: expected null to be '티켓온 · 11월 11일(수) 오후 5:50' // Object.is equality",
+        "AssertionError: expected null to be '티켓온 · 11월 12일(목) 오전 12:00' // Object.is equality"
+      ]
+    },
+    {
+      "scenario_id": "SC-08",
+      "type": "error",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-08 (error) 기준 시각을 못 맞췄거나 맞추는 중이면 시각 줄이 없고 나머지는 그대로다",
+      "rows": 12,
+      "rows_red": 12,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"전체\""
+    },
+    {
+      "scenario_id": "SC-09",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-09 (boundary) 기준 시각이 정해지기 전 「오늘」 문구는 기기 날짜로, 정해진 뒤에는 기준 시각 날짜로 바뀐다",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '11월 11일(수) 오후 6:00에 루미너스 콘서트 〈WAVELEN…' // Object.is equality"
+    },
+    {
+      "scenario_id": "SC-10",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-10 (boundary) 시간이 흘러도 목록·후보를 다시 부르지 않고, 탭이 다시 보일 때만 시각을 다시 잰다",
+      "rows": 5,
+      "rows_red": 5,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected [] to have a length of 3 but got +0"
+    },
+    {
+      "scenario_id": "SC-11",
+      "type": "happy",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-11 (happy) 카드는 상태별로 배지·공연명·일시·장소 줄이 시안대로 보인다",
+      "rows": 12,
+      "rows_red": 12,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 12월 19일(토) 오후 6:00. This could be because the text is broken up by mult",
+      "failure_variants": [
+        "TestingLibraryElementError: Unable to find an element with the text: 12월 19일(토) 오후 6:00. This could be because the text is broken up by mult",
+        "TestingLibraryElementError: Unable to find an element with the text: 11월 21일(토) 오후 7:00. This could be because the text is broken up by mult",
+        "TestingLibraryElementError: Unable to find an element with the text: 12월 5일(토) 오후 7:00. This could be because the text is broken up by multi",
+        "TestingLibraryElementError: Unable to find an element with the text: 12월 24일(목) 오후 7:00. This could be because the text is broken up by mult"
+      ]
+    },
+    {
+      "scenario_id": "SC-12",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.home.test.tsx",
+      "test_function": "SC-12 (boundary) 포스터가 없거나 불러오지 못하면 같은 크기의 회색 면과 아이콘이 보인다",
+      "rows": 14,
+      "rows_red": 14,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"img\" and name \"소리풍경 밴드 나이트 포스터\""
+    },
+    {
+      "scenario_id": "SC-13",
+      "type": "happy",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-13 (happy) 칩을 누르면 그 상태로 첫 페이지를 다시 불러오고 누른 칩만 눌린 상태다",
+      "rows": 74,
+      "rows_red": 74,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예정\"",
+      "failure_variants": [
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예정\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예매 가능\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"매진\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"마감\""
+      ]
+    },
+    {
+      "scenario_id": "SC-14",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-14 (boundary) 칩을 바꾸거나 화면을 떠나기 전에 오던 응답은 버려진다",
+      "rows": 14,
+      "rows_red": 14,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예정\""
+    },
+    {
+      "scenario_id": "SC-15",
+      "type": "happy",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-15 (happy) 「더 보기」를 누르면 다음 20개가 아래에 붙고 다 불러오면 버튼이 없어진다",
+      "rows": 6,
+      "rows_red": 6,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: expect(received).toBeInTheDocument()",
+      "failure_variants": [
+        "Error: expect(received).toBeInTheDocument()",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예정\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예매 가능\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"매진\""
+      ]
+    },
+    {
+      "scenario_id": "SC-16",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-16 (boundary) 「더 보기」는 불러온 개수가 전체보다 적을 때만 보인다",
+      "rows": 8,
+      "rows_red": 5,
+      "rows_already_passing": 3,
+      "status": "red",
+      "failure": "AssertionError: expected false to be true // Object.is equality",
+      "failure_variants": [
+        "AssertionError: expected false to be true // Object.is equality",
+        "TestingLibraryElementError: Unable to find an element with the text: 다가오는 공연이 없어요. This could be because the text is broken up by multiple e"
+      ],
+      "note": "행 a·c·d — 「더 보기」가 없어야 하는 행이라 현 화면(더 보기 자체가 없음)에서 구조적으로 통과한다. 행 b·e·f·g·h 가 Red"
+    },
+    {
+      "scenario_id": "SC-17",
+      "type": "error",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-17 (error) 더 보기가 실패하면 이미 보인 카드는 그대로이고 그 자리에 「불러오지 못했어요 · 다시 시도」가 보인다",
+      "rows": 77,
+      "rows_red": 77,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to fire a \"click\" event - please provide a DOM element."
+    },
+    {
+      "scenario_id": "SC-18",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-18 (boundary) 더 보기 중에는 중복 요청이 없고, 같은 공연은 한 번만 보이고, 오래된 응답은 버려진다",
+      "rows": 8,
+      "rows_red": 8,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "Error: Unable to fire a \"click\" event - please provide a DOM element."
+    },
+    {
+      "scenario_id": "SC-19",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-19 (boundary) 빈 목록은 전체면 「다가오는 공연이 없어요」, 칩이면 「<칩> 공연이 없어요」와 「전체 보기」다",
+      "rows": 7,
+      "rows_red": 7,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 다가오는 공연이 없어요. This could be because the text is broken up by multiple e",
+      "failure_variants": [
+        "TestingLibraryElementError: Unable to find an element with the text: 다가오는 공연이 없어요. This could be because the text is broken up by multiple e",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예정\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예매 가능\"",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"매진\""
+      ]
+    },
+    {
+      "scenario_id": "SC-20",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-20 (boundary) 로딩 중에는 카드 자리 4개와 머리글 자리가 보인다",
+      "rows": 3,
+      "rows_red": 3,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"전체\""
+    },
+    {
+      "scenario_id": "SC-21",
+      "type": "error",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-21 (error) 목록 조회가 실패하면 「공연 목록을 불러오지 못했어요」와 「다시 시도」가 보이고, 다시 시도하면 다시 부른다",
+      "rows": 11,
+      "rows_red": 11,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 공연 목록을 불러오지 못했어요. This could be because the text is broken up by multip",
+      "failure_variants": [
+        "TestingLibraryElementError: Unable to find an element with the text: 공연 목록을 불러오지 못했어요. This could be because the text is broken up by multip",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"예정\""
+      ]
+    },
+    {
+      "scenario_id": "SC-22",
+      "type": "error",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-22 (error) 목록 응답이 계약을 어기면 화면이 깨지지 않고 오류 화면이 된다",
+      "rows": 67,
+      "rows_red": 67,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an element with the text: 공연 목록을 불러오지 못했어요. This could be because the text is broken up by multip",
+      "failure_variants": [
+        "TestingLibraryElementError: Unable to find an element with the text: 공연 목록을 불러오지 못했어요. This could be because the text is broken up by multip",
+        "TypeError: Cannot read properties of null (reading 'id')",
+        "TypeError: Cannot read properties of undefined (reading 'length')",
+        "TypeError: Cannot read properties of null (reading 'length')"
+      ]
+    },
+    {
+      "scenario_id": "SC-23",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.list.test.tsx",
+      "test_function": "SC-23 (boundary) 응답이 오는 사이 화면이 바뀌거나 세션이 바뀌어도 홈이 깨지지 않는다",
+      "rows": 8,
+      "rows_red": 6,
+      "rows_already_passing": 2,
+      "status": "red",
+      "failure": "AssertionError: expected null to be '오늘 오후 6:00에 루미너스 콘서트 〈WAVELENGTH〉 서울 …' // Object.is equality",
+      "failure_variants": [
+        "AssertionError: expected null to be '오늘 오후 6:00에 루미너스 콘서트 〈WAVELENGTH〉 서울 …' // Object.is equality",
+        "AssertionError: expected undefined to be true // Object.is equality",
+        "TestingLibraryElementError: Unable to find an accessible element with the role \"heading\"",
+        "AssertionError: expected null to be '다가오는 공연을 골라 보세요' // Object.is equality"
+      ],
+      "note": "행 a·b — 응답 전에 다른 화면으로 가도 콘솔 오류가 없다는 부정형. 현 화면은 후보·시각 요청이 없고 목록 setState 경고도 없다. 행 c~h 가 Red"
+    },
+    {
+      "scenario_id": "SC-24",
+      "type": "regression",
+      "test_file": "frontend/src/pages/task021.misc.test.tsx",
+      "test_function": "SC-24 (regression) 「내 예매」 행은 없고 전역 헤더는 홈에 남는다",
+      "rows": 1,
+      "rows_red": 0,
+      "rows_already_passing": 1,
+      "status": "already_passing",
+      "failure": null,
+      "note": "전체 — 「내 예매」 행이 없고 전역 헤더가 홈에 남는 것은 현 상태 그대로다(사용자 결정 2026-11-16 — App.tsx 불변). 구조적으로 Red 불가"
+    },
+    {
+      "scenario_id": "SC-25",
+      "type": "regression",
+      "test_file": "frontend/src/pages/task021.misc.test.tsx",
+      "test_function": "SC-25 (regression) 렌더된 값이 시안과 같다",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"전체\""
+    },
+    {
+      "scenario_id": "SC-26",
+      "type": "regression",
+      "test_file": "frontend/src/pages/task021.misc.test.tsx",
+      "test_function": "SC-26 (regression) 디자인·배포 제약이 이번 변경으로 새로 어겨지지 않는다",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]"
+    },
+    {
+      "scenario_id": "SC-27",
+      "type": "regression",
+      "test_file": "frontend/src/pages/task021.misc.test.tsx",
+      "test_function": "SC-27 (regression) 포스터를 공용으로 꺼낸 뒤에도 상세의 포스터는 그대로다",
+      "rows": 1,
+      "rows_red": 1,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "AssertionError: components/Poster.tsx 가 있다: expected undefined to be defined"
+    },
+    {
+      "scenario_id": "SC-28",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.misc.test.tsx",
+      "test_function": "SC-28 (boundary) API 클라이언트는 상태·페이지를 쿼리로 싣고 잘못된 인자는 요청 전에 거른다",
+      "rows": 12,
+      "rows_red": 9,
+      "rows_already_passing": 3,
+      "status": "red",
+      "failure": "Error: promise rejected \"Error: Not implemented\" instead of resolving",
+      "failure_variants": [
+        "Error: promise rejected \"Error: Not implemented\" instead of resolving",
+        "Error: promise resolved \"{ content: [ { …(10) } ], …(3) }\" instead of rejecting",
+        "AssertionError: expected '/api/performances' to be '/api/performances?status=OPEN' // Object.is equality",
+        "AssertionError: expected '/api/performances' to be '/api/performances?page=1' // Object.is equality"
+      ],
+      "note": "행 a·b·f — 인자 없음·page 0·null 상태는 쿼리 문자열이 없는 기존 URL 그대로다(승인 테스트 스텁 보호). 행 c~e·g~l 이 Red"
+    },
+    {
+      "scenario_id": "SC-29",
+      "type": "boundary",
+      "test_file": "frontend/src/pages/task021.misc.test.tsx",
+      "test_function": "SC-29 (boundary) 홈이 쓰지 않는 필드가 이상해도 홈은 그대로 보인다",
+      "rows": 9,
+      "rows_red": 9,
+      "rows_already_passing": 0,
+      "status": "red",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"전체\""
+    }
+  ],
+  "red_result": {
+    "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npx vitest run --testTimeout=60000",
+    "total": 1604,
+    "failed": 424,
+    "passed": 1179,
+    "new_cases": 435,
+    "new_cases_failed": 424,
+    "new_cases_passed": 11,
+    "existing_tests_still_passing": true,
+    "existing_tests_failed": 0,
+    "breakdown": "새 테스트 435케이스(시나리오 29건, 표는 행마다 한 케이스) 중 424 실패·11 통과. 통과 11개는 모두 「이 태스크가 바꾸지 않는 기존 동작」 행이다(red_scenarios[].note). 기존 1168 통과·1 todo 는 그대로(실패 0)"
+  },
+  "harness_probe": {
+    "method": "버린 프로브 테스트 2건(src/zz_probe*.test.tsx, 커밋하지 않고 삭제)",
+    "verified": [
+      "jsdom getComputedStyle 이 MUI sx 의 overflow-wrap(anywhere)·aspect-ratio(\"1/1\" — 공백 없음)·grid-template-columns(\"repeat(2, 1fr)\")·min-height(\"44px\")·display 를 계산한다 → aspect-ratio 는 squash()로 비교",
+      "fetch 스텁이 등록하지 않은 키에 404 {code:NOT_FOUND} 를 준다(test/task020.ts stubServer) — 승인 테스트 3개의 스텁도 같은 방식이라 홈의 후보·시각 요청은 후보 없음·시각 줄 없음이 된다"
+    ],
+    "not_verified": [
+      "-webkit-line-clamp(두 줄 말줄임)는 jsdom 이 계산하지 않는다 → Phase 4 브라우저 증거",
+      "375px 시안 나란히 대조(AC-9)는 jsdom 으로 못 한다 → Phase 4 브라우저 증거",
+      "CV 표의 1e400 은 응답 본문 문자열을 직접 만들어 JSON 파서가 Infinity 로 읽게 했다(jsonWithInfinity) — 실제 서버가 이런 값을 내지는 않는다"
+    ]
+  },
+  "inventory_check": {
+    "scenarios": 29,
+    "test_functions": 29,
+    "match": true,
+    "how": "테스트 제목의 'SC-NN (type)' — 표 시나리오는 test.each 한 줄(= 시나리오 한 건). grep -hoE \"'SC-[0-9]+ \\(\" 의 고유 제목 29개, 중복 없음"
+  },
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/api/performances.ts"
+    ],
+    "contents": "getNextOpening() 신규 — 본문은 throw new Error('Not implemented') 한 줄. getPerformances(_status?, _page?) 는 시그니처만 늘렸고 본문은 기존 그대로(인자를 무시한다)",
+    "purity_check": "새 테스트 실패 사유에 스켈레톤이 만든 가짜 통과가 없다 — SC-28 행 l 은 거부 단언이 throw 로 우연히 통과하던 것을 「정상 응답은 먼저 성공해야 한다」 선행 단언으로 막았다. tsc -b 0 오류. 컴포넌트(PerformanceCard·StatusChips·Poster)는 만들지 않았다 — 테스트가 App 을 통해 렌더하고 소스는 import.meta.glob ?raw 로 읽는다(없으면 Red)"
+  },
+  "testing_preferences": {
+    "framework": "Vitest + Testing Library + jsdom (ADR-0007)",
+    "mock_strategy": "fetch 를 'METHOD path' 표로 스텁(응답마다 새 Response). 목록은 쿼리 문자열별(listRoute)로 응답. 화면은 App + MemoryRouter + AuthProvider 로 실제 라우트를 지난다. 시간은 vi.useFakeTimers + 기준 시각 훅이 부르는 /api/time 스텁(timeRoute·skew). 붙들어 둔 응답은 deferred 로 풀고 StrictMode 행은 게이트 없이 응답마다 새 Response 를 쓴다. 계약 위반 표 CV 는 test/task021.ts 한 곳에 있다"
+  },
+  "approved_test_changes": [
+    "| `frontend/src/pages/PerformanceListPage.test.tsx` 5건 전체 | 옛 화면(MUI Card·`toLocaleString`·「목록을 불러오지 못했습니다」·「예정된 공연이 없습니다」)을 단언 → 새 문구로 교체. SC-02 의 Pretendard 단언(공연명·장소의 `font-family`)은 새 화면에서도 같은 값이 나오는지 SC-25 e·g 가 렌더 값으로 대신한다 | SC-01·11·19·20·21·25 |",
+    "| `frontend/src/pages/task017.regression.test.tsx` :70-76 | 목록에서 배지 다섯 문구가 각각 **하나씩**이라는 단언을 카드 안(`within`) 배지로 바꾼다 — 칩 「예정」·「매진」·「마감」이 같은 글자라 `findAllByText(...)` 가 둘이 된다 | SC-11 |",
+    "| `frontend/src/pages/task017.regression.test.tsx` :100-113 | 앱 첫 경로의 빈 목록 문구 「예정된 공연이 없습니다」 → 「다가오는 공연이 없어요」 | SC-19 a |",
+    "| `frontend/src/task017.static.test.ts` :30-34·`frontend/src/task020.static.test.ts` :30-34 | DESIGN-003 위반 파일 목록 `[PerformanceEditPage, PerformanceListPage]` → `[PerformanceEditPage]` | SC-26 |",
+    "| `frontend/src/api/http.test.ts` :71·143 | 변경 없음 — `getPerformances()` 가 인자 없이 `/api/performances` 를 부르는 것을 SC-28 a 가 그대로 지킨다(회귀 확인만) | SC-28 a |",
+    "| `frontend/src/auth/AuthScreens.test.tsx`·`SocialLoginScreens.test.tsx`·`task024.organizer.test.tsx` 의 홈 렌더 | 변경 없음 — `'GET /api/performances'` 키 하나만 알고 후보·시각은 404 로 응답한다. 홈은 그 404 를 후보 없음(SC-04 b)·시각 줄 없음(SC-08 b)으로 보고 목록을 그린다. 이 테스트들의 목록 픽스처는 계약 안이다(`sections` 의 모양은 SC-29 d·e) | SC-04 b·SC-08 b·SC-29 |",
+    "| `frontend/src/pages/task020.detail.test.tsx` SC-17·33 | 변경 없음 — `Poster` 추출 뒤에도 그대로 통과해야 한다(회귀 확인) | SC-27 |"
+  ],
+  "human_review": {
+    "approved": false
+  }
+}

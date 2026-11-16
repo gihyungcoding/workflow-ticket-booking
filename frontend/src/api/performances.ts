@@ -80,12 +80,18 @@ export class UnauthorizedError extends Error {}
 // 공연 쓰기의 역할 불일치(403) — 주최자가 아니다 (ADR-0029). 화면은 주최자 전용 안내를 보인다.
 export class ForbiddenRoleError extends Error {}
 
-export async function getPerformances(): Promise<PerformanceListResponse> {
+// 2b 스켈레톤 — 시그니처만 늘렸다(TASK-021). 상태·페이지를 요청에 싣는 일은 Phase 3 에서 한다.
+export async function getPerformances(_status?: PerformanceStatus | null, _page?: number): Promise<PerformanceListResponse> {
   const response = await request('/api/performances')
   if (!response.ok) {
     throw new Error(`공연 목록 조회 실패: ${response.status}`)
   }
   return response.json()
+}
+
+// 2b 스켈레톤 — 본문은 Phase 3 에서 쓴다. 200 → 공연, 204 → null.
+export async function getNextOpening(): Promise<Performance | null> {
+  throw new Error('Not implemented')
 }
 
 export async function getPerformance(id: string): Promise<Performance> {
