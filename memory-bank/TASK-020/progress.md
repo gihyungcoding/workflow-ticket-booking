@@ -5,8 +5,8 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | flows 10 · AC 14 · 입력 17 |
 | 2a Scenario | ✅ 완료 | CP-2.2 | 39건 · 칸 120/120 · 검증 3회차 PASS |
 | 2b Red | ✅ 완료 | CP-2.5 | 새 241케이스 229 실패 · already_passing 5건 · HITL#1·2 승인 |
-| 3 Green | ⏳ 다음 | — | |
-| 4 Verify | ⬜ 대기 | — | |
+| 3 Green | ✅ 완료 | CP-3.4 | 1029 통과 · 린트 0 · 자체 리뷰 2R |
+| 4 Verify | ⏳ 다음 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 
 ## 완료 조건

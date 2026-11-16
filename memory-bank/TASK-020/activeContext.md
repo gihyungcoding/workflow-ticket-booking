@@ -1,8 +1,8 @@
 ---
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
-phase: "2b"
-phase_name: "Phase 2b - Red (승인 완료)"
+phase: "3"
+phase_name: "Phase 3 - Green (완료)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-13
@@ -13,22 +13,23 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-020-detail-clock-zone-sheet"
 
-last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
+last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-020.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-020.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-020.json"
   test: "workflow_design/05_scenario/TEST_TASK-020.json"
+  dev: "workflow_design/06_dev/DEV_TASK-020.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b(Red)를 마쳤다 — 통합 HITL(시나리오 + Red) 승인 완료. Phase 3(Green) 진입 직전.
+Phase 3(Green)을 마쳤다 — 전체 1029 통과, 자체 리뷰 2라운드. Phase 4(검증) 진입 직전.
 
 ## 다음 한 걸음
 
-`wf-develop` — Phase 3. frontend 테스트는 `--testTimeout=60000` 으로 돌린다(시스템 부하).
+`wf-verify` — Phase 4. frontend 테스트는 `--testTimeout=60000` 으로 돌린다(시스템 부하).
 
 ## 알아둬야 할 것
 
