@@ -75,6 +75,41 @@
       "path": "frontend/src/assets/fluent/pin.svg",
       "change": "시안 아이콘 복사",
       "lines_changed": 64
+    },
+    {
+      "path": "frontend/src/utils/datetime.ts",
+      "change": "isInstant 추가 — ISO 순간 형식 + 달력·시계 범위 되돌려 대조(Date.parse 의 보정 거부, 연도 0~99 보정 회피)",
+      "lines_changed": 22
+    },
+    {
+      "path": "frontend/src/api/time.ts",
+      "change": "getServerTime(signal) — 중단 신호, now 는 isInstant 로 검증",
+      "lines_changed": 6
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "change": "parseDetail — 시각은 isInstant, title·venue 공백(isBlankDisplay)·availableSeats>totalSeats 는 계약 위반",
+      "lines_changed": 8
+    },
+    {
+      "path": "frontend/src/hooks/useServerClock.ts",
+      "change": "표본 하나 5초 제한(AbortController), invalidate() 로 세대 폐기 때 요청도 중단",
+      "lines_changed": 30
+    },
+    {
+      "path": "frontend/src/pages/PerformanceDetailPage.tsx",
+      "change": "시트 닫기 — 눌러 연 시트(pressed)는 한 칸 뒤로, 열린 채 들어온 주소는 replace; 가드는 시트가 닫힐 때까지(+1초 안전망); 포스터는 http(s) 만",
+      "lines_changed": 40
+    },
+    {
+      "path": "frontend/src/components/ui/text.ts",
+      "change": "hasContent(ReactNode) 추가 — 표시 문구 「없음」 판정 한 곳. isBlank(trim) 와의 용도 차이를 주석으로",
+      "lines_changed": 14
+    },
+    {
+      "path": "frontend/src/components/ui/Hero.tsx · Row.tsx · Block.tsx",
+      "change": "eyebrow·lead·sub·lead·trail·title·note 를 hasContent 로 판정",
+      "lines_changed": 12
     }
   ],
   "reused": [
@@ -117,22 +152,27 @@
     {
       "path": "frontend/src/assets/fluent/ticket.svg",
       "symbol": "ticket.svg"
+    },
+    {
+      "path": "frontend/src/components/ui/text.ts",
+      "symbol": "isBlankDisplay",
+      "note": "hasContent·parseDetail 가 같은 판정을 쓴다(ADR-0027)"
     }
   ],
   "test_status": "green",
   "test_result": {
     "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npx vitest run --testTimeout=60000",
-    "total": 1030,
-    "passed": 1029,
+    "total": 1169,
+    "passed": 1168,
     "failed": 0,
     "todo": 1,
     "target_tests_passed": 257,
-    "target_note": "task020 파일의 통과 케이스 257(= 새 241 + 자체 리뷰 추가 16). 시나리오 39건 모두 통과. 기본 제한 5초에서는 시스템 부하(load 30+)로 타이핑이 많은 기존 테스트가 간헐 타임아웃하므로 --testTimeout=60000 으로 판정한다"
+    "target_note": "롤백 재진입(Phase 4 FAIL → 2a → 2b → 3) 뒤 전체 스위트. 새 행(SC-04·10·17·40~43) 56건 Red → Green, 자체 리뷰 추가 테스트 포함. 시나리오 43건 모두 통과. 부하(load 10 안팎)에서 SC-41 h 가 전체 실행 중 1회 실패했고 단독 3회·전체 3회에서는 통과했다 — 시간 의존 flake 가능성(실제 타이머 60ms 대기)"
   },
   "lint": {
     "command": "cd frontend && npm run lint (oxlint)",
     "errors": 0,
-    "warnings": "PerformanceDetailPage 의 set-state-in-effect 경고 1건은 옛 화면과 같은 패턴. 하네스(src/test/task020.tsx)의 only-export-components·globals 경고 다수 — 에러 아님. 빌드(npm run build)·tsc -b·check_architecture(DESIGN-001·002·DEPLOY 위반 0, DESIGN-003 2건 기존)"
+    "warnings": "PerformanceDetailPage 의 set-state-in-effect 경고 1건은 옛 화면과 같은 패턴. 하네스(src/test/task020.tsx)의 only-export-components·globals 경고 다수 — 에러 아님. 빌드(npm run build)·tsc -b·check_architecture(DESIGN-001·002·DEPLOY 위반 0, DESIGN-003 2건 기존) (재진입 뒤에도 error 0, tsc -b·npm run build 통과, check_architecture error 0)"
   },
   "refactoring": [
     {
@@ -217,6 +257,15 @@
       "change": "SC-16 b(/performances/3): 로그인 링크 단언을 header 플래그로(상세에는 없음). SC-17 a: 로그인 상태 단언을 등록 요청 직전 등록 화면에서 하도록 시점만 앞당김",
       "reason": "상세 전역 헤더 제거(사용자 결정) — 시나리오의 승인 테스트 변경 표에서 빠졌던 행",
       "approval": "AskUserQuestion — 승인 (2026-11-16, Phase 3)"
+    },
+    {
+      "file": "frontend/src/pages/task020.clock.test.tsx",
+      "scenarios": [
+        "SC-40 b"
+      ],
+      "change": "settle(5_000) 뒤에 settle(10) 한 줄 추가",
+      "reason": "첫 표본이 5초에 중단된 뒤 둘째·셋째 표본(0ms 응답)이 가짜 타이머로 도착할 시간이 모자라 카운트다운 단언이 먼저 실행되는 하네스 시간 진행 부족. 단언은 그대로",
+      "approval": "AskUserQuestion — 승인 (2026-11-16, Phase 3 재진입)"
     }
   ],
   "scope_deviations": [
@@ -259,88 +308,206 @@
         "findings": 1,
         "tests_added": [],
         "fix_commit": "26489ae"
+      },
+      {
+        "n": 3,
+        "phase": "3 재진입",
+        "scope": "수정 커밋 6648034...a80a73c 전체 · RC-1~4(Phase 4) 해소 확인 + 같은 카테고리 전수",
+        "findings": 2,
+        "tests_added": [
+          "utils/task020.instant.test.ts (isInstant 24케이스)",
+          "components/ui/task020.content.test.tsx (Block·Row 공백 6종 + 글자)"
+        ],
+        "fix_commit": "1886b6b"
+      },
+      {
+        "n": 4,
+        "phase": "3 재진입",
+        "scope": "수정 커밋 a80a73c...1886b6b · isInstant·hasContent 호출부 전수",
+        "findings": 1,
+        "tests_added": [
+          "utils/task020.instant.test.ts 연도 0000·0001·0099 3케이스"
+        ],
+        "fix_commit": "b3f2719"
       }
     ],
     "root_causes": [
       {
         "id": "RC-1",
-        "summary": "클라이언트 공백 판정(JS \\s)이 ADR-0027 의 공백 목록과 다른 집합이라(U+FEFF 를 공백으로, U+0085 를 글자로 봄) 서버가 받은 값(서식 문자 U+FEFF)을 계약 위반으로 본다",
+        "summary": "표시 문구의 「없음」 판정이 부품마다 흩어져 있었다 → hasContent 한 곳",
         "found_in_round": 1,
         "variants": [
           {
-            "case": "sections 원소의 area 가 U+FEFF 만",
+            "case": "Hero·Row.sub truthiness",
             "origin": "found",
-            "probe": "reproduced"
+            "probe": "reproduced",
+            "resolved": true
           },
           {
-            "case": "grade 가 U+FEFF 만",
-            "origin": "found",
-            "probe": "reproduced"
+            "case": "Block·Row lead/trail",
+            "origin": "later",
+            "probe": "reproduced",
+            "resolved": true
           },
           {
-            "case": "areaNote·posterUrl 이 U+FEFF 만",
-            "origin": "found",
-            "probe": "reproduced"
-          },
-          {
-            "case": "U+0085·U+2800·U+3164·U+200D 만",
-            "origin": "found",
-            "probe": "reproduced"
-          },
-          {
-            "case": "2라운드: 수정된 정규식과 서버 상수의 전체 집합 비교(U+0000~U+2FFFF)",
+            "case": "Field·Badge·Segmented·Toast trim 유지",
             "origin": "predicted",
             "probe": "not_reproduced",
-            "reason": "Java (?U)[^\\p{Z}\\s\\u200B] 와 JS 정규식이 모두 26개 코드포인트로 일치"
-          },
-          {
-            "case": "isBlankDisplay 외 호출부와 trim()/\\s 로 따로 판정하는 코드",
-            "origin": "predicted",
-            "probe": "not_reproduced",
-            "reason": "이 태스크 값 경로는 모두 isBlankDisplay, 남은 isBlank(trim)는 Field·Badge·Toast·Segmented 뿐"
+            "reason": "의도된 차이 — task020.text.test.ts 에 고정"
           }
         ]
       },
       {
         "id": "RC-2",
-        "summary": "시트 닫기가 history 한 칸 뒤로(navigate(-1))를 닫기 입력마다 호출하고 멱등 가드가 없다 (2라운드: 가드가 navigate(-1) 의 성공을 전제해 실패하면 풀리지 않았다)",
+        "summary": "시트 닫기 가드가 타이머로 풀리고 history 칸의 출처를 몰랐다",
         "found_in_round": 1,
         "variants": [
           {
-            "case": "백드롭 더블 탭 / Esc 키 반복 / 확인 직후 Esc",
+            "case": "비동기 popstate 구간·반복 입력",
             "origin": "found",
             "probe": "reproduced",
-            "reason": "같은 틱 Esc 연타 테스트로 재현(jsdom)"
+            "resolved": true
           },
           {
-            "case": "history 첫 칸에서 열린 시트(navigate(-1) 이 no-op) — 가드 영구 고착",
+            "case": "열린 채 들어온 주소",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true
+          },
+          {
+            "case": "뒤로→앞으로 가기로 시트 칸에 재진입한 뒤 닫기(replace 로 상세 칸이 하나 더 남음)",
+            "origin": "later",
+            "probe": "not_probed",
+            "reason": "장애가 아닌 중복 칸 1개 — 시나리오 밖, 리뷰어도 프로브 못함(deferred)"
+          }
+        ]
+      },
+      {
+        "id": "RC-3",
+        "summary": "시각 측정에 시간 제한이 없었다",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "응답이 오지 않는 표본·세대 폐기 때 요청",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true
+          }
+        ]
+      },
+      {
+        "id": "RC-4",
+        "summary": "시각 판정이 Date.parse 의 관대한 해석에 기댐 → isInstant 한 곳",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "비 ISO 문자열",
+            "origin": "found",
+            "probe": "reproduced",
+            "resolved": true
+          },
+          {
+            "case": "존재하지 않는 달력 날짜·24시",
             "origin": "later",
             "probe": "reproduced",
-            "reason": "createMemoryRouter 프로브. 가드를 같은 틱 한정(setTimeout 0 해제)으로 고쳐 고착은 없앴다 — 시트가 닫히지 않는 것 자체는 남는다(unresolved)"
+            "resolved": true
           },
           {
-            "case": "닫은 뒤 다시 열기 / 뒤로 가기로 닫은 뒤 다시 열기",
-            "origin": "predicted",
-            "probe": "not_reproduced",
-            "reason": "state 가 false 가 되면 가드가 풀린다(코드 추적)"
+            "case": "연도 0000~0099",
+            "origin": "later",
+            "probe": "reproduced",
+            "resolved": true
           }
         ]
       }
     ],
-    "unresolved": [
-      {
-        "id": "RC-2 later",
-        "tag": "correctness",
-        "summary": "history 첫 칸에서 시트가 열려 있으면(앞쪽 칸이 잘린 history — 시트를 여는 버튼은 항상 push 하므로 일반 흐름에서는 나오지 않는다) navigate(-1) 이 no-op 이라 시트가 닫히지 않는다",
-        "in_scenario": false,
-        "note": "고착(영구 무시)은 고쳤다. 시트 열기 때 push 한 칸임을 표시하고 아닌 경우 replace 로 폴백하는 설계가 필요하면 2a 로 — 사용자에게 알림"
-      }
-    ],
+    "unresolved": [],
     "deferred": [
       {
         "tag": "design",
-        "summary": "첫 묶음 라벨(최대 12자 + ' · 무대 바로 앞')이 배치도 폭 128 칸을 넘칠 수 있다 — 시나리오 규약 안의 모양. Phase 4 시안 대조에서 긴 이름으로 확인"
+        "summary": "뒤로→앞으로 가기로 시트 칸에 재진입한 뒤 닫으면 replace 라 [상세, 상세] 칸이 하나 남는다(장애 아님, 시나리오 밖)"
+      },
+      {
+        "tag": "design",
+        "summary": "PerformanceListPage.tsx:83 은 new Date(startAt) 를 검증 없이 쓴다 — 이 태스크 범위 밖(TASK-021 홈 화면)"
+      },
+      {
+        "tag": "design",
+        "summary": "첫 묶음 라벨 폭(최대 12자 + ' · 무대 바로 앞')은 Phase 3 1차 deferred — Phase 4 화면 확인 때 긴 이름으로 보지 못했다"
+      },
+      {
+        "tag": "design",
+        "summary": "hasContent 는 ReactNode 숫자 0 을 숨긴다 — 호출부는 요소·문자열만 넘긴다"
       }
     ]
-  }
+  },
+  "rollback_fixes": [
+    {
+      "root_cause": "RC-4 시각 판정이 Date.parse 의 관대한 해석에 기댐",
+      "variants": [
+        "'1'·'2026'·날짜만·오프셋 없음",
+        "title·venue·totalSeats·availableSeats>totalSeats",
+        "2026-02-30·T24:00:00 (자체 리뷰 later)",
+        "연도 0000~0099 (자체 리뷰 2R)"
+      ],
+      "tests": [
+        "task020.detail.test.tsx SC-04 ax~bv",
+        "task020.clock.test.tsx SC-10 m~p",
+        "utils/task020.instant.test.ts"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "utils/datetime.ts isInstant (time.ts·performances.ts 가 호출)"
+      ]
+    },
+    {
+      "root_cause": "RC-3 시각 측정에 시간 제한·중단이 없음",
+      "variants": [
+        "응답이 오지 않는 표본",
+        "화면 이탈·재측정 때 진행 중 요청",
+        "첫 표본만 지연·4.999/5.001초 경계"
+      ],
+      "tests": [
+        "task020.clock.test.tsx SC-40 a~f"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "hooks/useServerClock.ts measure·invalidate (fetch 호출부는 api/time.ts 하나)"
+      ]
+    },
+    {
+      "root_cause": "RC-2 시트 닫기 가드가 타이머로 풀리고 history 칸의 출처를 몰랐음",
+      "variants": [
+        "비동기 popstate 구간의 둘째 입력(Esc·바탕·확인 조합)",
+        "열린 채 들어온 주소(한 칸뿐·앞 칸이 홈)"
+      ],
+      "tests": [
+        "task020.close.test.tsx SC-41 a~i"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "pages/PerformanceDetailPage.tsx closeSheet (시트를 닫는 입력은 모두 이 함수로 모인다)"
+      ]
+    },
+    {
+      "root_cause": "RC-1 표시 문구 「없음」 판정이 흩어짐",
+      "variants": [
+        "Hero eyebrow·lead, Row sub",
+        "title·venue(parseDetail)",
+        "Block title·note, Row lead·trail (자체 리뷰 later)",
+        "포스터 스킴(보안, 경미)",
+        "Field·Badge·Segmented·Toast 의 trim 유지는 의도 — 차이를 테스트로 고정"
+      ],
+      "tests": [
+        "components/ui/task020.blank.test.tsx SC-42",
+        "components/ui/task020.content.test.tsx",
+        "components/ui/task020.text.test.ts",
+        "task020.detail.test.tsx SC-17 i~l"
+      ],
+      "fix_locus": "common",
+      "sites": [
+        "components/ui/text.ts hasContent (Hero·Row·Block 가 호출), isBlankDisplay (AppBar·zones·parseDetail)"
+      ]
+    }
+  ]
 }
