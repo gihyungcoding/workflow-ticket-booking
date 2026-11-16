@@ -1,0 +1,27 @@
+{
+  "task_id": "TASK-021",
+  "checks": [
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 SC-01~SC-29, 29개다. 아래 항목이 서로 같다. 시나리오 ID와 type, flow·also_flows, 각 Given/When/Then(MD 의 And 는 JSON then 배열로 들어가 있다), 표 행, 규약 17행, `CV` 표, 「승인된 테스트 변경」 7행. SC-01·08·20·23·26·27 등을 대조했고 문장 차이는 찾지 못했다. MD 아래쪽의 When 안 괄호 문구(SC-08 '행 a 는 응답을 붙들어 둔다')도 JSON 에 그대로 있다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 29개. happy 6개(SC-01·02·03·07·11·13·15 중 type=happy 7개), error 6개(SC-04·05·08·17·21·22), boundary 13개, regression 4개(SC-24~27). 하한 충족."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "Plan AC-1~AC-9 를 `covers` 와 직접 대조했다. AC-1→SC-01·02·03·04·05·06·09·23, AC-2→SC-01·07·08·09·10·23, AC-3→SC-01·13·14·28, AC-4→SC-01·03·06·11·12·27·29, AC-5→SC-15·16·17·18·28, AC-6→SC-19, AC-7→SC-20·21·22·23·29, AC-8→SC-24, AC-9→SC-25·26. 9건 모두 대응된다. 참고로 AC-9(375px 나란히 대조)는 jsdom 으로 볼 수 없어 SC-25·26 이 대리 지표다. SC-26(check_architecture 실행)이 AC-9 를 covers 로 붙이는 것은 억지에 가깝다."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오가 쓰는 flow 는 F1~F9 전부이고 Plan 의 design.flows[].id(F1~F9)에 모두 실재한다. also_flows 도 같다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "SC-06 의 'overflow-wrap 이 anywhere 이거나 min-width 가 0' 은 OR 조건이라 어느 쪽이든 통과하고, 가로 스크롤이 없다는 단언으로는 약하다. SC-27 의 Then 'TASK-020 SC-17·33 의 단언이 수정 없이 통과한다' 는 다른 테스트 파일을 가리키는 메타 단언이다. SC-26 의 Then 은 스크립트 위반 건수라 화면 동작이 아니다. SC-25 k 는 소스 문자열 검사라 렌더 관찰이 아니다. SC-23 c 의 `AbortSignal.aborted` 는 관찰 가능하지만 구현 수단에 묶여 있다."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "When 이 둘 이상인 곳이 있다. SC-09 는 '시각 응답이 오기 전과 온 뒤를 각각 본다' 로 시점이 둘이다. SC-15·16·17·18 은 '홈을 열고 더 보기를 누른다' 로 When 이 둘이다. SC-19 는 '홈을 열고(칩 행은 그 칩을 누르고)' 이고, And 에 '전체 보기를 누르면' 이 또 있다. SC-13 은 And 에 '선택된 칩을 다시 누르면', SC-21 은 And 에 '다시 시도를 누르면' 이 있다. SC-14·18·23 의 표 행은 이동→응답 풀기처럼 순서 있는 다단계 조작이다. SC-24 는 '비로그인·로그인 상태로 각각' 으로 When 이 둘이다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "SC-28 은 When/표에 함수명을 직접 쓴다(`getPerformances('OPEN')`, `getNextOpening()`). SC-23 d 는 `StrictMode` 를, SC-23 c 는 `AbortSignal` 을, SC-25 는 `getComputedStyle` 을, SC-20 은 `data-testid` 이름을 쓴다. SC-26 은 `python3 scripts/check_architecture.py --json` 을 When 으로 쓴다. SC-27 은 `components/Poster.tsx` 파일 구조를 Given 에 둔다(Given 은 허용). API 클라이언트·정적 제약을 직접 시험하는 시나리오라 불가피한 면은 있지만, 화면 시나리오와 섞여 있다."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "warn", "detail": "Plan 과 어긋나는 곳이 둘 있다. (1) Plan input_fields 의 page 노트는 '응답의 page·size·totalElements 와 어긋나는 값(음수·소수·문자열)은 검증에서 오류로' 라고 하는데, SC-29 g·h 는 응답의 page·size 키 누락이나 size:'x' 를 정상 화면으로 못박는다. (2) Plan unresolved 는 목록 검증에 availableSeats ≤ totalSeats 를 포함하는 것으로 읽히고 availableSeats 노트에도 'totalSeats 초과' 가 있는데, SC-29 i 는 초과해도 정상이라고 한다. 시나리오 쪽 결정이 합리적일 수는 있지만 Plan 문구와 모순이므로 Plan 을 고치거나 HITL 에서 확인해야 한다. 또 시나리오(SC-02 g, SC-07 b·c, SC-09)는 기기 시계(DEVICE)를 입력으로 쓰는데 design.inputs 에는 없다."},
+    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "같은 코드 경로를 타는 시나리오가 여럿 있다. 언마운트·세션 변경 시 늦은 응답 폐기는 SC-14 d·e, SC-18 f·g, SC-23 a·e 가 같은 가드를 반복한다. 후보 실패는 SC-04 와 SC-23 g 가 겹친다. 계약 위반 검증기는 SC-05·13·17 j·22 가 같은 `CV` 표를 네 번 돈다(호출 지점이 달라 의도적이지만 같은 parse 경로다). SC-25 k 와 SC-26 은 같은 정적 제약을 이중으로 본다."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "기존 파일(PerformanceListPage.tsx·performances.ts·PerformanceDetailPage.tsx)을 바꾸는 태스크이고 regression 시나리오가 SC-24~27 로 있다. 기존 승인 테스트의 이전 대응표도 SC 번호와 함께 적혀 있다."},
+    {"id": "V11", "name": "입력 경계 판정", "verdict": "fail", "detail": "coverage_matrix 의 모든 칸을 확인했다. false_cover 1건이 있다. n/a 판정 중 PLAN 과 직접 어긋나는 것은 없었고, 아래 V12 에 적은 근거 문구 부정확성만 경고로 남긴다. plan_gap 으로 올릴 정도의 확실한 누락은 없었고, 기기 시계(DEVICE)는 V12 경고로 낸다. 나머지 칸은 by 시나리오가 값을 Given/When 에 쓰고 Then 이 결과를 단언하는 것을 확인했다. 예를 들어 status@F5:enum.each 는 SC-11 a~l 의 다섯 값이 모두 있고, availableSeats 와 id 의 CV 행도 SC-22 표에 있다."},
+    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "(1) 더 보기에서 중복 id 로 24<25 인 채 버튼이 남는데(SC-18 b), 그 상태에서 다시 누르면 page=2 가 요청되는지, 같은 id 만 계속 오면 무한히 남는지가 정해져 있지 않다. (2) 기기 시계(DEVICE)·기준 시각의 datetime 종류(자정 경계, 서버/기기 날짜 불일치)는 Plan input_fields 에 필드가 없다. 시나리오 SC-02 g·SC-09 가 쓰지만 표에 없어서 Plan 보완 여부를 사람이 판단해야 한다. (3) n/a 로 처리한 posterUrl 하위 요소 칸 9개의 근거 'PLAN note — url 형식은 서버가 판정' 은 PLAN 본문에 그대로 있는 문장이 아니다. PLAN 은 '서버가 https 만 받는다' 까지만 말한다. 칸이 n/a 인 것 자체는 수긍할 만하다. (4) 칩을 빠르게 연속으로 누를 때 같은 칩을 두 번 누르는 경우와 다른 칩을 두 번 누르는 경우의 요청 횟수(SC-13 마지막 And 는 이미 선택된 칩만 다룬다). (5) 후보 공연이 목록에 없거나 다른 칩에서 안 보일 때의 머리글·카드 불일치. (6) 제목·장소에 HTML 특수문자가 들어올 때의 이스케이프."}
+  ],
+  "v11_matrix": [
+    {"cell": "content@F6:array.max+1", "kind": "false_cover",
+     "detail": "by 가 SC-16 인데, 21개 카드를 주는 행 d 는 첫 응답(F1)이다. 더 보기(`?page=1`) 응답이 20개를 넘는 경우는 Given·When 어디에도 없다. SC-16 f 는 page=1 의 빈 배열(array.empty)만 다룬다. 이 칸은 더 보기 응답에서 20개 초과 행을 추가하거나, 근거를 들어 n/a 로 바꿔야 한다."}
+  ],
+  "overall": {
+    "pass": false,
+    "fail_count": 1,
+    "warn_count": 6,
+    "summary": "V1~V4(MD/JSON 일치, 개수 하한, AC 9건 커버, flow 대응)는 통과했다. V11 에서 false_cover 가 1건 나와 fail 이다: content@F6:array.max+1 을 SC-16 d 가 덮는다고 적었는데 그 행은 첫 응답이다. 경고는 V5·V6·V7·V8·V9·V12 다. 주요 항목은 두 가지다. 하나는 SC-29 g·h·i 가 Plan 의 page 검증·availableSeats ≤ totalSeats 문구와 어긋난다는 점이다. 다른 하나는 SC-09·15~19·21 등 여러 시나리오의 When 이 둘 이상이라는 점이다. 이 둘과 기기 시계 입력 누락은 HITL 에서 판단하는 것이 좋다."
+  }
+}
