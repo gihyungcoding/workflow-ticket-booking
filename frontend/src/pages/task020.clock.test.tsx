@@ -171,6 +171,10 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
     ['j', '200 + now 배열', () => res(200, { now: ['2026-11-11T08:55:28Z'] })],
     ['k', '200 + now true', () => res(200, { now: true })],
     ['l', "200 + now '어제'", () => res(200, { now: '어제' })],
+    ['m', "200 + now '1' (Date.parse 는 받지만 ISO 순간이 아니다)", () => res(200, { now: '1' })],
+    ['n', "200 + now '2026'", () => res(200, { now: '2026' })],
+    ['o', "200 + now 날짜만 '2026-11-11'", () => res(200, { now: '2026-11-11' })],
+    ['p', "200 + now 오프셋 없음 '2026-11-11T08:55:28'", () => res(200, { now: '2026-11-11T08:55:28' })],
   ]
   test.each(FAILURES)('SC-10 (error) 기준 시각을 맞추지 못하면 카운트다운 대신 안내가 보이고 CTA 는 기기 시계로 켜지지 않는다 — %s %s', async (_row, _label, respond) => {
     // Given P_UP(openAt 은 서버 시각 + 272초), GET /api/time 이 세 번 모두 표의 응답을 준다, 상세를 열었다
@@ -595,6 +599,94 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
     // And 콘솔 오류·경고(상태 갱신 경고 포함)가 0건이다
     expect(consoleError).not.toHaveBeenCalled()
     expect(consoleWarn).not.toHaveBeenCalled()
+  })
+
+  // ---------- SC-40 — 시각 응답 시간 제한 (표본 하나 5초, 요청 중단) ----------
+
+  type Plan = number | 'never'
+  /** 호출 순서대로 응답 시간을 정한다 — 'never' 는 붙들어 두고, 중단 신호가 오면 AbortError 로 끝낸다. 표본이 바닥나면 마지막 값을 되풀이한다 */
+  function timedRoute(plan: Plan[], signals: Array<AbortSignal | null | undefined>): Responder {
+    let i = 0
+    return (init) =>
+      new Promise<Response>((resolve, reject) => {
+        const wait = plan[Math.min(i, plan.length - 1)]
+        i += 1
+        signals.push(init.signal)
+        const timer = wait === 'never' ? undefined : setTimeout(() => resolve(res(200, { now: new Date(Date.now()).toISOString() })), wait)
+        init.signal?.addEventListener('abort', () => {
+          clearTimeout(timer)
+          reject(new DOMException('Aborted', 'AbortError'))
+        })
+      })
+  }
+  const allAborted = (signals: Array<AbortSignal | null | undefined>) => signals.length > 0 && signals.every((x) => x?.aborted === true)
+
+  test.each([
+    ['a', '세 표본 모두 응답이 오지 않는다'],
+    ['b', '첫 표본만 응답이 오지 않고 나머지는 정상'],
+    ['c', '세 표본 모두 4.999초에 온다'],
+    ['d', '세 표본 모두 5.001초에 온다'],
+    ['e', '첫 표본 응답 전 홈으로 이동'],
+    ['f', '첫 측정이 붙든 채 탭이 숨겨졌다 보인다'],
+  ])('SC-40 (error) 시각 응답이 오지 않으면 5초 뒤 그 표본을 실패로 보고 요청을 중단한다 — %s %s', async (row, _label) => {
+    // Given P_UP, GET /api/time 이 표의 응답을 준다, 상세를 열었다 (머리글은 측정 중)
+    const signals: Array<AbortSignal | null | undefined> = []
+    const plans: Record<string, Plan[]> = { a: ['never'], b: ['never', 0, 0], c: [4999], d: [5001], e: ['never'], f: ['never', 0] }
+    await openUp({ time: timedRoute(plans[row], signals) })
+    expect(h1()).toHaveTextContent('기준 시각을 맞추고 있어요')
+
+    // When 표의 시간만큼 기기 시계를 흘린다 (e·f 는 해당 입력)
+    if (row === 'a') await settle(15_000)
+    if (row === 'b') await settle(5_000)
+    if (row === 'c') await settle(15_000)
+    if (row === 'd') await settle(16_000)
+    if (row === 'e') {
+      await settle(1_000)
+      await navigateTo('/')
+      await settle(30_000)
+    }
+    if (row === 'f') {
+      await settle(1_000)
+      await act(async () => {
+        setDocumentVisibility('hidden')
+        setDocumentVisibility('visible')
+      })
+      await settle(0)
+    }
+
+    // Then 표의 Then 이다
+    if (row === 'a' || row === 'd') {
+      expect(h1()).toHaveTextContent(FAIL_TEXT)
+      expect(screen.getByRole('button', { name: '다시 맞추기' })).toBeInTheDocument()
+      expect(timerOrNull()).not.toBeInTheDocument()
+      expect(cta(UP_CTA)).toBeDisabled()
+      expect(callsTo(TIME)).toHaveLength(3)
+      if (row === 'a') {
+        expect(allAborted(signals)).toBe(true)
+        await settle(60_000)
+        expect(callsTo(TIME)).toHaveLength(3) // 그 뒤로 시각 호출이 더 나가지 않는다
+      }
+    }
+    if (row === 'b') {
+      expect(signals[0]?.aborted).toBe(true) // 5초 시점에 첫 요청이 중단된다
+      expect(timer()).toBeInTheDocument() // 둘째·셋째 표본으로 측정이 끝나 카운트다운이 보인다
+      expect(screen.queryByText(FAIL_TEXT)).not.toBeInTheDocument()
+    }
+    if (row === 'c') {
+      expect(timer()).toBeInTheDocument()
+      expect(screen.queryByText(FAIL_TEXT)).not.toBeInTheDocument()
+      expect(signals.every((x) => x?.aborted !== true)).toBe(true) // 요청은 중단되지 않았다
+    }
+    if (row === 'e') {
+      expect(signals[0]?.aborted).toBe(true) // 진행 중이던 요청이 중단된다
+      expect(callsTo(TIME)).toHaveLength(1) // 이후 시각 호출이 더 나가지 않는다
+      expect(where()).toBe('/')
+      expect(timerOrNull()).not.toBeInTheDocument()
+    }
+    if (row === 'f') {
+      expect(signals[0]?.aborted).toBe(true) // 먼저 시작한 측정의 요청은 중단되고 새 측정만 남는다
+      expect(callsTo(TIME).length).toBeGreaterThanOrEqual(2)
+    }
   })
 
   // ---------- SC-34 ----------

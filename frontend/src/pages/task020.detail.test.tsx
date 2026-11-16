@@ -183,6 +183,38 @@ describe('TASK-020 — 공연 상세 (실시간 타이머)', () => {
     ['au', 'startAt 키 없음', topWithout('startAt')],
     ['av', 'startAt null', top({ startAt: null })],
     ['aw', "startAt '내일'", top({ startAt: '내일' })],
+    // 시각은 ISO 순간(…T…Z 또는 ±hh:mm)만 받는다 — Date.parse 가 받아 주는 값도 계약 위반이다 (RC-4)
+    ...(['openAt', 'closeAt', 'startAt'] as const).flatMap((field) =>
+      (
+        [
+          ['ax', "'1'", '1'],
+          ['ay', "'2026'", '2026'],
+          ['az', "날짜만 '2026-11-11'", '2026-11-11'],
+          ['ba', "오프셋 없음 '2026-11-11T09:00:00'", '2026-11-11T09:00:00'],
+        ] as const
+      ).map(([row, label, value]): [string, string, (p: Perf) => Perf] => [`${row}·${field}`, `${field} ${label}`, top({ [field]: value })]),
+    ),
+    ['bb', 'title 키 없음', topWithout('title')],
+    ['bc', 'title null', top({ title: null })],
+    ['bd', "title ''", top({ title: '' })],
+    ['be', "title '   '", top({ title: '   ' })],
+    ['bf', 'title 전각 공백', top({ title: '　' })],
+    ['bg', 'title 제로폭 공백', top({ title: '​' })],
+    ['bh', 'title 123', top({ title: 123 })],
+    ['bi', 'venue 키 없음', topWithout('venue')],
+    ['bj', 'venue null', top({ venue: null })],
+    ['bk', "venue ''", top({ venue: '' })],
+    ['bl', "venue '   '", top({ venue: '   ' })],
+    ['bm', 'venue 전각 공백', top({ venue: '　' })],
+    ['bn', 'venue 제로폭 공백', top({ venue: '​' })],
+    ['bo', 'venue 123', top({ venue: 123 })],
+    ['bp', 'totalSeats 키 없음', topWithout('totalSeats')],
+    ['bq', 'totalSeats null', top({ totalSeats: null })],
+    ['br', "totalSeats '21000'", top({ totalSeats: '21000' })],
+    ['bs', 'totalSeats -1', top({ totalSeats: -1 })],
+    ['bt', 'totalSeats 1.9', top({ totalSeats: 1.9 })],
+    ['bu', 'totalSeats 1e400', top({ totalSeats: INF })],
+    ['bv', 'totalSeats 100·availableSeats 101', top({ totalSeats: 100, availableSeats: 101 })],
   ]
 
   test.each(VIOLATIONS)('SC-04 (error) 응답이 계약을 어기면 화면이 깨지지 않고 오류 화면이 된다 — %s %s', async (_row, _label, mutate) => {
@@ -321,6 +353,10 @@ describe('TASK-020 — 공연 상세 (실시간 타이머)', () => {
     ['f', POSTER], // 이미지에서 error 이벤트가 난다
     ['g', 123],
     ['h', {}],
+    ['i', 'javascript:alert(1)'],
+    ['j', 'data:image/png;base64,AAAA'],
+    ['k', 'ftp://cdn.example.com/luminous.jpg'],
+    ['l', 'http://cdn.example.com/luminous.jpg'], // http 는 이미지로 보인다
   ])('SC-17 (boundary) 포스터가 없거나 불러오지 못하면 같은 크기의 회색 면과 아이콘이 보인다 — %s', async (row, posterUrl) => {
     // Given P_OPEN 이고 posterUrl 이 표와 같다
     const body = P_OPEN()
@@ -342,8 +378,32 @@ describe('TASK-020 — 공연 상세 (실시간 타이머)', () => {
     expect(squash(css(frame, 'aspect-ratio'))).toBe('4/3')
     expect(isTokenColor(css(frame, 'background-color'), '--c-bg')).toBe(true)
     // And 포스터가 없는 행은 그 요소가 <img> 가 아니라 아이콘 면이다
-    if (row === 'a') expect(poster.tagName).toBe('IMG')
+    if (row === 'a' || row === 'l') expect(poster.tagName).toBe('IMG')
     else expect(poster.tagName).not.toBe('IMG')
+  })
+
+  // ---------- SC-43 ----------
+
+  test.each([
+    ['a', 'seatCount 키 없음', firstWithout('seatCount')],
+    ['b', 'seatCount null', first({ seatCount: null })],
+    ['c', "seatCount '100'", first({ seatCount: '100' })],
+    ['d', 'seatCount -1', first({ seatCount: -1 })],
+    ['e', '계약에 없는 키 extra', top({ extra: 1 })],
+    ['f', 'totalSeats 0·availableSeats 0 (status OPEN)', top({ totalSeats: 0, availableSeats: 0 })],
+  ])('SC-43 (boundary) 화면이 쓰지 않는 필드가 이상해도 상세 화면은 그대로 보이고, 좌석 수가 0 이어도 계약 위반이 아니다 — %s %s', async (row, _label, mutate) => {
+    // Given GET /api/performances/7 이 200 으로 P_OPEN 에서 표의 값만 바꾼 본문을 준다
+    stubServer({ [DETAIL]: () => res(200, mutate(P_OPEN())) })
+
+    // When /performances/7 을 연다
+    renderAt('/performances/7')
+
+    // Then 오류 화면이 아니라 상세 화면이 보인다 (머리글 「지금 예매할 수 있어요」)
+    expect(await screen.findByRole('heading', { level: 1, name: '지금 예매할 수 있어요' })).toBeInTheDocument()
+    expect(screen.queryByText(ERROR_TEXT)).not.toBeInTheDocument()
+    // And a~e: 구역 행이 그대로 보인다 / f: 「고척스카이돔 · 0석」이 보인다
+    if (row === 'f') expect(screen.getByText('고척스카이돔 · 0석')).toBeInTheDocument()
+    else expect(screen.getByText('구역 위치 보기')).toBeInTheDocument()
   })
 
   // ---------- SC-18 ----------

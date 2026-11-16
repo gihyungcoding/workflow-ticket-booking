@@ -1,7 +1,8 @@
 import { act, render, screen } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { ThemeProvider } from '@mui/material/styles'
-import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
+import { MemoryRouter, unstable_HistoryRouter as HistoryRouter, useLocation, useNavigate } from 'react-router-dom'
+import { UNSAFE_createMemoryHistory as createMemoryHistory } from 'react-router'
 import type { NavigateFunction } from 'react-router-dom'
 import App from '../App'
 import { AuthProvider, useAuth } from '../auth/AuthContext'
@@ -198,23 +199,42 @@ export async function navigateTo(path: string) {
 
 type Entry = string | { pathname: string; state?: unknown }
 
+/**
+ * 한 칸 이동(history.go)이 그 틱에 끝나지 않고 다음 태스크에 반영되는 history —
+ * 브라우저 history.go 가 popstate 를 따로 일으키는 것과 같다. 반영되기까지 기다리는 시간은 ASYNC_HISTORY_MS.
+ */
+export const ASYNC_HISTORY_MS = 20
+
 export function renderAt(
   entry: Entry | Entry[],
-  options: { strict?: boolean; index?: number } = {},
+  options: { strict?: boolean; index?: number; asyncHistory?: boolean } = {},
 ) {
   const entries = Array.isArray(entry) ? entry : [entry]
-  const tree = (
-    <ThemeProvider theme={theme}>
-      <MemoryRouter initialEntries={entries} initialIndex={options.index ?? entries.length - 1}>
-        <AuthProvider>
-          <App />
-          <Where />
-          <NavProbe />
-          <AuthProbe />
-        </AuthProvider>
-      </MemoryRouter>
-    </ThemeProvider>
+  const index = options.index ?? entries.length - 1
+  const children = (
+    <AuthProvider>
+      <App />
+      <Where />
+      <NavProbe />
+      <AuthProbe />
+    </AuthProvider>
   )
+  let router
+  if (options.asyncHistory) {
+    const history = createMemoryHistory({ initialEntries: entries, initialIndex: index, v5Compat: true })
+    const go = history.go.bind(history)
+    history.go = (delta: number) => {
+      setTimeout(() => go(delta), ASYNC_HISTORY_MS)
+    }
+    router = <HistoryRouter history={history}>{children}</HistoryRouter>
+  } else {
+    router = (
+      <MemoryRouter initialEntries={entries} initialIndex={index}>
+        {children}
+      </MemoryRouter>
+    )
+  }
+  const tree = <ThemeProvider theme={theme}>{router}</ThemeProvider>
   return render(options.strict ? <StrictMode>{tree}</StrictMode> : tree)
 }
 

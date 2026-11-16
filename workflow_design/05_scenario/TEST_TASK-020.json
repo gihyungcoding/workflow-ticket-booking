@@ -3,7 +3,9 @@
   "supersedes": "SCENARIO_TASK-020.json",
   "test_file": "frontend/src/pages/task020.detail.test.tsx",
   "test_files": [
+    "frontend/src/components/ui/task020.blank.test.tsx",
     "frontend/src/pages/task020.clock.test.tsx",
+    "frontend/src/pages/task020.close.test.tsx",
     "frontend/src/pages/task020.detail.test.tsx",
     "frontend/src/pages/task020.zone.test.tsx",
     "frontend/src/task020.layout.test.tsx",
@@ -54,11 +56,11 @@
       "scenario_id": "SC-04",
       "type": "error",
       "test_file": "src/pages/task020.detail.test.tsx",
-      "rows": 49,
-      "rows_red": 49,
-      "rows_already_passing": 0,
+      "rows": 82,
+      "rows_red": 21,
+      "rows_already_passing": 61,
       "status": "red",
-      "failure": "Error: Unable to find an element with the text: 공연 정보를 불러오지 못했어요. This could be because the text is broken up by multiple elements. In this "
+      "failure": "Unable to find an element with the text: 공연 정보를 불러오지 못했어요 (새 행 33개 중 21 Red — 시각 형식 12·title/venue 공백 8·availableSeats>totalSeats 1. 옛 행 49 + 새 행 12(null·키 없음·숫자)는 이미 통과)"
     },
     {
       "scenario_id": "SC-05",
@@ -118,11 +120,11 @@
       "scenario_id": "SC-10",
       "type": "error",
       "test_file": "src/pages/task020.clock.test.tsx",
-      "rows": 12,
-      "rows_red": 12,
-      "rows_already_passing": 0,
+      "rows": 16,
+      "rows_red": 4,
+      "rows_already_passing": 12,
       "status": "red",
-      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"heading\""
+      "failure": "행 m~p(now 가 '1'·'2026'·날짜만·오프셋 없음) — 「기준 시각을 맞추지 못했어요」 대신 카운트다운이 보인다"
     },
     {
       "scenario_id": "SC-11",
@@ -188,11 +190,11 @@
       "scenario_id": "SC-17",
       "type": "boundary",
       "test_file": "src/pages/task020.detail.test.tsx",
-      "rows": 8,
-      "rows_red": 8,
-      "rows_already_passing": 0,
+      "rows": 12,
+      "rows_red": 3,
+      "rows_already_passing": 9,
       "status": "red",
-      "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+      "failure": "행 i~k(javascript:·data:·ftp: 스킴) — 아이콘 면이 아니라 <img> 로 그린다. 행 l(http)은 이미지 그대로라 통과"
     },
     {
       "scenario_id": "SC-18",
@@ -436,6 +438,47 @@
       "rows_already_passing": 0,
       "status": "red",
       "failure": "Error: Unable to find role=\"heading\" and name \"지금 예매할 수 있어요\""
+    },
+    {
+      "scenario_id": "SC-40",
+      "type": "error",
+      "test_file": "src/pages/task020.clock.test.tsx",
+      "rows": 6,
+      "rows_red": 5,
+      "rows_already_passing": 1,
+      "status": "red",
+      "failure": "행 a·b·d·e·f: 요청에 중단 신호(init.signal)가 없고 5초 제한이 없어 「기준 시각을 맞추지 못했어요」가 안 나오고 요청이 중단되지 않는다. 행 c(4.999초 응답)는 제한이 없어도 성공이라 통과(구조적 — 경계 아래쪽을 지키는 행)"
+    },
+    {
+      "scenario_id": "SC-41",
+      "type": "boundary",
+      "test_file": "src/pages/task020.close.test.tsx",
+      "rows": 9,
+      "rows_red": 8,
+      "rows_already_passing": 1,
+      "status": "red",
+      "failure": "행 b~f(비동기 history): 첫 반영 전 둘째 입력이 뒤로 가기를 한 번 더 해 주소가 /performances/7 이 아니라 / 가 된다. 행 g·h(시트가 열린 한 칸뿐): navigate(-1) 이 no-op 이라 dialog 가 남는다. 행 i([/, 시트 상세]): -1 로 / 로 나가 상세를 떠난다. 행 a(동기)는 Phase 3 가드로 이미 통과"
+    },
+    {
+      "scenario_id": "SC-42",
+      "type": "boundary",
+      "test_file": "src/components/ui/task020.blank.test.tsx",
+      "rows": 44,
+      "rows_red": 15,
+      "rows_already_passing": 29,
+      "status": "red",
+      "failure": "Hero eyebrow·lead, Row sub 가 공백 값(행 b~f)을 빈 요소로 그린다(truthiness 만 본다). AppBar title(5행)과 글자로 보는 행(g·h·i)은 이미 통과"
+    },
+    {
+      "scenario_id": "SC-43",
+      "type": "boundary",
+      "test_file": "src/pages/task020.detail.test.tsx",
+      "rows": 6,
+      "rows_red": 0,
+      "rows_already_passing": 6,
+      "status": "already_passing",
+      "failure": null,
+      "note": "구조적 Red 불가 — 계약 위반 규칙을 좁히지 않는 부정형 회귀(쓰지 않는 필드·좌석 0). 변이 확인: parseDetail 에 seatCount 정수 검사를 넣으면 행 a~d 4건이 실패한다(커밋하지 않고 원복)"
     }
   ],
   "red_result": {
@@ -476,10 +519,10 @@
     ]
   },
   "inventory_check": {
-    "scenarios": 39,
-    "test_functions": 39,
+    "scenarios": 43,
+    "test_functions": 43,
     "match": true,
-    "how": "테스트 함수 제목의 'SC-NN (type)' 을 파일별로 센 수(task020.detail 13·clock 13·zone 8·layout 3 + datetime.test 1 + task020.static 1). 표 시나리오는 test.each 한 줄(행마다 케이스) — 새 케이스 합계는 red_result.new_cases"
+    "how": "테스트 제목의 'SC-NN (type)' — 표 시나리오는 test.each 한 줄. SC-41·42 는 한 test.each 로 합쳤다(시나리오당 함수 하나)"
   },
   "compile_skeleton": {
     "files": [
@@ -537,8 +580,33 @@
     }
   ],
   "human_review": {
-    "approved": true,
-    "approved_at": "2026-11-13T08:06:10Z",
-    "via": "AskUserQuestion — 승인 (통합 HITL#1·2, 시나리오 39건 + Red 테스트 + 승인 테스트 변경 7파일·삭제 1)"
+    "approved": false,
+    "note": "롤백 재진입 — SC-40~43·SC-04/10/17 추가 행이 새로 생겨 재승인 필요(통합 HITL#1·2)"
+  },
+  "red_retry": {
+    "reason": "Phase 4 FAIL(1회차) → 시나리오 롤백(2a) → 재진입 2b. 구현이 이미 있어 새 행은 구현 부재가 아니라 구현의 결함·누락으로 실패한다",
+    "red_result": {
+      "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npx vitest run --testTimeout=60000",
+      "total": 1135,
+      "failed": 56,
+      "passed": 1078,
+      "todo": 1,
+      "breakdown": "새·바뀐 행 SC-04 +33(21 Red)·SC-10 +4(4)·SC-17 +4(3)·SC-40 6(5)·SC-41 9(8)·SC-42 44(15)·SC-43 6(0). 실패 56건은 모두 위 새 행이고 기존 1029건은 계속 통과"
+    },
+    "mutation_check": [
+      {
+        "mutation": "parseDetail 에 seatCount 정수 검사 추가",
+        "tests": "SC-43 a~d",
+        "result": "4건 실패 — 쓰지 않는 필드를 계약에 넣는 변이를 잡는다",
+        "reverted": true
+      }
+    ],
+    "harness": "test/task020.tsx renderAt({ asyncHistory }) — unstable_HistoryRouter + UNSAFE_createMemoryHistory({ v5Compat: true }) 에 history.go 를 20ms 뒤에 반영하도록 감싼다. v5Compat 없이는 push 가 listener 를 부르지 않아 시트가 안 열린다(프로브로 확인)",
+    "removed": [
+      "frontend/src/pages/task020.sheet-close.test.tsx — SC-41 a~f 가 대신한다(Phase 3 에서 HITL 없이 추가했던 것)"
+    ],
+    "kept_unapproved": [
+      "frontend/src/components/ui/task020.text.test.ts — isBlankDisplay 단위 16케이스(Phase 3 추가, 시나리오 밖). SC-42 가 부품 수준 판정을 덮는다"
+    ]
   }
 }
