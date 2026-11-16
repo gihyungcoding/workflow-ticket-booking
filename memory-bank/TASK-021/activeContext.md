@@ -44,3 +44,13 @@ Phase 5 완료 — 태스크 DONE. 회고(KPT·ADR 후보 2·drift 3·규칙 개
 - frontend 명령은 `export PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH"` 후 실행. 시작 시점 develop 에서 `npm test` 1168 통과·1 todo
 - 사용자 결정(2026-11-16): 홈은 AppHeader 유지(App.tsx 불변) · Poster 는 components/Poster.tsx 로 공용 추출(상세 파일도 변경)
 - 회고 개선안: 같은 대상 미반영 2건씩(screen-verification.md·coverage_matrix.py·wf-plan·wf-red·wf-develop) 이 쌓여 있으나 사용자가 "그대로 시작"을 선택했다(2026-11-16)
+
+## Pull Request
+
+```yaml
+pull_request:
+  number: 54
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/54"
+  base: develop
+  opened_at: 2026-11-16
+```
