@@ -2,7 +2,7 @@
 task_id: TASK-021
 title: "홈 화면을 시안대로"
 phase: "4"
-phase_name: "Phase 4 - Verify (HITL#3 승인 대기)"
+phase_name: "Phase 4 - Verify 완료 (예외 승인)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-16
@@ -26,11 +26,11 @@ artifacts:
 
 ## 지금 무엇을 하고 있나
 
-Phase 4 WARN — VERIFY 저장·커밋 완료. HITL#3 승인 대기(AC-9 시각 표기를 브라우저로 못 봄, 리뷰 권고 4건).
+Phase 4 완료 — WARN 을 예외 승인(HITL#3, 2026-11-16). `verified_commit` 기록.
 
 ## 다음 한 걸음
 
-승인되면 `verified_commit` 기록 후 Phase 5(`wf-reflect`).
+Phase 5 — `wf-reflect`. 회고 후보는 CP-4.2 next_steps 에 있다.
 
 ## 알아둬야 할 것
 

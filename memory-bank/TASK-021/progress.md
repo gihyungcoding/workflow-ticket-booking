@@ -6,8 +6,8 @@
 | 2a Scenario | ✅ 완료 | CP-2.2 | 29건 · 칸 152/152 · 검증 2회차 PASS |
 | 2b Red | ✅ 완료 | CP-2.5 | 435케이스 중 424 실패(11은 기존 동작) · HITL#1·2 승인 |
 | 3 Green | ✅ 완료 | CP-3.4 | 1603/1604 통과(todo 1) · 자체 리뷰 1R correctness 0 |
-| 4 Verify | ⏳ 승인 대기 | CP-4.2 | WARN — AC 8 PASS·1 WARN, 리뷰 correctness 0 |
-| 5 Reflect | ⬜ 대기 | — | |
+| 4 Verify | ✅ 완료 | CP-4.2 | WARN 예외 승인 — AC 8 PASS·1 WARN, 리뷰 correctness 0 |
+| 5 Reflect | ⏳ 다음 | — | |
 
 ## 완료 조건
 
