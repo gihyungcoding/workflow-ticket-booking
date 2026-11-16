@@ -580,8 +580,9 @@
     }
   ],
   "human_review": {
-    "approved": false,
-    "note": "롤백 재진입 — SC-40~43·SC-04/10/17 추가 행이 새로 생겨 재승인 필요(통합 HITL#1·2)"
+    "approved": true,
+    "approved_at": "2026-11-16T08:17:36Z",
+    "via": "AskUserQuestion — 승인 (통합 HITL#1·2 재승인, 롤백 재진입: 시나리오 43건 + Red 새 행 56 실패, PLAN 밖 결정 6가지 포함)"
   },
   "red_retry": {
     "reason": "Phase 4 FAIL(1회차) → 시나리오 롤백(2a) → 재진입 2b. 구현이 이미 있어 새 행은 구현 부재가 아니라 구현의 결함·누락으로 실패한다",

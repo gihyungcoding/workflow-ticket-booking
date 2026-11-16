@@ -1,8 +1,8 @@
 ---
 task_id: TASK-020
 title: "기준 시계·공연 상세·구역 위치 시트를 시안대로"
-phase: "2a"
-phase_name: "Phase 2a - Scenario (Phase 4 FAIL → 시나리오 롤백)"
+phase: "2b"
+phase_name: "Phase 2b - Red 재승인 완료 (Phase 4 FAIL 롤백 재진입)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-13
@@ -13,7 +13,7 @@ sub_categories: [audience]
 target_repo: "."
 branch: "feature/task-020-detail-clock-zone-sheet"
 
-last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
+last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
 source: "docs/product/features/booking-ux-02-browse.md (Task B)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-020.json"

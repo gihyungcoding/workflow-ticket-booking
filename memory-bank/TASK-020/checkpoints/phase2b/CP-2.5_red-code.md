@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-13T00:00:00Z
-summary: "[롤백 재진입] 시나리오 43건 — 새·바뀐 행 중 56 실패(SC-04 21·SC-10 4·SC-17 3·SC-40 5·SC-41 8·SC-42 15), 기존 1029 통과. 통합 HITL 재승인 대기(이전 39건 승인은 유효하지 않음)"
+summary: "[롤백 재진입] 시나리오 43건 — 새·바뀐 행 중 56 실패(SC-04 21·SC-10 4·SC-17 3·SC-40 5·SC-41 8·SC-42 15), 기존 1029 통과. 통합 HITL#1·2 재승인 완료"
 
 next_steps:
-  - "HITL#1·2 재승인(AskUserQuestion) → 승인되면 Phase 3: 뿌리 4 변종 전부를 고친다(공통 지점에서) — parseDetail 시각 형식·title/venue 공백·totalSeats, useServerClock 표본 5초·AbortController, 시트 닫기(열린 채 들어온 주소는 replace), Hero/Row 공백 판정"
+  - "Phase 3 (HITL#1·2 재승인 완료): 뿌리 4 변종 전부를 고친다(공통 지점에서) — parseDetail 시각 형식·title/venue 공백·totalSeats, useServerClock 표본 5초·AbortController, 시트 닫기(열린 채 들어온 주소는 replace), Hero/Row 공백 판정"
   - "Phase 3 — wf-develop. frontend 테스트는 --testTimeout=60000 으로 돌린다. 스켈레톤 8개를 구현으로 채우고 App.tsx 라우트·레이아웃 분기, AppBar·CtaBar(조건부) 수정"
   - "Green 중 승인 테스트(특히 SC-33 SVG fill·stroke, 시트 가격 color)를 고쳐야 하면 훅이 사람에게 묻는다 — harness_probe.not_verified 참고"
 
