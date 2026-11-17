@@ -3,7 +3,7 @@
 | Phase | 상태 | 체크포인트 | 비고 |
 |---|---|---|---|
 | 1 Plan | ✅ 완료 | CP-1.3 | flows 12 · AC 10 · unresolved 13 |
-| 2a Scenario | ⬜ 대기 | — | |
+| 2a Scenario | ✅ 완료 | CP-2.2 | 23건 · 칸 140 · 검증 2회차 PASS |
 | 2b Red | ⬜ 대기 | — | |
 | 3 Green | ⬜ 대기 | — | |
 | 4 Verify | ⬜ 대기 | — | |

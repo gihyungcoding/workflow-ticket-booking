@@ -1,8 +1,8 @@
 ---
 task_id: TASK-025
 title: "내 공연 목록·주최자 진입 경로"
-phase: "1"
-phase_name: "Phase 1 - Plan 완료"
+phase: "2a"
+phase_name: "Phase 2a - Scenario 완료"
 status: IN_PROGRESS
 track: light
 created_at: 2026-11-17
@@ -13,19 +13,21 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-025-organizer-list-entry"
 
-last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/organizer-flow.md (Task D)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-025.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-025.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-025.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 (Plan) 완료 — PLAN_TASK-025.json·CP-1.3 저장. check_plan 통과.
+Phase 2a (Scenario) 완료 — 시나리오 23건·칸 140/140·독립검증 2회차 PASS. 2b 진입 가능(사람 승인은 2b 끝).
 
 ## 다음 한 걸음
 
-Phase 2a — `wf-scenario`. 사용자 확정 4건(머리글·전역 헤더 없음·더 보기·소셜 콜백)과 unresolved #4·#5·#7 을 시나리오에 반영한다.
+Phase 2b — `wf-red`. 시나리오를 실패하는 테스트로 옮기고 승인된 테스트 변경(task024.organizer.test.tsx)과 함께 통합 HITL 을 받는다.
 
 ## 알아둬야 할 것
 
