@@ -2,7 +2,7 @@
 task_id: TASK-025
 title: "내 공연 목록·주최자 진입 경로"
 phase: "1"
-phase_name: "Phase 1 - Plan"
+phase_name: "Phase 1 - Plan 완료"
 status: IN_PROGRESS
 track: light
 created_at: 2026-11-17
@@ -13,18 +13,19 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-025-organizer-list-entry"
 
-last_checkpoint: ""
+last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
 source: "docs/product/features/organizer-flow.md (Task D)"
-artifacts: {}
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-025.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 (Plan) 진입 전. 워크플로우 시작 — 브랜치·Memory Bank 생성 완료 (develop `de76a5d` 에서 분기).
+Phase 1 (Plan) 완료 — PLAN_TASK-025.json·CP-1.3 저장. check_plan 통과.
 
 ## 다음 한 걸음
 
-`wf-plan` 으로 PLAN_TASK-025.json 작성. 출발점은 요구사항 문서 §2(화면 설계)·§3(API)·§5(완료 조건)·§6 「프론트 (Task D·E)」, 시안 `out/screens/organizer.html`·`organizer--empty.html`·`organizer-only.html`.
+Phase 2a — `wf-scenario`. 사용자 확정 4건(머리글·전역 헤더 없음·더 보기·소셜 콜백)과 unresolved #4·#5·#7 을 시나리오에 반영한다.
 
 ## 알아둬야 할 것
 
@@ -37,3 +38,5 @@ Phase 1 (Plan) 진입 전. 워크플로우 시작 — 브랜치·Memory Bank 생
 - frontend 명령은 `export PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH"` 후 실행. 시작 시점 `npm test` 1603 통과 (32 파일)
 - track light(견적 8h) — 검증은 줄이지 않는다. Phase 1 완료 보고는 unresolved 와 AC 매핑만
 - 시작 시 미반영 회고 개선안 9건 (coverage_matrix.py ×2: TASK-020·022) — 사용자가 「그대로 시작」 선택. 이 태스크는 입력 경계 칸이 적은 화면 위주
+- **사용자 확정 (2026-11-17, Phase 1)**: ① 머리글 「{이름} 님」+상태별 제목 3종 ② /organizer 한 장 전체(전역 헤더 없음) ③ 「더 보기」 추가 ④ 소셜 콜백도 역할별 이동 — ③·④ 는 AC·implementation_spec 밖 확장
+- 상세 라우트가 없어 행 선택은 TASK-026 전까지 빈 화면 — 같은 배포로 낸다
