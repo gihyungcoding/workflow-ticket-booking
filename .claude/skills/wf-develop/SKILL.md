@@ -191,6 +191,10 @@ Refs: TASK-001"
 결과가 같은지 프로브해달라"** 를 넣는다. 다시 구현한 판별은 표기 변종이 하나씩 새어 나온다
 (→ TASK-018 RC-2 — 정확 일치 → `matchPath` → `matchRoutes` 로 세 번 고침).
 
+**공유 판정 함수를 새로 만들거나 호출부를 바꾸면** 구현 시점에 해당 디렉터리를 **전체 Grep** 해 `truthiness`·
+`trim` 으로 **따로 판정하는 곳**을 열거해 `DEV_<ID>.json` 에 남긴다. 자체 리뷰의 「같은 카테고리 전수」는
+수정 범위 밖을 놓친다 (→ TASK-020 자체 리뷰 3R — `hasContent` 도입 때 `Block`·`Row.lead/trail` 누락).
+
 ```
 Agent({
   subagent_type: "code-reviewer",
@@ -216,6 +220,11 @@ TASK-001 의 변경 코드를 리뷰해주세요. Phase 3 자체 리뷰입니다
 | `[correctness]`, 변종이 시나리오에 없는 동작 | 여기서 만들지 않는다. **Phase 4 를 거치지 말고 지금** 사용자에게 2a 롤백을 제안한다. 변종은 전부 한 번에 가져간다 |
 | `[security]` | `[correctness]` 와 같이 처리한다 |
 | `[design]` `[reuse]` `[test]` | 범위 안에서 싸게 고칠 수 있으면 고친다. 아니면 `pre_review.deferred` 에 적어 Phase 4 로 넘긴다 |
+
+**심각도를 이유로 미루지 않는다.** `[correctness]` 가 시나리오 밖이면 「낮음」으로 적었더라도 `unresolved` 에 두고
+Phase 4 로 넘기지 않는다 — **같은 응답에서** `AskUserQuestion`(2a 롤백 / 위험 수용 + 후속 태스크)으로 묻는다.
+`[참고, 변경 범위 밖]` 으로 나온 소견이 **같은 서비스의 형제 경로 비대칭**이면 범위 안으로 본다
+(→ TASK-023 — 동시성을 「낮음」으로, 관객 목록 비대칭을 [참고] 로 넘겼다가 Phase 4 가 둘 다 `[correctness]` 로 FAIL).
 
 새로 쓴 테스트는 통합 HITL 에서 승인받은 테스트가 아니다. `pre_review.rounds[].tests_added` 에
 적어 Phase 4 가 리뷰하게 한다. **승인된 테스트는 고치지 않는다** — 고쳐야 하면 Step 3 의

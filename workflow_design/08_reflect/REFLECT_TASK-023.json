@@ -129,24 +129,27 @@
       "section": "Step 2 — 코드베이스 조사",
       "change": "① 쓰기·상태 전이 API 를 추가하면 '같은 자원에 쓰기가 겹치면' 을 unresolved 에 적고, 쓰기 경로가 락·@Version 없는 read-modify-write 면 2a 에 동시 쓰기 시나리오(별도 트랜잭션의 JPA 표준 잠금 + 별도 스레드 요청, 최종 DB 값 단언)를 넣는다 ② 새 입력 검증·방어 코드를 넣으면 같은 서비스에서 같은 입력을 받는 형제 엔드포인트를 Grep 으로 열거해 input_fields 칸에 포함한다",
       "evidence": "TASK-023 — Phase 4 1회차 FAIL RC-1(동시성)·RC-2(관객 목록 page·size), 2a·2b·3·4 한 바퀴",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "c41f02c"
     },
     {
       "target": ".claude/skills/wf-develop/SKILL.md",
       "section": "Step 5.5 — 자체 리뷰",
       "change": "자체 리뷰의 [correctness] 가 시나리오 밖이면 심각도를 '낮음' 으로 적었더라도 Phase 4 로 넘기지 않고 같은 응답에서 AskUserQuestion(2a 롤백 / 위험 수용 + 후속 태스크)으로 묻는다. '[참고, 변경 범위 밖]' 으로 나온 소견이 같은 서비스의 형제 경로 비대칭이면 범위 안으로 본다",
       "evidence": "TASK-023 — Phase 3 가 동시성을 '낮음' 으로 unresolved 에 두고 관객 목록 비대칭을 [참고] 로 넘겼다가 Phase 4 가 둘 다 [correctness] 로 FAIL",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "c41f02c"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",
       "section": "Step 2 — 테스트 작성 (기존 테스트가 이 태스크의 변경과 부딪히는지)",
       "change": "등록 직후 상태가 바뀌는 태스크(비공개 등록 등)면 fixture 헬퍼(register*·registeredBy 등 API 로 등록하는 도우미)를 호출하는 모든 테스트를 Grep 해 그 상태에 기대는 읽기(관객 조회·오픈 시각 수정)를 찾아 HITL 요약의 '같이 바뀌어야 하는 기존 테스트' 에 올린다",
       "evidence": "TASK-023 — 2b Grep 이 헬퍼 경로를 놓쳐 Green 에서 승인 테스트 2건(BrowseResponse SC-10·Ownership SC-13)을 사용자 승인 후 수정",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "c41f02c"
     },
     {
       "target": ".claude/skills/task-authoring/SKILL.md",
@@ -175,6 +178,9 @@
     }
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-16T17:30:00Z",
+    "reviewed_in": "batch",
+    "note": "일괄 검토(/wf-retro) — 승인. 반복 제안은 문서 대상만 반영(coverage_matrix.py 는 다음에)"
   }
 }

@@ -161,24 +161,27 @@
       "section": "Step 3 하네스 가정 확인",
       "change": "가짜 타이머로 0ms 응답이 연이어 오는 경우 settle 한 번에 몇 개가 흐르는지 프로브하고, history 를 쓰는 오버레이는 비동기 history 하네스(unstable_HistoryRouter + v5Compat:true)를 쓴다",
       "evidence": "TASK-020 승인 테스트 clock 하네스 4곳 수정(AskUserQuestion 4회), SC-41 하네스",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "c41f02c"
     },
     {
       "target": ".claude/skills/wf-develop/SKILL.md",
       "section": "Step 5.5 자체 리뷰",
       "change": "공유 판정 함수를 새로 만들거나 호출부를 바꿀 때 구현 시점에 해당 디렉터리를 전체 Grep 해 truthiness·trim 으로 따로 판정하는 곳을 열거해 DEV 에 남긴다",
       "evidence": "TASK-020 자체 리뷰 3R — hasContent 도입 때 Block·Row.lead/trail 누락",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "c41f02c"
     },
     {
       "target": ".claude/skills/wf-verify/references/screen-verification.md",
       "section": "모바일 폭·시각 값",
       "change": "브라우저가 시간대를 무시하는지 첫 단계에서 한 줄 프로브하고, 무시하면 시각 값 증거는 TZ 3종 Node 테스트로 쓴다고 VERIFY screens 에 미리 적는다",
       "evidence": "TASK-020 Phase 4 두 번 모두 WARN 사유",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "c41f02c"
     }
   ],
   "follow_ups": [
@@ -188,6 +191,9 @@
     "SC-41 h 가 부하에서 1회 flake — 반복되면 실제 타이머 대기를 가짜 타이머로 바꾸는 후속 정리"
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-16T17:30:00Z",
+    "reviewed_in": "batch",
+    "note": "일괄 검토(/wf-retro) — 승인. 반복 제안은 문서 대상만 반영(coverage_matrix.py 는 다음에)"
   }
 }

@@ -177,8 +177,9 @@
       "section": "상태를 실제로 만들어 본다",
       "change": "클립보드·권한이 필요한 동작은 iframe 안 프로그램 클릭(사용자 동작 없음)으로 확인하지 않는다 — writeText 가 끝나지 않는다. 최상위 문서에서 실제 클릭으로. 띄운 서버 종료는 PID 를 하나씩 확인해 명시적으로(pkill -P 같은 부모 기준 종료는 권한 분류기가 막는다)",
       "evidence": "TASK-018 Phase 4 1회차 — iframe 복사 무응답, 서버 종료 명령 거부",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "c41f02c"
     }
   ],
   "handoff": [
