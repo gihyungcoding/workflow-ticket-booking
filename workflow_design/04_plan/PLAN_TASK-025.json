@@ -82,7 +82,7 @@
       {
         "name": "주최자 전용 안내의 앱바",
         "type": "화면",
-        "description": "OrganizerOnlyNotice 에 시안 organizer-only 의 앱바(뒤로 → / , 제목 「내 공연」)를 붙인다"
+        "description": "/organizer 의 OrganizerOnlyNotice 에만 시안 organizer-only 의 앱바(뒤로 → / , 제목 「내 공연」)를 붙인다"
       }
     ],
     "flows": [
@@ -221,7 +221,7 @@
           "App.tsx: /organizer 를 RequireOrganizer 로 감싼다",
           "비로그인 → /login(state.from=/organizer), 관객 → 주최자 전용 안내, 복원 중 → 아무것도 그리지 않음 (TASK-024 규칙 그대로)",
           "/organizer 는 전역 AppHeader 없이 시안의 자체 앱바 「내 공연」만 그린다(사용자 확정) — PAGE_ROUTES·FULL_PAGE_PATHS 에 추가, 인증·상세 화면과 같은 판별",
-          "OrganizerOnlyNotice 에 시안 organizer-only 의 앱바(뒤로 → /, 제목 「내 공연」)를 붙인다 — 등록·수정 가드 화면도 같은 컴포넌트를 쓴다"
+          "/organizer 의 주최자 전용 안내에만 시안 organizer-only 의 앱바(뒤로 → /, 제목 「내 공연」)를 붙인다 — 등록·수정 가드 화면은 전역 헤더가 이미 있어 앱바를 더하지 않는다(2a 분류 보완 — 헤더가 둘이 되는 것을 막는다)"
         ],
         "covers": [
           "비로그인·관객의 `/organizer` 진입은 Task C 의 가드 규칙대로 처리된다",
@@ -590,7 +590,7 @@
       },
       {
         "path": "frontend/src/auth/RequireOrganizer.tsx",
-        "change": "OrganizerOnlyNotice 에 시안 organizer-only 앱바(뒤로 → /, 「내 공연」) 추가, :11 의 TASK-025 예고 주석 정리"
+        "change": "/organizer 한 장 전체 화면에서만 주최자 전용 안내에 시안 organizer-only 앱바(뒤로 → /, 「내 공연」)를 붙인다(안내 본문은 그대로 — 등록·수정 가드는 전역 헤더가 있어 앱바 없음), :11 의 TASK-025 예고 주석 정리"
       },
       {
         "path": "frontend/src/auth/AuthContext.tsx",

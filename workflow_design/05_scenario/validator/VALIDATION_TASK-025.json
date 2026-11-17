@@ -1,0 +1,27 @@
+{
+  "task_id": "TASK-025",
+  "checks": [
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 SC-01~SC-23 (23개). 유형·flow 도 같다. 규약표 30행이 conventions_table 과 일치한다. SC-01~SC-15 의 GWT·표 문장은 직접 대조해 같다. SC-16~SC-23 은 id·type·flow 와 MD 본문만 대조했고 JSON 의 GWT 문장 전부를 줄 단위로 맞춰 보지는 못했다. 차이: SC-12 notes 는 JSON 이 빈 문자열이고 MD 에는 notes 줄이 없다. 의미 차이는 없다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 23개. happy 10개 (SC-01·02·03·04·05·06·11·13·16·17·21 중 happy 로 표기된 것), error 6개 이상 (SC-08·10·12·14·18·20·22), boundary 4개, regression 1개 (SC-23). 하한 2/1/1 을 충족한다."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "Plan 기준 10건을 직접 대조했다. 기준1→SC-01, 기준2→SC-02·SC-03, 기준3→SC-04, 기준4→SC-06·07·09·15, 기준5→SC-13·14·19, 기준6→SC-15, 기준7→SC-08·10·11·12, 기준8→SC-16, 기준9→SC-10·20·22, 기준10→SC-05·06·15·21·23. 모두 covers 문장이 Plan 문장과 일치한다. F9·F12 의 확장 covers 도 SC-17·18·19·22 에 있다."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "사용된 flow 는 F1~F12 이고 모두 Plan design.flows 에 실재한다. 복합 표기('F5, F8' 등)도 각 항목이 실재한다. 모든 flow 가 최소 한 번 쓰인다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "SC-06 Then '상태 배지 문구는 6가지 뜻과 같은 말이다(예정·예매 가능·매진·마감, 비공개)' 는 모호하다. '6가지'라 하고 5개를 나열했고, 단언 가능한 정확한 문자열이 아니다. SC-17 Then '이어 붙은 뒤에도 앞 행은 그대로이고 순서가 바뀌지 않는다' 는 비교 기준이 불명확하다. SC-22 Then '가드가 영구히 아무것도 안 그리는 일이 없다' 는 부정형 설명이라, 주소가 /login 이라는 단언 외에는 단언으로 옮기기 어렵다. SC-23 은 계산된 스타일 값을 단언하므로 관찰은 가능하다."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "SC-22 는 When 이 둘이다. '로그아웃을 한 번 호출한다' 와 'And 그다음 붙들어 둔 복원 응답을 보낸다'. SC-19 When '표의 동작을 하고, 표의 늦은 응답을 보낸다', SC-20 When '주소를 열고, … 복원 응답이 있으면 그것을 보낸다', SC-07 When '/organizer 를 열고 표의 칩을 누른다', SC-15, SC-21 도 같은 형태다. 지연 응답과 복원 흐름을 시나리오 한 개로 묶은 것이다. 사람이 판단할 항목이다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "SC-14 의 When '`getMyPerformances(filter, page)` 를 표의 인자로 부른다' 는 함수명을 When 에 담았다. 사용자 관찰 경로가 아니라 내부 함수 호출이다. SC-22 의 When '(`AuthProvider` 의 `logout`)' 도 구현 이름이다. SC-18 notes 의 `parseList`, SC-23 의 CSS 속성·토큰(`flex-shrink`, `z-index`, `var(--c-draft-tint)` 등)도 구현 세부에 가깝다. SC-23 은 regression 이라 일부 허용 여지가 있다."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "pass", "detail": "시나리오가 다루는 입력·출력은 Plan inputs·outputs 범위 안이다. SC-14 의 filter·page 인자는 filter 칩과 more 요청 쪽 번호에 해당한다. 단 입력 목록이 Plan input_fields 에서 빠진 부분은 V11 plan_gap 으로 올렸다."},
+    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "SC-10 행 a~d (500/500/404/400) 는 같은 오류 분기라 중복에 가깝다. 행 b 는 같은 상태 다른 code 를 확인하는 목적이라 의도가 있다. SC-08 과 SC-18 은 같은 parse 를 두 번 지나지만 요청 쪽이 다르다 (첫 쪽/더 보기). 작성자가 merged 에 근거를 적었다. 경고 수준이다."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "기존 파일(JoinedPage·LoginPage·OAuthRedirectPage·AppHeader·StatusChips·AuthContext 등)을 수정하는 태스크다. regression 시나리오 SC-23 (홈 칩·배지 회귀 q·r) 과 SC-03 c·d, SC-22 i·j 회귀 행이 있다. 승인된 기존 테스트 변경 목록도 있다."},
+    {"id": "V11", "name": "입력 경계 판정", "verdict": "fail", "detail": "작성자가 적은 판정 중 false_cover·bad_na 는 찾지 못했다. covered 칸의 by 시나리오가 해당 값을 Given/When 에 쓰고 Then 이 결과를 단언한다. n/a 칸의 사유도 Plan 과 맞는다. 단 plan_gap 이 두 건 있다. 아래 v11_matrix 참고."},
+    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "칩 목록 밖에서 깨질 법한 경계를 제안한다. (1) 응답이 `items.length > totalElements` 인 경우. 더 보기 판정이 어떻게 되는지 시나리오에 없다. (2) 더 보기 대기 중 필터를 바꾼 뒤 쪽 번호(성공 횟수)가 0 으로 초기화되는지. SC-17 g 는 같은 필터 안에서만 본다. (3) 같은 id 가 서로 다른 필터 응답에 있을 때 병합이 필터 간에 새지 않는지. (4) 「공연 등록」 FAB 연타·행 연타로 이중 이동. (5) 이름에 HTML 특수문자가 있을 때 머리글이 그대로 문자로 보이는지. (6) 비공개 N건 제목이 N 이 아주 큰 경우나 한 쪽에서 N=0 으로 돌아오는 전환. (7) 401 이 복원 중 RequireOrganizer 와 목록 요청 사이에서 겹치는 경우."}
+  ],
+  "v11_matrix": [
+    {"field": "list_response.item.id", "kind": "plan_gap", "missing_field": "list_response.item.id", "detail": "시나리오 SC-08 행 20~23 이 id 를 검증하고 SC-09 o 와 SC-17 f 가 id 로 중복을 제거하며 SC-16 이 id 로 링크 주소를 만든다. 그런데 Plan input_fields 에는 항목 필드 중 id 가 없다. json_field + integer(+integer_notation) 종류가 필요하다. design.inputs 의 '항목: id·title·…' 에는 id 가 들어 있다."},
+    {"field": "more 요청 쪽 번호", "kind": "plan_gap", "missing_field": "more 요청 쪽 번호", "detail": "design.inputs 에 '더 보기 요청 쪽 번호(int)' 가 입력으로 있고 SC-17 g·h, SC-18 n, SC-14 의 page 인자가 쓴다. input_fields 에는 이 필드가 없다. integer 종류(음수·0·소수·안전 정수 초과 등)가 필요하다. SC-14 f~l 이 사실상 이 칸을 다루지만 칸 목록에 없어 기계가 세지 못한다. list_request 의 async_result 와는 다른 칸이다."}
+  ],
+  "overall": {
+    "pass": false,
+    "fail_count": 1,
+    "warn_count": 5,
+    "summary": "V1~V4 는 통과했고 AC 10건이 모두 대응된다. V11 에서 plan_gap 두 건이 나왔다: 응답 항목의 id 와 더 보기 쪽 번호가 design.inputs·시나리오에는 있는데 input_fields 에 없다. Plan input_fields 를 고치고 새 칸을 채워야 한다. 경고는 V5(SC-06 '6가지' 모호한 Then), V6(SC-22·19·20·07 등 When 둘), V7(SC-14 함수명·SC-22 logout·SC-23 CSS), V9, V12 다."
+  }
+}
