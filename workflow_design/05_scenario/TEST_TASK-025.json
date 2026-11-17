@@ -312,6 +312,9 @@
     "screen_issue": "기본 머리글 제목이 「내 공연」이라 앱바 제목(h1)과 같은 글자가 화면에 두 번 나온다(SC-05·SC-07 d·e·g·h~n). 시나리오는 이 값을 정했고 사용자 확정 옵션에도 같은 값이었다"
   },
   "human_review": {
-    "approved": false
+    "approved": true,
+    "approved_at": "2026-11-17",
+    "decision": "APPROVE",
+    "notes": "시나리오 23건·Red 23개 함수 승인(AskUserQuestion). SC-17 행 f 는 쪽 수 × 20 ≥ 총수 규칙으로 구현, 기본 제목 「내 공연」과 앱바 제목 중복은 수용. task024.organizer.test.tsx 3곳 수정(SC-17 b·c·보강, afterEach 복원) 함께 승인"
   }
 }

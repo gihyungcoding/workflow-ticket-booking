@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-17T00:00:00Z
-summary: "Red 테스트 23건(320 케이스) 작성·커밋. 전체 1924건 중 실패 303(새 테스트 300 + 승인 테스트 변경 3)·통과 1620, 기존 실패 0. HITL#1·2 통합 승인 대기."
+summary: "Red 테스트 23건(320 케이스) 작성·커밋. 전체 1924건 중 실패 303(새 테스트 300 + 승인 테스트 변경 3)·통과 1620, 기존 실패 0. HITL#1·2 통합 승인 완료(2026-11-17)."
 
 next_steps:
-  - "통합 HITL(AskUserQuestion) — 시나리오·검증·Red 를 함께 보여주고 승인받는다. 승인되면 generate_red_trigger·human_review.approved 를 쓰고 Phase 3(wf-develop)으로"
+  - "Phase 3 — wf-develop. 테스트 계약(test_contracts_for_green)과 SC-17 행 f 규칙(쪽 수 × 20 ≥ 총수)을 따른다. 승인된 테스트는 고치지 않는다 — 고쳐야 하면 사람에게 묻는다"
 
 decisions:
   - decision: "새 파일 하나만 컴파일 스켈레톤 — frontend/src/api/organizer.ts (본문은 throw 한 줄)"
@@ -17,6 +17,9 @@ decisions:
     rationale: "SC-17 b·c·보강이 주최자 로그인 뒤 '/' 를 기대 — 새 동작은 /organizer. afterEach 복원은 Red 중단 시 연쇄 실패 2건 방지"
   - decision: "시나리오 결함 1건을 시나리오대로 테스트하고 HITL 에 올린다 — SC-17 행 f"
     rationale: "「더 보기 사라진다」가 홈의 items<total 규칙과 어긋난다. 2a 를 다시 거치지 않고 사람이 규칙(쪽 수 기준)을 정하게 한다"
+
+  - decision: "HITL#1·2 승인 — SC-17 행 f 규칙은 쪽 수 기준, 기본 제목 중복 수용"
+    rationale: "사용자 승인(AskUserQuestion). 홈의 items < total 규칙과 달라지는 것을 알고 승인했다"
 
 attempts: []
 ---
