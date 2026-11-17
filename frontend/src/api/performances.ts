@@ -80,12 +80,33 @@ export class UnauthorizedError extends Error {}
 // 공연 쓰기의 역할 불일치(403) — 주최자가 아니다 (ADR-0029). 화면은 주최자 전용 안내를 보인다.
 export class ForbiddenRoleError extends Error {}
 
-export async function getPerformances(): Promise<PerformanceListResponse> {
-  const response = await request('/api/performances')
+/**
+ * 공연 목록 한 쪽. status 가 없으면 전체, page 가 0 이면 첫 쪽이라 둘 다 쿼리에 싣지 않는다 — 인자 없는 호출은 지금처럼 `/api/performances` 다.
+ * 정의 밖 status 와 0 이상 정수가 아닌 page 는 요청 전에 거부한다(화면이 만드는 값이라 버그다).
+ */
+export async function getPerformances(status?: PerformanceStatus | null, page?: number): Promise<PerformanceListResponse> {
+  if (status != null && !STATUSES.includes(status)) throw new Error(`공연 목록 조회 인자 오류: status ${String(status)}`)
+  if (page !== undefined && !isSafeCount(page)) throw new Error(`공연 목록 조회 인자 오류: page ${String(page)}`)
+  const query = [status ? `status=${status}` : '', page ? `page=${page}` : ''].filter(Boolean).join('&')
+  const response = await request(`/api/performances${query ? `?${query}` : ''}`)
   if (!response.ok) {
     throw new Error(`공연 목록 조회 실패: ${response.status}`)
   }
-  return response.json()
+  const list = parseList(await response.json())
+  if (list === null) throw new Error('공연 목록 응답이 올바르지 않습니다')
+  return list
+}
+
+/** 홈 머리글 후보 — 200 이면 그 공연, 204 면 후보 없음(null). 본문이 계약을 어기면 던진다 */
+export async function getNextOpening(): Promise<Performance | null> {
+  const response = await request('/api/performances/next-opening')
+  if (response.status === 204) return null
+  if (!response.ok) {
+    throw new Error(`머리글 후보 조회 실패: ${response.status}`)
+  }
+  const item = parseListItem(await response.json())
+  if (item === null) throw new Error('머리글 후보 응답이 올바르지 않습니다')
+  return item
 }
 
 export async function getPerformance(id: string): Promise<Performance> {
@@ -180,4 +201,37 @@ export function parseDetail(value: unknown): Performance | null {
     sections = p.sections as SectionSummary[]
   }
   return { ...(value as Performance), sections }
+}
+
+// 안전 정수 — 1e400(Infinity)·2^53 넘는 값은 서버가 내지 않는다. 어기면 화면이 오류로 본다.
+const isSafeCount = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+
+/**
+ * 목록 원소가 홈이 쓰는 계약을 지키는지 본다 — 어기면 null. id 는 양의 정수(링크 /performances/{id} 에 끼운다),
+ * title·venue 는 공백이 아닌 문자열(ADR-0027), startAt·openAt 은 ISO 순간, status 는 다섯 값, availableSeats 는 0 이상 정수.
+ * closeAt·totalSeats·sections·그 밖의 키는 홈이 쓰지 않으므로 계약이 아니다(쓰지 않는 값을 위반으로 보면 서버가 바꿀 때 멀쩡한 화면이 오류가 된다).
+ */
+export function parseListItem(value: unknown): Performance | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
+  const p = value as Record<string, unknown>
+  if (!isSafeCount(p.id) || p.id < 1) return null
+  if (isBlankDisplay(p.title) || isBlankDisplay(p.venue)) return null
+  if (!isInstant(p.startAt) || !isInstant(p.openAt)) return null
+  if (typeof p.status !== 'string' || !STATUSES.includes(p.status)) return null
+  if (!isSafeCount(p.availableSeats)) return null
+  return value as Performance
+}
+
+/** 목록 응답 — 원소 하나라도 계약을 어기면 전체를 오류로 본다(건너뛰면 totalElements 와 불러온 개수가 어긋나 더 보기가 영영 남는다) */
+export function parseList(value: unknown): PerformanceListResponse | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
+  const body = value as Record<string, unknown>
+  if (!Array.isArray(body.content) || !isSafeCount(body.totalElements)) return null
+  const content: Performance[] = []
+  for (const element of body.content) {
+    const item = parseListItem(element)
+    if (item === null) return null
+    content.push(item)
+  }
+  return { ...(value as PerformanceListResponse), content }
 }

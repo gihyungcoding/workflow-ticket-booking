@@ -1,16 +1,19 @@
 import { render, screen, within } from '@testing-library/react'
 import { ThemeProvider } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
-import { getPerformances } from '../api/performances'
+import { getNextOpening, getPerformances } from '../api/performances'
 import type { PerformanceListResponse } from '../api/performances'
 import { PerformanceListPage } from './PerformanceListPage'
 import { theme } from '../theme'
+import { GlobalTokens } from '../theme/GlobalTokens'
 
 vi.mock('../api/performances')
 
 function renderPage() {
   return render(
     <ThemeProvider theme={theme}>
+      {/* TASK-021 — 새 화면의 글자는 body 에서 폰트를 물려받는다. 앱(main.tsx)과 같이 전역 토큰을 둔다 */}
+      <GlobalTokens />
       <MemoryRouter>
         <PerformanceListPage />
       </MemoryRouter>
@@ -21,6 +24,9 @@ function renderPage() {
 describe('PerformanceListPage', () => {
   beforeEach(() => {
     vi.mocked(getPerformances).mockReset()
+    // TASK-021 — 홈이 머리글 후보를 따로 부른다. 이 파일은 목록만 본다(후보 없음)
+    vi.mocked(getNextOpening).mockReset()
+    vi.mocked(getNextOpening).mockResolvedValue(null)
   })
 
   test('SC-01 (happy) 목록에 공연이 카드와 상태 배지로 표시된다', async () => {
@@ -130,8 +136,8 @@ describe('PerformanceListPage', () => {
     renderPage()
 
     // Then
-    // '목록을 불러오지 못했습니다' 오류 메시지가 보인다
-    expect(await screen.findByText('목록을 불러오지 못했습니다')).toBeInTheDocument()
+    // '공연 목록을 불러오지 못했어요' 오류 메시지가 보인다 (TASK-021 SC-21 — 시안 문구)
+    expect(await screen.findByText('공연 목록을 불러오지 못했어요')).toBeInTheDocument()
 
     // [다시 시도] 버튼이 보인다
     expect(screen.getByRole('button', { name: '다시 시도' })).toBeInTheDocument()
@@ -165,8 +171,8 @@ describe('PerformanceListPage', () => {
     renderPage()
 
     // Then
-    // '예정된 공연이 없습니다' 안내가 보인다
-    expect(await screen.findByText('예정된 공연이 없습니다')).toBeInTheDocument()
+    // '다가오는 공연이 없어요' 안내가 보인다 (TASK-021 SC-19 — 시안 문구)
+    expect(await screen.findByText('다가오는 공연이 없어요')).toBeInTheDocument()
 
     // 카드가 하나도 렌더되지 않는다
     expect(screen.queryAllByRole('link')).toHaveLength(0)

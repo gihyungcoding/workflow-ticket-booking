@@ -1,0 +1,285 @@
+{
+  "task_id": "TASK-021",
+  "status": "WARN",
+  "status_reason": "AC-9(375px 시안 대조)의 한국 시간 표기를 브라우저에서 확인하지 못했다 — 이 환경의 Chrome 이 Intl timeZone 을 무시하고 UTC 로 출력한다(jsdom 테스트가 대신 지킨다). 리뷰어의 design·reuse 권고 4건(fontWeight 700 리터럴·상태 변화 접근성·「오늘」 비교 중복·MoreLink 위치)이 남았다. 결함·제약 error 는 없다",
+  "evidence": {
+    "tests": {
+      "command": "cd frontend && npx vitest run --testTimeout=60000",
+      "exit_code": 0,
+      "summary": "Test Files 32 passed (32); Tests 1603 passed | 1 todo (1604) — 새 435 + 기존 1168, 실패 0"
+    },
+    "lint": {
+      "command": "cd frontend && npm run lint",
+      "exit_code": 0,
+      "summary": "error 0, 경고 51(대부분 기존). 이 태스크 신규 경고 2건 — StatusChips.tsx:6 only-export-components(상수 export), PerformanceListPage.tsx:171 purity(Date.now — 상세와 같은 선례)"
+    },
+    "typecheck": {
+      "command": "cd frontend && npx tsc -b",
+      "exit_code": 0,
+      "summary": "오류 0"
+    },
+    "build": {
+      "command": "cd frontend && npm run build",
+      "exit_code": 0,
+      "summary": "성공(청크 크기 경고는 기존)"
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD -- frontend",
+      "summary": "17 files changed, 1864 insertions(+), 127 deletions(-) — 소스 7개 445+/104-, 나머지는 테스트"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "AC-1 next-opening 후보가 오늘 열리면 「오늘 오후 6:00에 …」, 다른 날이면 날짜, 「공연 보기」가 상세로, 204 면 일반 문구",
+      "verdict": "PASS",
+      "evidence": "SC-01~06·09·23 통과(SC-02 7행: 오늘·다른 날·한국 자정 경계·기기 날짜 불일치, SC-04 10행: 204·404·5xx·비 JSON·네트워크, SC-05 56행: 후보 계약 위반). 브라우저: 후보 있음 h1+링크, 204 면 「다가오는 공연을 골라 보세요」·링크 없음을 확인(문구의 시각은 환경이 UTC 라 jsdom 값 사용)"
+    },
+    {
+      "criterion": "AC-2 머리글 위 「티켓온 · …」이 기준 시각이고 측정 실패 시 이 줄이 없다",
+      "verdict": "PASS",
+      "evidence": "SC-07(4행)·SC-08(12행)·SC-10 통과. 브라우저: /api/time 500 에서 줄만 없어지고 h1·카드는 그대로(h1 은 기기 날짜로 가른 문구)"
+    },
+    {
+      "criterion": "AC-3 칩을 누르면 해당 status 로 첫 페이지를 다시 불러오고 누른 칩만 aria-pressed",
+      "verdict": "PASS",
+      "evidence": "SC-13(74행: 칩 6종·계약 위반)·SC-14(14행: 늦은 응답 폐기)·SC-28 통과. 브라우저: 「예정」 누름 → pressed=예정, 응답 반영"
+    },
+    {
+      "criterion": "AC-4 카드가 배지·공연명·일시(날짜+시각)·장소와 상태별 한 줄, 카드를 누르면 상세로",
+      "verdict": "PASS",
+      "evidence": "SC-03·06·11(12행)·12(14행)·27·29 통과. 브라우저: 포스터 없는 카드가 같은 크기의 회색 면+아이콘, 가로 스크롤 없음"
+    },
+    {
+      "criterion": "AC-5 20개 넘으면 더 보기, 누르면 다음 20개, 다 불러오면 버튼 없음, 실패하면 카드 유지 + 「불러오지 못했어요 · 다시 시도」",
+      "verdict": "PASS",
+      "evidence": "SC-15~18·28 통과. 브라우저(25건): 20개+더 보기 → 누르면 25개·버튼 없음. 더 보기 실패 → 카드 20개 유지+실패 버튼, 서버 복구 뒤 다시 시도 → 25개"
+    },
+    {
+      "criterion": "AC-6 빈 목록은 전체면 「다가오는 공연이 없어요」, 칩이면 「<칩> 공연이 없어요」+ 전체 보기",
+      "verdict": "PASS",
+      "evidence": "SC-19(7행) 통과. 브라우저: 전체 빈 → 문구만, 「예정」 빈 → 「예정 공연이 없어요」+「전체 보기」, 누르면 전체 칩·카드 7개"
+    },
+    {
+      "criterion": "AC-7 목록 실패 시 「공연 목록을 불러오지 못했어요」+ 다시 시도, 로딩 중엔 카드 자리 4개",
+      "verdict": "PASS",
+      "evidence": "SC-20~22·29 통과. 브라우저: 로딩에서 스켈레톤 4개, 오류에서 문구+다시 시도(머리글·칩 유지), 서버 복구 뒤 다시 시도 → 카드 7개"
+    },
+    {
+      "criterion": "AC-8 「내 예매」 행이 없다",
+      "verdict": "PASS",
+      "evidence": "SC-24 통과(「내 예매」 글자·링크·/my-bookings 링크 없음)"
+    },
+    {
+      "criterion": "AC-9 375px 에서 home.html 과 나란히 띄워 구조·문구·색이 같다",
+      "verdict": "WARN",
+      "evidence": "375px iframe 두 장으로 나란히 봤다 — 블록 16px·머리글 24px·칩·2열 카드·배지 색·문구가 같고 보정한 여백 이중 외 차이는 전역 헤더 한 줄(사용자 결정)뿐. 못 본 것: 한국 시간 표기(이 Chrome 은 UTC 출력 — 시안의 「오후 5:50」 대신 「오전 8:50」)는 jsdom 테스트(SC-02·07·11, formatDateTime)가 지킨다. SC-25 의 렌더 값은 jsdom 계산값"
+    }
+  ],
+  "screens": [
+    {
+      "name": "홈",
+      "state": "기본(7건, 시안 이미지)",
+      "verdict": "PASS",
+      "evidence": "모의 서버 검증 — 스키마 출처: backend PerformanceResponse/PerformanceListResponse DTO. 375px iframe(innerWidth 375), 머리글+칩 6+2열 카드, 가로 스크롤 없음, 시안 home.html 과 나란히"
+    },
+    {
+      "name": "홈",
+      "state": "로딩",
+      "verdict": "PASS",
+      "evidence": "느린 응답 모드 — 스켈레톤 4개·머리글 후보 문구·칩 유지. (개발 서버 StrictMode 이중 요청이 Chrome 캐시 락으로 직렬화돼 인위적 4초 지연이 8초로 보였다 — 8초 뒤 카드 7개, 결함 아님)"
+    },
+    {
+      "name": "홈",
+      "state": "빈 목록(전체)",
+      "verdict": "PASS",
+      "evidence": "「다가오는 공연이 없어요」, 카드 0, 머리글·칩 유지, 전체 보기 버튼 없음"
+    },
+    {
+      "name": "홈",
+      "state": "빈 목록(칩) → 전체 보기",
+      "verdict": "PASS",
+      "evidence": "「예정」 칩 → 「예정 공연이 없어요」+「전체 보기」, 누르면 pressed=전체·카드 7"
+    },
+    {
+      "name": "홈",
+      "state": "목록 오류 → 다시 시도",
+      "verdict": "PASS",
+      "evidence": "「공연 목록을 불러오지 못했어요」+「다시 시도」, 서버 복구 뒤 카드 7"
+    },
+    {
+      "name": "홈",
+      "state": "더 보기(25건)·더 보기 실패·다시 시도",
+      "verdict": "PASS",
+      "evidence": "20개+더 보기 → 25개·버튼 없음 / 실패 → 카드 20 유지+「불러오지 못했어요 · 다시 시도」 / 복구 뒤 25"
+    },
+    {
+      "name": "홈",
+      "state": "머리글 후보 없음(204)",
+      "verdict": "PASS",
+      "evidence": "h1 「다가오는 공연을 골라 보세요」, 「… 공연 보기」 링크 없음, 카드 7"
+    },
+    {
+      "name": "홈",
+      "state": "기준 시각 실패",
+      "verdict": "PASS",
+      "evidence": "「티켓온 ·」 줄 없음, h1 은 기기 날짜로 가른 문구, 카드 7"
+    },
+    {
+      "name": "홈",
+      "state": "포스터 없음",
+      "verdict": "PASS",
+      "evidence": "포스터 없는 카드(id 17)는 이미지 없이 같은 크기 회색 면+아이콘"
+    },
+    {
+      "name": "홈",
+      "state": "긴 공연명(201자, 공백 없음)",
+      "verdict": "PASS",
+      "evidence": "머리글 링크 right 351px ≤ 375, scrollWidth 375 — 가로 넘침 없음. Phase 3 자체 리뷰의 design 소견은 재현되지 않았다(body 의 overflow-wrap 상속)"
+    },
+    {
+      "name": "홈",
+      "state": "한국 시간 표기",
+      "verdict": "WARN",
+      "evidence": "이 환경의 Chrome 이 Intl timeZone 을 무시한다(순수 Intl 호출로 재현 — new Date('2026-11-11T08:50:00Z') 가 Asia/Seoul 에서도 오전 8:50). 구현 결함이 아니다. jsdom/Node 테스트에서는 KST 로 단언된다"
+    }
+  ],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 1,
+    "no_target": [],
+    "files_scanned": 648,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend/src/pages/PerformanceEditPage.tsx — 기존 위반, 이 태스크 범위 밖(홈은 이 태스크로 해소)"
+      }
+    ],
+    "overdue_promotions": [
+      {
+        "id": "AUTH-001",
+        "promote_after": "TASK-024"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "Frontend: 도메인 규칙(선점 유효성 등은 서버가 최종 판단)",
+        "constraint": null,
+        "state": "검사 불가",
+        "note": "ADR-0024 가 forbidden_pattern 으로 잡기엔 오탐이 많다고 명시. 이번 변경에는 오픈 판정이 없다 — 홈은 표시용 기준 시각만 쓰고(SC-08·09·10) 리뷰어도 위반을 찾지 못했다"
+      },
+      {
+        "rule": "API: 비즈니스 로직·DB 접근",
+        "constraint": "ARCH-001",
+        "state": "✓",
+        "note": "이 태스크는 백엔드를 바꾸지 않았다"
+      },
+      {
+        "rule": "Service: HTTP 관심사·SQL/영속성 타입 직접 사용",
+        "constraint": "ARCH-002·003",
+        "state": "✓",
+        "note": "백엔드 변경 없음"
+      },
+      {
+        "rule": "domain: 영속성 접근·HTTP 관심사·트랜잭션 제어",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "백엔드 변경 없음 — Phase 5 rule_proposals 후보(이전 태스크에서도 같다)"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "미인코딩",
+        "note": "백엔드 변경 없음 — 위와 같다"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "1603 passed, 0 failed, 1 todo (기존 1168 유지)",
+    "callers_checked": true,
+    "note": "getPerformances·getNextOpening 의 호출부는 PerformanceListPage 뿐(Grep) — 둘 다 parseList/parseListItem 을 지난다. Poster 의 호출부는 PerformanceDetailPage·PerformanceCard"
+  },
+  "scope_deviations": [
+    {
+      "path": "frontend/src/pages/PerformanceDetailPage.tsx",
+      "reason": "Poster 공용 추출 — PLAN F9 와 사용자 확인(2026-11-16). 상세 동작 불변(task020.detail SC-17·33 통과)"
+    },
+    {
+      "path": "frontend/src/components/Poster.tsx",
+      "reason": "위와 같다 — PLAN target_files 에 있다"
+    }
+  ],
+  "code_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "phase": 3,
+        "findings": 1,
+        "note": "자체 리뷰 1R — [correctness] 0·[security] 0, design 1(낮음): 머리글 MoreLink 긴 공연명 줄바꿈. Phase 4 브라우저에서 재현되지 않음(link right 351 ≤ 375)"
+      },
+      {
+        "n": 2,
+        "phase": 4,
+        "findings": 4,
+        "note": "Phase 4 리뷰 — [correctness] 0, root_causes 없음. design 2(PerformanceCard fontWeight 700 리터럴·상태 변화 접근성 role=alert/aria-busy), reuse 2(「오늘」 비교가 상세·홈에 두 곳·MoreLink 가 auth/ 에 있음). 이번에 고친 승인 테스트(test_modifications 6건)는 단언을 약화하지 않았다는 리뷰 결과 — task020.clock 호출 수는 정확한 toHaveLength 라 상세의 늦은 응답이 추가 호출을 만들면 여전히 잡힌다"
+      }
+    ],
+    "findings": [
+      {
+        "category": "design",
+        "where": "PerformanceCard.tsx:41",
+        "detail": "공연명 fontWeight 700 리터럴 — 시안 .p-brand 값. 토큰 --fw-title/--fw-h2 가 700 이라 토큰으로 바꿀 수 있다. DESIGN-003 은 JSX 숫자 속성만 잡아 정적 검사로는 안 잡힌다",
+        "disposition": "WARN — Phase 5 try 로"
+      },
+      {
+        "category": "design",
+        "where": "PerformanceListPage.tsx",
+        "detail": "Notice 에 role=alert/status, 로딩 스켈레톤에 aria-busy, 더 보기 결과 알림이 없다(권고, 하한선 위반 아님)",
+        "disposition": "WARN — Phase 5 try 로"
+      },
+      {
+        "category": "reuse",
+        "where": "PerformanceDetailPage.tsx:216",
+        "detail": "「오늘」 날짜 비교(kstDay === kstDay)가 상세에 인라인으로 남아 있다. 출력 형식이 달라 formatWhen 으로 대체되지는 않는다",
+        "disposition": "WARN — Phase 5 try 로(날짜 비교만 공용 헬퍼)"
+      },
+      {
+        "category": "reuse",
+        "where": "PerformanceListPage.tsx → auth/AuthParts.tsx MoreLink",
+        "detail": "auth 폴더에서 import — 위치 문제",
+        "disposition": "WARN — Phase 5 try 로"
+      }
+    ]
+  },
+  "root_causes": [],
+  "security": {
+    "input_validation": "서버 응답을 입력으로 본다 — parseListItem/parseList 가 id(양의 안전 정수 — 링크 경로에 끼워짐)·title·venue(ADR-0027 공백 판정)·시각(isInstant)·status(다섯 값)·availableSeats 를 런타임 검증하고 어기면 오류. getPerformances 는 정의 밖 status·0 이상 안전 정수가 아닌 page 를 요청 전에 거부. posterUrl 은 http(s) 접두사만 이미지로 그리고 그 밖의 스킴(javascript:·data:)은 그리지 않는다(SC-12)",
+    "authorization": "해당 없음 — 목록·후보·시각 조회는 공개 경로. request() 가 토큰이 있으면 싣지만 무효 토큰도 서버가 익명으로 본다(ADR-0029)",
+    "secrets": "해당 없음",
+    "logging": "해당 없음 — 새 로그 없음"
+  },
+  "environment_notes": [
+    "이 환경의 Chrome 은 Intl.DateTimeFormat 의 timeZone 옵션을 무시하고 UTC 로 출력한다 — 순수 Intl 호출로 재현했다. 한국 시간 표기는 브라우저 증거가 아니라 jsdom(Node) 테스트로 지킨다",
+    "모의 서버는 backend 의 PerformanceResponse·PerformanceListResponse 필드를 그대로 옮겼다(스키마를 지어내지 않았다). 시안 이미지는 out/assets/photos 를 그대로 서빙. 띄운 서버(vite 5199·모의 API 8099)는 PID 로만 종료했고 기존 5173 서버(PID 7770)는 건드리지 않았다",
+    "개발 서버(StrictMode)의 이중 효과로 같은 URL 요청이 두 번 나가고, 4초 지연 모의 응답에서는 Chrome 캐시 락이 둘째를 첫째 뒤로 직렬화해 로딩이 8초로 보였다 — 운영 빌드에는 해당 없다"
+  ],
+  "human_review": {
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "edbac5d2043aabe036d231bb48c94691e8d8b849",
+    "verified_at": "2026-11-16T13:31:28Z",
+    "via": "AskUserQuestion — 예외 승인 (HITL#3, WARN)"
+  },
+  "exceptions": [
+    {
+      "item": "AC-9 — 한국 시간 표기를 브라우저에서 확인하지 못함",
+      "reason": "이 환경의 Chrome 이 Intl timeZone 을 무시하고 UTC 로 출력한다(순수 Intl 호출로 재현, 구현 결함 아님)",
+      "compensation": "jsdom(Node)에서 KST 로 단언 — SC-02·07·09·11 의 formatDateTime·formatWhen"
+    },
+    {
+      "item": "리뷰어 권고 4건 — fontWeight 700 리터럴·상태 변화 접근성(role/aria-busy)·「오늘」 비교 중복·MoreLink 위치",
+      "reason": "결함이 아니라 개선 제안 — 정책(design.md §6)의 엄격한 해석과 접근성 권고",
+      "compensation": "Phase 5 회고의 try 항목으로 넘긴다"
+    }
+  ]
+}

@@ -434,7 +434,8 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
       expect(callsTo(DETAIL)).toHaveLength(1)
     }
     // And 화면이 바뀐 뒤에도 늦은 응답 때문에 시각 호출이 생기지 않는다 (시각 호출 수 0 — StrictMode 의 P_UP 행은 제외)
-    if (!strict) expect(callsTo(TIME)).toHaveLength(0)
+    // TASK-021 — 홈(행 c)은 스스로 기준 시각을 3회 잰다. 늦은 상세 응답이 더 부르면 3 을 넘어 잡힌다
+    if (!strict) expect(callsTo(TIME)).toHaveLength(kind === 'home' ? 3 : 0)
   })
 
   // ---------- SC-25·26 ----------
@@ -571,8 +572,8 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
 
     // Then 표의 Then 이다
     if (row === 'a') {
-      // 첫 측정의 첫 호출만 나갔고 그 뒤로는 더 나가지 않는다
-      expect(callsTo(TIME)).toHaveLength(1)
+      // 첫 측정의 첫 호출만 나갔고 그 뒤로는 더 나가지 않는다 (TASK-021 — 이동한 홈의 측정 3회는 더한다)
+      expect(callsTo(TIME)).toHaveLength(1 + 3)
       expect(timerOrNull()).not.toBeInTheDocument()
       expect(screen.queryByText(TITLE)).not.toBeInTheDocument()
     } else if (row === 'b') {
@@ -682,7 +683,7 @@ describe('TASK-020 — 기준 시각·카운트다운·0초 전환', () => {
     }
     if (row === 'e') {
       expect(signals[0]?.aborted).toBe(true) // 진행 중이던 요청이 중단된다
-      expect(callsTo(TIME)).toHaveLength(1) // 이후 시각 호출이 더 나가지 않는다
+      expect(callsTo(TIME)).toHaveLength(1 + 3) // 이후 시각 호출이 더 나가지 않는다 (TASK-021 — 이동한 홈의 측정 3회는 더한다)
       expect(where()).toBe('/')
       expect(timerOrNull()).not.toBeInTheDocument()
     }

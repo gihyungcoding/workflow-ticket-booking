@@ -1,0 +1,585 @@
+{
+  "task_id": "TASK-021",
+  "route": "Frontend",
+  "route_reason": "홈 화면·칩 필터·더 보기·상태별 화면은 전부 화면 상태와 렌더링이다. 서버 쪽(GET /api/performances?status&page&size · /next-opening · /api/time · posterUrl)은 TASK-019 로 develop 에 있다 — PerformanceController.java:37-52, PerformanceResponse.java(posterUrl), PerformanceStatus.java 를 열어 확인했다. 화면 간 이동(카드·머리글 바로가기 → 상세)이 있어 F5·F2 에 적었다.",
+  "design": {
+    "inputs": [
+      {
+        "name": "공연 목록 응답",
+        "type": "PerformanceListResponse",
+        "source": "외부 서버 응답 — GET /api/performances[?status=][&page=]",
+        "constraints": [
+          "content[] 원소: id·title·venue·startAt·openAt·closeAt·totalSeats·availableSeats·status, posterUrl 은 없으면 키 생략",
+          "목록 응답엔 sections 가 없다",
+          "page·size·totalElements — 더 보기 판단은 불러온 개수 < totalElements",
+          "실패(비 2xx·네트워크·비 JSON)는 오류 화면, 더 보기 실패는 이미 보인 카드를 유지"
+        ]
+      },
+      {
+        "name": "머리글 후보 응답",
+        "type": "Performance | 204",
+        "source": "외부 서버 응답 — GET /api/performances/next-opening",
+        "constraints": [
+          "200 이면 공연 1건, 204 이면 후보 없음",
+          "조회 실패는 후보 없음과 같이 일반 문구(§2-5)"
+        ]
+      },
+      {
+        "name": "서버 시각 응답",
+        "type": "{ now: ISO 순간 }",
+        "source": "외부 서버 응답 — GET /api/time (useServerClock 이 3회 측정)",
+        "constraints": [
+          "측정 실패 시 '티켓온 · …' 줄을 숨긴다 — 기기 시계로 대신 쓰지 않는다"
+        ]
+      },
+      {
+        "name": "상태 칩",
+        "type": "'' | UPCOMING | OPEN | SOLD_OUT | CLOSED | CANCELLED",
+        "source": "사용자 입력(칩 누르기)",
+        "constraints": [
+          "전체(상태 없음)·예정·예매 가능·매진·마감·취소 6개, 하나만 aria-pressed=true",
+          "누르면 그 status 로 첫 페이지를 다시 불러온다"
+        ]
+      },
+      {
+        "name": "더 보기",
+        "type": "page 번호",
+        "source": "사용자 입력(더 보기 누르기)",
+        "constraints": [
+          "현재 칩의 status 로 page+1 을 이어 붙인다",
+          "20개씩"
+        ]
+      },
+      {
+        "name": "기기 시계",
+        "type": "ms",
+        "source": "브라우저 Date.now()",
+        "constraints": [
+          "기준 시각이 없을 때(측정 중·실패)만 「오늘」 문구를 가르는 데 쓴다 — 켜는 동작에는 쓰지 않는다",
+          "서버와 어긋나도(3초·3시간·한국 날짜가 다름) 기준 시각이 정해진 뒤에는 기준 시각의 한국 날짜를 쓴다"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "홈 화면 상태",
+        "type": "로딩 | 기본 | 빈 목록(전체/칩별) | 목록 오류 | 더 보기 실패 | 머리글 후보 없음 | 기준 시각 실패 | 포스터 없음",
+        "description": "§2-5 홈 목록. 로딩은 카드 자리 4개 + 머리글 한 줄 자리. 기본은 머리글(시각 줄·제목·공연 보기) + 칩 6개 + 2열 카드 + (남았으면) 더 보기"
+      },
+      {
+        "name": "머리글 문구",
+        "type": "string",
+        "description": "'오늘 오후 6:00에 <공연명> 예매가 열려요' · '11월 14일(토) 오후 2:00에 …' · 후보 없음 '다가오는 공연을 골라 보세요'(바로가기 없음) · 바로가기 '<공연명> 공연 보기' → /performances/:id"
+      },
+      {
+        "name": "카드",
+        "type": "링크 카드",
+        "description": "포스터(없음·로드 실패 시 회색 면+아이콘) · 배지 · 공연명(두 줄 말줄임) · 시작 일시(항상 날짜+시각) · 장소 + 상태별 한 줄(예매 가능 '남은 좌석 N석', 예정 '<오픈 일시> 오픈' — 오늘이면 '오늘 오후 6:00 오픈'). 카드 전체가 /performances/:id 링크"
+      },
+      {
+        "name": "이동",
+        "type": "route",
+        "description": "카드·'<공연명> 공연 보기' → /performances/:id"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "홈 진입·첫 페이지·로딩·오류·빈 목록",
+        "steps": [
+          "진입하면 현재 칩(전체)의 첫 페이지를 조회하고 카드 자리 4개(포스터 비율 유지)와 머리글 한 줄 자리를 보인다",
+          "성공이고 content 가 비면 전체는 '다가오는 공연이 없어요', 칩이면 '<칩> 공연이 없어요' + 전체 보기(칩을 전체로)",
+          "실패하면 '공연 목록을 불러오지 못했어요' + 다시 시도(재조회)",
+          "화면을 떠나거나 칩이 바뀐 뒤 늦게 온 응답은 버린다(ADR-0018)",
+          "응답 원소가 계약을 어기면(시각 형식·정수·공백 제목) 오류로 본다 — parseDetail 과 같은 런타임 검증"
+        ],
+        "covers": [
+          "AC-6 빈 목록은 전체면 '다가오는 공연이 없어요', 칩이면 '<칩> 공연이 없어요' + 전체 보기",
+          "AC-7 목록 실패 시 '공연 목록을 불러오지 못했어요' + 다시 시도, 로딩 중엔 카드 자리 4개"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "머리글 후보(next-opening)",
+        "steps": [
+          "진입 시 GET /api/performances/next-opening 을 목록과 따로 조회",
+          "200 → '<언제>에 <공연명> 예매가 열려요' + '<공연명> 공연 보기'(→ 그 상세). 오늘(한국 날짜, 기준 시각 기준)이면 '오늘 오후 6:00', 아니면 '11월 14일(토) 오후 2:00'",
+          "204 또는 조회 실패 → '다가오는 공연을 골라 보세요' 만, 바로가기 없음",
+          "공연명은 줄이지 않고 두 줄을 넘으면 말줄임",
+          "목록과 머리글은 서로의 실패에 영향을 주지 않는다",
+          "화면을 떠난 뒤 늦게 온 응답은 버린다"
+        ],
+        "covers": [
+          "AC-1 next-opening 후보가 오늘 열리면 '오늘 오후 6:00에 <공연명> 예매가 열려요', 다른 날이면 '11월 14일(토) 오후 2:00에 …', '<공연명> 공연 보기'가 상세로 간다, 204 면 '다가오는 공연을 골라 보세요'만"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "기준 시각 줄(useServerClock)",
+        "steps": [
+          "홈에서 useServerClock({ enabled: true }) 로 GET /api/time 3회 측정 — 훅은 그대로 재사용한다",
+          "ready 면 머리글 위 '티켓온 · 11월 11일(수) 오후 5:50' (formatDateTime(기준 시각))",
+          "측정 중·실패면 이 줄이 없다 — 기기 시계로 대신하지 않는다",
+          "기준 시각은 F2 의 '오늘' 판정과 F5 카드의 '오늘 … 오픈' 판정에 쓴다. 기준 시각이 없으면 기기 날짜로만 문구를 가른다(상세 PerformanceDetailPage.tsx:249 의 선례 — 켜는 데는 쓰지 않는다)"
+        ],
+        "covers": [
+          "AC-2 머리글 위 '티켓온 · 11월 11일(수) 오후 5:50' 이 기준 시각이고, 기준 시각 측정이 실패하면 이 줄이 없다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "상태 칩 필터",
+        "steps": [
+          "칩 6개: 전체·예정(UPCOMING)·예매 가능(OPEN)·매진(SOLD_OUT)·마감(CLOSED)·취소(CANCELLED)",
+          "누르면 그 status 로 page 0 을 다시 불러온다 — 이미 보인 카드는 비우고 로딩(카드 4개 자리)",
+          "누른 칩만 aria-pressed=true",
+          "응답 전에 다른 칩을 누르면 앞 요청의 응답은 버린다",
+          "더 보기 실패 상태·페이지 진행은 칩을 바꾸면 초기화"
+        ],
+        "covers": [
+          "AC-3 칩을 누르면 해당 status 로 첫 페이지를 다시 불러오고 누른 칩만 aria-pressed=true"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "공연 카드",
+        "steps": [
+          "카드 = 포스터 · 상태 배지(StatusBadge, 문구는 design.md §5) · 공연명(두 줄 말줄임) · 시작 일시 formatDateTime(startAt)(항상 날짜+시각) · 장소 + 상태별 한 줄",
+          "예매 가능 → '<장소> · 남은 좌석 N석', 예정 → '<장소> · <오픈 일시> 오픈'(오늘이면 '오늘 오후 6:00 오픈'), 그 밖의 상태 → 장소만",
+          "포스터는 http(s) 만 그리고, 없거나 로드 실패면 같은 비율(1:1)의 회색 면(--c-bg)+티켓 아이콘, 대체 텍스트 '<공연명> 포스터'",
+          "카드 전체가 /performances/:id 링크",
+          "상태 값이 정의 밖이면 배지를 그리지 않는다(StatusBadge 의 기존 동작)"
+        ],
+        "covers": [
+          "AC-4 카드가 배지·공연명·시작 일시(항상 날짜+시각)·장소를 보이고 예매 가능은 '남은 좌석 N석', 예정은 '<오픈 일시> 오픈'(오늘이면 '오늘 오후 6:00 오픈')을 덧붙인다, 카드를 누르면 상세로 간다"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "더 보기",
+        "steps": [
+          "불러온 개수 < totalElements 일 때만 '더 보기' 버튼",
+          "누르면 현재 칩의 status 로 page+1 을 조회해 카드를 아래에 이어 붙인다(20개씩)",
+          "진행 중에는 중복 요청을 막는다",
+          "다 불러오면(개수 ≥ totalElements) 버튼이 없다",
+          "실패하면 이미 보인 카드는 그대로이고 버튼 자리에 '불러오지 못했어요 · 다시 시도' — 다시 시도는 같은 page 를 다시 부른다",
+          "같은 id 가 두 페이지에 걸쳐 오면(목록이 그 사이 바뀜) 한 번만 보인다"
+        ],
+        "covers": [
+          "AC-5 공연이 20개를 넘으면 '더 보기', 누르면 다음 20개가 아래에 붙고 다 불러오면 버튼이 없다, 실패하면 이미 보인 카드는 그대로이고 '불러오지 못했어요 · 다시 시도'"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "내 예매 행 없음·시안 대조",
+        "steps": [
+          "홈에 '내 예매' 행을 그리지 않는다(흐름 5)",
+          "375px 에서 out/screens/home.html 과 나란히 띄워 구조·문구·색을 비교한다 — 카드 일시·내 예매는 §8 의 차이. 전역 헤더(AppHeader)는 사용자 결정으로 유지한다(차이로 판정하지 않는다)"
+        ],
+        "covers": [
+          "AC-8 '내 예매' 행이 없다",
+          "AC-9 375px 에서 home.html 과 나란히 띄워 구조·문구·색이 같다"
+        ]
+      },
+      {
+        "id": "F8",
+        "name": "API 클라이언트 계약",
+        "steps": [
+          "getPerformances(status?, page?) — 인자가 없으면 지금처럼 '/api/performances' 그대로(쿼리 문자열 없음). status 가 있으면 ?status=, page 가 0 이 아니면 page= 를 붙인다",
+          "getNextOpening() — 200 → Performance, 204 → null, 그 밖 → 던진다",
+          "응답 본문 런타임 검증(parseList) — 어기면 던진다",
+          "request() 를 쓴다(토큰이 있으면 싣는다 — 공개 경로라 무효 토큰도 익명으로 처리된다, api/http.ts)"
+        ],
+        "covers": [
+          "AC-3·AC-5 status·page 가 요청에 실린다",
+          "AC-1 204 처리"
+        ]
+      },
+      {
+        "id": "F9",
+        "name": "Poster 공용 추출(회귀)",
+        "steps": [
+          "PerformanceDetailPage.tsx 안의 비공개 Poster 를 components/Poster.tsx 로 꺼내 비율(aspectRatio)을 prop 으로 받게 한다 — 상세는 4/3, 카드는 1/1",
+          "상세의 동작·data-testid=\"poster\"·대체 텍스트·회색 면 색은 그대로"
+        ],
+        "covers": [
+          "범위 확장 — AC 에 없다. 사용자 확인(2026-11-16): 카드와 상세가 같은 포스터 규칙을 쓰도록 공용으로 추출. 상세 테스트(task020.detail SC-17·33)가 그대로 통과해야 한다"
+        ]
+      }
+    ],
+    "input_fields": [
+      {
+        "field": "listResponse",
+        "flows": [
+          "F1",
+          "F4",
+          "F6"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result"
+        ],
+        "note": "GET /api/performances — 실패·비 JSON·빈 바디, 칩을 바꾼 뒤·화면을 떠난 뒤 늦게 온 응답은 버린다(ADR-0018). 더 보기의 늦은 실패가 이미 보인 카드를 지우지 않는다"
+      },
+      {
+        "field": "nextOpeningResponse",
+        "flows": [
+          "F2"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result"
+        ],
+        "note": "GET /api/performances/next-opening — 200·204·그 밖의 코드·비 JSON, 화면을 떠난 뒤 늦은 응답. 실패는 후보 없음과 같다"
+      },
+      {
+        "field": "timeResponse",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "server_response",
+          "async_result"
+        ],
+        "note": "GET /api/time — 3회 중 일부·전부 실패, 측정 중 언마운트. 훅은 TASK-020 에서 검증됐고 홈에서 켜는 조건만 새롭다"
+      },
+      {
+        "field": "status",
+        "flows": [
+          "F4",
+          "F5",
+          "F6",
+          "F8"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "enum"
+        ],
+        "note": "응답의 status 와 칩이 보내는 status — 다섯 값 각각(배지·한 줄), 정의 밖 값(배지 null — 카드는 그린다), 칩 6개 각각 aria-pressed"
+      },
+      {
+        "field": "page",
+        "flows": [
+          "F6",
+          "F8"
+        ],
+        "kinds": [
+          "integer"
+        ],
+        "note": "더 보기가 보내는 page — 화면이 만드는 값이라 사용자가 못 바꾼다(성공한 더 보기 횟수). 음수·소수·문자열 같은 비정상 인자는 API 클라이언트가 요청 전에 거부한다. 응답의 page·size 는 홈이 쓰지 않아 계약이 아니다(SC-29 g·h)"
+      },
+      {
+        "field": "totalElements",
+        "flows": [
+          "F6"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "integer"
+        ],
+        "note": "더 보기 판단 — 불러온 개수와 같을 때·1 작을 때·0·음수·소수"
+      },
+      {
+        "field": "content",
+        "flows": [
+          "F1",
+          "F6"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "array"
+        ],
+        "note": "비어 있음(빈 목록)·null 원소·키 없음·배열이 아닌 값 — 20개 상한은 서버가 정한다"
+      },
+      {
+        "field": "id",
+        "flows": [
+          "F5",
+          "F6",
+          "F2"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "opaque"
+        ],
+        "note": "카드·머리글 링크 /performances/{id} 에 끼운다. 더 보기에서 중복 id"
+      },
+      {
+        "field": "title",
+        "flows": [
+          "F2",
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ],
+        "note": "카드 두 줄 말줄임·머리글 두 줄 말줄임. 공백 판정은 ADR-0027 과 같은 한 판정(isBlankDisplay)"
+      },
+      {
+        "field": "venue",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "string"
+        ],
+        "note": "공백 판정은 ADR-0027 과 같은 한 판정"
+      },
+      {
+        "field": "startAt",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field"
+        ],
+        "note": "카드 일시 — ISO 순간 형식(isInstant), 한국 시간 표기"
+      },
+      {
+        "field": "openAt",
+        "flows": [
+          "F2",
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "datetime"
+        ],
+        "note": "'오늘' 판정 — 기준 시각의 한국 날짜와 openAt 의 한국 날짜 비교(자정 경계). 머리글과 카드가 같은 비교를 쓴다"
+      },
+      {
+        "field": "availableSeats",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "json_field",
+          "integer"
+        ],
+        "note": "예매 가능 카드의 '남은 좌석 N석' — 0·1·음수·소수. totalSeats 는 홈이 쓰지 않아 availableSeats ≤ totalSeats 는 검사하지 않는다(SC-29 i)"
+      },
+      {
+        "field": "posterUrl",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "required",
+          "url"
+        ],
+        "note": "키 생략 = 포스터 없음. 서버가 https 만 받지만 화면은 http(s) 만 그리고 그 밖의 스킴은 없음으로 본다(상세와 같은 규칙). 로드 실패는 img error 이벤트"
+      },
+      {
+        "field": "now",
+        "flows": [
+          "F2",
+          "F3"
+        ],
+        "kinds": [
+          "required",
+          "json_field"
+        ],
+        "note": "기준 시각 — 시각 줄과 '오늘' 판정의 기준"
+      },
+      {
+        "field": "visibilityState",
+        "flows": [
+          "F3"
+        ],
+        "kinds": [
+          "enum"
+        ],
+        "note": "탭이 다시 보이면 재측정 — 훅이 이미 한다. 홈에서도 켜져 있는지만 확인"
+      }
+    ],
+    "prop_schema": [
+      {
+        "part": "칩 줄(.chips)",
+        "context_dependent": "display:flex; gap --stack-s; overflow-x:auto; padding 0 --page-x; scrollbar 숨김. 칩 .chip: min-height 44px · padding 0 --stack-m · 알약 · 안쪽 1px --c-line-strong · 선택(.is-selected)은 --c-text-1 바탕 + --c-surface 글자(브랜드 색 없음)",
+        "check": "홈은 Container(MUI) 안에 있어 좌우 여백이 이중이 될 수 있다 — 시안은 page 가 좌우 0 이고 chips·grid 가 --page-x 를 직접 쓴다. 375px 에서 시안과 나란히 확인(Phase 4)"
+      },
+      {
+        "part": "카드 격자(.product-grid)",
+        "context_dependent": "2열 · gap --stack-l --stack-s(세로 가로) · 카드 .p-card gap 4px · 포스터 aspect-ratio 1/1 + margin-bottom 4px. 공연명 .p-brand: --fs-caption 700, 시안 .p-name(날짜): --fs-sub --c-text-2 두 줄 말줄임, .p-meta: --fs-caption --c-text-3",
+        "check": "시안은 .p-brand 가 공연명·.p-name 이 일시다 — 시안의 클래스 이름과 의미가 다르다. 값은 토큰으로"
+      },
+      {
+        "part": "머리글(.hero)",
+        "context_dependent": "Hero(eyebrow·title·lead) 재사용. 바로가기는 .hero-more 인데 auth/AuthParts.tsx 의 MoreLink 가 같은 모양이다",
+        "check": "Hero 의 lead 는 <p> 에 body 크기·--c-text-2 를 입힌다 — MoreLink 를 lead 로 넣으면 색·크기가 MoreLink 쪽 sx 로 덮이는지 확인"
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "Frontend (React)",
+    "note": "화면 렌더링·사용자 입력·API 호출만. 오픈 판정의 최종 권한은 서버(ADR-0024) — 홈은 표시용 기준 시각만 쓰고 켜는 동작이 없다. 새 계층·컴포넌트 종류는 없다.",
+    "constraints_applied": [
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003",
+      "DEPLOY-001"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0002",
+    "ADR-0007",
+    "ADR-0008",
+    "ADR-0018",
+    "ADR-0022",
+    "ADR-0024",
+    "ADR-0026",
+    "ADR-0027",
+    "ADR-0028",
+    "ADR-0034"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "frontend/src/pages/PerformanceListPage.tsx",
+        "change": "재작성(→ 홈) — MUI Card·Stack·Typography 대신 components/ui 부품. 머리글(기준 시각 줄·후보 문구·공연 보기)·StatusChips·2열 격자·더 보기·상태별 화면. 상태는 칩·페이지·세대(늦은 응답 폐기)"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "change": "getPerformances(status?, page?) 로 확장(인자 없으면 쿼리 없음), getNextOpening()(204 → null), 목록 응답 런타임 검증 parseList — parseDetail 과 같은 규칙을 공유"
+      },
+      {
+        "path": "frontend/src/components/PerformanceCard.tsx",
+        "change": "카드 — Poster·StatusBadge·공연명·일시·장소·상태별 한 줄, 카드 전체 Link",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/StatusChips.tsx",
+        "change": "칩 6개 — aria-pressed·가로 스크롤·44px 터치 영역",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/Poster.tsx",
+        "change": "PerformanceDetailPage 의 비공개 Poster 를 꺼낸 것 — aspectRatio 를 prop 으로 받는다",
+        "new": true
+      },
+      {
+        "path": "frontend/src/pages/PerformanceDetailPage.tsx",
+        "change": "로컬 Poster 를 지우고 components/Poster 를 import — 동작 불변(사용자 확인 2026-11-16)"
+      },
+      {
+        "path": "frontend/src/utils/datetime.ts",
+        "change": "'오늘 <시각>' / '<날짜> <시각>' 을 가르는 formatWhen(iso, referenceMs) 추가 — 머리글·카드가 같이 쓴다(상세에 같은 비교가 인라인으로 있으나 상세는 건드리지 않는다)"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "frontend/src/hooks/useServerClock.ts",
+        "symbol": "useServerClock",
+        "note": "ADR-0024 의 오프셋 계산은 이 훅 하나 — 홈은 { enabled: true } 로 쓴다. deadline 이 없으면 1초마다 다시 그린다(목록 전체가 매초 다시 그려진다 — 카드를 memo 로 막을지 unresolved)"
+      },
+      {
+        "path": "frontend/src/utils/datetime.ts",
+        "symbol": "formatDateTime·formatTimeOfDay·kstDay·isInstant",
+        "note": "한국 시간 표기와 같은 날 비교 — 새로 만들지 말 것"
+      },
+      {
+        "path": "frontend/src/components/StatusBadge.tsx",
+        "symbol": "StatusBadge",
+        "note": "배지 문구·색이 design.md §5 와 같다 — 변경 없이 재사용(기능 문서 spec paths 에 있으나 고칠 것이 없다)"
+      },
+      {
+        "path": "frontend/src/components/ui/Hero.tsx",
+        "symbol": "Hero",
+        "note": "eyebrow·title(h1)·lead — 홈 머리글"
+      },
+      {
+        "path": "frontend/src/components/ui/Block.tsx",
+        "symbol": "Block",
+        "note": "'다가오는 공연' 흰 섹션 + h2"
+      },
+      {
+        "path": "frontend/src/components/ui/Page.tsx",
+        "symbol": "Page",
+        "note": "main 래퍼"
+      },
+      {
+        "path": "frontend/src/auth/AuthParts.tsx",
+        "symbol": "MoreLink",
+        "note": "시안 .hero-more — 화살표가 붙은 글자 링크. auth 폴더에 있어 홈이 import 하면 방향이 어색하다 — 옮길지 그대로 쓸지는 2a·3 에서 정한다"
+      },
+      {
+        "path": "frontend/src/components/ui/text.ts",
+        "symbol": "isBlankDisplay·hasContent",
+        "note": "표시 문자열 공백 판정 한 곳(ADR-0027)"
+      },
+      {
+        "path": "frontend/src/api/http.ts",
+        "symbol": "request",
+        "note": "토큰이 있으면 싣는다 — 목록·후보는 공개 경로"
+      },
+      {
+        "path": "frontend/src/assets/fluent/ticket.svg",
+        "symbol": "ticketArt",
+        "note": "포스터 없음 아이콘 — 상세가 쓰는 것과 같다"
+      },
+      {
+        "path": "frontend/src/test/task020.tsx",
+        "symbol": "fetch 스텁·공연 fixture",
+        "note": "App + MemoryRouter + AuthProvider + 'METHOD path' 키 스텁 관례 — 홈 테스트가 따른다"
+      }
+    ],
+    "existing_tests": [
+      "frontend/src/pages/PerformanceListPage.test.tsx",
+      "frontend/src/pages/task017.regression.test.tsx",
+      "frontend/src/api/http.test.ts",
+      "frontend/src/task017.static.test.ts",
+      "frontend/src/task020.static.test.ts",
+      "frontend/src/pages/task020.detail.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/src/auth/AuthScreens.test.tsx",
+      "frontend/src/auth/task018.auth.test.tsx",
+      "frontend/src/auth/task024.organizer.test.tsx",
+      "frontend/src/auth/SocialLoginScreens.test.tsx",
+      "frontend/src/components/StatusBadge.test.tsx"
+    ],
+    "unresolved": [
+      "[승인 테스트 수정·교체 — 2b 승인에 함께 올린다] (a) pages/PerformanceListPage.test.tsx 5건 전체: 옛 화면 문구('목록을 불러오지 못했습니다'·'예정된 공연이 없습니다')와 MUI Card·toLocaleString 을 단언 — 새 문구(AC-6·7)로 교체. SC-02 는 공연명·장소의 fontFamily 가 Pretendard 인지 단언한다 — 새 화면에서도 같은 단언이 성립해야 하는지 2a 에서 정한다. (b) pages/task017.regression.test.tsx:100-113: 앱 첫 경로 빈 목록에서 '예정된 공연이 없습니다' — AC-6 의 '다가오는 공연이 없어요' 로. :70-76 은 목록에서 배지 다섯 문구가 각각 1개씩이라고 단언 — 새 홈에는 칩 '예정·매진·마감' 도 같은 글자라 findAllByText(...).toHaveLength(1) 이 깨진다(칩은 '취소', 배지는 '공연 취소'라 이 둘만 겹치지 않는다). (c) task017.static.test.ts:30-34·task020.static.test.ts:30-34: DESIGN-003 위반 파일을 [PerformanceEditPage, PerformanceListPage] 로 toEqual 고정 — 홈을 토큰으로 재작성하면 위반이 PerformanceEditPage 하나로 준다(check_architecture.py 로 지금 위반을 확인했다). (d) api/http.test.ts:71·143: getPerformances() 인자 없는 호출의 URL 이 '/api/performances' 여야 한다 — 인자가 없으면 쿼리 문자열을 붙이지 않는 것으로 지킨다.",
+      "[홈을 렌더하는 기존 테스트의 fetch 스텁] auth/AuthScreens.test.tsx:77·SocialLoginScreens.test.tsx:80·task024.organizer.test.tsx:78 은 'GET /api/performances' 키 하나만 안다. 홈이 새로 부르는 GET /api/performances/next-opening 과 GET /api/time 은 스텁에 없어(404·미등록) 후보 없음·기준 시각 실패 상태가 되고 해롭지 않을 것으로 본다 — 그러나 AuthScreens.test.tsx:1014 는 'calls.filter(key.includes(/api/performances))' 가 0 이라고 단언한다(홈을 거치지 않는 흐름인지 2a 에서 확인). 스텁이 모르는 키를 어떻게 다루는지(throw 인지 404 응답인지) 2a 에서 열어 확인한다.",
+      "[사용자 결정 2026-11-16 — 전역 헤더 유지] 시안 home.html 은 전역 헤더 없이 한 장이지만 홈에서 로그인·가입으로 가는 길이 AppHeader 뿐이고 organizer-flow 의 TASK-025 가 AppHeader 에 '내 공연' 링크를 단다. 홈은 지금처럼 Container + AppHeader 아래에 그린다(App.tsx 변경 없음). 시안과 다른 점은 맨 위 헤더 한 줄과 좌우 여백(Container 16~24px + 시안 --page-x) 이중 가능성 — Phase 4 화면 확인에서 차이로 판정하지 않고, 이중 여백이면 홈 안에서 보정한다. 기능 문서 §8 '시안과 다르게 두는 것' 에 한 줄을 더해야 한다(문서 갱신은 Phase 5 제안).",
+      "[useServerClock 을 deadline 없이 켠다] 훅은 offset 이 정해지면 1초마다 bump 해 컴포넌트를 다시 그린다 — 홈은 카드 20~수백 개가 매초 다시 그려진다. PerformanceCard 를 React.memo 로 막을지, 시각 줄만 별도 컴포넌트로 빼 훅을 그 안에 둘지 Phase 3 에서 정한다(후자면 '오늘' 판정용 reference 를 위로 올려야 해 구조가 달라진다). 시나리오에서 '카드는 시각이 바뀌어도 다시 요청하지 않는다'(호출 횟수)만 못박는다.",
+      "[기준 시각이 없을 때 '오늘' 문구] 기준 시각 측정 중·실패면 머리글·카드의 '오늘 … 오픈' 판정은 기기 날짜로 가른다(상세 PerformanceDetailPage.tsx:249 와 같은 선례 — 문구용이고 켜는 데 쓰지 않는다). AC-2 는 시각 줄만 숨기라고 하고 문구는 말하지 않는다 — 2a 에서 이 해석(기기 날짜 대체)을 시나리오로 못박고 독립검증을 받는다. 기준 시각이 처음엔 없다가 측정이 끝나면 문구가 '11월 14일(토) …' 에서 '오늘 …' 로 바뀔 수 있다(자정 근처).",
+      "[목록 응답 런타임 검증] parseDetail(상세)은 TASK-020 Phase 4 에서 응답 계약 위반을 오류로 보라는 지적(RC-1·4)을 받았다. 목록도 같은 규칙(ISO 순간·정수·공백 제목·정의 밖 status)을 적용하되, 원소 하나가 위반이면 전체 오류로 볼지 그 원소만 건너뛸지 정한다 — 건너뛰면 totalElements 와 불러온 개수가 어긋나 더 보기가 영영 남는다. 2a 에서 '전체 오류'로 못박는 것을 권한다. 정의 밖 status 는 상세와 같이 오류로 볼지(상세는 오류) 배지만 없이 카드를 그릴지(StatusBadge 는 null) 정해야 한다 — 기존 StatusBadge.test 가 정의 밖 값에서 null 을 단언한다.",
+      "[칩 라벨 vs 배지 문구] 칩은 시안대로 '전체·예정·예매 가능·매진·마감·취소', 배지는 design.md §5 의 '예매 가능·예정·매진·마감·공연 취소'. 칩과 카드 배지가 같은 글자를 쓰므로 테스트는 role(button, aria-pressed)로 칩을, 카드 안(within)으로 배지를 잡아야 한다 — 2b 에서 쿼리를 정한다.",
+      "[Poster 추출이 승인 테스트에 닿는 곳] task020.detail.test.tsx SC-17·33 이 data-testid=\"poster\"·대체 텍스트 '<공연명> 포스터'·회색 면 색(--c-bg)·ticket 아이콘 크기를 단언한다 — 추출 뒤에도 그대로여야 한다(코드 이동만, 값 불변). 카드는 비율만 1/1 로 다르다. 포스터 없음 면 색은 상세와 같이 --c-bg(기능 문서는 --c-surface 라 적었으나 시안 .photo 가 --c-bg — TASK-020 결정을 따른다).",
+      "[설정·마이그레이션·환경변수 없음] ops_impacts 불필요. 백엔드 변경 없음 — 마이그레이션·FK·응답 DTO 필드 추가가 없어 TASK-019 에서 겪은 승인 테스트 파급은 이 태스크에 없다. GET /api/performances 의 size 는 서버 기본 20 이라 요청에 싣지 않는다(기본 호출이 쿼리 없는 URL 을 유지).",
+      "[선점 가능성 해당 없음] 외부 신원으로 계정을 연결하는 설계가 아니다. 테스트 DB·운영 DB 차이도 해당 없음(프론트 전용, 서버는 fetch 스텁)."
+    ],
+    "exploration": {
+      "method": "inline",
+      "calls": 0,
+      "main_reads": 24
+    }
+  },
+  "acceptance_criteria": [
+    "AC-1 `next-opening` 후보가 오늘(기준 시각, 한국 시간) 열리면 \"오늘 오후 6:00에 <공연명> 예매가 열려요\", 다른 날이면 \"11월 14일(토) 오후 2:00에 …\"가 보이고, \"<공연명> 공연 보기\"가 그 상세로 간다. 204 면 \"다가오는 공연을 골라 보세요\"만 보인다",
+    "AC-2 머리글 위 \"티켓온 · 11월 11일(수) 오후 5:50\"이 기준 시각이고, 기준 시각 측정이 실패하면 이 줄이 없다",
+    "AC-3 칩을 누르면 해당 `status` 로 첫 페이지를 다시 불러오고 누른 칩만 `aria-pressed=\"true\"` 다",
+    "AC-4 카드가 배지·공연명·시작 일시(항상 날짜 + 시각)·장소를 보이고, 예매 가능은 \"남은 좌석 N석\", 예정은 \"<오픈 일시> 오픈\"(오늘이면 \"오늘 오후 6:00 오픈\")을 덧붙인다. 카드를 누르면 상세로 간다",
+    "AC-5 공연이 20개를 넘으면 \"더 보기\"가 보이고 누르면 다음 20개가 아래에 붙는다. 다 불러오면 버튼이 없다. 실패하면 이미 보인 카드는 그대로이고 \"불러오지 못했어요 · 다시 시도\"가 보인다",
+    "AC-6 빈 목록은 전체면 \"다가오는 공연이 없어요\", 칩이면 \"<칩> 공연이 없어요\" + 전체 보기가 보인다",
+    "AC-7 목록 실패 시 \"공연 목록을 불러오지 못했어요\" + 다시 시도, 로딩 중엔 카드 자리 4개가 보인다",
+    "AC-8 \"내 예매\" 행이 없다 (흐름 5)",
+    "AC-9 375px 에서 `home.html` 과 나란히 띄워 구조·문구·색이 같다 (카드 일시·내 예매는 §8 의 차이)"
+  ],
+  "test_hints": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "command": "export PATH=\"$HOME/.nvm/versions/node/v22.23.1/bin:$PATH\" && cd frontend && npm test -- --run",
+    "mock_strategy": "화면은 App + MemoryRouter(+ AuthProvider)로 실제 라우트를 지나게 해 전역 헤더(유지)·카드 이동을 함께 확인한다(test/task020.tsx 관례). 서버는 'METHOD path' 키별 fetch 스텁(응답마다 새 Response) — GET /api/performances·/next-opening(200·204·실패)·/api/time 을 각각 제어하고 호출 횟수·쿼리(status·page)를 단언한다. 늦은 응답 폐기(칩 전환·언마운트)는 응답을 수동으로 늦게 풀어 검증, 기준 시각은 vi.useFakeTimers + 서버 now 스텁(TASK-020 가짜 타이머 관례, userEvent advanceTimers). 포스터 로드 실패는 img error 이벤트. 375px 시안 대조(AC-9)는 Phase 4 브라우저에서."
+  }
+}

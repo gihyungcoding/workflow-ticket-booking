@@ -67,6 +67,14 @@ export function kstDay(time: number | string): string {
   return dayFormat.format(new Date(time))
 }
 
+/**
+ * 오픈 일시 표기 — 한국 날짜가 today(`kstDay`)와 같으면 「오늘 오후 6:00」, 아니면 「11월 14일(토) 오후 2:00」.
+ * 머리글과 카드가 같은 비교를 쓴다. today 를 문자열로 받아 카드가 매초 다시 그려지지 않게 한다(날짜가 바뀔 때만 달라진다).
+ */
+export function formatWhen(iso: string, today: string): string {
+  return kstDay(iso) === today ? `오늘 ${formatTimeOfDay(iso)}` : formatDateTime(iso)
+}
+
 /** 남은 시간(ms) → "3일 4시간" · "2시간 15분" · "4분 32초" · "32초". 초 이하는 버린다 */
 export function formatCountdown(remainingMs: number): string {
   const total = Math.max(0, Math.floor(remainingMs / 1000))

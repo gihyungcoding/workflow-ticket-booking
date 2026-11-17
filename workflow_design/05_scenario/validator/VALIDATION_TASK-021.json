@@ -1,0 +1,25 @@
+{
+  "task_id": "TASK-021",
+  "round": 2,
+  "checks": [
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 시나리오 29개(SC-01~29)다. 이번에 고친 SC-06(Then 세 줄), SC-15(Then 세 줄), SC-16(행 h), SC-17(j 행), SC-18(행 h 와 표 행 순서 a·b·h·c…), SC-19(g 행·And)의 문장이 MD 와 JSON 에서 같다. 고치지 않은 SC-23~29 와 승인 테스트 표는 이번 회차에 다시 대조하지 않았다. 1회차에 일치로 판정한 부분이다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 29개. happy·error·boundary·regression 이 모두 있다. 하한을 충족한다."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "AC-1~9 가 모두 어느 시나리오의 covers 에 있다. AC-1→SC-01·02·03·04·05·06·09·23, AC-2→SC-01·07~10·23, AC-3→SC-01·13·14·28, AC-4→SC-01·03·06·11·12·27·29, AC-5→SC-15~18·28, AC-6→SC-19, AC-7→SC-20~23·29, AC-8→SC-24, AC-9→SC-25·26. 이번 수정으로 바뀐 covers 는 없다."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오의 flow·also_flows 는 F1~F9 안이고 PLAN 의 design.flows[].id 에 모두 실재한다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "1회차의 SC-06 OR 조건 지적은 고쳐졌다. 지금은 h1 과 첫 카드 textContent 에 201자 전체가 들어 있는지와 overflow-wrap 값을 단언하고 OR 조건은 없다. 남은 것은 SC-26 의 위반 건수 단언(스크립트 결과), SC-27 의 다른 테스트 파일 통과를 가리키는 메타 단언, SC-25 k 의 소스 문자열 검사다. 렌더 단언이 아니다. 변경 없음. [신규] SC-15 의 세 번째 Then '앞은 모두 /api/performances' 는 해석이 둘이다. 칩 변형에서 첫 요청이 쿼리 없는 URL 이라는 뜻이면 사실과 다르다. 칩을 누른 뒤에는 첫 요청이 ?status=X 이기 때문이다. 칩을 누르기 전 초기 로드를 말하는 것이면 Given 에 그렇게 적어야 한다."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "1회차와 같다. SC-09 는 시점이 둘이다. SC-15~19 는 '홈을 열고 더 보기를 누른다' 꼴로 When 이 둘이다. SC-19·SC-21·SC-13 은 And 에서 두 번째 조작을 한다. SC-14·18·23 의 표 행은 다단계 조작이다. SC-24 는 비로그인과 로그인을 각각 연다. [신규] SC-16 은 When 이 '홈을 연다' 뿐인데 행 e·f·h 는 '누른 뒤' 결과를 단언한다. When 에 더 보기 조작이 없어 Given/When 과 Then 이 어긋난다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "1회차와 같다. SC-28 이 함수명을 쓰고 SC-23 이 StrictMode·AbortSignal 을, SC-25 가 getComputedStyle 을, SC-20 이 data-testid 를, SC-26 이 python3 스크립트 명령을 쓴다. API 클라이언트와 정적 제약을 시험하는 시나리오라 불가피한 면은 있다."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "pass", "detail": "1회차의 두 지적은 고쳐졌다. (1) PLAN page 노트가 '응답의 page·size 는 홈이 쓰지 않아 계약이 아니다(SC-29 g·h)' 로 바뀌어 SC-29 g·h 와 맞는다. (2) availableSeats 노트가 'totalSeats 는 홈이 쓰지 않아 availableSeats ≤ totalSeats 는 검사하지 않는다(SC-29 i)' 로 바뀌어 SC-29 i 와 맞는다. (3) 기기 시계는 design.inputs 에 '기기 시계'(Date.now())가 추가됐고, 기준 시각이 없을 때만 문구용으로 쓴다는 제약이 SC-08·09 와 맞는다. 기기 시계가 input_fields 에는 여전히 없다. 이 부분은 V12 로 남긴다."},
+    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "1회차와 같다. 늦은 응답 폐기 가드가 SC-14 d·e, SC-18 f·g, SC-23 a·e 에서 반복된다. 후보 실패는 SC-04 와 SC-23 g 가 겹친다. CV 표를 SC-05·13·17 j·22 가 쓴다. SC-25 k 와 SC-26 은 같은 정적 제약을 본다. 의도된 중복일 수 있고 사람이 판단할 일이다."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "기존 파일을 바꾸는 태스크이고 regression 시나리오 SC-24~27 과 승인 테스트 이전 표가 있다."},
+    {"id": "V11", "name": "입력 경계 판정", "verdict": "pass", "detail": "coverage_matrix 의 모든 칸을 보았다. 1회차 false_cover content@F6:array.max+1 은 고쳐졌다. 지금은 SC-16 행 h 가 첫 20개에 더해 ?page=1 응답이 21개이고 total 41 인 경우를 Given 으로 두고, Then 이 '카드 41개 전부 표시(자르지 않음)·더 보기 없음' 을 단언한다. 이 칸의 판정은 맞다. 새로 생긴 칸과 바뀐 칸도 확인했다. status@F6:enum.each→SC-15 는 칩 다섯 상태마다 page=1 URL 을 단언한다. page@F6 의 n/a 근거는 PLAN page 노트와 맞고, n/a 에서 가리키는 SC-28 i·SC-21 j 가 실재한다. posterUrl 하위 칸 9개의 n/a 는 PLAN 노트가 '서버가 https 만 받는다·화면은 http(s) 만 그린다·로드 실패는 img error' 까지 말하므로 근거가 있다. 새로 깨진 칸은 없다. false_cover, bad_na, plan_gap 모두 0건이다."},
+    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "(1) 기기 시계 DEVICE 는 SC-02 g, SC-07 b·c, SC-09 가 입력으로 쓰는데 PLAN input_fields 에 필드가 없다. design.inputs 에는 들어갔다. datetime 종류(자정 경계, 서버와 기기의 날짜 불일치)가 칸 목록에 올라 있지 않다. 사람이 HITL 에서 input_fields 를 보강할지 판단한다. (2) posterUrl n/a 근거 문구에 'PLAN posterUrl note — … 호스트·userinfo·포트 같은 하위 요소는 서버가 판정한다' 가 있다. 이 중 하위 요소 판정 부분은 PLAN note 에 그대로 있는 문장이 아니다. PLAN 은 서버가 https 만 받고 화면은 http(s) 만 그린다는 데까지만 말한다. 칸을 n/a 로 두는 것 자체는 수긍되고 문구 정확성만의 문제다. (3) 칩을 연속으로 누를 때 같은 칩과 다른 칩의 요청 횟수는 정해져 있지 않다. SC-13 의 마지막 And 는 이미 선택된 칩을 다시 누를 때만 다룬다. (4) 후보 공연이 목록에 없거나 칩 필터에서 안 보일 때 머리글과 카드가 어긋나는 경우가 정해져 있지 않다. (5) 제목·장소에 HTML 특수문자가 들어올 때의 이스케이프가 정해져 있지 않다. (6) SC-18 b 의 중복 id 로 24<25 인 채 남은 더 보기에서, 같은 id 만 계속 오면 버튼이 무한히 남는지는 SC-18 h 가 page=2 요청과 빈 배열일 때 사라짐만 정하고 그 사이의 경우는 정하지 않는다."}
+  ],
+  "v11_matrix": [],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 6,
+    "summary": "1회차의 fail 1건(content@F6:array.max+1 false_cover)은 SC-16 행 h 로 고쳐졌다. 고치면서 새로 깨진 V1~V4·V11 위반은 없다. 1회차의 V8 경고 두 건도 PLAN 노트 수정으로 해소됐고, SC-06 의 OR 조건도 AND 로 바뀌었다. 경고는 V5·V6·V7·V9·V12 다. 새로 본 경고는 [신규] 두 건이다. SC-15 세 번째 Then 의 '앞은 모두 /api/performances' 가 모호하고, SC-16 의 When 에 더 보기 조작이 없어 행 e·f·h 와 어긋난다. 사람이 HITL 에서 판단한다."
+  }
+}

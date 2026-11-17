@@ -8,6 +8,7 @@ import type { Performance } from '../api/performances'
 import calendarArt from '../assets/fluent/calendar.svg'
 import pinArt from '../assets/fluent/pin.svg'
 import ticketArt from '../assets/fluent/ticket.svg'
+import { Poster } from '../components/Poster'
 import { ZoneMapSheet } from '../components/ZoneMapSheet'
 import { AppBar, CtaBar, Hero, Info, Page, Row } from '../components/ui'
 import { useServerClock } from '../hooks/useServerClock'
@@ -35,41 +36,6 @@ const eyebrowStyle = {
   fontWeight: Number(token('--fw-strong')),
   lineHeight: Number(token('--lh-sub')),
   color: token('--c-text-2'),
-}
-
-/** 포스터 — 없거나 불러오지 못하면 같은 크기의 회색 면과 아이콘 (시안 .photo) */
-function Poster({ title, url }: { title: string; url: unknown }) {
-  const [broken, setBroken] = useState(false)
-  // http·https 만 그린다 — javascript:·data: 같은 스킴은 포스터 없음으로 본다(서버는 https 만 받는다 — ADR-0028)
-  const usable = !broken && typeof url === 'string' && /^https?:\/\//i.test(url.trim())
-  const alt = `${title} 포스터`
-  return (
-    <Box
-      data-testid="poster"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: token('--r-m'),
-        backgroundColor: token('--c-bg'),
-        aspectRatio: '4 / 3',
-        marginBottom: token('--stack-s'), // 시안 .show .photo
-      }}
-    >
-      {usable ? (
-        <Box
-          component="img"
-          src={url as string}
-          alt={alt}
-          onError={() => setBroken(true)}
-          sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
-        />
-      ) : (
-        <Box role="img" aria-label={alt} sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}>
-          <Box component="img" src={ticketArt} alt="" sx={{ width: componentSizes.waitArt, height: componentSizes.waitArt, opacity: 0.45 }} />
-        </Box>
-      )}
-    </Box>
-  )
 }
 
 /** 「열리면 이 순서로 골라요」 — 시안 .timeline */
@@ -311,7 +277,7 @@ export function PerformanceDetailPage() {
         </Box>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: token('--stack-s') }}>
-          <Poster title={p.title} url={(p as { posterUrl?: unknown }).posterUrl} />
+          <Poster title={p.title} url={(p as { posterUrl?: unknown }).posterUrl} aspectRatio="4 / 3" marginBottom={token('--stack-s')} />
           <Box component="p" sx={eyebrowStyle}>{`${p.venue} · ${p.totalSeats.toLocaleString('ko-KR')}석`}</Box>
           <Box component="h2" sx={{ margin: 0, fontSize: token('--fs-h2'), fontWeight: Number(token('--fw-h2')), lineHeight: Number(token('--lh-h2')), textWrap: 'balance' }}>
             {p.title}

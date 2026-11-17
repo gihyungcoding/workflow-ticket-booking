@@ -69,8 +69,12 @@ describe('TASK-017 기존 화면 회귀', () => {
     // 공연 목록 — 상태별 다섯 개
     vi.mocked(getPerformances).mockResolvedValue(list(['OPEN', 'UPCOMING', 'SOLD_OUT', 'CLOSED', 'CANCELLED']))
     const listView = renderAt('/', '/', <PerformanceListPage />)
+    // TASK-021 — 홈의 상태 칩(예정·예매 가능·매진·마감)이 배지와 같은 글자라 배지는 칩(button) 밖에서만 센다 (SC-11).
+    // 칩이 먼저 그려지므로 카드가 나올 때까지 기다린 뒤 센다
+    await screen.findByText('공연 1')
     for (const label of ['예매 가능', '예정', '매진', '마감', '공연 취소']) {
-      expect(await screen.findAllByText(label), label).toHaveLength(1)
+      const badges = (await screen.findAllByText(label)).filter((el) => !el.closest('button'))
+      expect(badges, label).toHaveLength(1)
     }
     expectNoOldLabels()
     listView.unmount()
@@ -110,6 +114,6 @@ describe('TASK-017 기존 화면 회귀', () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    expect(await screen.findByText('예정된 공연이 없습니다')).toBeInTheDocument()
+    expect(await screen.findByText('다가오는 공연이 없어요')).toBeInTheDocument() // TASK-021 SC-19 — 시안 문구
   })
 })
