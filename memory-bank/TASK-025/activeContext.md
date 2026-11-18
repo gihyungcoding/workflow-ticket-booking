@@ -1,8 +1,8 @@
 ---
 task_id: TASK-025
 title: "내 공연 목록·주최자 진입 경로"
-phase: "2b"
-phase_name: "Phase 2b - Red 완료 (HITL#1·2 승인)"
+phase: "3"
+phase_name: "Phase 3 - Green 완료"
 status: IN_PROGRESS
 track: light
 created_at: 2026-11-17
@@ -13,22 +13,23 @@ sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-025-organizer-list-entry"
 
-last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
+last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
 source: "docs/product/features/organizer-flow.md (Task D)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-025.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-025.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-025.json"
   test: "workflow_design/05_scenario/TEST_TASK-025.json"
+  dev: "workflow_design/06_dev/DEV_TASK-025.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 2b (Red) 완료 — 테스트 23개 함수·320 케이스, 실패 300(+승인 테스트 변경 3), HITL#1·2 승인(2026-11-17). 3 진입 가능.
+Phase 3 (Green) 완료 — 전체 1923 통과·린트 0·tsc 0·빌드 성공, 자체 리뷰 1라운드 결함 0. Phase 4 진입 가능.
 
 ## 다음 한 걸음
 
-Phase 3 — `wf-develop`. 테스트를 통과시키는 최소 구현. 계약: TEST_TASK-025.json `test_contracts_for_green`, SC-17 행 f 는 쪽 수 × 20 ≥ 총수 규칙.
+Phase 4 — `wf-verify`. 증거 기반 완료 판정(HITL#3). 보류된 [reuse] 3건·[test] 1건은 DEV pre_review.deferred.
 
 ## 알아둬야 할 것
 
@@ -44,3 +45,4 @@ Phase 3 — `wf-develop`. 테스트를 통과시키는 최소 구현. 계약: TE
 - **사용자 확정 (2026-11-17, Phase 1)**: ① 머리글 「{이름} 님」+상태별 제목 3종 ② /organizer 한 장 전체(전역 헤더 없음) ③ 「더 보기」 추가 ④ 소셜 콜백도 역할별 이동 — ③·④ 는 AC·implementation_spec 밖 확장
 - 상세 라우트가 없어 행 선택은 TASK-026 전까지 빈 화면 — 같은 배포로 낸다
 - **Red 승인 사항 (2026-11-17)**: 승인된 테스트 변경 1파일(task024.organizer.test.tsx — SC-17 b·c·보강·afterEach 복원). SC-17 행 f = 쪽 수 기준(홈과 다름). 기본 제목 「내 공연」과 앱바 제목 중복은 수용
+- **Phase 3 결정**: 더 보기 소멸 = items ≥ total 또는 쪽 수×20 ≥ total. Badge 는 BadgeToneOrDraft 로 분리(task017 타입). 승인 테스트 수정 — task018 SC-35 한 행(사용자 승인 2026-11-18). 화면 확인(시안 대조)은 Phase 3 에서 수행

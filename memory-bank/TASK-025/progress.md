@@ -5,7 +5,7 @@
 | 1 Plan | ✅ 완료 | CP-1.3 | flows 12 · AC 10 · unresolved 13 |
 | 2a Scenario | ✅ 완료 | CP-2.2 | 23건 · 칸 140 · 검증 2회차 PASS |
 | 2b Red | ✅ 완료 | CP-2.5 | 23 함수 · 320 케이스 · 실패 300 · HITL#1·2 승인 |
-| 3 Green | ⬜ 대기 | — | |
+| 3 Green | ✅ 완료 | CP-3.4 | 1923 통과 · 리뷰 1R 결함 0 |
 | 4 Verify | ⬜ 대기 | — | |
 | 5 Reflect | ⬜ 대기 | — | |
 

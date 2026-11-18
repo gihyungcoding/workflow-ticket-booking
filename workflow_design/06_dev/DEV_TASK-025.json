@@ -1,0 +1,275 @@
+{
+  "task_id": "TASK-025",
+  "changed_files": [
+    {
+      "path": "frontend/src/api/organizer.ts",
+      "change": "getMyPerformances — 인자 검증·쿼리·401/403 구분·응답 계약 검증(parseItem·parseList). 스켈레톤을 구현으로",
+      "lines_changed": 72
+    },
+    {
+      "path": "frontend/src/pages/OrganizerPerformanceListPage.tsx",
+      "change": "내 공연 목록(신규) — 앱바·머리글·칩·행·로딩·오류·0건·필터 0건·더 보기·떠 있는 버튼, 세대 규칙",
+      "lines_changed": 291
+    },
+    {
+      "path": "frontend/src/components/OrganizerPerformanceRow.tsx",
+      "change": "목록 행(신규) — 배지 하나·썸네일/자리표시·일시·둘째 줄·화살표, 모든 행이 상세 링크",
+      "lines_changed": 91
+    },
+    {
+      "path": "frontend/src/components/ui/Fab.tsx",
+      "change": "떠 있는 주 행동 부품(신규)",
+      "lines_changed": 48
+    },
+    {
+      "path": "frontend/src/components/ui/Badge.tsx",
+      "change": "draft 톤 — BadgeToneOrDraft(BadgeTone 은 그대로)",
+      "lines_changed": 10
+    },
+    {
+      "path": "frontend/src/components/StatusChips.tsx",
+      "change": "FilterChips<T> 일반화, StatusChips 는 얇은 래퍼",
+      "lines_changed": 28
+    },
+    {
+      "path": "frontend/src/components/AppHeader.tsx",
+      "change": "주최자 로그인일 때만 「내 공연」 링크",
+      "lines_changed": 5
+    },
+    {
+      "path": "frontend/src/pages/JoinedPage.tsx",
+      "change": "시작하기 목적지를 역할로 가름",
+      "lines_changed": 3
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.tsx",
+      "change": "safeDestination 폴백을 역할별로",
+      "lines_changed": 11
+    },
+    {
+      "path": "frontend/src/pages/OAuthRedirectPage.tsx",
+      "change": "소셜 콜백 뒤 역할별 이동(사용자 확정 확장)",
+      "lines_changed": 3
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "change": "/organizer 라우트(RequireOrganizer appBar)와 한 장 전체 화면 판별",
+      "lines_changed": 7
+    },
+    {
+      "path": "frontend/src/auth/RequireOrganizer.tsx",
+      "change": "OrganizerOnlyNotice 에 appBar 옵션(/organizer 에서만 앱바), 예고 주석 정리",
+      "lines_changed": 23
+    },
+    {
+      "path": "frontend/src/auth/AuthContext.tsx",
+      "change": "logout 에 setRestoring(false) — TASK-024 follow_up",
+      "lines_changed": 2
+    },
+    {
+      "path": "frontend/src/auth/homePath.ts",
+      "change": "homePathOf(role) — 세 이동 지점의 공용 규칙(신규, scope_deviations)",
+      "lines_changed": 6
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "change": "STATUSES·isSafeCount export(scope_deviations)",
+      "lines_changed": 4
+    },
+    {
+      "path": "frontend/src/theme/tokens.ts",
+      "change": "componentSizes: thumbLarge·fab·fabGap (시안 값)",
+      "lines_changed": 3
+    },
+    {
+      "path": "frontend/src/components/ui/index.ts",
+      "change": "Fab·BadgeToneOrDraft export",
+      "lines_changed": 3
+    }
+  ],
+  "reused": [
+    {
+      "path": "frontend/src/pages/PerformanceListPage.tsx",
+      "symbol": "ListState·merge·loadMore·generation",
+      "note": "파일을 고치지 않고 같은 구조를 따랐다. ActionButton·Notice 는 export 되지 않아 페이지 안에 사본을 뒀다(deferred)"
+    },
+    {
+      "path": "frontend/src/components/StatusBadge.tsx",
+      "symbol": "StatusBadge",
+      "note": "예정·예매 가능·매진·마감 배지. 수정하지 않았다"
+    },
+    {
+      "path": "frontend/src/components/ui/AppBar.tsx",
+      "symbol": "AppBar"
+    },
+    {
+      "path": "frontend/src/components/ui/Hero.tsx",
+      "symbol": "Hero"
+    },
+    {
+      "path": "frontend/src/components/ui/Block.tsx",
+      "symbol": "Block"
+    },
+    {
+      "path": "frontend/src/components/Poster.tsx",
+      "symbol": "Poster"
+    },
+    {
+      "path": "frontend/src/utils/datetime.ts",
+      "symbol": "formatDateTime·isInstant"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "symbol": "UnauthorizedError·ForbiddenRoleError·STATUSES·isSafeCount"
+    },
+    {
+      "path": "frontend/src/auth/RequireOrganizer.tsx",
+      "symbol": "RequireOrganizer·OrganizerOnlyNotice"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd frontend && npx vitest run",
+    "total": 1924,
+    "passed": 1923,
+    "failed": 0,
+    "todo": 1,
+    "target_tests_passed": 320,
+    "note": "전체 35파일. 새 테스트 320케이스(23 시나리오) 전부 통과, 기존 1603 − 승인 변경 3(task024) + 3 + 1(task018 기대값 조정 후) 통과. todo 1건은 기존"
+  },
+  "lint": {
+    "command": "cd frontend && npm run lint (oxlint)",
+    "errors": 0,
+    "warnings": 1,
+    "note": "변경한 소스 파일의 경고는 StatusChips.tsx:6 STATUS_CHIPS export(기존 코드, react/only-export-components) 1건. 새 파일·테스트 하네스의 only-export-components 경고는 기존 test/task020.tsx 와 같은 종류"
+  },
+  "typecheck": {
+    "command": "npx tsc --noEmit -p tsconfig.app.json",
+    "errors": 0
+  },
+  "build": {
+    "command": "npx vite build",
+    "result": "성공(스크래치 outDir)"
+  },
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py",
+    "result": "error 0 — DESIGN-003 warn 1건은 기존(PerformanceEditPage.tsx:135), AUTH-001 승격 기한 안내는 이 태스크 밖"
+  },
+  "refactoring": [
+    {
+      "what": "StatusChips 를 FilterChips<T> 로 일반화하고 StatusChips 를 얇은 래퍼로",
+      "why": "주최자 7칩이 같은 칩 스타일·동작을 써야 한다. 홈 6칩 동작은 그대로(회귀 SC-23 q·r 통과)"
+    },
+    {
+      "what": "homePathOf 를 auth/homePath.ts 로",
+      "why": "가입 완료·이메일 로그인·소셜 콜백 세 곳이 같은 역할별 규칙을 쓴다. 복사하면 한 곳이 어긋난다"
+    },
+    {
+      "what": "하지 않기로 한 것: ActionButton·Notice·401 이동 코드의 공통화",
+      "why": "홈·등록·수정 페이지를 건드려야 해 범위가 번진다(리뷰 [reuse] 메모와 같다) — pre_review.deferred"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "#4 승인된 테스트의 이동 기대값(JoinedPage·LoginPage·OAuthRedirectPage)",
+      "how": "전체 스위트 실행 + 2b 의 Grep",
+      "fact": "2b 가 찾은 task024 SC-17 b·c·보강 3건 외에 task018.auth.test.tsx SC-35 F1 「짝: role ORGANIZER」 행이 `/` 를 기대해 깨졌다(2b Grep 이 표를 만드는 코드의 role 변형을 놓쳤다)",
+      "impact": "사용자 승인으로 그 행의 기대 주소만 /organizer 로 고쳤다(test_modifications). 그 밖의 task018·SocialLoginScreens·AuthScreens 는 영향 없음"
+    },
+    {
+      "item": "#5 SC-36 경로 표기 표 · hasGlobalHeader",
+      "how": "신규 SC-05 로 /organizer 표기 변종 9행을 지켰고 전체 스위트 통과",
+      "fact": "기존 SC-36 행은 영향 없음. 리뷰어가 matchRoutes 를 PAGE_ROUTES 와 Routes 양쪽에 돌려 /organizer · /organizer/ · /Organizer · /ORGANIZER/ · /%6Frganizer 가 같은 화면으로 판별됨을 프로브",
+      "impact": "없음"
+    },
+    {
+      "item": "#6 AppHeader 를 렌더하는 기존 테스트의 링크 개수 단언",
+      "how": "전체 스위트 + Grep",
+      "fact": "링크 개수를 세는 단언 없음. 「내 공연」 링크 추가로 깨진 테스트 없음",
+      "impact": "없음"
+    },
+    {
+      "item": "#7 복원 중 logout 을 직접 검증하는 기존 테스트",
+      "how": "2a·2b Grep + 신규 SC-22",
+      "fact": "기존에는 없었다. 신규 SC-22 가 /organizer·/·등록 화면에서 지킨다(Red 에서 실패 → Green)",
+      "impact": "없음"
+    },
+    {
+      "item": "#8 잘못된 filter 에 서버가 400 을 내는 위치",
+      "how": "리뷰어가 OrganizerPerformanceController·PerformanceService 확인",
+      "fact": "서버가 400 으로 거르는 값은 page<0·size<1·page×size int 초과. 프론트는 PERFORMANCE_FILTERS 7값만 보내고 그 밖은 요청 전에 거부한다",
+      "impact": "없음 — 프론트 시나리오(SC-14)가 지킨다"
+    },
+    {
+      "item": "#10 task017.ui.test.tsx 가 BadgeTone 전수를 검사하는가",
+      "how": "tsc --noEmit",
+      "fact": "task017 이 Record<ExpectedTone> 로 BadgeTone 을 인덱싱한다 — BadgeTone 에 draft 를 더하면 승인 테스트 2곳(66·91행)이 타입 오류",
+      "impact": "BadgeTone 은 그대로 두고 Badge props 를 BadgeToneOrDraft 로 확장했다(PLAN 의 「BadgeTone 에 draft 추가」와 다름 — scope_deviations)"
+    }
+  ],
+  "test_modifications": [
+    {
+      "file": "frontend/src/auth/task018.auth.test.tsx",
+      "scenario": "TASK-018 SC-35 (F1 · 짝: role ORGANIZER)",
+      "change": "올바른 로그인 응답 행의 기대 주소 `/` → role ORGANIZER 행만 `/organizer`. 단언 수·다른 행은 그대로",
+      "reason": "이 태스크의 승인된 동작(주최자는 from 없이 로그인하면 /organizer — SC-02 행 a)과 충돌. 2b 가 놓친 곳",
+      "approval": "사용자 승인 — AskUserQuestion 「기대값만 고친다」(2026-11-18)",
+      "commit": "c51482c"
+    }
+  ],
+  "scope_deviations": [
+    {
+      "path": "frontend/src/auth/homePath.ts",
+      "reason": "PLAN target_files 에 없는 신규 파일(6줄). 세 이동 지점이 같은 규칙을 써야 해 복사 대신 공용 함수로"
+    },
+    {
+      "path": "frontend/src/api/performances.ts",
+      "reason": "STATUSES·isSafeCount 를 export(2줄). 주최자 목록 검증이 홈과 같은 판정을 쓰도록 — PLAN 은 이 파일을 reusable 로만 적었다"
+    },
+    {
+      "path": "frontend/src/components/ui/Badge.tsx",
+      "reason": "PLAN 은 BadgeTone 에 draft 를 추가한다고 했으나 승인된 TASK-017 테스트의 타입 때문에 BadgeToneOrDraft 로 분리"
+    },
+    {
+      "path": "frontend/src/auth/task024.organizer.test.tsx · frontend/src/auth/task018.auth.test.tsx",
+      "reason": "승인된 테스트 변경 — task024 는 2b 통합 승인분(SC-17 b·c·보강·afterEach 복원), task018 은 위 test_modifications"
+    }
+  ],
+  "dedup_scan": {
+    "homePathOf": "frontend/src 전체에서 로그인·가입 직후 navigate('/') 를 Grep — JoinedPage·LoginPage·OAuthRedirectPage 세 곳을 바꿨고 SignUpPage·RoleSelectionPage 는 /joined·/login 으로 가서 해당 없음(리뷰어도 확인)",
+    "isSafeCount·STATUSES": "performances.ts 기존 호출부 의미 불변, 신규 호출부는 organizer.ts 하나",
+    "포스터 판정": "OrganizerPerformanceRow.hasPoster 와 Poster.usable 이 같은 정규식을 따로 가진다 — deferred"
+  },
+  "screen_check": {
+    "method": "운영 빌드 + 모의 API + 시안을 한 출처(5199)로 서빙하고 같은 출처 375px iframe 두 장을 나란히(저장소 밖 임시 서버, PID 로 종료)",
+    "states": [
+      "기본(5행)",
+      "빈 목록",
+      "관객 안내",
+      "로딩(자리표시 3·칩 7·버튼)",
+      "오류+다시 시도",
+      "더 보기(20→40→45, 마지막에 버튼 사라짐)"
+    ],
+    "result": "구조·문구·위치가 시안과 같다. 375px 에서 가로 스크롤 없음. 시안과 다른 점은 알려진 것뿐 — 머리글 문구(회사명 없음·상태별 제목), 취소·마감 행도 링크·화살표(PLAN unresolved #3)",
+    "not_verified": "한국 시간 표기는 이 환경의 Chrome 이 timeZone 을 무시해(UTC) 브라우저 증거로 쓰지 못한다 — jsdom 테스트(SC-06·09)가 KST 로 단언한다"
+  },
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "전체 de76a5d...HEAD (frontend/src)",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": null
+      }
+    ],
+    "root_causes": [],
+    "unresolved": [],
+    "deferred": [
+      "[reuse] 401 이동 코드(from 조립 + /login)가 RequireOrganizer·PerformanceRegisterPage·PerformanceEditPage·이번 페이지 네 곳에 있다. 이번 페이지만 logout() 도 호출한다 — 등록·수정은 이번 diff 밖",
+      "[reuse] OrganizerPerformanceRow.hasPoster 와 Poster.usable 의 같은 정규식 중복",
+      "[reuse] ActionButton·Notice 가 홈 페이지와 이번 페이지에 사본으로 있다(홈에서 export 하지 않음)",
+      "[test] 머리글 「비공개 N건」은 불러온 행만 센다(시나리오 결정) — 21건 이상이면 총 비공개 수와 다르게 보일 수 있다"
+    ]
+  }
+}
