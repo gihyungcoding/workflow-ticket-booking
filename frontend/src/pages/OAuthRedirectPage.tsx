@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { fetchMe } from '../api/auth'
 import { useAuth } from '../auth/AuthContext'
+import { homePathOf } from '../auth/homePath'
 import { AUTH_MESSAGES } from '../auth/messages'
 import { rememberedProviderName } from '../auth/socialProvider'
 import idCardArt from '../assets/fluent/idcard.svg'
@@ -58,7 +59,7 @@ export function OAuthRedirectPage() {
       .then((user) => {
         if (!mounted.current) return
         auth.login(accessToken, user)
-        navigate('/', { replace: true })
+        navigate(homePathOf(user.role), { replace: true })
       })
       .catch(() => {
         if (mounted.current) navigate(FAILURE, { replace: true })

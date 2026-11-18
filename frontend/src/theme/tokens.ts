@@ -130,6 +130,9 @@ export const componentSizes = {
   waitSpin: '32px', // oauth-callback .wait-spin 32px
   waitSpinBorder: '3px', // .wait-spin border 3px
   rowArt: '36px', // .row-art img 36px (components.css 165행)
+  thumbLarge: '72px', // .thumb.is-l 72px (components.css 242행)
+  fab: '52px', // .fab height·min-width 52px (components.css 339행)
+  fabGap: '6px', // .fab gap 6px (components.css 339행)
   emptySubMax: '240px', // .empty .row-sub max-width 240px (components.css 136행)
   moreIcon: '18px', // .hero-more svg 18px (47행)
   fieldMsgIcon: '18px', // .field-msg svg 18px (130행)

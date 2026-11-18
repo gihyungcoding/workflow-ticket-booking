@@ -6,6 +6,7 @@ import { AppHeader } from './components/AppHeader'
 import { JoinedPage } from './pages/JoinedPage'
 import { LoginPage } from './pages/LoginPage'
 import { OAuthRedirectPage } from './pages/OAuthRedirectPage'
+import { OrganizerPerformanceListPage } from './pages/OrganizerPerformanceListPage'
 import { PerformanceDetailPage } from './pages/PerformanceDetailPage'
 import { PerformanceEditPage } from './pages/PerformanceEditPage'
 import { PerformanceListPage } from './pages/PerformanceListPage'
@@ -15,15 +16,16 @@ import { RoleSelectionPage } from './pages/RoleSelectionPage'
 import { SignUpPage } from './pages/SignUpPage'
 
 // 인증 화면은 시안대로 한 장 전체를 쓴다 — 전역 헤더(로그인·가입·로그아웃)를 그리지 않는다 (TASK-018 사용자 결정)
-// 공연 상세와 대기열 임시 화면도 시안대로 한 장을 쓴다 (TASK-020 사용자 결정). 판별은 라우터가 화면을 고르는 순위와 같아야 한다 —
+// 공연 상세와 대기열 임시 화면도 시안대로 한 장을 쓴다 (TASK-020 사용자 결정). 내 공연 목록도 같다 (TASK-025 사용자 결정). 판별은 라우터가 화면을 고르는 순위와 같아야 한다 —
 // `/performances/:id` 단독으로 맞추면 `/performances/new` 도 잡히므로 형제 경로와 함께 매칭해 가장 위에 오른 것을 본다.
 const PAGE_ROUTES = [
+  { path: '/organizer' },
   { path: '/performances/new' },
   { path: '/performances/:id/edit' },
   { path: '/performances/:id' },
   { path: '/performances/:id/queue' },
 ]
-const FULL_PAGE_PATHS: Array<string | undefined> = ['/performances/:id', '/performances/:id/queue']
+const FULL_PAGE_PATHS: Array<string | undefined> = ['/organizer', '/performances/:id', '/performances/:id/queue']
 function isFullPage(pathname: string): boolean {
   return FULL_PAGE_PATHS.includes(matchRoutes(PAGE_ROUTES, pathname)?.[0].route.path)
 }
@@ -33,6 +35,7 @@ function App() {
   const routes = (
     <Routes>
       <Route path="/" element={<PerformanceListPage />} />
+      <Route path="/organizer" element={<RequireOrganizer appBar><OrganizerPerformanceListPage /></RequireOrganizer>} />
       <Route path="/performances/new" element={<RequireOrganizer><PerformanceRegisterPage /></RequireOrganizer>} />
       <Route path="/performances/:id" element={<PerformanceDetailPage />} />
       <Route path="/performances/:id/queue" element={<QueuePlaceholderPage />} />

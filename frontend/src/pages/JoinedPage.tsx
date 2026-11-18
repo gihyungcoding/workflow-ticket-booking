@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { homePathOf } from '../auth/homePath'
 import { AUTH_MESSAGES } from '../auth/messages'
 import { providerNameOf } from '../auth/socialProvider'
 import ticketArt from '../assets/fluent/ticket.svg'
@@ -125,7 +126,7 @@ export function JoinedPage() {
           </Info>
         </Block>
       </Page>
-      <CtaBar onClick={() => navigate('/')}>시작하기</CtaBar>
+      <CtaBar onClick={() => navigate(homePathOf(user.role))}>시작하기</CtaBar>
       <Toast message={copy === 'copied' ? AUTH_MESSAGES.copied : null} onClose={() => setCopy(null)} />
     </>
   )

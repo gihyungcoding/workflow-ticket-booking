@@ -106,6 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         adopt(null)
         writeToken(null)
         setUser(null)
+        // 복원 중 로그아웃해도 복원이 끝난 것으로 본다 — 늦게 온 복원 응답은 세대가 달라 버려지므로 여기서 풀어야 한다
+        setRestoring(false)
       },
     }),
     [user, restoring],
