@@ -1,0 +1,142 @@
+{
+  "task_id": "TASK-025",
+  "keep": [
+    {
+      "what": "Phase 1 에서 범위 질문(머리글 문구·앱바·더 보기·소셜 콜백)을 한 번에 사용자 확정",
+      "evidence": "CP-1.3 decisions 사용자 확정 4건 → 2a·4 에서 설계 롤백 0, Phase 4 1라운드 통과"
+    },
+    {
+      "what": "Phase 3 에서 시안 나란히 대조 + 자체 리뷰를 먼저 돌렸다",
+      "evidence": "Phase 3 에서 375px 6상태 대조·리뷰 결함 0 → Phase 4 FAIL 0(이전 태스크 다수는 1회차 FAIL)"
+    }
+  ],
+  "problem": [
+    {
+      "what": "2b 의 기존 테스트 Grep 이 로그인 착지 주소를 역할별 표로 단언하던 task018 SC-35 F1 을 놓쳤다",
+      "evidence": "DEV test_modifications — Phase 3 에서 승인 테스트 수정을 별도 AskUserQuestion 으로 받음(c51482c)",
+      "phase": "2b"
+    },
+    {
+      "what": "시나리오 안의 두 표 행이 서로 다른 「더 보기」 소멸 규칙을 요구했다",
+      "evidence": "SC-17 행 f(쪽 수 기준)와 SC-09 행 n(items 기준)이 Green 에서 충돌 — 두 조건 OR 로 합침. 독립검증 2회 모두 못 잡음",
+      "phase": "3"
+    },
+    {
+      "what": "페이지로 나눠 받는 목록에서 「N건」 문구를 불러온 행으로 세기로 시나리오에 고정했다",
+      "evidence": "Phase 4 리뷰어 [correctness 경미] RC-1, 예외 승인으로 남음. 서버가 비공개 총수를 주지 않는다는 사실을 문구 설계로 이어가지 않았다",
+      "phase": "2a"
+    },
+    {
+      "what": "독립검증 1회차 V11 plan_gap — input_fields 에 item.id·more_page 누락",
+      "evidence": "VALIDATION 1회차 FAIL, 칸 115 → 140",
+      "phase": "2a"
+    }
+  ],
+  "try": [
+    {
+      "what": "이동 목적지가 바뀌는 태스크는 2b 에서 옛 목적지를 단언하는 표 행(경로 문자열 + 역할 라벨 조합)까지 Grep 한다 — `pathname).toBe('/')`·`role ORGANIZER` 처럼 값과 조건을 함께",
+      "target": ".claude/skills/wf-red/SKILL.md"
+    },
+    {
+      "what": "분할 응답(page)에서 건수를 화면 문구에 쓰면 Phase 1 에서 '서버 총수가 있는가'를 확인하고, 없으면 건수 없는 문구를 기본안으로 제시",
+      "target": ".claude/skills/wf-plan/references/design-checks.md"
+    },
+    {
+      "what": "검증자가 같은 상태 전이(예: 더 보기 소멸)를 기대하는 여러 시나리오 행의 규칙이 서로 맞는지 대조",
+      "target": ".claude/agents/scenario-validator.md"
+    }
+  ],
+  "insights": [
+    "범위 확장(더 보기)을 사용자 확정으로 들일 때, 그 확장이 기존 문구 규칙(머리글 N)의 의미를 바꾸는지까지 같이 물어야 한다 — 확장만 묻고 파생 영향은 묻지 않았다",
+    "승인 테스트 수정은 두 번 모두 '이동 목적지' 변경에서 나왔다 — 라우팅 결과를 바꾸는 태스크는 기존 테스트 Grep 을 문자열이 아니라 조건 조합으로 해야 한다"
+  ],
+  "phase_analysis": {
+    "1": {
+      "retries": 0,
+      "note": "사용자 확정 질문 2회"
+    },
+    "2a": {
+      "retries": 1,
+      "note": "V11 plan_gap(id·more_page) → 2회차 PASS"
+    },
+    "2b": {
+      "retries": 0,
+      "note": "HITL#1·2 승인 1회. SC-17 행 f 규칙을 사람이 정함"
+    },
+    "3": {
+      "retries": 0,
+      "note": "승인 테스트 수정 1건(task018) 별도 승인. 더 보기 규칙 충돌을 OR 로 해소"
+    },
+    "4": {
+      "retries": 0,
+      "note": "1라운드 WARN, 예외 승인(머리글 N·TASK-026 동시 배포·KST 브라우저 미확인)"
+    },
+    "5": {
+      "retries": 0,
+      "note": "—"
+    }
+  },
+  "adr_candidates": [
+    {
+      "decision": "역할별 첫 화면 — 주최자는 /organizer, 관객은 / (homePathOf)",
+      "why_broader": "가입 완료·이메일 로그인·소셜 콜백 세 진입이 같은 규칙을 쓰고, 앞으로 운영자(admin) 역할이 생기면 같은 자리를 늘린다",
+      "evidence": "CP-3.4 decisions homePathOf",
+      "suggested_title": "역할별 착지 경로"
+    }
+  ],
+  "architecture_drift": [
+    {
+      "what": "AUTH-001 승격 기한 지남(promote_after TASK-024)",
+      "where": "docs/architecture/constraints.yaml",
+      "found_how": "check_architecture.py overdue_promotions",
+      "suggestion": "TASK-024 #3 제안(warn → error) 반영 — 위반 0"
+    },
+    {
+      "what": "기능 문서 §2-5 는 「비공개」를 상태 배지 앞에 붙인다고 하나 시안·구현은 한 행 배지 하나",
+      "where": "docs/product/features/organizer-flow.md §2-5",
+      "found_how": "PLAN unresolved #11",
+      "suggestion": "문서를 시안에 맞춘다"
+    }
+  ],
+  "rule_proposals": [
+    {
+      "target": ".claude/skills/wf-red/SKILL.md",
+      "section": "Step 2 기존 테스트 충돌 찾기",
+      "change": "이동 목적지가 바뀌면 옛 목적지 문자열 × 조건 라벨(역할 등) 조합으로 표 행까지 Grep",
+      "evidence": "TASK-025 task018 SC-35 F1 을 Phase 3 에서 발견",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/skills/wf-plan/references/design-checks.md",
+      "section": "화면 문구",
+      "change": "페이지 응답에서 건수 문구를 쓰면 서버 총수 유무를 확인해 unresolved 에 적고 기본안을 정한다",
+      "evidence": "TASK-025 VERIFY RC-1 예외 승인",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": ".claude/agents/scenario-validator.md",
+      "section": "검사 항목",
+      "change": "같은 상태 전이를 단언하는 시나리오 행들 사이의 규칙 일관성 대조를 추가",
+      "evidence": "TASK-025 SC-17 행 f ↔ SC-09 행 n 충돌이 Green 에서 드러남",
+      "status": "pending",
+      "recurring": 0
+    },
+    {
+      "target": "docs/product/features/organizer-flow.md",
+      "section": "§2-5",
+      "change": "한 행 배지 하나(시안 우선)로 문구 수정",
+      "evidence": "PLAN unresolved #11",
+      "status": "pending",
+      "recurring": 0
+    }
+  ],
+  "follow_ups": [
+    "머리글 「비공개 N건」을 서버 총수 기준 또는 건수 없는 문구로 — 예외 승인 항목",
+    "TASK-026 과 같은 배포"
+  ],
+  "completion_report": {
+    "approved_by_human": false
+  }
+}

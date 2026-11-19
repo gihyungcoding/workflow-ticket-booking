@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-18T00:00:00Z
 summary: "Green — 전체 1923 통과(새 320 포함) · 린트 error 0 · tsc 0 · 운영 빌드 성공. 자체 리뷰 1라운드 결함 0. 승인 테스트 수정 2건(task024 2b 승인분 · task018 사용자 승인)."
 

@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-17T00:00:00Z
 summary: "SCENARIO_TASK-025 — 시나리오 23건(happy 11·error 7·boundary 4·regression 1), AC 10/10 매핑, 입력 경계 칸 140/140, 독립검증 2회차 PASS(경고 5건). 사람 승인은 2b 끝 통합 HITL."
 

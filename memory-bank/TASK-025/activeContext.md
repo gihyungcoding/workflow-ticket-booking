@@ -1,19 +1,19 @@
 ---
 task_id: TASK-025
 title: "내 공연 목록·주최자 진입 경로"
-phase: "3"
-phase_name: "Phase 3 - Green 완료"
-status: IN_PROGRESS
+phase: "5"
+phase_name: "Phase 5 - 회고 완료"
+status: DONE
 track: light
 created_at: 2026-11-17
-last_updated: 2026-11-17
+last_updated: 2026-11-19
 
 primary_category: Frontend
 sub_categories: [organizer]
 target_repo: "."
 branch: "feature/task-025-organizer-list-entry"
 
-last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
+last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/organizer-flow.md (Task D)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-025.json"

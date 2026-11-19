@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-17T00:00:00Z
 summary: "PLAN_TASK-025.json — route Frontend, flows 12건이 AC 10건을 전부 덮음(+사용자 확정 범위 확장 3건). input_fields 15. 변경 대상 15(신규 4). unresolved 13."
 
