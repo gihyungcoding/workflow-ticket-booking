@@ -2,8 +2,8 @@ package com.example.ticket_booking.config;
 
 import static com.example.ticket_booking.support.PendingTokenTestHelper.queryOf;
 
-import com.example.ticket_booking.TicketBookingApplication;
 import com.example.ticket_booking.support.AppleTestKeys;
+import com.example.ticket_booking.support.BareBoot;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -15,15 +15,14 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
 /**
  * TASK-012 시나리오 SC-11.
  *
- * <p>환경변수와 개인 키는 실제 애플리케이션을 그 값으로 띄워(SpringApplicationBuilder, 서블릿, 임의 포트) 확인한다. 환경변수는 기본 프로퍼티로 넣는다
- * — 공백만·앞뒤 공백·역슬래시 값이 명령행 인자 파싱에서 바뀌지 않게 인자가 아니라 프로퍼티 맵으로 넘긴다.
+ * <p>환경변수와 개인 키는 실제 애플리케이션을 그 값으로 띄워(SpringApplicationBuilder, 서블릿, 임의 포트) 확인한다. 환경변수는 프로퍼티 맵으로 넣는다
+ * — 공백만·앞뒤 공백·역슬래시 값이 명령행 인자 파싱에서 바뀌지 않게 인자가 아니라 프로퍼티 맵으로 넘긴다. TASK-027 부터 설정 파일을 읽지 않는 기동({@code
+ * BareBoot})으로 띄운다 — 맵이 가장 우선하는 소스가 되고 「FRONTEND_BASE_URL 없음」 행이 그대로 「없음」이다.
  *
  * <p>SoT: workflow_design/05_scenario/SCENARIO_TASK-012.md
  */
@@ -58,11 +57,12 @@ class AppleProviderConfigTest {
             + DB_SEQUENCE.incrementAndGet()
             + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE";
     try {
-      ConfigurableApplicationContext context =
-          new SpringApplicationBuilder(TicketBookingApplication.class)
-              .web(WebApplicationType.SERVLET)
-              .properties(environment)
-              .run("--server.port=0", "--spring.datasource.url=" + url);
+      // 설정 파일을 읽지 않고 띄운다(TASK-027) — 테스트 application.properties 의 FRONTEND_BASE_URL 이 기본 프로퍼티보다 우선해
+      // 「미설정」·「틀린 값」 행을 만들 수 없기 때문이다. 이 테스트의 「미설정」은 키가 없는 것이라 기본 값도 뺀다.
+      Map<String, Object> values = new LinkedHashMap<>(environment);
+      values.putIfAbsent("FRONTEND_BASE_URL", null);
+      values.put("spring.datasource.url", url);
+      ConfigurableApplicationContext context = BareBoot.run(values);
       int port = Integer.parseInt(context.getEnvironment().getProperty("local.server.port"));
       return new Started(context, port, null);
     } catch (Throwable thrown) {

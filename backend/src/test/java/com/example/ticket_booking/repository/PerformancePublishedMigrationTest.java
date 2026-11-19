@@ -148,8 +148,8 @@ class PerformancePublishedMigrationTest {
    * SC-01 (happy)
    *
    * <p>Given PostgreSQL 에 V7 까지 적용, 기존 공연 1행 + 좌석 20행, 열 값을 읽어 두었다 When Flyway 를 끝까지 적용한다 Then
-   * 성공·현재 버전 8, 기존 공연 published TRUE, 다른 열은 읽어 둔 값과 같다, published 를 안 주고 INSERT 하면 FALSE, NULL 을
-   * 넣으면 NOT NULL 위반
+   * 성공·현재 버전 9(V9 추가 — TASK-027), 기존 공연 published TRUE, 다른 열은 읽어 둔 값과 같다, published 를 안 주고 INSERT
+   * 하면 FALSE, NULL 을 넣으면 NOT NULL 위반
    */
   @Test
   void test_sc01_V8_은_기존_공연이_있는_PostgreSQL_에_적용되고_기존_행을_공개로_둔다() throws SQLException {
@@ -166,7 +166,7 @@ class PerformancePublishedMigrationTest {
     flyway(null).migrate();
 
     // Then 적용에 성공하고 현재 버전은 8 이다
-    assertThat(flyway(null).info().current().getVersion().getVersion()).isEqualTo("8");
+    assertThat(flyway(null).info().current().getVersion().getVersion()).isEqualTo("9");
     try (Connection connection = connect()) {
       // And 기존 공연의 published 는 TRUE 다
       assertThat(published(connection, performanceId)).isEqualTo(true);
