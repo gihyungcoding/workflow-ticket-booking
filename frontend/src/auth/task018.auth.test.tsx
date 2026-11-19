@@ -1716,7 +1716,8 @@ describe('TASK-018 인증 화면 5종을 시안대로', () => {
       fillLogin()
       await click('로그인하기')
       if (row.ok) {
-        await waitFor(() => expect(where()).toBe('/'))
+        // TASK-025 — 주최자는 from 없이 로그인하면 /organizer 로 간다(관객은 그대로 /)
+        await waitFor(() => expect(where()).toBe(row.label.includes('role ORGANIZER') ? '/organizer' : '/'))
         expect(token()).toBe('tok-new')
       } else {
         expect(await screen.findByText(MSG.loginFailed)).toBeInTheDocument()

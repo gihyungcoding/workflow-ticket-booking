@@ -1,0 +1,24 @@
+{
+  "task_id": "TASK-025",
+  "checks": [
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 SC-01~SC-23, 23건이고 type 순서도 같다(happy 10, error 7, boundary 4, regression 1 로 JSON type 라인 23개 확인). JSON 의 규약표(30행)는 MD 와 동일하다. 이번 회차 수정 문구(SC-17 행 n, SC-22 「로그인 화면의 제목」, SC-07 「영구히」 등)가 JSON 에도 있다(Grep 7건). 일부 JSON 구간(656~945행)은 전문 대조하지 않고 Grep 으로 표본만 확인했다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 23, happy 10, error 7, boundary 4, regression 1. 하한(전체 2 이상, happy 1 이상, error 1 이상)을 넘는다."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "Plan 기준 10건을 직접 대조했다. 기준1→SC-01, 기준2→SC-02·03, 기준3→SC-04, 기준4→SC-06·07·09, 기준5→SC-13·19, 기준6→SC-15, 기준7→SC-08·10·11·12, 기준8→SC-16, 기준9→SC-10·20·22, 기준10→SC-05·06·07·15·21·23. 모두 covers 문구가 Plan 과 글자 단위로 같다. 사용자 확정으로 넓힌 F9 과 F12 문구도 SC-17·18 과 SC-22 의 covers 에 있다."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오가 쓰는 flow 는 F1~F12 이고 모두 Plan design.flows 에 있다. 복수 flow(F5·F8, F5·F6·F9, F11·F12, F5·F6·F7·F10)도 모두 실재한다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "1회차의 세 지적은 고쳐졌다. SC-06 은 배지 문구를 글자 그대로 단언한다. SC-17 은 앞 행 id 순서를 단언한다. SC-22 행 a 는 로그인 화면 제목으로 단언한다. [신규] SC-22 행 f·g 의 「헤더가 영구히 비어 있지 않다」는 괄호 설명이고, 단언은 앞 문장의 「로그인」「가입」 링크가 맡는다. 문제는 아니다. SC-23 행 c 의 「비공개 배지의 색이 아니다」는 부정형이라 기대값이 모호하다. 비공개 배지의 색과 다르다는 단언인지 `--c-fill` 인지 2b 에서 하나로 정해야 한다."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "1회차에 보류된 지적이 그대로 남았다. SC-22 는 When 이 둘이다(「로그아웃을 한 번 호출한다」 And 「복원 응답을 보낸다」). 사건 순서 자체를 보는 시나리오라 합치기 어렵다는 보류 근거는 이해된다. SC-18 의 When 은 「더 보기를 누르고 응답이 온다」로 둘이다. SC-07·SC-15 의 「열고 칩을 누른다」도 둘이다. 보류를 받아들이고 사람이 HITL 에서 판단한다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "1회차에 보류된 지적이 남았다. SC-14 의 When 이 `getMyPerformances(filter, page)` 이고, SC-22 의 When 이 `AuthProvider` 의 `logout` 이다. SC-18 notes 에 `parseList` 가 있다. SC-14 는 화면이 아니라 함수 경계를 직접 검증하는 시나리오라 의도된 것으로 보인다. 그래도 When 에 함수 이름이 있는 것은 사실이다."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "pass", "detail": "이번 회차에 PLAN input_fields 에 `list_response.item.id` 와 `more_page` 가 추가되어, 시나리오가 다루는 id 변종과 쪽 번호가 PLAN 범위 안으로 들어왔다. 나머지 입력(role·name·from·filter·응답 필드·HTTP 결과)과 출력(목록·상태 화면·이동·링크·배지·앱바)은 PLAN design 안에 있다."},
+    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "1회차에 보류된 지적이 남았다. SC-10 행 a~d(500, 500 다른 code, 404, 400)와 SC-15 행 b~g(필터 이름만 다른 0건 안내)는 같은 코드 경로를 탄다. SC-16 행 c~h 와 i~n 도 이름만 다르다. 값 변종을 표로 남긴 것이라 비용은 작다. 병합 근거는 coverage.merged 와 CP-2.2 decisions 에 있다."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "기존 파일(JoinedPage·LoginPage·OAuthRedirectPage·AppHeader·App·RequireOrganizer·AuthContext·StatusChips·Badge)을 바꾸는 태스크다. regression SC-23(행 q·r 이 홈 칩과 배지), SC-03 행 c·d, SC-22 행 i·j, 「기존 승인 테스트 변경」 절이 있다."},
+    {"id": "V11", "name": "입력 경계 판정", "verdict": "pass", "detail": "coverage_matrix 140칸을 모두 확인했고 false_cover, bad_na, plan_gap 은 없다. 1회차 plan_gap 2건(`list_response.item.id`, `more_page`)은 PLAN input_fields 에 추가되었고, 새 칸의 판정은 맞다. 근거는 다음과 같다. item.id@F5·F10 의 negative(SC-08 행 24), zero(20), fraction(23), overflow(26, 25), numeric_string(21), type_range(25), wrong_type(22·27)는 모두 해당 값을 Given 에 쓰고 Then 이 오류 화면과 행 없음을 단언한다. more_page@F9 의 negative·zero·fraction·overflow 는 SC-14 행 f·m·g·k·l 이 닫는다. n/a 사유(max+1 은 PLAN 에 상한 없음, integral_fraction·exponent 는 JSON.parse 가 구분 불가, user.role undefined 는 PLAN note, from@F11 은 가드가 만든 값)는 PLAN 과 맞다. 다만 integral_fraction·exponent 의 n/a 근거는 PLAN 에 직접 쓰여 있지 않고 작성자의 기술적 주장이다. 타당해서 fail 로 올리지 않는다."},
+    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "항상 warn 으로 사람이 판단한다. 목록에 없는 경계 후보는 다음과 같다. (1) `title`·`venue` 에 HTML 특수문자가 들어간 경우. 이름은 SC-07 행 n 이 닫았지만 공연명·장소는 같은 확인이 없다. (2) `posterUrl` 이 `javascript:` 같은 비 http 주소인 경우. (3) `startAt` 이 `+09:00` 같은 비 Z 오프셋이거나 `openAt` 이 `startAt` 보다 늦은 경우. (4) 더 보기 사이에 `totalElements` 가 줄거나 늘어나는 경우. (5) 같은 id 가 다른 filter 응답에 나오는 경우(SC-17 행 m 이 일부 닫는다). (6) 429 응답과 타임아웃. (7) 목록 화면에서 `visibilityChangeable`·`editable` 을 쓰지 않는다는 단언. 1회차 목록 중 일부는 SC-07·SC-08·SC-17 에서 해소되었다."}
+  ],
+  "v11_matrix": [],
+  "overall": {
+    "pass": true,
+    "fail_count": 0,
+    "warn_count": 5,
+    "summary": "구조와 커버리지(V1~V4)를 충족한다. 1회차 V11 plan_gap 2건은 해소되었고 새로 생긴 칸(item.id, more_page)의 판정도 맞다. 140칸에서 false_cover, bad_na, plan_gap 은 찾지 못했다. 남은 경고는 V5(SC-23 행 c 의 부정형), V6(SC-22·18 의 When 둘), V7(SC-14·22 의 함수 이름), V9(표 행 중복), V12(목록 밖 경계 7건)다. V6·V7·V9 는 1회차에 보류되어 근거가 CP-2.2 decisions 에 있으니 사람이 HITL 에서 판단한다."
+  }
+}

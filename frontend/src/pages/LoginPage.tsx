@@ -6,19 +6,20 @@ import { INVALID_CREDENTIALS, login } from '../api/auth'
 import { ApiError } from '../api/performances'
 import { useAuth } from '../auth/AuthContext'
 import { isOneOf } from '../auth/authPaths'
+import { homePathOf } from '../auth/homePath'
 import { LinkLine, MoreLink, OrDivider, PrimaryButton, TopNotice } from '../auth/AuthParts'
 import { AUTH_MESSAGES } from '../auth/messages'
 import { SocialLoginButtons } from '../components/SocialLoginButtons'
 import { Field, Hero, Page } from '../components/ui'
 import { token } from '../theme/tokens'
 
-// 앱 안의 경로만 믿는다 — 외부 주소·프로토콜 상대 주소·스킴·로그인/가입 순환은 홈으로.
-function safeDestination(from: unknown): string {
+// 앱 안의 경로만 믿는다 — 외부 주소·프로토콜 상대 주소·스킴·로그인/가입 순환은 역할별 첫 화면(fallback)으로.
+function safeDestination(from: unknown, fallback: string): string {
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//') || from.includes('\\')) {
-    return '/'
+    return fallback
   }
   // 로그인·가입으로 되돌아가는 순환 — 라우터와 같은 규칙으로 본다 (/login/·/Login 도 같은 화면)
-  return isOneOf(['/login', '/signup'], from.split(/[?#]/)[0]) ? '/' : from
+  return isOneOf(['/login', '/signup'], from.split(/[?#]/)[0]) ? fallback : from
 }
 
 type ServerError = 'credentials' | 'failed' | null
@@ -72,7 +73,7 @@ export function LoginPage() {
       const result = await login({ email: email.trim(), password })
       if (!mounted.current) return
       auth.login(result.accessToken, result.user)
-      navigate(safeDestination(state?.from), { replace: true })
+      navigate(safeDestination(state?.from, homePathOf(result.user.role)), { replace: true })
     } catch (error) {
       if (!mounted.current) return
       if (error instanceof ApiError && error.code === INVALID_CREDENTIALS) {

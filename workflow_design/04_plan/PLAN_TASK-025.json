@@ -1,0 +1,734 @@
+{
+  "task_id": "TASK-025",
+  "route": "Frontend",
+  "route_reason": "목록 화면·진입 링크·배지 톤이 주 변경 대상이고 서버 계약(TASK-023 `GET /api/organizer/performances`)은 이미 develop 에 있다. 화면 간 이동(가입 완료·로그인 → /organizer, 칩·FAB·행)이 있어 이동 flow(F1·F2·F3·F10)를 둔다",
+  "design": {
+    "inputs": [
+      {
+        "name": "user.role · user.name",
+        "type": "AuthUser",
+        "source": "useAuth() (AuthContext — 로그인·복원·소셜 콜백이 채운다)",
+        "constraints": [
+          "role ∈ AUDIENCE · ORGANIZER",
+          "복원 중(restoring)에는 이동·링크 판정을 하지 않는다",
+          "name 은 머리글 「{이름} 님」에만 쓴다(회사명 필드는 없다)"
+        ]
+      },
+      {
+        "name": "location.state.from",
+        "type": "unknown",
+        "source": "react-router location.state (RequireOrganizer 가 싣는다)",
+        "constraints": [
+          "앱 안 경로만 믿는다 — 기존 safeDestination 규칙(SC-37 표: 외부 주소·`//`·`\\`·/login·/signup 순환은 거부)이 정본",
+          "거부되거나 없으면 역할별 기본 경로(ORGANIZER → /organizer, 그 외 → /)"
+        ]
+      },
+      {
+        "name": "filter 칩 선택",
+        "type": "PerformanceFilter",
+        "source": "사용자 클릭",
+        "constraints": [
+          "ALL · DRAFT · UPCOMING · OPEN · SOLD_OUT · CLOSED · CANCELLED (백엔드 domain/PerformanceFilter.java 와 같은 이름)",
+          "기본 ALL",
+          "칩 이름: 전체·비공개·예정·예매 가능·매진·마감·취소"
+        ]
+      },
+      {
+        "name": "내 공연 목록 응답",
+        "type": "{items, page, size, totalElements}",
+        "source": "외부 서버 응답 — GET /api/organizer/performances?filter=&page=&size=",
+        "constraints": [
+          "항목: id·title·venue·startAt·openAt·closeAt·totalSeats·availableSeats·status·posterUrl(선택, NON_NULL 이라 키 생략)·published·editable·visibilityChangeable (sections 는 목록에 없다)",
+          "관객 목록은 `content`, 주최자 목록은 `items` — 기존 parseList 를 쓸 수 없다",
+          "401(토큰 없음/만료)·403(관객) 은 UnauthorizedError·ForbiddenRoleError 로 구분한다",
+          "size 기본 20·상한 100, 잘못된 page·size 는 400"
+        ]
+      },
+      {
+        "name": "more 요청 쪽 번호",
+        "type": "int",
+        "source": "화면 상태(성공한 더 보기 횟수 + 1)",
+        "constraints": [
+          "홈 목록과 같은 규칙 — 불러온 개수가 아니라 성공 횟수로 센다(중복 id 가 있어도 쪽이 어긋나지 않게)"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "내 공연 목록 화면 /organizer",
+        "type": "화면",
+        "description": "머리글(이름·상태별 제목) · 칩 7개 · 행(배지·공연명·일시·장소·오픈 일시 또는 남은/총 좌석) · 더 보기 · 떠 있는 「공연 등록」"
+      },
+      {
+        "name": "상태 화면",
+        "type": "화면",
+        "description": "로딩 행 자리표시 · 오류(「공연 목록을 불러오지 못했어요」+「다시 시도」) · 0건(「아직 등록한 공연이 없어요」+「첫 공연 등록하기」) · 필터 0건(「<필터명> 공연이 없어요」+「전체 보기」)"
+      },
+      {
+        "name": "이동",
+        "type": "navigation",
+        "description": "시작하기·로그인·소셜 콜백 → /organizer 또는 /, FAB·빈 화면 CTA → /performances/new, 행 → /organizer/performances/:id"
+      },
+      {
+        "name": "AppHeader 「내 공연」",
+        "type": "link",
+        "description": "ORGANIZER 로그인일 때만, to=/organizer"
+      },
+      {
+        "name": "「비공개」 배지",
+        "type": "컴포넌트",
+        "description": "Badge tone=draft (--c-draft-tint / --c-draft-tint-text — 토큰은 이미 theme/tokens.ts 에 있다)"
+      },
+      {
+        "name": "주최자 전용 안내의 앱바",
+        "type": "화면",
+        "description": "/organizer 의 OrganizerOnlyNotice 에만 시안 organizer-only 의 앱바(뒤로 → / , 제목 「내 공연」)를 붙인다"
+      }
+    ],
+    "flows": [
+      {
+        "id": "F1",
+        "name": "가입 완료 「시작하기」 이동 (화면 간 이동)",
+        "steps": [
+          "JoinedPage 가 user.role 을 읽는다(restoring·비로그인 처리는 기존 그대로)",
+          "CtaBar 「시작하기」: ORGANIZER → navigate('/organizer'), 그 외 → navigate('/')"
+        ],
+        "covers": [
+          "주최자가 가입 완료 화면에서 「시작하기」를 누르면 `/organizer` 로, 관객은 `/` 로 간다"
+        ]
+      },
+      {
+        "id": "F2",
+        "name": "이메일 로그인 직후 기본 목적지 (화면 간 이동)",
+        "steps": [
+          "login() 성공 → auth.login(token, result.user)",
+          "safeDestination(state.from, result.user.role): from 이 안전하면 from",
+          "from 이 없거나 거부되면 ORGANIZER → /organizer, 그 외 → /",
+          "navigate(replace)"
+        ],
+        "covers": [
+          "주최자가 `from` 없이 로그인하면 `/organizer` 로, `from` 이 있으면 그 경로로 간다"
+        ]
+      },
+      {
+        "id": "F3",
+        "name": "소셜 로그인 콜백 이동 (사용자 확정 — 범위 확장, 화면 간 이동)",
+        "steps": [
+          "OAuthRedirectPage 가 fetchMe 로 복원한 user 로 auth.login",
+          "ORGANIZER → navigate('/organizer', replace), 그 외 → navigate('/', replace)",
+          "화면을 떠난 뒤 도착한 응답은 이동하지 않는다(기존 mounted 규칙)"
+        ],
+        "covers": [
+          "주최자가 `from` 없이 로그인하면 `/organizer` 로, `from` 이 있으면 그 경로로 간다"
+        ]
+      },
+      {
+        "id": "F4",
+        "name": "AppHeader 「내 공연」 링크",
+        "steps": [
+          "AppHeader 의 로그인 분기(user 있음)에서 user.role === 'ORGANIZER' 일 때만 RouterLink(to=/organizer) 「내 공연」",
+          "복원 중·비로그인·관객에는 없다"
+        ],
+        "covers": [
+          "주최자로 로그인하면 `AppHeader` 에 「내 공연」 링크가 있고, 관객·비로그인에게는 없다"
+        ]
+      },
+      {
+        "id": "F5",
+        "name": "내 공연 목록 조회·표시",
+        "steps": [
+          "RequireOrganizer 통과 후 getMyPerformances(filter=ALL, page=0) 호출",
+          "응답을 parse — 형식이 틀린 항목·응답은 오류 상태",
+          "머리글: eyebrow 「{이름} 님」, 제목 — 0건이면 「첫 공연을 등록해 보세요」, 비공개 공연이 있으면 「비공개 공연이 {N}건 있어요」, 그 외 「내 공연」 (사용자 확정 — 문구 3종은 PLAN 이 정한다)",
+          "행: 포스터 썸네일(없으면 ticket 자리표시) · 배지 · 공연명 · 「공연 일시 · 장소」 · 둘째 줄",
+          "배지(시안 우선 — 한 행에 배지 하나): published=false 이고 취소 아님 → 「비공개」(draft) 만, 그 외 StatusBadge 규칙(예정 info·예매 가능 brand·매진 danger·마감 neutral)",
+          "취소(CANCELLED): 배지 없이 둘째 줄 「공연 취소」(published 와 무관)",
+          "둘째 줄: 비공개 → 「{오픈 일시} 오픈 · {총석}석」, 예정 → 같은 형식, 예매 가능·매진·마감 → 「남은 좌석 {N} / {총석}석」",
+          "공연 일시·오픈 일시는 formatDateTime(KST)"
+        ],
+        "covers": [
+          "`/organizer` 는 내 공연을 행마다 공연명·공연 일시·장소·오픈 일시 또는 남은/총 좌석·상태 배지로 보여주고, 비공개면 「비공개」 배지(`is-draft`)가, 취소면 배지 없이 「공연 취소」가 보인다",
+          "화면 구조·문구가 `out/screens/organizer.html`·`organizer--empty.html`·`organizer-only.html` 과 같다"
+        ]
+      },
+      {
+        "id": "F6",
+        "name": "필터 칩 → 재조회",
+        "steps": [
+          "칩 클릭 → filter 를 바꾸고 첫 쪽을 다시 부른다",
+          "이전 응답이 늦게 와도 버린다(세대 — ADR-0018, 홈과 같은 규칙)",
+          "선택된 칩 aria-pressed=true, 칩 목록은 role=group aria-label=「상태로 걸러 보기」"
+        ],
+        "covers": [
+          "필터 칩(전체·비공개·예정·예매 가능·매진·마감·취소)을 누르면 해당 `filter` 로 다시 불러온다"
+        ]
+      },
+      {
+        "id": "F7",
+        "name": "빈 목록 · 필터 결과 0건",
+        "steps": [
+          "filter=ALL 이고 items=[] → 시안 organizer--empty: 칩·FAB 없이 「아직 등록한 공연이 없어요」·「등록하면 비공개로 저장돼요. 준비가 끝나면 공개하세요」·「첫 공연 등록하기」",
+          "filter≠ALL 이고 items=[] → 칩 유지, 「<필터명> 공연이 없어요」 + 「전체 보기」(filter=ALL 로 되돌림). 등록 버튼으로 바꾸지 않는다"
+        ],
+        "covers": [
+          "공연 0건이면 「아직 등록한 공연이 없어요」와 「첫 공연 등록하기」가, 필터 결과 0건이면 「<필터명> 공연이 없어요」와 「전체 보기」가 보인다",
+          "화면 구조·문구가 `out/screens/organizer.html`·`organizer--empty.html`·`organizer-only.html` 과 같다"
+        ]
+      },
+      {
+        "id": "F8",
+        "name": "로딩 · 오류 · 다시 시도",
+        "steps": [
+          "불러오는 중: 행 모양 자리표시 3개",
+          "실패(네트워크·형식 오류·5xx): 「공연 목록을 불러오지 못했어요」 + 「다시 시도」 — 같은 filter 로 다시 부른다",
+          "401 → 로그아웃 후 /login (TASK-024 규칙), 403 → 주최자 전용 안내"
+        ],
+        "covers": [
+          "불러오는 중에는 행 자리표시가, 실패하면 「공연 목록을 불러오지 못했어요」와 「다시 시도」가 보인다"
+        ]
+      },
+      {
+        "id": "F9",
+        "name": "더 보기 (사용자 확정 — 범위 확장)",
+        "steps": [
+          "items 개수가 totalElements 보다 적으면 「더 보기」",
+          "다음 쪽(성공 횟수 + 1)을 부르고 이어 붙인다 — 같은 id 는 다시 붙이지 않는다",
+          "중복 요청은 렌더를 기다리지 않는 ref 로 막는다",
+          "실패 → 「불러오지 못했어요 · 다시 시도」, 빈 쪽을 받으면 더 부르지 않는다",
+          "칩을 바꾸거나 떠나면 오래된 응답은 버린다"
+        ],
+        "covers": [
+          "(사용자 확정 2026-11-17) 20건을 넘는 공연이 화면에서 사라지지 않는다 — AC 4·5 의 목록이 전부 보인다"
+        ]
+      },
+      {
+        "id": "F10",
+        "name": "화면 간 이동 — 등록·상세·전체 보기 (화면 간 이동)",
+        "steps": [
+          "떠 있는 「공연 등록」(FAB) → /performances/new",
+          "빈 목록의 「첫 공연 등록하기」 → /performances/new",
+          "행 선택 → /organizer/performances/:id (취소·마감 행 포함 모든 행 — 시안의 비링크 행은 AC 와 어긋나 AC 가 이긴다)",
+          "필터 0건의 「전체 보기」 → 같은 화면에서 filter=ALL"
+        ],
+        "covers": [
+          "떠 있는 「공연 등록」 버튼이 `/performances/new` 로, 행 선택이 `/organizer/performances/:id` 로 간다"
+        ]
+      },
+      {
+        "id": "F11",
+        "name": "가드 진입 · 한 장 전체 화면",
+        "steps": [
+          "App.tsx: /organizer 를 RequireOrganizer 로 감싼다",
+          "비로그인 → /login(state.from=/organizer), 관객 → 주최자 전용 안내, 복원 중 → 아무것도 그리지 않음 (TASK-024 규칙 그대로)",
+          "/organizer 는 전역 AppHeader 없이 시안의 자체 앱바 「내 공연」만 그린다(사용자 확정) — PAGE_ROUTES·FULL_PAGE_PATHS 에 추가, 인증·상세 화면과 같은 판별",
+          "/organizer 의 주최자 전용 안내에만 시안 organizer-only 의 앱바(뒤로 → /, 제목 「내 공연」)를 붙인다 — 등록·수정 가드 화면은 전역 헤더가 이미 있어 앱바를 더하지 않는다(2a 분류 보완 — 헤더가 둘이 되는 것을 막는다)"
+        ],
+        "covers": [
+          "비로그인·관객의 `/organizer` 진입은 Task C 의 가드 규칙대로 처리된다",
+          "화면 구조·문구가 `out/screens/organizer.html`·`organizer--empty.html`·`organizer-only.html` 과 같다"
+        ]
+      },
+      {
+        "id": "F12",
+        "name": "복원 중 로그아웃 (TASK-024 follow_up — 사용자 결정 이관)",
+        "steps": [
+          "AuthContext.logout 에 setRestoring(false) 를 더한다 (login 은 이미 한다)",
+          "복원 중 logout → 늦게 온 복원 응답은 세대가 달라 버려지고 restoring 은 false 로 남는다",
+          "그 뒤 가드는 /login 으로 보낸다(영구 null 이 아니다)"
+        ],
+        "covers": [
+          "(TASK-024 follow_up 이관) 복원 중 로그아웃해도 restoring 이 영구히 true 로 남지 않는다 — 로그아웃 진입 경로(AppHeader 「내 공연」 이웃 등)가 늘어 도달 가능해진다"
+        ]
+      }
+    ],
+    "input_fields": [
+      {
+        "field": "user.role",
+        "flows": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F11"
+        ],
+        "kinds": [
+          "enum"
+        ],
+        "note": "ORGANIZER·AUDIENCE 각각. 정의 밖 값은 서버가 만들지 않는다 — 타입(UserRole)이 막는다"
+      },
+      {
+        "field": "user.name",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "string"
+        ],
+        "note": "머리글 「{이름} 님」 — 빈·공백·아주 긴 이름. 화면은 표시만(검증 아님)"
+      },
+      {
+        "field": "location.state.from",
+        "flows": [
+          "F2",
+          "F11"
+        ],
+        "kinds": [
+          "opaque"
+        ],
+        "note": "기존 safeDestination 표(SC-37)가 정본. 새로 생기는 것은 폴백이 역할별이라는 점 — 순환(/login·/signup)으로 거부될 때도 주최자는 /organizer"
+      },
+      {
+        "field": "filter",
+        "flows": [
+          "F5",
+          "F6",
+          "F7",
+          "F10"
+        ],
+        "kinds": [
+          "enum"
+        ],
+        "note": "7칩 각각 + 같은 칩 다시 누름. 정의 밖 값은 화면이 만들지 않는다"
+      },
+      {
+        "field": "list_response.items",
+        "flows": [
+          "F5",
+          "F7",
+          "F8"
+        ],
+        "kinds": [
+          "server_response",
+          "json_field",
+          "array"
+        ],
+        "note": "빈 배열 · null 원소 · 항목 형식 오류(필드 누락·타입 다름) → 오류 상태. 기존 parseList 는 `content` 라 못 쓴다 — 새 parse"
+      },
+      {
+        "field": "list_response.totalElements·page·size",
+        "flows": [
+          "F5",
+          "F9"
+        ],
+        "kinds": [
+          "json_field",
+          "integer",
+          "integer_notation"
+        ],
+        "note": "더 보기 판정의 기준 — 음수·소수·문자열·초과값이면 오류. 총수와 실제 개수가 어긋나도(빈 쪽) 더 부르지 않는다"
+      },
+      {
+        "field": "list_response.item.id",
+        "flows": [
+          "F5",
+          "F10"
+        ],
+        "kinds": [
+          "json_field",
+          "integer",
+          "integer_notation"
+        ],
+        "note": "링크 /organizer/performances/{id} 에 끼우는 값 — 1 이상 안전 정수. 0·음수·소수·문자열·초과값이면 항목 형식 오류. 같은 id 는 한 번만 남긴다(merge)"
+      },
+      {
+        "field": "list_response.item.status",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "json_field",
+          "enum"
+        ],
+        "note": "UPCOMING·OPEN·SOLD_OUT·CLOSED·CANCELLED 각각 + 정의 밖 값(서버 확장) → 오류 상태인지 무시인지 2a 가 정한다"
+      },
+      {
+        "field": "list_response.item.title·venue",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "json_field",
+          "string"
+        ],
+        "note": "빈·공백·유니코드 공백(ADR-0027)·아주 긴 이름(목록 2줄 말줄임)"
+      },
+      {
+        "field": "list_response.item.startAt·openAt",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "json_field",
+          "string"
+        ],
+        "note": "ISO 순간 — 표기가 틀리면(날짜만·오프셋 없음·달력에 없는 날짜·24시·연도 0~99) 항목 형식 오류. coverage_matrix 의 instant 종류는 아직 없다(회고 개선안 TASK-020 #0 미반영) — 같은 칸을 string 의 비고로 직접 단다"
+      },
+      {
+        "field": "list_response.item.totalSeats·availableSeats",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "json_field",
+          "integer",
+          "integer_notation"
+        ],
+        "note": "음수·소수·문자열·available > total 이면 형식 오류인지 2a 가 정한다. 0 이면 「남은 좌석 0 / 0석」"
+      },
+      {
+        "field": "list_response.item.posterUrl",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "json_field",
+          "string"
+        ],
+        "note": "키 생략(NON_NULL)·null·빈 문자열 → ticket 자리표시. 로드 실패 → Poster 의 기본 무늬"
+      },
+      {
+        "field": "list_response.item.published",
+        "flows": [
+          "F5"
+        ],
+        "kinds": [
+          "json_field"
+        ],
+        "note": "true·false·누락·불리언 아님 — 취소된 공연은 published 와 무관하게 비공개 배지가 없다"
+      },
+      {
+        "field": "list_response (HTTP 결과)",
+        "flows": [
+          "F5",
+          "F8"
+        ],
+        "kinds": [
+          "server_response"
+        ],
+        "note": "401 → 로그아웃·/login, 403 → 주최자 전용 안내, 5xx·네트워크 실패 → 오류 + 다시 시도, 200 이지만 비 JSON·빈 바디 → 오류"
+      },
+      {
+        "field": "list_request",
+        "flows": [
+          "F5",
+          "F6",
+          "F9"
+        ],
+        "kinds": [
+          "async_result"
+        ],
+        "group": "list_async",
+        "note": "응답 전 칩 변경(오래된 응답 버림)·로그인/로그아웃·화면 이동·StrictMode 취소. 더 보기·다시 시도도 같은 규칙"
+      },
+      {
+        "field": "logout_during_restore",
+        "flows": [
+          "F11",
+          "F12"
+        ],
+        "kinds": [
+          "async_result"
+        ],
+        "note": "복원 요청 전에 logout — restoring 이 false 가 되고 가드가 /login 으로 보낸다. 복원 응답이 그 뒤 도착해도 상태가 바뀌지 않는다(ADR-0018)"
+      },
+      {
+        "field": "more_page",
+        "flows": [
+          "F9"
+        ],
+        "kinds": [
+          "integer"
+        ],
+        "note": "더 보기 요청 쪽 번호 — 화면이 성공 횟수 + 1 로 만든다. 사용자가 입력하지 않는 값이라 getMyPerformances 의 인자 검사(0 이상 안전 정수)가 지킨다"
+      }
+    ],
+    "ui_state_matrix": {
+      "note": "시안 모양 값 표 — 값은 토큰 이름으로 적는다(DESIGN-002·003). 출처는 out/components.css·out/screens/organizer*.html",
+      "rows": [
+        {
+          "screen": "목록",
+          "state": "기본",
+          "element": ".appbar > .appbar-title",
+          "value": "제목 「내 공연」, 뒤로 버튼 없음, 로그아웃·링크 없음 (전역 AppHeader 없음)",
+          "source": "out/screens/organizer.html:7"
+        },
+        {
+          "screen": "목록",
+          "state": "기본",
+          "element": ".hero",
+          "value": ".eyebrow 「{이름} 님」 + .title (Hero 컴포넌트)",
+          "source": "organizer.html:9-12"
+        },
+        {
+          "screen": "목록",
+          "state": "기본",
+          "element": ".block.is-list > .chips",
+          "value": "role=group aria-label=「상태로 걸러 보기」 · 7칩 · .block .chips 가장자리 번짐",
+          "source": "organizer.html:13-22, components.css:112-114·193"
+        },
+        {
+          "screen": "목록",
+          "state": "기본",
+          "element": ".row (링크)",
+          "value": "썸네일(.thumb.is-l 72px) 또는 .row-art(ticket.svg 44px) · .row-main(배지 · .row-title · .row-sub 2줄) · .row-trail 화살표",
+          "source": "organizer.html:23-32, components.css:165·241-242"
+        },
+        {
+          "screen": "목록",
+          "state": "기본",
+          "element": ".badge.is-draft",
+          "value": "background var(--c-draft-tint), color var(--c-draft-tint-text) — 폴백 var(--c-fill)·var(--c-text-2)",
+          "source": "components.css:82"
+        },
+        {
+          "screen": "목록",
+          "state": "기본",
+          "element": ".fab",
+          "value": "position fixed · right var(--page-x) · bottom calc(var(--stack-l) + env(safe-area-inset-bottom)) · z-index 6 · height 52px · min-width 52px · pill · brand · shadow-2 · 「+」 아이콘 + 「공연 등록」",
+          "source": "components.css:339-342"
+        },
+        {
+          "screen": "빈 목록",
+          "state": "0건",
+          "element": ".empty",
+          "value": "clipboard.svg · .row-title · .row-sub · .btn.primary — 칩·FAB 없음",
+          "source": "organizer--empty.html:13-20"
+        },
+        {
+          "screen": "관객 안내",
+          "state": "관객 역할",
+          "element": ".appbar",
+          "value": ".appbar-btn 뒤로(→ home) + 제목 「내 공연」 · 본문 .empty 는 기존 OrganizerOnlyNotice",
+          "source": "organizer-only.html:7"
+        }
+      ]
+    },
+    "prop_schema": [
+      {
+        "part": "Badge tone=draft",
+        "context_dependent": [
+          "배경이 var(--c-draft-tint) — neutral 처럼 놓인 면의 --c-fill 이 아니다(어느 면 위에서도 같은 색)",
+          "flex-shrink: 0 (짧은 「비공개」가 줄어 말줄임되지 않는다 — 기존 Badge 규칙)"
+        ]
+      },
+      {
+        "part": "Fab",
+        "context_dependent": [
+          "position: fixed — 스크롤해도 화면에 떠 있다",
+          "pointer-events 는 기본(눌린다) — 토스트의 none 을 따라가지 않는다",
+          "bottom 은 safe-area-inset-bottom 을 포함한다",
+          "flex-shrink: 0 / 아이콘과 문구가 한 줄"
+        ]
+      },
+      {
+        "part": "목록 행",
+        "context_dependent": [
+          "썸네일 .thumb 은 flex: none(옆 글자가 길어도 줄지 않는다)",
+          ".row-main 은 min-width: 0 — 공연명은 2줄 말줄임",
+          "배지는 title 위 별도 줄(align-self: flex-start)"
+        ]
+      },
+      {
+        "part": "칩 7개",
+        "context_dependent": [
+          "flex: none · 가로 스크롤 · 선택 칩만 먹색 채움(브랜드 색 아님)",
+          "블록 가장자리까지 번진다(.block .chips 의 음수 마진)"
+        ]
+      }
+    ]
+  },
+  "architecture_refs": {
+    "layer": "Frontend (React)",
+    "note": "화면·입력·API 호출만. 가드·역할 이동은 화면을 가르는 편의이고 최종 판단은 서버(SecurityConfig `/api/organizer/**` hasRole, architecture.md §2). 서버 계약은 TASK-023 산출물이 정본이라 백엔드는 건드리지 않는다. 시각 판단(editable·visibilityChangeable)은 서버 계산 — 목록 화면은 쓰지 않는다. 색·치수는 토큰에서(DESIGN-001·002·003)",
+    "constraints_applied": [
+      "DESIGN-001",
+      "DESIGN-002",
+      "DESIGN-003",
+      "AUTH-001",
+      "DEPLOY-001"
+    ]
+  },
+  "adr_refs": [
+    "ADR-0002",
+    "ADR-0008",
+    "ADR-0018",
+    "ADR-0022",
+    "ADR-0027",
+    "ADR-0029",
+    "ADR-0030"
+  ],
+  "codebase_analysis": {
+    "target_files": [
+      {
+        "path": "frontend/src/api/organizer.ts",
+        "change": "getMyPerformances(filter, page) — 쿼리 조립, 401→UnauthorizedError·403→ForbiddenRoleError, items 응답 parse. 상세·공개 전환은 TASK-026",
+        "new": true
+      },
+      {
+        "path": "frontend/src/pages/OrganizerPerformanceListPage.tsx",
+        "change": "내 공연 목록 — 머리글·칩·행·로딩·오류·0건·필터 0건·더 보기·FAB. 홈(PerformanceListPage)의 세대·더 보기 규칙을 따른다",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/Fab.tsx",
+        "change": "시안 .fab — 떠 있는 「공연 등록」 버튼 부품 (기존에 없다)",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/OrganizerPerformanceRow.tsx",
+        "change": "시안 a.row 목록 행 — 배지가 title 위, sub 2줄, 썸네일/자리표시, 화살표. 기존 ui/Row 는 이 구조를 못 담는다",
+        "new": true
+      },
+      {
+        "path": "frontend/src/components/ui/index.ts",
+        "change": "Fab export"
+      },
+      {
+        "path": "frontend/src/components/ui/Badge.tsx",
+        "change": "BadgeTone 에 'draft' 추가, TONE 표에 draft → ['--c-draft-tint','--c-draft-tint-text']"
+      },
+      {
+        "path": "frontend/src/components/StatusChips.tsx",
+        "change": "칩 목록·값 타입을 받을 수 있게 일반화(홈의 6칩 동작은 그대로) — 주최자 7칩(PerformanceFilter)에 재사용"
+      },
+      {
+        "path": "frontend/src/pages/JoinedPage.tsx",
+        "change": "「시작하기」 목적지를 user.role 로 가른다 (ORGANIZER → /organizer)"
+      },
+      {
+        "path": "frontend/src/pages/LoginPage.tsx",
+        "change": "safeDestination 의 폴백을 역할별로 (ORGANIZER → /organizer). 순환 거부 때도 같다"
+      },
+      {
+        "path": "frontend/src/pages/OAuthRedirectPage.tsx",
+        "change": "소셜 로그인 성공 뒤 역할별 이동 (사용자 확정 — 범위 확장)"
+      },
+      {
+        "path": "frontend/src/components/AppHeader.tsx",
+        "change": "ORGANIZER 로그인일 때만 「내 공연」 링크(to=/organizer)"
+      },
+      {
+        "path": "frontend/src/App.tsx",
+        "change": "/organizer 라우트(RequireOrganizer) + 한 장 전체 화면 목록(PAGE_ROUTES·FULL_PAGE_PATHS)에 추가"
+      },
+      {
+        "path": "frontend/src/auth/RequireOrganizer.tsx",
+        "change": "/organizer 한 장 전체 화면에서만 주최자 전용 안내에 시안 organizer-only 앱바(뒤로 → /, 「내 공연」)를 붙인다(안내 본문은 그대로 — 등록·수정 가드는 전역 헤더가 있어 앱바 없음), :11 의 TASK-025 예고 주석 정리"
+      },
+      {
+        "path": "frontend/src/auth/AuthContext.tsx",
+        "change": "logout 에 setRestoring(false) — TASK-024 follow_up"
+      },
+      {
+        "path": "frontend/src/theme/tokens.ts",
+        "change": "필요한 치수만(.fab 높이 52px 등)을 componentSizes 에 옮긴다. --c-draft* 3개는 이미 있다(tokens.ts:34-36) — 색 이식은 불필요"
+      }
+    ],
+    "reusable": [
+      {
+        "path": "frontend/src/pages/PerformanceListPage.tsx",
+        "symbol": "ListState",
+        "note": "ListState 유니온·generation ref·fetchFirst/loadFirst·loadMore(:147)·「다시 시도」·「<필터명> 공연이 없어요」+「전체 보기」 — 구조를 그대로 따른다(파일을 수정하지 않는다)"
+      },
+      {
+        "path": "frontend/src/components/StatusBadge.tsx",
+        "symbol": "StatusBadge",
+        "note": "예정·예매 가능·매진·마감 배지. 취소는 평문이라 주최자 행에서는 CANCELLED 에 쓰지 않는다. 수정하지 않는다"
+      },
+      {
+        "path": "frontend/src/components/ui/AppBar.tsx",
+        "symbol": "AppBar",
+        "note": "시안 .appbar — title·onBack"
+      },
+      {
+        "path": "frontend/src/components/ui/Hero.tsx",
+        "symbol": "Hero",
+        "note": "eyebrow·title"
+      },
+      {
+        "path": "frontend/src/components/ui/Block.tsx",
+        "symbol": "Block",
+        "note": "list prop — 시안 .block.is-list"
+      },
+      {
+        "path": "frontend/src/components/Poster.tsx",
+        "symbol": "Poster",
+        "note": "썸네일 — 로드 실패 시 기본 무늬"
+      },
+      {
+        "path": "frontend/src/utils/datetime.ts",
+        "symbol": "formatDateTime",
+        "note": "「11월 21일(토) 오후 7:00」 — 시안 문구 형식(KST)"
+      },
+      {
+        "path": "frontend/src/api/performances.ts",
+        "symbol": "UnauthorizedError",
+        "note": "UnauthorizedError·ForbiddenRoleError·ApiError 를 import 해 쓴다. throwWriteError 는 비공개라 새 organizer.ts 에서 같은 규칙을 구현"
+      },
+      {
+        "path": "frontend/src/auth/RequireOrganizer.tsx",
+        "symbol": "RequireOrganizer",
+        "note": "가드 — 새로 만들지 않는다. /organizer 를 감싸기만"
+      },
+      {
+        "path": "frontend/src/test/task020.tsx",
+        "symbol": "renderAt",
+        "note": "Phase 2b 테스트 지원 — renderAt·where·stubServer·USER(AUDIENCE, 주최자는 {...USER, role:'ORGANIZER'})"
+      },
+      {
+        "path": "frontend/src/test/task021.ts",
+        "symbol": "LIST_ERROR",
+        "note": "오류·다시 시도 문구 상수·chip 도우미"
+      }
+    ],
+    "existing_tests": [
+      "frontend/src/auth/task018.auth.test.tsx",
+      "frontend/src/auth/AuthScreens.test.tsx",
+      "frontend/src/auth/SocialLoginScreens.test.tsx",
+      "frontend/src/auth/task024.organizer.test.tsx",
+      "frontend/src/pages/task021.list.test.tsx",
+      "frontend/src/task020.layout.test.tsx",
+      "frontend/src/components/ui/task017.ui.test.tsx",
+      "frontend/src/components/StatusBadge.test.tsx",
+      "frontend/src/App.test.tsx"
+    ],
+    "unresolved": [
+      "#1 [사용자 확정 4건 — 범위] ① 머리글: eyebrow 「{이름} 님」(회사명 필드 없음), 제목은 0건 「첫 공연을 등록해 보세요」 · 비공개 공연 있음 「비공개 공연이 {N}건 있어요」 · 그 외 「내 공연」 — 시안 문구와 다르고 문구 3종은 PLAN 이 정했다(시안에서 제목 규칙을 찾지 못했다). ② /organizer 는 전역 AppHeader 없이 시안 한 장 전체 — 이 화면에서 로그아웃·홈 이동이 없다(홈에서 한다). ③ 「더 보기」 추가(AC 밖). ④ 소셜 콜백(OAuthRedirectPage)도 역할별 이동(AC 2 의 「로그인」을 이메일·소셜 둘로 읽는다). ③·④ 는 태스크 acceptance_criteria·implementation_spec.paths 를 넓히므로 tasks.json 은 고치지 않고 PLAN·Phase 4 검증에 근거(사용자 확정 2026-11-17)로 남긴다",
+      "#2 [상세 화면 없음] 행 선택은 /organizer/performances/:id 로 가지만 그 라우트는 TASK-026 이 만든다(범위 외). TASK-025 만 배포되면 행을 누르면 빈 화면이다 — 두 태스크를 같은 배포로 내야 한다(Phase 5·배포 메모). 임시 라우트는 만들지 않는다",
+      "#3 [시안과 AC 의 어긋남] 시안 organizer.html 의 취소·마감 행은 링크(a.row)가 아니고 비공개·예매 가능 행만 링크다. AC 8 은 행 선택이 /organizer/performances/:id 로 간다고만 쓰고, 상세 시안(organizer-cancelled·organizer-show--done)이 있어 취소·마감 공연도 상세로 들어가야 한다 → 모든 행을 링크로 한다. 화살표(.row-trail)는 시안대로 링크 행에만 있었다 — 모든 행에 둔다(Phase 4 시안 대조에서 이 차이를 의도된 변종으로 적는다)",
+      "#4 [승인된 테스트 영향] JoinedPage·LoginPage·OAuthRedirectPage 의 이동 기대값 — task018.auth.test.tsx:1498-1524(SC-29·30 시작하기 → '/')·SocialLoginScreens.test.tsx:328·709·737(콜백 후 '/')·AuthScreens/task018 의 로그인 후 where() 단언. 사용자가 관객이면 그대로 통과해야 한다. 주최자 사용자로 같은 단언을 하는 행이 있는지 2a 가 Grep 으로 전수 확인한다(없으면 새 시나리오로 추가). task018.auth.test.tsx SC-37 표(from 순환 → '/')는 관객 기준으로 유지 + 주최자 열 추가",
+      "#5 [라우트 진입·전역 헤더] App.tsx 의 한 장 전체 판별은 matchRoutes 로 표기가 달라도(대소문자·끝 슬래시·%인코딩) 같은 화면을 가려야 한다 — task018.auth.test.tsx SC-36 표(경로 표기 변종 × 전역 헤더 유무)에 /organizer·/Organizer·/organizer/ 행을 추가한다. 기존 행은 영향 없음. hasGlobalHeader()(test/task020.tsx:269)는 「로그인·가입」 링크와 「로그아웃」 버튼으로 판별 — /organizer 에서는 둘 다 없어야 한다",
+      "#6 [AppHeader 테스트] 「내 공연」 링크 추가가 깨뜨릴 수 있는 곳: task020.layout.test.tsx(:117-176, 링크 이름으로 판별 — 새 이름이라 영향 없음), task017.regression.test.tsx(:49·112). 링크 개수를 세는 단언은 찾지 못했다(Grep). 2a 가 주최자 로그인 상태의 AppHeader 를 렌더하는 기존 테스트(task024.organizer.test.tsx 등)를 한 번 더 확인한다",
+      "#7 [TASK-024 follow_up] AuthContext.logout 이 복원 중이면 restoring 이 영구 true 로 남는다 — 이 결함을 직접 검증하는 기존 테스트는 없다(task018.auth.test.tsx:755·1337 은 before: 'logout' 행이 있으나 restoring 이 풀리는지는 단언하지 않는다 — 2a 가 확인). 새 시나리오: 복원 요청을 붙들어 둔 채 logout → restoring false → 가드가 /login 으로, 이후 복원 응답이 와도 상태 불변",
+      "#8 [서버 계약 확인 — 못 찾음] 잘못된 filter 값(예: XYZ)에 서버가 400 을 내는 처리 위치를 찾지 못했다. 화면은 7칩만 만들어 정의 밖 값을 보내지 않으므로 프론트 시나리오에는 영향이 없다. 백엔드 소관 — TASK-023 테스트가 정본",
+      "#9 [날짜·시각 표기] 시안 문구 「12월 26일(토) 오후 7:00」는 formatDateTime 형식(「{월}월 {일}일({요일}) {오전|오후} {시}:{분}」)과 같다(datetime.ts:47-50 확인). 오픈 줄은 「{formatDateTime} 오픈 · {총석}석」. 테스트 환경 시간대는 UTC 이므로 KST 표기 단언은 고정 시각 + formatDateTime 기대값으로 한다(Chrome 도구도 UTC 출력 — 한국 시간 표기는 브라우저 증거로 못 쓴다)",
+      "#10 [Badge draft 테스트] task017.ui.test.tsx 가 BadgeTone 전수를 검사하는지 열어 보지 못했다 — 2a 가 확인. theme 쪽 expected(task017.expected.ts)에 draft 가 없어 충돌은 없다. DESIGN-002: 색 리터럴은 theme/** 밖에 두지 않는다 — Badge 는 token() 으로만",
+      "#11 [비공개 배지와 상태 배지] 서버는 published 와 status 를 따로 준다. 시안 organizer.html 은 비공개 행에 「비공개」 배지 하나만 보이고 상태 배지가 없다 — 기능 문서 §2-5 의 「비공개 배지가 상태 배지 앞에 붙는다」와 어긋나지만 design.md 는 시안이 이긴다고 정했다(ADR-0022). 한 행에 배지 하나: 비공개(취소 아님)면 「비공개」만, 아니면 상태 배지. 상태는 둘째 줄(오픈 일시·총석)로 드러난다. 2a 규약 표에 이 우선순위를 적는다",
+      "#12 [페이지 크기] 더 보기는 홈과 같은 20개씩이다. 서버 상한은 100 — 화면은 size 를 보내지 않거나 20 으로 보낸다(2a 가 정한다). page·size 검증(400)은 서버 몫 — 프론트는 음수·소수 page 를 만들지 않는다",
+      "#13 [회고 개선안 미반영 2건에 해당] coverage_matrix.py 의 timeout·instant 종류(TASK-020 #0)와 sign·leading_zero·non_ascii_digit 칸(TASK-022 #4)이 아직 없다. 이 태스크는 응답의 ISO 시각·정수를 읽으므로 instant 에 해당하는 칸을 input_fields 의 note 로 직접 달았다 — 2a 가 같은 칸을 string 의 비고로 닫는다"
+    ],
+    "exploration": {
+      "method": "explore",
+      "calls": 1,
+      "main_reads": 14
+    }
+  },
+  "acceptance_criteria": [
+    "주최자가 가입 완료 화면에서 「시작하기」를 누르면 `/organizer` 로, 관객은 `/` 로 간다",
+    "주최자가 `from` 없이 로그인하면 `/organizer` 로, `from` 이 있으면 그 경로로 간다",
+    "주최자로 로그인하면 `AppHeader` 에 「내 공연」 링크가 있고, 관객·비로그인에게는 없다",
+    "`/organizer` 는 내 공연을 행마다 공연명·공연 일시·장소·오픈 일시 또는 남은/총 좌석·상태 배지로 보여주고, 비공개면 「비공개」 배지(`is-draft`)가, 취소면 배지 없이 「공연 취소」가 보인다",
+    "필터 칩(전체·비공개·예정·예매 가능·매진·마감·취소)을 누르면 해당 `filter` 로 다시 불러온다",
+    "공연 0건이면 「아직 등록한 공연이 없어요」와 「첫 공연 등록하기」가, 필터 결과 0건이면 「<필터명> 공연이 없어요」와 「전체 보기」가 보인다",
+    "불러오는 중에는 행 자리표시가, 실패하면 「공연 목록을 불러오지 못했어요」와 「다시 시도」가 보인다",
+    "떠 있는 「공연 등록」 버튼이 `/performances/new` 로, 행 선택이 `/organizer/performances/:id` 로 간다",
+    "비로그인·관객의 `/organizer` 진입은 Task C 의 가드 규칙대로 처리된다",
+    "화면 구조·문구가 `out/screens/organizer.html`·`organizer--empty.html`·`organizer-only.html` 과 같다"
+  ],
+  "test_hints": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "command": "cd frontend && PATH=~/.nvm/versions/node/v22.23.1/bin:$PATH npm test",
+    "mock_strategy": "fetch 를 `GET /api/organizer/performances?filter=…` 등 URL·method 별로 스텁(test/task020.tsx 의 stubServer·renderAt·where). 주최자는 `{...USER, role:'ORGANIZER'}` 로 GET /api/auth/me 를 스텁해 localStorage 토큰으로 복원하거나 loginNow 로 로그인. 화면은 App + MemoryRouter + AuthProvider 로 실제 라우트를 지난다(AuthScreens 관례). 응답은 deferred 로 붙들어 로딩·오래된 응답 버림·복원 중 logout 을 관찰. 시각 표기는 고정 ISO + formatDateTime 기대값. 375px 시안 대조(.fab 위치·칩 번짐·배지 색·썸네일)는 Phase 4 브라우저 — jsdom 은 배치를 계산하지 않는다(design-checks §5)",
+    "backend_integration": "해당 없음 — 백엔드를 바꾸지 않는다(서버 계약은 TASK-023). 운영 DB 입력 저장·비교 태스크가 아니다"
+  }
+}

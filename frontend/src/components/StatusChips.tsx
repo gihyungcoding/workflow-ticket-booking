@@ -12,13 +12,24 @@ export const STATUS_CHIPS: ReadonlyArray<{ label: string; status: PerformanceSta
   { label: '취소', status: 'CANCELLED' },
 ]
 
+export interface ChipOption<T> {
+  label: string
+  value: T
+}
+
+export interface FilterChipsProps<T> {
+  chips: ReadonlyArray<ChipOption<T>>
+  value: T
+  onChange: (value: T) => void
+}
+
 export interface StatusChipsProps {
   value: PerformanceStatus | null
   onChange: (status: PerformanceStatus | null) => void
 }
 
-/** 시안 .chips·.chip — 걸러 보기. 고른 칩은 먹색 채움(브랜드 색 없음), 가로로 넘겨 본다 */
-export function StatusChips({ value, onChange }: StatusChipsProps) {
+/** 시안 .chips·.chip — 걸러 보기. 고른 칩은 먹색 채움(브랜드 색 없음), 가로로 넘겨 본다. 칩 목록은 화면이 정한다(홈 6칩·내 공연 7칩) */
+export function FilterChips<T>({ chips, value, onChange }: FilterChipsProps<T>) {
   return (
     <Box
       role="group"
@@ -33,15 +44,15 @@ export function StatusChips({ value, onChange }: StatusChipsProps) {
         padding: `0 ${token('--block-pad')}`,
       }}
     >
-      {STATUS_CHIPS.map(({ label, status }) => {
-        const selected = status === value
+      {chips.map(({ label, value: chipValue }) => {
+        const selected = chipValue === value
         return (
           <Box
             key={label}
             component="button"
             type="button"
             aria-pressed={selected}
-            onClick={() => onChange(status)}
+            onClick={() => onChange(chipValue)}
             sx={{
               flex: 'none',
               display: 'inline-flex',
@@ -66,4 +77,11 @@ export function StatusChips({ value, onChange }: StatusChipsProps) {
       })}
     </Box>
   )
+}
+
+const STATUS_OPTIONS: ReadonlyArray<ChipOption<PerformanceStatus | null>> = STATUS_CHIPS.map(({ label, status }) => ({ label, value: status }))
+
+/** 홈의 상태 칩 — 전체·예정·예매 가능·매진·마감·취소 */
+export function StatusChips({ value, onChange }: StatusChipsProps) {
+  return <FilterChips chips={STATUS_OPTIONS} value={value} onChange={onChange} />
 }

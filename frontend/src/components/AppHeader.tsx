@@ -13,6 +13,11 @@ export function AppHeader() {
     <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'flex-end', mb: 2, minHeight: 36 }}>
       {restoring ? null : user ? (
         <>
+          {user.role === 'ORGANIZER' && (
+            <Button size="small" component={RouterLink} to="/organizer">
+              내 공연
+            </Button>
+          )}
           <Typography variant="body2">{user.name}</Typography>
           <Button size="small" onClick={logout}>
             로그아웃

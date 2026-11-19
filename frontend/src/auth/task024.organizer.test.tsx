@@ -1,7 +1,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider } from '@mui/material/styles'
-import { MemoryRouter, useLocation } from 'react-router-dom'
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
+import type { NavigateFunction } from 'react-router-dom'
 import App from '../App'
 import { theme } from '../theme'
 import { request } from '../api/http'
@@ -122,6 +123,17 @@ function Where() {
   )
 }
 const where = () => screen.getByTestId('where').textContent
+
+// TASK-025 — 주최자는 로그인 직후 /organizer(전역 헤더 없음)에 도착한다. 헤더를 보려면 / 로 이동한다.
+let navigateRef: NavigateFunction | null = null
+function NavProbe() {
+  navigateRef = useNavigate()
+  return null
+}
+const goTo = (path: string) =>
+  act(async () => {
+    navigateRef!(path)
+  })
 const fromState = () => screen.getByTestId('from').textContent
 
 function renderAt(entry: string) {
@@ -131,6 +143,7 @@ function renderAt(entry: string) {
         <AuthProvider>
           <App />
           <Where />
+          <NavProbe />
         </AuthProvider>
       </MemoryRouter>
     </ThemeProvider>,
@@ -210,6 +223,8 @@ beforeEach(() => {
   localStorage.clear()
 })
 afterEach(() => {
+  // TASK-025 — SC-17 보강이 중간에 실패해도 setItem 스파이가 다음 테스트로 새지 않게 한다
+  vi.restoreAllMocks()
   vi.unstubAllEnvs()
   vi.unstubAllGlobals()
   localStorage.clear()
@@ -721,10 +736,12 @@ describe('TASK-024 F1 — 요청 토큰의 정본은 화면의 로그인 세션'
         } else if (then === 'email') {
           renderAt('/login')
           await loginWith()
-          await waitFor(() => expect(where()).toBe('/'))
+          await waitFor(() => expect(where()).toBe('/organizer'))
+          await goTo('/')
         } else if (then === 'social') {
           renderAt('/oauth2/redirect?token=tok-soc')
-          await waitFor(() => expect(where()).toBe('/'))
+          await waitFor(() => expect(where()).toBe('/organizer'))
+          await goTo('/')
         } else {
           renderAt('/')
           const logoutButton = await screen.findByRole('button', { name: '로그아웃' })
@@ -771,7 +788,7 @@ describe('TASK-024 F1 — AuthProvider 가 내려간 뒤의 요청 토큰', () =
     })
     const view = renderAt('/login')
     await loginWith()
-    await waitFor(() => expect(where()).toBe('/'))
+    await waitFor(() => expect(where()).toBe('/organizer'))
     spy.mockRestore()
 
     // When AuthProvider 가 내려가고, 저장소에 tok-x 가 있을 때 요청을 보낸다

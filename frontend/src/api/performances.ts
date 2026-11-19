@@ -173,7 +173,7 @@ export async function cancelPerformance(id: string): Promise<Performance> {
   return response.json()
 }
 
-const STATUSES: readonly string[] = ['UPCOMING', 'OPEN', 'SOLD_OUT', 'CLOSED', 'CANCELLED']
+export const STATUSES: readonly string[] = ['UPCOMING', 'OPEN', 'SOLD_OUT', 'CLOSED', 'CANCELLED']
 const isCount = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0
 
 /**
@@ -204,7 +204,7 @@ export function parseDetail(value: unknown): Performance | null {
 }
 
 // 안전 정수 — 1e400(Infinity)·2^53 넘는 값은 서버가 내지 않는다. 어기면 화면이 오류로 본다.
-const isSafeCount = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+export const isSafeCount = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
 /**
  * 목록 원소가 홈이 쓰는 계약을 지키는지 본다 — 어기면 null. id 는 양의 정수(링크 /performances/{id} 에 끼운다),

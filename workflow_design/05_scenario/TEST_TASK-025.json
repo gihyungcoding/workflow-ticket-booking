@@ -1,0 +1,320 @@
+{
+  "task_id": "TASK-025",
+  "supersedes": "SCENARIO_TASK-025.json",
+  "test_files": [
+    "frontend/src/auth/task025.entry.test.tsx",
+    "frontend/src/api/task025.organizer.test.ts",
+    "frontend/src/pages/task025.list.test.tsx"
+  ],
+  "shared_harness": "frontend/src/test/task025.tsx",
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 1,
+      "passing_rows": 1,
+      "already_passing_rows": [
+        "b 관객"
+      ],
+      "failure": "AssertionError: expected '/' to be '/organizer' // Object.is equality",
+      "note": "행 b(관객 → /) 는 기존 동작이라 이미 통과 — task018 SC-30 이 같은 것을 지킨다"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 11,
+      "passing_rows": 6,
+      "already_passing_rows": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "h 관객 로그인 순환",
+        "q 관객 앞 공백"
+      ],
+      "failure": "AssertionError: expected '/' to be '/organizer' // Object.is equality",
+      "note": "행 b·c·d·e·h·q(from 이 안전하면 그대로, 관객·순환은 기존 규칙) 가 이미 통과 — 바뀌는 것은 주최자의 폴백(a·f·g·i~p)뿐이다"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 1,
+      "passing_rows": 3,
+      "already_passing_rows": [
+        "b 관객",
+        "c 401",
+        "d 떠난 뒤 도착"
+      ],
+      "failure": "AssertionError: expected '/' to be '/organizer' // Object.is equality",
+      "note": "행 b(관객)·c(401)·d(떠난 뒤) 는 기존 동작이라 이미 통과 — 주최자 행 a 만 Red"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 4,
+      "passing_rows": 3,
+      "already_passing_rows": [
+        "b AUD 홈",
+        "c 비로그인 홈",
+        "d 복원 중"
+      ],
+      "failure": "AssertionError: expected null not to be null",
+      "note": "행 b·c·d(관객·비로그인·복원 중에는 링크 없음) 는 링크가 아직 없어 이미 통과 — 선행 단언(로그아웃 버튼·로그인 링크)이 화면이 떴음을 먼저 확인한다"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 7,
+      "passing_rows": 2,
+      "already_passing_rows": [
+        "h 다른 주소 /organizers",
+        "i 상세 라우트(TASK-026) /organizer/performances/12"
+      ],
+      "failure": "AssertionError: expected [] to have a length of 1 but got +0",
+      "note": "행 h·i(/organizers · 상세 라우트) 는 이 태스크가 라우트를 만들지 않는다는 사실을 고정하는 행이라 이미 통과"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 1,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected [] to deeply equal [ 11, 12, 13, 14, 15, 16, 18, 17 ]"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 14,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected 0 to be greater than 0"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 93,
+      "passing_rows": 0,
+      "failure": "Error: Unable to find an element with the text: 공연 목록을 불러오지 못했어요. This could be because the text is broken up by multiple elements. In this case, you can provid"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 16,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected 0 to be greater than 0"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 16,
+      "passing_rows": 0,
+      "failure": "Error: Unable to find an element with the text: 공연 목록을 불러오지 못했어요. This could be because the text is broken up by multiple elements. In this case, you can provid"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 1,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected [] to have a length of 3 but got +0"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 5,
+      "passing_rows": 0,
+      "failure": "Error: Unable to find an element with the text: 공연 목록을 불러오지 못했어요. This could be because the text is broken up by multiple elements. In this case, you can provid"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 9,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected [] to deeply equal [ 12, 14 ]"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_file": "frontend/src/api/task025.organizer.test.ts",
+      "status": "red",
+      "failing_rows": 17,
+      "passing_rows": 0,
+      "failure": "Error: promise rejected \"Error: Not implemented\" instead of resolving"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 9,
+      "passing_rows": 0,
+      "failure": "Error: Unable to find an element with the text: 아직 등록한 공연이 없어요. This could be because the text is broken up by multiple elements. In this case, you can provide "
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 15,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected [] to deeply equal [ 12 ]"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 14,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected [] to deeply equal [ 1001, 1002, 1003, 1004, 1005, …(15) ]"
+    },
+    {
+      "scenario_id": "SC-18",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 16,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected [] to deeply equal [ 1001, 1002, 1003, 1004, 1005, …(15) ]"
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 15,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected [] to have a length of 3 but got +0"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 7,
+      "passing_rows": 0,
+      "failure": "AssertionError: expected '/organizer' to be '/login' // Object.is equality"
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 2,
+      "passing_rows": 2,
+      "already_passing_rows": [
+        "c 등록 화면",
+        "d 수정 화면"
+      ],
+      "failure": "Error: Unable to find an element with the text: 주최자만 이용할 수 있어요. This could be because the text is broken up by multiple elements. In this case, you can provide ",
+      "note": "행 c·d(등록·수정 안내에는 앱바 없음) 는 TASK-024 의 기존 화면이라 이미 통과 — 앱바를 더하는 구현이 이 행을 깨뜨리지 않게 지킨다"
+    },
+    {
+      "scenario_id": "SC-22",
+      "test_file": "frontend/src/auth/task025.entry.test.tsx",
+      "status": "red",
+      "failing_rows": 9,
+      "passing_rows": 1,
+      "already_passing_rows": [
+        "i 화면을 떠난 뒤"
+      ],
+      "failure": "AssertionError: expected '/organizer' to be '/login' // Object.is equality",
+      "note": "행 i(복원 중 화면을 떠남 — ADR-0018) 는 기존 동작이라 이미 통과"
+    },
+    {
+      "scenario_id": "SC-23",
+      "test_file": "frontend/src/pages/task025.list.test.tsx",
+      "status": "red",
+      "failing_rows": 17,
+      "passing_rows": 2,
+      "already_passing_rows": [
+        "q 홈 상태 칩 회귀",
+        "r 홈 상태 배지 회귀"
+      ],
+      "failure": "AssertionError: expected [] to deeply equal [ 11, 12, 14 ]",
+      "note": "행 q·r(홈 칩·배지 회귀) 는 StatusChips 일반화·Badge 톤 추가가 기존 화면을 깨뜨리지 않는지 보는 회귀 — 이미 통과가 정상"
+    }
+  ],
+  "red_result": {
+    "command": "cd frontend && npx vitest run",
+    "total": 1924,
+    "failed": 303,
+    "passed": 1620,
+    "todo": 1,
+    "new_tests": {
+      "total": 320,
+      "failed": 300,
+      "passed": 20
+    },
+    "changed_approved_tests": {
+      "file": "frontend/src/auth/task024.organizer.test.tsx",
+      "failed": 3,
+      "rows": [
+        "SC-17 b 쿼터 초과 · 이메일 로그인",
+        "SC-17 c 저장 실패 · 소셜 콜백",
+        "SC-17 보강"
+      ]
+    },
+    "existing_tests_still_passing": true,
+    "other_existing_failures": 0,
+    "baseline_before": "프론트 npm test 1603 통과 · 1 todo (Phase 0 시작 시점, 32파일)"
+  },
+  "inventory_check": {
+    "scenarios": 23,
+    "test_functions": 23,
+    "match": true,
+    "method": "각 파일에서 test / test.each 선언의 이름 앞머리 'SC-NN (' 을 세어 SCENARIO_TASK-025.json 의 id 와 대조 — 누락 0·추가 0·중복 0. 표로 묶인 시나리오는 test.each 한 줄이고 행마다 케이스가 돈다(총 320 케이스)"
+  },
+  "testing_preferences": {
+    "framework": "Vitest + Testing Library + user-event + jsdom (ADR-0007)",
+    "mock_strategy": "fetch 스텁(task020 stubServer — 등록 안 한 키는 404) + App + MemoryRouter + AuthProvider 로 실제 라우트. 응답은 deferred 로 붙들어 로딩·늦은 응답을 관찰. 실제 타이머"
+  },
+  "compile_skeleton": {
+    "files": [
+      "frontend/src/api/organizer.ts"
+    ],
+    "contents": "타입(PerformanceFilter·OrganizerPerformance·OrganizerPerformanceList)과 getMyPerformances 시그니처. 본문은 throw new Error(\"Not implemented\") 한 줄",
+    "purity_check": "tsc --noEmit 오류 0. 새 파일은 이것뿐이다 — 페이지·Fab·행·Badge draft·App 라우트는 테스트가 import 하지 않아 스켈레톤이 필요 없고, 없는 채로 Red 다. SC-14 실패 17건은 모두 'Not implemented' 거부/정상 호출 실패(promise rejected 12 + Error 5)였다"
+  },
+  "test_contracts_for_green": [
+    "목록 로딩 자리표시: data-testid='organizer-row-skeleton' (3개)",
+    "칩 묶음: role=group, 이름 「상태로 걸러 보기」, 칩은 button + aria-pressed (7개, 순서 고정)",
+    "행: /organizer/performances/{id} 로 가는 링크(a). 배지·공연명·줄 ③④ 는 행 안의 요소로 그 글자만 담는다(span 으로 쪼개져도 된다 — 요소의 textContent 로 찾는다)",
+    "「공연 등록」·「첫 공연 등록하기」·「전체 보기」: link 또는 button 어느 쪽이든 된다(name 으로 찾는다)",
+    "앱바 뒤로 버튼: aria-label '뒤로'. 앱바 제목은 h1",
+    "더 보기: button 「더 보기」, 실패 시 「불러오지 못했어요 · 다시 시도」, 오류 화면의 「다시 시도」"
+  ],
+  "harness_probe": {
+    "performed": "던져 버릴 프로브 1건(삭제함, git status 깨끗): jsdom 이 flex-shrink·position·z-index·height·min-width·bottom calc(env())·right(token)·flex·overflow-x·pointer-events·border-radius 를 계산하는지 — 모두 값이 나온다",
+    "verified_by_passing_rows": "SC-02 b·c·d·e·h·q(로그인 폼·세션·이동 하네스), SC-01 b(/joined), SC-03 b·c·d(소셜 콜백), SC-04 b·c·d(헤더), SC-22 i(navigateTo), SC-23 q·r(홈 칩·배지 하네스) 가 구현 없이 통과해 하네스가 동작함을 보인다",
+    "not_verified": [
+      "실패한 테스트의 첫 실패 지점 뒤쪽 단언은 실행되지 않았다 — 특히 SC-06 의 행별 배지·줄·포스터 단언, SC-07 의 이름 변형 8행(세션 API 로 로그인 뒤 /organizer 로 이동하는 경로 자체), SC-08~10 의 오류 화면 단언, SC-12·13·17~19 의 deferred 흐름, SC-23 a~p 의 계산 스타일(토큰 비교). Green 에서 하네스 결함이 드러나면 승인된 테스트를 고쳐야 해 사람에게 묻는다",
+      "SC-23 c 의 중립 배지 색은 jsdom 이 var(--c-fill) 을 해석하지 않아 문자열 'var(--c-fill)' 과 대조한다(Badge neutral 과 같다)",
+      "SC-07 의 빈·공백 이름 행은 /me 의 이름 검증(isFilled)을 지나지 못하므로 세션 API(authApi().login)로 로그인한다 — 실제 서비스에서는 도달하지 않는 입력이다"
+    ]
+  },
+  "approved_test_changes": [
+    {
+      "file": "frontend/src/auth/task024.organizer.test.tsx",
+      "changes": [
+        "SC-17 표의 email·social 행(b·c): 로그인·콜백 직후 기다리는 주소를 '/' → '/organizer' 로, 그 뒤 전역 헤더 단언은 '/' 로 이동한 뒤에 한다(NavProbe·goTo 도우미 추가)",
+        "SC-17 보강: 기다리는 주소 '/' → '/organizer'",
+        "afterEach 에 vi.restoreAllMocks() — SC-17 보강이 중간에 실패해도 setItem 스파이가 SC-16 로 새는 연쇄 실패 2건을 막는다"
+      ],
+      "scenarios": "SC-02 행 a · SC-03 행 a",
+      "single_assertion_weakened": false
+    }
+  ],
+  "review_notes": {
+    "scenario_defect_found": "SC-17 행 f — 「더 보기는 사라진다」: 홈의 hasMore(`!exhausted && items.length < total`)로는 23 < 25 라 버튼이 남는다. 테스트는 시나리오대로(사라짐)로 썼고, 통과하려면 쪽 수 기준(받은 쪽 수 × 20 ≥ total)이 필요하다. 홈과 규칙이 달라진다",
+    "screen_issue": "기본 머리글 제목이 「내 공연」이라 앱바 제목(h1)과 같은 글자가 화면에 두 번 나온다(SC-05·SC-07 d·e·g·h~n). 시나리오는 이 값을 정했고 사용자 확정 옵션에도 같은 값이었다"
+  },
+  "human_review": {
+    "approved": true,
+    "approved_at": "2026-11-17",
+    "decision": "APPROVE",
+    "notes": "시나리오 23건·Red 23개 함수 승인(AskUserQuestion). SC-17 행 f 는 쪽 수 × 20 ≥ 총수 규칙으로 구현, 기본 제목 「내 공연」과 앱바 제목 중복은 수용. task024.organizer.test.tsx 3곳 수정(SC-17 b·c·보강, afterEach 복원) 함께 승인"
+  }
+}
