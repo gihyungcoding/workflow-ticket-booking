@@ -46,3 +46,10 @@ Phase 4 — `wf-verify`. 증거 기반 완료 판정(HITL#3). 보류된 [reuse] 
 - 상세 라우트가 없어 행 선택은 TASK-026 전까지 빈 화면 — 같은 배포로 낸다
 - **Red 승인 사항 (2026-11-17)**: 승인된 테스트 변경 1파일(task024.organizer.test.tsx — SC-17 b·c·보강·afterEach 복원). SC-17 행 f = 쪽 수 기준(홈과 다름). 기본 제목 「내 공연」과 앱바 제목 중복은 수용
 - **Phase 3 결정**: 더 보기 소멸 = items ≥ total 또는 쪽 수×20 ≥ total. Badge 는 BadgeToneOrDraft 로 분리(task017 타입). 승인 테스트 수정 — task018 SC-35 한 행(사용자 승인 2026-11-18). 화면 확인(시안 대조)은 Phase 3 에서 수행
+
+pull_request:
+  number: 56
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/56"
+  base: develop
+  opened_at: 2026-11-19
+  note: "TASK-026 과 같은 배포"
