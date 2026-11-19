@@ -35,7 +35,9 @@
 | 간격 | `account_mail_sent_at IS NULL OR account_mail_sent_at < now - 60초` 일 때만 보낸다. 보내면 `account_mail_sent_at = now`. 안 보내면 그 값이 그대로다. 결과는 `true`(보냄)/`false`(건너뜀) |
 | 메일 문구 | 아래 표(요구사항 §3-4). `{B}` 는 정리된 `FRONTEND_BASE_URL`(앞뒤 공백·끝 `/` 제거) |
 | 기동 실패 | 컨텍스트 기동이 예외로 끝나고, 예외 체인의 메시지 어딘가에 해당 변수 이름이 있다 |
-| 발송 실패 로그 | WARN 1줄. 받는 사람은 앞 2글자만 보이고 나머지는 가린다(`e@***` 꼴이 아니라 `e@` 앞 부분 기준 — `ab***@ticket.on`). 토큰 원문·본문은 없다 |
+| 발송 실패 로그 | WARN 1줄. 받는 사람은 로컬 파트의 첫 1글자 + `***` + `@` + 도메인으로 쓴다(`e@ticket.on` → `e***@ticket.on`, `abc@ticket.on` → `a***@ticket.on`). 원래 주소 문자열·토큰 원문·본문은 없다 |
+| 로그 관찰 | 테스트의 출력 캡처(`OutputCaptureExtension`)로 본 표준 출력 |
+| 인자 오류 | `issue`·`consume`·간격 제한 발송의 `userId`(null·0 이하)·`purpose`(null)는 DB 에 닿기 전에 `IllegalArgumentException` 이다 — 호출자 버그(PLAN inputs). 간격 제한 발송만 0 이하·없는 사용자를 `false` 로 돌려준다(조건부 UPDATE 0행) |
 
 | 메일 | 제목 | 본문에 반드시 있는 것 | 본문에 없어야 하는 것 |
 |---|---|---|---|
@@ -51,7 +53,7 @@
 - **And** `MAIL_FROM` 은 설정하지 않았다
 - **When** `MailGateway.send(MailMessage("e@ticket.on", "이메일 인증을 해 주세요", "링크 https://app.example/verify-email#token=abc"))` 를 부른다
 - **Then** 예외 없이 끝난다
-- **And** 출력 로그에 받는 사람 `e@ticket.on`·제목 `이메일 인증을 해 주세요`·링크 `https://app.example/verify-email#token=abc` 가 있다
+- **And** 출력 캡처(규약 「로그 관찰」)에 받는 사람 `e@ticket.on`·제목 `이메일 인증을 해 주세요`·링크 `https://app.example/verify-email#token=abc` 가 있다
 - **And** 선택된 빈이 `LoggingMailGateway` 다
 
 covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다
@@ -209,6 +211,7 @@ flow: F4
 | n | `r` | RESET_PASSWORD(용도 다름) | — |
 | o | `r` | VERIFY_EMAIL | `r` 을 한 번 소모했다(`used_at = T+1m`) |
 | p | 10,000자 문자열 | VERIFY_EMAIL | — |
+| q | 정규화 변형 — `r` 의 한 글자를 전각(`A`→`Ａ`, `0`→`０`)으로, `r` 끝에 결합 문자 `"\u0301"`, `r` 의 `-`·`_` 를 `‐`(U+2010)·`＿`(U+FF3F)로 각각(NFKC 로 원문과 같아지거나 비슷해 보이는 값) | VERIFY_EMAIL | — |
 
 covers: 유효한 토큰은 한 번만 소모된다 — 동시에 두 요청을 보내면 한 쪽만 성공한다 / 만료는 인증 24시간, 재설정 30분이다. 만료 시각 정각에는 이미 만료다
 flow: F4
@@ -265,6 +268,14 @@ flow: F3
 | e | `T-60.001s` | true | 1 | `T` |
 | f | `T-1h` | true | 1 | `T` |
 | g | `T+1s`(시계가 뒤로 간 경우) | false | 0 | `T+1s` |
+
+용도와 무관하게 같은 기준인지 — 「마지막 발송」을 `T-10s` 로 두고 인증 대신 아래 메일을 보낸다.
+
+| 행 | 보내는 메일 | 결과 | 메일 | 뒤 값 |
+|---|---|---|---|---|
+| h | 재설정 메일 | false | 0 | `T-10s` |
+| i | 소셜 안내 메일 | false | 0 | `T-10s` |
+| j | 재설정 메일, 「마지막 발송」 `T-61s` | true | 1 | `T` |
 
 covers: 마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)
 flow: F5
@@ -346,7 +357,7 @@ flow: F6
 | b | 바깥 트랜잭션 안에서 간격 제한 발송 → 롤백 | 5초 뒤 0통 | NULL | 정상 |
 | c | 트랜잭션 없이 간격 제한 발송 | 1통 | `T` | 정상 |
 | d | 수집 구현이 예외(`MailSendException`)를 던지게 하고 간격 제한 발송 | 0통(보내기 시도 1회) | `T` | 정상(`true`), 예외가 전파되지 않는다 |
-| e | d 와 같은 조건 — 로그 | — | — | WARN 1줄, 받는 사람 가림 규약대로, 토큰 원문·본문 없음 |
+| e | 수집 구현이 예외를 던지게 하고 `e@ticket.on` 에게 인증 메일을 간격 제한 발송(원문 `r`) → 출력 캡처를 본다 | 0통 | `T` | WARN 1줄이 있고 그 줄에 `e***@ticket.on` 이 있으며, 출력 어디에도 `e@ticket.on`·`r`·본문 문구 `24시간` 이 없다 |
 | f | 변경 알림 발송, `account_mail_sent_at = T-10s` | 1통 | `T-10s`(바꾸지 않는다) | 정상 |
 | g | 변경 알림 발송을 바깥 트랜잭션에서 하고 롤백 | 0통 | 그대로 | 정상 |
 
@@ -378,3 +389,21 @@ flow: F8
 
 covers: `architecture.md` §5 에 메일 발송 행이 있다(ADR-0031 의 결정과 같은 내용)
 flow: F9
+
+## SC-20 (regression) 소셜 제공자가 설정된 기동은 지금과 같고 소셜 실패 이동도 같은 기준 주소를 쓴다
+
+- **Given** 머리말 「기동」의 기본 값에 `KAKAO_CLIENT_ID=id-KAKAO`·`KAKAO_CLIENT_SECRET=secret-KAKAO` 를 넣었다
+- **When** 표의 `FRONTEND_BASE_URL` 로 기동하고, 성공하면 `GET /login/oauth2/code/kakao?error=access_denied` 를 보낸다
+- **Then** 「결과」 열대로다 — 실패 행은 예외 체인에 `FRONTEND_BASE_URL` 이 있다
+- **And** 성공 행은 302 이고 `Location` 이 「이동」 열이다(근거: `OAuth2LoginFailureHandler.failureLocation` — `{B}/login?error=social`)
+- **And** 성공 행은 같은 기동에서 `AccountMails` 인증 메일 링크가 `https://app.example/verify-email#token=` 로 시작한다(소셜 이동과 메일이 같은 정리 규칙)
+- **And** 승인 테스트 `SocialProviderConfigTest`·`AppleProviderConfigTest` 의 단언은 그대로 통과한다 — 바뀌는 것은 값 주입 하네스(설정 파일을 읽지 않는 기동)와 SocialProviderConfigTest 의 「제공자 없음 → 기동 성공」 한 덩어리뿐이다(SC-05 a 로 대체)
+
+| 행 | FRONTEND_BASE_URL | 결과 | 이동 |
+|---|---|---|---|
+| a | `https://app.example/` | 성공 | `https://app.example/login?error=social` |
+| b | (키 없음) | 실패 | — |
+| c | `https://app.example?x=1` | 실패 | — |
+
+covers: 운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다 / 메일의 링크는 `FRONTEND_BASE_URL` 로 만들어지고, 위조한 `Host` 헤더를 실어도 바뀌지 않는다
+flow: F2

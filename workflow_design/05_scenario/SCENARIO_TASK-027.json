@@ -15,7 +15,7 @@
       ],
       "then": [
         "예외 없이 끝난다",
-        "출력 로그에 받는 사람 `e@ticket.on`·제목 `이메일 인증을 해 주세요`·링크 `https://app.example/verify-email#token=abc` 가 있다",
+        "출력 캡처(규약 「로그 관찰」)에 받는 사람 `e@ticket.on`·제목 `이메일 인증을 해 주세요`·링크 `https://app.example/verify-email#token=abc` 가 있다",
         "선택된 빈이 `LoggingMailGateway` 다"
       ],
       "table": null,
@@ -169,7 +169,7 @@
         "예외 없이 빈 결과다",
         "DB 의 `r` 행 `used_at` 이 「준비」 뒤의 값 그대로다(준비가 없으면 NULL)"
       ],
-      "table": "| 행 | 입력 | 용도 | 준비 |\n|---|---|---|---|\n| a | `null` | VERIFY_EMAIL | — |\n| b | `\"\"` | VERIFY_EMAIL | — |\n| c | `\"   \"` | VERIFY_EMAIL | — |\n| d | `\"\\u3000\"`·`\"\\u00A0\"`·`\"\\u200B\"`·`\"\\u2028\"` 각각 | VERIFY_EMAIL | — |\n| e | `r` 의 앞 42자(잘림) | VERIFY_EMAIL | — |\n| f | `r` 의 앞 20자 | VERIFY_EMAIL | — |\n| g | `r + \"x\"` | VERIFY_EMAIL | — |\n| h | `r` 의 마지막 글자를 다른 글자로 | VERIFY_EMAIL | — |\n| i | `r.toUpperCase()` (원문과 다를 때) | VERIFY_EMAIL | — |\n| j | `\" \" + r`, `r + \" \"`, `r + \"\\n\"`, `r + \"=\"`, `\"=\" + r`, `\"~\" + r` 각각 | VERIFY_EMAIL | — |\n| k | `r` 가운데 `\"\\u0000\"` 삽입, `r + \"\\u0000\"` | VERIFY_EMAIL | — |\n| l | `r + \"\\uD800\"`(짝 없는 서로게이트), `r + \"é\"`(비 ASCII) | VERIFY_EMAIL | — |\n| m | 처음 보는 43자 원문(발급하지 않은 값) | VERIFY_EMAIL | — |\n| n | `r` | RESET_PASSWORD(용도 다름) | — |\n| o | `r` | VERIFY_EMAIL | `r` 을 한 번 소모했다(`used_at = T+1m`) |\n| p | 10,000자 문자열 | VERIFY_EMAIL | — |",
+      "table": "| 행 | 입력 | 용도 | 준비 |\n|---|---|---|---|\n| a | `null` | VERIFY_EMAIL | — |\n| b | `\"\"` | VERIFY_EMAIL | — |\n| c | `\"   \"` | VERIFY_EMAIL | — |\n| d | `\"\\u3000\"`·`\"\\u00A0\"`·`\"\\u200B\"`·`\"\\u2028\"` 각각 | VERIFY_EMAIL | — |\n| e | `r` 의 앞 42자(잘림) | VERIFY_EMAIL | — |\n| f | `r` 의 앞 20자 | VERIFY_EMAIL | — |\n| g | `r + \"x\"` | VERIFY_EMAIL | — |\n| h | `r` 의 마지막 글자를 다른 글자로 | VERIFY_EMAIL | — |\n| i | `r.toUpperCase()` (원문과 다를 때) | VERIFY_EMAIL | — |\n| j | `\" \" + r`, `r + \" \"`, `r + \"\\n\"`, `r + \"=\"`, `\"=\" + r`, `\"~\" + r` 각각 | VERIFY_EMAIL | — |\n| k | `r` 가운데 `\"\\u0000\"` 삽입, `r + \"\\u0000\"` | VERIFY_EMAIL | — |\n| l | `r + \"\\uD800\"`(짝 없는 서로게이트), `r + \"é\"`(비 ASCII) | VERIFY_EMAIL | — |\n| m | 처음 보는 43자 원문(발급하지 않은 값) | VERIFY_EMAIL | — |\n| n | `r` | RESET_PASSWORD(용도 다름) | — |\n| o | `r` | VERIFY_EMAIL | `r` 을 한 번 소모했다(`used_at = T+1m`) |\n| p | 10,000자 문자열 | VERIFY_EMAIL | — |\n| q | 정규화 변형 — `r` 의 한 글자를 전각(`A`→`Ａ`, `0`→`０`)으로, `r` 끝에 결합 문자 `\"\\u0301\"`, `r` 의 `-`·`_` 를 `‐`(U+2010)·`＿`(U+FF3F)로 각각(NFKC 로 원문과 같아지거나 비슷해 보이는 값) | VERIFY_EMAIL | — |",
       "covers": [
         "유효한 토큰은 한 번만 소모된다 — 동시에 두 요청을 보내면 한 쪽만 성공한다",
         "만료는 인증 24시간, 재설정 30분이다. 만료 시각 정각에는 이미 만료다"
@@ -256,7 +256,7 @@
         "결과와 5초 뒤 모인 메일 수가 「결과」·「메일」 열대로다",
         "DB 의 `account_mail_sent_at` 이 「뒤 값」 열이다"
       ],
-      "table": "| 행 | 마지막 발송 | 결과 | 메일 | 뒤 값 |\n|---|---|---|---|---|\n| a | NULL | true | 1 | `T` |\n| b | `T-1s` | false | 0 | `T-1s` |\n| c | `T-59.999s` | false | 0 | `T-59.999s` |\n| d | `T-60s` | false | 0 | `T-60s` |\n| e | `T-60.001s` | true | 1 | `T` |\n| f | `T-1h` | true | 1 | `T` |\n| g | `T+1s`(시계가 뒤로 간 경우) | false | 0 | `T+1s` |",
+      "table": "| 행 | 마지막 발송 | 결과 | 메일 | 뒤 값 |\n|---|---|---|---|---|\n| a | NULL | true | 1 | `T` |\n| b | `T-1s` | false | 0 | `T-1s` |\n| c | `T-59.999s` | false | 0 | `T-59.999s` |\n| d | `T-60s` | false | 0 | `T-60s` |\n| e | `T-60.001s` | true | 1 | `T` |\n| f | `T-1h` | true | 1 | `T` |\n| g | `T+1s`(시계가 뒤로 간 경우) | false | 0 | `T+1s` |\n\n용도와 무관하게 같은 기준인지 — 「마지막 발송」을 `T-10s` 로 두고 인증 대신 아래 메일을 보낸다.\n\n| 행 | 보내는 메일 | 결과 | 메일 | 뒤 값 |\n|---|---|---|---|---|\n| h | 재설정 메일 | false | 0 | `T-10s` |\n| i | 소셜 안내 메일 | false | 0 | `T-10s` |\n| j | 재설정 메일, 「마지막 발송」 `T-61s` | true | 1 | `T` |",
       "covers": [
         "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)"
       ],
@@ -361,7 +361,7 @@
       "then": [
         "「메일」·「뒤 값」·「호출자」 열대로다"
       ],
-      "table": "| 행 | 방식 | 메일 | 뒤 값(account_mail_sent_at) | 호출자 |\n|---|---|---|---|---|\n| a | 바깥 트랜잭션 안에서 간격 제한 발송 → 커밋 전에 모인 메일을 센다 → 커밋 | 커밋 전 0통, 커밋 뒤 1통 | `T` | 정상 |\n| b | 바깥 트랜잭션 안에서 간격 제한 발송 → 롤백 | 5초 뒤 0통 | NULL | 정상 |\n| c | 트랜잭션 없이 간격 제한 발송 | 1통 | `T` | 정상 |\n| d | 수집 구현이 예외(`MailSendException`)를 던지게 하고 간격 제한 발송 | 0통(보내기 시도 1회) | `T` | 정상(`true`), 예외가 전파되지 않는다 |\n| e | d 와 같은 조건 — 로그 | — | — | WARN 1줄, 받는 사람 가림 규약대로, 토큰 원문·본문 없음 |\n| f | 변경 알림 발송, `account_mail_sent_at = T-10s` | 1통 | `T-10s`(바꾸지 않는다) | 정상 |\n| g | 변경 알림 발송을 바깥 트랜잭션에서 하고 롤백 | 0통 | 그대로 | 정상 |",
+      "table": "| 행 | 방식 | 메일 | 뒤 값(account_mail_sent_at) | 호출자 |\n|---|---|---|---|---|\n| a | 바깥 트랜잭션 안에서 간격 제한 발송 → 커밋 전에 모인 메일을 센다 → 커밋 | 커밋 전 0통, 커밋 뒤 1통 | `T` | 정상 |\n| b | 바깥 트랜잭션 안에서 간격 제한 발송 → 롤백 | 5초 뒤 0통 | NULL | 정상 |\n| c | 트랜잭션 없이 간격 제한 발송 | 1통 | `T` | 정상 |\n| d | 수집 구현이 예외(`MailSendException`)를 던지게 하고 간격 제한 발송 | 0통(보내기 시도 1회) | `T` | 정상(`true`), 예외가 전파되지 않는다 |\n| e | 수집 구현이 예외를 던지게 하고 `e@ticket.on` 에게 인증 메일을 간격 제한 발송(원문 `r`) → 출력 캡처를 본다 | 0통 | `T` | WARN 1줄이 있고 그 줄에 `e***@ticket.on` 이 있으며, 출력 어디에도 `e@ticket.on`·`r`·본문 문구 `24시간` 이 없다 |\n| f | 변경 알림 발송, `account_mail_sent_at = T-10s` | 1통 | `T-10s`(바꾸지 않는다) | 정상 |\n| g | 변경 알림 발송을 바깥 트랜잭션에서 하고 롤백 | 0통 | 그대로 | 정상 |",
       "covers": [
         "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다",
         "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)"
@@ -413,6 +413,29 @@
         "`architecture.md` §5 에 메일 발송 행이 있다(ADR-0031 의 결정과 같은 내용)"
       ],
       "flow": "F9"
+    },
+    {
+      "id": "SC-20",
+      "type": "regression",
+      "title": "소셜 제공자가 설정된 기동은 지금과 같고 소셜 실패 이동도 같은 기준 주소를 쓴다",
+      "given": [
+        "머리말 「기동」의 기본 값에 `KAKAO_CLIENT_ID=id-KAKAO`·`KAKAO_CLIENT_SECRET=secret-KAKAO` 를 넣었다"
+      ],
+      "when": [
+        "표의 `FRONTEND_BASE_URL` 로 기동하고, 성공하면 `GET /login/oauth2/code/kakao?error=access_denied` 를 보낸다"
+      ],
+      "then": [
+        "「결과」 열대로다 — 실패 행은 예외 체인에 `FRONTEND_BASE_URL` 이 있다",
+        "성공 행은 302 이고 `Location` 이 「이동」 열이다(근거: `OAuth2LoginFailureHandler.failureLocation` — `{B}/login?error=social`)",
+        "성공 행은 같은 기동에서 `AccountMails` 인증 메일 링크가 `https://app.example/verify-email#token=` 로 시작한다(소셜 이동과 메일이 같은 정리 규칙)",
+        "승인 테스트 `SocialProviderConfigTest`·`AppleProviderConfigTest` 의 단언은 그대로 통과한다 — 바뀌는 것은 값 주입 하네스(설정 파일을 읽지 않는 기동)와 SocialProviderConfigTest 의 「제공자 없음 → 기동 성공」 한 덩어리뿐이다(SC-05 a 로 대체)"
+      ],
+      "table": "| 행 | FRONTEND_BASE_URL | 결과 | 이동 |\n|---|---|---|---|\n| a | `https://app.example/` | 성공 | `https://app.example/login?error=social` |\n| b | (키 없음) | 실패 | — |\n| c | `https://app.example?x=1` | 실패 | — |",
+      "covers": [
+        "운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다",
+        "메일의 링크는 `FRONTEND_BASE_URL` 로 만들어지고, 위조한 `Host` 헤더를 실어도 바뀌지 않는다"
+      ],
+      "flow": "F2"
     }
   ],
   "coverage_matrix": [
@@ -657,22 +680,22 @@
     {
       "cell": "SPRING_MAIL_HOST@F2:config.case",
       "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 실패(SC-17 d)로 나타난다"
+      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
     },
     {
       "cell": "SPRING_MAIL_HOST@F2:config.notation",
       "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 실패(SC-17 d)로 나타난다"
+      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
     },
     {
       "cell": "SPRING_MAIL_HOST@F2:config.list_separator",
       "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 실패(SC-17 d)로 나타난다"
+      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
     },
     {
       "cell": "SPRING_MAIL_HOST@F2:config.prefix_only",
       "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 실패(SC-17 d)로 나타난다"
+      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
     },
     {
       "cell": "MAIL_FROM@F2:config.unset",
@@ -835,10 +858,8 @@
     },
     {
       "cell": "userId@F3:integer.max+1",
-      "state": "covered",
-      "by": [
-        "SC-14"
-      ]
+      "state": "n/a",
+      "reason": "PLAN inputs 에 userId 상한이 없다(Long, DB 의 BIGSERIAL id) — 상한+1 이 정의되지 않는다. 범위 안의 없는 사용자는 SC-14 a·g, Long 범위 밖은 overflow 칸"
     },
     {
       "cell": "userId@F3:integer.fraction",
@@ -878,10 +899,8 @@
     },
     {
       "cell": "userId@F5:integer.max+1",
-      "state": "covered",
-      "by": [
-        "SC-14"
-      ]
+      "state": "n/a",
+      "reason": "PLAN inputs 에 userId 상한이 없다(Long, DB 의 BIGSERIAL id) — 상한+1 이 정의되지 않는다. 범위 안의 없는 사용자는 SC-14 a·g, Long 범위 밖은 overflow 칸"
     },
     {
       "cell": "userId@F5:integer.fraction",

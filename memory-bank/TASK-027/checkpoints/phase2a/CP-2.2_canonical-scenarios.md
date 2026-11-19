@@ -1,12 +1,16 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-19T15:10:00Z
-summary: "시나리오 19건(happy 8 · error 7 · boundary 4) · 입력 경계 칸 90 판정(covered 58 · n/a 32) · AC 10/10 — 독립검증 대기"
+summary: "시나리오 20건(happy 8 · error 7 · boundary 4 · regression 1) · 입력 경계 칸 90 판정 · AC 10/10 — 1회차 FAIL(V11 false_cover 3) 수정, 2회차 대기"
 
 next_steps:
   - "scenario-validator 1회차"
 
 decisions:
+  - decision: "1회차 경고 반영 — V5(마스킹 규약을 첫 1글자 + *** 로 확정, 로그는 OutputCaptureExtension, SC-17 e 를 독립 행으로), V8(인자 검증을 PLAN inputs 에 명시 — 분류 보완, ROLLBACK_PLAN 아님), V10(SC-20 regression — 제공자 설정 기동·소셜 실패 이동), V11 사유 보정(SPRING_MAIL_HOST), V12 ②(SC-12 h·i·j 용도 공유 간격), ④(log WARN 은 두지 않음 — PLAN unresolved 문구 수정), ⑤(스킴 대소문자 허용은 SocialLoginConfig.java:262 의 toLowerCase 비교가 근거)"
+    rationale: "Then 을 단언 가능한 값으로 고정하고 기존 동작 회귀를 시나리오로 둔다"
+  - decision: "1회차 경고 보류 — V6(SC-06·09 의 두 호출은 '두 번째 호출의 결과'가 관찰 대상이라 한 시나리오), V7(선택된 빈 클래스는 컨텍스트에서 관찰되는 구성 결과 · 예외 클래스는 호출자 계약), V9(경미), V12 ①(SPRING_MAIL_PORT 는 Spring Boot 바인딩에 맡긴다 — 앱이 해석하지 않음), ③(발급 직후 삭제·재발급 중 롤백 — CASCADE·트랜잭션이 보장, TASK-028 에서 호출 경로와 함께)"
+    rationale: "사람이 2b HITL 에서 판단"
   - decision: "새로 쓴다 — 메일·토큰 기반은 기존 시나리오가 없다"
     rationale: "TASK-027 은 신규 기반"
   - decision: "기동 시나리오(SC-03~05)는 설정 파일을 읽지 않는 기동으로 값을 넣는다"
@@ -22,7 +26,11 @@ decisions:
   - decision: "PLAN 입력 제약 대조 — 모든 inputs.constraints 가 SC-01~19 의 Then 에 있다(대소문자 무시·앞뒤 공백 = SC-03 f~h, smtp 필수값 = SC-04, URL 규칙 = SC-05, 무효 결과·예외 없음 = SC-08, 정각 만료 = SC-07, 간격 '<' = SC-12, 발송 예외 비전파 = SC-17)"
     rationale: "wf-scenario Step 2 입력 제약 대조"
 
-attempts: []
+attempts:
+  - n: 1
+    result: FAIL
+    reason: "V11 false_cover 3 — userId@F3·F5 integer.max+1(상한 초과 값 없음), raw_token normalized(정규화 변형 없음)"
+    fix: "userId max+1 → n/a(PLAN 에 상한 없음), SC-08 행 q(전각·결합 문자·유사 기호) 추가"
 ---
 
 # CP-2.2 시나리오 — TASK-027
