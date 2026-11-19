@@ -185,8 +185,13 @@
     "logging": "해당 없음"
   },
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "c3ef4d0a97aa5dccbe635d8b81a90884c2dc8287",
+    "verified_at": "2026-11-19T13:29:50Z",
+    "exceptions": [
+      "머리글 「비공개 공연이 N건 있어요」 N 이 불러온 행만 센다 — 승인된 시나리오 규칙, 규칙 변경은 후속 과제",
+      "TASK-026 과 같은 배포 필요(행 링크 도착 라우트)",
+      "한국 시각 표기는 브라우저로 미확인(jsdom 테스트로만)"
+    ]
   }
 }
