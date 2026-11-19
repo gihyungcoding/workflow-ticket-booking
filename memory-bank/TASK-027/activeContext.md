@@ -1,8 +1,8 @@
 ---
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
-phase: "0"
-phase_name: "시작"
+phase: "1"
+phase_name: "Phase 1 - Plan 완료"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-19
@@ -13,18 +13,19 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-027-mail-email-token"
 
-last_checkpoint: null
+last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
 source: "docs/product/features/email-verification-password-reset.md (Task A)"
-artifacts: {}
+artifacts:
+  plan: "workflow_design/04_plan/PLAN_TASK-027.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-워크플로우 시작 — Phase 1(설계) 진입 전.
+Phase 1 완료 — flows 9 · input_fields 10 · unresolved 15.
 
 ## 다음 한 걸음
 
-Phase 1 — `wf-plan`. 코드베이스 조사(`SocialLoginConfig` 의 FRONTEND_BASE_URL 검증, `Clock` 주입, 조건부 UPDATE 선례, 마이그레이션 버전 단언 테스트).
+Phase 2a — `wf-scenario`. 설정 우선순위 프로브(PLAN unresolved #3) 먼저.
 
 ## 알아둬야 할 것
 
@@ -38,3 +39,5 @@ Phase 1 — `wf-plan`. 코드베이스 조사(`SocialLoginConfig` 의 FRONTEND_B
 - 시작 시 미반영 회고 개선안: coverage_matrix.py ×2(TASK-020·022 — timeout·instant·부호·선행 0·비ASCII 숫자), design-checks.md ×2 — 사용자 「그대로 시작」. 만료 시각·간격은 input_fields 에 수동으로 반영
 - 선행 TASK-025 는 PR #56 으로 develop 에 머지됨(fd4e27b)
 - track standard(견적 12h)
+- **사용자 결정 (2026-11-19, Phase 1)**: ① MAIL_TRANSPORT·FRONTEND_BASE_URL 항상 필수(프로필 없음) ② 커밋 뒤 비동기 발송 기반(AccountMailService)을 이 태스크에서 만든다
+- 승인 테스트 수정 예정(2b HITL): 마이그레이션 버전 "8"→"9" 2곳, SocialProviderConfigTest:332(제공자 없으면 FRONTEND_BASE_URL 없이 기동 성공 → 실패)
