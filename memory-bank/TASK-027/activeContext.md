@@ -1,8 +1,8 @@
 ---
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
-phase: "1"
-phase_name: "Phase 1 - Plan 완료"
+phase: "2a"
+phase_name: "Phase 2a - 시나리오 독립검증 통과"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-19
@@ -13,19 +13,21 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-027-mail-email-token"
 
-last_checkpoint: "checkpoints/phase1/CP-1.3_context-plan.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/email-verification-password-reset.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-027.json"
+  scenario: "workflow_design/05_scenario/SCENARIO_TASK-027.md"
+  validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-027.json"
 ---
 
 ## 지금 무엇을 하고 있나
 
-Phase 1 완료 — flows 9 · input_fields 10 · unresolved 15.
+Phase 2a 완료 — 시나리오 20건, 칸 90, 독립검증 2회차 PASS.
 
 ## 다음 한 걸음
 
-Phase 2a — `wf-scenario`. 설정 우선순위 프로브(PLAN unresolved #3) 먼저.
+Phase 2b — `wf-red`. Red 테스트 + 승인 테스트 수정 3묶음을 HITL#1·2 에 함께.
 
 ## 알아둬야 할 것
 

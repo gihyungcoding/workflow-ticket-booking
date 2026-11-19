@@ -322,7 +322,7 @@ flow: F5
 - **Then** 받는 사람은 `e@ticket.on` 이다
 - **And** 제목과 본문이 규약의 「메일 문구」 표대로다(`{B}` = `https://app.example`)
 - **And** 링크 안에 `//verify-email`·`//reset-password`·`//login` 처럼 겹친 `/` 가 없다
-- **And** 변경 알림 본문에 `AccountMails` 에 넘긴 어떤 비밀번호 후보 문자열도 없다(넘기는 인자가 없다)
+- **And** 변경 알림 메일을 만드는 입력은 받는 사람 하나뿐이고, 본문에 `비밀번호:`·`password` 같은 값 칸과 `http` 가 없다
 
 | 행 | 메일 |
 |---|---|
@@ -397,7 +397,6 @@ flow: F9
 - **Then** 「결과」 열대로다 — 실패 행은 예외 체인에 `FRONTEND_BASE_URL` 이 있다
 - **And** 성공 행은 302 이고 `Location` 이 「이동」 열이다(근거: `OAuth2LoginFailureHandler.failureLocation` — `{B}/login?error=social`)
 - **And** 성공 행은 같은 기동에서 `AccountMails` 인증 메일 링크가 `https://app.example/verify-email#token=` 로 시작한다(소셜 이동과 메일이 같은 정리 규칙)
-- **And** 승인 테스트 `SocialProviderConfigTest`·`AppleProviderConfigTest` 의 단언은 그대로 통과한다 — 바뀌는 것은 값 주입 하네스(설정 파일을 읽지 않는 기동)와 SocialProviderConfigTest 의 「제공자 없음 → 기동 성공」 한 덩어리뿐이다(SC-05 a 로 대체)
 
 | 행 | FRONTEND_BASE_URL | 결과 | 이동 |
 |---|---|---|---|
