@@ -1,0 +1,29 @@
+{
+  "task_id": "TASK-027",
+  "round": 1,
+  "checks": [
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 SC-01~SC-19 의 19개이고 ID 순서가 같다. 대조한 시나리오(SC-03, SC-08, SC-12, SC-14, SC-17)의 given/when/then/table/covers/flow 문장이 일치한다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 19개, happy 7개(SC-01, 02, 06, 09, 11, 15, 18, 19 포함 8개 수준), error 7개, boundary 4개. 하한(전체 2 이상, happy 1 이상, error 1 이상)을 충족한다."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "PLAN 기준 10건을 직접 대조했다. 기준1→SC-01·02·03·17, 기준2→SC-03·04·05, 기준3→SC-06, 기준4→SC-07·08, 기준5→SC-08·09·10, 기준6→SC-11, 기준7→SC-12·13·14·17, 기준8→SC-15·16, 기준9→SC-18, 기준10→SC-19. 미커버 없음."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오의 flow 는 F1~F9 이고 모두 PLAN design.flows 에 있다. F3·F4·F5·F6·F7·F8·F9 는 각각 1개 이상의 시나리오에 대응한다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "대체로 단언 가능한 형태다. 다만 ① 규약의 '발송 실패 로그' 마스킹 규칙(`e@***` 꼴이 아니라 `ab***@ticket.on`)이 자기모순이다. 테스트 사용자 `e@ticket.on` 의 로컬 파트는 1글자라 '앞 2글자만 보인다'를 그대로 적용할 수 없고, SC-17 e 의 단언 값이 확정되지 않는다. ② SC-01 의 '출력 로그에 ... 있다'는 로그 캡처 방식이 정해져 있지 않다. ③ SC-17 e 는 When/Then 구조가 아니라 d 와 같은 조건이라는 참조 행이다."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "SC-09 의 When 은 'consume 을 부르고, 이어서 한 번 더 부른다'로 호출이 둘이다. SC-06 도 issue 를 두 번 부른다. SC-17 a 는 '발송 → 커밋 전에 센다 → 커밋'으로 한 칸에 여러 동작이 들어 있다. SC-10 의 'When ... And 20회 반복'은 반복 설명이라 허용 범위로 본다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "SC-02 와 SC-03 의 Then 이 선택된 빈 클래스(`LoggingMailGateway`·`SmtpMailGateway`)를 단언한다. SC-14·SC-17 의 Then 은 예외 클래스(`IllegalArgumentException`·`MailSendException`)를 단언한다. SC-18 은 열·제약 이름을 쓴다. 외부에서 관찰되는 동작(로그 출력, SMTP 수신)으로 대체할 수 있다."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "warn", "detail": "SC-14 e·f·h·i 는 issue(null/0/-1, null 용도)·consume(r, null) 이 IllegalArgumentException 을 던진다고 단언한다. PLAN design.outputs 와 inputs 에는 이런 인자 검증이 없고, PLAN input_fields note 는 '없는 사용자: 발급은 FK 위반'이라고만 적는다. 0·-1 도 PLAN 기준으로는 FK 위반이라 SC-14 f(IAE)와 g(무결성 위반)가 서로 어긋날 수 있다. Plan 이 불완전하거나 시나리오가 범위를 넘은 것이다."},
+    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "경미하다. SC-07 a·d(성공 경로)는 SC-09 첫 호출과, SC-17 c(트랜잭션 없는 발송)는 SC-12 a 와 같은 코드 경로다. SC-08 의 여러 행은 같은 경로지만 입력이 달라 의도된 표다."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "warn", "detail": "SocialLoginConfig 의 FRONTEND_BASE_URL 검증을 공용으로 옮기는 기존 동작 변경인데 regression 타입 시나리오가 없다. PLAN F2 step4 '제공자 설정 시 기존 동작은 그대로'를 검증하는 시나리오가 없다. SC-05 는 제공자가 없는 경우만 다룬다. 기존 승인 테스트(SocialProviderConfigTest:332, V8→V9 단언)의 변경은 PLAN unresolved 에 있지만 시나리오에 회귀 행이 없다."},
+    {"id": "V11", "name": "입력 경계 판정", "verdict": "fail", "detail": "coverage_matrix 전 칸 중 false_cover 2건. userId 의 integer.max+1 이 SC-14 로 covered 인데 SC-14 에는 상한 초과 값이 없다. raw_token 의 string_stored.normalized 가 SC-08 로 covered 인데 NFC/NFD 변형 입력이 없다. n/a 사유는 PLAN 과 일치하나 SPRING_MAIL_HOST 사유가 인용한 SC-17 d 는 틀린 호스트가 아니라 수집 구현이 던지는 예외다. plan_gap 은 찾지 못했다."},
+    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "① SPRING_MAIL_PORT 는 PLAN inputs 와 SC-02 가 쓰는 입력인데 input_fields 에 없고, 숫자가 아닌 값·범위 밖 값 시나리오도 없다. ② 같은 사용자에게 인증 메일과 재설정 메일을 연달아 보낼 때 용도가 달라도 60초 간격이 공유되는지 시나리오에 없다. ③ 발급 직후 사용자가 삭제된 경우, 재발급 도중 롤백 시 이전 토큰이 살아 있는지도 없다. ④ MAIL_TRANSPORT=log 를 운영에서 고르면 기동 시 WARN 을 남긴다는 PLAN unresolved 항목에 대응 시나리오가 없다. ⑤ SC-05 m(`HTTPS://App.Example` 성공)은 기존 SocialLoginConfig 규칙이 대소문자 스킴을 허용하는지 PLAN 에서 확인되지 않는다."}
+  ],
+  "v11_matrix": [
+    {"cell": "userId@F3:integer.max+1", "kind": "false_cover", "detail": "by SC-14. SC-14 의 userId 값은 E.id+1000(없는 사용자)·0·-1·null 뿐이고 상한 초과 값이 없다. '없는 사용자'는 max+1 경계가 아니다. 상한 초과 값을 추가하거나 n/a 로 사유를 적어야 한다."},
+    {"cell": "userId@F5:integer.max+1", "kind": "false_cover", "detail": "by SC-14. F3 과 같은 사유로 상한 초과 값이 SC-14 의 어느 행에도 없다."},
+    {"cell": "raw_token@F4:string_stored.normalized", "kind": "false_cover", "detail": "by SC-08. SC-08 의 i 행은 toUpperCase 이고 l 행은 비 ASCII `é` 로 유니코드 정규화(NFC/NFD) 형태 변형 입력이 아니다. 정규화 변형 입력이 있거나 n/a 사유가 필요하다."}
+  ],
+  "overall": {
+    "pass": false,
+    "fail_count": 1,
+    "warn_count": 7,
+    "summary": "V1~V4 는 충족했다. V11 이 fail 이다. integer.max+1 칸 2개(userId@F3, userId@F5)가 SC-14 에 상한 초과 값이 없는데 covered 로 적혀 있고, string_stored.normalized 칸도 정규화 변형 입력이 없다. warn 은 V5(마스킹 규약 모순)·V6(SC-09 다중 호출)·V7(빈 클래스명·예외 클래스명 단언)·V8(SC-14 의 IAE 가 PLAN 에 없음)·V9·V10(SocialLoginConfig 회귀 시나리오 없음)·V12 이다."
+  }
+}
