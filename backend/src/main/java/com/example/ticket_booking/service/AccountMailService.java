@@ -187,11 +187,18 @@ public class AccountMailService {
 
   /** 컨텍스트 닫기 — 새 메일은 받지 않고 대기 중인 메일을 최대 {@link #SHUTDOWN_WAIT} 동안 보낸다(RC-2). */
   @PreDestroy
-  void shutdown() throws InterruptedException {
+  void shutdown() {
     sender.shutdown();
-    if (!sender.awaitTermination(SHUTDOWN_WAIT.toMillis(), TimeUnit.MILLISECONDS)) {
-      log.warn("계정 메일 발송기 종료 대기 초과 — 남은 메일 {}통을 버린다", sender.getQueue().size());
+    try {
+      if (!sender.awaitTermination(SHUTDOWN_WAIT.toMillis(), TimeUnit.MILLISECONDS)) {
+        log.warn("계정 메일 발송기 종료 대기 초과 — 남은 메일 {}통을 버린다", sender.getQueue().size());
+        sender.shutdownNow();
+      }
+    } catch (InterruptedException interrupted) {
+      // 기다리는 중 인터럽트 — 남은 메일을 버리고 인터럽트 상태를 되살린다. 종료 절차의 호출자에게 예외를 넘기지 않는다(자체 리뷰 2R)
+      log.warn("계정 메일 발송기 종료 대기 중 인터럽트 — 남은 메일 {}통을 버린다", sender.getQueue().size());
       sender.shutdownNow();
+      Thread.currentThread().interrupt();
     }
   }
 }
