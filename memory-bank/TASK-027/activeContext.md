@@ -2,7 +2,7 @@
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
 phase: "4"
-phase_name: "Phase 4 - 2회차 검증"
+phase_name: "Phase 4 - 예외 승인"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-19
@@ -21,6 +21,7 @@ artifacts:
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-027.json"
   test: "workflow_design/05_scenario/TEST_TASK-027.json"
   dev: "workflow_design/06_dev/DEV_TASK-027.json"
+  verify: "workflow_design/07_verify/VERIFY_TASK-027.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -50,3 +51,4 @@ Phase 3 1회차 Green(225 통과, 6017bb5) 뒤 자체 리뷰 결함으로 Phase 
 - **RETRY_SCENARIO 2회 (2026-11-20, 사용자 결정)**: 자체 리뷰 2R — smtps 타임아웃 무시(재현)·JNDI 세션·종료 인터럽트. 상한 3회 중 2회 사용
 - **Phase 3 완료 (2026-11-20)**: 232 통과. 수용 위험 2 — RC-3(issue 직접 동시 호출), 대괄호 표기 타임아웃(체크리스트 '환경변수로만')
 - **Phase 4 1회차 FAIL → RETRY_SCENARIO 3회 (2026-11-20, 상한)**: SPRING_MAIL_HOST 앞뒤 공백. 다시 FAIL 이면 ROLLBACK_PLAN
+- **HITL#3 예외 승인 (2026-11-20)**: verified_commit da2f1b1. 후속 — TASK-028 에서 체크리스트 STARTTLS 문구 정정, ADR-0035 다시 볼 조건(issue 직접 호출자) 확인

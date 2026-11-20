@@ -361,9 +361,16 @@
     "logging": "실패 WARN 은 가린 주소·예외 클래스명만. log 전송은 본문(토큰 링크)을 INFO 로 남김 — 개발용, 운영 smtp(문서). [낮음] mail.debug=true 시 JavaMail 이 SMTP 대화 전체를 stdout 에 — 체크리스트 안내 없음. STARTTLS 미강제 — 대부분 서비스가 평문 AUTH 거부, 안내 권고 / 2회차: 체크리스트에 587 STARTTLS 필수·mail.debug 금지 안내 추가(문구 정밀도는 WARN)"
   },
   "human_review": {
-    "decision": null,
-    "verified_commit": null,
-    "verified_at": null
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "da2f1b13379d91cd8ab7ccbccc3d40804745ed90",
+    "verified_at": "2026-11-20T05:24:06Z",
+    "exceptions": [
+      "수용 위험 2건 — ADR-0035(토큰 직접 동시 발급, 설정 파일 대괄호 표기 타임아웃)",
+      "체크리스트 STARTTLS 문구 정밀도 — TASK-028 배포 체크리스트 작업에서 고친다",
+      "시나리오 밖 참고 — 호스트 NBSP(발송 시 loud 실패), test-connection=true 순서(미프로브)",
+      "SC-22·25 시간 단언 CI 흔들림 가능",
+      "AUTH-001 승격 기한 지남 — 판정 무관, 사람이 정한다"
+    ]
   },
   "round": 2
 }
