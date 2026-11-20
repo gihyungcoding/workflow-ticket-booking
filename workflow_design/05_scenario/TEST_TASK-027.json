@@ -1,0 +1,235 @@
+{
+  "task_id": "TASK-027",
+  "supersedes": "SCENARIO_TASK-027.json",
+  "test_files": [
+    "backend/src/test/java/com/example/ticket_booking/config/Task027ArchitectureDocTest.java",
+    "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+    "backend/src/test/java/com/example/ticket_booking/repository/Task027EmailTokenMigrationTest.java",
+    "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+    "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java"
+  ],
+  "red_scenarios": [
+    {
+      "scenario_id": "SC-01",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc01_log_전송이면_메일이_로그로_남는다",
+      "status": "red",
+      "failure": "NoSuchBeanDefinitionException: MailGateway 빈 없음(MailConfig 미구현)"
+    },
+    {
+      "scenario_id": "SC-02",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc02_smtp_전송이면_SMTP_서버가_메일을_받는다",
+      "status": "red",
+      "failure": "NoSuchBeanDefinitionException: MailGateway 빈 없음"
+    },
+    {
+      "scenario_id": "SC-03",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc03_MAIL_TRANSPORT_가_정의_밖이면_기동이_실패하고_정의된_값이면_그_구현을_쓴다",
+      "status": "red",
+      "failure": "17행 전부 실패 — 실패 행(a·b·c·i~q)은 검증 없어 기동 성공, 성공 행(d~h)은 MailGateway 빈 없음(null)"
+    },
+    {
+      "scenario_id": "SC-04",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc04_smtp_인데_SMTP_호스트나_보내는_사람이_없으면_기동이_실패한다",
+      "status": "red",
+      "failure": "8행 전부 실패 — a~f 기동 성공(검증 없음), g·h 빈 없음"
+    },
+    {
+      "scenario_id": "SC-05",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc05_소셜_제공자가_없어도_FRONTEND_BASE_URL_이_없거나_틀리면_기동이_실패한다",
+      "status": "red",
+      "failure": "14행 전부 실패 — a~i 기동 성공(제공자 없으면 검증 안 함), j~n AccountMails UnsupportedOperationException"
+    },
+    {
+      "scenario_id": "SC-06",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+      "test_function": "test_sc06_발급한_토큰의_원문은_43자이고_DB_에는_해시만_남는다",
+      "status": "red",
+      "failure": "UnsupportedOperationException(issue)"
+    },
+    {
+      "scenario_id": "SC-07",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+      "test_function": "test_sc07_만료는_인증_24시간_재설정_30분이고_정각에는_이미_만료다",
+      "status": "red",
+      "failure": "UnsupportedOperationException(issue) — 첫 행에서 멈춤, b~f 미실행"
+    },
+    {
+      "scenario_id": "SC-08",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+      "test_function": "test_sc08_무효한_토큰은_빈_결과이고_DB_가_바뀌지_않는다",
+      "status": "red",
+      "failure": "UnsupportedOperationException(issue) — 첫 행 Given 에서 멈춤, 입력 변형·DB 읽기 미실행"
+    },
+    {
+      "scenario_id": "SC-09",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+      "test_function": "test_sc09_유효한_토큰은_한_번_소모되고_두_번째는_빈_결과다",
+      "status": "red",
+      "failure": "UnsupportedOperationException(issue)"
+    },
+    {
+      "scenario_id": "SC-10",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+      "test_function": "test_sc10_같은_토큰을_동시에_두_번_소모하면_한_쪽만_성공한다",
+      "status": "red",
+      "failure": "UnsupportedOperationException(issue) — 스레드 부분 미실행"
+    },
+    {
+      "scenario_id": "SC-11",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+      "test_function": "test_sc11_같은_사용자_용도로_새로_발급하면_이전_토큰은_사라진다",
+      "status": "red",
+      "failure": "UnsupportedOperationException(issue)"
+    },
+    {
+      "scenario_id": "SC-12",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc12_마지막_발송_60초_안에는_보내지_않고_지나면_보낸다",
+      "status": "red",
+      "failure": "BadSqlGrammarException: users.account_mail_sent_at 없음(V9 미구현) — Given 첫 행에서 멈춤"
+    },
+    {
+      "scenario_id": "SC-13",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc13_간격_제한_대상_메일을_동시에_요청해도_한_통만_나간다",
+      "status": "red",
+      "failure": "ExecutionException(UnsupportedOperationException — sendVerificationMail)"
+    },
+    {
+      "scenario_id": "SC-14",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc14_간격_제한_발송의_대상_사용자가_없으면_아무것도_하지_않는다_호출자_인자_오류",
+      "status": "red",
+      "failure": "UnsupportedOperationException(Given 의 issue) — 행 a~i 미실행"
+    },
+    {
+      "scenario_id": "SC-15",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc15_메일_네_종류의_제목_본문_링크",
+      "status": "red",
+      "failure": "UnsupportedOperationException(AccountMails.verification)"
+    },
+    {
+      "scenario_id": "SC-16",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc16_요청의_Host_를_위조해도_메일_링크는_FRONTEND_BASE_URL_이다",
+      "status": "red",
+      "failure": "UnsupportedOperationException(sendVerificationMail)"
+    },
+    {
+      "scenario_id": "SC-17",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc17_메일은_커밋_뒤_비동기로_나가고_롤백이면_나가지_않으며_발송_실패는_호출자에_영향이_없다",
+      "status": "red",
+      "failure": "BadSqlGrammarException: account_mail_sent_at 없음 — 행 a 의 뒤 값 읽기에서 멈춤, b~g·로그 단언 미실행"
+    },
+    {
+      "scenario_id": "SC-18",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/repository/Task027EmailTokenMigrationTest.java",
+      "test_function": "test_sc18_V9_는_기존_사용자_행을_그대로_두고_적용된다",
+      "status": "red",
+      "failure": "expected \"9\" but was \"8\" (V9 없음)"
+    },
+    {
+      "scenario_id": "SC-19",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027ArchitectureDocTest.java",
+      "test_function": "test_sc19_architecture_md_5_에_ADR_0031_과_같은_메일_발송_행이_있다",
+      "status": "already_passing",
+      "failure": null,
+      "note": "architecture.md §5 의 메일 발송 행은 ADR-0031 과 함께 2026-11-12 에 이미 추가됐다 — 이 태스크가 문서를 바꿀 필요가 없어 구현 전에도 참. AC10(absorbed_steps: 확인)을 고정하는 회귀 테스트"
+    },
+    {
+      "scenario_id": "SC-20",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc20_소셜_제공자가_설정된_기동은_지금과_같고_소셜_실패_이동도_같은_기준_주소를_쓴다",
+      "status": "red",
+      "failure": "행 a 의 메일 링크만 실패(AccountMails UnsupportedOperationException). 행 a 의 기동·302·Location 과 행 b·c 의 기동 실패는 이미 통과 — 기존 동작(regression), 새 하네스가 동작한다는 증거"
+    }
+  ],
+  "red_result": {
+    "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --continue (build/test-results/test 삭제 후)",
+    "total": 225,
+    "failed": 21,
+    "passed": 204,
+    "breakdown": "새 시나리오 19 red + SC-19 already_passing 1, 승인 테스트 수정 2건(PerformanceOwnerMigrationTest·PerformancePublishedMigrationTest: expected \"9\" but was \"8\")",
+    "existing_tests_still_passing": true,
+    "note": "1회차(Docker 꺼짐)는 PostgreSQL 테스트 전부 initializationError — Docker 기동 뒤 2회차가 정본. 2회차에 CapturingMailConfig 의 @Primary 중복(하네스 결함)을 고쳐 Task027AccountMailTest 를 다시 돌렸다(6/6 red)"
+  },
+  "inventory_check": {
+    "scenarios": 20,
+    "test_functions": 20,
+    "match": true,
+    "command": "grep -ho 'void test_sc[0-9]*' backend/src/test/java/.../*/Task027*.java | sort -u | wc -l"
+  },
+  "testing_preferences": {
+    "framework": "JUnit 5 + AssertJ(SoftAssertions 표) + Spring Boot Test + Testcontainers PostgreSQL + Awaitility",
+    "mock_strategy": "MailGateway 는 CapturingMailGateway(@Primary), Clock 은 MutableClock, 기동은 BareBoot(설정 파일 미사용·최우선 프로퍼티 소스), SMTP 는 FakeSmtpServer"
+  },
+  "config_applied_via": {
+    "SC-01~05·SC-20": "BareBoot.run(map) — --spring.config.location 으로 설정 파일을 끄고 값은 initializer 의 addFirst(MapPropertySource)",
+    "SC-06~17": "@SpringBootTest + @DynamicPropertySource(PostgresTestContainer.register: datasource·flyway.enabled=true·ddl-auto=none), SC-12~17 은 properties FRONTEND_BASE_URL=https://app.example/",
+    "SPRING_MAIL_HOST·PORT": "명령행/맵에는 완화 바인딩이 없어 정식 이름 spring.mail.host·spring.mail.port 로 넣는다(운영 환경변수는 완화 바인딩으로 같은 키)"
+  },
+  "harness_probe": {
+    "done": [
+      "설정 우선순위(2026-11-19, 커밋 안 함): 테스트 application.properties > SpringApplicationBuilder.properties(map), --인자 > 파일",
+      "SC-20 행 a·b·c 의 기동·소셜 실패 이동이 구현 없이 통과 — BareBoot 가 실제 기동·검증을 재현"
+    ],
+    "not_verified": [
+      "FakeSmtpServer 의 실제 수신·MimeMessage 파싱(SC-02 는 빈 없음으로 멈춤)",
+      "OutputCaptureExtension 이 비동기 실행기 스레드의 WARN 을 잡는지(SC-17 e — 같은 JVM 표준 출력이라 잡힐 것으로 본다)",
+      "Awaitility 대기 5초의 충분성",
+      "SC-10·13 스레드 동시 실행 부분"
+    ]
+  },
+  "compile_skeleton": {
+    "files": [
+      "backend/src/main/java/com/example/ticket_booking/domain/EmailTokenPurpose.java",
+      "backend/src/main/java/com/example/ticket_booking/service/MailMessage.java",
+      "backend/src/main/java/com/example/ticket_booking/service/MailGateway.java",
+      "backend/src/main/java/com/example/ticket_booking/service/EmailTokenService.java",
+      "backend/src/main/java/com/example/ticket_booking/service/AccountMails.java",
+      "backend/src/main/java/com/example/ticket_booking/service/AccountMailService.java",
+      "backend/src/main/java/com/example/ticket_booking/config/LoggingMailGateway.java",
+      "backend/src/main/java/com/example/ticket_booking/config/SmtpMailGateway.java",
+      "backend/build.gradle(spring-boot-starter-mail)"
+    ],
+    "contents": "enum 상수 2·record 1·interface 1·클래스 5. 메서드 본문 13개 전부 throw new UnsupportedOperationException() 한 줄. @Service·@Component 구조 애노테이션만. MailConfig·EmailToken 엔티티·리포지토리·V9 는 없음(테스트가 import 하지 않음)",
+    "purity_check": "스켈레톤 파일의 if/for/while/return 0줄, throw 13 == 메서드 13. red 실패 원인은 UnsupportedOperationException·빈 없음·검증 없음·V9 없음 넷뿐(구현 부재)"
+  },
+  "approved_test_modifications": [
+    {
+      "file": "backend/src/test/java/com/example/ticket_booking/repository/PerformanceOwnerMigrationTest.java",
+      "change": "끝까지 적용한 버전 \"8\" → \"9\" (주석 포함)",
+      "reason": "V9 추가 — PLAN unresolved #1"
+    },
+    {
+      "file": "backend/src/test/java/com/example/ticket_booking/repository/PerformancePublishedMigrationTest.java",
+      "change": "같음",
+      "reason": "같음"
+    },
+    {
+      "file": "backend/src/test/java/com/example/ticket_booking/config/SocialProviderConfigTest.java",
+      "change": "start() 를 BareBoot(설정 파일 미사용) 로, 「미설정」은 키 없음 유지. 제공자 없음 기동 덩어리에 FRONTEND_BASE_URL 을 넣어 '기동 성공·이메일 가입 동작' 단언은 그대로",
+      "reason": "테스트 설정 파일에 FRONTEND_BASE_URL·MAIL_TRANSPORT 가 생겨 기본 프로퍼티로는 미설정·틀린 값 행을 만들 수 없다(프로브). 제공자 없음 + 미설정 = 기동 성공은 사용자 결정(항상 필수)과 반대 — SC-05 a 로 대체",
+      "assertions_changed": false
+    },
+    {
+      "file": "backend/src/test/java/com/example/ticket_booking/config/AppleProviderConfigTest.java",
+      "change": "start() 를 BareBoot 로(값은 여전히 프로퍼티 맵 — 공백·역슬래시·PEM 개행 보존), 클래스 주석 보강",
+      "reason": "같음",
+      "assertions_changed": false
+    }
+  ],
+  "other_changed_files": [
+    "backend/src/test/resources/application.properties: MAIL_TRANSPORT=log, FRONTEND_BASE_URL=http://localhost:5173 추가"
+  ],
+  "human_review": {
+    "approved": false
+  }
+}

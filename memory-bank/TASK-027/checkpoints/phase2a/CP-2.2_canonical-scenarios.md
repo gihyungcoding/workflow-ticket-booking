@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-19T15:10:00Z
 summary: "시나리오 20건(happy 8 · error 7 · boundary 4 · regression 1) · 입력 경계 칸 90 판정 · AC 10/10 — 독립검증 2회차 PASS(경고 5)"
 
