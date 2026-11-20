@@ -95,10 +95,15 @@ public class MailConfig {
         value = String.valueOf(DEFAULT_TIMEOUT_MILLIS);
       } else {
         String trimmed = raw.trim();
-        if (!ASCII_DIGITS.matcher(trimmed).matches() || trimmed.length() > 10) {
+        if (!ASCII_DIGITS.matcher(trimmed).matches()) {
           throw invalidTimeout(protocol, key, raw);
         }
-        long millis = Long.parseLong(trimmed);
+        // 앞에 붙은 0 은 값에 영향이 없다 — 떼고 나서 자릿수로 long 넘침을 먼저 막는다
+        String digits = trimmed.replaceFirst("^0+(?=.)", "");
+        if (digits.length() > 10) {
+          throw invalidTimeout(protocol, key, raw);
+        }
+        long millis = Long.parseLong(digits);
         if (millis <= 0 || millis > Integer.MAX_VALUE) {
           throw invalidTimeout(protocol, key, raw);
         }
