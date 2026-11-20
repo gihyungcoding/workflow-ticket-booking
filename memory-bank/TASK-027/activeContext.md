@@ -53,3 +53,10 @@ Phase 3 1회차 Green(225 통과, 6017bb5) 뒤 자체 리뷰 결함으로 Phase 
 - **Phase 3 완료 (2026-11-20)**: 232 통과. 수용 위험 2 — RC-3(issue 직접 동시 호출), 대괄호 표기 타임아웃(체크리스트 '환경변수로만')
 - **Phase 4 1회차 FAIL → RETRY_SCENARIO 3회 (2026-11-20, 상한)**: SPRING_MAIL_HOST 앞뒤 공백. 다시 FAIL 이면 ROLLBACK_PLAN
 - **HITL#3 예외 승인 (2026-11-20)**: verified_commit da2f1b1. 후속 — TASK-028 에서 체크리스트 STARTTLS 문구 정정, ADR-0035 다시 볼 조건(issue 직접 호출자) 확인
+
+pull_request:
+  number: 57
+  url: "https://github.com/gihyungcoding/workflow-ticket-booking/pull/57"
+  base: develop
+  opened_at: 2026-11-20
+  note: "배포 전 Render 에 FRONTEND_BASE_URL·MAIL_TRANSPORT(+smtp 값) 먼저"
