@@ -178,7 +178,7 @@ SELECT id, title, created_at FROM performance WHERE published = FALSE AND cancel
 | `SPRING_MAIL_USERNAME` · `SPRING_MAIL_PASSWORD` | SMTP 계정 | 비밀. 서비스가 요구하면 넣는다. STARTTLS 가 필요하면 `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true` |
 | `MAIL_FROM` | 보내는 사람 주소 | `smtp` 일 때 필수 — 없으면 기동 실패. 발신 도메인의 SPF·DKIM 을 메일 서비스 안내대로 설정한다 `사람` |
 | `SPRING_MAIL_PROTOCOL` | 비워 둔다(`smtp`) 또는 `smtps` | 587 STARTTLS 는 `smtp`(기본), 465 SSL 은 `smtps`. 그 밖의 값이면 기동 실패 (`MailConfig`) |
-| `SPRING_MAIL_PROPERTIES_MAIL_<SMTP\|SMTPS>_CONNECTIONTIMEOUT` · `_TIMEOUT` · `_WRITETIMEOUT` | 비워 둔다(10000) | 고른 프로토콜의 키만 읽는다. 없으면 10초를 건다(무한 대기 방지). 값은 1~2147483647 의 숫자(ms) — 아니면 기동 실패 |
+| `SPRING_MAIL_PROPERTIES_MAIL_<SMTP\|SMTPS>_CONNECTIONTIMEOUT` · `_TIMEOUT` · `_WRITETIMEOUT` | 비워 둔다(10000) | 고른 프로토콜의 키만 읽는다. 없으면 10초를 건다(무한 대기 방지). 값은 1~2147483647 의 숫자(ms) — 아니면 기동 실패. **환경변수로만 넣는다** — 설정 파일의 `spring.mail.properties[mail.smtp.timeout]` 같은 대괄호 표기는 읽지 않고 10초로 덮인다(TASK-027 수용 위험) |
 | `SPRING_MAIL_JNDI_NAME` | **넣지 않는다** | 있으면(빈 값도) 기동 실패 — JNDI 세션은 타임아웃을 걸 수 없어 지원하지 않는다 |
 | `PORT` | **직접 넣지 않는다** | Render 가 주입한다 |
 
