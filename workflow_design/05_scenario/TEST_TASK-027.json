@@ -287,10 +287,10 @@
     "backend/src/test/resources/application.properties: MAIL_TRANSPORT=log, FRONTEND_BASE_URL=http://localhost:5173 추가"
   ],
   "human_review": {
-    "approved": false,
-    "previous": {
-      "note": "RETRY_SCENARIO 2회차 재승인 — 3회차로 다시 필요"
-    }
+    "approved": true,
+    "approved_at": "2026-11-20T05:03:52Z",
+    "decision": "APPROVE",
+    "note": "RETRY_SCENARIO 3회차 재승인 — SC-27"
   },
   "red_retry": {
     "reason": "RETRY_SCENARIO 1회차 — Phase 3 자체 리뷰 RC-1·RC-2·RC-4",

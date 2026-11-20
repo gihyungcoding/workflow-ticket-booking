@@ -1,7 +1,7 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-20T00:30:00Z
-summary: "RETRY_SCENARIO 3회차 Red — 함수 27 == 시나리오 27. SC-27 11행 중 8행 red(Phase 4 FAIL 재현 포함). HITL#1·2 재승인 대기"
+summary: "RETRY_SCENARIO 3회차 Red — 함수 27 == 시나리오 27. SC-27 11행 중 8행 red(Phase 4 FAIL 재현 포함). HITL#1·2 재승인"
 
 next_steps:
   - "HITL#1·2 재승인 → Phase 3 4회차(호스트·보내는 사람 정리·검증) → Phase 4 2회차"

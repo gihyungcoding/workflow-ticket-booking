@@ -1399,6 +1399,8 @@
     "uncovered": []
   },
   "human_input": {
-    "generate_red_trigger": false
+    "generate_red_trigger": true,
+    "approved_at": "2026-11-20T05:03:52Z",
+    "via": "AskUserQuestion HITL#1·2 재승인(RETRY_SCENARIO 3회차)"
   }
 }
