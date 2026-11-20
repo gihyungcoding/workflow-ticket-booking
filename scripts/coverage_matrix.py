@@ -100,6 +100,9 @@ KINDS: dict[str, tuple[str, list[tuple[str, str]]]] = {
         ("integral_fraction", "정수값 소수 (1700000000.0)"),
         ("exponent", "지수 (1.7e9)"),
         ("type_range", "받는 타입(long·Instant)의 표기 범위 초과"),
+        ("sign", "부호 (+7·-7)"),
+        ("leading_zero", "앞에 붙은 0 (07)"),
+        ("non_ascii_digit", "ASCII 가 아닌 숫자 (아라비아-인도·전각)"),
     ]),
     "opaque": ("요청에 실린 불투명 문자열 (토큰·코드·서명)", [
         ("affix_entry", "앞뒤에 붙은 문자(=·~·공백·LF·NUL·서로게이트·비 ASCII)를 실제 입구로"),
@@ -120,6 +123,25 @@ KINDS: dict[str, tuple[str, list[tuple[str, str]]]] = {
     ]),
     "datetime": ("시각 비교", [
         ("now_eq_boundary", "now == 경계 — 같은 비교를 하는 코드 경로마다"),
+    ]),
+    "instant": ("외부가 적는 ISO 순간 문자열 (응답의 startAt·serverTime 등)", [
+        ("bare_number", "숫자만 ('1'·'2026')"),
+        ("date_only", "날짜만 (2026-11-20)"),
+        ("no_offset", "오프셋 없음 (2026-11-20T10:00:00)"),
+        ("invalid_calendar", "달력에 없는 날짜 (02-30)"),
+        ("hour_24", "24시 (T24:00:00)"),
+        ("year_0_99", "연도 0~99"),
+    ]),
+    "timeout": ("응답이 오지 않을 수 있는 외부 호출", [
+        ("no_response", "응답 없음 — 시간 제한에 걸린다"),
+        ("abort", "요청 중단 (취소·재요청)"),
+        ("unmount_abort", "언마운트·종료 중 진행 중인 호출"),
+    ]),
+    "external_config": ("라이브러리가 읽는 설정 키·값 (n/a 로 닫을 수 없다)", [
+        ("key_prefix_variant", "라이브러리가 실제로 읽는 키 접두사 (프로토콜별 mail.smtp.*·mail.smtps.*)"),
+        ("trimmed_value_used", "정리(trim 등)한 값이 실제로 라이브러리에 넘어가는가 — 검증한 값 == 쓰는 값"),
+        ("library_zero_default", "0·미설정의 라이브러리 기본 의미 (무한 대기 등)"),
+        ("alternate_notation", "다른 표기 (대괄호 키·환경변수 완화 바인딩)"),
     ]),
     "config": ("환경변수·헤더 값", [
         ("unset", "미설정 / 헤더 부재"),
@@ -169,6 +191,19 @@ KINDS: dict[str, tuple[str, list[tuple[str, str]]]] = {
 
 STATES = ("covered", "n/a")
 SC_ID_RE = re.compile(r"^SC-\d+$")
+
+#: n/a 로 닫을 수 없는 종류 — '앱이 해석하지 않는다' 로 닫은 칸에서 같은 뿌리의 변종이 라운드마다
+#: 하나씩 나왔다 (TASK-027 RC-2 — 롤백 3회). 해당하지 않으면 시나리오로 그 사실을 보인다.
+NO_NA_KINDS = {"external_config"}
+
+#: 나중에 더한 칸 → 더한 날. 시나리오가 이미 승인된(generate_red_trigger) 태스크에는 소급하지 않는다 —
+#: 닫힌 태스크의 게이트가 규칙 개선만으로 다시 깨지지 않게 한다. 새 종류(instant 등)는 고른 태스크에만
+#: 생기므로 여기에 적지 않는다.
+ADDED_CELLS: dict[tuple[str, str], str] = {
+    ("integer_notation", "sign"): "2026-11-20",
+    ("integer_notation", "leading_zero"): "2026-11-20",
+    ("integer_notation", "non_ascii_digit"): "2026-11-20",
+}
 
 
 POLICY = Path(__file__).resolve().parent.parent / ".claude/skills/wf-scenario/references/coverage-policy.md"
@@ -236,7 +271,7 @@ def required_cells(plan: dict) -> tuple[list[dict], list[str]]:
             for flow in flows:
                 for cid, desc in KINDS[kind][1]:
                     cells.append({"cell": cell_key(name, flow, kind, cid), "field": name,
-                                  "flow": flow, "kind": kind, "desc": desc})
+                                  "flow": flow, "kind": kind, "cid": cid, "desc": desc})
     return cells, problems
 
 
@@ -255,11 +290,15 @@ def judge(cells: list[dict], scenario: dict | None) -> dict:
                 problems.append(f"{e['cell']}: 두 번 적혀 있다")
             by_cell[e["cell"]] = e
 
+    approved = bool(((scenario or {}).get("human_input") or {}).get("generate_red_trigger"))
     rows = []
     for c in cells:
         e = by_cell.get(c["cell"])
         state, note = "missing", ""
-        if e is not None:
+        added = ADDED_CELLS.get((c["kind"], c.get("cid", "")))
+        if e is None and added and approved:
+            state, note = "n/a", f"시나리오 승인 뒤 더한 칸({added}) — 소급하지 않는다"
+        elif e is not None:
             state = e.get("state")
             if state == "covered":
                 by = e.get("by") or []
@@ -274,6 +313,9 @@ def judge(cells: list[dict], scenario: dict | None) -> dict:
                 note = str(e.get("reason") or "").strip()
                 if not note:
                     note = "n/a 인데 reason 이 없다"
+                    state = "invalid"
+                elif c["kind"] in NO_NA_KINDS:
+                    note = f"{c['kind']} 칸은 n/a 로 닫을 수 없다 — 시나리오로 덮는다"
                     state = "invalid"
             else:
                 note = f"state 는 {STATES} 중 하나 — {state!r}"
