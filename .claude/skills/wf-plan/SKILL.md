@@ -179,6 +179,11 @@ Foundation 문서가 아직 없으면(빈 프로젝트) 이 단계를 건너뛰�
 - **`target_files` 에 `docs/release/**` 가 있거나 환경변수·설정·허용 헤더·마이그레이션이 바뀌면**
   `design.ops_impacts` 표를 둔다 — 변경 항목마다 배포 순서(클라이언트 호환)·기존 데이터·롤백·모니터링
   (공개 메서드 범위)·문서 위치. 운영 문서 결함이 Phase 4 에서 세 번 FAIL 했다 (→ TASK-022 RC-2)
+- **외부 호출(SMTP·HTTP·메시지)이나 비동기 실행기를 추가하면** 운영 성질 넷을 `unresolved` 에 적고 기본안을
+  정한다 — **타임아웃 기본값**(라이브러리의 0·미설정 의미), **실행기 상한**(스레드·큐 크기·넘칠 때 처리),
+  **종료 처리**(종료 시 대기·인터럽트), **트랜잭션 경계**(커밋 뒤 실행인가). 설계에서 묻지 않으면 자체 리뷰
+  1라운드에 한꺼번에 나와 시나리오 롤백이 된다 (→ TASK-027 RETRY_SCENARIO 1회차 — RC-2). 라이브러리가 직접
+  읽는 설정은 `references/design-checks.md` §8 로 키·값을 대조한다
 
 조사 결과를 `codebase_analysis` 에 기록한다. 찾지 못한 것은 `unresolved` 에 남긴다 —
 못 찾았다는 사실이 다음 Phase에 필요한 정보다.
@@ -312,6 +317,11 @@ python3 scripts/coverage_matrix.py --kinds        # 고를 수 있는 종류와 
   전부 고친다
 - 외부 토큰·JSON 을 받으면 필드마다 `json_field`, 숫자면 `integer_notation`, 요청 문자열이면
   `opaque` 를 고른다 (→ TASK-016 `claim_schema`)
+- 외부 서버 응답이 **시각**에 기대면 `instant`, **요청 지연**에 기대면 `timeout` 을 고른다. 화면에 그대로
+  보여주기만 하는 **표시 전용 값**(`startAt`·`title`·`venue`)도 필드로 올린다 — 빠뜨리면 2a 롤백에서 PLAN 에
+  필드를 더하게 된다 (→ TASK-020 — 롤백 2a 에서 4필드 추가)
+- 라이브러리가 직접 읽는 설정(SMTP·HTTP 클라이언트 속성)은 `external_config` 를 고른다 — `n/a` 로 닫을 수
+  없다 (→ `references/design-checks.md` §8)
 - 입력이 없는 태스크는 `"input_fields": []` 와 `"input_fields_none_reason"` 을 적는다
 
 `check_plan.py` 가 종류 이름·흐름 ID 를 확인한다.
