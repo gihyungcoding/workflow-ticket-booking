@@ -1,24 +1,24 @@
 {
   "task_id": "TASK-027",
   "checks": [
-    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 SC-01~SC-20 의 20개이고 ID 순서가 같다. 이번에 바뀐 SC-08(q 행), SC-12(h·i·j 행), SC-14(h·i 행), SC-17(e 행), SC-20 과 규약 표 문장이 JSON 의 given/when/then/table/covers/flow 와 일치한다."},
-    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 20, happy 8(SC-01·02·06·09·11·15·18·19), error 7(SC-03·04·05·08·14·16·17), boundary 4(SC-07·10·12·13), regression 1(SC-20). 하한을 충족한다."},
-    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "PLAN 기준 10건을 직접 대조했다. 기준1→SC-01·02·03·17, 기준2→SC-03·04·05·20, 기준3→SC-06, 기준4→SC-07·08, 기준5→SC-08·09·10, 기준6→SC-11, 기준7→SC-12·13·14·17, 기준8→SC-15·16·20, 기준9→SC-18, 기준10→SC-19. 미커버 없음."},
-    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오의 flow 는 F1~F9 이고 모두 PLAN design.flows 에 있다. SC-20 은 F2 다."},
-    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "이전 지적이던 마스킹 규약 모순은 고쳐졌다(`e***@ticket.on`, 출력 캡처 방식 명시). 남은 것은 두 가지다. ① SC-20 의 네 번째 Then('승인 테스트의 단언은 그대로 통과한다')은 시나리오가 단언할 행동이 아니라 기존 테스트 파일에 대한 서술이다. ② SC-15 의 'AccountMails 에 넘긴 어떤 비밀번호 후보 문자열도 없다(넘기는 인자가 없다)'는 어떤 문자열을 단언하는지 불명확하다."},
-    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "SC-09 의 When 은 consume 을 두 번 부른다. SC-06 은 issue 를 두 번 부른다. SC-17 a 는 '발송 → 커밋 전에 센다 → 커밋' 으로 한 칸에 여러 동작이 있다. SC-20 은 '기동하고, 성공하면 GET 을 보낸다' 로 When 이 둘이다(기동 → 요청)."},
-    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "SC-01·02·03 의 Then 이 선택된 빈 클래스(`LoggingMailGateway`·`SmtpMailGateway`)를, SC-14·17 의 Then 이 예외 클래스를 단언한다. SC-20 은 Then 에 `OAuth2LoginFailureHandler.failureLocation` 을 적었고, SC-18 은 열·제약 이름을 쓴다. 관찰 가능한 동작으로 바꿀 여지가 있다."},
-    {"id": "V8", "name": "입출력 대응", "verdict": "pass", "detail": "1회차 지적(SC-14 의 IllegalArgumentException 이 PLAN 에 없음)이 해소됐다. PLAN design.inputs 의 userId·purpose 제약에 'null·0 이하·null purpose → IllegalArgumentException, 간격 제한 발송은 0 이하·없는 사용자 false' 가 추가됐고 SC-14 a~i 와 일치한다."},
-    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "경미하다. SC-07 a·d(성공 경로)는 SC-09 첫 호출과, SC-17 c 는 SC-12 a 와 같은 코드 경로다. SC-12 h·i 는 같은 거절 분기를 용도만 바꿔 두 번 탄다. 의도된 표이므로 사람이 판단한다."},
-    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "SC-20(regression)이 추가돼 소셜 제공자 설정 시 기동과 소셜 실패 이동(SocialLoginConfig 공용화)을 다룬다. 1회차 지적이 해소됐다."},
-    {"id": "V11", "name": "입력 경계 판정", "verdict": "pass", "detail": "coverage_matrix 전 칸을 확인했다. 1회차 3건은 모두 고쳐졌다. ① userId@F3·F5:integer.max+1 은 n/a 로 바뀌었고, 사유(PLAN inputs 에 상한이 없고 Long 범위 밖은 overflow 칸)가 PLAN 과 맞다. ② raw_token@F4:string_stored.normalized 는 SC-08 q 행(전각·결합문자·U+2010·U+FF3F)이 추가돼 실제로 입력되고, Then 이 빈 결과와 used_at 불변을 단언한다. ③ SPRING_MAIL_HOST 의 n/a 사유가 '앱이 해석하지 않고 발송 시점 예외는 SC-17 d·e 의 경로로 처리' 로 바뀌어 PLAN(있음/없음만 판정)과 맞다. covered 칸 전부(SC-03~SC-08, SC-12, SC-14 등)가 Given/When 에 그 값을 쓰고 Then 이 결과를 단언한다. 새 false_cover·bad_na·plan_gap 은 없다."},
-    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "① [신규] SPRING_MAIL_PORT 는 PLAN inputs 와 SC-02 가 쓰는 입력인데 input_fields 에 없다. 숫자가 아니거나 범위 밖인 값의 판정이 없다. ② SC-05 m(`HTTPS://App.Example` 성공)은 대소문자 스킴 허용이 기존 SocialLoginConfig 규칙에 있는지 PLAN 에서 확인되지 않는다. ③ 같은 사용자에게 issue 중 롤백이 나면 이전 토큰이 살아 있는지, 발급 직후 사용자가 삭제된 경우의 시나리오가 없다. 이전 회차의 '운영 log 선택 시 WARN' 지적은 PLAN unresolved 가 '두지 않는다' 로 바뀌어 해소됐고, 용도 간 60초 공유는 SC-12 h·i·j 로 해소됐다."}
+    {"id": "V1", "name": "MD ↔ JSON 일치", "verdict": "pass", "detail": "MD 와 JSON 모두 SC-01~SC-24 의 24개이고 ID 순서가 같다. 새로 들어온 SC-21~24 의 given/when/then/table/covers/flow 와 SC-03·04·05 가 가리키는 머리말 「기동」 문구가 JSON 과 일치한다. 2회차 판정 파일은 SC-01~20 기준이라 시나리오 수가 늘었지만 그 사이 SC-01~20 의 본문은 달라지지 않았다."},
+    {"id": "V2", "name": "개수 하한", "verdict": "pass", "detail": "전체 24. happy 8(SC-01·02·06·09·11·15·18·19), error 9(SC-03·04·05·08·14·16·17·21·24), boundary 6(SC-07·10·12·13·22·23), regression 1(SC-20). 하한을 충족한다."},
+    {"id": "V3", "name": "acceptance_criteria 커버리지", "verdict": "pass", "detail": "PLAN 기준 10건을 covers 와 직접 대조했다. 기준1→SC-01·02·03·17·22·23·24, 기준2→SC-03·04·05·20, 기준3→SC-06, 기준4→SC-07·08, 기준5→SC-08·09·10·21, 기준6→SC-11·21, 기준7→SC-12·13·14·17·21·23, 기준8→SC-15·16·20, 기준9→SC-18, 기준10→SC-19. 미커버 없음."},
+    {"id": "V4", "name": "flow 대응", "verdict": "pass", "detail": "시나리오의 flow 는 F1~F9 이고 모두 PLAN design.flows 에 있다. 새로 들어온 SC-21(F4)·SC-22(F1)·SC-23(F7)·SC-24(F7)도 실재한다. SC-21 은 F3·F5 도 다루지만 flow 필드는 F4 하나라 PLAN F3·F5 의 새 step(영속 엔티티를 분리하지 않는다)과 flow 표기가 어긋난다. 위반은 아니다."},
+    {"id": "V5", "name": "Then 관찰 가능성", "verdict": "warn", "detail": "SC-24 의 When 은 '애플리케이션 종료 절차가 하는 것처럼 메일 발송기를 멈춘다'이고 Then 은 '발송기 멈춤이 끝났을 때 5통이 보내져 있다'이다. 멈추는 수단과 멈춤이 끝났다는 신호가 명시되지 않아 그대로 단언으로 옮기기 어렵다. SC-23 의 '막혀 있던 1통 + 대기열 100통'은 메일 수로 단언할 수 있어 괜찮다. SC-22 의 9초 이상 20초 안은 시간 단언이라 느린 CI 에서 흔들릴 수 있다."},
+    {"id": "V6", "name": "When 단일성", "verdict": "warn", "detail": "SC-24 는 When 이 둘이다. U1~U5 발송 후 발송기 멈춤, 이어서 멈춘 뒤 U6 발송이 And 로 붙어 있다. SC-23 은 102회 순차 호출 뒤 '수집 구현을 풀어 준다'가 And 로 붙는다. SC-21 의 When 은 한 트랜잭션 안의 읽기 → 호출 → 엔티티 변경 → 커밋이다(의도된 단일 흐름이지만 동작이 여러 개). 이전 회차의 SC-06·09·17 a·20 지적도 그대로다."},
+    {"id": "V7", "name": "구현 누출", "verdict": "warn", "detail": "SC-21 의 When 이 `changePublished(true)` 라는 도메인 메서드명을, SC-24 가 '메일 발송기를 멈춘다'(TaskExecutor 종료)라는 구현 동작을 담는다. SC-01·02·03 Then 의 빈 클래스명, SC-14·17 Then 의 예외 클래스명, SC-20 의 `OAuth2LoginFailureHandler.failureLocation` 도 이전 회차 그대로 남아 있다."},
+    {"id": "V8", "name": "입출력 대응", "verdict": "pass", "detail": "새 시나리오의 입력이 모두 이번 회차에 추가된 PLAN design.inputs 범위 안이다. SC-22 는 SMTP 타임아웃 설정, SC-23·24 는 발송 대기열·종료(상한 100, 종료 시 10초, 종료 뒤 버리고 WARN), SC-21 은 호출자 트랜잭션의 영속 엔티티다. 출력 쪽(WARN 로그, 호출자 정상)도 PLAN F7 step 과 맞다."},
+    {"id": "V9", "name": "중복", "verdict": "warn", "detail": "SC-21 c·d 는 인증/재설정 용도만 다르고 같은 AccountMailService 경로이며, 그 용도 차이는 SC-12 h·i·j 가 이미 본다. 이전 회차의 SC-07 a·d 와 SC-09, SC-17 c 와 SC-12 a, SC-12 h·i 중복 지적도 그대로다. 모두 의도된 표로 보여 사람이 판단한다."},
+    {"id": "V10", "name": "회귀 누락", "verdict": "pass", "detail": "SC-20(regression)이 소셜 제공자 설정 기동과 소셜 실패 이동의 회귀를 다룬다. SC-21 은 기존 호출자 트랜잭션 동작의 회귀도 지킨다."},
+    {"id": "V11", "name": "입력 경계 판정", "verdict": "pass", "detail": "coverage_matrix 전 칸을 확인했다. 새 SMTP_TIMEOUT 7칸은 unset 이 covered(SC-22 a, 설정 키 없음으로 기동하고 9~20초 안에 예외로 끝난다고 단언)이고 나머지 6칸은 n/a 다. n/a 사유('앱이 해석하지 않고 JavaMail 에 그대로 넘긴다', '숫자라 대소문자·접두사 없음', '단일 값')는 PLAN inputs 의 '설정이 없으면 10초, 있으면 그 값 그대로'와 문면상 맞고 설정값 사용은 SC-22 b 가 본다. false_cover, bad_na, plan_gap 으로 올릴 근거는 없다. 이번 회차에 고쳐진 MAIL_TRANSPORT·FRONTEND_BASE_URL 의 unset 칸은 머리말 「기동」이 OS 환경변수를 읽지 않는다고 못박아 PLAN 의 BareBoot 변경과 일치하고, 이전 회차 칸 판정은 바뀌지 않았다."},
+    {"id": "V12", "name": "목록 밖 경계 제안", "verdict": "warn", "detail": "① [신규] 타임아웃 값 0·음수. JavaMail 에서 0 은 무한 대기이고 PLAN 은 '설정이 있으면 그 값 그대로'라 0 이 들어오면 RC-2 가 되살아난다. 앱이 정리하는지가 PLAN 에도 시나리오에도 없다. ② [신규] 세 설정 중 일부만 설정한 경우(connectiontimeout 만 1000 등) 나머지가 10초 기본인지 무한인지 판정이 없다. ③ [신규] 타임아웃 빈 값(`\"\"`)은 '없음'인지 '있음'인지 모호하다. 빈 값이 그대로 넘어가 무한 대기가 될 수 있는데 n/a 로 닫혀 있다. ④ 이전 회차에서 이어진 것. SPRING_MAIL_PORT 가 input_fields 에 없고, SC-05 m 의 대문자 스킴 허용 근거가 PLAN 에 없고, issue 도중 롤백 시 이전 토큰 상태 시나리오가 없다. ⑤ [신규] SC-23 은 대기열을 100 으로 고정해 단언한다. 상한 경계 100 번째·101번째는 보이지만 종료 중 대기열 처리와의 조합은 없다."}
   ],
   "v11_matrix": [],
   "overall": {
     "pass": true,
     "fail_count": 0,
-    "warn_count": 5,
-    "summary": "1회차 fail(V11 false_cover 3건과 SPRING_MAIL_HOST 사유)이 모두 해소됐고 V1~V4·V11 에 fail 이 없다. V8·V10 도 pass 로 바뀌었다. 남은 warn 은 V5(SC-20 네 번째 Then 이 테스트 파일 서술)·V6(SC-09·SC-17 a·SC-20 의 다중 동작)·V7(클래스·예외명 단언)·V9(경미한 중복)·V12(SPRING_MAIL_PORT 입력, 대소문자 스킴, 롤백 중 재발급)이며 HITL 에서 사람이 판단한다."
+    "warn_count": 6,
+    "summary": "V1~V4·V11 에 fail 이 없다. 새 SC-21~24 와 SMTP_TIMEOUT 7칸, 머리말 「기동」의 OS 환경변수 문구, PLAN 추가분이 서로 맞고 기준 10건이 모두 커버된다. warn 6건(V5·V6·V7·V9·V12 및 V4 의 flow 표기 참고)은 HITL 에서 사람이 판단한다. 가장 눈여겨볼 것은 SC-24 의 When 이 둘이라는 점과, 타임아웃 0·부분 설정·빈 값이 무한 대기로 이어질 수 있는데 시나리오가 판정하지 않는다는 점(V12)이다."
   }
 }

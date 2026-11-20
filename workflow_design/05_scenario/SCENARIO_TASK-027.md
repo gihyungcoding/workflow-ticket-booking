@@ -427,20 +427,28 @@ flow: F2
 covers: 유효한 토큰은 한 번만 소모된다 — 동시에 두 요청을 보내면 한 쪽만 성공한다 / 같은 사용자·용도로 새 토큰을 발급하면 이전 토큰은 사라진다 / 마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)
 flow: F4
 
-## SC-22 (boundary) SMTP 서버가 응답하지 않아도 발송은 타임아웃으로 끝난다
+## SC-22 (boundary) SMTP 서버가 응답하지 않아도 발송은 타임아웃으로 끝나고 타임아웃 설정이 틀리면 기동이 실패한다
 
 - **Given** 연결은 받지만 아무 응답도 보내지 않는 SMTP 서버(블랙홀)가 임의 포트에서 떠 있다
-- **And** 애플리케이션이 `MAIL_TRANSPORT=smtp`·그 호스트·포트·`MAIL_FROM` 과 표의 타임아웃 설정으로 기동했다
-- **When** `MailGateway.send` 를 부른다
-- **Then** 「끝나는 시간」 안에 예외로 끝난다(무한 대기하지 않는다)
-- **And** 「끝나는 시간」의 아래 한계보다 늦게 끝난다(설정한 값이 실제로 쓰였다)
+- **And** 애플리케이션을 `MAIL_TRANSPORT=smtp`·그 호스트·포트·`MAIL_FROM` 과 표의 타임아웃 설정으로 기동한다(설정 이름은 `spring.mail.properties.mail.smtp.` 뒤의 키, 운영 환경변수는 `SPRING_MAIL_PROPERTIES_MAIL_SMTP_<키 대문자>`)
+- **When** 기동이 성공하면 `MailGateway.send` 를 부른다
+- **Then** 「결과」가 시간이면 `send` 가 그 범위 안에 예외로 끝난다(무한 대기하지 않고, 아래 한계보다 늦게 끝나 그 값이 실제로 쓰였다)
+- **And** 「결과」가 기동 실패면 예외 체인에 「이름」 열의 환경변수 이름이 있다
 
-| 행 | 타임아웃 설정(`spring.mail.properties.mail.smtp.connectiontimeout`·`timeout`·`writetimeout`) | 끝나는 시간 |
-|---|---|---|
-| a | (키 없음) — 기본 10초 | 9초 이상 20초 안 |
-| b | 셋 다 `1000` | 1초 이상 5초 안 |
+| 행 | connectiontimeout | timeout | writetimeout | 결과 | 이름 |
+|---|---|---|---|---|---|
+| a | (키 없음) | (키 없음) | (키 없음) | 9초 이상 20초 안 — 기본 10초 | — |
+| b | `1000` | `1000` | `1000` | 1초 이상 5초 안 | — |
+| c | `1000` | `""` | `1000` | 9초 이상 20초 안 — 빈 값은 기본 | — |
+| d | `1000` | `"   "` | `1000` | 9초 이상 20초 안 — 공백만은 기본 | — |
+| e | (키 없음) | `" 1000 "` | (키 없음) | 1초 이상 5초 안 — 앞뒤 공백 정리, 다른 키는 기본 | — |
+| f | `1000` | `0` | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT` |
+| g | `1000` | `-5` | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT` |
+| h | `abc` | `1000` | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT` |
+| i | `1000` | `1000` | `1e3` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT` |
+| j | `1000` | `1.5` | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT` |
 
-covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다
+covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다 / 운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다
 flow: F1
 
 ## SC-23 (boundary) 발송이 막혀 대기열이 차면 넘친 메일은 버리고 WARN 을 남기며 호출자는 정상이다
@@ -462,9 +470,8 @@ flow: F7
 - **Given** 이 시나리오만 쓰고 버리는 애플리케이션 컨텍스트다(다른 시나리오와 공유하지 않는다)
 - **And** 수집 구현은 메일 한 통에 200ms 가 걸리게 해 뒀다
 - **And** 사용자 `U1`…`U6`(이메일 `d1@ticket.on`…`d6@ticket.on`, 마지막 발송 NULL)가 있다
-- **When** `U1`…`U5` 에게 간격 제한 인증 메일을 보낸 직후, 애플리케이션 종료 절차가 하는 것처럼 메일 발송기를 멈춘다
-- **And** 멈춘 뒤 `U6` 에게 간격 제한 인증 메일을 보낸다(트랜잭션 커밋까지)
-- **Then** 발송기 멈춤이 끝났을 때 `d1`…`d5` 5통이 모두 보내져 있다
+- **When** `U1`…`U5` 에게 간격 제한 인증 메일을 보낸 직후 컨텍스트 닫기에서 불리는 `AccountMailService` 의 종료 처리(@PreDestroy)를 테스트가 직접 부르고, 그 호출이 돌아온 뒤 `U6` 에게 간격 제한 인증 메일을 보낸다(트랜잭션 커밋까지)
+- **Then** 종료 처리 호출이 돌아온 시점에 `d1`…`d5` 5통이 모두 보내져 있다(기다림 없이 바로 센다)
 - **And** `U6` 호출은 true 로 정상 끝나고 예외가 나오지 않는다
 - **And** `d6@ticket.on` 메일은 5초 뒤에도 없다
 - **And** 출력 캡처에 WARN 줄이 1줄 있고 그 줄에 `d***@ticket.on` 이 있다

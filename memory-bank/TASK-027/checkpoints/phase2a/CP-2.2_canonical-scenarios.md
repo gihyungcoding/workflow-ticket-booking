@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-19T15:10:00Z
-summary: "RETRY_SCENARIO 1회차(Phase 3 자체 리뷰) — 시나리오 24건(SC-21~24 추가), 칸 97 판정, 독립검증 3회차 대기"
+summary: "RETRY_SCENARIO 1회차 — 시나리오 24건, 칸 97, 독립검증 3회차 PASS(경고 6, V12 ①~③·V5 반영)"
 
 next_steps:
-  - "scenario-validator 3회차(이전 판정 원문 첨부)"
+  - "Phase 2b — SC-21~24 Red 와 BareBoot(OS 환경변수) 수정, HITL#1·2 재승인"
 
 decisions:
   - decision: "RETRY_SCENARIO 1회차 — 자체 리뷰 RC-1·RC-2·RC-4 의 변종 전부를 한 번에 시나리오로(SC-21 a~d, SC-22 a·b, SC-23, SC-24, 머리말 기동)"
@@ -33,6 +33,10 @@ decisions:
     rationale: "wf-scenario Step 2 입력 제약 대조"
 
 attempts:
+  - n: 4
+    result: PASS
+    reason: "3회차 fail 0 · warn 6"
+    fix: "재검증 없이 V12 ①~③(타임아웃 0·음수·숫자 아님 → 기동 실패, 빈 값·공백·키 없음 → 키별 10초 기본, PLAN inputs 수정, SC-22 행 c~j), V5(SC-24 의 멈춤 수단·신호 = @PreDestroy 직접 호출과 그 반환) 반영. 보류: V6·V7·V9·V12 ④⑤ — 이전 회차와 같은 사유"
   - n: 3
     result: "RETRY_SCENARIO (Phase 3 → 2a)"
     outcome: "Phase 3 자체 리뷰 1라운드 [correctness] 뿌리 3개가 시나리오 밖 — 사용자 결정 2026-11-20 「2a 로 돌아가 한번에」"

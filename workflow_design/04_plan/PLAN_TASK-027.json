@@ -84,8 +84,9 @@
         "type": "ms 정수 문자열",
         "source": "환경변수(SPRING_MAIL_PROPERTIES_MAIL_SMTP_*)",
         "constraints": [
-          "smtp 일 때 설정이 없으면 셋 다 10000ms 를 기본으로 건다(자체 리뷰 RC-2 — JavaMail 기본은 무한 대기)",
-          "설정이 있으면 그 값을 그대로 쓴다"
+          "smtp 일 때 세 키를 각각 본다 — 키가 없거나 빈 값·공백만이면 그 키에 10000ms 기본을 건다(자체 리뷰 RC-2 — JavaMail 기본·0 은 무한 대기)",
+          "값이 있으면 앞뒤 공백을 정리해 양의 정수(ms)여야 한다 — 0·음수·정수가 아닌 값(abc·1e3·1.5)이면 기동 실패, 메시지에 해당 환경변수 이름(SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT 등)",
+          "log 일 때는 읽지 않는다"
         ]
       },
       {
