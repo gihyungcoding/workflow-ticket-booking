@@ -708,6 +708,100 @@ class Task027MailTransportTest {
     soft.assertAll();
   }
 
+  // ---------- SC-27 ----------
+
+  private record SmtpTextRow(String row, String host, String from, String failName) {}
+
+  /**
+   * SC-27 (boundary) SMTP 호스트·보내는 사람의 앞뒤 공백은 정리해 실제 발송에 쓰고 호스트 안의 공백은 기동 실패다.
+   *
+   * <p>Given FakeSmtpServer, smtp·그 포트와 표의 SPRING_MAIL_HOST·MAIL_FROM 으로 기동 When 기동이 성공하면 send Then
+   * 수신 행은 1통·From 이 no-reply@ticket.on, 기동 실패 행은 예외 체인에 행 g·h·i 는 SPRING_MAIL_HOST, j·k 는 MAIL_FROM
+   */
+  @Test
+  void test_sc27_SMTP_호스트_보내는_사람의_앞뒤_공백은_정리해_실제_발송에_쓰고_호스트_안의_공백은_기동_실패다() throws Exception {
+    SmtpTextRow[] rows = {
+      new SmtpTextRow("a", " localhost", FROM, null),
+      new SmtpTextRow("b", "localhost ", FROM, null),
+      new SmtpTextRow("c", "localhost\n", FROM, null),
+      new SmtpTextRow("d", "\tlocalhost\r\n", FROM, null),
+      new SmtpTextRow("e", "LOCALHOST", FROM, null),
+      new SmtpTextRow("f", "localhost", "  " + FROM + "  ", null),
+      new SmtpTextRow("g", "local host", FROM, "SPRING_MAIL_HOST"),
+      new SmtpTextRow("h", "localhost\nevil", FROM, "SPRING_MAIL_HOST"),
+      new SmtpTextRow("i", "\n", FROM, "SPRING_MAIL_HOST"),
+      new SmtpTextRow("j", "localhost", FROM + "\r\nBcc: x@evil.example", "MAIL_FROM"),
+      new SmtpTextRow("k", "localhost", "no reply@ticket.on", "MAIL_FROM"),
+    };
+    SoftAssertions soft = new SoftAssertions();
+    try (FakeSmtpServer smtp = new FakeSmtpServer()) {
+      for (SmtpTextRow row : rows) {
+        String label = "SC-27 " + row.row();
+        // Given
+        Started started =
+            BareBoot.start(
+                env(
+                    "MAIL_TRANSPORT",
+                    "smtp",
+                    "spring.mail.host",
+                    row.host(),
+                    "spring.mail.port",
+                    String.valueOf(smtp.port()),
+                    "MAIL_FROM",
+                    row.from(),
+                    "spring.mail.properties.mail.smtp.timeout",
+                    "3000",
+                    "spring.mail.properties.mail.smtp.connectiontimeout",
+                    "3000"));
+        try {
+          if (row.failName() != null) {
+            // Then 기동 실패
+            soft.assertThat(started.ok()).as(label + " — 기동 실패여야 한다").isFalse();
+            if (!started.ok()) {
+              soft.assertThat(started.failureMessages()).as(label).contains(row.failName());
+            }
+            continue;
+          }
+          soft.assertThat(started.ok())
+              .as(label + " — 기동 성공 (" + started.failureMessages() + ")")
+              .isTrue();
+          if (!started.ok()) {
+            continue;
+          }
+          int before = smtp.received().size();
+
+          // When
+          Throwable thrown = null;
+          try {
+            started.context().getBean(MailGateway.class).send(MESSAGE);
+          } catch (Throwable throwable) {
+            thrown = throwable;
+          }
+
+          // Then
+          soft.assertThat(thrown).as(label + " — 발송 예외 없음").isNull();
+          try {
+            Awaitility.await()
+                .atMost(Duration.ofSeconds(5))
+                .until(() -> smtp.received().size() > before);
+          } catch (RuntimeException timeout) {
+            // 아래 단언이 실제 수를 남긴다
+          }
+          soft.assertThat(smtp.received().size() - before).as(label + " — 수신 수").isEqualTo(1);
+          if (smtp.received().size() > before) {
+            MimeMessage received = smtp.received().get(before);
+            soft.assertThat(((InternetAddress) received.getFrom()[0]).getAddress())
+                .as(label + " — From")
+                .isEqualTo(FROM);
+          }
+        } finally {
+          started.close();
+        }
+      }
+    }
+    soft.assertAll();
+  }
+
   // ---------- 도우미 ----------
 
   private static MailGateway gatewayOf(Started started) {

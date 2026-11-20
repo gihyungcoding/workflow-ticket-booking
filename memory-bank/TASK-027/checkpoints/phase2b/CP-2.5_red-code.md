@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-20T00:30:00Z
-summary: "RETRY_SCENARIO 2회차 Red — 함수 26 == 시나리오 26. 전체 231 중 실패 3(SC-22 l·m, SC-25 15행, SC-26), 기존 228 통과. HITL#1·2 재승인"
+summary: "RETRY_SCENARIO 3회차 Red — 함수 27 == 시나리오 27. SC-27 11행 중 8행 red(Phase 4 FAIL 재현 포함). HITL#1·2 재승인 대기"
 
 next_steps:
-  - "HITL#1·2 재승인 → Phase 3 3회차(프로토콜·JNDI·인터럽트·타임아웃 표기)"
+  - "HITL#1·2 재승인 → Phase 3 4회차(호스트·보내는 사람 정리·검증) → Phase 4 2회차"
 
 decisions:
   - decision: "컴파일 스켈레톤은 테스트가 import 하는 타입만 — MailConfig·엔티티·리포지토리·V9 는 Phase 3"
@@ -19,6 +19,10 @@ decisions:
     rationale: "출력 어디에도 e@ticket.on 이 없다는 단언이 다른 행 주소에 걸리지 않게"
 
 attempts:
+  - n: 5
+    result: "RETRY_SCENARIO 3회차 Red"
+    outcome: "SC-27 a~d 발송 실패(Phase 4 FAIL 재현), g·h·j·k 기동 성공 — 실제 결함"
+    back_to: "Phase 2b"
   - n: 4
     result: "RETRY_SCENARIO 2회차 Red"
     outcome: "SC-22 l·m, SC-25(15/18행), SC-26 red — 실제 결함. PLAN 정정: JNDI 키만으로는 Boot 가 기동을 막지 않음(MailConfig 가 검사)"
