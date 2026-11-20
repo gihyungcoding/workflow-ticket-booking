@@ -1,0 +1,376 @@
+{
+  "task_id": "TASK-027",
+  "status": "WARN",
+  "status_reason": "2회차 — 1회차 FAIL(RC-2 later: SPRING_MAIL_HOST 공백) 해소(SC-27 실제 SMTP 수신으로 확인), 새 [correctness] 0. WARN: (1) 수용 위험 2(ADR-0035) — RC-3(issue 직접 동시 호출, 재현·현재 호출자 2곳 모두 claim 선행), 설정 파일 대괄호 표기 타임아웃(체크리스트 '환경변수로만') (2) [docs] 체크리스트 STARTTLS 문구 정밀도 — enable 이 없으면 서버가 지원해도 항상 평문(결론 '둘 다 넣는다'는 같음) (3) 시나리오 밖 참고 — 호스트의 NBSP 는 기동 때 안 걸리고 발송 때 실패(loud), test-connection=true 순서는 등록 순서 의존(미프로브) (4) 시간 단언(SC-22·25) CI 흔들림 가능 (5) AUTH-001 승격 기한 지남",
+  "evidence": {
+    "tests": {
+      "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --continue (결과 디렉터리 삭제 후, Docker 켜짐)",
+      "exit_code": 0,
+      "summary": "233 tests, 0 failed, 0 skipped — BUILD SUCCESSFUL in 5m 5s",
+      "round": 2
+    },
+    "lint": {
+      "command": "cd backend && ./gradlew spotlessCheck",
+      "exit_code": 0,
+      "summary": "위반 없음",
+      "round": 2
+    },
+    "build": {
+      "command": "cd backend && ./gradlew build -x test",
+      "exit_code": 0,
+      "summary": "빌드 성공",
+      "round": 2
+    },
+    "diff": {
+      "command": "git diff --stat develop...HEAD",
+      "summary": "52 files changed, 7746 insertions(+), 70 deletions(-) — 소스·빌드·문서 18 files +813 -44",
+      "round": 2
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다",
+      "verdict": "PASS",
+      "evidence": "SC-01(log 출력 캡처)·SC-02(FakeSmtpServer 수신 From·To·제목·본문)·SC-03 통과. 테스트는 CapturingMailGateway 로 보낸 메일을 모아 단언(SC-12~17)"
+    },
+    {
+      "criterion": "운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다",
+      "verdict": "PASS",
+      "evidence": "SC-03·04·05·20·22·25·27 통과 — 1회차 FAIL(SPRING_MAIL_HOST 공백) 해소: 호스트·MAIL_FROM 을 정리해 발송에 쓰고 안쪽 공백·개행은 기동 실패(SC-27 a~d 실제 수신, g~k 기동 실패)"
+    },
+    {
+      "criterion": "발급한 토큰의 원문은 43자이고, DB 에는 SHA-256 해시만 있다(DB 조회로 원문이 없음을 확인)",
+      "verdict": "PASS",
+      "evidence": "SC-06 통과 — 원문 43자 [A-Za-z0-9_-], token_hash = sha256hex, 모든 행·열에 원문 없음(JDBC 비트랜잭션)"
+    },
+    {
+      "criterion": "만료는 인증 24시간, 재설정 30분이다. 만료 시각 정각에는 이미 만료다",
+      "verdict": "PASS",
+      "evidence": "SC-07 통과 — VERIFY 24h·RESET 30m, 정각·+1ms 만료, used_at NULL 유지"
+    },
+    {
+      "criterion": "유효한 토큰은 한 번만 소모된다 — 동시에 두 요청을 보내면 한 쪽만 성공한다",
+      "verdict": "PASS",
+      "evidence": "SC-09·SC-10(2스레드 20회)·SC-21 a 통과"
+    },
+    {
+      "criterion": "같은 사용자·용도로 새 토큰을 발급하면 이전 토큰은 사라진다",
+      "verdict": "PASS",
+      "evidence": "SC-11·SC-21 b 통과"
+    },
+    {
+      "criterion": "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)",
+      "verdict": "PASS",
+      "evidence": "SC-12(10행 경계)·SC-13(10스레드 → 1통)·SC-14·SC-17·SC-21 c·d·SC-23 통과"
+    },
+    {
+      "criterion": "메일의 링크는 `FRONTEND_BASE_URL` 로 만들어지고, 위조한 `Host` 헤더를 실어도 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "SC-15·SC-16(위조 Host·X-Forwarded-*·Origin)·SC-20 통과"
+    },
+    {
+      "criterion": "마이그레이션이 기존 `users` 행(이메일 가입·소셜 가입)을 그대로 두고 적용된다 — `email_verified` 값이 바뀌지 않는다",
+      "verdict": "PASS",
+      "evidence": "SC-18 통과(PostgreSQL Testcontainers, V8→V9, email_verified 불변, UNIQUE·FK·CASCADE)"
+    },
+    {
+      "criterion": "`architecture.md` §5 에 메일 발송 행이 있다(ADR-0031 의 결정과 같은 내용)",
+      "verdict": "PASS",
+      "evidence": "SC-19 통과(already_passing — §5 메일 발송 행 이미 존재)"
+    }
+  ],
+  "screens": [],
+  "architecture": {
+    "command": "python3 scripts/check_architecture.py --json",
+    "error_count": 0,
+    "warn_count": 1,
+    "no_target": [],
+    "files_scanned": 721,
+    "violations": [
+      {
+        "id": "DESIGN-003",
+        "severity": "warn",
+        "detail": "frontend/src/pages/PerformanceEditPage.tsx:135 — 기존 파일, 이 태스크 아님"
+      }
+    ],
+    "overdue_promotions": [
+      {
+        "id": "AUTH-001",
+        "promote_after": "TASK-024"
+      }
+    ],
+    "prose_coverage": [
+      {
+        "rule": "API: 비즈니스 로직, DB 접근",
+        "constraint": "ARCH-001(리포지토리 import 금지)",
+        "state": "✓ — 이번 변경에 API 없음"
+      },
+      {
+        "rule": "Service: HTTP 관심사",
+        "constraint": "ARCH-002",
+        "state": "✓ — AccountMails 는 요청을 읽지 않음(SC-16)"
+      },
+      {
+        "rule": "Service: SQL/영속성 프레임워크 타입 직접 사용(쿼리 조립 포함)",
+        "constraint": "ARCH-003(data.jpa·criteria import 만)",
+        "state": "⚠ 부분 인코딩 — 네이티브 SQL 은 UserRepository 에 있어 이번 변경은 지킴. TransactionSynchronizationManager 는 트랜잭션 프레임워크라 영속성 타입 아님"
+      },
+      {
+        "rule": "domain: 영속성 접근, HTTP 관심사, 트랜잭션 제어",
+        "constraint": null,
+        "state": "⚠ 미인코딩 — EmailToken·EmailTokenPurpose 는 위반 없음(코드 확인)"
+      },
+      {
+        "rule": "Repository: 도메인 규칙 판단",
+        "constraint": null,
+        "state": "검사 불가 — 조건부 UPDATE 의 만료·간격 조건은 쿼리 조건이지 규칙 판단이 아닌가가 해석 문제. 60초·TTL 값은 서비스·enum 이 정한다"
+      }
+    ]
+  },
+  "regression": {
+    "full_suite": "232/232 passed",
+    "callers_checked": true,
+    "note": "EmailTokenService·AccountMailService 의 프로덕션 호출자는 서로뿐(후속 TASK-028·029 가 부른다). FrontendBaseUrl 은 소셜 핸들러 2곳 + MailConfig — SC-20·SocialProviderConfigTest·AppleProviderConfigTest 통과"
+  },
+  "scope_deviations": [
+    {
+      "path": "docs/release/first-deploy-checklist.md",
+      "reason": "implementation_spec 밖 — 이 태스크만 배포해도 MAIL_TRANSPORT·FRONTEND_BASE_URL 없으면 기동 실패(PLAN ops_impacts, Phase 1 보고)"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/FrontendBaseUrl.java",
+      "reason": "SocialLoginConfig 의 검증을 항상 쓰는 공용 위치로 — PLAN target 의 '공용으로 뺀다'를 새 파일로"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AccountMailService.java·AccountMails.java",
+      "reason": "PLAN target 에 있음(implementation_spec 밖) — 사용자 결정(비동기 기반을 이 태스크에서)"
+    }
+  ],
+  "code_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "develop...6017bb5 전체",
+        "findings": 5,
+        "tests_added": [],
+        "fix_commit": null,
+        "outcome": "RC-1·RC-2·RC-4 시나리오 밖 → RETRY_SCENARIO 1회차(사용자 결정), RC-3 수용 위험",
+        "phase": 3
+      },
+      {
+        "n": 2,
+        "scope": "6017bb5...97c9214 · 같은 카테고리 전수",
+        "findings": 4,
+        "tests_added": [],
+        "fix_commit": "75e4885·04e1221(주석 누락 보정)",
+        "outcome": "RC-1·RC-4 해소. RC-2 later(smtps 재현·JNDI·종료 인터럽트) 시나리오 밖 → RETRY_SCENARIO 2회차(사용자 결정)",
+        "phase": 3
+      },
+      {
+        "n": 3,
+        "scope": "97c9214...7593cd9 (롤백 뒤 수정 커밋 재리뷰)",
+        "findings": 2,
+        "tests_added": [
+          "backend/src/test/java/com/example/ticket_booking/config/MailConfigTimeoutValueTest.java#앞에_0이_붙어_10자를_넘어도_범위_안의_정수면_그_값을_쓴다"
+        ],
+        "fix_commit": "38b6064",
+        "outcome": "later 3 해소. 앞자리 0(규칙 안) 수정, 대괄호 표기(시나리오 밖) 위험 수용 — 사용자 결정, 체크리스트에 명시",
+        "phase": 3
+      },
+      {
+        "n": 4,
+        "phase": 4,
+        "scope": "develop...HEAD 전체",
+        "findings": 2,
+        "summary": "[correctness] SPRING_MAIL_HOST 공백(RC-2 later, 재현). [security, 낮음] STARTTLS 강제·안내 없음, mail.debug=true 시 토큰 링크 stdout 노출 — 체크리스트 안내 권고. 확인: RC-1·RC-4 해소, RC-3 수용 유지(재현), 트랜잭션 경계·해시·V9 매핑·FrontendBaseUrl 이동·BareBoot 단언 불약화·링크 Host 미사용 이상 없음"
+      },
+      {
+        "n": 5,
+        "phase": 4,
+        "scope": "develop...HEAD 전체 + 수정 커밋 556c6f3...HEAD",
+        "findings": 0,
+        "summary": "[correctness] 0. RC-2 later 해소. 같은 뿌리 전수(PORT·USERNAME·PASSWORD·DEFAULT_ENCODING·TEST_CONNECTION·MAIL_FROM·FRONTEND_BASE_URL·MAIL_TRANSPORT·PROTOCOL·타임아웃) 변종 없음. singleToken 호출부 전부 덮음. 참고: NBSP 호스트(발송 시 loud 실패), test-connection 순서(미프로브), STARTTLS 문구 정밀도. 수용 위험 2건 변화 없음"
+      }
+    ]
+  },
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "summary": "벌크 @Modifying 의 clearAutomatically 가 호출자 트랜잭션의 영속성 컨텍스트 전체를 detach",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "findById→consume→수정",
+          "origin": "found",
+          "probe": "reproduced",
+          "evidence": "SC-21 a Red(4131d79) / SC-21 a — clearAutomatically 제거(97c9214)",
+          "resolved": true
+        },
+        {
+          "case": "sendVerification/ResetMail 내부 issue",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "evidence": "SC-21 c·d / SC-21 c·d",
+          "resolved": true
+        },
+        {
+          "case": "다른 엔티티(Performance) detach",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "evidence": "SC-21 전 행이 Performance 로 관찰 / SC-21 a~d(Performance 로 관찰)",
+          "resolved": true
+        },
+        {
+          "case": "수정 후 clearAutomatically 가 남은 @Modifying",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "Phase 4 Grep — main 전체에 clearAutomatically 없음"
+        }
+      ]
+    },
+    {
+      "id": "RC-2",
+      "summary": "메일 발송이 외부 응답을 무한정 기다릴 수 있고 발송기 수명·용량이 호출자와 분리되지 않았으며, 전송 설정을 JavaMail 이 실제로 읽는 키가 아니라 짐작한 키로 읽는다",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "블랙홀 SMTP 영구 블록",
+          "origin": "found",
+          "probe": "reproduced",
+          "evidence": "SC-22 a Red / SC-22 a~e·SC-25 a~g — 기본 10초 타임아웃",
+          "resolved": true
+        },
+        {
+          "case": "종료 시 큐 유실",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "evidence": "SC-24 Red / SC-24 — 종료 시 최대 10초 대기",
+          "resolved": true
+        },
+        {
+          "case": "종료 뒤 afterCommit RejectedExecution 전파",
+          "origin": "predicted",
+          "probe": "reproduced",
+          "evidence": "SC-24 U6 행 / SC-24 U6 행 — enqueue 가 거부를 WARN 으로 흡수",
+          "resolved": true
+        },
+        {
+          "case": "smtps 면 mail.smtp.* 무시",
+          "origin": "later",
+          "probe": "reproduced",
+          "evidence": "SC-25 a·e Red / SC-25 a~e·o — 프로토콜 접두사 키(7593cd9)",
+          "resolved": true
+        },
+        {
+          "case": "JNDI 세션이면 타임아웃 변경 무시",
+          "origin": "later",
+          "probe": "reproduced",
+          "evidence": "SC-25 l~n·r(기동 실패로 차단) / SC-25 l~n·r — 기동 실패",
+          "resolved": true
+        },
+        {
+          "case": "awaitTermination 인터럽트 전파",
+          "origin": "later",
+          "probe": "reproduced",
+          "evidence": "SC-26 Red / SC-26 — 인터럽트 시 shutdownNow·상태 복구",
+          "resolved": true
+        },
+        {
+          "case": "앞자리 0 이 붙은 유효 값 거부",
+          "origin": "later",
+          "probe": "reproduced",
+          "evidence": "MailConfigTimeoutValueTest Red → 38b6064 / MailConfigTimeoutValueTest(38b6064)",
+          "resolved": true
+        },
+        {
+          "case": "설정 파일 대괄호 표기 spring.mail.properties[mail.smtp.timeout] 를 못 읽고 10초로 덮음",
+          "origin": "later",
+          "probe": "reproduced",
+          "evidence": "리뷰어 프로브(Environment.getProperty → null)",
+          "accepted_risk": "ADR-0035 — 운영은 환경변수로만(체크리스트 §6), 결과는 10초 기본(무한 대기 아님)"
+        },
+        {
+          "case": "SPRING_MAIL_HOST 앞뒤 공백/개행 — 기동 검증(isBlank)은 통과, 발송은 Boot 가 넣은 호스트 원문을 그대로 써 UnknownHostException, WARN 한 줄만",
+          "origin": "later",
+          "probe": "reproduced",
+          "evidence": "Phase 4 리뷰어 프로브: JavaMailSenderImpl.setHost(\" localhost\") 후 send → MailConnectException(UnknownHostException) / 2회차: singleToken + impl.setHost 로 해소, SC-27 a~d 실제 수신",
+          "resolved": true
+        },
+        {
+          "case": "MAIL_FROM 앞뒤 공백 / 안쪽 개행(헤더 주입)",
+          "origin": "later",
+          "probe": "reproduced",
+          "evidence": "SC-27 f·j·k — 해소",
+          "resolved": true
+        },
+        {
+          "case": "NBSP 등 유니코드 공백이 호스트에 섞임",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "시나리오 SC-27 범위 밖 — 통과 시 발송 때 UnknownHost 로 loud 실패(조용한 오동작 아님). WARN 참고"
+        },
+        {
+          "case": "test-connection=true 의 연결 검증이 정리 전 호스트를 쓸 가능성",
+          "origin": "later",
+          "probe": "not_probed",
+          "reason": "리뷰어 javap — 검증기가 mailGateway 뒤에 만들어져 정리된 값을 쓸 것으로 판단, 실패해도 기동 실패(loud). WARN 참고"
+        },
+        {
+          "case": "PORT·USERNAME·PASSWORD·DEFAULT_ENCODING·MAIL_TRANSPORT·FRONTEND_BASE_URL 의 검증값≠사용값",
+          "origin": "later",
+          "probe": "not_reproduced",
+          "evidence": "2회차 리뷰어 코드 확인 — 같은 값으로 검증·사용 또는 Boot 바인더가 검증"
+        }
+      ]
+    },
+    {
+      "id": "RC-3",
+      "summary": "issue 의 delete+insert 가 사용자 행 락 없이는 직렬화되지 않는다(수용 위험)",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "issue 직접 동시 호출 시 유효 토큰 2개",
+          "origin": "found",
+          "probe": "reproduced",
+          "reason": "현재 호출자는 AccountMailService 뿐(claim 이 먼저 행을 잠금) — javadoc 호출 규칙(75e4885)",
+          "evidence": "Phase 4 리뷰어 임시 Postgres 프로브 — 두 세션 DELETE→INSERT 겹치면 2행",
+          "accepted_risk": "ADR-0035 — 현재 호출자 2곳 모두 간격 제한 UPDATE 가 사용자 행을 먼저 잠금, issue javadoc 호출 규칙"
+        }
+      ]
+    },
+    {
+      "id": "RC-4",
+      "summary": "BareBoot 「키 없음」에 OS 환경변수가 새어 듦",
+      "found_in_round": 1,
+      "variants": [
+        {
+          "case": "개발자 머신의 FRONTEND_BASE_URL·MAIL_TRANSPORT",
+          "origin": "found",
+          "probe": "reproduced",
+          "reason": "테스트가 OS 환경변수를 바꿀 수 없다 — 시스템 환경변수 소스 제거로 수정(4131d79)",
+          "evidence": "Phase 4 리뷰어 프로브 — systemEnvironment 소스 제거 시 OS 환경변수 안 보임(수정 확인) / BareBoot 가 systemEnvironment 소스 제거(4131d79) — Phase 4 리뷰어 프로브로 확인",
+          "resolved": true
+        }
+      ]
+    }
+  ],
+  "security": {
+    "input_validation": "토큰 원문 형식 검사 후 해시로만 조회, 소모는 조건부 UPDATE 1문장. 설정값 기동 검증(전송·프로토콜·타임아웃·JNDI·기준 주소·호스트·보내는 사람) — 보내는 사람 안쪽 CR·LF 거부로 헤더 주입 차단",
+    "authorization": "해당 없음 — 엔드포인트 없음",
+    "secrets": "하드코딩 없음. SMTP 비밀번호는 환경변수",
+    "logging": "실패 WARN 은 가린 주소·예외 클래스명만. log 전송은 본문(토큰 링크)을 INFO 로 남김 — 개발용, 운영 smtp(문서). [낮음] mail.debug=true 시 JavaMail 이 SMTP 대화 전체를 stdout 에 — 체크리스트 안내 없음. STARTTLS 미강제 — 대부분 서비스가 평문 AUTH 거부, 안내 권고 / 2회차: 체크리스트에 587 STARTTLS 필수·mail.debug 금지 안내 추가(문구 정밀도는 WARN)"
+  },
+  "human_review": {
+    "decision": "EXCEPTION_APPROVE",
+    "verified_commit": "da2f1b13379d91cd8ab7ccbccc3d40804745ed90",
+    "verified_at": "2026-11-20T05:24:06Z",
+    "exceptions": [
+      "수용 위험 2건 — ADR-0035(토큰 직접 동시 발급, 설정 파일 대괄호 표기 타임아웃)",
+      "체크리스트 STARTTLS 문구 정밀도 — TASK-028 배포 체크리스트 작업에서 고친다",
+      "시나리오 밖 참고 — 호스트 NBSP(발송 시 loud 실패), test-connection=true 순서(미프로브)",
+      "SC-22·25 시간 단언 CI 흔들림 가능",
+      "AUTH-001 승격 기한 지남 — 판정 무관, 사람이 정한다"
+    ]
+  },
+  "round": 2
+}

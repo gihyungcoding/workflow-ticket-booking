@@ -2,13 +2,10 @@ package com.example.ticket_booking.config;
 
 import com.example.ticket_booking.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
@@ -42,8 +39,8 @@ import org.springframework.util.MultiValueMap;
 /**
  * 소셜 로그인 제공자 등록과 프론트 리다이렉트 설정(ADR-0013). 제공자는 환경변수 {@code <KAKAO|NAVER|GOOGLE>_CLIENT_ID}·{@code
  * _CLIENT_SECRET} 둘 다 (공백 제거 뒤) 값이 있을 때만 등록한다 — 하나도 없으면 이 설정의 빈이 하나도 만들어지지 않고 서버는 이메일 인증만으로 기동한다.
- * 하나라도 있으면 프론트 기준 주소 FRONTEND_BASE_URL 이 올바라야 하고, 아니면 기동이 실패한다 — 리다이렉트 주소를 요청에서 얻지 않으므로 이 값이 유일한
- * 출처다.
+ * 프론트 기준 주소 FRONTEND_BASE_URL 은 제공자 유무와 무관하게 항상 검증된다(TASK-027 — 메일 링크도 쓴다, {@link FrontendBaseUrl})
+ * — 리다이렉트 주소를 요청에서 얻지 않으므로 이 값이 유일한 출처다.
  *
  * <p>애플은 고정 비밀번호 대신 서명한 JWT 를 Client Secret 으로 쓰므로 {@code APPLE_CLIENT_ID} {@code APPLE_TEAM_ID}
  * {@code APPLE_KEY_ID} {@code APPLE_PRIVATE_KEY} 네 값이 모두 있을 때만 등록한다. 개인 키가 올바르지 않으면 기동이 실패한다.
@@ -119,13 +116,13 @@ public class SocialLoginConfig {
   @Conditional(AnyProviderConfigured.class)
   public OAuth2LoginSuccessHandler oauth2LoginSuccessHandler(
       AuthService authService, Environment environment) {
-    return new OAuth2LoginSuccessHandler(authService, frontendBaseUrl(environment));
+    return new OAuth2LoginSuccessHandler(authService, FrontendBaseUrl.from(environment));
   }
 
   @Bean
   @Conditional(AnyProviderConfigured.class)
   public OAuth2LoginFailureHandler oauth2LoginFailureHandler(Environment environment) {
-    return new OAuth2LoginFailureHandler(frontendBaseUrl(environment));
+    return new OAuth2LoginFailureHandler(FrontendBaseUrl.from(environment));
   }
 
   @Bean
@@ -245,41 +242,6 @@ public class SocialLoginConfig {
         .userNameAttributeName(IdTokenClaimNames.SUB)
         .clientName("Apple")
         .build();
-  }
-
-  /** 제공자 하나라도 등록되면 기준 주소가 올바라야 한다. 앞뒤 공백과 끝 슬래시는 정리해 돌려준다. */
-  static String frontendBaseUrl(Environment environment) {
-    String raw = environment.getProperty("FRONTEND_BASE_URL");
-    if (raw == null || raw.isBlank()) {
-      throw new IllegalStateException("FRONTEND_BASE_URL 이 필요하다 (소셜 로그인 제공자가 설정돼 있다)");
-    }
-    String trimmed = raw.trim();
-    URI uri;
-    try {
-      uri = new URI(trimmed);
-    } catch (URISyntaxException exception) {
-      throw invalidBaseUrl("URL 형식이 아니다");
-    }
-    String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
-    if (!scheme.equals("http") && !scheme.equals("https")) {
-      throw invalidBaseUrl("스킴은 http 또는 https 여야 한다");
-    }
-    if (uri.getHost() == null || uri.getUserInfo() != null) {
-      throw invalidBaseUrl("호스트가 있어야 하고 사용자 정보를 포함할 수 없다");
-    }
-    // URI 는 빈 쿼리("?")·빈 프래그먼트("#")를 null 이 아닌 값으로 돌려주지만 문자열로도 막는다
-    if (trimmed.contains("?") || trimmed.contains("#")) {
-      throw invalidBaseUrl("쿼리와 프래그먼트를 포함할 수 없다");
-    }
-    int end = trimmed.length();
-    while (end > 0 && trimmed.charAt(end - 1) == '/') {
-      end--;
-    }
-    return trimmed.substring(0, end);
-  }
-
-  private static IllegalStateException invalidBaseUrl(String reason) {
-    return new IllegalStateException("FRONTEND_BASE_URL 이 올바르지 않다: " + reason);
   }
 
   private static boolean configured(Environment environment, String prefix) {
