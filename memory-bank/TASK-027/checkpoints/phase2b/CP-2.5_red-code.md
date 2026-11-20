@@ -1,7 +1,7 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-20T00:30:00Z
-summary: "RETRY_SCENARIO 2회차 Red — 함수 26 == 시나리오 26. 전체 231 중 실패 3(SC-22 l·m, SC-25 15행, SC-26), 기존 228 통과. HITL#1·2 재승인 대기"
+summary: "RETRY_SCENARIO 2회차 Red — 함수 26 == 시나리오 26. 전체 231 중 실패 3(SC-22 l·m, SC-25 15행, SC-26), 기존 228 통과. HITL#1·2 재승인"
 
 next_steps:
   - "HITL#1·2 재승인 → Phase 3 3회차(프로토콜·JNDI·인터럽트·타임아웃 표기)"
