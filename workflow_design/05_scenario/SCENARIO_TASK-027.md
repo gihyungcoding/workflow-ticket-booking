@@ -535,7 +535,7 @@ flow: F7
 - **And** 애플리케이션을 `MAIL_TRANSPORT=smtp`·그 포트와 표의 `SPRING_MAIL_HOST`(`spring.mail.host`)·`MAIL_FROM` 으로 기동한다
 - **When** 기동이 성공하면 SC-01 의 메일을 `MailGateway.send` 로 보낸다
 - **Then** 「결과」가 수신이면 SMTP 서버가 메일 1통을 받고 그 From 이 `no-reply@ticket.on` 이다(호스트·보내는 사람의 공백이 실제 발송에서 사라졌다)
-- **And** 「결과」가 기동 실패면 예외 체인에 `SPRING_MAIL_HOST` 가 있다
+- **And** 「결과」가 기동 실패면 예외 체인에 행 g·h·i 는 `SPRING_MAIL_HOST`, 행 j·k 는 `MAIL_FROM` 이 있다
 
 | 행 | SPRING_MAIL_HOST | MAIL_FROM | 결과 |
 |---|---|---|---|
@@ -547,6 +547,9 @@ flow: F7
 | f | `localhost` | `"  no-reply@ticket.on  "` | 수신 — From 은 정리된 주소 |
 | g | `"local host"` | `no-reply@ticket.on` | 기동 실패 |
 | h | `"localhost\nevil"` | `no-reply@ticket.on` | 기동 실패 |
+| i | `"\n"`(개행만) | `no-reply@ticket.on` | 기동 실패 |
+| j | `localhost` | `"no-reply@ticket.on\r\nBcc: x@evil.example"` | 기동 실패 — 보내는 사람 안의 개행(헤더 주입) |
+| k | `localhost` | `"no reply@ticket.on"` | 기동 실패 — 보내는 사람 안의 공백 |
 
 covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다 / 운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다
 flow: F2
