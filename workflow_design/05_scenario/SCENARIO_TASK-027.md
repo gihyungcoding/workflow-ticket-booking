@@ -10,7 +10,7 @@
 
 **시각은 테스트가 고정한다.** `T` 는 `MutableClock` 에 넣은 `2026-11-20T09:00:00Z` 다(`ClockTestConfig`, ADR-0005).
 
-**DB.** 토큰·간격·마이그레이션 시나리오(SC-06~SC-14, SC-17, SC-18)는 PostgreSQL(Testcontainers) 위에서 Flyway 로 끝까지
+**DB.** 토큰·간격·마이그레이션 시나리오(SC-06~SC-14, SC-17, SC-18, SC-21, SC-23, SC-24, SC-26)는 PostgreSQL(Testcontainers) 위에서 Flyway 로 끝까지
 적용한 스키마로 돈다(ADR-0006). 「DB 가 바뀌지 않는다」「DB 에 반영된다」는 클래스 레벨 `@Transactional` 없이 JDBC/리포지토리로
 새로 읽어 확인한다(요구사항 §5, CLAUDE.md JPA 리뷰 지시).
 
@@ -447,6 +447,9 @@ flow: F4
 | h | `abc` | `1000` | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT` |
 | i | `1000` | `1000` | `1e3` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT` |
 | j | `1000` | `1.5` | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT` |
+| k | `1000` | `99999999999`(int 범위 초과) | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT` |
+| l | `+1000` | `1000` | `1000` | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT` |
+| m | `1000` | `1000` | `１０００`(전각 숫자) | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT` |
 
 covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다 / 운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다
 flow: F1
@@ -486,6 +489,7 @@ flow: F7
 - **When** 기동이 성공하면 `MailGateway.send` 를 부른다
 - **Then** 「결과」가 시간이면 `send` 가 그 범위 안에 예외로 끝난다
 - **And** 「결과」가 기동 실패면 예외 체인에 「메시지」 열의 글자가 있다(대소문자 무시)
+- **And** 「결과」가 기동 성공이면 고른 메일 구현이 `LoggingMailGateway` 다
 
 | 행 | protocol | 타임아웃 키(값) | jndi-name | 결과 | 메시지 |
 |---|---|---|---|---|---|
@@ -503,6 +507,10 @@ flow: F7
 | l | (키 없음) | (없음) | `java:comp/env/mail/Session` | 기동 실패 | `jndi` |
 | m | (키 없음) | (없음) | `""` | 기동 실패 | `jndi` |
 | n | (키 없음) | (없음) | `"   "` | 기동 실패 | `jndi` |
+| o | `smtps` | `mail.smtps.` 세 키 = `1000`, `mail.smtp.timeout` = `0` | (키 없음) | 1초 이상 5초 안 — 쓰지 않는 프로토콜의 틀린 값은 무시 | — |
+| p | `imap` — 단 `MAIL_TRANSPORT=log` | (없음) | (키 없음) | 기동 성공(메일 구현은 로그) — log 는 프로토콜을 보지 않는다 | — |
+| q | (키 없음) — 단 `MAIL_TRANSPORT=log` | `mail.smtp.timeout` = `0` | (키 없음) | 기동 성공(메일 구현은 로그) — log 는 타임아웃을 보지 않는다 | — |
+| r | (키 없음) — 단 `MAIL_TRANSPORT=log` | (없음) | `java:comp/env/mail/Session` | 기동 실패 — JNDI 는 전송 방식과 무관 | `jndi` |
 
 covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다 / 운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다
 flow: F1

@@ -1,10 +1,10 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-19T15:10:00Z
-summary: "RETRY_SCENARIO 2회차 — 시나리오 26건(SC-25·26 추가), 칸 122 판정, 독립검증 4회차 대기"
+summary: "RETRY_SCENARIO 2회차 — 시나리오 26건, 칸 122, 독립검증 4회차 PASS(경고 5, V12 ①②③·V4·V11 참고·V1 참고 반영)"
 
 next_steps:
-  - "scenario-validator 4회차(이전 판정 원문 첨부)"
+  - "Phase 2b — SC-22 k~m·SC-25·SC-26 Red, HITL#1·2 재승인"
 
 decisions:
   - decision: "RETRY_SCENARIO 1회차 — 자체 리뷰 RC-1·RC-2·RC-4 의 변종 전부를 한 번에 시나리오로(SC-21 a~d, SC-22 a·b, SC-23, SC-24, 머리말 기동)"
@@ -33,6 +33,10 @@ decisions:
     rationale: "wf-scenario Step 2 입력 제약 대조"
 
 attempts:
+  - n: 6
+    result: PASS
+    reason: "4회차 fail 0 · warn 5"
+    fix: "재검증 없이 V12 ①(log 이면 프로토콜·타임아웃 무시 — SC-25 p·q, JNDI 는 전송 무관 실패 — r), ②(타임아웃 ASCII 숫자·int 상한 — SC-22 k·l·m), ③(smtps 이면 mail.smtp.* 무시 — SC-25 o), V4(PLAN F2 step), V11·V1 참고(PLAN note·머리말 DB 목록). 보류: V5 ②(블랙홀은 읽기 타임아웃만 관찰 — 연결·쓰기 기본은 코드 리뷰로), ③(JNDI 메시지는 Boot 오류가 먼저일 수 있어 'jndi'), ④(로그 문구), V6·V7·V9, V12 ④⑤⑥"
   - n: 5
     result: "RETRY_SCENARIO 2회차 (Phase 3 → 2a)"
     outcome: "자체 리뷰 2라운드 — RC-2 변종 later 3(smtps 타임아웃 무시 재현, JNDI 세션, 종료 인터럽트) 시나리오 밖. 사용자 결정 「2a 로 한 번 더」"
