@@ -435,6 +435,100 @@
         "메일의 링크는 `FRONTEND_BASE_URL` 로 만들어지고, 위조한 `Host` 헤더를 실어도 바뀌지 않는다"
       ],
       "flow": "F2"
+    },
+    {
+      "id": "SC-21",
+      "type": "error",
+      "title": "토큰·메일 호출은 호출자가 미리 읽어 둔 엔티티를 놓지 않는다 — 호출 뒤의 변경도 커밋된다",
+      "given": [
+        "사용자 `E` 와 비공개 공연 `P`(`published = false`)가 있다",
+        "E 에게 VERIFY_EMAIL 토큰 `r` 을 발급해 뒀다(행 a 용)"
+      ],
+      "when": [
+        "바깥 트랜잭션 하나 안에서 `P` 를 리포지토리로 읽고 → 표의 호출을 하고 → 읽어 둔 `P` 를 공개로 바꾸고(`changePublished(true)`) → 커밋한다"
+      ],
+      "then": [
+        "JDBC 로 새로 읽은 `P` 의 `published` 가 true 다(호출 뒤의 변경이 사라지지 않았다)",
+        "호출 자체의 결과도 정상이다(「결과」 열)"
+      ],
+      "table": "| 행 | 호출 | 결과 |\n|---|---|---|\n| a | `consume(r, VERIFY_EMAIL)` | `E.id` |\n| b | `issue(E.id, RESET_PASSWORD)` | 43자 원문 |\n| c | 간격 제한 인증 메일 발송(E, 마지막 발송 NULL) | true, 커밋 뒤 메일 1통 |\n| d | 간격 제한 재설정 메일 발송(E, 마지막 발송 NULL) | true, 커밋 뒤 메일 1통 |",
+      "covers": [
+        "유효한 토큰은 한 번만 소모된다 — 동시에 두 요청을 보내면 한 쪽만 성공한다",
+        "같은 사용자·용도로 새 토큰을 발급하면 이전 토큰은 사라진다",
+        "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)"
+      ],
+      "flow": "F4"
+    },
+    {
+      "id": "SC-22",
+      "type": "boundary",
+      "title": "SMTP 서버가 응답하지 않아도 발송은 타임아웃으로 끝난다",
+      "given": [
+        "연결은 받지만 아무 응답도 보내지 않는 SMTP 서버(블랙홀)가 임의 포트에서 떠 있다",
+        "애플리케이션이 `MAIL_TRANSPORT=smtp`·그 호스트·포트·`MAIL_FROM` 과 표의 타임아웃 설정으로 기동했다"
+      ],
+      "when": [
+        "`MailGateway.send` 를 부른다"
+      ],
+      "then": [
+        "「끝나는 시간」 안에 예외로 끝난다(무한 대기하지 않는다)",
+        "「끝나는 시간」의 아래 한계보다 늦게 끝난다(설정한 값이 실제로 쓰였다)"
+      ],
+      "table": "| 행 | 타임아웃 설정(`spring.mail.properties.mail.smtp.connectiontimeout`·`timeout`·`writetimeout`) | 끝나는 시간 |\n|---|---|---|\n| a | (키 없음) — 기본 10초 | 9초 이상 20초 안 |\n| b | 셋 다 `1000` | 1초 이상 5초 안 |",
+      "covers": [
+        "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다"
+      ],
+      "flow": "F1"
+    },
+    {
+      "id": "SC-23",
+      "type": "boundary",
+      "title": "발송이 막혀 대기열이 차면 넘친 메일은 버리고 WARN 을 남기며 호출자는 정상이다",
+      "given": [
+        "수집 구현이 첫 메일에서 풀어 줄 때까지 멈추도록 해 뒀다(발송 스레드가 막힌 상태)",
+        "사용자 `U1`…`U102`(이메일 `q1@ticket.on`…`q102@ticket.on`, 마지막 발송 NULL)가 있다"
+      ],
+      "when": [
+        "`U1`…`U102` 순서로 간격 제한 인증 메일을 보낸다(각자 트랜잭션, 순차)",
+        "모두 끝난 뒤 수집 구현을 풀어 준다"
+      ],
+      "then": [
+        "102번 호출 모두 true 로 정상 끝난다(예외 없음)",
+        "5초 뒤 보낸 메일은 101통이다 — 막혀 있던 1통 + 대기열 100통",
+        "`q102@ticket.on` 메일은 없다",
+        "출력 캡처에 WARN 줄이 1줄 있고 그 줄에 `q***@ticket.on` 이 있으며 `q102@ticket.on` 은 출력 어디에도 없다"
+      ],
+      "table": null,
+      "covers": [
+        "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다",
+        "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)"
+      ],
+      "flow": "F7"
+    },
+    {
+      "id": "SC-24",
+      "type": "error",
+      "title": "종료할 때 대기 중인 메일을 보내고 종료 뒤의 발송 요청은 호출자에게 예외를 전하지 않는다",
+      "given": [
+        "이 시나리오만 쓰고 버리는 애플리케이션 컨텍스트다(다른 시나리오와 공유하지 않는다)",
+        "수집 구현은 메일 한 통에 200ms 가 걸리게 해 뒀다",
+        "사용자 `U1`…`U6`(이메일 `d1@ticket.on`…`d6@ticket.on`, 마지막 발송 NULL)가 있다"
+      ],
+      "when": [
+        "`U1`…`U5` 에게 간격 제한 인증 메일을 보낸 직후, 애플리케이션 종료 절차가 하는 것처럼 메일 발송기를 멈춘다",
+        "멈춘 뒤 `U6` 에게 간격 제한 인증 메일을 보낸다(트랜잭션 커밋까지)"
+      ],
+      "then": [
+        "발송기 멈춤이 끝났을 때 `d1`…`d5` 5통이 모두 보내져 있다",
+        "`U6` 호출은 true 로 정상 끝나고 예외가 나오지 않는다",
+        "`d6@ticket.on` 메일은 5초 뒤에도 없다",
+        "출력 캡처에 WARN 줄이 1줄 있고 그 줄에 `d***@ticket.on` 이 있다"
+      ],
+      "table": null,
+      "covers": [
+        "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다"
+      ],
+      "flow": "F7"
     }
   ],
   "coverage_matrix": [
@@ -1007,6 +1101,43 @@
       "cell": "mail_send_result@F7:server_response.non_json",
       "state": "n/a",
       "reason": "SMTP 응답 본문을 읽지 않는다 — 같은 사유"
+    },
+    {
+      "cell": "SMTP_TIMEOUT@F1:config.unset",
+      "state": "covered",
+      "by": [
+        "SC-22"
+      ]
+    },
+    {
+      "cell": "SMTP_TIMEOUT@F1:config.empty",
+      "state": "n/a",
+      "reason": "빈 값·공백은 Spring Boot 의 spring.mail.properties 바인딩이 JavaMail 에 그대로 넘긴다 — 앱이 해석하지 않는다(PLAN inputs: 미설정이면 기본, 설정 있으면 그 값). 잘못된 값의 판정은 JavaMail 몫"
+    },
+    {
+      "cell": "SMTP_TIMEOUT@F1:config.blank",
+      "state": "n/a",
+      "reason": "empty 와 같은 사유"
+    },
+    {
+      "cell": "SMTP_TIMEOUT@F1:config.case",
+      "state": "n/a",
+      "reason": "숫자 값이라 대소문자가 없다"
+    },
+    {
+      "cell": "SMTP_TIMEOUT@F1:config.notation",
+      "state": "n/a",
+      "reason": "표기 변형(1e3·+1000·앞뒤 공백)은 앱이 해석하지 않고 JavaMail 에 그대로 넘긴다 — 앱의 판정은 「미설정이면 기본 10초」 하나(PLAN inputs). 설정값이 실제로 쓰이는지는 SC-22 b"
+    },
+    {
+      "cell": "SMTP_TIMEOUT@F1:config.list_separator",
+      "state": "n/a",
+      "reason": "단일 숫자 값이지 목록이 아니다"
+    },
+    {
+      "cell": "SMTP_TIMEOUT@F1:config.prefix_only",
+      "state": "n/a",
+      "reason": "숫자 값이라 접두사 일치가 없다"
     }
   ],
   "coverage": {
@@ -1015,8 +1146,6 @@
     "uncovered": []
   },
   "human_input": {
-    "generate_red_trigger": true,
-    "approved_at": "2026-11-20T00:29:13Z",
-    "via": "AskUserQuestion HITL#1·2 통합 — 승인"
+    "generate_red_trigger": false
   }
 }

@@ -1,12 +1,16 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-19T15:10:00Z
-summary: "시나리오 20건(happy 8 · error 7 · boundary 4 · regression 1) · 입력 경계 칸 90 판정 · AC 10/10 — 독립검증 2회차 PASS(경고 5)"
+summary: "RETRY_SCENARIO 1회차(Phase 3 자체 리뷰) — 시나리오 24건(SC-21~24 추가), 칸 97 판정, 독립검증 3회차 대기"
 
 next_steps:
-  - "Phase 2b — wf-red. 승인 테스트 수정 예정: 마이그레이션 버전 8→9 두 곳, SocialProviderConfigTest:332 덩어리, SocialProviderConfigTest·AppleProviderConfigTest 값 주입 하네스(설정 파일을 읽지 않는 기동)"
+  - "scenario-validator 3회차(이전 판정 원문 첨부)"
 
 decisions:
+  - decision: "RETRY_SCENARIO 1회차 — 자체 리뷰 RC-1·RC-2·RC-4 의 변종 전부를 한 번에 시나리오로(SC-21 a~d, SC-22 a·b, SC-23, SC-24, 머리말 기동)"
+    rationale: "wf-develop Step 5.5 — 시나리오 밖 [correctness] 는 Phase 4 로 넘기지 않는다. 사용자 결정"
+  - decision: "SC-21 은 User 에 변경 메서드가 없어 공연(changePublished)으로 관찰한다"
+    rationale: "같은 영속성 컨텍스트의 어느 엔티티든 clear 의 영향은 같다 — RC-1 변종 3(다른 엔티티)을 그대로 덮는다"
   - decision: "1회차 경고 반영 — V5(마스킹 규약을 첫 1글자 + *** 로 확정, 로그는 OutputCaptureExtension, SC-17 e 를 독립 행으로), V8(인자 검증을 PLAN inputs 에 명시 — 분류 보완, ROLLBACK_PLAN 아님), V10(SC-20 regression — 제공자 설정 기동·소셜 실패 이동), V11 사유 보정(SPRING_MAIL_HOST), V12 ②(SC-12 h·i·j 용도 공유 간격), ④(log WARN 은 두지 않음 — PLAN unresolved 문구 수정), ⑤(스킴 대소문자 허용은 SocialLoginConfig.java:262 의 toLowerCase 비교가 근거)"
     rationale: "Then 을 단언 가능한 값으로 고정하고 기존 동작 회귀를 시나리오로 둔다"
   - decision: "2회차 경고 보류 — V6·V7·V9 는 1회차와 같은 사유, SC-20 의 기동→요청은 한 흐름. V12 ①(SPRING_MAIL_PORT — Spring Boot 바인딩, 앱이 해석하지 않음) ②(스킴 대소문자 — SocialLoginConfig.java:262 toLowerCase 비교) ③(롤백 중 재발급·발급 직후 삭제 — 트랜잭션·CASCADE)"
@@ -29,6 +33,11 @@ decisions:
     rationale: "wf-scenario Step 2 입력 제약 대조"
 
 attempts:
+  - n: 3
+    result: "RETRY_SCENARIO (Phase 3 → 2a)"
+    outcome: "Phase 3 자체 리뷰 1라운드 [correctness] 뿌리 3개가 시나리오 밖 — 사용자 결정 2026-11-20 「2a 로 돌아가 한번에」"
+    back_to: "Phase 2a"
+    fix: "RC-1 → SC-21, RC-2 → SC-22·23·24, RC-4 → 머리말 「기동」(OS 환경변수 제외). RC-3 은 수용 위험 — PLAN unresolved 에 호출 규칙. PLAN inputs 3개·input_fields SMTP_TIMEOUT 추가"
   - n: 1
     result: FAIL
     reason: "V11 false_cover 3 — userId@F3·F5 integer.max+1(상한 초과 값 없음), raw_token normalized(정규화 변형 없음)"

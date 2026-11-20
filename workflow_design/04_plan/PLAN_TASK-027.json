@@ -78,6 +78,33 @@
         "constraints": [
           "예외는 로그만 남기고 호출자에게 전파하지 않는다(커밋 뒤 비동기)"
         ]
+      },
+      {
+        "name": "SMTP 타임아웃 설정(spring.mail.properties.mail.smtp.connectiontimeout·timeout·writetimeout)",
+        "type": "ms 정수 문자열",
+        "source": "환경변수(SPRING_MAIL_PROPERTIES_MAIL_SMTP_*)",
+        "constraints": [
+          "smtp 일 때 설정이 없으면 셋 다 10000ms 를 기본으로 건다(자체 리뷰 RC-2 — JavaMail 기본은 무한 대기)",
+          "설정이 있으면 그 값을 그대로 쓴다"
+        ]
+      },
+      {
+        "name": "발송 대기열·종료",
+        "type": "내부 상태",
+        "source": "AccountMailService",
+        "constraints": [
+          "발송 스레드 1개, 대기열 상한 100 — 넘치면 그 메일은 버리고 WARN(받는 사람 가림), 호출자는 정상(RC-2)",
+          "컨텍스트 종료 시 대기 중인 메일을 최대 10초까지 보낸 뒤 멈춘다(RC-2)",
+          "종료 뒤 커밋된 발송 요청은 버리고 WARN, 호출자에게 예외를 전하지 않는다(RC-2)"
+        ]
+      },
+      {
+        "name": "호출자 트랜잭션의 영속 엔티티",
+        "type": "JPA 영속성 컨텍스트",
+        "source": "TASK-028·029 호출자",
+        "constraints": [
+          "issue·consume·간격 제한 발송은 호출자가 같은 트랜잭션에서 미리 읽어 둔 엔티티를 분리(detach)하지 않는다 — 호출 뒤 그 엔티티를 바꾸면 커밋에 반영된다(자체 리뷰 RC-1)"
+        ]
       }
     ],
     "outputs": [
@@ -130,7 +157,8 @@
           "MailConfig 가 MAIL_TRANSPORT 를 읽어 LoggingMailGateway 또는 SmtpMailGateway 빈을 만든다",
           "log: 받는 사람·제목·본문을 INFO 로그",
           "smtp: SimpleMailMessage(from=MAIL_FROM) 를 JavaMailSender 로 보낸다",
-          "테스트는 MailGateway 를 모으는 구현으로 바꿔 받은 메일을 단언한다"
+          "테스트는 MailGateway 를 모으는 구현으로 바꿔 받은 메일을 단언한다",
+          "smtp 는 연결·읽기·쓰기 타임아웃을 설정이 없으면 10초로 건다"
         ],
         "covers": [
           "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다"
@@ -156,7 +184,8 @@
           "같은 userId·purpose 의 기존 email_token 행 삭제",
           "SecureRandom 32바이트 → URL-safe Base64 무패딩 43자",
           "SHA-256 16진 소문자 해시와 expires_at(now+TTL)·purpose·user_id 저장",
-          "원문 반환(저장하지 않음)"
+          "원문 반환(저장하지 않음)",
+          "호출자 트랜잭션의 다른 영속 엔티티를 분리하지 않는다(벌크 쿼리는 flush 만, clear 하지 않음)"
         ],
         "covers": [
           "발급한 토큰의 원문은 43자이고, DB 에는 SHA-256 해시만 있다(DB 조회로 원문이 없음을 확인)",
@@ -171,7 +200,8 @@
           "원문이 null·빈·공백이면 empty",
           "원문을 SHA-256 → 조건부 UPDATE(used_at IS NULL AND expires_at > now AND purpose 일치)",
           "1행이면 그 행의 user_id, 0행이면 empty",
-          "동시 두 호출 중 하나만 1행"
+          "동시 두 호출 중 하나만 1행",
+          "호출자 트랜잭션의 다른 영속 엔티티를 분리하지 않는다(벌크 쿼리는 flush 만, clear 하지 않음)"
         ],
         "covers": [
           "만료는 인증 24시간, 재설정 30분이다. 만료 시각 정각에는 이미 만료다",
@@ -185,7 +215,8 @@
           "트랜잭션 안에서 UPDATE users SET account_mail_sent_at = now WHERE id = ? AND (account_mail_sent_at IS NULL OR account_mail_sent_at < now - 60초)",
           "1행이면 커밋 뒤 발송 예약, 0행이면 건너뜀(예외 아님)",
           "동시 요청에도 1행만 → 메일 1통",
-          "변경 알림은 간격 검사 없이 커밋 뒤 발송"
+          "변경 알림은 간격 검사 없이 커밋 뒤 발송",
+          "호출자 트랜잭션의 다른 영속 엔티티를 분리하지 않는다(벌크 쿼리는 flush 만, clear 하지 않음)"
         ],
         "covers": [
           "마지막 메일 발송 60초 안의 요청은 메일을 보내지 않고, 60초가 지나면 보낸다(동시 요청에도 한 통)"
@@ -209,7 +240,9 @@
         "steps": [
           "활성 트랜잭션이 있으면 afterCommit 에 등록, 롤백이면 보내지 않는다(간격 UPDATE 도 롤백)",
           "전용 TaskExecutor 에서 MailGateway.send",
-          "예외는 로그(받는 사람 마스킹·토큰 미포함)만 남기고 호출자는 정상 완료"
+          "예외는 로그(받는 사람 마스킹·토큰 미포함)만 남기고 호출자는 정상 완료",
+          "대기열 상한 100, 넘치면 버리고 WARN",
+          "종료 시 최대 10초 비우고, 종료 뒤 요청은 버리고 WARN(호출자 예외 없음)"
         ],
         "covers": [
           "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다",
@@ -350,6 +383,16 @@
           "server_response"
         ],
         "note": "SMTP 예외·런타임 예외 → 로그만. other_code/empty_body/non_json 은 SMTP 에 해당 없음 — n/a 사유로 닫는다"
+      },
+      {
+        "field": "SMTP_TIMEOUT",
+        "flows": [
+          "F1"
+        ],
+        "kinds": [
+          "config"
+        ],
+        "note": "spring.mail.properties.mail.smtp.connectiontimeout·timeout·writetimeout 셋을 한 필드로 — 미설정이면 10초 기본, 설정 있으면 그 값"
       }
     ],
     "ops_impacts": [
@@ -416,22 +459,22 @@
       {
         "path": "backend/src/main/resources/db/migration/V9__add_email_token.sql",
         "change": "email_token 테이블·인덱스, users.account_mail_sent_at",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/domain/EmailToken.java",
         "change": "엔티티(userId·purpose·tokenHash·expiresAt·usedAt·createdAt)",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/domain/EmailTokenPurpose.java",
         "change": "VERIFY_EMAIL(24h)·RESET_PASSWORD(30m)",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/repository/EmailTokenRepository.java",
         "change": "사용자·용도별 삭제, 조건부 소모 UPDATE, 해시로 user_id 조회",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
@@ -444,42 +487,42 @@
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/MailGateway.java",
         "change": "인터페이스 send(MailMessage)",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/MailMessage.java",
         "change": "record(to, subject, body)",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/EmailTokenService.java",
         "change": "발급·소모(Clock·SecureRandom 주입)",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/AccountMailService.java",
         "change": "간격 제한 발송 + 커밋 뒤 비동기 발송 + 실패 로그(사용자 결정: 이 태스크에서 만든다)",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/service/AccountMails.java",
         "change": "메일 문구 4종과 링크 조립(FRONTEND_BASE_URL)",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/config/SmtpMailGateway.java",
         "change": "JavaMailSender 구현",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/config/LoggingMailGateway.java",
         "change": "로그 구현",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/config/MailConfig.java",
         "change": "MAIL_TRANSPORT 선택·기동 검증, 메일 전용 TaskExecutor, FrontendBaseUrl 빈",
-        "new": true
+        "created_in": "TASK-027 Phase 3 1회차(6017bb5) — RETRY_SCENARIO 왕복에서는 기존 파일"
       },
       {
         "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
@@ -496,6 +539,10 @@
       {
         "path": "docs/release/first-deploy-checklist.md",
         "change": "§6 환경변수 표에 MAIL_TRANSPORT·SPRING_MAIL_*·MAIL_FROM, FRONTEND_BASE_URL '항상 필수' — implementation_spec 밖(ops_impacts: 이 태스크만 배포해도 기동 조건이 바뀐다)"
+      },
+      {
+        "path": "backend/src/test/java/com/example/ticket_booking/support/BareBoot.java",
+        "change": "「키 없음」에 OS 환경변수가 새어 들지 않게 시스템 환경변수 소스를 뺀다(RC-4, 승인 하네스 — 2b HITL)"
       }
     ],
     "reusable": [
@@ -563,7 +610,8 @@
       "smtp 경로 확인 수단 — Phase 3 확인: 테스트용 SMTP 서버(GreenMail 등 testImplementation 추가) 또는 JavaMailSender 를 모으는 대체. AC1 'SMTP 로 나간다'를 실제 SMTP 프로토콜로 보려면 전자",
       "발송 실패 로그: 받는 사람은 마스킹, 토큰·본문은 남기지 않는다(로그 보안)",
       "요구사항 §7 열린 질문 '발송 서비스·발신 도메인' — 배포 설정이라 코드는 모른다. first-deploy-checklist 에 'SMTP 제공자 선택·SPF/DKIM' 사람 단계로 적는다",
-      "docs/release/first-deploy-checklist.md 는 implementation_spec 밖 — 이 태스크만 배포해도 MAIL_TRANSPORT·FRONTEND_BASE_URL 이 없으면 기동하지 않으므로 함께 고친다(TASK-028 의 체크리스트 AC 는 재인증 안내 등 나머지)"
+      "docs/release/first-deploy-checklist.md 는 implementation_spec 밖 — 이 태스크만 배포해도 MAIL_TRANSPORT·FRONTEND_BASE_URL 이 없으면 기동하지 않으므로 함께 고친다(TASK-028 의 체크리스트 AC 는 재인증 안내 등 나머지)",
+      "Phase 3 자체 리뷰 1라운드(2026-11-20) → RETRY_SCENARIO 1회차: RC-1(벌크 쿼리 clearAutomatically 가 호출자 컨텍스트 분리) · RC-2(SMTP 타임아웃 없음·무한 대기열·종료 시 유실·종료 뒤 afterCommit 예외) · RC-4(BareBoot 의 「키 없음」에 OS 환경변수가 새어 듦) 를 시나리오로 가져온다. RC-3(issue 직접 동시 호출 시 유효 토큰 2개)은 기존 수용 위험 — issue 의 javadoc 에 '간격 제한 발송(사용자 행 잠금) 아래에서 부른다'는 호출 규칙을 남긴다. [security] log 전송 운영 허용·MAIL_FROM 형식 검사는 사용자 결정·범위 밖으로 deferred"
     ],
     "exploration": {
       "method": "inline",
