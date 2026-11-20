@@ -1,8 +1,8 @@
 ---
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
-phase: "2b"
-phase_name: "Phase 2b - RETRY_SCENARIO Red, 재승인 대기"
+phase: "2a"
+phase_name: "Phase 2a - RETRY_SCENARIO 2회차"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-19
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-027-mail-email-token"
 
-last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/email-verification-password-reset.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-027.json"
@@ -46,3 +46,4 @@ Phase 3 1회차 Green(225 통과, 6017bb5) 뒤 자체 리뷰 결함으로 Phase 
 - 승인 테스트 수정 예정(2b HITL): 마이그레이션 버전 "8"→"9" 2곳, SocialProviderConfigTest:332(제공자 없으면 FRONTEND_BASE_URL 없이 기동 성공 → 실패)
 - **Red 승인 (2026-11-20)**: 승인 테스트 4파일 변경 포함(마이그레이션 버전 8→9 두 곳, Social·Apple 기동 하네스 BareBoot). PostgreSQL 테스트는 Docker Desktop 필요
 - **RETRY_SCENARIO 1회 (2026-11-20, 사용자 결정)**: 자체 리뷰 RC-1(clearAutomatically)·RC-2(SMTP 타임아웃·대기열·종료)·RC-4(BareBoot OS 환경변수). RC-3 은 수용 위험(issue 호출 규칙 javadoc)
+- **RETRY_SCENARIO 2회 (2026-11-20, 사용자 결정)**: 자체 리뷰 2R — smtps 타임아웃 무시(재현)·JNDI 세션·종료 인터럽트. 상한 3회 중 2회 사용

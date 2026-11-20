@@ -1,7 +1,7 @@
 ---
 status: ARCHIVED
 saved_at: 2026-11-20T02:00:00Z
-summary: "Green 1회차 — 전체 225 통과·spotless OK·아키텍처 error 0(6017bb5). 자체 리뷰 1라운드 [correctness] 4뿌리 → 시나리오 밖 3 → RETRY_SCENARIO(사용자 결정)"
+summary: "Green 2회차 — RC-1·RC-2 수정(97c9214), 229 통과. 자체 리뷰 2라운드(상한) RC-2 변종 later 3 시나리오 밖 → RETRY_SCENARIO 2회차(사용자 결정). 주석 치환 누락 2건을 리뷰어가 찾아 75e4885·04e1221 로 보정"
 
 next_steps:
   - "Phase 2a 로 롤백 — SC-21~24 추가, 독립검증 → 2b HITL → Phase 3 2회차"
@@ -17,6 +17,10 @@ decisions:
     rationale: "한 줄 위임만 남은 중복"
 
 attempts:
+  - n: 2
+    result: "자체 리뷰 2라운드 — RC-1·RC-4 해소, RC-2 대부분 해소. later: smtps(재현)·JNDI·종료 인터럽트. RC-3 javadoc 누락(치환 실패) 지적 → 보정"
+    outcome: "RETRY_SCENARIO"
+    back_to: "Phase 2a"
   - n: 1
     result: "자체 리뷰 1라운드 — RC-1(clearAutomatically) · RC-2(SMTP 타임아웃·무한 큐·종료) · RC-3(issue 직접 동시 호출, 수용 위험) · RC-4(BareBoot OS 환경변수)"
     outcome: "RETRY_SCENARIO"

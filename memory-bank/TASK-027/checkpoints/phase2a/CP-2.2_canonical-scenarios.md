@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-19T15:10:00Z
-summary: "RETRY_SCENARIO 1회차 — 시나리오 24건, 칸 97, 독립검증 3회차 PASS(경고 6, V12 ①~③·V5 반영)"
+summary: "RETRY_SCENARIO 2회차 — 시나리오 26건(SC-25·26 추가), 칸 122 판정, 독립검증 4회차 대기"
 
 next_steps:
-  - "Phase 2b — SC-21~24 Red 와 BareBoot(OS 환경변수) 수정, HITL#1·2 재승인"
+  - "scenario-validator 4회차(이전 판정 원문 첨부)"
 
 decisions:
   - decision: "RETRY_SCENARIO 1회차 — 자체 리뷰 RC-1·RC-2·RC-4 의 변종 전부를 한 번에 시나리오로(SC-21 a~d, SC-22 a·b, SC-23, SC-24, 머리말 기동)"
@@ -33,6 +33,11 @@ decisions:
     rationale: "wf-scenario Step 2 입력 제약 대조"
 
 attempts:
+  - n: 5
+    result: "RETRY_SCENARIO 2회차 (Phase 3 → 2a)"
+    outcome: "자체 리뷰 2라운드 — RC-2 변종 later 3(smtps 타임아웃 무시 재현, JNDI 세션, 종료 인터럽트) 시나리오 밖. 사용자 결정 「2a 로 한 번 더」"
+    back_to: "Phase 2a"
+    fix: "SC-25(프로토콜 smtp|smtps·JNDI 14행), SC-26(종료 대기 인터럽트). PLAN inputs 2·input_fields SMTP_PROTOCOL·MAIL_JNDI_NAME 추가"
   - n: 4
     result: PASS
     reason: "3회차 fail 0 · warn 6"

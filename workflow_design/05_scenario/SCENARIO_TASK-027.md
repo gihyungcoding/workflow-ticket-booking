@@ -478,3 +478,45 @@ flow: F7
 
 covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다
 flow: F7
+
+## SC-25 (boundary) smtps 에도 타임아웃이 걸리고 정의 밖 프로토콜·JNDI 메일 세션이면 기동이 실패한다
+
+- **Given** SC-22 의 블랙홀 SMTP 서버가 떠 있다
+- **And** 애플리케이션을 `MAIL_TRANSPORT=smtp`·그 호스트·포트·`MAIL_FROM` 과 표의 `spring.mail.protocol`(운영 환경변수 `SPRING_MAIL_PROTOCOL`)·타임아웃·`spring.mail.jndi-name`(`SPRING_MAIL_JNDI_NAME`)으로 기동한다. 표에 없는 키는 「키 없음」이다
+- **When** 기동이 성공하면 `MailGateway.send` 를 부른다
+- **Then** 「결과」가 시간이면 `send` 가 그 범위 안에 예외로 끝난다
+- **And** 「결과」가 기동 실패면 예외 체인에 「메시지」 열의 글자가 있다(대소문자 무시)
+
+| 행 | protocol | 타임아웃 키(값) | jndi-name | 결과 | 메시지 |
+|---|---|---|---|---|---|
+| a | `smtps` | (없음) | (키 없음) | 9초 이상 20초 안 — smtps 기본 10초 | — |
+| b | `smtps` | `mail.smtps.` connectiontimeout·timeout·writetimeout = `1000` | (키 없음) | 1초 이상 5초 안 | — |
+| c | `SMTPS` | b 와 같음 | (키 없음) | 1초 이상 5초 안 — 대소문자 무시 | — |
+| d | `"  smtps  "` | b 와 같음 | (키 없음) | 1초 이상 5초 안 — 앞뒤 공백 정리 | — |
+| e | `smtps` | `mail.smtp.` 세 키 = `1000`(다른 프로토콜의 키) | (키 없음) | 9초 이상 20초 안 — smtps 는 smtps 키만 본다 | — |
+| f | `""` | `mail.smtp.` 세 키 = `1000` | (키 없음) | 1초 이상 5초 안 — 빈 값은 smtp | — |
+| g | `"   "` | `mail.smtp.` 세 키 = `1000` | (키 없음) | 1초 이상 5초 안 — 공백만은 smtp | — |
+| h | `smtps` | `mail.smtps.timeout` = `0`(나머지 `1000`) | (키 없음) | 기동 실패 | `SPRING_MAIL_PROPERTIES_MAIL_SMTPS_TIMEOUT` |
+| i | `imap` | (없음) | (키 없음) | 기동 실패 | `SPRING_MAIL_PROTOCOL` |
+| j | `smtp,smtps` | (없음) | (키 없음) | 기동 실패 | `SPRING_MAIL_PROTOCOL` |
+| k | `smt` | (없음) | (키 없음) | 기동 실패 | `SPRING_MAIL_PROTOCOL` |
+| l | (키 없음) | (없음) | `java:comp/env/mail/Session` | 기동 실패 | `jndi` |
+| m | (키 없음) | (없음) | `""` | 기동 실패 | `jndi` |
+| n | (키 없음) | (없음) | `"   "` | 기동 실패 | `jndi` |
+
+covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다 / 운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다
+flow: F1
+
+## SC-26 (error) 종료를 기다리는 중 인터럽트되면 남은 메일을 버리고 인터럽트 상태를 지킨 채 예외 없이 돌아온다
+
+- **Given** SC-24 처럼 이 시나리오만 쓰고 버리는 애플리케이션 컨텍스트다
+- **And** 수집 구현은 메일 한 통에 2초가 걸리게 해 뒀다
+- **And** 사용자 `U1`…`U5`(이메일 `i1@ticket.on`…`i5@ticket.on`, 마지막 발송 NULL)에게 간격 제한 인증 메일을 보냈다
+- **When** 별도 스레드 `X` 가 `AccountMailService` 의 종료 처리(@PreDestroy)를 부르고, 300ms 뒤 테스트가 `X` 를 인터럽트한다
+- **Then** `X` 의 종료 처리 호출은 인터럽트 뒤 3초 안에 예외 없이 돌아온다
+- **And** 돌아온 직후 `X` 의 인터럽트 상태가 true 다
+- **And** 5초 뒤에도 보낸 메일은 5통보다 적다(남은 대기열을 버렸다)
+- **And** 출력 캡처에 「인터럽트」가 든 WARN 줄이 있다
+
+covers: `MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다
+flow: F7
