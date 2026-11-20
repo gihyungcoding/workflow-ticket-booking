@@ -124,7 +124,7 @@
         "type": "str",
         "source": "환경변수 SPRING_MAIL_JNDI_NAME",
         "constraints": [
-          "MAIL_TRANSPORT 와 무관하게 키가 있으면(빈 값·공백 포함) 기동 실패 — Spring Boot 가 키만 있어도 JNDI 세션을 조회하고, 세션이 먼저 만들어지면 타임아웃을 걸 수 없다(자체 리뷰 2R). 메시지는 Spring Boot 의 JNDI 오류이거나 SPRING_MAIL_JNDI_NAME — 둘 다 'jndi' 를 포함한다"
+          "MAIL_TRANSPORT 와 무관하게 키가 있으면(빈 값·공백 포함) 기동 실패 — MailConfig 가 직접 검사한다(메시지에 SPRING_MAIL_JNDI_NAME). JNDI 세션이 먼저 만들어지면 타임아웃을 걸 수 없다(자체 리뷰 2R). 정정(2b Red 2026-11-20): Spring Boot 는 키만으로는 기동을 실패시키지 않는다 — 처음 PLAN 의 'Boot 가 조회해 실패' 는 틀렸다"
         ]
       }
     ],

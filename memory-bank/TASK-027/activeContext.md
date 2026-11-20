@@ -1,8 +1,8 @@
 ---
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
-phase: "2a"
-phase_name: "Phase 2a - RETRY_SCENARIO 2회차"
+phase: "2b"
+phase_name: "Phase 2b - RETRY_SCENARIO 2회차 Red, 재승인 대기"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-19
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-027-mail-email-token"
 
-last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
+last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
 source: "docs/product/features/email-verification-password-reset.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-027.json"

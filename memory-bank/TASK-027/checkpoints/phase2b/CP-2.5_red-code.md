@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-20T00:30:00Z
-summary: "RETRY_SCENARIO Red — 함수 24 == 시나리오 24. 전체 229 중 실패 4(SC-21·22·23·24, 현재 구현의 실제 결함), 기존 225 통과. HITL#1·2 재승인"
+summary: "RETRY_SCENARIO 2회차 Red — 함수 26 == 시나리오 26. 전체 231 중 실패 3(SC-22 l·m, SC-25 15행, SC-26), 기존 228 통과. HITL#1·2 재승인 대기"
 
 next_steps:
-  - "HITL#1·2 재승인 → Phase 3 2회차(RC-1·RC-2 수정, issue javadoc 호출 규칙)"
+  - "HITL#1·2 재승인 → Phase 3 3회차(프로토콜·JNDI·인터럽트·타임아웃 표기)"
 
 decisions:
   - decision: "컴파일 스켈레톤은 테스트가 import 하는 타입만 — MailConfig·엔티티·리포지토리·V9 는 Phase 3"
@@ -19,6 +19,10 @@ decisions:
     rationale: "출력 어디에도 e@ticket.on 이 없다는 단언이 다른 행 주소에 걸리지 않게"
 
 attempts:
+  - n: 4
+    result: "RETRY_SCENARIO 2회차 Red"
+    outcome: "SC-22 l·m, SC-25(15/18행), SC-26 red — 실제 결함. PLAN 정정: JNDI 키만으로는 Boot 가 기동을 막지 않음(MailConfig 가 검사)"
+    back_to: "Phase 2b"
   - n: 3
     result: "RETRY_SCENARIO Red"
     outcome: "SC-21~24 Red 4건 — 구현이 이미 있어 새 테스트가 실제 결함으로 실패(RC-1 재현, RC-2 무한 대기·상한 없음·종료 대기 없음). BareBoot 시스템 환경변수 제외(RC-4)는 이 머신에서 Red 관찰 불가"

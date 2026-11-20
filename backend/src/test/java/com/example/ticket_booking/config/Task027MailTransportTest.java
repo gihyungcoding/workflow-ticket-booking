@@ -427,6 +427,30 @@ class Task027MailTransportTest {
           "i", "1000", "1000", "1e3", null, null, "SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT"),
       new TimeoutRow(
           "j", "1000", "1.5", "1000", null, null, "SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT"),
+      new TimeoutRow(
+          "k",
+          "1000",
+          "99999999999",
+          "1000",
+          null,
+          null,
+          "SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT"),
+      new TimeoutRow(
+          "l",
+          "+1000",
+          "1000",
+          "1000",
+          null,
+          null,
+          "SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT"),
+      new TimeoutRow(
+          "m",
+          "1000",
+          "1000",
+          "\uFF11\uFF10\uFF10\uFF10",
+          null,
+          null,
+          "SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT"),
     };
     SoftAssertions soft = new SoftAssertions();
     try (com.example.ticket_booking.support.BlackholeSmtpServer blackhole =
@@ -467,6 +491,184 @@ class Task027MailTransportTest {
               java.util.concurrent.Executors.newSingleThreadExecutor(
                   task -> {
                     Thread thread = new Thread(task, "sc22-send-" + row.row());
+                    thread.setDaemon(true);
+                    return thread;
+                  });
+          long begin = System.nanoTime();
+          java.util.concurrent.Future<Throwable> sending =
+              runner.submit(
+                  () -> {
+                    try {
+                      gateway.send(MESSAGE);
+                      return null;
+                    } catch (Throwable thrown) {
+                      return thrown;
+                    }
+                  });
+          Throwable thrown;
+          try {
+            thrown =
+                sending.get(
+                    row.within().toMillis() + 2_000, java.util.concurrent.TimeUnit.MILLISECONDS);
+          } catch (java.util.concurrent.TimeoutException hanging) {
+            soft.fail(label + " — " + row.within() + " 안에 끝나지 않았다(무한 대기)");
+            runner.shutdownNow();
+            continue;
+          }
+          runner.shutdownNow();
+          Duration elapsed = Duration.ofNanos(System.nanoTime() - begin);
+
+          // Then
+          soft.assertThat(thrown).as(label + " — 예외로 끝난다").isNotNull();
+          soft.assertThat(elapsed).as(label + " — 걸린 시간 하한").isGreaterThanOrEqualTo(row.atLeast());
+          soft.assertThat(elapsed).as(label + " — 걸린 시간 상한").isLessThanOrEqualTo(row.within());
+        } finally {
+          started.close();
+        }
+      }
+    }
+    soft.assertAll();
+  }
+
+  // ---------- SC-25 ----------
+
+  private record ProtocolRow(
+      String row,
+      String transport,
+      Map<String, Object> extra,
+      Duration atLeast,
+      Duration within,
+      String failText,
+      boolean logBoot) {}
+
+  private static Map<String, Object> keys(String protocol, String value) {
+    Map<String, Object> values = new LinkedHashMap<>();
+    for (String key : new String[] {"connectiontimeout", "timeout", "writetimeout"}) {
+      values.put("spring.mail.properties.mail." + protocol + "." + key, value);
+    }
+    return values;
+  }
+
+  private static Map<String, Object> with(Map<String, Object> base, Object... pairs) {
+    Map<String, Object> values = new LinkedHashMap<>(base);
+    for (int i = 0; i < pairs.length; i += 2) {
+      values.put((String) pairs[i], pairs[i + 1]);
+    }
+    return values;
+  }
+
+  /**
+   * SC-25 (boundary) smtps 에도 타임아웃이 걸리고 정의 밖 프로토콜·JNDI 메일 세션이면 기동이 실패한다.
+   *
+   * <p>Given 블랙홀 SMTP 서버, smtp(또는 행의 log)·호스트·포트·MAIL_FROM 과 표의 protocol·타임아웃·jndi-name 으로 기동한다
+   * When 기동이 성공하면 send 를 부른다 Then 시간 행은 범위 안에 예외로 끝나고, 실패 행은 예외 체인에 메시지 열의 글자, 기동 성공 행은 로그 구현
+   */
+  @Test
+  void test_sc25_smtps_에도_타임아웃이_걸리고_정의_밖_프로토콜_JNDI_메일_세션이면_기동이_실패한다() throws Exception {
+    Duration s1 = Duration.ofSeconds(1);
+    Duration s5 = Duration.ofSeconds(5);
+    Duration s9 = Duration.ofSeconds(9);
+    Duration s20 = Duration.ofSeconds(20);
+    Map<String, Object> none = Map.of();
+    String protocol = "spring.mail.protocol";
+    String jndi = "spring.mail.jndi-name";
+    String smtpsTimeout = "spring.mail.properties.mail.smtps.timeout";
+    String smtpTimeout = "spring.mail.properties.mail.smtp.timeout";
+    ProtocolRow[] rows = {
+      new ProtocolRow("a", "smtp", with(none, protocol, "smtps"), s9, s20, null, false),
+      new ProtocolRow(
+          "b", "smtp", with(keys("smtps", "1000"), protocol, "smtps"), s1, s5, null, false),
+      new ProtocolRow(
+          "c", "smtp", with(keys("smtps", "1000"), protocol, "SMTPS"), s1, s5, null, false),
+      new ProtocolRow(
+          "d", "smtp", with(keys("smtps", "1000"), protocol, "  smtps  "), s1, s5, null, false),
+      new ProtocolRow(
+          "e", "smtp", with(keys("smtp", "1000"), protocol, "smtps"), s9, s20, null, false),
+      new ProtocolRow("f", "smtp", with(keys("smtp", "1000"), protocol, ""), s1, s5, null, false),
+      new ProtocolRow(
+          "g", "smtp", with(keys("smtp", "1000"), protocol, "   "), s1, s5, null, false),
+      new ProtocolRow(
+          "h",
+          "smtp",
+          with(keys("smtps", "1000"), protocol, "smtps", smtpsTimeout, "0"),
+          null,
+          null,
+          "SPRING_MAIL_PROPERTIES_MAIL_SMTPS_TIMEOUT",
+          false),
+      new ProtocolRow(
+          "i", "smtp", with(none, protocol, "imap"), null, null, "SPRING_MAIL_PROTOCOL", false),
+      new ProtocolRow(
+          "j",
+          "smtp",
+          with(none, protocol, "smtp,smtps"),
+          null,
+          null,
+          "SPRING_MAIL_PROTOCOL",
+          false),
+      new ProtocolRow(
+          "k", "smtp", with(none, protocol, "smt"), null, null, "SPRING_MAIL_PROTOCOL", false),
+      new ProtocolRow(
+          "l", "smtp", with(none, jndi, "java:comp/env/mail/Session"), null, null, "jndi", false),
+      new ProtocolRow("m", "smtp", with(none, jndi, ""), null, null, "jndi", false),
+      new ProtocolRow("n", "smtp", with(none, jndi, "   "), null, null, "jndi", false),
+      new ProtocolRow(
+          "o",
+          "smtp",
+          with(keys("smtps", "1000"), protocol, "smtps", smtpTimeout, "0"),
+          s1,
+          s5,
+          null,
+          false),
+      new ProtocolRow("p", "log", with(none, protocol, "imap"), null, null, null, true),
+      new ProtocolRow("q", "log", with(none, smtpTimeout, "0"), null, null, null, true),
+      new ProtocolRow(
+          "r", "log", with(none, jndi, "java:comp/env/mail/Session"), null, null, "jndi", false),
+    };
+    SoftAssertions soft = new SoftAssertions();
+    try (com.example.ticket_booking.support.BlackholeSmtpServer blackhole =
+        new com.example.ticket_booking.support.BlackholeSmtpServer()) {
+      for (ProtocolRow row : rows) {
+        String label = "SC-25 " + row.row();
+        // Given
+        Map<String, Object> values =
+            with(
+                row.extra(),
+                "MAIL_TRANSPORT",
+                row.transport(),
+                "spring.mail.host",
+                "localhost",
+                "spring.mail.port",
+                String.valueOf(blackhole.port()),
+                "MAIL_FROM",
+                FROM);
+        Started started = BareBoot.start(values);
+        try {
+          if (row.failText() != null) {
+            soft.assertThat(started.ok()).as(label + " — 기동 실패여야 한다").isFalse();
+            if (!started.ok()) {
+              soft.assertThat(started.failureMessages())
+                  .as(label)
+                  .containsIgnoringCase(row.failText());
+            }
+            continue;
+          }
+          soft.assertThat(started.ok())
+              .as(label + " — 기동 성공 (" + started.failureMessages() + ")")
+              .isTrue();
+          if (!started.ok()) {
+            continue;
+          }
+          MailGateway gateway = started.context().getBean(MailGateway.class);
+          if (row.logBoot()) {
+            soft.assertThat(gateway).as(label + " — 로그 구현").isInstanceOf(LoggingMailGateway.class);
+            continue;
+          }
+
+          // When
+          java.util.concurrent.ExecutorService runner =
+              java.util.concurrent.Executors.newSingleThreadExecutor(
+                  task -> {
+                    Thread thread = new Thread(task, "sc25-send-" + row.row());
                     thread.setDaemon(true);
                     return thread;
                   });

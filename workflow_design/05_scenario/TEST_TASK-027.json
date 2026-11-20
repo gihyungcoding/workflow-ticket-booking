@@ -7,6 +7,7 @@
     "backend/src/test/java/com/example/ticket_booking/repository/Task027EmailTokenMigrationTest.java",
     "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
     "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+    "backend/src/test/java/com/example/ticket_booking/service/Task027MailShutdownInterruptTest.java",
     "backend/src/test/java/com/example/ticket_booking/service/Task027MailShutdownTest.java"
   ],
   "red_scenarios": [
@@ -163,7 +164,8 @@
       "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
       "test_function": "test_sc22_SMTP_서버가_응답하지_않아도_발송은_타임아웃으로_끝나고_타임아웃_설정이_틀리면_기동이_실패한다",
       "status": "red",
-      "failure": "9/10행 실패 — a·c·d·e 무한 대기(20초·5초 초과, e 는 JavaMail 이 ' 1000 ' 을 정리하지 않음), f~j 기동 성공(검증 없음). 행 b(셋 다 1000)는 Spring Boot 가 값을 그대로 넘겨 이미 통과"
+      "failure": "9/10행 실패 — a·c·d·e 무한 대기(20초·5초 초과, e 는 JavaMail 이 ' 1000 ' 을 정리하지 않음), f~j 기동 성공(검증 없음). 행 b(셋 다 1000)는 Spring Boot 가 값을 그대로 넘겨 이미 통과",
+      "note": "RETRY_SCENARIO 2회차에 행 k·l·m 추가 — 현재 구현에서 l(+1000)·m(전각 숫자) 기동 성공으로 red, k(int 초과)는 이미 통과"
     },
     {
       "scenario_id": "SC-23",
@@ -178,6 +180,20 @@
       "test_function": "test_sc24_종료할_때_대기_중인_메일을_보내고_종료_뒤의_발송_요청은_호출자에게_예외를_전하지_않는다",
       "status": "red",
       "failure": "종료 처리가 돌아온 시점 메일 0 (기대 5) — awaitTermination 없음(RC-2). 뒷부분(U6 RejectedExecution) 은 첫 단언에서 멈춰 미실행"
+    },
+    {
+      "scenario_id": "SC-25",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc25_smtps_에도_타임아웃이_걸리고_정의_밖_프로토콜_JNDI_메일_세션이면_기동이_실패한다",
+      "status": "red",
+      "failure": "18행 중 15행 실패 — a·e 무한 대기(smtps 키에 기본 없음), c·d·f·g 1~2ms 즉시 실패(프로토콜 SMTPS·공백·빈 값을 정리하지 않아 JavaMail 제공자 없음), h~k·l·m·n·r 기동 성공(검증 없음 — JNDI 는 Boot 가 막지 않음, PLAN 정정), o 기동 실패(쓰지 않는 mail.smtp.timeout=0 을 검증함). b·p·q 는 이미 통과"
+    },
+    {
+      "scenario_id": "SC-26",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027MailShutdownInterruptTest.java",
+      "test_function": "test_sc26_종료를_기다리는_중_인터럽트되면_남은_메일을_버리고_인터럽트_상태를_지킨_채_예외_없이_돌아온다",
+      "status": "red",
+      "failure": "'예외 없음' expected null but was InterruptedException — 현재 shutdown 이 인터럽트를 그대로 던진다. 뒷부분 단언 미실행"
     }
   ],
   "red_result": {
@@ -190,10 +206,9 @@
     "note": "1회차(Docker 꺼짐)는 PostgreSQL 테스트 전부 initializationError — Docker 기동 뒤 2회차가 정본. 2회차에 CapturingMailConfig 의 @Primary 중복(하네스 결함)을 고쳐 Task027AccountMailTest 를 다시 돌렸다(6/6 red)"
   },
   "inventory_check": {
-    "scenarios": 24,
-    "test_functions": 24,
-    "match": true,
-    "command": "grep -ho 'void test_sc[0-9]*' backend/src/test/java/.../*/Task027*.java | sort -u | wc -l"
+    "scenarios": 26,
+    "test_functions": 26,
+    "match": true
   },
   "testing_preferences": {
     "framework": "JUnit 5 + AssertJ(SoftAssertions 표) + Spring Boot Test + Testcontainers PostgreSQL + Awaitility",
@@ -265,18 +280,14 @@
     "backend/src/test/resources/application.properties: MAIL_TRANSPORT=log, FRONTEND_BASE_URL=http://localhost:5173 추가"
   ],
   "human_review": {
-    "approved": true,
-    "approved_at": "2026-11-20T01:18:26Z",
-    "decision": "APPROVE",
-    "note": "RETRY_SCENARIO 1회차 재승인 — SC-21~24 Red, BareBoot 시스템 환경변수 제외 포함",
+    "approved": false,
     "previous": {
-      "approved_at": "2026-11-20T00:29:13Z",
-      "note": "1회차 승인 — RETRY_SCENARIO 로 재승인 필요"
+      "note": "RETRY_SCENARIO 1회차 재승인 — 2회차로 다시 필요"
     }
   },
   "red_retry": {
     "reason": "RETRY_SCENARIO 1회차 — Phase 3 자체 리뷰 RC-1·RC-2·RC-4",
-    "attempt": 1,
+    "attempt": 2,
     "note": "구현이 이미 있는 상태의 Red — 새 테스트 4건이 현재 구현(6017bb5)의 실제 결함으로 실패해 변이 검증 없이 Red 가 관찰됐다",
     "red_result": {
       "command": "cd backend && ./gradlew test --continue (결과 디렉터리 삭제 후, Docker 켜짐)",
@@ -289,6 +300,16 @@
     "support_added": [
       "CapturingMailGateway.block()/release()/delay(ms)",
       "BlackholeSmtpServer"
-    ]
+    ],
+    "round2": {
+      "reason": "RETRY_SCENARIO 2회차 — 자체 리뷰 2라운드 RC-2 later 3",
+      "red_result": {
+        "total": 231,
+        "failed": 3,
+        "passed": 228,
+        "existing_tests_still_passing": true
+      },
+      "plan_correction": "JNDI 키만으로 Spring Boot 가 기동을 막지 않는다 — PLAN inputs 근거 정정, 시나리오 동작은 그대로(MailConfig 가 검사)"
+    }
   }
 }
