@@ -37,6 +37,10 @@ public class EmailTokenService {
   /**
    * 같은 사용자·용도의 이전 토큰을 지우고 새 토큰을 발급해 원문(43자)을 돌려준다. userId 가 null·0 이하이거나 purpose 가 null 이면 호출자 버그다
    * — DB 에 닿기 전에 IllegalArgumentException. 없는 사용자면 외래 키 위반(DataIntegrityViolationException)이다.
+   *
+   * <p><b>호출 규칙</b>: 같은 사용자·용도로 동시에 부르면 이전 토큰 삭제와 새 토큰 저장이 겹쳐 유효 토큰이 둘 남을 수 있다(수용한 위험 — PLAN, 자체 리뷰
+   * RC-3). 메일과 함께 발급할 때는 {@link AccountMailService} 를 거친다 — 간격 제한 UPDATE 가 사용자 행을 먼저 잠가 직렬화한다. 직접
+   * 부르는 호출자는 같은 트랜잭션에서 그 사용자 행을 먼저 잠근다.
    */
   @Transactional
   public String issue(Long userId, EmailTokenPurpose purpose) {
