@@ -182,8 +182,9 @@
       "section": "KINDS integer_notation (+ coverage-policy.md §2-1 표)",
       "change": "sign(+7·-7)·leading_zero(07)·non_ascii_digit(아라비아-인도·전각) 칸 추가",
       "evidence": "TASK-022 자체 리뷰 RC-1 reproduced 4 — RETRY_SCENARIO 2/3",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "81b81de"
     },
     {
       "target": "docs/release/first-deploy-checklist.md",

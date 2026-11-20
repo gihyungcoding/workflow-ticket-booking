@@ -112,8 +112,9 @@
       "section": "화면 문구",
       "change": "페이지 응답에서 건수 문구를 쓰면 서버 총수 유무를 확인해 unresolved 에 적고 기본안을 정한다",
       "evidence": "TASK-025 VERIFY RC-1 예외 승인",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "434c765"
     },
     {
       "target": ".claude/agents/scenario-validator.md",
@@ -137,6 +138,8 @@
     "TASK-026 과 같은 배포"
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-20T07:29:26Z",
+    "reviewed_in": "batch"
   }
 }
