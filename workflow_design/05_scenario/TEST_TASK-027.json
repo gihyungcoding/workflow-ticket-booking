@@ -6,7 +6,8 @@
     "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
     "backend/src/test/java/com/example/ticket_booking/repository/Task027EmailTokenMigrationTest.java",
     "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
-    "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java"
+    "backend/src/test/java/com/example/ticket_booking/service/Task027EmailTokenTest.java",
+    "backend/src/test/java/com/example/ticket_booking/service/Task027MailShutdownTest.java"
   ],
   "red_scenarios": [
     {
@@ -149,6 +150,34 @@
       "test_function": "test_sc20_소셜_제공자가_설정된_기동은_지금과_같고_소셜_실패_이동도_같은_기준_주소를_쓴다",
       "status": "red",
       "failure": "행 a 의 메일 링크만 실패(AccountMails UnsupportedOperationException). 행 a 의 기동·302·Location 과 행 b·c 의 기동 실패는 이미 통과 — 기존 동작(regression), 새 하네스가 동작한다는 증거"
+    },
+    {
+      "scenario_id": "SC-21",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc21_토큰_메일_호출은_호출자가_미리_읽어_둔_엔티티를_놓지_않는다",
+      "status": "red",
+      "failure": "4행 모두 '호출 뒤의 변경이 커밋됐다' expected true but was false — 현재 구현의 clearAutomatically(RC-1 재현)"
+    },
+    {
+      "scenario_id": "SC-22",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/config/Task027MailTransportTest.java",
+      "test_function": "test_sc22_SMTP_서버가_응답하지_않아도_발송은_타임아웃으로_끝나고_타임아웃_설정이_틀리면_기동이_실패한다",
+      "status": "red",
+      "failure": "9/10행 실패 — a·c·d·e 무한 대기(20초·5초 초과, e 는 JavaMail 이 ' 1000 ' 을 정리하지 않음), f~j 기동 성공(검증 없음). 행 b(셋 다 1000)는 Spring Boot 가 값을 그대로 넘겨 이미 통과"
+    },
+    {
+      "scenario_id": "SC-23",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027AccountMailTest.java",
+      "test_function": "test_sc23_발송이_막혀_대기열이_차면_넘친_메일은_버리고_WARN_을_남기며_호출자는_정상이다",
+      "status": "red",
+      "failure": "보낸 메일 102 (기대 101), q102 메일 있음, WARN 없음 — 대기열 상한 없음(RC-2)"
+    },
+    {
+      "scenario_id": "SC-24",
+      "test_file": "backend/src/test/java/com/example/ticket_booking/service/Task027MailShutdownTest.java",
+      "test_function": "test_sc24_종료할_때_대기_중인_메일을_보내고_종료_뒤의_발송_요청은_호출자에게_예외를_전하지_않는다",
+      "status": "red",
+      "failure": "종료 처리가 돌아온 시점 메일 0 (기대 5) — awaitTermination 없음(RC-2). 뒷부분(U6 RejectedExecution) 은 첫 단언에서 멈춰 미실행"
     }
   ],
   "red_result": {
@@ -161,8 +190,8 @@
     "note": "1회차(Docker 꺼짐)는 PostgreSQL 테스트 전부 initializationError — Docker 기동 뒤 2회차가 정본. 2회차에 CapturingMailConfig 의 @Primary 중복(하네스 결함)을 고쳐 Task027AccountMailTest 를 다시 돌렸다(6/6 red)"
   },
   "inventory_check": {
-    "scenarios": 20,
-    "test_functions": 20,
+    "scenarios": 24,
+    "test_functions": 24,
     "match": true,
     "command": "grep -ho 'void test_sc[0-9]*' backend/src/test/java/.../*/Task027*.java | sort -u | wc -l"
   },
@@ -224,15 +253,39 @@
       "change": "start() 를 BareBoot 로(값은 여전히 프로퍼티 맵 — 공백·역슬래시·PEM 개행 보존), 클래스 주석 보강",
       "reason": "같음",
       "assertions_changed": false
+    },
+    {
+      "file": "backend/src/test/java/com/example/ticket_booking/support/BareBoot.java",
+      "change": "시스템 환경변수 소스 제거(RC-4)",
+      "reason": "「키 없음」에 OS 환경변수가 새어 드는 결함 — 자체 리뷰",
+      "assertions_changed": false
     }
   ],
   "other_changed_files": [
     "backend/src/test/resources/application.properties: MAIL_TRANSPORT=log, FRONTEND_BASE_URL=http://localhost:5173 추가"
   ],
   "human_review": {
-    "approved": true,
-    "approved_at": "2026-11-20T00:29:13Z",
-    "decision": "APPROVE",
-    "note": "시나리오 20·Red 테스트·승인 테스트 4파일 변경(버전 8→9 두 곳, 소셜·애플 기동 하네스) 함께 승인"
+    "approved": false,
+    "previous": {
+      "approved_at": "2026-11-20T00:29:13Z",
+      "note": "1회차 승인 — RETRY_SCENARIO 로 재승인 필요"
+    }
+  },
+  "red_retry": {
+    "reason": "RETRY_SCENARIO 1회차 — Phase 3 자체 리뷰 RC-1·RC-2·RC-4",
+    "attempt": 1,
+    "note": "구현이 이미 있는 상태의 Red — 새 테스트 4건이 현재 구현(6017bb5)의 실제 결함으로 실패해 변이 검증 없이 Red 가 관찰됐다",
+    "red_result": {
+      "command": "cd backend && ./gradlew test --continue (결과 디렉터리 삭제 후, Docker 켜짐)",
+      "total": 229,
+      "failed": 4,
+      "passed": 225,
+      "existing_tests_still_passing": true
+    },
+    "harness_change": "BareBoot initializer 가 시스템 환경변수 소스(systemEnvironment)를 뺀다(RC-4) — 이 머신에는 해당 환경변수가 없어 Red 로 관찰할 수 없다(already_passing 성격). 기동 테스트 225건 계속 통과로 회귀 없음을 확인",
+    "support_added": [
+      "CapturingMailGateway.block()/release()/delay(ms)",
+      "BlackholeSmtpServer"
+    ]
   }
 }

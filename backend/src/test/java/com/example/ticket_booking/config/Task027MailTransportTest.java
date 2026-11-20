@@ -382,6 +382,130 @@ class Task027MailTransportTest {
     soft.assertAll();
   }
 
+  // ---------- SC-22 ----------
+
+  private record TimeoutRow(
+      String row,
+      Object connection,
+      Object read,
+      Object write,
+      Duration atLeast,
+      Duration within,
+      String failName) {}
+
+  /**
+   * SC-22 (boundary) SMTP 서버가 응답하지 않아도 발송은 타임아웃으로 끝나고 타임아웃 설정이 틀리면 기동이 실패한다.
+   *
+   * <p>Given 블랙홀 SMTP 서버, smtp·호스트·포트·MAIL_FROM 과 표의 타임아웃 설정으로 기동한다 When 기동이 성공하면 send 를 부른다 Then
+   * 결과가 시간이면 그 범위 안에 예외로 끝나고, 기동 실패면 예외 체인에 이름 열의 환경변수 이름이 있다
+   */
+  @Test
+  void test_sc22_SMTP_서버가_응답하지_않아도_발송은_타임아웃으로_끝나고_타임아웃_설정이_틀리면_기동이_실패한다() throws Exception {
+    Duration s1 = Duration.ofSeconds(1);
+    Duration s5 = Duration.ofSeconds(5);
+    Duration s9 = Duration.ofSeconds(9);
+    Duration s20 = Duration.ofSeconds(20);
+    TimeoutRow[] rows = {
+      new TimeoutRow("a", UNSET, UNSET, UNSET, s9, s20, null),
+      new TimeoutRow("b", "1000", "1000", "1000", s1, s5, null),
+      new TimeoutRow("c", "1000", "", "1000", s9, s20, null),
+      new TimeoutRow("d", "1000", "   ", "1000", s9, s20, null),
+      new TimeoutRow("e", UNSET, " 1000 ", UNSET, s1, s5, null),
+      new TimeoutRow(
+          "f", "1000", "0", "1000", null, null, "SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT"),
+      new TimeoutRow(
+          "g", "1000", "-5", "1000", null, null, "SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT"),
+      new TimeoutRow(
+          "h",
+          "abc",
+          "1000",
+          "1000",
+          null,
+          null,
+          "SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT"),
+      new TimeoutRow(
+          "i", "1000", "1000", "1e3", null, null, "SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT"),
+      new TimeoutRow(
+          "j", "1000", "1.5", "1000", null, null, "SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT"),
+    };
+    SoftAssertions soft = new SoftAssertions();
+    try (com.example.ticket_booking.support.BlackholeSmtpServer blackhole =
+        new com.example.ticket_booking.support.BlackholeSmtpServer()) {
+      for (TimeoutRow row : rows) {
+        String label = "SC-22 " + row.row();
+        // Given
+        Map<String, Object> values =
+            env(
+                "MAIL_TRANSPORT", "smtp",
+                "spring.mail.host", "localhost",
+                "spring.mail.port", String.valueOf(blackhole.port()),
+                "MAIL_FROM", FROM,
+                "spring.mail.properties.mail.smtp.connectiontimeout", row.connection(),
+                "spring.mail.properties.mail.smtp.timeout", row.read(),
+                "spring.mail.properties.mail.smtp.writetimeout", row.write());
+        Started started = BareBoot.start(values);
+        try {
+          if (row.failName() != null) {
+            // Then 기동 실패
+            soft.assertThat(started.ok()).as(label + " — 기동 실패여야 한다").isFalse();
+            if (!started.ok()) {
+              soft.assertThat(started.failureMessages()).as(label).contains(row.failName());
+            }
+            continue;
+          }
+          soft.assertThat(started.ok())
+              .as(label + " — 기동 성공 (" + started.failureMessages() + ")")
+              .isTrue();
+          if (!started.ok()) {
+            continue;
+          }
+          MailGateway gateway = started.context().getBean(MailGateway.class);
+
+          // When
+          // 행마다 새 데몬 스레드 — 무한 대기한 행의 스레드가 다음 행을 막지 않게
+          java.util.concurrent.ExecutorService runner =
+              java.util.concurrent.Executors.newSingleThreadExecutor(
+                  task -> {
+                    Thread thread = new Thread(task, "sc22-send-" + row.row());
+                    thread.setDaemon(true);
+                    return thread;
+                  });
+          long begin = System.nanoTime();
+          java.util.concurrent.Future<Throwable> sending =
+              runner.submit(
+                  () -> {
+                    try {
+                      gateway.send(MESSAGE);
+                      return null;
+                    } catch (Throwable thrown) {
+                      return thrown;
+                    }
+                  });
+          Throwable thrown;
+          try {
+            thrown =
+                sending.get(
+                    row.within().toMillis() + 2_000, java.util.concurrent.TimeUnit.MILLISECONDS);
+          } catch (java.util.concurrent.TimeoutException hanging) {
+            soft.fail(label + " — " + row.within() + " 안에 끝나지 않았다(무한 대기)");
+            runner.shutdownNow();
+            continue;
+          }
+          runner.shutdownNow();
+          Duration elapsed = Duration.ofNanos(System.nanoTime() - begin);
+
+          // Then
+          soft.assertThat(thrown).as(label + " — 예외로 끝난다").isNotNull();
+          soft.assertThat(elapsed).as(label + " — 걸린 시간 하한").isGreaterThanOrEqualTo(row.atLeast());
+          soft.assertThat(elapsed).as(label + " — 걸린 시간 상한").isLessThanOrEqualTo(row.within());
+        } finally {
+          started.close();
+        }
+      }
+    }
+    soft.assertAll();
+  }
+
   // ---------- 도우미 ----------
 
   private static MailGateway gatewayOf(Started started) {

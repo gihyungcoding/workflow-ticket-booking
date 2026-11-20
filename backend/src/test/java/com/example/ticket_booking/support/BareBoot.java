@@ -10,6 +10,8 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.StandardEnvironment;
 
 /**
  * 설정 파일(테스트 application.properties)을 읽지 않고 실제 애플리케이션을 띄운다(TASK-027 머리말 「기동」). 테스트 설정 파일의 값이 기본
@@ -60,11 +62,12 @@ public final class BareBoot {
     return new SpringApplicationBuilder(TicketBookingApplication.class)
         .web(WebApplicationType.SERVLET)
         .initializers(
-            context ->
-                context
-                    .getEnvironment()
-                    .getPropertySources()
-                    .addFirst(new MapPropertySource("bare-boot", source)))
+            context -> {
+              MutablePropertySources sources = context.getEnvironment().getPropertySources();
+              sources.addFirst(new MapPropertySource("bare-boot", source));
+              // 「키 없음」은 OS 환경변수에서도 없다 — 개발자 머신의 FRONTEND_BASE_URL·MAIL_TRANSPORT 가 새어 들지 않게(RC-4)
+              sources.remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+            })
         // 기본 위치(classpath:/application.properties 등)를 존재하지 않는 파일 하나로 바꿔 설정 파일을 읽지 않는다
         .run(
             "--spring.config.location=optional:classpath:/bare-boot-no-such-file.properties",

@@ -3,6 +3,8 @@ package com.example.ticket_booking.service;
 import static com.example.ticket_booking.domain.EmailTokenPurpose.VERIFY_EMAIL;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.ticket_booking.domain.Performance;
+import com.example.ticket_booking.repository.PerformanceRepository;
 import com.example.ticket_booking.repository.UserRepository;
 import com.example.ticket_booking.support.CapturingMailConfig;
 import com.example.ticket_booking.support.CapturingMailGateway;
@@ -75,6 +77,7 @@ class Task027AccountMailTest {
   @Autowired private MutableClock clock;
   @Autowired private JdbcTemplate jdbc;
   @Autowired private UserRepository userRepository;
+  @Autowired private PerformanceRepository performanceRepository;
   @Autowired private PlatformTransactionManager transactionManager;
 
   private Task027Db db;
@@ -379,6 +382,134 @@ class Task027AccountMailTest {
     assertThat(sent).hasSize(1);
     assertThat(sent.get(0).body()).contains("https://app.example/verify-email#token=");
     assertThat(sent.get(0).body()).doesNotContain("evil.example");
+  }
+
+  // ---------- SC-21 ----------
+
+  private interface CallInTransaction {
+    Object call(Long userId, String raw);
+  }
+
+  private record DetachRow(String row, CallInTransaction call, String mailTo) {}
+
+  /**
+   * SC-21 (error) 토큰·메일 호출은 호출자가 미리 읽어 둔 엔티티를 놓지 않는다 — 호출 뒤의 변경도 커밋된다.
+   *
+   * <p>Given 사용자 E 와 비공개 공연 P, E 의 VERIFY 토큰 r When 한 트랜잭션에서 P 를 읽고 → 표의 호출 → P 공개로 바꿈 → 커밋 Then
+   * JDBC 로 새로 읽은 P 의 published 가 true, 호출 결과도 정상
+   */
+  @Test
+  void test_sc21_토큰_메일_호출은_호출자가_미리_읽어_둔_엔티티를_놓지_않는다() throws Exception {
+    DetachRow[] rows = {
+      new DetachRow("a", (user, raw) -> tokens.consume(raw, VERIFY_EMAIL), null),
+      new DetachRow(
+          "b",
+          (user, raw) ->
+              tokens.issue(
+                  user, com.example.ticket_booking.domain.EmailTokenPurpose.RESET_PASSWORD),
+          null),
+      new DetachRow("c", (user, raw) -> accountMail.sendVerificationMail(user), "sc21c@ticket.on"),
+      new DetachRow("d", (user, raw) -> accountMail.sendPasswordResetMail(user), "sc21d@ticket.on"),
+    };
+    TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+    SoftAssertions soft = new SoftAssertions();
+    for (DetachRow row : rows) {
+      String label = "SC-21 " + row.row();
+      // Given
+      Long e = db.emailUser("sc21" + row.row() + "@ticket.on");
+      String r = tokens.issue(e, VERIFY_EMAIL);
+      Long performanceId =
+          performanceRepository
+              .save(
+                  new Performance(
+                      null,
+                      "SC-21 공연 " + row.row(),
+                      "공연장",
+                      T.plus(Duration.ofDays(30)),
+                      T.plus(Duration.ofDays(7)),
+                      T.plus(Duration.ofDays(29)),
+                      100,
+                      100,
+                      false,
+                      null,
+                      false))
+              .getId();
+
+      // When
+      Object result =
+          call(
+              () ->
+                  transaction.execute(
+                      status -> {
+                        Performance loaded =
+                            performanceRepository.findById(performanceId).orElseThrow();
+                        Object called = row.call().call(e, r);
+                        loaded.changePublished(true);
+                        return called;
+                      }));
+
+      // Then
+      Boolean published =
+          jdbc.queryForObject(
+              "SELECT published FROM performance WHERE id = ?", Boolean.class, performanceId);
+      soft.assertThat(published).as(label + " — 호출 뒤의 변경이 커밋됐다").isTrue();
+      switch (row.row()) {
+        case "a" -> soft.assertThat(result).as(label + " 결과").isEqualTo(java.util.Optional.of(e));
+        case "b" ->
+            soft.assertThat(String.valueOf(result)).as(label + " 결과").matches("[A-Za-z0-9_-]{43}");
+        default -> {
+          soft.assertThat(result).as(label + " 결과").isEqualTo(true);
+          awaitMail(soft, row.mailTo(), 1, label);
+        }
+      }
+    }
+    soft.assertAll();
+  }
+
+  // ---------- SC-23 ----------
+
+  /**
+   * SC-23 (boundary) 발송이 막혀 대기열이 차면 넘친 메일은 버리고 WARN 을 남기며 호출자는 정상이다.
+   *
+   * <p>Given 수집 구현이 풀어 줄 때까지 멈추고, 사용자 U1…U102(q1…q102@ticket.on) When 순서대로 간격 제한 인증 메일을 보내고 끝나면 풀어
+   * 준다 Then 102번 모두 true, 5초 뒤 101통, q102 메일 없음, WARN 1줄에 q***@ticket.on 이 있고 q102@ticket.on 은 출력에
+   * 없다
+   */
+  @Test
+  void test_sc23_발송이_막혀_대기열이_차면_넘친_메일은_버리고_WARN_을_남기며_호출자는_정상이다(CapturedOutput output)
+      throws Exception {
+    // Given
+    gateway.block();
+    List<Long> users = new ArrayList<>();
+    for (int i = 1; i <= 102; i++) {
+      users.add(db.emailUser("q" + i + "@ticket.on"));
+    }
+
+    // When
+    List<Object> results = new ArrayList<>();
+    for (Long user : users) {
+      results.add(call(() -> accountMail.sendVerificationMail(user)));
+      if (results.size() == 1) {
+        // 첫 메일이 발송 스레드를 실제로 붙잡은 뒤에 나머지를 넣는다 — 그래야 대기열이 정확히 100 이다
+        sleep(300);
+      }
+    }
+    gateway.release();
+    quiet();
+
+    // Then
+    SoftAssertions soft = new SoftAssertions();
+    soft.assertThat(results).as("102번 호출 결과").hasSize(102).containsOnly(true);
+    soft.assertThat(gateway.sent()).as("보낸 메일 수").hasSize(101);
+    soft.assertThat(gateway.sentTo("q102@ticket.on")).as("q102 메일").isEmpty();
+    String out = output.getAll();
+    List<String> warnLines =
+        out.lines()
+            .filter(line -> line.contains("WARN") && line.contains("q***@ticket.on"))
+            .toList();
+    soft.assertThat(warnLines).as("WARN 줄").hasSize(1);
+    soft.assertThat(out).as("원래 주소").doesNotContain("q102@ticket.on");
+    soft.assertAll();
   }
 
   // ---------- SC-17 ----------

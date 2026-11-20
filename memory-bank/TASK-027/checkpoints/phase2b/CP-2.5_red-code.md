@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-20T00:30:00Z
-summary: "Red — 테스트 함수 20 == 시나리오 20. 전체 225 중 실패 21(새 19 red + 승인 테스트 버전 단언 2), SC-19 already_passing. 기존 테스트 계속 통과. HITL#1·2 승인"
+summary: "RETRY_SCENARIO Red — 함수 24 == 시나리오 24. 전체 229 중 실패 4(SC-21·22·23·24, 현재 구현의 실제 결함), 기존 225 통과. HITL#1·2 재승인 대기"
 
 next_steps:
-  - "Phase 3 — wf-develop. MailConfig·EmailToken·리포지토리·V9·AccountMailService(커밋 뒤 비동기)·SocialLoginConfig 공용 검증·first-deploy-checklist"
+  - "HITL#1·2 재승인 → Phase 3 2회차(RC-1·RC-2 수정, issue javadoc 호출 규칙)"
 
 decisions:
   - decision: "컴파일 스켈레톤은 테스트가 import 하는 타입만 — MailConfig·엔티티·리포지토리·V9 는 Phase 3"
@@ -19,6 +19,10 @@ decisions:
     rationale: "출력 어디에도 e@ticket.on 이 없다는 단언이 다른 행 주소에 걸리지 않게"
 
 attempts:
+  - n: 3
+    result: "RETRY_SCENARIO Red"
+    outcome: "SC-21~24 Red 4건 — 구현이 이미 있어 새 테스트가 실제 결함으로 실패(RC-1 재현, RC-2 무한 대기·상한 없음·종료 대기 없음). BareBoot 시스템 환경변수 제외(RC-4)는 이 머신에서 Red 관찰 불가"
+    back_to: "Phase 2b"
   - n: 1
     result: "실행 불가"
     reason: "Docker Desktop 꺼짐 — PostgreSQL 테스트 initializationError(기존 마이그레이션 테스트 포함). 사용자가 Docker 기동"
