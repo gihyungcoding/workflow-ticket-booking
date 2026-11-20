@@ -44,16 +44,18 @@ public class MailConfig {
     return switch (normalized) {
       case "log" -> new LoggingMailGateway();
       case "smtp" -> {
-        requireText(environment, "spring.mail.host", "SPRING_MAIL_HOST");
-        String from = requireText(environment, "MAIL_FROM", "MAIL_FROM");
+        String host = singleToken(environment, "spring.mail.host", "SPRING_MAIL_HOST");
+        String from = singleToken(environment, "MAIL_FROM", "MAIL_FROM");
         JavaMailSender sender = senders.getIfAvailable();
         if (!(sender instanceof JavaMailSenderImpl impl)) {
           throw new IllegalStateException("SPRING_MAIL_HOST 로 SMTP 발송기를 만들지 못했다");
         }
+        // 검증한 값과 발송에 쓰는 값이 같아야 한다 — Boot 가 넣은 호스트 원문(앞뒤 공백·개행 포함)을 정리한 값으로 바꾼다(Phase 4 RC-2)
+        impl.setHost(host);
         String protocol = protocol(environment);
         impl.setProtocol(protocol);
         applyTimeouts(environment, impl, protocol);
-        yield new SmtpMailGateway(impl, from.trim());
+        yield new SmtpMailGateway(impl, from);
       }
       default ->
           throw new IllegalStateException(
@@ -122,6 +124,21 @@ public class MailConfig {
             + " 은 1 이상 2147483647 이하의 정수(ms)여야 한다: \""
             + raw
             + "\"");
+  }
+
+  /**
+   * 앞뒤 공백·개행을 정리한 한 덩어리 값 — 비었으면 「필요하다」, 정리한 뒤 안에 공백·탭·CR·LF 가 있으면 「한 덩어리여야 한다」로 기동 실패(메시지에 환경변수
+   * 이름). 호스트 안의 공백은 연결 실패가, 보내는 사람 안의 개행은 메일 헤더 주입이 된다.
+   */
+  static String singleToken(Environment environment, String key, String name) {
+    String trimmed = requireText(environment, key, name).trim();
+    if (trimmed.isEmpty()) {
+      throw new IllegalStateException(name + " 이 필요하다 (MAIL_TRANSPORT=smtp)");
+    }
+    if (trimmed.chars().anyMatch(Character::isWhitespace)) {
+      throw new IllegalStateException(name + " 안에 공백·개행이 있다(앞뒤 공백은 정리한다)");
+    }
+    return trimmed;
   }
 
   private static String requireText(Environment environment, String key, String name) {

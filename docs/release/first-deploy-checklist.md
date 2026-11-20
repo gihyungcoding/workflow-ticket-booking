@@ -174,12 +174,14 @@ SELECT id, title, created_at FROM performance WHERE published = FALSE AND cancel
 | `JWT_SECRET` | §1 에서 만든 값 | 비밀. 비었거나 32바이트 미만이면 기동 실패 (`SecurityConfig`) |
 | `FRONTEND_BASE_URL` | `https://<Pages 이름>.pages.dev` | **항상 필수**(TASK-027 — 메일 링크·소셜 이동의 기준 주소). 없거나 형식이 틀리면 **기동 실패**. `http`/`https` 만, 사용자 정보·쿼리·`#` 불가, 끝 `/` 는 제거됨 (`FrontendBaseUrl`) |
 | `MAIL_TRANSPORT` | `smtp` | **항상 필수**(TASK-027, ADR-0031). `smtp` 또는 `log`(대소문자·앞뒤 공백 무시) 외의 값이거나 비면 **기동 실패**. 운영은 `smtp` — `log` 는 메일을 보내지 않고 링크(토큰)를 로그에 남기는 개발용이다 (`MailConfig`) |
-| `SPRING_MAIL_HOST` · `SPRING_MAIL_PORT` | SMTP 서버 주소·포트 | `smtp` 일 때 호스트 필수 — 없으면 기동 실패. 포트는 서비스 안내대로(보통 587) |
-| `SPRING_MAIL_USERNAME` · `SPRING_MAIL_PASSWORD` | SMTP 계정 | 비밀. 서비스가 요구하면 넣는다. STARTTLS 가 필요하면 `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true` |
-| `MAIL_FROM` | 보내는 사람 주소 | `smtp` 일 때 필수 — 없으면 기동 실패. 발신 도메인의 SPF·DKIM 을 메일 서비스 안내대로 설정한다 `사람` |
+| `SPRING_MAIL_HOST` · `SPRING_MAIL_PORT` | SMTP 서버 주소·포트 | `smtp` 일 때 호스트 필수 — 없으면 기동 실패. 앞뒤 공백·개행은 정리하고, 안에 공백·개행이 있으면 기동 실패. 포트는 서비스 안내대로(보통 587) |
+| `SPRING_MAIL_USERNAME` · `SPRING_MAIL_PASSWORD` | SMTP 계정 | 비밀. 서비스가 요구하면 넣는다. 공백도 값으로 보고 정리하지 않는다 |
+| `MAIL_FROM` | 보내는 사람 주소 | `smtp` 일 때 필수 — 없으면 기동 실패. 앞뒤 공백은 정리하고, 안에 공백·개행이 있으면 기동 실패(헤더 주입 방지). 발신 도메인의 SPF·DKIM 을 메일 서비스 안내대로 설정한다 `사람` |
 | `SPRING_MAIL_PROTOCOL` | 비워 둔다(`smtp`) 또는 `smtps` | 587 STARTTLS 는 `smtp`(기본), 465 SSL 은 `smtps`. 그 밖의 값이면 기동 실패 (`MailConfig`) |
 | `SPRING_MAIL_PROPERTIES_MAIL_<SMTP\|SMTPS>_CONNECTIONTIMEOUT` · `_TIMEOUT` · `_WRITETIMEOUT` | 비워 둔다(10000) | 고른 프로토콜의 키만 읽는다. 없으면 10초를 건다(무한 대기 방지). 값은 1~2147483647 의 숫자(ms) — 아니면 기동 실패. **환경변수로만 넣는다** — 설정 파일의 `spring.mail.properties[mail.smtp.timeout]` 같은 대괄호 표기는 읽지 않고 10초로 덮인다(TASK-027 수용 위험) |
 | `SPRING_MAIL_JNDI_NAME` | **넣지 않는다** | 있으면(빈 값도) 기동 실패 — JNDI 세션은 타임아웃을 걸 수 없어 지원하지 않는다 |
+| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE` · `_STARTTLS_REQUIRED` | `true` · `true` | 587(`smtp`)이면 **둘 다 넣는다** — 넣지 않으면 서버가 허용할 때 계정 정보·토큰 링크가 평문으로 나간다. 465(`smtps`)는 처음부터 TLS 라 필요 없다(`smtps` 의 TLS 설정은 `..._MAIL_SMTPS_SSL_*` 키) |
+| `SPRING_MAIL_PROPERTIES_MAIL_DEBUG` | **넣지 않는다** | `true` 면 JavaMail 이 SMTP 대화 전체(메일 본문의 토큰 링크 포함)를 표준 출력에 남긴다 |
 | `PORT` | **직접 넣지 않는다** | Render 가 주입한다 |
 
 > **TASK-027 배포 순서**: 새 버전을 올리기 **전에** `FRONTEND_BASE_URL`·`MAIL_TRANSPORT`(+ `smtp` 값들)를 Render 에 먼저 넣는다.
