@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-19T15:10:00Z
-summary: "RETRY_SCENARIO 2회차 — 시나리오 26건, 칸 122, 독립검증 4회차 PASS(경고 5, V12 ①②③·V4·V11 참고·V1 참고 반영)"
+summary: "RETRY_SCENARIO 3회차(상한, Phase 4 FAIL) — 시나리오 27건(SC-27 추가), 칸 122, 독립검증 5회차 대기"
 
 next_steps:
-  - "Phase 2b — SC-22 k~m·SC-25·SC-26 Red, HITL#1·2 재승인"
+  - "scenario-validator 5회차(이전 판정 원문 첨부)"
 
 decisions:
   - decision: "RETRY_SCENARIO 1회차 — 자체 리뷰 RC-1·RC-2·RC-4 의 변종 전부를 한 번에 시나리오로(SC-21 a~d, SC-22 a·b, SC-23, SC-24, 머리말 기동)"
@@ -33,6 +33,11 @@ decisions:
     rationale: "wf-scenario Step 2 입력 제약 대조"
 
 attempts:
+  - n: 7
+    result: "RETRY_SCENARIO 3회차 (Phase 4 → 2a, 상한)"
+    outcome: "Phase 4 1회차 FAIL — RC-2 later: SPRING_MAIL_HOST 앞뒤 공백(재현). 사용자 결정 「시나리오로 롤백」"
+    back_to: "Phase 2a"
+    fix: "SC-27(호스트·보내는 사람 정리 8행), SPRING_MAIL_HOST·MAIL_FROM 표기 칸 n/a → covered, PLAN inputs 제약 3줄"
   - n: 6
     result: PASS
     reason: "4회차 fail 0 · warn 5"

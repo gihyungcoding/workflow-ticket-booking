@@ -30,7 +30,9 @@
         "source": "환경변수(Spring Boot spring.mail.* 완화 바인딩)",
         "constraints": [
           "MAIL_TRANSPORT=smtp 일 때 SPRING_MAIL_HOST 필수 — 없으면 기동 실패",
-          "log 일 때는 읽지 않는다"
+          "log 일 때는 읽지 않는다",
+          "smtp 일 때 호스트는 앞뒤 공백·개행을 정리해 발송기에 다시 넣는다 — 검증한 값과 발송에 쓰는 값이 같아야 한다(Phase 4 RC-2 later). 정리한 뒤 안에 공백이 있으면 기동 실패(메시지에 SPRING_MAIL_HOST)",
+          "포트는 Spring Boot 숫자 변환이 공백을 정리하고 숫자가 아니면 기동 실패 — 앱이 다시 검사하지 않는다. 사용자명·비밀번호는 공백도 값일 수 있어 정리하지 않는다"
         ]
       },
       {
@@ -39,7 +41,8 @@
         "source": "환경변수",
         "constraints": [
           "smtp 일 때 필수(공백 아님) — 없으면 기동 실패",
-          "log 일 때는 없어도 된다"
+          "log 일 때는 없어도 된다",
+          "앞뒤 공백을 정리해 From 에 쓴다(이미 구현 — 시나리오 칸을 바로잡는다)"
         ]
       },
       {
@@ -659,7 +662,8 @@
       "요구사항 §7 열린 질문 '발송 서비스·발신 도메인' — 배포 설정이라 코드는 모른다. first-deploy-checklist 에 'SMTP 제공자 선택·SPF/DKIM' 사람 단계로 적는다",
       "docs/release/first-deploy-checklist.md 는 implementation_spec 밖 — 이 태스크만 배포해도 MAIL_TRANSPORT·FRONTEND_BASE_URL 이 없으면 기동하지 않으므로 함께 고친다(TASK-028 의 체크리스트 AC 는 재인증 안내 등 나머지)",
       "Phase 3 자체 리뷰 1라운드(2026-11-20) → RETRY_SCENARIO 1회차: RC-1(벌크 쿼리 clearAutomatically 가 호출자 컨텍스트 분리) · RC-2(SMTP 타임아웃 없음·무한 대기열·종료 시 유실·종료 뒤 afterCommit 예외) · RC-4(BareBoot 의 「키 없음」에 OS 환경변수가 새어 듦) 를 시나리오로 가져온다. RC-3(issue 직접 동시 호출 시 유효 토큰 2개)은 기존 수용 위험 — issue 의 javadoc 에 '간격 제한 발송(사용자 행 잠금) 아래에서 부른다'는 호출 규칙을 남긴다. [security] log 전송 운영 허용·MAIL_FROM 형식 검사는 사용자 결정·범위 밖으로 deferred",
-      "Phase 3 자체 리뷰 2라운드(2026-11-20) → RETRY_SCENARIO 2회차(사용자 결정): RC-2 변종 later 3 — smtps 프로토콜이면 mail.smtp.* 타임아웃 무시(리뷰어 프로브 재현), JNDI 세션이면 타임아웃 변경 무시(미확인), 종료 대기 인터럽트 시 대기열 정리 누락. 셋을 한 번에 시나리오로"
+      "Phase 3 자체 리뷰 2라운드(2026-11-20) → RETRY_SCENARIO 2회차(사용자 결정): RC-2 변종 later 3 — smtps 프로토콜이면 mail.smtp.* 타임아웃 무시(리뷰어 프로브 재현), JNDI 세션이면 타임아웃 변경 무시(미확인), 종료 대기 인터럽트 시 대기열 정리 누락. 셋을 한 번에 시나리오로",
+      "Phase 4 1회차 FAIL(2026-11-20) → RETRY_SCENARIO 3회차(상한, 사용자 결정): RC-2 later — SPRING_MAIL_HOST 앞뒤 공백이 기동 검증을 통과하고 발송이 전부 실패. 뿌리 '검증한 값과 실제 쓰는 값이 다르다' 를 SMTP 문자열 설정 전부로 스윕 — 호스트(정리·내부 공백 실패), MAIL_FROM(정리 — 기존 동작을 시나리오로), 포트(Boot 변환), 사용자명·비밀번호(정리하지 않음). [security] 낮음 — 체크리스트에 587 STARTTLS 필수·mail.debug 금지 안내"
     ],
     "exploration": {
       "method": "inline",

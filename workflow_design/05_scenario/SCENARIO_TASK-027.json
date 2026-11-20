@@ -576,6 +576,28 @@
         "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다"
       ],
       "flow": "F7"
+    },
+    {
+      "id": "SC-27",
+      "type": "boundary",
+      "title": "SMTP 호스트·보내는 사람의 앞뒤 공백은 정리해 실제 발송에 쓰고 호스트 안의 공백은 기동 실패다",
+      "given": [
+        "SC-02 의 테스트용 SMTP 서버(FakeSmtpServer)가 임의 포트에서 떠 있다",
+        "애플리케이션을 `MAIL_TRANSPORT=smtp`·그 포트와 표의 `SPRING_MAIL_HOST`(`spring.mail.host`)·`MAIL_FROM` 으로 기동한다"
+      ],
+      "when": [
+        "기동이 성공하면 SC-01 의 메일을 `MailGateway.send` 로 보낸다"
+      ],
+      "then": [
+        "「결과」가 수신이면 SMTP 서버가 메일 1통을 받고 그 From 이 `no-reply@ticket.on` 이다(호스트·보내는 사람의 공백이 실제 발송에서 사라졌다)",
+        "「결과」가 기동 실패면 예외 체인에 `SPRING_MAIL_HOST` 가 있다"
+      ],
+      "table": "| 행 | SPRING_MAIL_HOST | MAIL_FROM | 결과 |\n|---|---|---|---|\n| a | `\" localhost\"` | `no-reply@ticket.on` | 수신 |\n| b | `\"localhost \"` | `no-reply@ticket.on` | 수신 |\n| c | `\"localhost\\n\"`(끝 개행) | `no-reply@ticket.on` | 수신 |\n| d | `\"\\tlocalhost\\r\\n\"` | `no-reply@ticket.on` | 수신 |\n| e | `LOCALHOST` | `no-reply@ticket.on` | 수신 — 호스트 대소문자는 그대로 둬도 같은 곳 |\n| f | `localhost` | `\"  no-reply@ticket.on  \"` | 수신 — From 은 정리된 주소 |\n| g | `\"local host\"` | `no-reply@ticket.on` | 기동 실패 |\n| h | `\"localhost\\nevil\"` | `no-reply@ticket.on` | 기동 실패 |",
+      "covers": [
+        "`MAIL_TRANSPORT=log` 이면 메일(받는 사람·제목·링크)이 로그로 남고, `smtp` 이면 SMTP 로 나간다. 테스트는 보낸 메일을 모아 단언한다",
+        "운영에서 `MAIL_TRANSPORT` 가 비었거나 `FRONTEND_BASE_URL` 이 올바르지 않으면 기동이 실패한다"
+      ],
+      "flow": "F2"
     }
   ],
   "coverage_matrix": [
@@ -819,23 +841,27 @@
     },
     {
       "cell": "SPRING_MAIL_HOST@F2:config.case",
-      "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
+      "state": "covered",
+      "by": [
+        "SC-27"
+      ]
     },
     {
       "cell": "SPRING_MAIL_HOST@F2:config.notation",
-      "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
+      "state": "covered",
+      "by": [
+        "SC-27"
+      ]
     },
     {
       "cell": "SPRING_MAIL_HOST@F2:config.list_separator",
       "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
+      "reason": "단일 호스트 값이지 목록이 아니다 — 쉼표가 든 값은 앱이 형식을 판정하지 않고 SMTP 연결 실패(로그)로 나타난다. 앱의 판정은 앞뒤 공백 정리와 안쪽 공백 거부(PLAN inputs)"
     },
     {
       "cell": "SPRING_MAIL_HOST@F2:config.prefix_only",
       "state": "n/a",
-      "reason": "호스트 문자열은 앱이 해석하지 않고 SMTP 클라이언트에 그대로 넘긴다(PLAN inputs — 있음/없음만 판정). 틀린 호스트는 발송 시점의 예외가 되고, 예외는 원인과 무관하게 같은 경로(로그만, 호출자 정상)로 처리된다 — 그 경로는 SC-17 d·e 가 덮는다"
+      "reason": "호스트 이름에 접두사 일치 판정이 없다 — 앱은 DNS 를 조회하지 않는다"
     },
     {
       "cell": "MAIL_FROM@F2:config.unset",
@@ -859,24 +885,26 @@
       ]
     },
     {
-      "cell": "MAIL_FROM@F2:config.case",
-      "state": "n/a",
-      "reason": "보내는 사람 주소는 앱이 해석하지 않고 From 헤더로 그대로 쓴다(PLAN inputs — smtp 일 때 공백 아님만 판정)"
+      "cell": "MAIL_FROM@F2:config.notation",
+      "state": "covered",
+      "by": [
+        "SC-27"
+      ]
     },
     {
-      "cell": "MAIL_FROM@F2:config.notation",
+      "cell": "MAIL_FROM@F2:config.case",
       "state": "n/a",
-      "reason": "보내는 사람 주소는 앱이 해석하지 않고 From 헤더로 그대로 쓴다(PLAN inputs — smtp 일 때 공백 아님만 판정)"
+      "reason": "주소 대소문자는 앱이 바꾸지 않고 그대로 From 에 쓴다 — 판정은 앞뒤 공백 정리뿐(PLAN inputs)"
     },
     {
       "cell": "MAIL_FROM@F2:config.list_separator",
       "state": "n/a",
-      "reason": "보내는 사람 주소는 앱이 해석하지 않고 From 헤더로 그대로 쓴다(PLAN inputs — smtp 일 때 공백 아님만 판정)"
+      "reason": "보내는 사람은 주소 하나 — 목록 판정이 없다"
     },
     {
       "cell": "MAIL_FROM@F2:config.prefix_only",
       "state": "n/a",
-      "reason": "보내는 사람 주소는 앱이 해석하지 않고 From 헤더로 그대로 쓴다(PLAN inputs — smtp 일 때 공백 아님만 판정)"
+      "reason": "접두사 일치 판정이 없다"
     },
     {
       "cell": "MAIL_FROM@F1:config.unset",
@@ -901,24 +929,26 @@
       ]
     },
     {
-      "cell": "MAIL_FROM@F1:config.case",
-      "state": "n/a",
-      "reason": "F2 와 같은 사유 — 값을 그대로 From 에 쓰며 SC-02 가 그대로 쓰이는지 본다"
+      "cell": "MAIL_FROM@F1:config.notation",
+      "state": "covered",
+      "by": [
+        "SC-27"
+      ]
     },
     {
-      "cell": "MAIL_FROM@F1:config.notation",
+      "cell": "MAIL_FROM@F1:config.case",
       "state": "n/a",
-      "reason": "F2 와 같은 사유 — 값을 그대로 From 에 쓰며 SC-02 가 그대로 쓰이는지 본다"
+      "reason": "주소 대소문자는 앱이 바꾸지 않고 그대로 From 에 쓴다 — 판정은 앞뒤 공백 정리뿐(PLAN inputs)"
     },
     {
       "cell": "MAIL_FROM@F1:config.list_separator",
       "state": "n/a",
-      "reason": "F2 와 같은 사유 — 값을 그대로 From 에 쓰며 SC-02 가 그대로 쓰이는지 본다"
+      "reason": "보내는 사람은 주소 하나 — 목록 판정이 없다"
     },
     {
       "cell": "MAIL_FROM@F1:config.prefix_only",
       "state": "n/a",
-      "reason": "F2 와 같은 사유 — 값을 그대로 From 에 쓰며 SC-02 가 그대로 쓰이는지 본다"
+      "reason": "접두사 일치 판정이 없다"
     },
     {
       "cell": "purpose@F3:required.missing",
@@ -1369,8 +1399,6 @@
     "uncovered": []
   },
   "human_input": {
-    "generate_red_trigger": true,
-    "approved_at": "2026-11-20T01:43:31Z",
-    "via": "AskUserQuestion HITL#1·2 재승인(RETRY_SCENARIO 2회차)"
+    "generate_red_trigger": false
   }
 }

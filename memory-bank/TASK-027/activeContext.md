@@ -1,8 +1,8 @@
 ---
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
-phase: "3"
-phase_name: "Phase 3 - Green 완료"
+phase: "2a"
+phase_name: "Phase 2a - RETRY_SCENARIO 3회차(Phase 4 FAIL)"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-19
@@ -13,7 +13,7 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-027-mail-email-token"
 
-last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
+last_checkpoint: "checkpoints/phase2a/CP-2.2_canonical-scenarios.md"
 source: "docs/product/features/email-verification-password-reset.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-027.json"
@@ -49,3 +49,4 @@ Phase 3 1회차 Green(225 통과, 6017bb5) 뒤 자체 리뷰 결함으로 Phase 
 - **RETRY_SCENARIO 1회 (2026-11-20, 사용자 결정)**: 자체 리뷰 RC-1(clearAutomatically)·RC-2(SMTP 타임아웃·대기열·종료)·RC-4(BareBoot OS 환경변수). RC-3 은 수용 위험(issue 호출 규칙 javadoc)
 - **RETRY_SCENARIO 2회 (2026-11-20, 사용자 결정)**: 자체 리뷰 2R — smtps 타임아웃 무시(재현)·JNDI 세션·종료 인터럽트. 상한 3회 중 2회 사용
 - **Phase 3 완료 (2026-11-20)**: 232 통과. 수용 위험 2 — RC-3(issue 직접 동시 호출), 대괄호 표기 타임아웃(체크리스트 '환경변수로만')
+- **Phase 4 1회차 FAIL → RETRY_SCENARIO 3회 (2026-11-20, 상한)**: SPRING_MAIL_HOST 앞뒤 공백. 다시 FAIL 이면 ROLLBACK_PLAN
