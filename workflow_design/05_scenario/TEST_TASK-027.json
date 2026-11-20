@@ -265,7 +265,10 @@
     "backend/src/test/resources/application.properties: MAIL_TRANSPORT=log, FRONTEND_BASE_URL=http://localhost:5173 추가"
   ],
   "human_review": {
-    "approved": false,
+    "approved": true,
+    "approved_at": "2026-11-20T01:18:26Z",
+    "decision": "APPROVE",
+    "note": "RETRY_SCENARIO 1회차 재승인 — SC-21~24 Red, BareBoot 시스템 환경변수 제외 포함",
     "previous": {
       "approved_at": "2026-11-20T00:29:13Z",
       "note": "1회차 승인 — RETRY_SCENARIO 로 재승인 필요"
