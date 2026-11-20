@@ -1,19 +1,19 @@
 ---
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
-phase: "4"
-phase_name: "Phase 4 - 예외 승인"
-status: IN_PROGRESS
+phase: "5"
+phase_name: "Phase 5 - 회고 완료"
+status: DONE
 track: standard
 created_at: 2026-11-19
-last_updated: 2026-11-19
+last_updated: 2026-11-20
 
 primary_category: Backend
 sub_categories: []
 target_repo: "."
 branch: "feature/task-027-mail-email-token"
 
-last_checkpoint: "checkpoints/phase4/CP-4.2_verification.md"
+last_checkpoint: "checkpoints/phase5/CP-5.2_context-reflect.md"
 source: "docs/product/features/email-verification-password-reset.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-027.json"
@@ -22,6 +22,7 @@ artifacts:
   test: "workflow_design/05_scenario/TEST_TASK-027.json"
   dev: "workflow_design/06_dev/DEV_TASK-027.json"
   verify: "workflow_design/07_verify/VERIFY_TASK-027.json"
+  reflect: "workflow_design/08_reflect/REFLECT_TASK-027.json"
 ---
 
 ## 지금 무엇을 하고 있나

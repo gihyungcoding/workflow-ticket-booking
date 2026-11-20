@@ -1,5 +1,5 @@
 ---
-status: ACTIVE
+status: ARCHIVED
 saved_at: 2026-11-19T14:30:00Z
 summary: "Phase 1 — route Backend, flows 9 · AC 10 · input_fields 10 · unresolved 15 · ops_impacts 4. 사용자 결정 2건(항상 필수, 비동기 기반 이 태스크)"
 
