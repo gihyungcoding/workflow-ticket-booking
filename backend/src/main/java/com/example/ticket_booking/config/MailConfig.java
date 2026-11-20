@@ -13,8 +13,9 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 /**
  * 계정 메일 설정(ADR-0031). {@code MAIL_TRANSPORT}(smtp | log, 앞뒤 공백·대소문자 무시)로 MailGateway 구현을 고른다 — 항상
  * 필수다(사용자 결정 2026-11-19). 비었거나 정의 밖이면, smtp 인데 SMTP 호스트({@code SPRING_MAIL_HOST} →
- * spring.mail.host)나 보내는 사람({@code MAIL_FROM})이 없으면 기동이 실패한다 — 「운영에서 메일이 조용히 안 나가는」 일을 막는다. 링크의 기준
- * 주소도 여기서 검증한다({@link FrontendBaseUrl}).
+ * spring.mail.host)나 보내는 사람({@code MAIL_FROM})이 없으면, SMTP 타임아웃 값이 틀리면 기동이 실패한다 — 「운영에서 메일이 조용히 안
+ * 나가는」 일을 막는다. SMTP 타임아웃이 없으면 10초를 건다({@link #applyTimeouts}). 링크의 기준 주소도 여기서 검증한다({@link
+ * FrontendBaseUrl}).
  */
 @Configuration
 public class MailConfig {
