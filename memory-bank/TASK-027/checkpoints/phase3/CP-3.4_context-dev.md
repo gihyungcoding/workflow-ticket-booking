@@ -1,12 +1,14 @@
 ---
 status: ARCHIVED
 saved_at: 2026-11-20T02:00:00Z
-summary: "Green 2회차 — RC-1·RC-2 수정(97c9214), 229 통과. 자체 리뷰 2라운드(상한) RC-2 변종 later 3 시나리오 밖 → RETRY_SCENARIO 2회차(사용자 결정). 주석 치환 누락 2건을 리뷰어가 찾아 75e4885·04e1221 로 보정"
+summary: "Green 3회차 — 전체 232 통과(대상 27)·spotless OK·아키텍처 error 0. 자체 리뷰 3라운드 — RC-1·2·4 해소, RC-3·대괄호 표기 수용 위험(사용자 결정)"
 
 next_steps:
-  - "Phase 2a 로 롤백 — SC-21~24 추가, 독립검증 → 2b HITL → Phase 3 2회차"
+  - "Phase 4 — wf-verify. 이전 라운드 = DEV pre_review(3라운드, root_causes RC-1~4)"
 
 decisions:
+  - decision: "MailConfig 전면 재작성 — 부분 치환이 포맷터 재정렬 때문에 조용히 실패한 일이 3번 있었다(주석 2, 앵커 1)"
+    rationale: "치환 전에 앵커가 정확히 한 번 있는지 assert 하도록 바꿨다"
   - decision: "PLAN Phase 3 확인 항목 닫음 — Awaitility 는 spring-boot-starter-test 4.1.1 에 포함(pom 확인), SMTP 확인 수단은 FakeSmtpServer(2b)"
     rationale: "plan_unresolved_resolution 에 옮긴다"
   - decision: "User.account_mail_sent_at 은 insertable/updatable=false 읽기 매핑, 갱신은 네이티브 조건부 UPDATE"
@@ -17,6 +19,9 @@ decisions:
     rationale: "한 줄 위임만 남은 중복"
 
 attempts:
+  - n: 3
+    result: "자체 리뷰 3라운드(롤백 뒤 수정 재리뷰) — later 3 해소, 앞자리 0 수정(38b6064), 대괄호 표기 위험 수용(사용자 결정, 체크리스트)"
+    outcome: "Green"
   - n: 2
     result: "자체 리뷰 2라운드 — RC-1·RC-4 해소, RC-2 대부분 해소. later: smtps(재현)·JNDI·종료 인터럽트. RC-3 javadoc 누락(치환 실패) 지적 → 보정"
     outcome: "RETRY_SCENARIO"

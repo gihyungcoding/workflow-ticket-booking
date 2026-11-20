@@ -1,8 +1,8 @@
 ---
 task_id: TASK-027
 title: "메일 발송 기반·일회용 이메일 토큰"
-phase: "2b"
-phase_name: "Phase 2b - RETRY_SCENARIO 2회차 Red, 재승인 대기"
+phase: "3"
+phase_name: "Phase 3 - Green 완료"
 status: IN_PROGRESS
 track: standard
 created_at: 2026-11-19
@@ -13,13 +13,14 @@ sub_categories: []
 target_repo: "."
 branch: "feature/task-027-mail-email-token"
 
-last_checkpoint: "checkpoints/phase2b/CP-2.5_red-code.md"
+last_checkpoint: "checkpoints/phase3/CP-3.4_context-dev.md"
 source: "docs/product/features/email-verification-password-reset.md (Task A)"
 artifacts:
   plan: "workflow_design/04_plan/PLAN_TASK-027.json"
   scenario: "workflow_design/05_scenario/SCENARIO_TASK-027.md"
   validation: "workflow_design/05_scenario/validator/VALIDATION_TASK-027.json"
   test: "workflow_design/05_scenario/TEST_TASK-027.json"
+  dev: "workflow_design/06_dev/DEV_TASK-027.json"
 ---
 
 ## 지금 무엇을 하고 있나
@@ -47,3 +48,4 @@ Phase 3 1회차 Green(225 통과, 6017bb5) 뒤 자체 리뷰 결함으로 Phase 
 - **Red 승인 (2026-11-20)**: 승인 테스트 4파일 변경 포함(마이그레이션 버전 8→9 두 곳, Social·Apple 기동 하네스 BareBoot). PostgreSQL 테스트는 Docker Desktop 필요
 - **RETRY_SCENARIO 1회 (2026-11-20, 사용자 결정)**: 자체 리뷰 RC-1(clearAutomatically)·RC-2(SMTP 타임아웃·대기열·종료)·RC-4(BareBoot OS 환경변수). RC-3 은 수용 위험(issue 호출 규칙 javadoc)
 - **RETRY_SCENARIO 2회 (2026-11-20, 사용자 결정)**: 자체 리뷰 2R — smtps 타임아웃 무시(재현)·JNDI 세션·종료 인터럽트. 상한 3회 중 2회 사용
+- **Phase 3 완료 (2026-11-20)**: 232 통과. 수용 위험 2 — RC-3(issue 직접 동시 호출), 대괄호 표기 타임아웃(체크리스트 '환경변수로만')
