@@ -1,10 +1,10 @@
 ---
 status: ARCHIVED
 saved_at: 2026-11-20T02:00:00Z
-summary: "Green 3회차 — 전체 232 통과(대상 27)·spotless OK·아키텍처 error 0. 자체 리뷰 3라운드 — RC-1·2·4 해소, RC-3·대괄호 표기 수용 위험(사용자 결정)"
+summary: "Green 4회차(RETRY_SCENARIO 3회차 뒤) — 233 통과·spotless·아키텍처 error 0. SPRING_MAIL_HOST·MAIL_FROM 정리·검증(79241ab), 체크리스트 STARTTLS·mail.debug"
 
 next_steps:
-  - "Phase 4 — wf-verify. 이전 라운드 = DEV pre_review(3라운드, root_causes RC-1~4)"
+  - "Phase 4 2회차 — 리뷰어가 수정 커밋 포함 전체를 다시 본다"
 
 decisions:
   - decision: "MailConfig 전면 재작성 — 부분 치환이 포맷터 재정렬 때문에 조용히 실패한 일이 3번 있었다(주석 2, 앵커 1)"
@@ -19,6 +19,10 @@ decisions:
     rationale: "한 줄 위임만 남은 중복"
 
 attempts:
+  - n: 4
+    result: "Green — Phase 4 1회차 FAIL 수정"
+    outcome: "233 통과"
+    note: "체크리스트 표에 빈 줄을 넣어 표를 끊는 실수 — 확인하고 바로잡음"
   - n: 3
     result: "자체 리뷰 3라운드(롤백 뒤 수정 재리뷰) — later 3 해소, 앞자리 0 수정(38b6064), 대괄호 표기 위험 수용(사용자 결정, 체크리스트)"
     outcome: "Green"
