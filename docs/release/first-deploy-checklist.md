@@ -172,7 +172,17 @@ SELECT id, title, created_at FROM performance WHERE published = FALSE AND cancel
 | `SPRING_DATASOURCE_PASSWORD` | Neon 비밀번호 | 비밀 |
 | `CORS_ALLOWED_ORIGINS` | `https://<Pages 이름>.pages.dev` | 쉼표로 여러 개. 와일드카드 금지 |
 | `JWT_SECRET` | §1 에서 만든 값 | 비밀. 비었거나 32바이트 미만이면 기동 실패 (`SecurityConfig`) |
+| `FRONTEND_BASE_URL` | `https://<Pages 이름>.pages.dev` | **항상 필수**(TASK-027 — 메일 링크·소셜 이동의 기준 주소). 없거나 형식이 틀리면 **기동 실패**. `http`/`https` 만, 사용자 정보·쿼리·`#` 불가, 끝 `/` 는 제거됨 (`FrontendBaseUrl`) |
+| `MAIL_TRANSPORT` | `smtp` | **항상 필수**(TASK-027, ADR-0031). `smtp` 또는 `log`(대소문자·앞뒤 공백 무시) 외의 값이거나 비면 **기동 실패**. 운영은 `smtp` — `log` 는 메일을 보내지 않고 링크(토큰)를 로그에 남기는 개발용이다 (`MailConfig`) |
+| `SPRING_MAIL_HOST` · `SPRING_MAIL_PORT` | SMTP 서버 주소·포트 | `smtp` 일 때 호스트 필수 — 없으면 기동 실패. 포트는 서비스 안내대로(보통 587) |
+| `SPRING_MAIL_USERNAME` · `SPRING_MAIL_PASSWORD` | SMTP 계정 | 비밀. 서비스가 요구하면 넣는다. STARTTLS 가 필요하면 `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true` |
+| `MAIL_FROM` | 보내는 사람 주소 | `smtp` 일 때 필수 — 없으면 기동 실패. 발신 도메인의 SPF·DKIM 을 메일 서비스 안내대로 설정한다 `사람` |
 | `PORT` | **직접 넣지 않는다** | Render 가 주입한다 |
+
+> **TASK-027 배포 순서**: 새 버전을 올리기 **전에** `FRONTEND_BASE_URL`·`MAIL_TRANSPORT`(+ `smtp` 값들)를 Render 에 먼저 넣는다.
+> 없으면 새 버전이 기동하지 않는다. 이전 버전은 이 값들을 읽지 않으므로 먼저 넣어도 무해하고, 롤백해도 남겨 둬도 된다.
+> V9 마이그레이션(`email_token` 테이블, `users.account_mail_sent_at`)은 기존 행을 바꾸지 않는다. 발송 서비스(SES·Resend·Gmail SMTP 등)는
+> 배포 설정이라 코드는 모른다 — 고른 서비스의 SMTP 값을 위 표에 넣는다.
 
 **프론트 (Pages 빌드 환경변수)**
 
@@ -184,13 +194,13 @@ SELECT id, title, created_at FROM performance WHERE published = FALSE AND cancel
 ### 6-1. 소셜 로그인 (선택)  `사람`
 
 **이 절은 소셜 로그인을 켤 때만 한다.** 제공자 환경변수가 하나도 없으면 서버는 이메일 인증만으로 기동하고,
-위 §6 표만으로 §7 스모크가 성립한다. 근거는 `SocialLoginConfig.java`(ADR-0013) — 이 절의 이름·규칙은 거기서 읽었다.
+위 §6 표만으로 §7 스모크가 성립한다(`FRONTEND_BASE_URL`·`MAIL_TRANSPORT` 는 §6 표에서 이미 필수다). 근거는 `SocialLoginConfig.java`(ADR-0013) — 이 절의 이름·규칙은 거기서 읽었다.
 
 **백엔드 (Render) — 공통**
 
 | 이름 | 값 | 비고 |
 |---|---|---|
-| `FRONTEND_BASE_URL` | `https://<Pages 이름>.pages.dev` | 제공자를 **하나라도** 켜면 필수 — 없거나 형식이 틀리면 **기동 실패**. `http`/`https` 만, 사용자 정보·쿼리·`#` 불가, 끝 `/` 는 제거됨 |
+| `FRONTEND_BASE_URL` | `https://<Pages 이름>.pages.dev` | 위 §6 표의 값과 같다 — TASK-027 부터 제공자와 무관하게 **항상 필수**. 소셜 로그인 성공·실패 이동도 이 주소로 간다 |
 | `JWT_SECRET` | 32바이트 이상 | 비었거나 짧으면 기동 실패 (`SecurityConfig`) |
 
 **백엔드 (Render) — 제공자별.** 제공자는 아래 값이 **전부** 있을 때만 등록된다. 하나라도 비면 그 제공자는 조용히 빠지고(기동은 된다) 버튼을 누르면 404 가 난다.
