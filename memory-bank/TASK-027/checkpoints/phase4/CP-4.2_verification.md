@@ -1,10 +1,10 @@
 ---
-status: ARCHIVED
+status: ACTIVE
 saved_at: 2026-11-20T08:00:00Z
-summary: "Phase 4 1라운드 FAIL — 테스트 232 통과·spotless·빌드·아키텍처 error 0 이지만 리뷰 [correctness] 1건 재현: SPRING_MAIL_HOST 앞뒤 공백이 기동 검증을 통과하고 발송이 전부 실패(RC-2 later). 시나리오 밖 → 2a 롤백 대상"
+summary: "Phase 4 2회차 WARN — 233 통과·spotless·빌드·아키텍처 error 0, 리뷰 [correctness] 0(1회차 FAIL 해소). HITL#3 대기"
 
 next_steps:
-  - "RETRY_SCENARIO 3회차 진행 중 — 2a → 2b → 3 → Phase 4 2회차"
+  - "HITL#3 결정"
 
 decisions:
   - decision: "FAIL 로 판정 — 낮음이라도 [correctness] 재현"
@@ -13,6 +13,9 @@ decisions:
     rationale: "코드 결함이 아니라 운영 안내"
 
 attempts:
+  - n: 2
+    result: WARN
+    reason: "RC-2 later 해소, 새 결함 0. WARN — 수용 위험 2, STARTTLS 문구 정밀도, NBSP·test-connection 참고, 시간 단언, AUTH-001 승격 기한"
   - n: 1
     result: FAIL
     reason: "RC-2 later — SPRING_MAIL_HOST 공백(재현). 뿌리 4 · 변종 15 · 재현 14"
