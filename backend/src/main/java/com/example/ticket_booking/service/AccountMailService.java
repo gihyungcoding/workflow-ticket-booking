@@ -8,8 +8,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,13 +38,26 @@ public class AccountMailService {
   private final AccountMails mails;
   private final MailGateway gateway;
   private final Clock clock;
-  private final ExecutorService sender =
-      Executors.newSingleThreadExecutor(
+
+  /** 발송 스레드 1개, 대기열 상한 — 메일 서비스가 멈춰도 메모리가 끝없이 늘지 않게(자체 리뷰 RC-2). */
+  static final int QUEUE_CAPACITY = 100;
+
+  /** 종료 때 대기 중인 메일을 보내며 기다리는 최대 시간. */
+  static final Duration SHUTDOWN_WAIT = Duration.ofSeconds(10);
+
+  private final ThreadPoolExecutor sender =
+      new ThreadPoolExecutor(
+          1,
+          1,
+          0L,
+          TimeUnit.MILLISECONDS,
+          new ArrayBlockingQueue<>(QUEUE_CAPACITY),
           runnable -> {
             Thread thread = new Thread(runnable, "account-mail");
             thread.setDaemon(true);
             return thread;
-          });
+          },
+          new ThreadPoolExecutor.AbortPolicy());
 
   public AccountMailService(
       UserRepository users,
@@ -129,11 +144,23 @@ public class AccountMailService {
           new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-              sender.execute(() -> send(message));
+              enqueue(message);
             }
           });
     } else {
+      enqueue(message);
+    }
+  }
+
+  /**
+   * 발송 스레드에 맡긴다. 대기열이 가득 찼거나 종료 중이면 그 메일은 버리고 WARN 만 남긴다 — afterCommit 의 예외는 이미 커밋된 요청의 호출자에게 전해지므로
+   * 던지지 않는다(RC-2).
+   */
+  private void enqueue(MailMessage message) {
+    try {
       sender.execute(() -> send(message));
+    } catch (RejectedExecutionException rejected) {
+      log.warn("계정 메일 발송 건너뜀(대기열 가득 참 또는 종료 중) to={}", mask(message.to()));
     }
   }
 
@@ -158,8 +185,13 @@ public class AccountMailService {
     return address.substring(0, address.offsetByCodePoints(0, 1)) + "***" + address.substring(at);
   }
 
+  /** 컨텍스트 닫기 — 새 메일은 받지 않고 대기 중인 메일을 최대 {@link #SHUTDOWN_WAIT} 동안 보낸다(RC-2). */
   @PreDestroy
-  void shutdown() {
+  void shutdown() throws InterruptedException {
     sender.shutdown();
+    if (!sender.awaitTermination(SHUTDOWN_WAIT.toMillis(), TimeUnit.MILLISECONDS)) {
+      log.warn("계정 메일 발송기 종료 대기 초과 — 남은 메일 {}통을 버린다", sender.getQueue().size());
+      sender.shutdownNow();
+    }
   }
 }
