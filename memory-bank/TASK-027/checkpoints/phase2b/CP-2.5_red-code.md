@@ -1,10 +1,10 @@
 ---
 status: ACTIVE
 saved_at: 2026-11-20T00:30:00Z
-summary: "Red — 테스트 함수 20 == 시나리오 20. 전체 225 중 실패 21(새 19 red + 승인 테스트 버전 단언 2), SC-19 already_passing. 기존 테스트 계속 통과. HITL#1·2 대기"
+summary: "Red — 테스트 함수 20 == 시나리오 20. 전체 225 중 실패 21(새 19 red + 승인 테스트 버전 단언 2), SC-19 already_passing. 기존 테스트 계속 통과. HITL#1·2 승인"
 
 next_steps:
-  - "HITL#1·2 통합 승인(AskUserQuestion) → 승인 시 Phase 3"
+  - "Phase 3 — wf-develop. MailConfig·EmailToken·리포지토리·V9·AccountMailService(커밋 뒤 비동기)·SocialLoginConfig 공용 검증·first-deploy-checklist"
 
 decisions:
   - decision: "컴파일 스켈레톤은 테스트가 import 하는 타입만 — MailConfig·엔티티·리포지토리·V9 는 Phase 3"

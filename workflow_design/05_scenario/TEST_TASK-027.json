@@ -230,6 +230,9 @@
     "backend/src/test/resources/application.properties: MAIL_TRANSPORT=log, FRONTEND_BASE_URL=http://localhost:5173 추가"
   ],
   "human_review": {
-    "approved": false
+    "approved": true,
+    "approved_at": "2026-11-20T00:29:13Z",
+    "decision": "APPROVE",
+    "note": "시나리오 20·Red 테스트·승인 테스트 4파일 변경(버전 8→9 두 곳, 소셜·애플 기동 하네스) 함께 승인"
   }
 }
