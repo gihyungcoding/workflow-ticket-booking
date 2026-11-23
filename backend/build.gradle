@@ -31,6 +31,8 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-oauth2-jose'
 	// TASK-011: 소셜 로그인(OAuth2 Login, ADR-0013)
 	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
+	// TASK-027: 계정 메일 발송(SMTP, ADR-0031)
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'

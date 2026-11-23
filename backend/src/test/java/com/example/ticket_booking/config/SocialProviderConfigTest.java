@@ -2,7 +2,7 @@ package com.example.ticket_booking.config;
 
 import static com.example.ticket_booking.support.PendingTokenTestHelper.queryOf;
 
-import com.example.ticket_booking.TicketBookingApplication;
+import com.example.ticket_booking.support.BareBoot;
 import com.example.ticket_booking.support.FakeOAuth2User;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -65,11 +63,12 @@ class SocialProviderConfigTest {
             + DB_SEQUENCE.incrementAndGet()
             + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE";
     try {
-      ConfigurableApplicationContext context =
-          new SpringApplicationBuilder(TicketBookingApplication.class)
-              .web(WebApplicationType.SERVLET)
-              .properties(environment)
-              .run("--server.port=0", "--spring.datasource.url=" + url);
+      // 설정 파일을 읽지 않고 띄운다(TASK-027) — 테스트 application.properties 의 FRONTEND_BASE_URL 이 기본 프로퍼티보다 우선해
+      // 「미설정」·「틀린 값」 행을 만들 수 없기 때문이다. 이 테스트의 「미설정」은 키가 없는 것이라 기본 값도 뺀다.
+      Map<String, Object> values = new LinkedHashMap<>(environment);
+      values.putIfAbsent("FRONTEND_BASE_URL", null);
+      values.put("spring.datasource.url", url);
+      ConfigurableApplicationContext context = BareBoot.run(values);
       int port = Integer.parseInt(context.getEnvironment().getProperty("local.server.port"));
       return new Started(context, port, null);
     } catch (Throwable thrown) {
@@ -329,8 +328,12 @@ class SocialProviderConfigTest {
       }
     }
 
-    // 그리고 제공자 설정이 하나도 없으면 FRONTEND_BASE_URL 이 미설정이어도 기동에 성공하고 이메일 가입·로그인이 동작한다
-    Started noProviders = start(new LinkedHashMap<>());
+    // 그리고 제공자 설정이 하나도 없어도 기동에 성공하고 이메일 가입·로그인이 동작한다
+    // (TASK-027: FRONTEND_BASE_URL 은 제공자와 무관하게 항상 필수 — 사용자 결정 2026-11-19. 미설정 기동 실패는
+    // Task027MailTransportTest SC-05)
+    Map<String, Object> noProviderEnvironment = new LinkedHashMap<>();
+    noProviderEnvironment.put("FRONTEND_BASE_URL", BASE);
+    Started noProviders = start(noProviderEnvironment);
     soft.assertThat(noProviders.ok())
         .as("제공자 설정 없음 — 기동 성공 (" + noProviders.failureMessages() + ")")
         .isTrue();

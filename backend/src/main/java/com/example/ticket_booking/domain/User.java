@@ -49,6 +49,13 @@ public class User {
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
+  /**
+   * 계정 메일의 마지막 발송 시각(V9, TASK-027). 엔티티는 읽기만 한다 — 값은 {@code UserRepository.claimAccountMailSlot} 의
+   * 조건부 UPDATE 로만 바뀐다. 쓰기를 막아 두지 않으면 불러 둔 User 를 저장할 때 옛 값이 덮어쓴다.
+   */
+  @Column(name = "account_mail_sent_at", insertable = false, updatable = false)
+  private Instant accountMailSentAt;
+
   protected User() {}
 
   public User(String email, String passwordHash, String name, UserRole role, String handle) {

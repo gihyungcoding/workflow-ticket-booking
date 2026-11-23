@@ -1,0 +1,367 @@
+{
+  "task_id": "TASK-027",
+  "changed_files": [
+    {
+      "path": "backend/build.gradle",
+      "change": "spring-boot-starter-mail",
+      "lines_changed": 2
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/FrontendBaseUrl.java",
+      "change": "기준 주소 공용 검증(SocialLoginConfig 에서 옮김)",
+      "lines_changed": 54
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/LoggingMailGateway.java",
+      "change": "로그 구현",
+      "lines_changed": 20
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/MailConfig.java",
+      "change": "전송 선택·기동 검증·프로토콜·JNDI·타임아웃",
+      "lines_changed": 134
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SmtpMailGateway.java",
+      "change": "SMTP 구현",
+      "lines_changed": 31
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
+      "change": "FrontendBaseUrl 사용",
+      "lines_changed": 46
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/EmailToken.java",
+      "change": "토큰 엔티티(user_id 숫자 열)",
+      "lines_changed": 73
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/EmailTokenPurpose.java",
+      "change": "용도별 TTL",
+      "lines_changed": 20
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/domain/User.java",
+      "change": "account_mail_sent_at 읽기 전용 매핑",
+      "lines_changed": 7
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/EmailTokenRepository.java",
+      "change": "삭제·조건부 소모 UPDATE(flush 만, clear 안 함)",
+      "lines_changed": 39
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/repository/UserRepository.java",
+      "change": "간격 제한 네이티브 조건부 UPDATE",
+      "lines_changed": 18
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AccountMailService.java",
+      "change": "간격 제한·커밋 뒤 비동기·대기열 100·종료 10초·인터럽트",
+      "lines_changed": 204
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AccountMails.java",
+      "change": "문구 4종·링크",
+      "lines_changed": 56
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/EmailTokenService.java",
+      "change": "발급·소모·호출 규칙 javadoc",
+      "lines_changed": 89
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/MailGateway.java",
+      "change": "발송 경계 인터페이스",
+      "lines_changed": 10
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/MailMessage.java",
+      "change": "메일 record",
+      "lines_changed": 4
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V9__add_email_token.sql",
+      "change": "email_token 테이블·users.account_mail_sent_at",
+      "lines_changed": 14
+    },
+    {
+      "path": "backend/src/test/resources/application.properties",
+      "change": "테스트 MAIL_TRANSPORT·FRONTEND_BASE_URL",
+      "lines_changed": 4
+    },
+    {
+      "path": "docs/release/first-deploy-checklist.md",
+      "change": "환경변수·배포 순서·수용 위험",
+      "lines_changed": 17
+    }
+  ],
+  "reused": [
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/SocialLoginConfig.java",
+      "symbol": "frontendBaseUrl 규칙 → FrontendBaseUrl.from 로 옮겨 공용"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java",
+      "symbol": "Clock"
+    },
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/MutableClock.java",
+      "symbol": "MutableClock"
+    },
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/ClockTestConfig.java",
+      "symbol": "ClockTestConfig"
+    },
+    {
+      "path": "backend/src/test/java/com/example/ticket_booking/support/UserFixtures.java",
+      "symbol": "fixtureHandle"
+    }
+  ],
+  "test_status": "green",
+  "test_result": {
+    "command": "cd backend && JAVA_HOME=<JDK21> ./gradlew test --continue (결과 디렉터리 삭제 후, Docker 켜짐)",
+    "total": 233,
+    "passed": 233,
+    "failed": 0,
+    "target_tests_passed": 28,
+    "note": "TASK-027 시나리오 테스트 27 + 자체 리뷰 추가 단위 테스트 1"
+  },
+  "lint": {
+    "command": "cd backend && ./gradlew spotlessCheck",
+    "errors": 0,
+    "warnings": 0
+  },
+  "refactoring": [
+    {
+      "what": "SocialLoginConfig 의 위임 메서드 제거 — FrontendBaseUrl.from 직접 호출",
+      "why": "한 줄 위임만 남은 중복"
+    },
+    {
+      "what": "MailConfig 를 전면 재작성(3회차) — 프로토콜·JNDI·타임아웃 규칙을 한 곳에",
+      "why": "부분 치환이 반복해 실패해 전체를 다시 썼다"
+    },
+    {
+      "what": "MailConfig.singleToken — 호스트·보내는 사람의 정리·검증을 한 함수로",
+      "why": "검증한 값과 쓰는 값을 같게 하는 공통 지점"
+    }
+  ],
+  "plan_unresolved_resolution": [
+    {
+      "item": "Awaitility 가 spring-boot-starter-test 에 포함되는가(Phase 3 확인)",
+      "how": "~/.gradle 캐시의 spring-boot-starter-test-4.1.1.pom 의 의존성 목록",
+      "fact": "awaitility 포함",
+      "impact": "없음 — 테스트가 Awaitility 를 쓴다"
+    },
+    {
+      "item": "smtp 경로 확인 수단(Phase 3 확인)",
+      "how": "2b 에서 결정",
+      "fact": "FakeSmtpServer(최소 SMTP, jakarta.mail 로 파싱) + BlackholeSmtpServer",
+      "impact": "새 테스트 의존성 없음"
+    },
+    {
+      "item": "승인 테스트 하네스 우선순위(2a 프로브)",
+      "how": "던져 버린 프로브 테스트",
+      "fact": "테스트 application.properties > SpringApplicationBuilder.properties(map), --인자 > 파일",
+      "impact": "BareBoot(설정 파일 끔 + 최우선 소스 + 시스템 환경변수 제외)로 승인 테스트 2파일 하네스 변경 — HITL 승인"
+    },
+    {
+      "item": "JNDI 키만으로 Spring Boot 가 기동을 막는가(2a 가정)",
+      "how": "SC-25 l·m·n·r Red",
+      "fact": "막지 않는다 — PLAN 근거 정정, MailConfig 가 직접 검사",
+      "impact": "시나리오 동작 불변"
+    }
+  ],
+  "test_modifications": [],
+  "scope_deviations": [
+    {
+      "path": "docs/release/first-deploy-checklist.md",
+      "reason": "implementation_spec 밖 — 이 태스크만 배포해도 MAIL_TRANSPORT·FRONTEND_BASE_URL 없으면 기동 실패(PLAN ops_impacts, Phase 1 보고)"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/config/FrontendBaseUrl.java",
+      "reason": "SocialLoginConfig 의 검증을 항상 쓰는 공용 위치로 — PLAN target 의 '공용으로 뺀다'를 새 파일로"
+    },
+    {
+      "path": "backend/src/main/java/com/example/ticket_booking/service/AccountMailService.java·AccountMails.java",
+      "reason": "PLAN target 에 있음(implementation_spec 밖) — 사용자 결정(비동기 기반을 이 태스크에서)"
+    }
+  ],
+  "pre_review": {
+    "rounds": [
+      {
+        "n": 1,
+        "scope": "develop...6017bb5 전체",
+        "findings": 5,
+        "tests_added": [],
+        "fix_commit": null,
+        "outcome": "RC-1·RC-2·RC-4 시나리오 밖 → RETRY_SCENARIO 1회차(사용자 결정), RC-3 수용 위험"
+      },
+      {
+        "n": 2,
+        "scope": "6017bb5...97c9214 · 같은 카테고리 전수",
+        "findings": 4,
+        "tests_added": [],
+        "fix_commit": "75e4885·04e1221(주석 누락 보정)",
+        "outcome": "RC-1·RC-4 해소. RC-2 later(smtps 재현·JNDI·종료 인터럽트) 시나리오 밖 → RETRY_SCENARIO 2회차(사용자 결정)"
+      },
+      {
+        "n": 3,
+        "scope": "97c9214...7593cd9 (롤백 뒤 수정 커밋 재리뷰)",
+        "findings": 2,
+        "tests_added": [
+          "backend/src/test/java/com/example/ticket_booking/config/MailConfigTimeoutValueTest.java#앞에_0이_붙어_10자를_넘어도_범위_안의_정수면_그_값을_쓴다"
+        ],
+        "fix_commit": "38b6064",
+        "outcome": "later 3 해소. 앞자리 0(규칙 안) 수정, 대괄호 표기(시나리오 밖) 위험 수용 — 사용자 결정, 체크리스트에 명시"
+      },
+      {
+        "n": 4,
+        "scope": "Phase 4 FAIL 수정 — 7193160...79241ab",
+        "findings": 0,
+        "tests_added": [],
+        "fix_commit": "79241ab",
+        "outcome": "Phase 4 리뷰어 소견을 그대로 반영(호스트·보내는 사람 정리·검증, 체크리스트 STARTTLS·mail.debug). 별도 자체 리뷰 라운드 없이 Phase 4 2회차 리뷰가 수정 커밋을 다시 본다"
+      }
+    ],
+    "root_causes": [
+      {
+        "id": "RC-1",
+        "summary": "벌크 @Modifying 의 clearAutomatically 가 호출자 트랜잭션의 영속성 컨텍스트 전체를 detach",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "findById→consume→수정",
+            "origin": "found",
+            "probe": "reproduced",
+            "evidence": "SC-21 a Red(4131d79)"
+          },
+          {
+            "case": "sendVerification/ResetMail 내부 issue",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "evidence": "SC-21 c·d"
+          },
+          {
+            "case": "다른 엔티티(Performance) detach",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "evidence": "SC-21 전 행이 Performance 로 관찰"
+          }
+        ]
+      },
+      {
+        "id": "RC-2",
+        "summary": "메일 발송이 외부 응답을 무한정 기다릴 수 있고 발송기 수명·용량이 호출자와 분리되지 않았으며, 전송 설정을 JavaMail 이 실제로 읽는 키가 아니라 짐작한 키로 읽는다",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "블랙홀 SMTP 영구 블록",
+            "origin": "found",
+            "probe": "reproduced",
+            "evidence": "SC-22 a Red"
+          },
+          {
+            "case": "종료 시 큐 유실",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "evidence": "SC-24 Red"
+          },
+          {
+            "case": "종료 뒤 afterCommit RejectedExecution 전파",
+            "origin": "predicted",
+            "probe": "reproduced",
+            "evidence": "SC-24 U6 행"
+          },
+          {
+            "case": "smtps 면 mail.smtp.* 무시",
+            "origin": "later",
+            "probe": "reproduced",
+            "evidence": "SC-25 a·e Red"
+          },
+          {
+            "case": "JNDI 세션이면 타임아웃 변경 무시",
+            "origin": "later",
+            "probe": "reproduced",
+            "evidence": "SC-25 l~n·r(기동 실패로 차단)"
+          },
+          {
+            "case": "awaitTermination 인터럽트 전파",
+            "origin": "later",
+            "probe": "reproduced",
+            "evidence": "SC-26 Red"
+          },
+          {
+            "case": "앞자리 0 이 붙은 유효 값 거부",
+            "origin": "later",
+            "probe": "reproduced",
+            "evidence": "MailConfigTimeoutValueTest Red → 38b6064"
+          },
+          {
+            "case": "설정 파일 대괄호 표기 spring.mail.properties[mail.smtp.timeout] 를 못 읽고 10초로 덮음",
+            "origin": "later",
+            "probe": "reproduced",
+            "evidence": "리뷰어 프로브(Environment.getProperty → null)",
+            "accepted": "사용자 결정 2026-11-20 — 위험 수용 + 체크리스트 '환경변수로만'"
+          }
+        ]
+      },
+      {
+        "id": "RC-3",
+        "summary": "issue 의 delete+insert 가 사용자 행 락 없이는 직렬화되지 않는다(수용 위험)",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "issue 직접 동시 호출 시 유효 토큰 2개",
+            "origin": "found",
+            "probe": "not_probed",
+            "reason": "현재 호출자는 AccountMailService 뿐(claim 이 먼저 행을 잠금) — javadoc 호출 규칙(75e4885)"
+          }
+        ]
+      },
+      {
+        "id": "RC-4",
+        "summary": "BareBoot 「키 없음」에 OS 환경변수가 새어 듦",
+        "found_in_round": 1,
+        "variants": [
+          {
+            "case": "개발자 머신의 FRONTEND_BASE_URL·MAIL_TRANSPORT",
+            "origin": "found",
+            "probe": "not_probed",
+            "reason": "테스트가 OS 환경변수를 바꿀 수 없다 — 시스템 환경변수 소스 제거로 수정(4131d79)"
+          }
+        ]
+      }
+    ],
+    "unresolved": [],
+    "deferred": [
+      "[security] MAIL_TRANSPORT=log 를 운영에서도 허용 — 사용자 결정(항상 필수, 운영 판별 없음), 체크리스트에 운영은 smtp",
+      "MAIL_FROM 주소 형식 미검사 — 첫 발송 때 WARN",
+      "SC-10 은 2스레드 겹침이 보장되지 않는 약한 동시성 검증(직렬이어도 같은 결과)",
+      "@SpringBootTest 컨텍스트는 OS 의 MAIL_TRANSPORT 가 test properties 보다 우선(키 없음 단언과 무관)",
+      "smtps 에서 ssl.* 키는 mail.smtps.ssl.* 로 써야 한다는 안내가 체크리스트에 없음"
+    ]
+  },
+  "rollbacks": [
+    {
+      "type": "RETRY_SCENARIO",
+      "attempt": 1,
+      "from": "Phase 3 자체 리뷰 1라운드",
+      "decided_by": "사용자 2026-11-20"
+    },
+    {
+      "type": "RETRY_SCENARIO",
+      "attempt": 2,
+      "from": "Phase 3 자체 리뷰 2라운드",
+      "decided_by": "사용자 2026-11-20"
+    },
+    {
+      "type": "RETRY_SCENARIO",
+      "attempt": 3,
+      "from": "Phase 4 1회차 FAIL(RC-2 later — SPRING_MAIL_HOST 공백)",
+      "decided_by": "사용자 2026-11-20",
+      "fix_commit": "79241ab"
+    }
+  ]
+}
