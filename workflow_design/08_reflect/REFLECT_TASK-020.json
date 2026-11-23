@@ -147,7 +147,7 @@
       "evidence": "TASK-020 Phase 4 FAIL — RC-3(시간 제한)·RC-4(Date.parse 관대함) 변종이 칸으로 없어 시나리오에서 빠졌다",
       "status": "applied",
       "recurring": 0,
-      "applied_in": "81b81de"
+      "applied_in": "c150ed6"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
@@ -156,7 +156,7 @@
       "evidence": "TASK-020 롤백 2a 에서 PLAN 에 4필드 추가, V8 PLAN 밖 결정 6건",
       "status": "applied",
       "recurring": 1,
-      "applied_in": "fe4b6cd"
+      "applied_in": "1fba60a"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",

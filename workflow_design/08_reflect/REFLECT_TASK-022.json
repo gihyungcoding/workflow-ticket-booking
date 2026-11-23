@@ -184,15 +184,16 @@
       "evidence": "TASK-022 자체 리뷰 RC-1 reproduced 4 — RETRY_SCENARIO 2/3",
       "status": "applied",
       "recurring": 0,
-      "applied_in": "81b81de"
+      "applied_in": "c150ed6"
     },
     {
       "target": "docs/release/first-deploy-checklist.md",
       "section": "§5 · §5-2",
       "change": "§5-2 SQL 주석을 'ASCII 이메일 기준' 으로 정확히, §5 에 옛 가드 변수 삭제 기준(롤백 창 종료 조건)과 '롤백 시 프론트도 함께 되돌린다'",
       "evidence": "TASK-022 VERIFY 4회차 경미 소견 2건 — EXCEPTION_APPROVE exceptions",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "366f45f"
     }
   ],
   "completion_report": {

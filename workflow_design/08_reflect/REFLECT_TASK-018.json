@@ -135,7 +135,7 @@
       "evidence": "TASK-018 Phase 4 1회차 RC-3 — 시안 차이 7건이 PLAN·SCENARIO 에 없어 검증에서 처음 발견, 롤백 2회",
       "status": "applied",
       "recurring": 0,
-      "applied_in": "434c765"
+      "applied_in": "1925263"
     },
     {
       "target": ".claude/skills/wf-develop/SKILL.md",

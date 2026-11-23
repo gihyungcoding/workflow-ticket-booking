@@ -114,7 +114,7 @@
       "evidence": "TASK-025 VERIFY RC-1 예외 승인",
       "status": "applied",
       "recurring": 0,
-      "applied_in": "434c765"
+      "applied_in": "1925263"
     },
     {
       "target": ".claude/agents/scenario-validator.md",
