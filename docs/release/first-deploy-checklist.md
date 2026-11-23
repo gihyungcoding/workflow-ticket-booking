@@ -101,7 +101,12 @@ Spring 에 줄 값    SPRING_DATASOURCE_URL      = jdbc:postgresql://호스트/D
 
 백엔드에 남아 있는 옛 변수(`WRITE_GUARD_ENABLED`·`WRITE_API_KEY`)는 새 코드가 읽지 않지만, **이전 배포로 롤백할 수 있는 동안은 지우지 않는다.**
 옛 코드는 이 변수가 비어 있으면 쓰기 가드를 끈 채 기동해서, 롤백한 순간 공연 쓰기가 인증 없이 열린다.
-이 배포가 안정된 것을 확인한 뒤(§9 롤백 항목)에 지운다. 롤백해도 V7 의 `owner_id` 컬럼은 남지만 옛 코드는 그 컬럼을 쓰지 않아 영향이 없다.
+**지우는 기준(롤백 창이 닫히는 조건)** — TASK-022 이후 코드로 **다음 배포가 한 번 더 나가 안정됐다**(§9 스모크 통과).
+그때부터는 롤백해도 TASK-022 이전 코드로 돌아가지 않으므로 두 변수를 지운다. 그 전까지는 남겨 둔다.
+롤백해도 V7 의 `owner_id` 컬럼은 남지만 옛 코드는 그 컬럼을 쓰지 않아 영향이 없다.
+
+**백엔드를 TASK-022 이전으로 롤백하면 프론트도 함께 되돌린다.** 옛 백엔드는 `X-Write-Key` 를 요구하는데 새 프론트는
+그 헤더를 보내지 않아(§5-1), 백엔드만 되돌리면 로그인·가입·쓰기가 `401 WRITE_KEY_INVALID` 로 막힌다.
 
 ### 5-1. 배포 순서 — 프론트에서 `VITE_WRITE_KEY` 를 먼저 지운다  `사람`
 
@@ -135,6 +140,8 @@ V7 은 공연에 소유자(`owner_id`)를 더하고 **기존 행은 비워 둔�
 
 ```sql
 -- 이메일은 가입 시 앞뒤 공백을 지우고 소문자로 저장된다 — 같은 규칙으로 찾는다
+-- ASCII 이메일 기준이다. PostgreSQL lower()·trim() 은 앱의 소문자 변환·공백 정리와 비 ASCII 글자에서 다를 수 있다
+-- — 비 ASCII 가 섞였으면 저장된 email 을 그대로 복사해 WHERE email = '<저장값>' 으로 찾는다
 UPDATE performance
    SET owner_id = (SELECT id FROM users WHERE email = lower(trim('<주최자 이메일>')))
  WHERE id IN (<공연 id 목록>) AND owner_id IS NULL;
@@ -180,7 +187,7 @@ SELECT id, title, created_at FROM performance WHERE published = FALSE AND cancel
 | `SPRING_MAIL_PROTOCOL` | 비워 둔다(`smtp`) 또는 `smtps` | 587 STARTTLS 는 `smtp`(기본), 465 SSL 은 `smtps`. 그 밖의 값이면 기동 실패 (`MailConfig`) |
 | `SPRING_MAIL_PROPERTIES_MAIL_<SMTP\|SMTPS>_CONNECTIONTIMEOUT` · `_TIMEOUT` · `_WRITETIMEOUT` | 비워 둔다(10000) | 고른 프로토콜의 키만 읽는다. 없으면 10초를 건다(무한 대기 방지). 값은 1~2147483647 의 숫자(ms) — 아니면 기동 실패. **환경변수로만 넣는다** — 설정 파일의 `spring.mail.properties[mail.smtp.timeout]` 같은 대괄호 표기는 읽지 않고 10초로 덮인다(TASK-027 수용 위험) |
 | `SPRING_MAIL_JNDI_NAME` | **넣지 않는다** | 있으면(빈 값도) 기동 실패 — JNDI 세션은 타임아웃을 걸 수 없어 지원하지 않는다 |
-| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE` · `_STARTTLS_REQUIRED` | `true` · `true` | 587(`smtp`)이면 **둘 다 넣는다** — 넣지 않으면 서버가 허용할 때 계정 정보·토큰 링크가 평문으로 나간다. 465(`smtps`)는 처음부터 TLS 라 필요 없다(`smtps` 의 TLS 설정은 `..._MAIL_SMTPS_SSL_*` 키) |
+| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE` · `_STARTTLS_REQUIRED` | `true` · `true` | 587(`smtp`)이면 **둘 다 넣는다** — `ENABLE` 이 없으면 서버가 STARTTLS 를 지원해도 **항상 평문**으로 보내고, `REQUIRED` 가 없으면 서버가 STARTTLS 를 알리지 않을 때(중간자가 지운 경우 포함) **평문으로 넘어간다**. 어느 쪽이든 로그인 정보·토큰 링크가 평문으로 나간다. 465(`smtps`)는 처음부터 TLS 라 필요 없다(`smtps` 의 TLS 설정은 `..._MAIL_SMTPS_SSL_*` 키) |
 | `SPRING_MAIL_PROPERTIES_MAIL_DEBUG` | **넣지 않는다** | `true` 면 JavaMail 이 SMTP 대화 전체(메일 본문의 토큰 링크 포함)를 표준 출력에 남긴다 |
 | `PORT` | **직접 넣지 않는다** | Render 가 주입한다 |
 

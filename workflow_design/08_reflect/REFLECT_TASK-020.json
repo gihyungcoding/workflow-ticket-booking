@@ -145,16 +145,18 @@
       "section": "종류 목록",
       "change": "`timeout`(응답이 오지 않음 — 시간 제한·요청 중단·언마운트 중단)과 `instant`(ISO 순간 — '1'·'2026'·날짜만·오프셋 없음·달력에 없는 날짜·24시·연도 0~99) 종류 추가",
       "evidence": "TASK-020 Phase 4 FAIL — RC-3(시간 제한)·RC-4(Date.parse 관대함) 변종이 칸으로 없어 시나리오에서 빠졌다",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "c150ed6"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 4 — 구조 정규화(input_fields)",
       "change": "외부 서버 응답이 시각이나 요청 지연에 기대면 input_fields 에 `timeout`·`instant` 종류를 고르게 하고, 표시 전용 시각·문구(startAt·title·venue)도 필드로 올리게 한다",
       "evidence": "TASK-020 롤백 2a 에서 PLAN 에 4필드 추가, V8 PLAN 밖 결정 6건",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "1fba60a"
     },
     {
       "target": ".claude/skills/wf-red/SKILL.md",

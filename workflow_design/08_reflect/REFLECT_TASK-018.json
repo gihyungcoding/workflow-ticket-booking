@@ -133,8 +133,9 @@
       "section": "새 절 — 시안 모양 값 표",
       "change": "Frontend 이고 시안(out/screens)이 있으면 PLAN design 에 '시안 모양 값' 표(화면·상태·요소·값·출처 파일 줄)를 둔다. 화면 <style> 과 components.css 의 맥락 규칙(.plain .appbar 등)을 전수로 옮기고, 2a 는 이 표의 행마다 시나리오(계산된 스타일 단언)를 둔다",
       "evidence": "TASK-018 Phase 4 1회차 RC-3 — 시안 차이 7건이 PLAN·SCENARIO 에 없어 검증에서 처음 발견, 롤백 2회",
-      "status": "pending",
-      "recurring": 0
+      "status": "applied",
+      "recurring": 0,
+      "applied_in": "1925263"
     },
     {
       "target": ".claude/skills/wf-develop/SKILL.md",

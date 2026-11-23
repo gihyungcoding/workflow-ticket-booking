@@ -134,24 +134,27 @@
       "section": "외부 입력",
       "change": "라이브러리 설정 키·값 대조 필수, n/a 금지(Try 1)",
       "evidence": "RC-2 later 7, Phase 4 FAIL",
-      "status": "pending",
-      "recurring": 2
+      "status": "applied",
+      "recurring": 2,
+      "applied_in": "1925263"
     },
     {
       "target": "scripts/coverage_matrix.py",
       "section": "종류",
       "change": "external_config 종류(Try 2)",
       "evidence": "같음",
-      "status": "pending",
-      "recurring": 2
+      "status": "applied",
+      "recurring": 2,
+      "applied_in": "c150ed6"
     },
     {
       "target": ".claude/skills/wf-plan/SKILL.md",
       "section": "Step 2",
       "change": "외부 호출·비동기 실행기 운영 성질 unresolved(Try 3)",
       "evidence": "RETRY_SCENARIO 1회차",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "1fba60a"
     },
     {
       "target": ".claude/skills/wf-develop/SKILL.md",
@@ -174,8 +177,9 @@
       "section": "§6",
       "change": "STARTTLS 문구 정정",
       "evidence": "Phase 4 2회차 리뷰",
-      "status": "pending",
-      "recurring": 1
+      "status": "applied",
+      "recurring": 1,
+      "applied_in": "366f45f"
     }
   ],
   "follow_ups": [
@@ -183,7 +187,10 @@
     "TASK-029: sendPasswordResetMail·sendSocialAccountNotice·sendPasswordChangedNotice·consume(RESET) 호출"
   ],
   "completion_report": {
-    "approved_by_human": false
+    "approved_by_human": true,
+    "reviewed_at": "2026-11-20T07:29:26Z",
+    "reviewed_in": "batch",
+    "note": "승인은 2026-11-20 일괄 검토에서 받았고, PR #57 머지 뒤 기록"
   },
   "report_url": "https://claude.ai/artifact/NBMpgwKXaDcyHL2q7N7r13"
 }
