@@ -70,6 +70,12 @@
       "text": "로그인하지 않은 사람이 좌석 조회를 요청하면 401 로 거절되고 화면은 로그인으로 안내한다",
       "kind": "error",
       "ui": false
+    },
+    {
+      "id": "AC-12",
+      "text": "한 관객이 같은 공연에서 입금 대기·확정 좌석 합계 4석을 넘게 예약하려 하면 거절되고, 새로 선점하면 이전 미예약 선점은 풀린다",
+      "kind": "error",
+      "ui": false
     }
   ],
   "out_of_scope": [
@@ -408,6 +414,83 @@
       "recommended": "A 를 둘로, C 는 그대로",
       "answer": "A 를 둘로, C 는 그대로 (추천)",
       "scope": "A1·A2·B·C·D 5개"
+    },
+    {
+      "id": "D32",
+      "class": "user_challenge",
+      "source": "outside",
+      "status": "approved",
+      "question": "1인 상한 (O1)",
+      "options": [
+        "둘 다 넣기",
+        "활성 선점 하나만",
+        "알려진 한계로 기록"
+      ],
+      "recommended": "둘 다 넣기",
+      "answer": "둘 다 넣기 (추천)",
+      "scope": "사용자당 활성 선점 1개(새 선점이 이전 미예약 선점을 대체) + 공연별 '입금 대기+확정' 합계 4석. product.md '1인 최대 4장'과 일치"
+    },
+    {
+      "id": "D33",
+      "class": "user_challenge",
+      "source": "outside",
+      "status": "approved",
+      "question": "범위를 반으로 줄일까 (O8)",
+      "options": [
+        "지금 범위 유지",
+        "반으로 줄이기"
+      ],
+      "recommended": "(리뷰어 제안: 반으로 줄이기)",
+      "answer": "지금 범위 유지",
+      "scope": "확대·미니맵, 떠나면 해제, 데스크톱 전용 화면 모두 이번 요청에"
+    },
+    {
+      "id": "D34",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "좌석 조회 매처 (O2 — Eng D24 와 다름)",
+      "answer": "GET /api/performances/*/seats 를 GET /api/performances/** permitAll 매처 앞에 authenticated 로. AC-11 401 테스트를 A1 에"
+    },
+    {
+      "id": "D35",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "예약 전환·해제 조건 (O3)",
+      "answer": "예약: UPDATE seat_lock SET expires_at=:deadline WHERE hold_id=:h AND 본인 AND expires_at > :now, 영향 행 = 좌석 수일 때만. 해제: DELETE … WHERE hold_id AND 본인 AND 예약 없음, 이미 예약된 hold 는 204 no-op. 프론트는 예약 성공 뒤 이동에 해제를 보내지 않는다(C 테스트)"
+    },
+    {
+      "id": "D36",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "기한 경계 (O4)",
+      "answer": "입금 확인 = 한 트랜잭션 조건부 쓰기(UPDATE … SET expires_at=NULL WHERE hold_id AND expires_at > :now, 영향 행 = 좌석 수). 유효 = now < expires_at 하나로 정의. 기한은 23:59:00 Asia/Seoul Instant. 단일 인스턴스라 앱 Clock"
+    },
+    {
+      "id": "D37",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "재시도·멱등 (O5)",
+      "answer": "booking.hold_id·booking_number UNIQUE, 같은 hold 재예약은 기존 예약 200. 예매번호 DB 시퀀스. 입금 확인 경로 /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit, 응답에 금액·예매자·좌석"
+    },
+    {
+      "id": "D38",
+      "class": "taste",
+      "source": "outside",
+      "status": "approved",
+      "question": "ADMIN 회수 지연·감사 (O6)",
+      "answer": "확정 시 DB 역할 재확인 + booking.confirmed_by·confirmed_at. ADR 에 회수 지연 한 줄"
+    },
+    {
+      "id": "D39",
+      "class": "taste",
+      "source": "outside",
+      "status": "approved",
+      "question": "여정 사실 정정 (O7)",
+      "answer": "'주최자 화면 남은 좌석 수가 움직인다' → '이번 요청에서 주최자 화면은 바뀌지 않음'"
     }
   ],
   "completeness": [
@@ -450,6 +533,46 @@
       "estimate_delta_h": 1,
       "status": "included",
       "source": "eng"
+    },
+    {
+      "id": "C6",
+      "text": "매처 순서 + AC-11 테스트 (O2)",
+      "in_radius": true,
+      "estimate_delta_h": 0.5,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C7",
+      "text": "예약 전환·해제 조건부 쓰기 (O3)",
+      "in_radius": true,
+      "estimate_delta_h": 1.5,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C8",
+      "text": "입금 확인 조건부 쓰기·경계 정의 (O4)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C9",
+      "text": "재시도·멱등·예매번호 시퀀스 (O5)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C10",
+      "text": "1인 상한 두 가지 (O1, D32)",
+      "in_radius": true,
+      "estimate_delta_h": 2,
+      "status": "included",
+      "source": "outside"
     }
   ],
   "scope": {
@@ -485,7 +608,7 @@
       "key": "A1",
       "title": "좌석 잠금 스키마·선점·해제·좌석 조회 API (동시성, PostgreSQL 테스트 베이스)",
       "route": "Backend",
-      "estimate_h": 11,
+      "estimate_h": 15,
       "ac": [
         "AC-1",
         "AC-2",
@@ -493,7 +616,8 @@
         "AC-7",
         "AC-8",
         "AC-10",
-        "AC-11"
+        "AC-11",
+        "AC-12"
       ],
       "depends_on": []
     },
@@ -501,7 +625,7 @@
       "key": "A2",
       "title": "무통장 예약·예매번호·ADMIN 역할·가입 차단·보안 매처",
       "route": "Backend",
-      "estimate_h": 9,
+      "estimate_h": 10,
       "ac": [
         "AC-4"
       ],
@@ -513,7 +637,7 @@
       "key": "B",
       "title": "입금 확인 API(ADMIN)·기한 판정·재판매",
       "route": "Backend",
-      "estimate_h": 6,
+      "estimate_h": 7.5,
       "ac": [
         "AC-5",
         "AC-6",
@@ -579,6 +703,13 @@
       "model": "claude-sonnet",
       "findings": 8,
       "accepted": 8
+    },
+    {
+      "role": "outside",
+      "model": "claude-opus",
+      "findings": 8,
+      "accepted": 7,
+      "note": "O8(범위 축소) 미채택 — D33"
     }
   ],
   "mockup": {
