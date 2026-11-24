@@ -3,7 +3,7 @@
   "status": "refining",
   "prompt": "티켓 구매 후 모바일 티켓을 발급하는 기능 만들어줘",
   "posture": "selective",
-  "goal": "예매가 확정된 관객은 좌석마다 모바일 티켓을 받아, 공연장에서 휴대폰으로 보여 주고 입장할 수 있다",
+  "goal": "예매가 확정된 관객은 좌석마다 모바일 티켓을 받아, 공연장에서 휴대폰으로 입장용 티켓(QR)을 보여 줄 수 있다",
   "acceptance_criteria": [
     {
       "id": "AC-1",
@@ -37,7 +37,7 @@
     }
   ],
   "out_of_scope": [
-    "검표(입장 확인) — 주최자가 QR 을 찍어 입장 처리하는 화면·API",
+    "검표(입장 처리) — 주최자가 QR 을 찍어 입장 처리하는 화면·API. product.md 다음 단계로 명시 (D3)",
     "Apple Wallet · Google Wallet 추가",
     "오프라인 저장·푸시 알림",
     "온라인 결제 연동 (ADR-0025)"
@@ -46,7 +46,7 @@
     {
       "text": "예매·입금 확인 흐름(좌석 선점 → 무통장 예약 → 입금 확인 → 확정)이 백엔드에 있다",
       "verified_by": null,
-      "note": "없다 — domain/ 에 Booking 없음, ADR-0025 의 POST /internal/bookings/{id}/deposit-confirmed 미구현. 예매 화면은 out/ 시안(booked·my-bookings·transfer)뿐"
+      "note": "없다 — domain/ 에 Booking 없음, ADR-0025 의 POST /internal/bookings/{id}/deposit-confirmed 미구현. 예매 화면은 out/ 시안(booked·my-bookings·transfer)뿐 → REQ-002 로 먼저 만든다 (D1)"
     },
     {
       "text": "티켓 단위는 좌석 한 장이다 — 양도 시안(transfer)이 좌석 한 장 단위",
@@ -62,14 +62,16 @@
       "id": "D1",
       "class": "user_challenge",
       "source": "draft",
-      "status": "unresolved",
+      "status": "approved",
       "question": "예매(구매) 기능이 아직 없다. 모바일 티켓을 무엇 위에 만들까?",
       "options": [
         "예매 흐름을 먼저 별도 요청으로 계획하고 이 요청은 그 뒤에",
         "이 요청에 예매 확정 흐름까지 포함",
         "예매 확정 데이터만 최소로 만들고 티켓을 먼저"
       ],
-      "recommended": "예매 흐름을 먼저 별도 요청으로 계획하고 이 요청은 그 뒤에"
+      "recommended": "예매 흐름을 먼저 별도 요청으로 계획하고 이 요청은 그 뒤에",
+      "answer": "예매를 먼저 별도 요청으로 (추천) — REQ-002 에서 예매 흐름을 계획하고, REQ-001 은 REQ-002 가 후속 작업까지 끝난 뒤 재개",
+      "scope": "REQ-001 의 시작 시점만. 예매 흐름의 내용은 REQ-002 에서 정한다"
     },
     {
       "id": "D2",
@@ -88,13 +90,15 @@
       "id": "D3",
       "class": "user_challenge",
       "source": "draft",
-      "status": "unresolved",
+      "status": "approved",
       "question": "모바일 티켓을 product.md 범위(하는 것)에 넣을까?",
       "options": [
         "넣는다",
         "이번 요청만 예외로 하고 범위는 그대로"
       ],
-      "recommended": "넣는다"
+      "recommended": "넣는다",
+      "answer": "넣고 검표는 '다음 단계'로 명시 (추천)",
+      "scope": "product.md §4 하는 것에 모바일 티켓, 다음 단계에 검표(입장 처리)"
     },
     {
       "id": "D4",
@@ -111,9 +115,32 @@
       "status": "approved",
       "question": "남의 티켓 조회 응답",
       "answer": "404 — 존재를 숨긴다. 공연 소유자 인가(ADR-0029)와 같은 방식"
+    },
+    {
+      "id": "D6",
+      "class": "user_challenge",
+      "source": "ceo",
+      "status": "approved",
+      "question": "티켓을 얼마나 만들까 — QR 포함 vs QR 없는 최소안",
+      "options": [
+        "QR 포함 (지금 계획)",
+        "최소안 — QR 없이 티켓 보기"
+      ],
+      "recommended": "QR 포함 (지금 계획)",
+      "answer": "QR 포함 (지금 계획)",
+      "scope": "좌석마다 티켓 발급 + 서명된 입장 QR. 검표는 범위 밖"
     }
   ],
-  "completeness": [],
+  "completeness": [
+    {
+      "id": "C4",
+      "text": "QR 공개 시점이 정해지면 AC-2 를 시점별로 나누고 날짜 판정은 서버 시각(ADR-0024)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "ceo"
+    }
+  ],
   "scope": {
     "wru": true,
     "routes": [
@@ -168,5 +195,17 @@
       ]
     }
   ],
-  "draft_commit": "9ee0a25"
+  "draft_commit": "9ee0a25",
+  "on_hold": {
+    "until": "REQ-002",
+    "reason": "D1 — 예매 흐름이 없어 완료 조건 AC-1·3·5 를 관찰할 수 없다"
+  },
+  "reviews": [
+    {
+      "role": "ceo",
+      "model": "claude-sonnet",
+      "findings": 4,
+      "accepted": 4
+    }
+  ]
 }
