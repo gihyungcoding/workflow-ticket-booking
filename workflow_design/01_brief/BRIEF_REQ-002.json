@@ -58,6 +58,12 @@
       "text": "입금 기한(예약 당일 오후 11:59, product.md 정본)이 지난 뒤의 입금 확인 요청은 거절되고 예약은 취소 상태로 보인다",
       "kind": "error",
       "ui": false
+    },
+    {
+      "id": "AC-10",
+      "text": "선점한 관객이 '좌석 다시 고르기'를 누르면 그 선점이 바로 풀려 다른 관객이 고를 수 있다",
+      "kind": "happy",
+      "ui": true
     }
   ],
   "out_of_scope": [
@@ -161,6 +167,48 @@
       "status": "approved",
       "question": "범위 외 표기",
       "answer": "취소·양도·대기열·연석에 '후속 요청에서 다룸' 표기, FR 번호 PRD 대조"
+    },
+    {
+      "id": "D7",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "'좌석 다시 고르기'가 선점을 바로 풀까",
+      "answer": "Q1 다시 고르면 선점 바로 해제",
+      "scope": "선점 해제 API 1개 — 본인 선점만"
+    },
+    {
+      "id": "D8",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "예매번호를 보여 줄까",
+      "answer": "Q4 예매번호 표시",
+      "scope": "예약 완료·예매 상세·내 예매. 새 데이터 필드(예매번호)"
+    },
+    {
+      "id": "D9",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "입금자명 칸·확정/취소 알림·기한 뒤 입금 안내",
+      "answer": "세 가지 모두 추천안 (추천) — 입금자명 칸 없이 예매자 이름으로 안내, 메일·문자는 나중에, 기한 뒤 입금은 '예매번호로 문의해 주세요' 한 줄",
+      "scope": "문의 창구는 정해지기 전까지 문구만"
+    },
+    {
+      "id": "D10",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "모바일에서 큰 구역(최대 26열 × 수백 석) 좌석을 44px 로 누르게 하는 방식",
+      "options": [
+        "확대해서 고르기",
+        "열 묶음으로 나눠 고르기",
+        "큰 구역은 매수 지정 자동 배정"
+      ],
+      "recommended": "확대해서 고르기",
+      "answer": "확대해서 고르기 (추천)",
+      "scope": "구역 좌석도는 처음에 전체(빈자리 분포), 누른 곳 주변을 44px 로 확대, 미니맵으로 위치. 좌석 수와 무관"
     }
   ],
   "completeness": [
@@ -204,16 +252,17 @@
   "split": [
     {
       "key": "A",
-      "title": "좌석 선점·무통장 예약 API",
+      "title": "좌석 선점·해제·무통장 예약 API (예매번호)",
       "route": "Backend",
-      "estimate_h": 12,
+      "estimate_h": 14,
       "ac": [
         "AC-1",
         "AC-2",
         "AC-3",
         "AC-4",
         "AC-7",
-        "AC-8"
+        "AC-8",
+        "AC-10"
       ],
       "depends_on": []
     },
@@ -233,15 +282,16 @@
     },
     {
       "key": "C",
-      "title": "좌석 선택·예약·예약 완료 화면",
+      "title": "좌석 선택(확대·미니맵)·예약·예약 완료 화면",
       "route": "Frontend",
-      "estimate_h": 12,
+      "estimate_h": 16,
       "ac": [
         "AC-1",
         "AC-2",
         "AC-3",
         "AC-4",
-        "AC-8"
+        "AC-8",
+        "AC-10"
       ],
       "depends_on": [
         "A"

@@ -1,0 +1,243 @@
+{
+ "core": "고른 자리가 '7분 동안 내 것'임을 숫자로 보여 주고, 예약 뒤에는 계좌·금액·기한 세 가지만 크게 — 확정은 내 예매에서 배지 하나로 안다.",
+ "counter_views": [
+  "정민지(관객): 오픈 직후 폰 하나로 3석을 잡는다 — 남은 시간과 '지금 할 일' 외의 글은 읽지 않는다. 확인 단계가 하나 늘 때마다 좌석을 놓칠까 불안하다.",
+  "한도윤(운영/관리자): 화면 없이 통장 내역과 예약을 맞춘다 — 예매번호·입금자명·금액이 관객 화면과 같은 말로 보여야 문의가 줄어든다.",
+  "30% 를 빼야 하는 PM: 예매 상세(booking)는 목록 행에 계좌를 다 넣으면 없앨 수 있다 / 알림 발송·입금자명 입력·선점 해제는 AC 에 없다 — 빼자."
+ ],
+ "items": [
+  {
+   "id": "AC-1",
+   "name": "좌석 1~4개 선점, 7분 유지",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "핵심 갈등(같은 자리 두 번 팔기)을 푼다. 관객의 처음 오는 이유.",
+   "screens": [
+    "seats",
+    "hold"
+   ]
+  },
+  {
+   "id": "AC-2",
+   "name": "선점·판매된 좌석 거절 + 빠진 좌석 안내·다시 고르기",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "오픈 순간 자주 생긴다(빈도 높음 × 놓치면 피해 큼). 빠진 좌석만 해제하고 나머지 선택은 유지.",
+   "screens": [
+    "seats--taken"
+   ]
+  },
+  {
+   "id": "AC-3",
+   "name": "5장 이상 선점 거절",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "how": "5장째 누르는 순간 화면에서 막고 문구, 서버도 거절",
+   "why": "1인 최대 4장(product.md §4). 누른 뒤 거절보다 누르는 순간 막는 쪽이 가볍다.",
+   "screens": [
+    "seats--limit"
+   ]
+  },
+  {
+   "id": "AC-4",
+   "name": "무통장 예약 → 계좌·금액·기한 표시",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "결제 수단이 무통장 하나(ADR-0025). 관객이 은행 앱으로 옮길 세 값.",
+   "screens": [
+    "hold",
+    "reserved",
+    "booking"
+   ]
+  },
+  {
+   "id": "AC-5",
+   "name": "입금 확인 → 내 예매에 '예매 확정'",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "관객의 성공한 순간.",
+   "screens": [
+    "bookings--confirmed",
+    "booking--confirmed"
+   ]
+  },
+  {
+   "id": "AC-6",
+   "name": "입금 기한 경과 자동 취소, 좌석 재판매",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "입금하지 않은 예약이 자리를 막지 않게. 관객에게는 이유와 다시 고르기를 보인다.",
+   "screens": [
+    "bookings",
+    "booking--cancelled"
+   ]
+  },
+  {
+   "id": "AC-7",
+   "name": "동시 선점 한 명만 성공",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "화면 없음(ui:false). 진 쪽 관객은 AC-2 화면(seats--taken)을 본다.",
+   "screens": [
+    "seats--taken"
+   ]
+  },
+  {
+   "id": "AC-8",
+   "name": "선점 7분 경과 → 좌석 다시 고를 수 있음",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "타이머 0 에서 좌석 화면으로 돌아가 같은 자리를 다시 고를 수 있다(ADR-0026).",
+   "screens": [
+    "seats--expired"
+   ]
+  },
+  {
+   "id": "AC-9",
+   "name": "기한 뒤 입금 확인 거절, 예약은 취소 상태",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "운영자 API 거절은 화면 없음(ui:false). 관객은 취소 상태(booking--cancelled)를 본다.",
+   "screens": [
+    "booking--cancelled"
+   ]
+  },
+  {
+   "id": "Q1",
+   "name": "선점 중 '좌석 다시 고르기'로 선점 풀기",
+   "source": "여정",
+   "verdict": "keep",
+   "ask": true,
+   "question": "선점 화면에서 '좌석 다시 고르기'를 누르면 선점을 바로 풀까? (AC 에 없는 선점 해제 동작이 생긴다)",
+   "recommended": "keep — 풀고 좌석 화면으로. 풀지 않으면 자기가 잡은 자리를 7분 동안 다시 고를 수 없다",
+   "options": [
+    "바로 풀고 다시 고르기(추천)",
+    "버튼을 두지 않는다 — 7분 만료를 기다린다"
+   ],
+   "why": "없으면 관객이 한 자리를 바꾸려다 7분 동안 막힌다(빈도 중 × 피해 큼). 새 할 일은 없다.",
+   "screens": [
+    "hold"
+   ]
+  },
+  {
+   "id": "Q2",
+   "name": "입금자명 입력 칸",
+   "source": "여정",
+   "verdict": "cut",
+   "ask": true,
+   "question": "무통장 예약에 입금자명 입력 칸을 둘까?",
+   "recommended": "cut — 예약자 이름(정민지)으로 입금하라고 안내만 한다",
+   "options": [
+    "두지 않고 예약자 이름으로 안내(추천)",
+    "입금자명 입력 칸을 둔다(새 데이터)"
+   ],
+   "why": "입력 칸은 관객의 새 할 일이고 새 필드다. 운영자는 예매번호·금액으로도 맞출 수 있다.",
+   "screens": [
+    "hold",
+    "reserved"
+   ]
+  },
+  {
+   "id": "Q3",
+   "name": "예매 확정·자동 취소 알림(문자·메일)",
+   "source": "여정",
+   "verdict": "later",
+   "ask": true,
+   "question": "확정·자동 취소를 메일이나 문자로 알릴까?",
+   "recommended": "later — 이번에는 내 예매에서 확인(목표 문장 그대로)",
+   "options": [
+    "보내지 않는다 — 내 예매에서 확인(추천)",
+    "확정 메일을 보낸다(MailGateway 재사용, 범위 확대)"
+   ],
+   "why": "목표는 '내 예매에서 확인'. 메일은 새 기능 — 결과 화면에 '알림은 보내지 않아요'를 적는다.",
+   "screens": [
+    "reserved"
+   ]
+  },
+  {
+   "id": "Q4",
+   "name": "예매번호 표시",
+   "source": "여정",
+   "verdict": "keep",
+   "ask": true,
+   "question": "예약 화면·내 예매에 예매번호(예: 2611240381)를 보일까? (새 표시 필드)",
+   "recommended": "keep — 운영자가 입금과 예약을 맞추고 관객이 문의할 때 쓰는 하나의 이름",
+   "options": [
+    "보인다(추천)",
+    "보이지 않는다 — 내부 id 만"
+   ],
+   "why": "예약 테이블이 새로 생기므로(V10) 추가 비용이 작다. 화면 데이터 변경이라 묻는다.",
+   "screens": [
+    "reserved",
+    "booking",
+    "booking--confirmed",
+    "booking--cancelled"
+   ]
+  },
+  {
+   "id": "Q5",
+   "name": "기한 뒤 입금한 관객 안내",
+   "source": "여정",
+   "verdict": "lighten",
+   "ask": true,
+   "question": "기한이 지난 뒤 입금한 관객(AC-9 거절 대상)에게 취소 화면에서 무엇을 안내할까? 환불 송금은 범위 밖이다",
+   "recommended": "lighten — '기한 뒤 입금은 예매로 바뀌지 않아요. 입금했다면 예매번호로 문의해 주세요' 한 줄만, 문의 창구는 정해지면 붙인다",
+   "options": [
+    "한 줄 안내만(추천)",
+    "환불 신청 화면을 만든다(범위 확대)",
+    "안내하지 않는다"
+   ],
+   "how": "취소 화면 블록 안 안내 한 줄",
+   "why": "드물지만(빈도 낮음) 돈이 걸린다(피해 큼). 환불 송금은 product.md §4 범위 밖이라 화면은 안내까지.",
+   "screens": [
+    "booking--cancelled"
+   ]
+  },
+  {
+   "id": "X1",
+   "name": "계좌번호 복사 버튼",
+   "source": "여정",
+   "verdict": "keep",
+   "how": "같은 자리에서 '복사됨' 안내(data-stay)",
+   "why": "은행 앱으로 옮겨 적는 실수를 막는다. 새 데이터 없음.",
+   "screens": [
+    "reserved",
+    "booking"
+   ]
+  },
+  {
+   "id": "X2",
+   "name": "관객 직접 취소·양도 버튼",
+   "source": "BRIEF",
+   "verdict": "later",
+   "how": "버튼 없이 '취소·양도는 후속 요청에서 다룸' 한 줄(D6)",
+   "why": "BRIEF out_of_scope(FR-19·20).",
+   "screens": [
+    "booking--confirmed"
+   ]
+  },
+  {
+   "id": "M1",
+   "name": "좌석도 + 아래 선택 요약·선점 버튼",
+   "source": "시장",
+   "verdict": "keep",
+   "how": "등급 세그먼트 → 좌석도 → 고른 좌석·금액 → 하단 버튼",
+   "why": "국내 예매 앱이 이미 가르친 조작."
+  },
+  {
+   "id": "M2",
+   "name": "결제 수단 고르기 목록",
+   "source": "시장",
+   "verdict": "cut",
+   "how": "무통장 입금 한 줄을 고정 정보로",
+   "why": "결제 수단이 하나뿐(ADR-0025) — 누를 수 없는 카드 행은 '왜 안 되지'만 남긴다."
+  },
+  {
+   "id": "M3",
+   "name": "예매 내역 목록 → 상세",
+   "source": "시장",
+   "verdict": "keep",
+   "why": "관객이 이미 아는 구조. 상태 배지로 입금 대기/확정을 가른다."
+  }
+ ]
+}

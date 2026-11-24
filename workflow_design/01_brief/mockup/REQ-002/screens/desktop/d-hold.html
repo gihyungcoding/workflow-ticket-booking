@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=1280">
+<title>선점 완료 · 예약</title>
+<link id="tokens" rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../../components.css"><link rel="stylesheet" href="../../desktop.css"><script src="../../palette.js"></script>
+<style>
+.seatmap { display: grid; grid-template-columns: 32px repeat(7, minmax(0, 1fr)); gap: 8px; align-items: center; }
+.seat-row { font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); text-align: center; }
+.seat { min-height: 48px; border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
+.seat[aria-pressed="true"] { background: var(--c-brand); color: var(--c-on-brand); box-shadow: none; }
+.seat:disabled { background: var(--c-disabled-bg); color: var(--c-text-disabled); box-shadow: none; }
+.seat.is-lost { box-shadow: inset 0 0 0 2px var(--c-danger); }
+.stage { padding: var(--stack-s); border-radius: var(--r-s); background: var(--c-bg); text-align: center; font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--stack-m); font-size: var(--fs-caption); color: var(--c-text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); }
+.legend i.is-mine { background: var(--c-brand); box-shadow: none; }
+.legend i.is-off { background: var(--c-disabled-bg); box-shadow: none; }
+</style></head>
+<body class="desk">
+<main class="main has-aside">
+<div class="col">
+<header class="d-head"><div><p class="eyebrow">새벽공방 단독 콘서트 〈밤의 정원〉 · 12월 20일 (일) 오후 6:00 · 한빛아트홀</p><h1><span class="num">6:42</span> 안에 예약해 주세요</h1><p class="lead">R-B4 · R-B5 · R-B6 을 오후 2:09까지 잡아 두고 있어요</p></div></header>
+<section class="block">
+<div class="stage">무대</div>
+<div class="seatmap" role="group" aria-label="R석 좌석도">
+<span class="seat-row">A</span>
+<button class="seat" disabled aria-label="R-A1 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-A2 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-A3 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-A4 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-A5 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-A6 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-A7 고를 수 없음"></button>
+<span class="seat-row">B</span>
+<button class="seat" disabled aria-label="R-B1 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-B2 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-B3 고를 수 없음"></button>
+<button class="seat" aria-pressed="true" aria-label="R-B4 내가 고름">4</button>
+<button class="seat" aria-pressed="true" aria-label="R-B5 내가 고름">5</button>
+<button class="seat" aria-pressed="true" aria-label="R-B6 내가 고름">6</button>
+<button class="seat" disabled aria-label="R-B7 고를 수 없음"></button>
+<span class="seat-row">C</span>
+<button class="seat" disabled aria-label="R-C1 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-C2 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C3 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C4 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C5 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C6 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C7 선점을 풀어야 고를 수 있음"></button>
+<span class="seat-row">D</span>
+<button class="seat" disabled aria-label="R-D1 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-D2 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-D3 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-D4 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-D5 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-D6 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-D7 고를 수 없음"></button>
+<span class="seat-row">E</span>
+<button class="seat" disabled aria-label="R-E1 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E2 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E3 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E4 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E5 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E6 선점을 풀어야 고를 수 있음"></button>
+<button class="seat" disabled aria-label="R-E7 선점을 풀어야 고를 수 있음"></button>
+</div>
+<div class="legend"><span><i></i>고를 수 있음</span><span><i class="is-off"></i>고를 수 없음</span><span><i class="is-mine"></i>내가 고름</span></div>
+</section>
+</div>
+<aside class="aside">
+<section class="panel">
+<div class="panel-head"><p class="h2">무통장 예약</p><p class="row-sub">오후 2:09까지</p></div>
+<div class="row"><div class="row-main"><p class="row-sub">선점한 좌석</p><p class="row-title">R석 3석 · R-B4 · R-B5 · R-B6</p></div></div>
+<div class="row"><div class="row-main"><p class="row-sub">결제</p><p class="row-title">무통장 입금 · 297,000원</p></div></div>
+<p class="block-note">예약자 이름 <strong>정민지</strong>로 오늘 오후 11:59까지 입금하면 예매가 확정돼요. 기한까지 입금이 없으면 예약은 저절로 취소돼요.</p>
+<div class="panel-foot"><a class="btn secondary" href="d-seats.html">좌석 다시 고르기</a><a class="btn primary" href="d-reserved.html">무통장 예약하기</a></div>
+</section>
+</aside>
+</main>
+</body></html>

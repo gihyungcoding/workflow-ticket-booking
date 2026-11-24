@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=1280">
+<title>좌석 선택 — 선점 만료</title>
+<link id="tokens" rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../../components.css"><link rel="stylesheet" href="../../desktop.css"><script src="../../palette.js"></script>
+<style>
+.seatmap { display: grid; grid-template-columns: 32px repeat(7, minmax(0, 1fr)); gap: 8px; align-items: center; }
+.seat-row { font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); text-align: center; }
+.seat { min-height: 48px; border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
+.seat[aria-pressed="true"] { background: var(--c-brand); color: var(--c-on-brand); box-shadow: none; }
+.seat:disabled { background: var(--c-disabled-bg); color: var(--c-text-disabled); box-shadow: none; }
+.seat.is-lost { box-shadow: inset 0 0 0 2px var(--c-danger); }
+.stage { padding: var(--stack-s); border-radius: var(--r-s); background: var(--c-bg); text-align: center; font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--stack-m); font-size: var(--fs-caption); color: var(--c-text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); }
+.legend i.is-mine { background: var(--c-brand); box-shadow: none; }
+.legend i.is-off { background: var(--c-disabled-bg); box-shadow: none; }
+.btn:disabled { color: var(--c-text-2); }
+</style></head>
+<body class="desk">
+<main class="main has-aside">
+<div class="col">
+<header class="d-head"><div><p class="eyebrow">새벽공방 단독 콘서트 〈밤의 정원〉 · 12월 20일 (일) 오후 6:00 · 한빛아트홀</p><h1>선점 시간이 끝났어요</h1><p class="lead">좌석을 다시 골라 주세요 · 한 번에 4석까지</p></div>
+<div class="d-actions"><div class="seg" role="radiogroup" aria-label="등급"><button class="seg-item is-selected" role="radio" aria-checked="true">R석 99,000원</button><button class="seg-item" role="radio" aria-checked="false" data-stay="S석 좌석도로 바뀌어요 — 남은 23석">S석 77,000원</button></div></div></header>
+<section class="block">
+<p class="field-msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>선점 시간 7분이 지나 R-B4 · R-B5 · R-B6 을 놓았어요. 아직 남아 있어 다시 고를 수 있어요.</p>
+<div class="stage">무대</div>
+<div class="seatmap" role="group" aria-label="R석 좌석도">
+<span class="seat-row">A</span>
+<button class="seat" aria-pressed="false" aria-label="R-A1 고를 수 있음">1</button>
+<button class="seat" aria-pressed="false" aria-label="R-A2 고를 수 있음">2</button>
+<button class="seat" disabled aria-label="R-A3 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-A4 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-A5 고를 수 없음"></button>
+<button class="seat" aria-pressed="false" aria-label="R-A6 고를 수 있음">6</button>
+<button class="seat" disabled aria-label="R-A7 고를 수 없음"></button>
+<span class="seat-row">B</span>
+<button class="seat" disabled aria-label="R-B1 고를 수 없음"></button>
+<button class="seat" aria-pressed="false" aria-label="R-B2 고를 수 있음">2</button>
+<button class="seat" disabled aria-label="R-B3 고를 수 없음"></button>
+<button class="seat" aria-pressed="false" aria-label="R-B4 고를 수 있음">4</button>
+<button class="seat" aria-pressed="false" aria-label="R-B5 고를 수 있음">5</button>
+<button class="seat" aria-pressed="false" aria-label="R-B6 고를 수 있음">6</button>
+<button class="seat" disabled aria-label="R-B7 고를 수 없음"></button>
+<span class="seat-row">C</span>
+<button class="seat" aria-pressed="false" aria-label="R-C1 고를 수 있음">1</button>
+<button class="seat" disabled aria-label="R-C2 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C3 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C4 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C5 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-C6 고를 수 없음"></button>
+<button class="seat" aria-pressed="false" aria-label="R-C7 고를 수 있음">7</button>
+<span class="seat-row">D</span>
+<button class="seat" disabled aria-label="R-D1 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-D2 고를 수 없음"></button>
+<button class="seat" aria-pressed="false" aria-label="R-D3 고를 수 있음">3</button>
+<button class="seat" aria-pressed="false" aria-label="R-D4 고를 수 있음">4</button>
+<button class="seat" aria-pressed="false" aria-label="R-D5 고를 수 있음">5</button>
+<button class="seat" disabled aria-label="R-D6 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-D7 고를 수 없음"></button>
+<span class="seat-row">E</span>
+<button class="seat" disabled aria-label="R-E1 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E2 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E3 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E4 고를 수 없음"></button>
+<button class="seat" disabled aria-label="R-E5 고를 수 없음"></button>
+<button class="seat" aria-pressed="false" aria-label="R-E6 고를 수 있음">6</button>
+<button class="seat" aria-pressed="false" aria-label="R-E7 고를 수 있음">7</button>
+</div>
+<div class="legend"><span><i></i>고를 수 있음</span><span><i class="is-off"></i>고를 수 없음</span><span><i class="is-mine"></i>내가 고름</span></div>
+</section>
+</div>
+<aside class="aside">
+<section class="block is-list">
+<div class="block-head"><h2 class="h2">고른 좌석 <span class="num">0</span> / 4</h2></div>
+<p class="row-sub">아직 고르지 않았어요</p>
+</section>
+<section class="block">
+<p class="row-title">합계 0원</p>
+<button class="btn primary full" disabled>좌석을 골라 주세요</button>
+<p class="block-note">선점하면 7분 동안 다른 관객이 이 좌석을 고를 수 없어요. 결제는 무통장 입금이에요.</p>
+</section>
+</aside>
+</main>
+</body></html>
