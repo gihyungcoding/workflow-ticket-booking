@@ -3,18 +3,32 @@
 <title>좌석 선택 — 먼저 잡힌 좌석</title>
 <link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
 <style>
-.seatmap { display: grid; grid-template-columns: 20px repeat(7, minmax(0, 1fr)); gap: 4px; align-items: center; }
-.seat-row { font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); text-align: center; }
-.seat { min-height: 40px; border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
+.seat { border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
 .seat[aria-pressed="true"] { background: var(--c-brand); color: var(--c-on-brand); box-shadow: none; }
-.seat:disabled { background: var(--c-disabled-bg); color: var(--c-text-disabled); box-shadow: none; }
+.seat:disabled { background: var(--c-disabled-bg); box-shadow: none; }
 .seat.is-lost { box-shadow: inset 0 0 0 2px var(--c-danger); }
+.seat-row { font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); text-align: center; }
 .stage { padding: var(--stack-s); border-radius: var(--r-s); background: var(--c-bg); text-align: center; font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
 .legend { display: flex; flex-wrap: wrap; gap: var(--stack-m); font-size: var(--fs-caption); color: var(--c-text-2); }
 .legend span { display: inline-flex; align-items: center; gap: 4px; }
-.legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); }
+.legend i { width: 14px; height: 14px; border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); }
 .legend i.is-mine { background: var(--c-brand); box-shadow: none; }
 .legend i.is-off { background: var(--c-disabled-bg); box-shadow: none; }
+.btn:disabled { color: var(--c-text-2); }
+.seatmap { display: grid; grid-template-columns: 20px repeat(5, minmax(44px, 1fr)); gap: 4px; align-items: center; }
+.seatmap .seat { min-height: 44px; min-width: 44px; }
+.overview { display: grid; grid-template-columns: 16px repeat(20, minmax(0, 1fr)); gap: 2px; align-items: center; }
+.overview .seat { aspect-ratio: 1; border-radius: var(--r-s); }
+.overview .seat-row { font-size: var(--fs-caption); }
+.ovmap { display: flex; flex-direction: column; gap: var(--stack-s); }
+.mini-bar { display: flex; align-items: center; gap: var(--stack-m); }
+.mini-box { flex: none; width: 128px; padding: 4px; border-radius: var(--r-s); background: var(--c-bg); }
+.mini { position: relative; display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 1px; }
+.mini i { aspect-ratio: 1; background: var(--c-disabled-bg); }
+.mini i.on { background: var(--c-text-3); }
+.mini i.me { background: var(--c-brand); }
+.mini-view { position: absolute; left: 5%; top: 0; width: 25%; height: 62.5%; border: 2px solid var(--c-brand-line); border-radius: var(--r-s); }
+.mini-bar .row-sub { flex: 1; }
 </style></head>
 <body class="has-cta">
 <header class="appbar"><a class="appbar-btn" data-back aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a><p class="appbar-title">좌석 선택</p><span></span></header>
@@ -23,50 +37,14 @@
 <div class="seg" role="radiogroup" aria-label="등급"><button class="seg-item is-selected" role="radio" aria-checked="true">R석 99,000원</button><button class="seg-item" role="radio" aria-checked="false" data-stay="S석 좌석도로 바뀌어요 — 남은 23석">S석 77,000원</button></div>
 <section class="block">
 <p class="field-msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/></svg>R-B5 는 다른 관객이 먼저 골랐어요. 이 좌석만 빼고 R-B4 · R-B6 은 남겨 뒀어요.</p>
-<div class="stage">무대</div>
-<div class="seatmap" role="group" aria-label="R석 좌석도">
-<span class="seat-row">A</span>
-<button class="seat" aria-pressed="false" aria-label="R-A1 고를 수 있음">1</button>
-<button class="seat" aria-pressed="false" aria-label="R-A2 고를 수 있음">2</button>
-<button class="seat" disabled aria-label="R-A3 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-A4 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-A5 고를 수 없음"></button>
-<button class="seat" aria-pressed="false" aria-label="R-A6 고를 수 있음">6</button>
-<button class="seat" disabled aria-label="R-A7 고를 수 없음"></button>
-<span class="seat-row">B</span>
-<button class="seat" disabled aria-label="R-B1 고를 수 없음"></button>
-<button class="seat" aria-pressed="false" aria-label="R-B2 고를 수 있음">2</button>
-<button class="seat" disabled aria-label="R-B3 고를 수 없음"></button>
-<button class="seat" aria-pressed="true" aria-label="R-B4 내가 고름">4</button>
-<button class="seat is-lost" disabled aria-label="R-B5 다른 관객이 먼저 고름"></button>
-<button class="seat" aria-pressed="true" aria-label="R-B6 내가 고름">6</button>
-<button class="seat" disabled aria-label="R-B7 고를 수 없음"></button>
-<span class="seat-row">C</span>
-<button class="seat" aria-pressed="false" aria-label="R-C1 고를 수 있음">1</button>
-<button class="seat" disabled aria-label="R-C2 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C3 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C4 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C5 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C6 고를 수 없음"></button>
-<button class="seat" aria-pressed="false" aria-label="R-C7 고를 수 있음">7</button>
-<span class="seat-row">D</span>
-<button class="seat" disabled aria-label="R-D1 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-D2 고를 수 없음"></button>
-<button class="seat" aria-pressed="false" aria-label="R-D3 고를 수 있음">3</button>
-<button class="seat" aria-pressed="false" aria-label="R-D4 고를 수 있음">4</button>
-<button class="seat" aria-pressed="false" aria-label="R-D5 고를 수 있음">5</button>
-<button class="seat" disabled aria-label="R-D6 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-D7 고를 수 없음"></button>
-<span class="seat-row">E</span>
-<button class="seat" disabled aria-label="R-E1 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E2 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E3 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E4 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E5 고를 수 없음"></button>
-<button class="seat" aria-pressed="false" aria-label="R-E6 고를 수 있음">6</button>
-<button class="seat" aria-pressed="false" aria-label="R-E7 고를 수 있음">7</button>
-</div>
-<div class="legend"><span><i></i>고를 수 있음</span><span><i class="is-off"></i>고를 수 없음</span><span><i class="is-mine"></i>내가 고름</span></div>
+<div class="mini-bar"><div class="mini-box" aria-hidden="true"><div class="mini"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i class="me"></i><i></i><i class="me"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><span class="mini-view"></span></div></div><p class="row-sub">지금 보는 곳 A~E열 2~6번 · R석 A~H열 × 20번</p><a class="block-link" href="seats--overview.html">전체 보기</a></div>
+<div class="stage">무대 쪽</div><div class="seatmap" role="group" aria-label="R석 A~E열 2~6번 확대">
+<span class="seat-row">A</span><button class="seat" aria-pressed="false" aria-label="R-A2 고를 수 있음">2</button><button class="seat" disabled aria-label="R-A3 고를 수 없음"></button><button class="seat" disabled aria-label="R-A4 고를 수 없음"></button><button class="seat" disabled aria-label="R-A5 고를 수 없음"></button><button class="seat" aria-pressed="false" aria-label="R-A6 고를 수 있음">6</button>
+<span class="seat-row">B</span><button class="seat" aria-pressed="false" aria-label="R-B2 고를 수 있음">2</button><button class="seat" disabled aria-label="R-B3 고를 수 없음"></button><button class="seat" aria-pressed="true" aria-label="R-B4 내가 고름">4</button><button class="seat is-lost" disabled aria-label="R-B5 다른 관객이 먼저 고름"></button><button class="seat" aria-pressed="true" aria-label="R-B6 내가 고름">6</button>
+<span class="seat-row">C</span><button class="seat" disabled aria-label="R-C2 고를 수 없음"></button><button class="seat" disabled aria-label="R-C3 고를 수 없음"></button><button class="seat" disabled aria-label="R-C4 고를 수 없음"></button><button class="seat" disabled aria-label="R-C5 고를 수 없음"></button><button class="seat" disabled aria-label="R-C6 고를 수 없음"></button>
+<span class="seat-row">D</span><button class="seat" disabled aria-label="R-D2 고를 수 없음"></button><button class="seat" aria-pressed="false" aria-label="R-D3 고를 수 있음">3</button><button class="seat" aria-pressed="false" aria-label="R-D4 고를 수 있음">4</button><button class="seat" aria-pressed="false" aria-label="R-D5 고를 수 있음">5</button><button class="seat" disabled aria-label="R-D6 고를 수 없음"></button>
+<span class="seat-row">E</span><button class="seat" disabled aria-label="R-E2 고를 수 없음"></button><button class="seat" disabled aria-label="R-E3 고를 수 없음"></button><button class="seat" disabled aria-label="R-E4 고를 수 없음"></button><button class="seat" disabled aria-label="R-E5 고를 수 없음"></button><button class="seat" aria-pressed="false" aria-label="R-E6 고를 수 있음">6</button>
+</div><div class="legend"><span><i></i>고를 수 있음</span><span><i class="is-off"></i>고를 수 없음</span><span><i class="is-mine"></i>내가 고름</span></div>
 </section>
 <section class="block">
 <div class="block-head"><h2 class="h2">고른 좌석 <span class="num">2</span> / 4</h2></div>

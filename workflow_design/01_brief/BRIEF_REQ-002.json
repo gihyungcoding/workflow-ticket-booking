@@ -209,6 +209,15 @@
       "recommended": "확대해서 고르기",
       "answer": "확대해서 고르기 (추천)",
       "scope": "구역 좌석도는 처음에 전체(빈자리 분포), 누른 곳 주변을 44px 로 확대, 미니맵으로 위치. 좌석 수와 무관"
+    },
+    {
+      "id": "D11",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "좌석 화면 상태 6장 — 한 화면 최대 3장 규칙을 넘는다",
+      "answer": "6장 그대로 (추천)",
+      "scope": "REQ-002 좌석 고르기 화면만"
     }
   ],
   "completeness": [
@@ -319,5 +328,77 @@
       "findings": 4,
       "accepted": 4
     }
-  ]
+  ],
+  "mockup": {
+    "status": "approved",
+    "rev": 2,
+    "coverage": {
+      "AC-1": [
+        "seats",
+        "seats--overview",
+        "hold",
+        "d-seats",
+        "d-hold"
+      ],
+      "AC-2": [
+        "seats--taken",
+        "d-seats--taken"
+      ],
+      "AC-3": [
+        "seats--limit",
+        "d-seats--limit"
+      ],
+      "AC-4": [
+        "hold",
+        "reserved",
+        "booking",
+        "d-reserved"
+      ],
+      "AC-5": [
+        "bookings--confirmed",
+        "booking--confirmed",
+        "d-bookings--confirmed"
+      ],
+      "AC-6": [
+        "bookings",
+        "booking--cancelled",
+        "d-bookings--cancelled"
+      ],
+      "AC-8": [
+        "seats--expired",
+        "d-seats--expired"
+      ],
+      "AC-10": [
+        "hold",
+        "seats--released",
+        "d-hold",
+        "d-seats--released"
+      ]
+    },
+    "feedback": [
+      {
+        "rev": 1,
+        "text": "모바일 좌석 33×40px — 큰 구역(최대 26열×수백 석)은 확대해서 고르기",
+        "impact": "screen"
+      },
+      {
+        "rev": 1,
+        "text": "다시 고르면 선점 바로 해제(D7)·예매번호 표시(D8)",
+        "impact": "data"
+      },
+      {
+        "rev": 2,
+        "text": "갈래 화살표를 실제 갈래 5개로 정리(캔버스 이름표 겹침)",
+        "impact": "visual"
+      },
+      {
+        "rev": 2,
+        "text": "좌석 배치도 둥글기·축소판 글자 크기",
+        "impact": "visual"
+      }
+    ],
+    "exceptions": [
+      "좌석 고르기 화면 상태 6장 — '한 화면 최대 3장' 규칙 예외. 모두 완료 조건 장면 (사용자 결정 2026-11-24)"
+    ]
+  }
 }

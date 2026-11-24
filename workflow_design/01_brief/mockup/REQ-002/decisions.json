@@ -103,11 +103,34 @@
    ]
   },
   {
+   "id": "AC-10",
+   "name": "좌석 다시 고르기 → 선점 바로 해제",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "why": "D7 승인.",
+   "screens": [
+    "hold",
+    "seats--released"
+   ]
+  },
+  {
+   "id": "D10",
+   "name": "큰 구역 좌석은 확대해서 고르기 + 미니맵",
+   "source": "BRIEF",
+   "verdict": "keep",
+   "how": "처음엔 구역 전체(누를 수 없음) → 누른 곳 주변 44px 확대",
+   "why": "최대 26열 × 수백 석 구역에서 44px 터치를 지킨다.",
+   "screens": [
+    "seats--overview",
+    "seats"
+   ]
+  },
+  {
    "id": "Q1",
    "name": "선점 중 '좌석 다시 고르기'로 선점 풀기",
    "source": "여정",
    "verdict": "keep",
-   "ask": true,
+   "ask": false,
    "question": "선점 화면에서 '좌석 다시 고르기'를 누르면 선점을 바로 풀까? (AC 에 없는 선점 해제 동작이 생긴다)",
    "recommended": "keep — 풀고 좌석 화면으로. 풀지 않으면 자기가 잡은 자리를 7분 동안 다시 고를 수 없다",
    "options": [
@@ -116,15 +139,17 @@
    ],
    "why": "없으면 관객이 한 자리를 바꾸려다 7분 동안 막힌다(빈도 중 × 피해 큼). 새 할 일은 없다.",
    "screens": [
-    "hold"
-   ]
+    "hold",
+    "seats--released"
+   ],
+   "answered": "D7 바로 풀고 다시 고르기"
   },
   {
    "id": "Q2",
    "name": "입금자명 입력 칸",
    "source": "여정",
    "verdict": "cut",
-   "ask": true,
+   "ask": false,
    "question": "무통장 예약에 입금자명 입력 칸을 둘까?",
    "recommended": "cut — 예약자 이름(정민지)으로 입금하라고 안내만 한다",
    "options": [
@@ -135,14 +160,15 @@
    "screens": [
     "hold",
     "reserved"
-   ]
+   ],
+   "answered": "D9"
   },
   {
    "id": "Q3",
    "name": "예매 확정·자동 취소 알림(문자·메일)",
    "source": "여정",
    "verdict": "later",
-   "ask": true,
+   "ask": false,
    "question": "확정·자동 취소를 메일이나 문자로 알릴까?",
    "recommended": "later — 이번에는 내 예매에서 확인(목표 문장 그대로)",
    "options": [
@@ -152,14 +178,15 @@
    "why": "목표는 '내 예매에서 확인'. 메일은 새 기능 — 결과 화면에 '알림은 보내지 않아요'를 적는다.",
    "screens": [
     "reserved"
-   ]
+   ],
+   "answered": "D9"
   },
   {
    "id": "Q4",
    "name": "예매번호 표시",
    "source": "여정",
    "verdict": "keep",
-   "ask": true,
+   "ask": false,
    "question": "예약 화면·내 예매에 예매번호(예: 2611240381)를 보일까? (새 표시 필드)",
    "recommended": "keep — 운영자가 입금과 예약을 맞추고 관객이 문의할 때 쓰는 하나의 이름",
    "options": [
@@ -172,14 +199,15 @@
     "booking",
     "booking--confirmed",
     "booking--cancelled"
-   ]
+   ],
+   "answered": "D8"
   },
   {
    "id": "Q5",
    "name": "기한 뒤 입금한 관객 안내",
    "source": "여정",
    "verdict": "lighten",
-   "ask": true,
+   "ask": false,
    "question": "기한이 지난 뒤 입금한 관객(AC-9 거절 대상)에게 취소 화면에서 무엇을 안내할까? 환불 송금은 범위 밖이다",
    "recommended": "lighten — '기한 뒤 입금은 예매로 바뀌지 않아요. 입금했다면 예매번호로 문의해 주세요' 한 줄만, 문의 창구는 정해지면 붙인다",
    "options": [
@@ -191,7 +219,8 @@
    "why": "드물지만(빈도 낮음) 돈이 걸린다(피해 큼). 환불 송금은 product.md §4 범위 밖이라 화면은 안내까지.",
    "screens": [
     "booking--cancelled"
-   ]
+   ],
+   "answered": "D9"
   },
   {
    "id": "X1",

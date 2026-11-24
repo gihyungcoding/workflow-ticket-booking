@@ -3,18 +3,20 @@
 <title>선점 완료 · 예약</title>
 <link id="tokens" rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../../components.css"><link rel="stylesheet" href="../../desktop.css"><script src="../../palette.js"></script>
 <style>
-.seatmap { display: grid; grid-template-columns: 32px repeat(7, minmax(0, 1fr)); gap: 8px; align-items: center; }
-.seat-row { font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); text-align: center; }
-.seat { min-height: 48px; border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
+.seat { border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
 .seat[aria-pressed="true"] { background: var(--c-brand); color: var(--c-on-brand); box-shadow: none; }
-.seat:disabled { background: var(--c-disabled-bg); color: var(--c-text-disabled); box-shadow: none; }
+.seat:disabled { background: var(--c-disabled-bg); box-shadow: none; }
 .seat.is-lost { box-shadow: inset 0 0 0 2px var(--c-danger); }
+.seat-row { font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); text-align: center; }
 .stage { padding: var(--stack-s); border-radius: var(--r-s); background: var(--c-bg); text-align: center; font-size: var(--fs-caption); font-weight: 600; color: var(--c-text-2); }
 .legend { display: flex; flex-wrap: wrap; gap: var(--stack-m); font-size: var(--fs-caption); color: var(--c-text-2); }
 .legend span { display: inline-flex; align-items: center; gap: 4px; }
-.legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); }
+.legend i { width: 14px; height: 14px; border-radius: var(--r-s); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line-strong); }
 .legend i.is-mine { background: var(--c-brand); box-shadow: none; }
 .legend i.is-off { background: var(--c-disabled-bg); box-shadow: none; }
+.btn:disabled { color: var(--c-text-2); }
+.seatmap { display: grid; grid-template-columns: 28px repeat(20, minmax(0, 1fr)); gap: 4px; align-items: center; }
+.seatmap .seat { min-height: 32px; }
 </style></head>
 <body class="desk">
 <main class="main has-aside">
@@ -22,49 +24,16 @@
 <header class="d-head"><div><p class="eyebrow">새벽공방 단독 콘서트 〈밤의 정원〉 · 12월 20일 (일) 오후 6:00 · 한빛아트홀</p><h1><span class="num">6:42</span> 안에 예약해 주세요</h1><p class="lead">R-B4 · R-B5 · R-B6 을 오후 2:09까지 잡아 두고 있어요</p></div></header>
 <section class="block">
 <div class="stage">무대</div>
-<div class="seatmap" role="group" aria-label="R석 좌석도">
-<span class="seat-row">A</span>
-<button class="seat" disabled aria-label="R-A1 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-A2 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-A3 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-A4 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-A5 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-A6 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-A7 고를 수 없음"></button>
-<span class="seat-row">B</span>
-<button class="seat" disabled aria-label="R-B1 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-B2 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-B3 고를 수 없음"></button>
-<button class="seat" aria-pressed="true" aria-label="R-B4 내가 고름">4</button>
-<button class="seat" aria-pressed="true" aria-label="R-B5 내가 고름">5</button>
-<button class="seat" aria-pressed="true" aria-label="R-B6 내가 고름">6</button>
-<button class="seat" disabled aria-label="R-B7 고를 수 없음"></button>
-<span class="seat-row">C</span>
-<button class="seat" disabled aria-label="R-C1 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-C2 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C3 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C4 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C5 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C6 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-C7 선점을 풀어야 고를 수 있음"></button>
-<span class="seat-row">D</span>
-<button class="seat" disabled aria-label="R-D1 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-D2 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-D3 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-D4 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-D5 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-D6 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-D7 고를 수 없음"></button>
-<span class="seat-row">E</span>
-<button class="seat" disabled aria-label="R-E1 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E2 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E3 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E4 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E5 고를 수 없음"></button>
-<button class="seat" disabled aria-label="R-E6 선점을 풀어야 고를 수 있음"></button>
-<button class="seat" disabled aria-label="R-E7 선점을 풀어야 고를 수 있음"></button>
-</div>
-<div class="legend"><span><i></i>고를 수 있음</span><span><i class="is-off"></i>고를 수 없음</span><span><i class="is-mine"></i>내가 고름</span></div>
+<div class="seatmap" role="group" aria-label="R석 좌석도 A~H열 × 1~20번">
+<span class="seat-row">A</span><button class="seat" disabled aria-label="R-A1 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-A2 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-A3 고를 수 없음"></button><button class="seat" disabled aria-label="R-A4 고를 수 없음"></button><button class="seat" disabled aria-label="R-A5 고를 수 없음"></button><button class="seat" disabled aria-label="R-A6 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-A7 고를 수 없음"></button><button class="seat" disabled aria-label="R-A8 고를 수 없음"></button><button class="seat" disabled aria-label="R-A9 고를 수 없음"></button><button class="seat" disabled aria-label="R-A10 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-A11 고를 수 없음"></button><button class="seat" disabled aria-label="R-A12 고를 수 없음"></button><button class="seat" disabled aria-label="R-A13 고를 수 없음"></button><button class="seat" disabled aria-label="R-A14 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-A15 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-A16 고를 수 없음"></button><button class="seat" disabled aria-label="R-A17 고를 수 없음"></button><button class="seat" disabled aria-label="R-A18 고를 수 없음"></button><button class="seat" disabled aria-label="R-A19 고를 수 없음"></button><button class="seat" disabled aria-label="R-A20 선점을 풀어야 고를 수 있음"></button>
+<span class="seat-row">B</span><button class="seat" disabled aria-label="R-B1 고를 수 없음"></button><button class="seat" disabled aria-label="R-B2 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-B3 고를 수 없음"></button><button class="seat" aria-pressed="true" aria-label="R-B4 내가 고름">4</button><button class="seat" aria-pressed="true" aria-label="R-B5 내가 고름">5</button><button class="seat" aria-pressed="true" aria-label="R-B6 내가 고름">6</button><button class="seat" disabled aria-label="R-B7 고를 수 없음"></button><button class="seat" disabled aria-label="R-B8 고를 수 없음"></button><button class="seat" disabled aria-label="R-B9 고를 수 없음"></button><button class="seat" disabled aria-label="R-B10 고를 수 없음"></button><button class="seat" disabled aria-label="R-B11 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-B12 고를 수 없음"></button><button class="seat" disabled aria-label="R-B13 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-B14 고를 수 없음"></button><button class="seat" disabled aria-label="R-B15 고를 수 없음"></button><button class="seat" disabled aria-label="R-B16 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-B17 고를 수 없음"></button><button class="seat" disabled aria-label="R-B18 고를 수 없음"></button><button class="seat" disabled aria-label="R-B19 고를 수 없음"></button><button class="seat" disabled aria-label="R-B20 선점을 풀어야 고를 수 있음"></button>
+<span class="seat-row">C</span><button class="seat" disabled aria-label="R-C1 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-C2 고를 수 없음"></button><button class="seat" disabled aria-label="R-C3 고를 수 없음"></button><button class="seat" disabled aria-label="R-C4 고를 수 없음"></button><button class="seat" disabled aria-label="R-C5 고를 수 없음"></button><button class="seat" disabled aria-label="R-C6 고를 수 없음"></button><button class="seat" disabled aria-label="R-C7 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-C8 고를 수 없음"></button><button class="seat" disabled aria-label="R-C9 고를 수 없음"></button><button class="seat" disabled aria-label="R-C10 고를 수 없음"></button><button class="seat" disabled aria-label="R-C11 고를 수 없음"></button><button class="seat" disabled aria-label="R-C12 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-C13 고를 수 없음"></button><button class="seat" disabled aria-label="R-C14 고를 수 없음"></button><button class="seat" disabled aria-label="R-C15 고를 수 없음"></button><button class="seat" disabled aria-label="R-C16 고를 수 없음"></button><button class="seat" disabled aria-label="R-C17 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-C18 고를 수 없음"></button><button class="seat" disabled aria-label="R-C19 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-C20 고를 수 없음"></button>
+<span class="seat-row">D</span><button class="seat" disabled aria-label="R-D1 고를 수 없음"></button><button class="seat" disabled aria-label="R-D2 고를 수 없음"></button><button class="seat" disabled aria-label="R-D3 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-D4 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-D5 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-D6 고를 수 없음"></button><button class="seat" disabled aria-label="R-D7 고를 수 없음"></button><button class="seat" disabled aria-label="R-D8 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-D9 고를 수 없음"></button><button class="seat" disabled aria-label="R-D10 고를 수 없음"></button><button class="seat" disabled aria-label="R-D11 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-D12 고를 수 없음"></button><button class="seat" disabled aria-label="R-D13 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-D14 고를 수 없음"></button><button class="seat" disabled aria-label="R-D15 고를 수 없음"></button><button class="seat" disabled aria-label="R-D16 고를 수 없음"></button><button class="seat" disabled aria-label="R-D17 고를 수 없음"></button><button class="seat" disabled aria-label="R-D18 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-D19 고를 수 없음"></button><button class="seat" disabled aria-label="R-D20 고를 수 없음"></button>
+<span class="seat-row">E</span><button class="seat" disabled aria-label="R-E1 고를 수 없음"></button><button class="seat" disabled aria-label="R-E2 고를 수 없음"></button><button class="seat" disabled aria-label="R-E3 고를 수 없음"></button><button class="seat" disabled aria-label="R-E4 고를 수 없음"></button><button class="seat" disabled aria-label="R-E5 고를 수 없음"></button><button class="seat" disabled aria-label="R-E6 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-E7 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-E8 고를 수 없음"></button><button class="seat" disabled aria-label="R-E9 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-E10 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-E11 고를 수 없음"></button><button class="seat" disabled aria-label="R-E12 고를 수 없음"></button><button class="seat" disabled aria-label="R-E13 고를 수 없음"></button><button class="seat" disabled aria-label="R-E14 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-E15 고를 수 없음"></button><button class="seat" disabled aria-label="R-E16 고를 수 없음"></button><button class="seat" disabled aria-label="R-E17 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-E18 고를 수 없음"></button><button class="seat" disabled aria-label="R-E19 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-E20 고를 수 없음"></button>
+<span class="seat-row">F</span><button class="seat" disabled aria-label="R-F1 고를 수 없음"></button><button class="seat" disabled aria-label="R-F2 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-F3 고를 수 없음"></button><button class="seat" disabled aria-label="R-F4 고를 수 없음"></button><button class="seat" disabled aria-label="R-F5 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-F6 고를 수 없음"></button><button class="seat" disabled aria-label="R-F7 고를 수 없음"></button><button class="seat" disabled aria-label="R-F8 고를 수 없음"></button><button class="seat" disabled aria-label="R-F9 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-F10 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-F11 고를 수 없음"></button><button class="seat" disabled aria-label="R-F12 고를 수 없음"></button><button class="seat" disabled aria-label="R-F13 고를 수 없음"></button><button class="seat" disabled aria-label="R-F14 고를 수 없음"></button><button class="seat" disabled aria-label="R-F15 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-F16 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-F17 고를 수 없음"></button><button class="seat" disabled aria-label="R-F18 고를 수 없음"></button><button class="seat" disabled aria-label="R-F19 고를 수 없음"></button><button class="seat" disabled aria-label="R-F20 선점을 풀어야 고를 수 있음"></button>
+<span class="seat-row">G</span><button class="seat" disabled aria-label="R-G1 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-G2 고를 수 없음"></button><button class="seat" disabled aria-label="R-G3 고를 수 없음"></button><button class="seat" disabled aria-label="R-G4 고를 수 없음"></button><button class="seat" disabled aria-label="R-G5 고를 수 없음"></button><button class="seat" disabled aria-label="R-G6 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-G7 고를 수 없음"></button><button class="seat" disabled aria-label="R-G8 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-G9 고를 수 없음"></button><button class="seat" disabled aria-label="R-G10 고를 수 없음"></button><button class="seat" disabled aria-label="R-G11 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-G12 고를 수 없음"></button><button class="seat" disabled aria-label="R-G13 고를 수 없음"></button><button class="seat" disabled aria-label="R-G14 고를 수 없음"></button><button class="seat" disabled aria-label="R-G15 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-G16 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-G17 고를 수 없음"></button><button class="seat" disabled aria-label="R-G18 고를 수 없음"></button><button class="seat" disabled aria-label="R-G19 고를 수 없음"></button><button class="seat" disabled aria-label="R-G20 고를 수 없음"></button>
+<span class="seat-row">H</span><button class="seat" disabled aria-label="R-H1 고를 수 없음"></button><button class="seat" disabled aria-label="R-H2 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-H3 고를 수 없음"></button><button class="seat" disabled aria-label="R-H4 고를 수 없음"></button><button class="seat" disabled aria-label="R-H5 고를 수 없음"></button><button class="seat" disabled aria-label="R-H6 고를 수 없음"></button><button class="seat" disabled aria-label="R-H7 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-H8 고를 수 없음"></button><button class="seat" disabled aria-label="R-H9 고를 수 없음"></button><button class="seat" disabled aria-label="R-H10 고를 수 없음"></button><button class="seat" disabled aria-label="R-H11 고를 수 없음"></button><button class="seat" disabled aria-label="R-H12 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-H13 고를 수 없음"></button><button class="seat" disabled aria-label="R-H14 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-H15 고를 수 없음"></button><button class="seat" disabled aria-label="R-H16 고를 수 없음"></button><button class="seat" disabled aria-label="R-H17 선점을 풀어야 고를 수 있음"></button><button class="seat" disabled aria-label="R-H18 고를 수 없음"></button><button class="seat" disabled aria-label="R-H19 고를 수 없음"></button><button class="seat" disabled aria-label="R-H20 고를 수 없음"></button>
+</div><div class="legend"><span><i></i>고를 수 있음</span><span><i class="is-off"></i>고를 수 없음</span><span><i class="is-mine"></i>내가 고름</span></div>
 </section>
 </div>
 <aside class="aside">
@@ -73,7 +42,8 @@
 <div class="row"><div class="row-main"><p class="row-sub">선점한 좌석</p><p class="row-title">R석 3석 · R-B4 · R-B5 · R-B6</p></div></div>
 <div class="row"><div class="row-main"><p class="row-sub">결제</p><p class="row-title">무통장 입금 · 297,000원</p></div></div>
 <p class="block-note">예약자 이름 <strong>정민지</strong>로 오늘 오후 11:59까지 입금하면 예매가 확정돼요. 기한까지 입금이 없으면 예약은 저절로 취소돼요.</p>
-<div class="panel-foot"><a class="btn secondary" href="d-seats.html">좌석 다시 고르기</a><a class="btn primary" href="d-reserved.html">무통장 예약하기</a></div>
+<p class="block-note">좌석 다시 고르기를 누르면 선점이 바로 풀려 다른 관객도 이 좌석을 고를 수 있어요.</p>
+<div class="panel-foot"><a class="btn secondary" href="d-seats--released.html">좌석 다시 고르기</a><a class="btn primary" href="d-reserved.html">무통장 예약하기</a></div>
 </section>
 </aside>
 </main>

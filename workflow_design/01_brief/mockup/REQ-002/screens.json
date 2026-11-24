@@ -1,94 +1,470 @@
 {
-  "title": "REQ-002 예매 흐름 — 좌석 선점 → 무통장 예약 → 입금 확인 → 예매 확정",
-  "story": {
-    "headline": "고른 자리는 <em>7분 동안 내 것</em>, 입금이 확인되면 내 예매에 <em>예매 확정</em>",
-    "summary": "좌석을 1~4개 고르면 7분 동안 다른 관객이 못 고른다. 그 안에 무통장 예약을 하면 계좌·금액·기한이 보이고, 운영자가 입금을 확인하는 순간 내 예매가 '예매 확정'으로 바뀐다. 기한까지 입금이 없으면 예약은 저절로 취소되고 좌석은 다시 판매된다.",
-    "ideas": [
-      {"title": "남은 시간이 주인공", "desc": "선점 화면의 가장 큰 숫자는 남은 시간 6:42 — 무엇을 언제까지 해야 하는지 한눈에."},
-      {"title": "결제 수단 고르기 없음", "desc": "무통장 하나뿐이라 고르는 단계를 없애고 계좌·금액·기한 세 값만 크게(ADR-0025)."},
-      {"title": "빠진 좌석만 빠진다", "desc": "누가 먼저 잡은 좌석 하나만 선택에서 빠지고 나머지는 그대로 — 처음부터 다시 고르지 않는다."}
-    ]
-  },
-  "badges": {"예매 가능": "is-brand", "입금 대기": "is-warning", "예매 확정": "is-success", "매진": "is-danger"},
-  "avatar_style": "people",
-  "people": [
-    {"name": "관객 정민지", "why": "기다리던 공연 좌석을 붙여서 3장 잡고 싶다", "win": "내 예매에 '예매 확정'이 보일 때", "core": true,
-     "wants": [
-       {"q": "고른 자리가 지금 내 것인가, 얼마 동안인가", "at": ["hold", "seats"]},
-       {"q": "어디로 얼마를 언제까지 보내나", "at": ["reserved", "booking"]},
-       {"q": "확정은 언제 어떻게 아나", "at": ["reserved", "booking--confirmed", "bookings--confirmed"]},
-       {"q": "자리를 놓쳤으면 왜, 이제 뭘 하나", "at": ["seats--taken", "seats--expired", "booking--cancelled"]},
-       {"q": "몇 장까지 한 번에 잡나", "at": ["seats", "seats--limit"]}
-     ]},
-    {"name": "운영/관리자 한도윤", "why": "들어온 입금을 예약과 맞춰 확정해야 한다(화면 없음, 입금 확인 API)", "win": "확인 한 번에 관객 쪽이 예매 확정으로 바뀐다", "core": false,
-     "wants": [
-       {"q": "이 입금이 어느 예약인가(예매번호·입금자명·금액)", "at": ["reserved"]},
-       {"q": "기한이 지났나", "at": ["booking--cancelled"]}
-     ]}
-  ],
-  "groups": ["좌석 선점", "무통장 예약", "내 예매"],
-  "screens": [
-    {"id": "seats", "file": "screens/seats.html", "title": "좌석 선택", "group": "좌석 선점", "kind": "form",
-     "purpose": "등급을 바꿔 가며 좌석을 1~4개 고르고 선점한다",
-     "policies": ["고를 수 없는 좌석은 선점·판매를 구분하지 않고 회색", "선택 수 3/4 가 늘 보이고, 하단 버튼에 고른 수를 적는다", "기존 공연 상세의 예매 버튼에서 들어온다(대기열은 후속 요청)"],
-     "branches": [{"to": "hold", "label": "선점 성공"}, {"to": "seats--taken", "label": "먼저 잡힌 좌석"}, {"to": "seats--limit", "label": "5장째 누름"}],
-     "sample": false, "desktop": "d-seats"},
-    {"id": "seats--taken", "file": "screens/seats--taken.html", "title": "좌석 선택 — 먼저 잡힌 좌석", "group": "좌석 선점", "kind": "form",
-     "purpose": "AC-2 — R-B5 가 빠졌다는 안내와 다시 고르기",
-     "policies": ["빠진 좌석 하나만 선택에서 빠지고 R-B4·R-B6 은 그대로", "안내는 좌석도 바로 위, 해결 행동(다시 선점하기)이 주 버튼"],
-     "branches": [{"to": "hold", "label": "다시 선점"}], "desktop": "d-seats--taken"},
-    {"id": "seats--limit", "file": "screens/seats--limit.html", "title": "좌석 선택 — 4석 한도", "group": "좌석 선점", "kind": "form",
-     "purpose": "AC-3 — 5장째를 누르면 고르지 않고 4석 한도를 알린다",
-     "policies": ["5장째 좌석은 선택되지 않는다 — 서버도 5장 이상 요청을 거절", "다른 좌석으로 바꾸려면 고른 좌석을 먼저 눌러 뺀다"],
-     "branches": [], "desktop": "d-seats--limit"},
-    {"id": "seats--expired", "file": "screens/seats--expired.html", "title": "좌석 선택 — 선점 만료", "group": "좌석 선점", "kind": "form",
-     "purpose": "AC-8 — 7분이 지나 선점이 풀렸고 좌석을 다시 고를 수 있다",
-     "policies": ["선점 화면 타이머가 0 이 되면 재조회 없이 이 화면으로(ADR-0026)", "풀린 좌석은 다른 관객도 고를 수 있다 — 아직 남아 있으면 다시 고를 수 있다"],
-     "branches": [{"to": "hold", "label": "다시 선점"}], "desktop": "d-seats--expired"},
-    {"id": "hold", "file": "screens/hold.html", "title": "선점 완료 · 예약", "group": "무통장 예약", "kind": "form",
-     "purpose": "7분 안에 무통장 예약을 한다 — 남은 시간·좌석·금액",
-     "policies": ["결제 수단은 무통장 입금 하나 — 고르는 목록 없음(ADR-0025)", "입금자명은 예약자 이름으로 안내(입력 칸 없음, Q2)", "좌석 다시 고르기는 선점을 풀고 좌석 화면으로(Q1)"],
-     "branches": [{"to": "reserved", "label": "무통장 예약"}, {"to": "seats", "label": "좌석 다시 고르기"}, {"to": "seats--expired", "label": "7분 지남"}],
-     "desktop": "d-hold"},
-    {"id": "reserved", "file": "screens/reserved.html", "title": "예약 완료", "group": "무통장 예약", "kind": "result",
-     "purpose": "AC-4 — 입금 계좌·금액·기한(오늘 오후 11:59)을 보여 주는 결과 화면",
-     "policies": ["정해진 것: 3석 예약·입금 대기 / 전해진 곳: 이 화면과 내 예매(알림 발송 없음)", "다음: 입금 확인되면 예매 확정, 기한 지나면 자동 취소·좌석 재판매", "계좌 복사는 같은 자리에서 '복사했어요'"],
-     "branches": [{"to": "bookings", "label": "확인"}], "desktop": "d-reserved"},
-    {"id": "bookings", "file": "screens/bookings.html", "title": "내 예매", "group": "내 예매", "kind": "list", "archetype": "행 목록",
-     "purpose": "내 예매의 상태를 훑는다 — 입금 대기와 자동 취소",
-     "policies": ["상태는 배지(입금 대기·예매 확정), 끝난 자동 취소는 평문", "입금 대기 행에는 기한을 글자로"],
-     "branches": [{"to": "booking", "label": "입금 대기 예매"}, {"to": "booking--cancelled", "label": "취소된 예매"}],
-     "sample": true, "desktop": "d-bookings"},
-    {"id": "bookings--empty", "file": "screens/bookings--empty.html", "title": "내 예매 — 처음", "group": "내 예매", "kind": "list",
-     "purpose": "아직 예매가 없을 때",
-     "policies": ["공연 둘러보기로 이어진다(기존 공연 목록)"], "branches": [], "desktop": "d-bookings--empty"},
-    {"id": "bookings--confirmed", "file": "screens/bookings--confirmed.html", "title": "내 예매 — 확정 반영", "group": "내 예매", "kind": "list",
-     "purpose": "AC-5 — 입금 확인 뒤 목록에 '예매 확정'",
-     "policies": ["입금 확인이 기록되면 다음 조회 때 배지가 입금 대기 → 예매 확정"],
-     "branches": [{"to": "booking--confirmed", "label": "확정된 예매"}], "desktop": "d-bookings--confirmed"},
-    {"id": "booking", "file": "screens/booking.html", "title": "예매 상세 — 입금 대기", "group": "내 예매", "kind": "detail", "archetype": "진행 추적형",
-     "purpose": "입금 대기 예매의 계좌·금액·기한과 진행 단계",
-     "policies": ["진행 단계: 선점 → 예약 → 입금 확인 → 예매 확정, 지금은 입금 확인 기다림", "직접 취소는 후속 요청 — 입금하지 않으면 기한에 자동 취소"],
-     "branches": [], "desktop": "d-bookings"},
-    {"id": "booking--confirmed", "file": "screens/booking--confirmed.html", "title": "예매 확정", "group": "내 예매", "kind": "result",
-     "purpose": "AC-5 — 입금 확인으로 예매가 확정됐다",
-     "policies": ["정해진 것: 3석 예매 확정 / 전해진 것: 11월 24일 오후 4:20 입금 확인 기록", "다음: 공연 당일 입장. 모바일 티켓·취소·양도는 후속 요청에서 다룸(D6)"],
-     "branches": [{"to": "bookings--confirmed", "label": "확인"}], "desktop": "d-bookings--confirmed"},
-    {"id": "booking--cancelled", "file": "screens/booking--cancelled.html", "title": "예약 취소됨", "group": "내 예매", "kind": "result",
-     "purpose": "AC-6·9 — 입금 기한이 지나 예약이 자동 취소됐다",
-     "policies": ["끝난 상태라 배지 없이 평문(design.md §5)", "좌석은 다시 판매 중 — 같은 공연 좌석을 다시 고를 수 있다", "기한 뒤 들어온 입금 확인은 거절된다(AC-9) — 입금했다면 문의 안내"],
-     "branches": [{"to": "seats", "label": "좌석 다시 고르기"}], "desktop": "d-bookings--cancelled"}
-  ],
-  "desktop": [
-    {"id": "d-seats", "file": "screens/desktop/d-seats.html", "title": "좌석 선택", "group": "좌석 선점", "merges": ["seats"], "pattern": "보조 열", "purpose": "좌석도를 보며 오른쪽에서 선택 수·금액을 확인하고 선점", "policies": ["보조 열은 스크롤해도 따라온다"]},
-    {"id": "d-seats--taken", "file": "screens/desktop/d-seats--taken.html", "title": "좌석 선택 — 먼저 잡힌 좌석", "group": "좌석 선점", "merges": ["seats--taken"], "pattern": "보조 열", "purpose": "AC-2 — 빠진 좌석 안내와 다시 선점", "policies": []},
-    {"id": "d-seats--limit", "file": "screens/desktop/d-seats--limit.html", "title": "좌석 선택 — 4석 한도", "group": "좌석 선점", "merges": ["seats--limit"], "pattern": "보조 열", "purpose": "AC-3 — 5장째 거절", "policies": []},
-    {"id": "d-seats--expired", "file": "screens/desktop/d-seats--expired.html", "title": "좌석 선택 — 선점 만료", "group": "좌석 선점", "merges": ["seats--expired"], "pattern": "보조 열", "purpose": "AC-8 — 7분 만료 후 다시 고르기", "policies": []},
-    {"id": "d-hold", "file": "screens/desktop/d-hold.html", "title": "선점 완료 · 예약", "group": "무통장 예약", "merges": ["hold"], "pattern": "보조 열 (예약 패널)", "purpose": "좌석도에 내 선점을 보며 7분 안에 무통장 예약", "policies": ["다른 좌석은 선점을 풀어야 고를 수 있다"]},
-    {"id": "d-reserved", "file": "screens/desktop/d-reserved.html", "title": "예약 완료", "group": "무통장 예약", "merges": ["reserved"], "pattern": "숫자 요약 + 보조 열", "purpose": "AC-4 — 계좌·금액·기한을 나란히", "policies": []},
-    {"id": "d-bookings", "file": "screens/desktop/d-bookings.html", "title": "내 예매", "group": "내 예매", "merges": ["bookings", "booking"], "pattern": "목록·상세 나란히", "purpose": "예매 목록과 선택한 입금 대기 예매 상세", "policies": []},
-    {"id": "d-bookings--empty", "file": "screens/desktop/d-bookings--empty.html", "title": "내 예매 — 처음", "group": "내 예매", "merges": ["bookings--empty"], "pattern": "목록·상세 나란히(빈 상태)", "purpose": "아직 예매가 없을 때", "policies": []},
-    {"id": "d-bookings--confirmed", "file": "screens/desktop/d-bookings--confirmed.html", "title": "내 예매 — 예매 확정", "group": "내 예매", "merges": ["bookings--confirmed", "booking--confirmed"], "pattern": "목록·상세 나란히", "purpose": "AC-5 — 목록 배지와 상세가 함께 예매 확정", "policies": []},
-    {"id": "d-bookings--cancelled", "file": "screens/desktop/d-bookings--cancelled.html", "title": "내 예매 — 자동 취소", "group": "내 예매", "merges": ["booking--cancelled"], "pattern": "목록·상세 나란히", "purpose": "AC-6·9 — 기한 경과로 취소된 예매", "policies": []}
+ "title": "REQ-002 예매 흐름 — 좌석 선점 → 무통장 예약 → 입금 확인 → 예매 확정",
+ "story": {
+  "headline": "고른 자리는 <em>7분 동안 내 것</em>, 입금이 확인되면 내 예매에 <em>예매 확정</em>",
+  "summary": "좌석을 1~4개 고르면 7분 동안 다른 관객이 못 고른다. 그 안에 무통장 예약을 하면 계좌·금액·기한이 보이고, 운영자가 입금을 확인하는 순간 내 예매가 '예매 확정'으로 바뀐다. 기한까지 입금이 없으면 예약은 저절로 취소되고 좌석은 다시 판매된다.",
+  "ideas": [
+   {
+    "title": "남은 시간이 주인공",
+    "desc": "선점 화면의 가장 큰 숫자는 남은 시간 6:42 — 무엇을 언제까지 해야 하는지 한눈에."
+   },
+   {
+    "title": "결제 수단 고르기 없음",
+    "desc": "무통장 하나뿐이라 고르는 단계를 없애고 계좌·금액·기한 세 값만 크게(ADR-0025)."
+   },
+   {
+    "title": "빠진 좌석만 빠진다",
+    "desc": "누가 먼저 잡은 좌석 하나만 선택에서 빠지고 나머지는 그대로 — 처음부터 다시 고르지 않는다."
+   }
   ]
+ },
+ "badges": {
+  "예매 가능": "is-brand",
+  "입금 대기": "is-warning",
+  "예매 확정": "is-success",
+  "매진": "is-danger"
+ },
+ "avatar_style": "people",
+ "people": [
+  {
+   "name": "관객 정민지",
+   "why": "기다리던 공연 좌석을 붙여서 3장 잡고 싶다",
+   "win": "내 예매에 '예매 확정'이 보일 때",
+   "core": true,
+   "wants": [
+    {
+     "q": "고른 자리가 지금 내 것인가, 얼마 동안인가",
+     "at": [
+      "hold",
+      "seats"
+     ]
+    },
+    {
+     "q": "어디로 얼마를 언제까지 보내나",
+     "at": [
+      "reserved",
+      "booking"
+     ]
+    },
+    {
+     "q": "확정은 언제 어떻게 아나",
+     "at": [
+      "reserved",
+      "booking--confirmed",
+      "bookings--confirmed"
+     ]
+    },
+    {
+     "q": "자리를 놓쳤으면 왜, 이제 뭘 하나",
+     "at": [
+      "seats--taken",
+      "seats--expired",
+      "booking--cancelled"
+     ]
+    },
+    {
+     "q": "몇 장까지 한 번에 잡나",
+     "at": [
+      "seats",
+      "seats--limit"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "운영/관리자 한도윤",
+   "why": "들어온 입금을 예약과 맞춰 확정해야 한다(화면 없음, 입금 확인 API)",
+   "win": "확인 한 번에 관객 쪽이 예매 확정으로 바뀐다",
+   "core": false,
+   "wants": [
+    {
+     "q": "이 입금이 어느 예약인가(예매번호·입금자명·금액)",
+     "at": [
+      "reserved"
+     ]
+    },
+    {
+     "q": "기한이 지났나",
+     "at": [
+      "booking--cancelled"
+     ]
+    }
+   ]
+  }
+ ],
+ "groups": [
+  "좌석 선점",
+  "무통장 예약",
+  "내 예매"
+ ],
+ "screens": [
+  {
+   "id": "seats--overview",
+   "file": "screens/seats--overview.html",
+   "title": "좌석 선택 — 구역 전체",
+   "group": "좌석 선점",
+   "kind": "form",
+   "purpose": "처음 모습 — 구역 전체의 빈자리 분포를 보고 고를 곳을 누른다(좌석은 누를 수 없음)",
+   "policies": [
+    "구역은 최대 26열 × 수백 석 — 처음엔 구역 전체(빈자리 분포), 누른 곳 주변을 44px 좌석으로 확대(D10)",
+    "작은 좌석은 분포만 보여 주고 누를 수 없다 — 누른 곳 주변이 확대된다",
+    "기존 공연 상세의 예매 버튼에서 들어온다(대기열은 후속 요청)"
+   ],
+   "branches": [],
+   "desktop": "d-seats"
+  },
+  {
+   "id": "seats",
+   "file": "screens/seats.html",
+   "title": "좌석 선택",
+   "group": "좌석 선점",
+   "kind": "form",
+   "purpose": "확대한 구역(A~E열 2~6번)에서 44px 좌석을 1~4개 고르고 선점한다",
+   "policies": [
+    "구역은 최대 26열 × 수백 석 — 처음엔 구역 전체(빈자리 분포), 누른 곳 주변을 44px 좌석으로 확대(D10)",
+    "미니맵에 구역 전체와 지금 보는 범위 사각형 — 전체 보기로 돌아간다",
+    "선택 수 3/4 가 늘 보이고, 고를 수 없는 좌석은 선점·판매 구분 없이 회색"
+   ],
+   "branches": [
+    {
+     "to": "seats--taken",
+     "label": "먼저 잡힌 좌석"
+    },
+    {
+     "to": "seats--limit",
+     "label": "5장째 누름"
+    }
+   ],
+   "sample": false,
+   "desktop": "d-seats"
+  },
+  {
+   "id": "seats--taken",
+   "file": "screens/seats--taken.html",
+   "title": "좌석 선택 — 먼저 잡힌 좌석",
+   "group": "좌석 선점",
+   "kind": "form",
+   "purpose": "AC-2 — R-B5 가 빠졌다는 안내와 다시 고르기",
+   "policies": [
+    "빠진 좌석 하나만 선택에서 빠지고 R-B4·R-B6 은 그대로",
+    "안내는 좌석도 바로 위, 해결 행동(다시 선점하기)이 주 버튼"
+   ],
+   "branches": [],
+   "desktop": "d-seats--taken"
+  },
+  {
+   "id": "seats--limit",
+   "file": "screens/seats--limit.html",
+   "title": "좌석 선택 — 4석 한도",
+   "group": "좌석 선점",
+   "kind": "form",
+   "purpose": "AC-3 — 5장째를 누르면 고르지 않고 4석 한도를 알린다",
+   "policies": [
+    "5장째 좌석은 선택되지 않는다 — 서버도 5장 이상 요청을 거절",
+    "다른 좌석으로 바꾸려면 고른 좌석을 먼저 눌러 뺀다"
+   ],
+   "branches": [],
+   "desktop": "d-seats--limit"
+  },
+  {
+   "id": "seats--expired",
+   "file": "screens/seats--expired.html",
+   "title": "좌석 선택 — 선점 만료",
+   "group": "좌석 선점",
+   "kind": "form",
+   "purpose": "AC-8 — 7분이 지나 선점이 풀렸고 좌석을 다시 고를 수 있다",
+   "policies": [
+    "선점 화면 타이머가 0 이 되면 재조회 없이 이 화면으로(ADR-0026)",
+    "풀린 좌석은 다른 관객도 고를 수 있다 — 아직 남아 있으면 다시 고를 수 있다"
+   ],
+   "branches": [],
+   "desktop": "d-seats--expired"
+  },
+  {
+   "id": "seats--released",
+   "file": "screens/seats--released.html",
+   "title": "좌석 선택 — 선점 해제",
+   "group": "좌석 선점",
+   "kind": "form",
+   "purpose": "AC-10 — 좌석 다시 고르기로 선점이 바로 풀렸다",
+   "policies": [
+    "본인 선점만 풀 수 있다(D7, 해제 API 1개)",
+    "풀린 R-B4·B5·B6 은 즉시 다른 관객도 고를 수 있다"
+   ],
+   "branches": [],
+   "desktop": "d-seats--released"
+  },
+  {
+   "id": "hold",
+   "file": "screens/hold.html",
+   "title": "선점 완료 · 예약",
+   "group": "무통장 예약",
+   "kind": "form",
+   "purpose": "7분 안에 무통장 예약을 한다 — 남은 시간·좌석·금액",
+   "policies": [
+    "결제 수단은 무통장 입금 하나 — 고르는 목록 없음(ADR-0025)",
+    "입금자명 칸 없이 예약자 이름으로 안내(D9)",
+    "좌석 다시 고르기·뒤로는 선점을 바로 풀고 좌석 화면으로(D7)"
+   ],
+   "branches": [
+    {
+     "to": "seats--expired",
+     "label": "7분 지남"
+    }
+   ],
+   "desktop": "d-hold"
+  },
+  {
+   "id": "reserved",
+   "file": "screens/reserved.html",
+   "title": "예약 완료",
+   "group": "무통장 예약",
+   "kind": "result",
+   "purpose": "AC-4 — 입금 계좌·금액·기한(오늘 오후 11:59)을 보여 주는 결과 화면",
+   "policies": [
+    "정해진 것: 3석 예약·입금 대기 / 전해진 곳: 이 화면과 내 예매(알림 발송 없음)",
+    "다음: 입금 확인되면 예매 확정, 기한 지나면 자동 취소·좌석 재판매",
+    "계좌 복사는 같은 자리에서 '복사했어요'"
+   ],
+   "branches": [],
+   "desktop": "d-reserved"
+  },
+  {
+   "id": "bookings",
+   "file": "screens/bookings.html",
+   "title": "내 예매",
+   "group": "내 예매",
+   "kind": "list",
+   "archetype": "행 목록",
+   "purpose": "내 예매의 상태를 훑는다 — 입금 대기와 자동 취소",
+   "policies": [
+    "상태는 배지(입금 대기·예매 확정), 끝난 자동 취소는 평문",
+    "입금 대기 행에는 기한을 글자로"
+   ],
+   "branches": [
+    {
+     "to": "booking",
+     "label": "입금 대기 예매"
+    },
+    {
+     "to": "booking--cancelled",
+     "label": "취소된 예매"
+    }
+   ],
+   "sample": true,
+   "desktop": "d-bookings"
+  },
+  {
+   "id": "bookings--empty",
+   "file": "screens/bookings--empty.html",
+   "title": "내 예매 — 처음",
+   "group": "내 예매",
+   "kind": "list",
+   "purpose": "아직 예매가 없을 때",
+   "policies": [
+    "공연 둘러보기로 이어진다(기존 공연 목록)"
+   ],
+   "branches": [],
+   "desktop": "d-bookings--empty"
+  },
+  {
+   "id": "bookings--confirmed",
+   "file": "screens/bookings--confirmed.html",
+   "title": "내 예매 — 확정 반영",
+   "group": "내 예매",
+   "kind": "list",
+   "purpose": "AC-5 — 입금 확인 뒤 목록에 '예매 확정'",
+   "policies": [
+    "입금 확인이 기록되면 다음 조회 때 배지가 입금 대기 → 예매 확정"
+   ],
+   "branches": [],
+   "desktop": "d-bookings--confirmed"
+  },
+  {
+   "id": "booking",
+   "file": "screens/booking.html",
+   "title": "예매 상세 — 입금 대기",
+   "group": "내 예매",
+   "kind": "detail",
+   "archetype": "진행 추적형",
+   "purpose": "입금 대기 예매의 계좌·금액·기한과 진행 단계",
+   "policies": [
+    "진행 단계: 선점 → 예약 → 입금 확인 → 예매 확정, 지금은 입금 확인 기다림",
+    "직접 취소는 후속 요청 — 입금하지 않으면 기한에 자동 취소"
+   ],
+   "branches": [],
+   "desktop": "d-bookings"
+  },
+  {
+   "id": "booking--confirmed",
+   "file": "screens/booking--confirmed.html",
+   "title": "예매 확정",
+   "group": "내 예매",
+   "kind": "result",
+   "purpose": "AC-5 — 입금 확인으로 예매가 확정됐다",
+   "policies": [
+    "정해진 것: 3석 예매 확정 / 전해진 것: 11월 24일 오후 4:20 입금 확인 기록",
+    "다음: 공연 당일 입장. 모바일 티켓·취소·양도는 후속 요청에서 다룸(D6)"
+   ],
+   "branches": [],
+   "desktop": "d-bookings--confirmed"
+  },
+  {
+   "id": "booking--cancelled",
+   "file": "screens/booking--cancelled.html",
+   "title": "예약 취소됨",
+   "group": "내 예매",
+   "kind": "result",
+   "purpose": "AC-6·9 — 입금 기한이 지나 예약이 자동 취소됐다",
+   "policies": [
+    "끝난 상태라 배지 없이 평문(design.md §5)",
+    "좌석은 다시 판매 중 — 같은 공연 좌석을 다시 고를 수 있다",
+    "기한 뒤 들어온 입금 확인은 거절된다(AC-9) — 입금했다면 문의 안내"
+   ],
+   "branches": [],
+   "desktop": "d-bookings--cancelled"
+  }
+ ],
+ "desktop": [
+  {
+   "id": "d-seats",
+   "file": "screens/desktop/d-seats.html",
+   "title": "좌석 선택",
+   "group": "좌석 선점",
+   "merges": [
+    "seats",
+    "seats--overview"
+   ],
+   "pattern": "보조 열",
+   "purpose": "좌석도를 보며 오른쪽에서 선택 수·금액을 확인하고 선점",
+   "policies": [
+    "데스크톱은 구역 전체(A~H열 × 20번)를 한 번에 — 확대·미니맵 없이 좌석을 바로 누른다",
+    "보조 열은 스크롤해도 따라온다"
+   ]
+  },
+  {
+   "id": "d-seats--taken",
+   "file": "screens/desktop/d-seats--taken.html",
+   "title": "좌석 선택 — 먼저 잡힌 좌석",
+   "group": "좌석 선점",
+   "merges": [
+    "seats--taken"
+   ],
+   "pattern": "보조 열",
+   "purpose": "AC-2 — 빠진 좌석 안내와 다시 선점",
+   "policies": []
+  },
+  {
+   "id": "d-seats--limit",
+   "file": "screens/desktop/d-seats--limit.html",
+   "title": "좌석 선택 — 4석 한도",
+   "group": "좌석 선점",
+   "merges": [
+    "seats--limit"
+   ],
+   "pattern": "보조 열",
+   "purpose": "AC-3 — 5장째 거절",
+   "policies": []
+  },
+  {
+   "id": "d-seats--expired",
+   "file": "screens/desktop/d-seats--expired.html",
+   "title": "좌석 선택 — 선점 만료",
+   "group": "좌석 선점",
+   "merges": [
+    "seats--expired"
+   ],
+   "pattern": "보조 열",
+   "purpose": "AC-8 — 7분 만료 후 다시 고르기",
+   "policies": []
+  },
+  {
+   "id": "d-seats--released",
+   "file": "screens/desktop/d-seats--released.html",
+   "title": "좌석 선택 — 선점 해제",
+   "group": "좌석 선점",
+   "merges": [
+    "seats--released"
+   ],
+   "pattern": "보조 열",
+   "purpose": "AC-10 — 선점을 풀고 다시 고르기",
+   "policies": []
+  },
+  {
+   "id": "d-hold",
+   "file": "screens/desktop/d-hold.html",
+   "title": "선점 완료 · 예약",
+   "group": "무통장 예약",
+   "merges": [
+    "hold"
+   ],
+   "pattern": "보조 열 (예약 패널)",
+   "purpose": "좌석도에 내 선점을 보며 7분 안에 무통장 예약",
+   "policies": [
+    "좌석 다시 고르기는 선점을 바로 푼다(D7)"
+   ]
+  },
+  {
+   "id": "d-reserved",
+   "file": "screens/desktop/d-reserved.html",
+   "title": "예약 완료",
+   "group": "무통장 예약",
+   "merges": [
+    "reserved"
+   ],
+   "pattern": "숫자 요약 + 보조 열",
+   "purpose": "AC-4 — 계좌·금액·기한을 나란히",
+   "policies": []
+  },
+  {
+   "id": "d-bookings",
+   "file": "screens/desktop/d-bookings.html",
+   "title": "내 예매",
+   "group": "내 예매",
+   "merges": [
+    "bookings",
+    "booking"
+   ],
+   "pattern": "목록·상세 나란히",
+   "purpose": "예매 목록과 선택한 입금 대기 예매 상세",
+   "policies": []
+  },
+  {
+   "id": "d-bookings--empty",
+   "file": "screens/desktop/d-bookings--empty.html",
+   "title": "내 예매 — 처음",
+   "group": "내 예매",
+   "merges": [
+    "bookings--empty"
+   ],
+   "pattern": "목록·상세 나란히(빈 상태)",
+   "purpose": "아직 예매가 없을 때",
+   "policies": []
+  },
+  {
+   "id": "d-bookings--confirmed",
+   "file": "screens/desktop/d-bookings--confirmed.html",
+   "title": "내 예매 — 예매 확정",
+   "group": "내 예매",
+   "merges": [
+    "bookings--confirmed",
+    "booking--confirmed"
+   ],
+   "pattern": "목록·상세 나란히",
+   "purpose": "AC-5 — 목록 배지와 상세가 함께 예매 확정",
+   "policies": []
+  },
+  {
+   "id": "d-bookings--cancelled",
+   "file": "screens/desktop/d-bookings--cancelled.html",
+   "title": "내 예매 — 자동 취소",
+   "group": "내 예매",
+   "merges": [
+    "booking--cancelled"
+   ],
+   "pattern": "목록·상세 나란히",
+   "purpose": "AC-6·9 — 기한 경과로 취소된 예매",
+   "policies": []
+  }
+ ]
 }
