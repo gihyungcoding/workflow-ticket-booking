@@ -52,13 +52,20 @@
       "text": "선점 7분이 지나 예약하지 않은 좌석은 다시 고를 수 있게 된다",
       "kind": "error",
       "ui": true
+    },
+    {
+      "id": "AC-9",
+      "text": "입금 기한(예약 당일 오후 11:59, product.md 정본)이 지난 뒤의 입금 확인 요청은 거절되고 예약은 취소 상태로 보인다",
+      "kind": "error",
+      "ui": false
     }
   ],
   "out_of_scope": [
-    "대기열 (FR-6~9, ADR-0023 Redis) — 다음 요청",
-    "매수 지정 연석 자동 선점 (FR-11·12)",
-    "관객 직접 취소·양도 (FR-19·20)",
+    "대기열 (FR-6~9, ADR-0023 Redis) — 후속 요청에서 다룸",
+    "매수 지정 연석 자동 선점 (FR-11·12) — 후속 요청에서 다룸",
+    "관객 직접 취소(FR-19)·양도(FR-20) — 후속 요청에서 다룸",
     "카드·간편결제 (FR-18, ADR-0025)",
+    "ADMIN 의 화면·가입 경로와 그 밖의 운영자 기능 (product.md §4)",
     "모바일 티켓 — REQ-001 (이 요청이 끝난 뒤 재개)"
   ],
   "assumptions": [
@@ -77,12 +84,12 @@
     {
       "text": "운영자 역할이 있다",
       "verified_by": null,
-      "note": "없다 — UserRole 은 AUDIENCE · ORGANIZER 뿐. 운영자 기능은 product.md 범위 밖(다음 단계)"
+      "note": "없다 — UserRole 은 AUDIENCE · ORGANIZER 뿐. 운영자 기능은 product.md 범위 밖(다음 단계) → ADMIN 최소 추가 (D2)"
     },
     {
       "text": "기한 경과를 처리할 스케줄러가 있다",
       "verified_by": null,
-      "note": "없다 — @Scheduled·EnableScheduling 없음"
+      "note": "없다 — @Scheduled·EnableScheduling 없음 → 필요 없음 (D5 조회 시점 판정)"
     }
   ],
   "decisions": [
@@ -90,27 +97,31 @@
       "id": "D1",
       "class": "user_challenge",
       "source": "draft",
-      "status": "unresolved",
+      "status": "approved",
       "question": "예매 흐름을 어디까지 만들까?",
       "options": [
         "최소 경로 — 선점·예약·입금 확인·확정·자동 취소",
         "PRD 의 예매 전체 — 대기열·연석·취소·양도까지",
         "최소 경로 + 관객 직접 취소"
       ],
-      "recommended": "최소 경로 — 선점·예약·입금 확인·확정·자동 취소"
+      "recommended": "최소 경로 — 선점·예약·입금 확인·확정·자동 취소",
+      "answer": "최소 경로 (추천)",
+      "scope": "선점·예약·입금 확인·확정·만료. 대기열·연석·취소·양도는 후속 요청"
     },
     {
       "id": "D2",
       "class": "user_challenge",
       "source": "draft",
-      "status": "unresolved",
+      "status": "approved",
       "question": "운영자 역할이 없다. 입금 확인 API 를 누가 호출하게 할까?",
       "options": [
-        "OPERATOR 역할 추가 — 화면 없이 API 만, 계정은 DB 로 지정",
+        "ADMIN 역할 최소 추가",
         "그 공연의 주최자가 확인",
-        "ADR-0025 처음 안대로 공유 키(X-Write-Key)"
+        "공유 키(X-Write-Key)"
       ],
-      "recommended": "OPERATOR 역할 추가 — 화면 없이 API 만, 계정은 DB 로 지정"
+      "recommended": "ADMIN 역할 최소 추가",
+      "answer": "ADMIN 역할 최소 추가 (추천) — 이름은 ADR-0029 의 ADMIN. 화면·가입 경로 없이 입금 확인 API 보호에만, 계정은 DB 로 지정",
+      "scope": "입금 확인 API 호출자 한정. 다른 운영자 기능은 여전히 범위 밖 — product.md §4 에 예외 한 줄"
     },
     {
       "id": "D3",
@@ -127,21 +138,53 @@
       "status": "approved",
       "question": "선점 동시성",
       "answer": "유니크 제약 + 조건부 UPSERT (ADR-0004). 별도 락 계층 없음"
+    },
+    {
+      "id": "D5",
+      "class": "user_challenge",
+      "source": "ceo",
+      "status": "approved",
+      "question": "선점 7분 만료와 입금 기한 자동 취소 방식",
+      "options": [
+        "조회할 때 만료 판정",
+        "스케줄러로 주기 처리",
+        "둘 다"
+      ],
+      "recommended": "조회할 때 만료 판정",
+      "answer": "조회할 때 만료 판정 (추천)",
+      "scope": "선점·예약 모두. 만료 시각을 저장하고 읽을 때 판정. 스케줄러는 두지 않는다"
+    },
+    {
+      "id": "D6",
+      "class": "taste",
+      "source": "ceo",
+      "status": "approved",
+      "question": "범위 외 표기",
+      "answer": "취소·양도·대기열·연석에 '후속 요청에서 다룸' 표기, FR 번호 PRD 대조"
     }
   ],
-  "completeness": [],
+  "completeness": [
+    {
+      "id": "C1",
+      "text": "기한 경계 — PRD '자정' 대신 product.md '오후 11:59' 를 정본으로, 기한 뒤 입금 확인 거절(AC-9)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "ceo"
+    }
+  ],
   "scope": {
     "wru": true,
     "routes": [
       "Backend",
       "Frontend"
     ],
-    "product_change": false,
+    "product_change": true,
     "architecture": {
       "change": true,
       "adr": [
-        "입금 확인 호출자와 운영자 역할",
-        "기한 경과 자동 취소 실행 방식"
+        "입금 확인 호출자 — 최소 ADMIN 역할",
+        "선점·예약 만료를 조회 시점에 판정"
       ]
     },
     "design_tokens": false,
@@ -176,12 +219,13 @@
     },
     {
       "key": "B",
-      "title": "입금 확인 API·기한 경과 자동 취소",
+      "title": "입금 확인 API(ADMIN)·만료 판정",
       "route": "Backend",
-      "estimate_h": 8,
+      "estimate_h": 6,
       "ac": [
         "AC-5",
-        "AC-6"
+        "AC-6",
+        "AC-9"
       ],
       "depends_on": [
         "A"
@@ -217,5 +261,13 @@
       ]
     }
   ],
-  "draft_commit": "dfe95c9"
+  "draft_commit": "dfe95c9",
+  "reviews": [
+    {
+      "role": "ceo",
+      "model": "claude-sonnet",
+      "findings": 4,
+      "accepted": 4
+    }
+  ]
 }
