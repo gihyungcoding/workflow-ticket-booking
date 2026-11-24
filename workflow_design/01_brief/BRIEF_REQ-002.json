@@ -96,6 +96,11 @@
       "text": "기한 경과를 처리할 스케줄러가 있다",
       "verified_by": null,
       "note": "없다 — @Scheduled·EnableScheduling 없음 → 필요 없음 (D5 조회 시점 판정)"
+    },
+    {
+      "text": "ADMIN 을 UserRole 에 더해도 기존 호출자(역할 CHECK 제약, /api/auth/me role, 프론트 역할 타입, 가입 API)가 깨지지 않는다",
+      "verified_by": null,
+      "note": "DevEx X6 — Eng 리뷰에서 코드로 확인"
     }
   ],
   "decisions": [
@@ -218,6 +223,108 @@
       "question": "좌석 화면 상태 6장 — 한 화면 최대 3장 규칙을 넘는다",
       "answer": "6장 그대로 (추천)",
       "scope": "REQ-002 좌석 고르기 화면만"
+    },
+    {
+      "id": "D12",
+      "class": "user_challenge",
+      "source": "design",
+      "status": "approved",
+      "question": "선점 뒤 예약 화면을 떠나면",
+      "options": [
+        "떠나면 선점이 풀린다",
+        "내 예매에서 다시 이어가기"
+      ],
+      "recommended": "떠나면 선점이 풀린다",
+      "answer": "떠나면 선점이 풀린다 (추천)",
+      "scope": "뒤로·이동 = 선점 해제(D7 과 같은 API). 강제 종료는 7분 만료로 풀림. 예약 화면에 안내 한 줄"
+    },
+    {
+      "id": "D13",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "새 API 계약",
+      "answer": "PLAN 에 계약표 고정 — POST /api/performances/{id}/seat-holds(seatIds) · DELETE /api/seat-holds/{holdId}(본인, 204) · POST /api/bookings(holdId → bookingNumber·계좌·금액·depositDeadline) · GET /api/bookings/me(page/size 0/20, 최신순) · GET /api/bookings/{id}(본인) · POST /api/admin/bookings/{id}/confirm-deposit(ADMIN). camelCase, 시각은 ISO·서버 시각(/api/time) 기준"
+    },
+    {
+      "id": "D14",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "에러 코드",
+      "answer": "SEAT_UNAVAILABLE 409(빠진 좌석 id 목록 — ErrorResponse 에 선택 필드 추가, 추가형) · SEAT_LIMIT_EXCEEDED 400 · HOLD_EXPIRED 409 · HOLD_NOT_OWNED 404 · DEPOSIT_DEADLINE_PASSED 409 · BOOKING_NOT_FOUND 404. BookingExceptionHandler 분리"
+    },
+    {
+      "id": "D15",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "예매 상태",
+      "answer": "저장하지 않고 만료 시각에서 파생(CONFIRMED / PENDING_DEPOSIT / CANCELLED). 기한 지난 입금 확인은 409 만 반환, 쓰기 없음"
+    },
+    {
+      "id": "D16",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "설정값",
+      "answer": "선점 7분·입금 기한 23:59(Asia/Seoul)·최대 4석을 설정 한 곳에"
+    },
+    {
+      "id": "D17",
+      "class": "mechanical",
+      "source": "design",
+      "status": "approved",
+      "question": "먼저 잡힌 좌석 안내 문구",
+      "answer": "'아직 선점 전이에요' — 부분 선점 없음(전부-아니면-없음)을 Eng 가 확인"
+    },
+    {
+      "id": "D18",
+      "class": "taste",
+      "source": "devex",
+      "status": "approved",
+      "question": "입금 확인 경로·중복 호출",
+      "answer": "/api/admin/ 접두, 이미 확정이면 200 멱등"
+    },
+    {
+      "id": "D19",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "취소 화면 버튼",
+      "answer": "'다시 예매하기' → seats--overview"
+    },
+    {
+      "id": "D20",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "확정 확인 방법",
+      "answer": "입금 대기 상세에 '열 때마다 최신으로 확인돼요' 한 줄"
+    },
+    {
+      "id": "D21",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "진행 단계 표기",
+      "answer": "확정·취소 상세도 선점 → 예약 → 입금 확인 → 확정 틀로 통일"
+    },
+    {
+      "id": "D22",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "짧은 입금 기한",
+      "answer": "기한까지 1시간 미만이면 예약 화면 문장에 '입금 시간이 짧아요'"
+    },
+    {
+      "id": "D23",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "동명이인·같은 금액 입금",
+      "answer": "알려진 한계로 기록 — 운영자는 예매번호로 확정"
     }
   ],
   "completeness": [
@@ -327,6 +434,18 @@
       "model": "claude-sonnet",
       "findings": 4,
       "accepted": 4
+    },
+    {
+      "role": "devex",
+      "model": "claude-sonnet",
+      "findings": 7,
+      "accepted": 7
+    },
+    {
+      "role": "design",
+      "model": "claude-sonnet",
+      "findings": 7,
+      "accepted": 7
     }
   ],
   "mockup": {
