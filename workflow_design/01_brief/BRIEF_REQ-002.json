@@ -64,6 +64,12 @@
       "text": "선점한 관객이 '좌석 다시 고르기'를 누르면 그 선점이 바로 풀려 다른 관객이 고를 수 있다",
       "kind": "happy",
       "ui": true
+    },
+    {
+      "id": "AC-11",
+      "text": "로그인하지 않은 사람이 좌석 조회를 요청하면 401 로 거절되고 화면은 로그인으로 안내한다",
+      "kind": "error",
+      "ui": false
     }
   ],
   "out_of_scope": [
@@ -99,8 +105,8 @@
     },
     {
       "text": "ADMIN 을 UserRole 에 더해도 기존 호출자(역할 CHECK 제약, /api/auth/me role, 프론트 역할 타입, 가입 API)가 깨지지 않는다",
-      "verified_by": null,
-      "note": "DevEx X6 — Eng 리뷰에서 코드로 확인"
+      "verified_by": "backend/.../migration/V3__create_users.sql:6 (CHECK 없음) · SignUpRequest.java:25 · frontend/src/api/auth.ts:9,46",
+      "note": "DB 는 참, 가입 API·프론트는 아님 → D25"
     }
   ],
   "decisions": [
@@ -325,6 +331,83 @@
       "status": "approved",
       "question": "동명이인·같은 금액 입금",
       "answer": "알려진 한계로 기록 — 운영자는 예매번호로 확정"
+    },
+    {
+      "id": "D24",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "보안 매처와 경로 (E1)",
+      "answer": "선점은 /api/seat-holds(본문 performanceId) — /api/performances/** 의 ORGANIZER 매처 밖. /api/admin/** 에 hasRole(ADMIN) 명시. 거절 문구는 역할 중립(기존 FORBIDDEN_ROLE 테스트 문구 단언 확인)"
+    },
+    {
+      "id": "D25",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "ADMIN 권한 상승 차단 (E2)",
+      "answer": "가입 API 두 곳(SignUpRequest·CompleteSocialSignUpRequest)에서 role==ADMIN 이면 400. ADMIN 계정은 DB 로만. 프론트 UserRole·ROLES 에 'ADMIN' 추가(화면 없음). DB 마이그레이션 불필요(V3 role VARCHAR(20), CHECK 없음)"
+    },
+    {
+      "id": "D26",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "좌석 잠금과 예매 좌석 기록 (E3)",
+      "answer": "seat_lock(seat_id UNIQUE, hold_id, expires_at) 과 booking·booking_seat 분리. ON CONFLICT (seat_id) DO UPDATE … WHERE seat_lock.expires_at <= :now — 판매 확정은 expires_at NULL. 입금 대기 예약의 잠금 만료 = depositDeadline. 시각은 앱 Clock 하나로"
+    },
+    {
+      "id": "D27",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "부분 선점 없음 (E4)",
+      "answer": "INSERT … SELECT … ON CONFLICT … RETURNING 한 번, seatIds 오름차순, 반환 수 < 요청 수면 롤백 + 빠진 id 를 SEAT_UNAVAILABLE 에. 입력 검증: 중복 제거·1~4개·같은 공연 소속·공개 공연"
+    },
+    {
+      "id": "D28",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "깨지는 승인 테스트 (E5)",
+      "answer": "마이그레이션 버전 '9' 단언 3개(PerformanceOwner·PerformancePublished·Task027EmailToken MigrationTest)를 target 버전 단언으로 — Phase 3 에서 사람 승인 필요. ErrorResponse 는 2-인자 생성자 유지 + 선택 필드 @JsonInclude(NON_NULL)"
+    },
+    {
+      "id": "D29",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "테스트 DB (E6)",
+      "answer": "선점·동시성 테스트는 PostgreSQL(Testcontainers) 공용 베이스에서 — ADR-0006 전환 조건 충족 기록. 기존 H2 테스트는 그대로"
+    },
+    {
+      "id": "D30",
+      "class": "user_challenge",
+      "source": "eng",
+      "status": "approved",
+      "question": "좌석 조회 API 추가와 공개 범위 (E7)",
+      "options": [
+        "추가 — 누구나 조회",
+        "추가 — 로그인한 관객만"
+      ],
+      "recommended": "추가 — 누구나 조회",
+      "answer": "추가 — 로그인한 관객만",
+      "scope": "GET /api/performances/{id}/seats — 좌석별 available(선점·판매 구분 없음)·등급별 남은 석수. 비로그인은 401 → 로그인으로. 좌석 화면 진입 전 로그인"
+    },
+    {
+      "id": "D31",
+      "class": "user_challenge",
+      "source": "eng",
+      "status": "approved",
+      "question": "태스크 분할 (E8)",
+      "options": [
+        "A 를 둘로, C 는 그대로",
+        "A 둘 + C 둘",
+        "나누지 않음"
+      ],
+      "recommended": "A 를 둘로, C 는 그대로",
+      "answer": "A 를 둘로, C 는 그대로 (추천)",
+      "scope": "A1·A2·B·C·D 5개"
     }
   ],
   "completeness": [
@@ -335,6 +418,38 @@
       "estimate_delta_h": 1,
       "status": "included",
       "source": "ceo"
+    },
+    {
+      "id": "C2",
+      "text": "가입 API ADMIN 거절 + 프론트 역할 타입 (E2)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
+    },
+    {
+      "id": "C3",
+      "text": "선점 입력 검증·좌석 정렬·반환 수 대조 (E4)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
+    },
+    {
+      "id": "C4",
+      "text": "마이그레이션 버전 단언 3개 갱신·ErrorResponse 호환 (E5)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
+    },
+    {
+      "id": "C5",
+      "text": "PostgreSQL 테스트 베이스·동시 선점 테스트 (E6)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
     }
   ],
   "scope": {
@@ -367,24 +482,36 @@
   },
   "split": [
     {
-      "key": "A",
-      "title": "좌석 선점·해제·무통장 예약 API (예매번호)",
+      "key": "A1",
+      "title": "좌석 잠금 스키마·선점·해제·좌석 조회 API (동시성, PostgreSQL 테스트 베이스)",
       "route": "Backend",
-      "estimate_h": 14,
+      "estimate_h": 11,
       "ac": [
         "AC-1",
         "AC-2",
         "AC-3",
-        "AC-4",
         "AC-7",
         "AC-8",
-        "AC-10"
+        "AC-10",
+        "AC-11"
       ],
       "depends_on": []
     },
     {
+      "key": "A2",
+      "title": "무통장 예약·예매번호·ADMIN 역할·가입 차단·보안 매처",
+      "route": "Backend",
+      "estimate_h": 9,
+      "ac": [
+        "AC-4"
+      ],
+      "depends_on": [
+        "A1"
+      ]
+    },
+    {
       "key": "B",
-      "title": "입금 확인 API(ADMIN)·만료 판정",
+      "title": "입금 확인 API(ADMIN)·기한 판정·재판매",
       "route": "Backend",
       "estimate_h": 6,
       "ac": [
@@ -393,7 +520,7 @@
         "AC-9"
       ],
       "depends_on": [
-        "A"
+        "A2"
       ]
     },
     {
@@ -410,7 +537,7 @@
         "AC-10"
       ],
       "depends_on": [
-        "A"
+        "A2"
       ]
     },
     {
@@ -446,6 +573,12 @@
       "model": "claude-sonnet",
       "findings": 7,
       "accepted": 7
+    },
+    {
+      "role": "eng",
+      "model": "claude-sonnet",
+      "findings": 8,
+      "accepted": 8
     }
   ],
   "mockup": {
