@@ -864,7 +864,19 @@
     {
       "job": "tasks",
       "why": "태스크 5개 생성",
-      "status": "pending"
+      "status": "done",
+      "result": {
+        "A1": "TASK-032",
+        "A2": "TASK-033",
+        "B": "TASK-034",
+        "C": "TASK-035",
+        "D": "TASK-036",
+        "files": [
+          "workflow_design/02_tasks/tasks.json (+5)",
+          "docs/product/features/booking-hold-deposit.md §1-2 태스크 ID 열"
+        ],
+        "validate_tasks": "통과 — 36건, 오류 0, 경고 3(기존 TASK-003·017·026)"
+      }
     },
     {
       "job": "start",
@@ -872,5 +884,12 @@
       "ref": "A1",
       "status": "pending"
     }
+  ],
+  "tasks": [
+    "TASK-032",
+    "TASK-033",
+    "TASK-034",
+    "TASK-035",
+    "TASK-036"
   ]
 }
