@@ -714,7 +714,7 @@
   ],
   "mockup": {
     "status": "draft",
-    "rev": 5,
+    "rev": 6,
     "coverage": {
       "AC-1": [
         "seats",
@@ -787,6 +787,16 @@
       {
         "rev": 5,
         "text": "좌석 배치도 미니맵을 구역 모양·무대·보는 범위·고른 좌석이 보이는 키트 부품으로",
+        "impact": "visual"
+      },
+      {
+        "rev": 6,
+        "text": "금액·입금 기한 구분 없음·박스가 밋밋함 → 입금 정보 묶음을 금액(주인공)·기한(시간 부품, 상태별)·계좌 행으로 재설계, 데이터 묶음 표로 화면 간 통일",
+        "impact": "visual"
+      },
+      {
+        "rev": 6,
+        "text": "rev6 보정: countdown → due",
         "impact": "visual"
       }
     ],

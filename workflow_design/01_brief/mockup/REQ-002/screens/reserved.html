@@ -6,12 +6,11 @@
 <body class="has-cta">
 <header class="hero"><p class="eyebrow"><span class="badge is-warning">입금 대기</span></p><h1 class="title">오늘 오후 11:59까지 입금해 주세요</h1><p class="lead">입금이 확인되면 내 예매에서 예매 확정으로 바뀌어요</p></header>
 <main class="page">
-<section class="block">
+<section class="block" data-bundle="payment">
 <div class="block-head"><h2 class="h2">입금 정보</h2></div>
-<div class="row"><div class="row-main"><p class="row-sub">금액</p><p class="row-title">297,000원</p><p class="row-sub">R석 99,000원 × 3</p></div></div>
-<div class="row"><div class="row-main"><p class="row-sub">입금 기한</p><p class="row-title">11월 24일 (화) 오후 11:59</p></div></div>
-<div class="row"><div class="row-main"><p class="row-sub">입금 계좌</p><p class="row-title">국민은행 123401-04-567890</p><p class="row-sub">예금주 (주)공연예매 · 입금자명 정민지</p></div></div>
-<button class="btn small tint" data-stay="계좌번호를 복사했어요 — 은행 앱에 붙여넣으세요"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>계좌번호 복사</button>
+<div data-item="amount"><p class="label">보낼 금액</p><p class="title">297,000원</p><p class="row-sub">R석 99,000원 × 3</p></div>
+<div data-item="deadline"><p class="due"><span class="due-left" role="timer" aria-label="입금 기한까지 9시간 54분 남음"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>9시간 54분 남음</span><span class="due-text">오늘 오후 11:59까지</span></p></div>
+<div class="row" data-item="account"><span class="row-lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="row-main"><p class="row-sub">입금 계좌</p><p class="row-title">국민은행 123401-04-567890</p><p class="row-sub">예금주 (주)공연예매 · 입금자명 정민지</p></div><span class="row-trail"><button class="btn small tint" data-stay="계좌번호를 복사했어요 — 은행 앱에 붙여넣으세요">계좌번호 복사</button></span></div>
 </section>
 <section class="block">
 <div class="block-head"><h2 class="h2">다음에 일어나는 일</h2></div>
@@ -24,7 +23,7 @@
 </section>
 <section class="block is-list">
 <div class="block-head"><h2 class="h2">예약 내용</h2></div>
-<div class="row"><span class="row-art"><img src="../assets/fluent/ticket.svg" alt=""></span><div class="row-main"><p class="row-title">새벽공방 단독 콘서트 〈밤의 정원〉</p><p class="row-sub">12월 20일 (일) 오후 6:00 · 한빛아트홀</p><p class="row-sub">R-B4 · R-B5 · R-B6 · 예매번호 2611240381</p></div></div>
+<div class="row" data-bundle="booking"><span class="row-art"><img src="../assets/fluent/ticket.svg" alt=""></span><div class="row-main"><p class="row-title" data-item="show">새벽공방 단독 콘서트 〈밤의 정원〉</p><p class="row-sub" data-item="when">12월 20일 (일) 오후 6:00 · 한빛아트홀</p><p class="row-sub" data-item="seats">R-B4 · R-B5 · R-B6</p><p class="row-sub" data-item="number">예매번호 2611240381</p></div></div>
 </section>
 </main>
 <div class="cta"><a class="btn primary full" href="bookings.html">확인</a></div>
