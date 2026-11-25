@@ -1,6 +1,6 @@
 # ADR-0022: 디자인 정본을 `out/` 시안으로 바꾸고, 토큰 값은 `out/tokens.css` 를 그대로 옮긴다
 
-- **상태**: 채택됨
+- **상태**: 채택됨 (화면 시안 정본을 `out/` 하나로 둔 부분은 ADR-0038 로 대체됨 — 화면 단위 정본)
 - **날짜**: 2026-11-04
 - **관련**: ADR-0002, ADR-0011, `docs/product/design.md`, `docs/product/design-tokens.css`, `out/`
 
