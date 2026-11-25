@@ -2313,7 +2313,7 @@
   {
     "id": "TASK-035",
     "title": "좌석 선택(확대·미니맵)·예약·예약 완료 화면",
-    "description": "REQ-002 C. 관객이 좌석을 고르고 예약할 화면이 없다. 공연 상세 「예매하기」 → 좌석 화면(지금은 대기열 자리표시로 간다), 좌석 화면(구역 전체 → 누른 곳 44px 확대·미니맵, 등급 전환, 1~4석, 상태 6장 — 먼저 잡힘·4석 한도·만료·해제), 선점 완료·예약 화면(서버 시각 오프셋 남은 시간, 0 에서 좌석 화면 전환 ADR-0026, 「좌석 다시 고르기」·뒤로·이동 = 해제, 예약 성공 뒤 이동은 해제를 보내지 않음), 예약 완료 화면(데이터 묶음 payment: 금액 → 기한(due) → 계좌 행·복사, booking: 공연 → 일시·장소 → 좌석 → 예매번호, 1시간 미만이면 「입금 시간이 짧아요」), 비로그인 401 → 로그인 후 복귀, 화면 폭은 기존 앱처럼 모바일 폭 한 줄(appMaxWidth) — 데스크톱에서도 같다, 데스크톱 시안 screens/desktop/ 은 보관이라 구현하지 않는다(D41). 정본 시안은 workflow_design/01_brief/mockup/REQ-002/screens/*.html 의 모바일 화면(ADR-0038, D42; 대체된 out/ seat·seat--error·checkout·booked 와의 대응은 design.md §0), 데이터 묶음은 layout.md. 새 공통 부품 picker(좌석 칸 고르기)·picker-mini(미니맵)·due(기한 줄)를 frontend/src/components/ui 에 만든다 — 화면 안 개별 구현 금지. 근거: BRIEF D7·D10·D11·D12·D17·D22·D30·D33·D35·D41·D42. 포함하지 않음: 내 예매 목록·상세, 대기열 화면, 매수 지정 자동 배정, 카드·간편결제.",
+    "description": "REQ-002 C. 관객이 좌석을 고르고 예약할 화면이 없다. 공연 상세 「예매하기」 → 좌석 화면(지금은 대기열 자리표시로 간다), 좌석 화면(구역 전체 → 누른 곳 44px 확대·미니맵, 등급 전환, 1~4석, 상태 6장 — 먼저 잡힘·4석 한도·만료·해제), 선점 완료·예약 화면(서버 시각 오프셋 남은 시간, 0 에서 좌석 화면 전환 ADR-0026, 「좌석 다시 고르기」·뒤로·이동 = 해제, 예약 성공 뒤 이동은 해제를 보내지 않음), 예약 완료 화면(데이터 묶음 payment: 금액 → 기한(due) → 계좌 행·복사, booking: 공연 → 일시·장소 → 좌석 → 예매번호, 1시간 미만이면 「입금 시간이 짧아요」), 비로그인 401 → 로그인 후 복귀, 화면 폭은 기존 앱처럼 모바일 폭 한 줄(appMaxWidth) — 데스크톱에서도 같다, 데스크톱 시안 screens/desktop/ 은 보관이라 구현하지 않는다(D41). 정본 시안은 workflow_design/01_brief/mockup/REQ-002/screens/*.html 의 모바일 화면(ADR-0038, D42; 대체된 out/ seat·seat--error·checkout·booked 와의 대응은 design.md §0), 데이터 묶음은 layout.md. 새 공통 부품 picker(좌석 칸 고르기)·picker-mini(미니맵)·due(기한 줄)를 frontend/src/components/ui 에 만든다 — 화면 안 개별 구현 금지. 근거: BRIEF D7·D10·D11·D12·D17·D22·D30·D33·D35·D41·D42. 포함하지 않음: 내 예매 목록·상세, 대기열 화면, 매수 지정 자동 배정, 카드·간편결제. 키트 부품 대응(ui_map.py 기준 대응 없음 → 이 태스크): timeline(reserved), done(seats--released), num(hold·seats 계열), title·label(label 은 reserved, title 은 ui_map 기준 TASK-036 화면에서 쓰인다), btn(hold 등) — 각각 기존 프론트 코드에 대응이 있으면 대응표 docs/product/ui-components.json 에 그 경로를 적고, 없으면 frontend/src/components/ui 공통 부품으로 만든다. btn 은 지금 MUI Button 을 쓰므로 키트 btn 모양(채움·보조·작게·한 줄)과 맞는지 확인이 핵심이다. picker·due 는 위 공통 부품 그대로. 이 부품들 때문에 추정이 늘 수 있다 — 추정은 PLAN 에서 다시 본다.",
     "primary_category": "Frontend",
     "sub_categories": [
       "audience"
@@ -2338,7 +2338,8 @@
         "남은 시간이 0 이 되면 좌석 화면으로 전환되고 만료 안내가 보인다 (AC-8)",
         "「좌석 다시 고르기」·뒤로는 해제 요청을 보내고 좌석 화면으로 간다. 예약 성공 뒤 이동은 해제를 보내지 않는다 (AC-10)",
         "좌석 조회 401 이면 로그인으로 안내하고 로그인 뒤 돌아온다 (AC-11)",
-        "화면이 정본 시안(REQ-002 모바일 화면)과 같다. 데스크톱에서도 모바일 폭 한 줄이다 (Phase 4 화면 확인 — 상태를 실제로 만들어)"
+        "화면이 정본 시안(REQ-002 모바일 화면)과 같다. 데스크톱에서도 모바일 폭 한 줄이다 (Phase 4 화면 확인 — 상태를 실제로 만들어)",
+        "python3 .claude/skills/ui-mockup/scripts/ui_map.py workflow_design/01_brief/mockup/REQ-002 가 이 태스크 화면(seats 계열·hold·reserved)의 부품에 대해 대응 없음 0 을 보고한다"
       ],
       "absorbed_steps": [],
       "implementation_spec": {
@@ -2348,7 +2349,8 @@
           "frontend/src/App.tsx",
           "frontend/src/hooks/useServerClock.ts",
           "frontend/src/components/ui/index.ts",
-          "frontend/src/theme/tokens.ts"
+          "frontend/src/theme/tokens.ts",
+          "docs/product/ui-components.json"
         ]
       },
       "complexity": {
@@ -2387,7 +2389,7 @@
   {
     "id": "TASK-036",
     "title": "내 예매 목록·상세 화면",
-    "description": "REQ-002 D. 관객이 예매 상태를 확인할 화면이 없다. 내 예매 목록(입금 대기·확정·취소, 빈 상태, 로딩·오류), 예매 상세(진행 단계 선점 → 예약 → 입금 확인 → 확정으로 통일, 데이터 묶음 payment — 대기는 남은 시간·기한·계좌, 확정은 입금 확인 시각·계좌 없음, 취소는 기한 지남·계좌 없음·금액 이름표 「예약 금액」, booking 묶음), 입금 대기 상세에 「열 때마다 최신으로 확인돼요」, 취소 화면 「입금 기한이 지나 취소됨」·「예매번호로 문의해 주세요」·「다시 예매하기」 → 구역 전체, 직접 취소·양도는 「아직 할 수 없어요」 한 줄, 화면 폭은 모바일 폭 한 줄(appMaxWidth) — 데스크톱에서도 같다, 데스크톱 시안 screens/desktop/ 은 보관이라 구현하지 않는다(D41). 정본 시안은 workflow_design/01_brief/mockup/REQ-002/screens/*.html 의 모바일 화면(ADR-0038, D42; 대체된 out/ my-bookings 와의 대응은 design.md §0). 기한 줄은 TASK-035 가 frontend/src/components/ui 에 만든 공통 부품 due 를 재사용한다 — 화면 안 개별 구현 금지. 근거: BRIEF D6·D9·D19·D20·D21·D41·D42. 포함하지 않음: 직접 취소·양도 버튼, 모바일 티켓, 알림.",
+    "description": "REQ-002 D. 관객이 예매 상태를 확인할 화면이 없다. 내 예매 목록(입금 대기·확정·취소, 빈 상태, 로딩·오류), 예매 상세(진행 단계 선점 → 예약 → 입금 확인 → 확정으로 통일, 데이터 묶음 payment — 대기는 남은 시간·기한·계좌, 확정은 입금 확인 시각·계좌 없음, 취소는 기한 지남·계좌 없음·금액 이름표 「예약 금액」, booking 묶음), 입금 대기 상세에 「열 때마다 최신으로 확인돼요」, 취소 화면 「입금 기한이 지나 취소됨」·「예매번호로 문의해 주세요」·「다시 예매하기」 → 구역 전체, 직접 취소·양도는 「아직 할 수 없어요」 한 줄, 화면 폭은 모바일 폭 한 줄(appMaxWidth) — 데스크톱에서도 같다, 데스크톱 시안 screens/desktop/ 은 보관이라 구현하지 않는다(D41). 정본 시안은 workflow_design/01_brief/mockup/REQ-002/screens/*.html 의 모바일 화면(ADR-0038, D42; 대체된 out/ my-bookings 와의 대응은 design.md §0). 기한 줄은 TASK-035 가 frontend/src/components/ui 에 만든 공통 부품 due 를 재사용한다 — 화면 안 개별 구현 금지. 근거: BRIEF D6·D9·D19·D20·D21·D41·D42. 포함하지 않음: 직접 취소·양도 버튼, 모바일 티켓, 알림. 키트 부품 대응(ui_map.py 기준): empty(bookings--empty)는 이 태스크가 만든다 — 기존 프론트 코드에 대응이 있으면 대응표 docs/product/ui-components.json 에 그 경로를 적고, 없으면 frontend/src/components/ui 공통 부품으로 만든다. timeline·title·label·btn·due 는 TASK-035 가 만들거나 대응표에 올린 것을 재사용한다. 추정은 PLAN 에서 다시 본다.",
     "primary_category": "Frontend",
     "sub_categories": [
       "audience"
@@ -2408,13 +2410,15 @@
         "확정된 예매는 목록·상세에 「예매 확정」과 입금 확인 시각이 보인다 (AC-5)",
         "기한이 지난 예매는 「입금 기한이 지나 취소됨」과 「다시 예매하기」가 보인다 (AC-6)",
         "예매가 없으면 빈 안내가 보인다. 조회 실패면 오류 문구가 보인다",
-        "화면이 정본 시안(REQ-002 모바일 화면)과 같다. 데스크톱에서도 모바일 폭 한 줄이다 (Phase 4 화면 확인 — 상태를 실제로 만들어)"
+        "화면이 정본 시안(REQ-002 모바일 화면)과 같다. 데스크톱에서도 모바일 폭 한 줄이다 (Phase 4 화면 확인 — 상태를 실제로 만들어)",
+        "python3 .claude/skills/ui-mockup/scripts/ui_map.py workflow_design/01_brief/mockup/REQ-002 가 이 태스크 화면(bookings 계열·booking 계열)의 부품에 대해 대응 없음 0 을 보고한다"
       ],
       "absorbed_steps": [],
       "implementation_spec": {
         "paths": [
           "frontend/src/App.tsx",
-          "frontend/src/components/ui/index.ts"
+          "frontend/src/components/ui/index.ts",
+          "docs/product/ui-components.json"
         ]
       },
       "complexity": {
