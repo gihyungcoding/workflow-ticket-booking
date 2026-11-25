@@ -856,7 +856,10 @@
     {
       "job": "feature_doc",
       "why": "태스크 분할·화면 설계를 기능 문서로 남긴다",
-      "status": "pending"
+      "status": "done",
+      "result": [
+        "docs/product/features/booking-hold-deposit.md — §1-2 태스크 분리 5행(A1·A2·B·C·D), §2 화면 설계(캔버스 링크·태스크별 화면·데이터 묶음 payment/booking), §5 완료 조건"
+      ]
     },
     {
       "job": "tasks",
