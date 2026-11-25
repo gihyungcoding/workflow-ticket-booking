@@ -1,7 +1,7 @@
 {
-  "measured_at": "2026-11-24T13:27:42.838Z",
+  "measured_at": "2026-11-25T00:03:24Z",
   "pass": true,
   "failed": [],
   "screens": 25,
-  "note": "audit.html 결과 요약 — 모바일 375 · 데스크톱 1280, 전 화면 통과(rev 2 수정 후)"
+  "note": "audit.html 결과 요약 — 모바일 375 · 데스크톱 1280, 전 화면 통과(rev 4 — 좌석 부품·데스크톱 키트 수정 후)"
 }
