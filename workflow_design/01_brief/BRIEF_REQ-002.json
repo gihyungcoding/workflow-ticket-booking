@@ -813,5 +813,48 @@
     "approved": true,
     "locked_commit": "779afa8",
     "note": "HITL#0 확정 — AskUserQuestion 응답 '확정' (2026-11-25). 시안 rev 6 승인 포함"
-  }
+  },
+  "dispatch": [
+    {
+      "job": "product",
+      "why": "product.md 범위를 바꾼다",
+      "status": "done",
+      "result": [
+        "docs/product/product.md §4 — REQ-002 진행 범위·제외 목록, ADMIN 최소 역할 예외"
+      ]
+    },
+    {
+      "job": "adr",
+      "why": "확정한 결정을 ADR 로",
+      "ref": "입금 확인 호출자 — 최소 ADMIN 역할",
+      "status": "pending"
+    },
+    {
+      "job": "adr",
+      "why": "확정한 결정을 ADR 로",
+      "ref": "선점·예약 만료를 조회 시점에 판정",
+      "status": "pending"
+    },
+    {
+      "job": "architecture",
+      "why": "새 계층·의존 방향 — architecture.md 와 constraints.yaml",
+      "status": "pending"
+    },
+    {
+      "job": "feature_doc",
+      "why": "태스크 분할·화면 설계를 기능 문서로 남긴다",
+      "status": "pending"
+    },
+    {
+      "job": "tasks",
+      "why": "태스크 5개 생성",
+      "status": "pending"
+    },
+    {
+      "job": "start",
+      "why": "선행이 없는 첫 태스크",
+      "ref": "A1",
+      "status": "pending"
+    }
+  ]
 }
