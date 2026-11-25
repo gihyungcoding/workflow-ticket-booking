@@ -504,6 +504,25 @@
       "note": "Dispatch 중 발견(기능 문서 작성 에이전트) — 확정 뒤 추가 결정, AskUserQuestion 응답 2026-11-25",
       "estimate_delta_h": 3,
       "placed_in": "B — 선점(A1)·예약(A2) 둘 다 있어야 계산할 수 있다"
+    },
+    {
+      "id": "D41",
+      "class": "user_challenge",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "지금 앱은 데스크톱에서도 모바일 폭 한 줄 화면인데 REQ-002 시안에는 1280 데스크톱 배치가 있다. 데스크톱을 어떻게 할까",
+      "answer": "이번엔 모바일 폭으로 (추천) — REQ-002 화면도 기존 화면처럼 한 줄(appMaxWidth). 데스크톱 시안(screens/desktop/)은 보관하고 앱 전체 데스크톱 배치는 별도 요청으로",
+      "phase": "dispatch",
+      "note": "사용자 질문 '기존 시안과 새 스킬 시안이 다를 텐데 어떻게 진행하나' 에서 — AskUserQuestion 응답 2026-11-25"
+    },
+    {
+      "id": "D42",
+      "class": "mechanical",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "화면 시안 정본이 out/(기존 k-style)과 요청별 시안으로 둘이 된다",
+      "answer": "정본은 화면 단위로 나뉜다 — 기존 화면은 out/, REQ-002 가 새로 만들거나 대체한 화면은 workflow_design/01_brief/mockup/REQ-002/ 의 모바일 화면. 대체되는 out/ 화면(seat, seat--error, checkout, booked, my-bookings)은 지우지 않고 대응표로 표시. 토큰은 같다(대조함). 새 부품(picker·mini·due)은 frontend components/ui 공통 부품으로",
+      "note": "design.md §0 과 ADR 로 옮긴다"
     }
   ],
   "completeness": [
