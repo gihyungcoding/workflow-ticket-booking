@@ -166,7 +166,8 @@ Phase 4 1차 검증이 FAIL 난 태스크가 최근 5건 중 4건이었다(TASK-
 이 리뷰가 Phase 4 리뷰를 대신하지는 않는다. Phase 4 는 리뷰어를 다시 부르고, 이 단계에서
 나온 `root_causes` 를 이전 라운드로 넘겨받는다.
 
-**0. Frontend 이고 시안(`out/screens/*.html`)이 있으면 리뷰 전에 화면을 시안과 나란히 본다.**
+**0. Frontend 이고 시안(요청의 `workflow_design/01_brief/mockup/<REQ-ID>/`, 이전 것은 `out/screens/*.html`)이 있으면
+리뷰 전에 화면을 시안과 나란히 본다.** 데스크톱 화면이 있으면 1280px 로도 `screens/desktop/` 과 나란히 본다.
 앱을 띄워 같은 출처 375px iframe 으로 시안 화면과 나란히 놓는다
 (`wf-verify/references/screen-verification.md` 방식 — 상태는 실제로 만들어 본다). 차이는
 리뷰 소견과 같이 처리한다(아래 3). 시안 대조를 Phase 4 에서 처음 하면 시안 값 차이가

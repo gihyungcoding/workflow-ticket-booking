@@ -50,9 +50,29 @@ from _utils import (  # noqa: E402
     ALLOWED_WORKFLOW_DIRS,
     DOC_NAME_EXEMPT,
     KEBAB_RE,
+    REQ_ID_RE,
     TASK_ID_RE,
     repo_root,
 )
+
+BRIEF_NAME_RE = re.compile(r"^BRIEF_(.+)\.json$")
+
+
+def _brief_path_problems(rel: str, parts: list[str]) -> list[str]:
+    """workflow_design/01_brief/ 아래 — BRIEF_<REQ-ID>.json 또는 mockup/<REQ-ID>/… 만."""
+    if len(parts) == 3:
+        m = BRIEF_NAME_RE.match(parts[2])
+        if m and REQ_ID_RE.match(m.group(1)):
+            return []
+        return [
+            f"계획 파일명이 규약에 맞지 않는다: '{parts[2]}' — 'BRIEF_<REQ-ID>.json'"
+            f"(REQ-001 처럼 'REQ-' + 숫자 3자리 이상)만 쓴다. ({DOC_REF} §2)"
+        ]
+    if parts[2] != "mockup":
+        return [f"01_brief 아래에는 BRIEF 파일과 mockup/ 만 둔다: '{rel}'. ({DOC_REF} §2)"]
+    if len(parts) >= 4 and not REQ_ID_RE.match(parts[3]):
+        return [f"시안 폴더명은 요청 ID 여야 한다: '{parts[3]}' — 'REQ-001'. ({DOC_REF} §2)"]
+    return []
 
 # 레거시(v1) 파일명도 허용한다 — 이미 만들어진 프로젝트의 체크포인트가 걸리지 않게.
 # 새로 쓸 이름은 _utils.CHECKPOINTS 의 6개뿐이고, 그건 스킬이 지시한다.
@@ -109,7 +129,16 @@ def violations_for(rel: str) -> list[str]:
                         f"{sorted(ALLOWED_CP_DIRS)} 중 하나여야 한다. ({DOC_REF} §3)"
                     )
                 canonical = RETRY_SUFFIX_RE.sub("", filename)
-                if canonical not in ALLOWED_CP_FILENAMES:
+                if filename == ".gitkeep":
+                    # 허용하지 않는다 — phase 디렉터리는 빈 채로 존재할 이유가 없다.
+                    # 체크포인트를 저장할 때 mkdir -p 로 만들면 되고, 파일이 생기면 git 이 추적한다.
+                    problems.append(
+                        f"빈 phase 디렉터리를 커밋하려는 자리표시 파일이다: '{rel}' — "
+                        "미리 만들 필요가 없다. 체크포인트를 저장할 때 "
+                        "`mkdir -p \"$(dirname \"$CP\")\"` 로 만든다. "
+                        "(docs/workflow/checkpoint-template.md §4)"
+                    )
+                elif canonical not in ALLOWED_CP_FILENAMES:
                     problems.append(
                         f"체크포인트 파일명이 고정 목록에 없다: '{filename}' — "
                         f"자유 작명 금지. 허용 목록은 {DOC_REF} §3 참조."
@@ -124,6 +153,16 @@ def violations_for(rel: str) -> list[str]:
                     f"workflow_design 하위 디렉터리가 허용 목록에 없다: '{top}' — "
                     f"{sorted(ALLOWED_WORKFLOW_DIRS)} 중 하나여야 한다. ({DOC_REF} §2)"
                 )
+            elif top == "01_brief" and len(parts) >= 3:
+                problems.extend(_brief_path_problems(rel, parts))
+            elif top == "09_telemetry" and len(parts) == 3:
+                name = parts[2]
+                stem = name.removesuffix(".jsonl")
+                if not name.endswith(".jsonl") or not (TASK_ID_RE.match(stem) or REQ_ID_RE.match(stem)):
+                    problems.append(
+                        f"텔레메트리 파일명이 규약에 맞지 않는다: '{name}' — "
+                        f"'<TASK-ID|REQ-ID>.jsonl' 만 쓴다. ({DOC_REF} §2)"
+                    )
 
     # --- 5. docs 내부 ---
     if parts[0] == "docs" and len(parts) >= 2:

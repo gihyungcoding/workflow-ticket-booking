@@ -105,8 +105,12 @@ ls docs/architecture/architecture.md docs/decisions/README.md 2>/dev/null
 
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-mkdir -p "$REPO_ROOT/memory-bank/$1/checkpoints"/{phase1,phase2a,phase2b,phase3,phase4,phase5}
+mkdir -p "$REPO_ROOT/memory-bank/$1"
 ```
+
+`checkpoints/phase*/` 는 **미리 만들지 않는다.** git 은 빈 디렉터리를 추적하지 못해서
+`.gitkeep` 을 넣게 되는데, 그 파일은 경로 규약 위반이다. 체크포인트를 저장할 때
+`mkdir -p` 로 만든다 (→ `docs/workflow/checkpoint-template.md` §4).
 
 `activeContext.md` 와 `progress.md` 를 작성한다 (→ `docs/workflow/memory-bank-spec.md` §1, §2).
 태스크의 `title`, `primary_category`, `acceptance_criteria` 를 옮겨 담는다.
@@ -153,7 +157,16 @@ git commit -m "chore(memory-bank): $1 워크플로우 시작"
 
 ### 8. Phase 1 진입
 
-`wf-plan` 스킬로 넘어간다.
+태스크의 `source_refs.request_id` 를 본다.
+
+```bash
+REQ=$(jq -r '.[] | select(.id == "$1") | .source_refs.request_id // empty' workflow_design/02_tasks/tasks.json)
+[ -n "$REQ" ] && python3 scripts/check_brief.py --req "$REQ" --gate locked
+```
+
+- 요청이 있고 확정됐다 → `wf-plan` 의 **Normalize**(`references/normalize.md`)만 한다. 계획 대화는 이미 끝났다
+- 요청이 있는데 확정되지 않았다 → 멈추고 `/wf-plan` 으로 그 요청을 먼저 확정하자고 안내한다
+- 요청이 없다(기능 문서에서 추출·`/wf-task-new`) → `wf-plan` 「요청 없는 태스크」로 미니 BRIEF 를 확정한 뒤 Normalize
 
 ---
 
