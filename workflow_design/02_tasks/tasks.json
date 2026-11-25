@@ -2103,7 +2103,7 @@
   {
     "id": "TASK-032",
     "title": "좌석 잠금·선점·해제·좌석 조회 API",
-    "description": "REQ-002 A1. 좌석을 고르고 잡는 API 가 없다. seat_lock 스키마(seat_id UNIQUE, hold_id, expires_at)와 좌석 조회(로그인 관객만, GET /api/performances/*/seats 매처를 permitAll 앞에), 선점 POST /api/seat-holds(1~4석, INSERT … ON CONFLICT … WHERE expires_at <= :now RETURNING 한 문장, seatIds 오름차순, 반환 수 대조로 부분 선점 없음, 중복 제거·같은 공연·공개 공연 검증), 사용자당 활성 선점 1개 대체와 공연별 입금 대기+확정 합계 4석, 해제 DELETE /api/seat-holds/{holdId}(본인·미예약만, 예약된 hold 는 204 no-op), SEAT_UNAVAILABLE·SEAT_LIMIT_EXCEEDED·HOLD_NOT_OWNED 와 ErrorResponse 선택 필드(@JsonInclude NON_NULL, 2-인자 생성자 유지), BookingExceptionHandler, 설정값(7분·4석), 마이그레이션 버전 단언 3개 갱신(사람 승인 필요, D28), PostgreSQL(Testcontainers) 공용 테스트 베이스와 동시 선점 테스트(ADR-0006 전환 조건 충족 기록). 근거: ADR-0004·0005·0037, BRIEF D24·D26·D27·D29·D30·D32·D34·D35. 포함하지 않음: 예약(booking)·예매번호, ADMIN 역할, 입금 확인, 대기열 입장권 검사, 연석 자동 선점, performance.available_seats 갱신.",
+    "description": "REQ-002 A1. 좌석을 고르고 잡는 API 가 없다. seat_lock 스키마(seat_id UNIQUE, hold_id, expires_at)와 좌석 조회(로그인 관객만, GET /api/performances/*/seats 매처를 permitAll 앞에), 선점 POST /api/seat-holds(1~4석, INSERT … ON CONFLICT … WHERE expires_at <= :now RETURNING 한 문장, seatIds 오름차순, 반환 수 대조로 부분 선점 없음, 중복 제거·같은 공연·공개 공연 검증), 사용자당 활성 선점 1개 대체와 공연별 입금 대기+확정 합계 4석, 해제 DELETE /api/seat-holds/{holdId}(본인·미예약만, 예약된 hold 는 204 no-op), SEAT_UNAVAILABLE·SEAT_LIMIT_EXCEEDED·HOLD_NOT_OWNED 와 ErrorResponse 선택 필드(@JsonInclude NON_NULL, 2-인자 생성자 유지), BookingExceptionHandler, 설정값(7분·4석), 마이그레이션 버전 단언 3개 갱신(사람 승인 필요, D28), PostgreSQL(Testcontainers) 공용 테스트 베이스와 동시 선점 테스트(ADR-0006 전환 조건 충족 기록). 근거: ADR-0004·0005·0037, BRIEF D24·D26·D27·D29·D30·D32·D34·D35. 포함하지 않음: 예약(booking)·예매번호, ADMIN 역할, 입금 확인, 대기열 입장권 검사, 연석 자동 선점.",
     "primary_category": "Backend",
     "sub_categories": [],
     "reason_primary": "좌석 잠금 스키마·동시성·보안 매처·API 가 모두 서버 범위",
@@ -2244,8 +2244,8 @@
   },
   {
     "id": "TASK-034",
-    "title": "입금 확인 API(ADMIN)·기한 판정·내 예매 조회",
-    "description": "REQ-002 B. 입금이 들어와도 예매를 확정할 수단이 없다. POST /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit(한 트랜잭션 조건부 쓰기 UPDATE … SET expires_at=NULL WHERE hold_id AND expires_at > :now, 영향 행 = 좌석 수일 때만, 기한 뒤면 DEPOSIT_DEADLINE_PASSED 409 만 반환하고 쓰기 없음, 이미 확정이면 200 멱등, 응답에 금액·예매자·좌석), 확정 시 DB 역할 재확인과 booking.confirmed_by·confirmed_at, 예매 상태 파생(CONFIRMED·PENDING_DEPOSIT·CANCELLED — 저장하지 않음), GET /api/bookings/me(page/size 0/20 최신순)·GET /api/bookings/{id}(본인, BOOKING_NOT_FOUND 404), 취소된 예약 좌석의 재판매. 근거: ADR-0036·0037, BRIEF D13·D14·D15·D18·D36·D37·D38, 완전성 C1·C8. 포함하지 않음: 은행 입금 자동 연동, 확정·취소 알림, 관객 직접 취소·환불, 운영자 화면.",
+    "title": "입금 확인 API(ADMIN)·기한 판정·남은 좌석 계산",
+    "description": "REQ-002 B. 입금이 들어와도 예매를 확정할 수단이 없다. POST /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit(한 트랜잭션 조건부 쓰기 UPDATE … SET expires_at=NULL WHERE hold_id AND expires_at > :now, 영향 행 = 좌석 수일 때만, 기한 뒤면 DEPOSIT_DEADLINE_PASSED 409 만 반환하고 쓰기 없음, 이미 확정이면 200 멱등, 응답에 금액·예매자·좌석), 확정 시 DB 역할 재확인과 booking.confirmed_by·confirmed_at, 예매 상태 파생(CONFIRMED·PENDING_DEPOSIT·CANCELLED — 저장하지 않음), GET /api/bookings/me(page/size 0/20 최신순)·GET /api/bookings/{id}(본인, BOOKING_NOT_FOUND 404), 취소된 예약 좌석의 재판매, 공연의 남은 좌석 수를 저장값이 아니라 조회 시점에 계산(전체 − 유효한 잠금: 만료 전 선점·입금 대기·입금 확인된 좌석)해 공연 상태(PerformanceStatusRules OPEN/SOLD_OUT)·공개 목록 매진 필터(PerformanceRepositoryImpl)·주최자 응답에 반영 — performance.available_seats 저장 컬럼은 더 쓰지 않고, 컬럼 처리(삭제·유지·마이그레이션)는 PLAN 에서 정한다. 근거: ADR-0036·0037, BRIEF D13·D14·D15·D18·D36·D37·D38·D39·D40, 완전성 C1·C8. 포함하지 않음: 은행 입금 자동 연동, 확정·취소 알림, 관객 직접 취소·환불, 운영자 화면.",
     "primary_category": "Backend",
     "sub_categories": [],
     "reason_primary": "입금 확인 권한·기한 경계·상태 파생·조회 API 가 서버 범위",
@@ -2257,7 +2257,7 @@
     "meta": {
       "estimate": {
         "unit": "hour",
-        "value": 7.5
+        "value": 10.5
       },
       "risk": "high",
       "acceptance_criteria": [
@@ -2265,17 +2265,23 @@
         "입금 기한이 지나면 예약은 취소 상태로 조회되고 그 좌석을 다른 관객이 선점할 수 있다 (AC-6)",
         "기한 뒤 입금 확인은 DEPOSIT_DEADLINE_PASSED 409 이고 DB 가 바뀌지 않는다(비트랜잭션 확인). 예약은 취소 상태로 보인다 (AC-9)",
         "DB 에서 ADMIN 역할을 회수한 사용자의 입금 확인은 거절된다",
-        "내 예매 목록은 본인 것만 최신순으로, 남의 예매 상세는 404 다"
+        "내 예매 목록은 본인 것만 최신순으로, 남의 예매 상세는 404 다",
+        "예매 확정·만료가 공연의 남은 좌석 수와 매진 표시에 반영된다 — 마지막 좌석이 입금 대기·확정이면 공연이 매진(SOLD_OUT)으로 보이고 공개 목록 매진 필터에 잡히며, 그 예약이 기한을 넘기면 다시 판매 중으로 보인다. 주최자 응답의 남은 좌석 수도 같다 (AC-5·AC-6, D40)"
       ],
       "absorbed_steps": [],
       "implementation_spec": {
-        "paths": []
+        "paths": [
+          "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java",
+          "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+          "backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceResponse.java",
+          "backend/src/main/java/com/example/ticket_booking/service/PerformanceResponse.java"
+        ]
       },
       "complexity": {
-        "size_score": 3,
+        "size_score": 4,
         "risk_score": 4,
-        "total_score": 60,
-        "level": "보통"
+        "total_score": 80,
+        "level": "복잡"
       }
     },
     "source_refs": {
