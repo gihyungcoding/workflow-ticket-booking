@@ -713,7 +713,7 @@
     }
   ],
   "mockup": {
-    "status": "draft",
+    "status": "approved",
     "rev": 6,
     "coverage": {
       "AC-1": [
@@ -797,6 +797,11 @@
       {
         "rev": 6,
         "text": "rev6 보정: countdown → due",
+        "impact": "visual"
+      },
+      {
+        "rev": 6,
+        "text": "취소 화면 금액 이름표 '보낼 금액' → '예약 금액' (승인 시 함께)",
         "impact": "visual"
       }
     ],
