@@ -713,8 +713,8 @@
     }
   ],
   "mockup": {
-    "status": "approved",
-    "rev": 2,
+    "status": "draft",
+    "rev": 5,
     "coverage": {
       "AC-1": [
         "seats",
@@ -777,6 +777,16 @@
       {
         "rev": 2,
         "text": "좌석 배치도 둥글기·축소판 글자 크기",
+        "impact": "visual"
+      },
+      {
+        "rev": 5,
+        "text": "금액·입금 기한·입금 계좌 표시를 한 부품·순서·이름표로 통일(모바일끼리·데스크톱끼리)",
+        "impact": "visual"
+      },
+      {
+        "rev": 5,
+        "text": "좌석 배치도 미니맵을 구역 모양·무대·보는 범위·고른 좌석이 보이는 키트 부품으로",
         "impact": "visual"
       }
     ],

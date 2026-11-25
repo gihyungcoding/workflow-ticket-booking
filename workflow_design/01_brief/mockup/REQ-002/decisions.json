@@ -268,5 +268,38 @@
    "verdict": "keep",
    "why": "관객이 이미 아는 구조. 상태 배지로 입금 대기/확정을 가른다."
   }
+ ],
+ "feedback": [
+  {
+   "rev": 5,
+   "impact": "visual",
+   "text": "금액·입금 기한·입금 계좌를 한 부품('입금 정보')·같은 순서·같은 이름표로 통일 — 모바일 reserved·booking 은 행 묶음, 데스크톱 d-reserved·d-bookings 계열은 숫자 칸(금액·입금 기한)+계좌 행. 금액 부가 글 'R석 99,000원 × 3'",
+   "screens": [
+    "reserved",
+    "booking",
+    "d-reserved",
+    "d-bookings",
+    "d-bookings--confirmed",
+    "d-bookings--cancelled"
+   ]
+  },
+  {
+   "rev": 5,
+   "impact": "visual",
+   "text": "좌석 미니맵을 키트 새 마크업으로 — 구역 모양·무대·보는 범위·고른 좌석 점·위치 글자('R석 · 무대 왼쪽 앞')",
+   "screens": [
+    "seats",
+    "seats--taken",
+    "seats--limit",
+    "seats--expired",
+    "seats--released",
+    "d-seats",
+    "d-seats--taken",
+    "d-seats--limit",
+    "d-seats--expired",
+    "d-seats--released",
+    "d-hold"
+   ]
+  }
  ]
 }
