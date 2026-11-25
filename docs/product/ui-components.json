@@ -1,0 +1,35 @@
+{
+  "_about": "키트 부품(시안의 루트 클래스) → 프론트 공통 부품. null = 아직 없음 — 그 부품을 쓰는 화면의 Frontend 태스크가 만든다. ui-mockup/scripts/ui_map.py 가 대조한다.",
+  "parts": {
+    "appbar": "frontend/src/components/ui/AppBar.tsx",
+    "badge": "frontend/src/components/ui/Badge.tsx",
+    "block": "frontend/src/components/ui/Block.tsx",
+    "btn": null,
+    "cta": "frontend/src/components/ui/CtaBar.tsx",
+    "done": null,
+    "due": null,
+    "empty": null,
+    "eyebrow": {
+      "path": "frontend/src/components/ui/Hero.tsx",
+      "note": "Hero 의 머리 줄"
+    },
+    "field": "frontend/src/components/ui/Field.tsx",
+    "h2": {
+      "path": "frontend/src/components/ui/Block.tsx",
+      "note": "Block 제목"
+    },
+    "hero": "frontend/src/components/ui/Hero.tsx",
+    "label": null,
+    "lead": {
+      "path": "frontend/src/components/ui/Hero.tsx",
+      "note": "Hero 의 설명 줄"
+    },
+    "num": null,
+    "page": "frontend/src/components/ui/Page.tsx",
+    "picker": null,
+    "row": "frontend/src/components/ui/Row.tsx",
+    "seg": "frontend/src/components/ui/Segmented.tsx",
+    "timeline": null,
+    "title": null
+  }
+}
