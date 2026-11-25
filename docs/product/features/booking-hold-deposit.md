@@ -2,7 +2,7 @@
 
 **상태**: 확정
 **최종 갱신**: 2026-11-25
-**계획**: `workflow_design/01_brief/BRIEF_REQ-002.json` (HITL#0 확정 2026-11-25, 결정 D1~D39 · 완전성 C1~C10 · AC-1~12)
+**계획**: `workflow_design/01_brief/BRIEF_REQ-002.json` (HITL#0 확정 2026-11-25, 결정 D1~D40 · 완전성 C1~C10 · AC-1~12)
 
 ---
 
@@ -28,11 +28,11 @@
 
 | Task | 범위 | 산출물 | 포함하지 않음 | 선행 | 추정 | 태스크 ID |
 |---|---|---|---|---|---|---|
-| A1. 백엔드 — 좌석 잠금 스키마·선점·해제·좌석 조회 API (동시성, PostgreSQL 테스트 베이스) | `seat_lock` 스키마, 좌석 조회(로그인 관객만, 매처 순서), 선점 1~4석 전부-아니면-없음·입력 검증·오름차순·반환 수 대조, 사용자당 활성 선점 1개 대체, 공연별 1인 4석 합계, 선점 해제(본인·미예약만), 에러 코드·`ErrorResponse` 선택 필드, 마이그레이션 버전 단언 3개 갱신, Testcontainers 공용 베이스와 동시 선점 테스트, 설정값(7분·4석) | `seat_lock` 마이그레이션, `GET /api/performances/{id}/seats`, `POST /api/seat-holds`, `DELETE /api/seat-holds/{holdId}`, `SecurityConfig` 좌석 조회 매처, `BookingExceptionHandler`(신규), `ErrorResponse` 선택 필드 | 예약(`booking`)·예매번호, ADMIN 역할, 입금 확인, 대기열 입장권 검사, 매수 지정 연석 자동 선점, `performance.available_seats` 갱신 | — | 15h || TASK-032 |
-| A2. 백엔드 — 무통장 예약·예매번호·ADMIN 역할·가입 차단·보안 매처 | `booking`·`booking_seat`·예매번호 시퀀스, 예약(선점 → 입금 대기, 조건부 전환, 같은 hold 재예약 200), 입금 기한 계산(23:59 Asia/Seoul), 응답에 예매번호·계좌·금액·기한, `UserRole.ADMIN`, 가입 API 두 곳 ADMIN 400, 프론트 `UserRole`·`ROLES` 에 `'ADMIN'`, `/api/admin/**` `hasRole(ADMIN)` 매처, 입금 계좌·기한 설정값 | `booking` 마이그레이션, `POST /api/bookings`, `UserRole.ADMIN`, `SignUpRequest`·`CompleteSocialSignUpRequest` 검증, `SecurityConfig` 관리자 매처, `frontend/src/api/auth.ts` 타입 | 입금 확인 API, 내 예매 조회 API, ADMIN 화면·계정 생성 화면, 카드·간편결제 | A1 | 10h || TASK-033 |
-| B. 백엔드 — 입금 확인 API(ADMIN)·기한 판정·재판매 | 예매번호로 입금 확인(조건부 쓰기, 기한 뒤 409·쓰기 없음, 이미 확정이면 200), DB 역할 재확인·`confirmed_by`·`confirmed_at`, 예매 상태 파생(`CONFIRMED`·`PENDING_DEPOSIT`·`CANCELLED`), 내 예매 목록·상세 조회 API, 취소된 예약 좌석의 재판매 | `POST /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit`, `GET /api/bookings/me`, `GET /api/bookings/{id}` | 은행 입금 자동 연동, 확정·취소 알림(메일·문자), 관객 직접 취소·환불, 운영자 화면 | A2 | 7.5h || TASK-034 |
-| C. 프론트 — 좌석 선택(확대·미니맵)·예약·예약 완료 화면 | 좌석 화면(구역 전체 → 확대 44px·미니맵, 등급 전환, 1~4석 선택, 상태 6장), 선점 완료·예약 화면(남은 시간·다시 고르기 = 해제·떠나면 해제), 예약 완료 화면(입금 정보 묶음·계좌 복사), 데스크톱 화면, 공연 상세 「예매하기」 → 좌석 화면, 비로그인 → 로그인 | 모바일 `seats`·`seats--*`·`hold`·`reserved`, 데스크톱 `d-seats`·`d-seats--*`·`d-hold`·`d-reserved` (§2), `api/` 의 선점·예약 호출 | 내 예매 목록·상세, 대기열 화면, 매수 지정 자동 배정, 카드·간편결제 수단 | A2 | 16h || TASK-035 |
-| D. 프론트 — 내 예매 목록·상세 화면 | 내 예매 목록(입금 대기·확정·취소, 빈 상태), 예매 상세(진행 단계 선점 → 예약 → 입금 확인 → 확정, 입금 정보 묶음 상태별, 취소 화면 「다시 예매하기」), 데스크톱 목록·상세 나란히 | 모바일 `bookings`·`bookings--empty`·`bookings--confirmed`·`booking`·`booking--confirmed`·`booking--cancelled`, 데스크톱 `d-bookings`·`d-bookings--*` (§2) | 직접 취소·양도 버튼(「아직 할 수 없어요」 한 줄만), 모바일 티켓, 알림 | B | 8h || TASK-036 |
+| A1. 백엔드 — 좌석 잠금 스키마·선점·해제·좌석 조회 API (동시성, PostgreSQL 테스트 베이스) | `seat_lock` 스키마, 좌석 조회(로그인 관객만, 매처 순서), 선점 1~4석 전부-아니면-없음·입력 검증·오름차순·반환 수 대조, 사용자당 활성 선점 1개 대체, 공연별 1인 4석 합계, 선점 해제(본인·미예약만), 에러 코드·`ErrorResponse` 선택 필드, 마이그레이션 버전 단언 3개 갱신, Testcontainers 공용 베이스와 동시 선점 테스트, 설정값(7분·4석) | `seat_lock` 마이그레이션, `GET /api/performances/{id}/seats`, `POST /api/seat-holds`, `DELETE /api/seat-holds/{holdId}`, `SecurityConfig` 좌석 조회 매처, `BookingExceptionHandler`(신규), `ErrorResponse` 선택 필드 | 예약(`booking`)·예매번호, ADMIN 역할, 입금 확인, 대기열 입장권 검사, 매수 지정 연석 자동 선점 | — | 15h | TASK-032 |
+| A2. 백엔드 — 무통장 예약·예매번호·ADMIN 역할·가입 차단·보안 매처 | `booking`·`booking_seat`·예매번호 시퀀스, 예약(선점 → 입금 대기, 조건부 전환, 같은 hold 재예약 200), 입금 기한 계산(23:59 Asia/Seoul), 응답에 예매번호·계좌·금액·기한, `UserRole.ADMIN`, 가입 API 두 곳 ADMIN 400, 프론트 `UserRole`·`ROLES` 에 `'ADMIN'`, `/api/admin/**` `hasRole(ADMIN)` 매처, 입금 계좌·기한 설정값 | `booking` 마이그레이션, `POST /api/bookings`, `UserRole.ADMIN`, `SignUpRequest`·`CompleteSocialSignUpRequest` 검증, `SecurityConfig` 관리자 매처, `frontend/src/api/auth.ts` 타입 | 입금 확인 API, 내 예매 조회 API, ADMIN 화면·계정 생성 화면, 카드·간편결제 | A1 | 10h | TASK-033 |
+| B. 백엔드 — 입금 확인 API(ADMIN)·기한 판정·재판매·남은 좌석 조회 시점 계산 | 예매번호로 입금 확인(조건부 쓰기, 기한 뒤 409·쓰기 없음, 이미 확정이면 200), DB 역할 재확인·`confirmed_by`·`confirmed_at`, 예매 상태 파생(`CONFIRMED`·`PENDING_DEPOSIT`·`CANCELLED`), 내 예매 목록·상세 조회 API, 취소된 예약 좌석의 재판매, 공연의 남은 좌석 수를 조회 시점에 계산(전체 − 유효한 잠금)해 공연 상태(OPEN/SOLD_OUT)·공개 목록 매진 필터·주최자 응답에 반영 | `POST /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit`, `GET /api/bookings/me`, `GET /api/bookings/{id}`, `PerformanceStatusRules`·`PerformanceRepositoryImpl`·`OrganizerPerformanceResponse` 의 남은 좌석 계산 | 은행 입금 자동 연동, 확정·취소 알림(메일·문자), 관객 직접 취소·환불, 운영자 화면 | A2 | 10.5h | TASK-034 |
+| C. 프론트 — 좌석 선택(확대·미니맵)·예약·예약 완료 화면 | 좌석 화면(구역 전체 → 확대 44px·미니맵, 등급 전환, 1~4석 선택, 상태 6장), 선점 완료·예약 화면(남은 시간·다시 고르기 = 해제·떠나면 해제), 예약 완료 화면(입금 정보 묶음·계좌 복사), 데스크톱 화면, 공연 상세 「예매하기」 → 좌석 화면, 비로그인 → 로그인 | 모바일 `seats`·`seats--*`·`hold`·`reserved`, 데스크톱 `d-seats`·`d-seats--*`·`d-hold`·`d-reserved` (§2), `api/` 의 선점·예약 호출 | 내 예매 목록·상세, 대기열 화면, 매수 지정 자동 배정, 카드·간편결제 수단 | A2 | 16h | TASK-035 |
+| D. 프론트 — 내 예매 목록·상세 화면 | 내 예매 목록(입금 대기·확정·취소, 빈 상태), 예매 상세(진행 단계 선점 → 예약 → 입금 확인 → 확정, 입금 정보 묶음 상태별, 취소 화면 「다시 예매하기」), 데스크톱 목록·상세 나란히 | 모바일 `bookings`·`bookings--empty`·`bookings--confirmed`·`booking`·`booking--confirmed`·`booking--cancelled`, 데스크톱 `d-bookings`·`d-bookings--*` (§2) | 직접 취소·양도 버튼(「아직 할 수 없어요」 한 줄만), 모바일 티켓, 알림 | B | 8h | TASK-036 |
 
 [태스크 생성 2026-11-25]
 
@@ -57,6 +57,7 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 - **동시성** — 유니크 제약 + 조건부 UPSERT 한 문장, 부분 선점 없음 (ADR-0004, D26·D27)
 - **1인 상한** — 사용자당 활성 선점 1개(새 선점이 이전 미예약 선점을 대체) + 공연별 「입금 대기 + 확정」 합계 4석 (D32)
 - **예매 상태** — 저장하지 않고 만료 시각에서 파생 (D15)
+- **남은 좌석 수** — 저장하지 않고 조회 시점에 전체 − 유효한 잠금으로 계산. 공연 상태·공개 목록 매진 필터·주최자 응답이 쓴다 (D40, ADR-0037)
 - **권한** — 좌석 조회·선점·예약·내 예매는 로그인 관객, 입금 확인은 ADMIN (ADR-0036, D24·D30·D34)
 - **멱등** — 같은 hold 재예약은 기존 예약 200, 이미 확정된 예매의 입금 확인은 200 (D18·D37)
 - **알려진 한계** — 동명이인·같은 금액 입금은 운영자가 예매번호로 구분한다 (D23)
@@ -234,6 +235,7 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 - [ ] 기한 뒤 입금 확인은 `DEPOSIT_DEADLINE_PASSED` 409 이고 DB 가 바뀌지 않는다(비트랜잭션 확인). 예약은 취소 상태로 보인다 (AC-9)
 - [ ] DB 에서 ADMIN 역할을 회수한 사용자의 입금 확인은 거절된다
 - [ ] 내 예매 목록은 본인 것만 최신순으로, 남의 예매 상세는 404 다
+- [ ] 예매 확정·만료가 공연의 남은 좌석 수와 매진 표시에 반영된다 — 마지막 좌석이 입금 대기·확정이면 공연이 매진(SOLD_OUT)으로 보이고 공개 목록 매진 필터에 잡히며, 그 예약이 기한을 넘기면 다시 판매 중으로 보인다. 주최자 응답의 남은 좌석 수도 같다 (AC-5·AC-6, D40)
 
 ### Task C (프론트 — 좌석·예약·예약 완료)
 
@@ -260,6 +262,9 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 - `backend/src/main/java/com/example/ticket_booking/domain/Seat.java` — 좌석(`grade`·`seatRow`·`seatNumber`·`seatLabel`·`price`)
 - `backend/src/main/java/com/example/ticket_booking/domain/UserRole.java` — `ADMIN` 추가 (A2)
 - `backend/src/main/java/com/example/ticket_booking/config/SecurityConfig.java` — 매처 순서 (A1 좌석 조회, A2 `/api/admin/**`)
+- `backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java` — OPEN/SOLD_OUT 판정이 남은 좌석 계산을 쓴다 (B)
+- `backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java` — 공개 목록 매진 필터가 지금 `availableSeats` 를 읽는다 (B)
+- `backend/src/main/java/com/example/ticket_booking/service/OrganizerPerformanceResponse.java` · `PerformanceResponse.java` — `availableSeats` 응답 (B)
 - `backend/src/main/java/com/example/ticket_booking/config/ClockConfig.java` — 주입 `Clock` (ADR-0005)
 - `backend/src/main/java/com/example/ticket_booking/api/dto/ErrorResponse.java` — 선택 필드 추가 (A1)
 - `backend/src/main/java/com/example/ticket_booking/api/dto/SignUpRequest.java` · `CompleteSocialSignUpRequest.java` — ADMIN 거절 (A2)
@@ -289,7 +294,7 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 - ADMIN 의 화면·가입 경로와 그 밖의 운영자 기능 (product.md §4)
 - 확정·취소 알림(메일·문자) — 확정은 내 예매에서 확인한다(D9)
 - 만료 정리 스케줄러 (ADR-0037)
-- 주최자 화면 변경 — 이번 요청에서 주최자 화면은 바뀌지 않음(D39). `performance.available_seats` 도 이 요청에서 갱신하지 않는다
+- 주최자 화면의 새 요소 — 화면 구성은 그대로이고 남은 좌석 수 값만 예매에 따라 움직인다(D39·D40)
 - 공연별·주최자별 입금 계좌 — 서비스 고정 계좌 하나(정산 문제)
 
 ---
@@ -303,5 +308,6 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 | 선점은 유니크 제약 + 조건부 UPSERT 한 문장, 부분 선점 없음 | ADR-0004 확장 (D4·D26·D27) | **전체** | ADR-0004 |
 | 선점·동시성 테스트는 PostgreSQL(Testcontainers) 공용 베이스 | ADR-0006 의 전환 조건 충족 (D29) | **전체** | ADR-0006 |
 | 선점·판매를 관객에게 구분하지 않는다 (`available` 하나) | 관객에게 구분할 이유가 없다 (D30) | 이 기능만 | — |
+| 공연의 남은 좌석 수를 저장값이 아니라 조회 시점에 계산 (`available_seats` 컬럼은 더 쓰지 않음, 컬럼 처리는 PLAN) | 만료가 쓰기 사건이 아니라 저장값으로는 맞출 수 없다 — 선점·만료와 같은 기준 (D40) | **전체** | ADR-0037 |
 | 예매번호를 보이고 DB 시퀀스로 만든다 | 운영자 입금 대조 (D8·D37) | 이 기능만 | — |
 | 떠나면 선점 해제 | 선점이 남아 다른 관객을 막지 않게 (D7·D12) | 이 기능만 | — |
