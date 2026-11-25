@@ -827,7 +827,11 @@
       "job": "adr",
       "why": "확정한 결정을 ADR 로",
       "ref": "입금 확인 호출자 — 최소 ADMIN 역할",
-      "status": "pending"
+      "status": "done",
+      "result": [
+        "docs/decisions/ADR-0036-deposit-confirm-caller-minimal-admin-role.md",
+        "docs/decisions/ADR-0025 상태 줄 — 경로·호출자 ADR-0036 으로 대체"
+      ]
     },
     {
       "job": "adr",

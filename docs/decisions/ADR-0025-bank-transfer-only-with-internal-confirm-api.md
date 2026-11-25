@@ -1,6 +1,6 @@
 # ADR-0025: 결제는 무통장 입금만 두고, 입금 확인은 쓰기 키로 보호한 내부 API 로 처리한다
 
-- **상태**: 채택됨 (입금 확인 API 의 보호 수단 `X-Write-Key` 는 ADR-0029 로 대체됨 — 운영자 역할 + JWT 방향)
+- **상태**: 채택됨 (입금 확인 API 의 보호 수단 `X-Write-Key` 는 ADR-0029 로 대체됨 — 운영자 역할 + JWT 방향. 경로·호출자는 ADR-0036 으로 대체됨 — `/api/admin/…/confirm-deposit`, 최소 ADMIN 역할)
 - **날짜**: 2026-11-04
 - **관련**: ADR-0016, ADR-0017, `out/prd.md` FR-15~18·§5-3, `docs/product/product.md` §4
 
