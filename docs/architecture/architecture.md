@@ -1,6 +1,6 @@
 # 아키텍처
 
-**최종 갱신**: 2026-11-04
+**최종 갱신**: 2026-11-25
 
 ---
 
@@ -56,10 +56,19 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
 **읽기 — 공연 조회/좌석 현황**
 `React → API(GET) → Service → Repository → PostgreSQL` 조회 후 그대로 반환. 캐시 없음.
 
-**쓰기 — 좌석 선점**
-`React → API(POST /seats/{id}/hold) → Service → Repository`. 좌석-예매 매핑 테이블의
-유니크 제약(좌석당 활성 선점 1건) 과 조건부 UPSERT 로 동시 요청 중 하나만 성공시킨다.
-별도 락 계층(분산 락, 인메모리 큐)은 두지 않는다 — §6, §7 참고.
+**읽기 — 좌석 조회 (REQ-002)**
+`React → API(GET /api/performances/{id}/seats) → Service → Repository`. 로그인한 관객만 —
+비로그인은 401 (§4-2 매처 순서). 좌석별 `available`(선점·판매를 구분하지 않는다)과 등급별 남은 석수만
+돌려준다. `available` 은 `seat_lock` 에 유효한 잠금(`now < expires_at` 또는 `expires_at IS NULL`)이 없는 좌석이다.
+
+**쓰기 — 좌석 선점·해제 (REQ-002)**
+`React → API(POST /api/seat-holds, 본문 performanceId·seatIds) → Service → Repository`.
+`seat_lock.seat_id` 유니크 제약 + `INSERT … SELECT … ON CONFLICT (seat_id) DO UPDATE … WHERE
+seat_lock.expires_at <= :now … RETURNING` **한 문장**으로 1~4석을 전부-아니면-없음으로 잡는다 —
+`seatIds` 오름차순, 반환 수가 요청 수보다 적으면 롤백하고 빠진 좌석 id 를 `SEAT_UNAVAILABLE`(409)에 싣는다.
+사용자당 활성 선점은 1개 — 새 선점이 이전 미예약 선점을 대체한다. 해제(`DELETE /api/seat-holds/{holdId}`)는
+본인·미예약 hold 만 지우고, 이미 예약된 hold 는 204 no-op 이다.
+별도 락 계층(분산 락, 인메모리 큐)은 두지 않는다 — ADR-0004, §6, §7 참고.
 
 **읽기 — 서버 기준 시각**
 `React → API(GET /api/time)`. 프론트는 왕복 시간 절반을 보정한 오프셋으로 카운트다운을
@@ -70,14 +79,58 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
 순번 조회는 DB 를 거치지 않는다. 입장권(TTL)을 받은 관객만 좌석 선택 API 를 호출할 수
 있다 (ADR-0023).
 
-**쓰기 — 예매·입금 확인**
-무통장 입금 예약은 선점과 같은 트랜잭션 경계에서 예매 행을 만든다. 입금 확인은
-내부 API 로 받는다 (ADR-0025). 보호 수단은 공유 키가 아니라 운영자 역할 + JWT 다 —
-방식은 그 API 를 만드는 기능에서 정하고, 정하기 전에는 열지 않는다 (ADR-0029).
+**쓰기 — 무통장 예약 (REQ-002)**
+`React → API(POST /api/bookings, 본문 holdId) → Service → Repository`. 한 트랜잭션에서
+`booking`·`booking_seat` 행을 만들고 잠금을 입금 기한까지 늘린다 — `UPDATE seat_lock SET expires_at = :deadline
+WHERE hold_id = :h AND 본인 AND expires_at > :now`, 영향 행 수 = 좌석 수일 때만 성공. 입금 기한은 예약 당일
+23:59:00 Asia/Seoul 의 `Instant`. 공연별 「입금 대기 + 확정」 합계 1인 4석을 넘으면 거절한다. 같은 hold 로 다시
+부르면 기존 예약을 200 으로 돌려준다(`booking.hold_id` UNIQUE). 예매번호는 DB 시퀀스로 만든다.
+
+**쓰기 — 입금 확인 (REQ-002)**
+`운영자(ADMIN) → API(POST /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit) → Service → Repository`.
+화면 없는 내부 API 다(ADR-0025). `/api/admin/**` 는 `hasRole(ADMIN)` 이고, 확정 시점에 DB 에서 역할을 한 번 더
+확인한다. 한 트랜잭션 조건부 쓰기 `UPDATE … SET expires_at = NULL WHERE hold_id AND expires_at > :now`, 영향 행 수 =
+좌석 수일 때만 확정하고 `booking.confirmed_by`·`confirmed_at` 을 남긴다. 기한 뒤면 409 `DEPOSIT_DEADLINE_PASSED`
+만 돌려주고 쓰지 않는다. 이미 확정이면 200 멱등 (ADR-0036).
+
+**만료 — 저장하지 않고 판정한다 (REQ-002)**
+선점 7분 만료와 입금 기한 경과 취소는 스케줄러가 아니라 `seat_lock.expires_at` 과 주입된 `Clock` 으로 읽기·쓰기
+시점에 판정한다. 유효 = `now < expires_at`. 예매 상태(`CONFIRMED`·`PENDING_DEPOSIT`·`CANCELLED`)는 컬럼이 아니라
+만료 시각에서 파생한다 (ADR-0037, ADR-0005). 선점 7분·입금 기한 23:59(Asia/Seoul)·최대 4석은 설정 한 곳에 둔다.
 
 **쓰기 — 공연 등록/관리**
 `React → API(POST/PUT) → Service → Repository`. 역할(주최자) 확인은 `SecurityConfig` 의
 경로 규칙에서, 소유권 확인은 Service 계층에서 한다. 소유권 위반은 404 (ADR-0029).
+
+### 4-1. 데이터 모델 — 좌석 잠금과 예매 (REQ-002, `V10__create_bookings.sql`)
+
+```
+  seat ◄──── seat_lock                      booking ◄──── booking_seat ────► seat
+             ├ seat_id   UNIQUE             ├ booking_number UNIQUE (DB 시퀀스)
+             ├ hold_id                      ├ hold_id        UNIQUE  ──► seat_lock.hold_id
+             ├ (선점한 사용자)                ├ (예매자·공연·금액·입금 기한)
+             └ expires_at                   ├ confirmed_by   (ADMIN 사용자)
+                 > now   : 선점 또는 입금 대기 └ confirmed_at
+                 NULL    : 판매 확정
+                 <= now  : 만료 — 다음 선점이 덮어쓴다
+```
+
+`seat_lock` 은 좌석당 한 행이고 「지금 누가 이 좌석을 막고 있는가」만 답한다. `booking`·`booking_seat` 는
+「누가 무엇을 예약했는가」의 기록이라 잠금이 만료·덮어써져도 남는다. 예매 상태는 `booking.hold_id` 로 찾은
+잠금의 `expires_at` 에서 파생한다.
+
+### 4-2. 보안 경로 규칙 (`SecurityConfig`, 위에서 아래로 처음 맞는 규칙)
+
+| 순서 | 매처 | 규칙 | 근거 |
+|---|---|---|---|
+| 1 | `GET /api/performances/*/seats` | `authenticated` — **아래 permitAll 보다 먼저** | D30·D34, AC-11 |
+| 2 | `GET /api/performances/**` | `permitAll` | 기존 |
+| 3 | `/api/performances/**`, `/api/organizer/**` | `hasRole(ORGANIZER)` | ADR-0029 |
+| 4 | `/api/admin/**` | `hasRole(ADMIN)` | ADR-0036 |
+| — | `/api/seat-holds/**`, `/api/bookings/**` | `anyRequest().authenticated()` 에 떨어진다 — 선점은 `/api/performances/**` 밑에 두지 않는다(ORGANIZER 매처를 피한다) | D24 |
+
+역할 거절은 기존 `FORBIDDEN_ROLE` 403, 문구는 역할 중립. `ADMIN` 은 가입 API(`SignUpRequest`·
+`CompleteSocialSignUpRequest`)에서 400 으로 거절하고 DB 로만 지정한다 (ADR-0036).
 
 ## 5. 외부 의존
 
@@ -141,6 +194,10 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
   [ADR-0032](../decisions/ADR-0032-email-link-token-hashed-fragment-post.md)
 - 이메일(비밀번호) 로그인은 이메일 소유 확인 뒤에만 →
   [ADR-0033](../decisions/ADR-0033-require-email-ownership-before-password-login.md)
+- 입금 확인 호출자는 최소 ADMIN 역할(`/api/admin/**`), ADMIN 은 DB 로만 →
+  [ADR-0036](../decisions/ADR-0036-deposit-confirm-caller-minimal-admin-role.md)
+- 선점·예약 만료는 만료 시각을 저장하고 조회·쓰기 시점에 판정, 스케줄러 없음 →
+  [ADR-0037](../decisions/ADR-0037-judge-hold-and-booking-expiry-at-read-time.md)
 
 ## 7. 알려진 부채
 
@@ -148,3 +205,8 @@ API/Service/Repository는 요청이 흐르는 순서고, domain은 그 위에 �
 |---|---|---|
 | 좌석 선점을 DB 트랜잭션(유니크 제약 + 조건부 UPSERT)만으로 처리, 메모리 선점 계층 없음 | 대기열(ADR-0023)이 좌석 선택 단계의 동시 인원을 입장권 발급 속도로 제한하므로 DB 만으로 감당할 규모가 된다 | 입장권 발급 속도를 낮춰도 선점 API p99 > 1초면 메모리 선점 계층 검토 (ADR-0004 두 번째 단계) |
 | Redis 단일 노드 | 대기열 전용이고 AOF 로 재시작은 견딘다 | 메모리 사용 70% 초과 또는 노드 장애가 관측되면 |
+| 만료·취소된 `seat_lock` 행을 지우지 않는다 (ADR-0037) | 다음 선점이 덮어쓰므로 좌석 수만큼만 쌓인다. 정리 작업이 필요한 완료 조건이 없다 | 만료 알림(메일·문자)이 범위에 들어오거나, `booking` 조회가 잠금 조인 때문에 느려지면 |
+| 모든 선점·예약 쿼리가 `expires_at` 조건을 빠짐없이 가져야 한다 (ADR-0037) | 정적 검사로 잡기 어렵다 — 경계 테스트로만 지킨다 | 조건 누락 버그가 한 번이라도 나오면 조회 전용 뷰나 리포지토리 공통 조건으로 모은다 |
+| ADMIN 역할 회수가 토큰 만료까지 늦다 — 입금 확인만 DB 에서 재확인한다 (ADR-0036) | ADMIN 이 쓰는 API 가 하나뿐이다 | `/api/admin/**` 에 두 번째 API 가 생기면 |
+| 대기열 없이 좌석 선택 API 가 열린다 — 입장권(ADR-0023) 검사가 없다 | REQ-002 가 대기열을 후속 요청으로 미뤘다 | 대기열 요청을 시작할 때 |
+| 선점·동시성 테스트만 PostgreSQL(Testcontainers), 나머지는 H2 (ADR-0006) | 기존 H2 테스트를 그대로 둔다 (REQ-002 D29) | H2 와 PostgreSQL 동작 차이로 테스트가 어긋나면 |

@@ -89,5 +89,7 @@ ADMIN 을 얻는 권한 상승)은 가입 API 에서 막을 수 있으며 DB 스
 
 ## 검사 가능한 제약
 
-- `ARCH-` 제약으로 `/api/admin/**` 매처가 `SecurityConfig` 에 있는지는 `architecture-doc` 작업(REQ-002 dispatch)에서
-  `constraints.yaml` 에 추가한다 — ID 는 그 작업 결과를 따른다
+- `AUTH-002` — 운영 API 를 `/internal/` 경로에 두지 않는다 (`/api/admin/**` 아래)
+- `AUTH-003` — 역할 인가는 `SecurityConfig` 경로 규칙 한 곳에서 (메서드 보안 애노테이션 금지)
+- `AUTH-004` — 프론트에 ADMIN 화면·운영 API 호출(`/admin`)을 두지 않는다
+- 매처 순서(`GET /api/performances/*/seats` 가 permitAll 보다 먼저)는 정규식으로 잡을 수 없다 — 태스크 A1 의 AC-11 401 테스트로 지킨다

@@ -845,7 +845,13 @@
     {
       "job": "architecture",
       "why": "새 계층·의존 방향 — architecture.md 와 constraints.yaml",
-      "status": "pending"
+      "status": "done",
+      "result": [
+        "docs/architecture/architecture.md — §4 좌석 조회·선점·예약·입금 확인·만료 흐름, §4-1 seat_lock/booking 모델, §4-2 보안 매처 순서, §6 ADR-0036·0037, §7 부채 5건",
+        "docs/architecture/constraints.yaml — ARCH-005, AUTH-002, AUTH-003, AUTH-004 (모두 error, 심은 위반으로 검출 확인)",
+        "docs/decisions/ADR-0036·0037 검사 가능한 제약 절에 ID 기입",
+        "check_architecture.py — 위반 0, 경고 1 (DESIGN-003 기존), AUTH-001 승격 기한 지남 알림(기존)"
+      ]
     },
     {
       "job": "feature_doc",
