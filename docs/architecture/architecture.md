@@ -98,6 +98,12 @@ WHERE hold_id = :h AND 본인 AND expires_at > :now`, 영향 행 수 = 좌석 �
 시점에 판정한다. 유효 = `now < expires_at`. 예매 상태(`CONFIRMED`·`PENDING_DEPOSIT`·`CANCELLED`)는 컬럼이 아니라
 만료 시각에서 파생한다 (ADR-0037, ADR-0005). 선점 7분·입금 기한 23:59(Asia/Seoul)·최대 4석은 설정 한 곳에 둔다.
 
+**읽기 — 공연의 남은 좌석 수 (REQ-002, D40)**
+남은 좌석 = 전체 좌석 − 유효한 잠금(만료 전 선점·입금 대기 예약, 입금 확인된 좌석). 저장값이 아니라 조회 시점에
+`seat_lock` 에서 계산한다 (ADR-0037 결정 5). 공연 상태(`PerformanceStatusRules` 의 OPEN/SOLD_OUT), 공개 목록
+매진 필터(`PerformanceRepositoryImpl`), 주최자 응답(`OrganizerPerformanceResponse`)이 모두 이 계산을 쓴다.
+`performance.available_seats` 저장 컬럼은 더 쓰지 않는다 — 컬럼을 지울지 남길지는 PLAN 에서 정한다.
+
 **쓰기 — 공연 등록/관리**
 `React → API(POST/PUT) → Service → Repository`. 역할(주최자) 확인은 `SecurityConfig` 의
 경로 규칙에서, 소유권 확인은 Service 계층에서 한다. 소유권 위반은 404 (ADR-0029).
@@ -210,3 +216,4 @@ WHERE hold_id = :h AND 본인 AND expires_at > :now`, 영향 행 수 = 좌석 �
 | ADMIN 역할 회수가 토큰 만료까지 늦다 — 입금 확인만 DB 에서 재확인한다 (ADR-0036) | ADMIN 이 쓰는 API 가 하나뿐이다 | `/api/admin/**` 에 두 번째 API 가 생기면 |
 | 대기열 없이 좌석 선택 API 가 열린다 — 입장권(ADR-0023) 검사가 없다 | REQ-002 가 대기열을 후속 요청으로 미뤘다 | 대기열 요청을 시작할 때 |
 | 선점·동시성 테스트만 PostgreSQL(Testcontainers), 나머지는 H2 (ADR-0006) | 기존 H2 테스트를 그대로 둔다 (REQ-002 D29) | H2 와 PostgreSQL 동작 차이로 테스트가 어긋나면 |
+| 공연의 남은 좌석 수를 조회마다 `seat_lock` 집계로 계산한다 — 공개 목록은 공연마다 집계가 붙는다 (ADR-0037, D40) | 선점·만료와 같은 기준으로 매진 표시가 바로 맞고, 만료는 쓰기 사건이 아니라 저장값으로는 맞출 수 없다 | 공연 목록 응답이 느려지면 집계 쿼리·인덱스부터. 저장 컬럼 `performance.available_seats` 의 처리는 TASK-034 PLAN 에서 |
