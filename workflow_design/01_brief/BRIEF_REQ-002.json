@@ -490,7 +490,20 @@
       "source": "outside",
       "status": "approved",
       "question": "여정 사실 정정 (O7)",
-      "answer": "'주최자 화면 남은 좌석 수가 움직인다' → '이번 요청에서 주최자 화면은 바뀌지 않음'"
+      "answer": "'주최자 화면 남은 좌석 수가 움직인다' — D40 으로 남은 좌석 수가 조회 시점 계산이 되어 주최자·공개 화면 모두 움직인다 (D40 에 따라 정정)",
+      "note": "D40 으로 다시 열고 정정"
+    },
+    {
+      "id": "D40",
+      "class": "user_challenge",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "예매가 생겨도 공연의 남은 좌석 수(available_seats — 판매 중/매진 상태·공개 목록 매진 필터의 근거)를 어떻게 할까",
+      "answer": "조회 시점에 계산 (추천) — 전체 − 유효한 선점·예약(만료 전·입금 확인된 것). ADR-0037 과 같은 방식. 저장 컬럼은 더 쓰지 않는다",
+      "phase": "dispatch",
+      "note": "Dispatch 중 발견(기능 문서 작성 에이전트) — 확정 뒤 추가 결정, AskUserQuestion 응답 2026-11-25",
+      "estimate_delta_h": 3,
+      "placed_in": "B — 선점(A1)·예약(A2) 둘 다 있어야 계산할 수 있다"
     }
   ],
   "completeness": [
@@ -597,10 +610,9 @@
       "backend/src/main/java/com/example/ticket_booking/domain/UserRole.java",
       "backend/src/main/resources/db/migration/V10__create_bookings.sql",
       "frontend/src/pages",
-      "out/screens/seat.html",
-      "out/screens/checkout.html",
-      "out/screens/booked.html",
-      "out/screens/my-bookings.html"
+      "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java",
+      "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+      "workflow_design/01_brief/mockup/REQ-002/screens"
     ]
   },
   "split": [
@@ -635,9 +647,9 @@
     },
     {
       "key": "B",
-      "title": "입금 확인 API(ADMIN)·기한 판정·재판매",
+      "title": "입금 확인 API(ADMIN)·기한 판정·재판매·남은 좌석 조회 시점 계산",
       "route": "Backend",
-      "estimate_h": 7.5,
+      "estimate_h": 10.5,
       "ac": [
         "AC-5",
         "AC-6",
