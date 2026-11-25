@@ -1,0 +1,9 @@
+{"ts": "2026-11-24T12:49:48Z", "id": "REQ-002", "event": "draft_saved", "data": {}}
+{"ts": "2026-11-24T12:53:33Z", "id": "REQ-002", "event": "finding_applied", "data": {"role": "ceo"}}
+{"ts": "2026-11-24T12:53:33Z", "id": "REQ-002", "event": "finding_applied", "data": {"role": "ceo"}}
+{"ts": "2026-11-24T12:53:33Z", "id": "REQ-002", "event": "finding_applied", "data": {"role": "ceo"}}
+{"ts": "2026-11-24T12:53:33Z", "id": "REQ-002", "event": "finding_applied", "data": {"role": "ceo"}}
+{"ts": "2026-11-24T13:28:43Z", "id": "REQ-002", "event": "mockup_rev", "data": {"impact": "screen", "rev": 2}}
+{"ts": "2026-11-25T00:57:53Z", "id": "REQ-002", "event": "mockup_rev", "data": {"rev": 6, "impact": "visual", "approved": true}}
+{"ts": "2026-11-25T01:01:32Z", "id": "REQ-002", "event": "locked", "data": {}}
+{"ts": "2026-11-25T01:38:13Z", "id": "REQ-002", "event": "reopened", "data": {"phase": "dispatch", "decision": "D40", "reopened": "D39"}}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=375, initial-scale=1">
+<title>예매 상세 — 입금 대기</title>
+<link id="tokens" rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><script src="../palette.js"></script>
+</head>
+<body>
+<header class="appbar"><a class="appbar-btn" href="bookings.html" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a><h1 class="appbar-title">예매 상세</h1><span></span></header>
+<header class="hero"><span class="badge is-warning">입금 대기</span><p class="lead">오늘 오후 11:59까지 입금이 확인되면 예매가 확정돼요</p></header>
+<main class="page">
+<section class="block" data-anchor>
+<ol class="timeline">
+<li class="tl-item"><p class="tl-date">11월 24일 오후 2:02</p><div class="tl-body"><p>좌석 선점</p></div></li>
+<li class="tl-item"><p class="tl-date">11월 24일 오후 2:05</p><div class="tl-body"><p>무통장 예약</p></div></li>
+<li class="tl-item is-now"><p class="tl-date">지금</p><div class="tl-body"><p>입금 확인 기다리는 중</p></div></li>
+<li class="tl-item"><p class="tl-date">입금 확인되면</p><div class="tl-body"><p>예매 확정</p></div></li>
+</ol>
+</section>
+<section class="block" data-bundle="payment">
+<div class="block-head"><h2 class="h2">입금 정보</h2></div>
+<div data-item="amount"><p class="label">보낼 금액</p><p class="title">297,000원</p><p class="row-sub">R석 99,000원 × 3</p></div>
+<div data-item="deadline"><p class="due"><span class="due-left" role="timer" aria-label="입금 기한까지 9시간 54분 남음"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>9시간 54분 남음</span><span class="due-text">오늘 오후 11:59까지</span></p></div>
+<div class="row" data-item="account"><span class="row-lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="row-main"><p class="row-sub">입금 계좌</p><p class="row-title">국민은행 123401-04-567890</p><p class="row-sub">예금주 (주)공연예매 · 입금자명 정민지</p></div><span class="row-trail"><button class="btn small tint" data-stay="계좌번호를 복사했어요 — 은행 앱에 붙여넣으세요">계좌번호 복사</button></span></div>
+</section>
+<section class="block is-list">
+<div class="block-head"><h2 class="h2">예약 내용</h2></div>
+<div class="row" data-bundle="booking"><span class="row-art"><img src="../assets/fluent/ticket.svg" alt=""></span><div class="row-main"><p class="row-title" data-item="show">새벽공방 단독 콘서트 〈밤의 정원〉</p><p class="row-sub" data-item="when">12월 20일 (일) 오후 6:00 · 한빛아트홀</p><p class="row-sub" data-item="seats">R-B4 · R-B5 · R-B6</p><p class="row-sub" data-item="number">예매번호 2611240381</p></div></div>
+</section>
+<p class="block-note">열 때마다 최신으로 확인돼요.</p>
+<p class="block-note">예약 직접 취소는 아직 할 수 없어요. 기한까지 입금하지 않으면 저절로 취소돼요.</p>
+</main>
+</body></html>

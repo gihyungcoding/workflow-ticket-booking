@@ -1,0 +1,260 @@
+{
+  "base": "out",
+  "requests": [
+    "REQ-002"
+  ],
+  "screens": {
+    "login": {
+      "req": "out"
+    },
+    "login--error": {
+      "req": "out"
+    },
+    "oauth-callback": {
+      "req": "out"
+    },
+    "role-select": {
+      "req": "out"
+    },
+    "role-select--error": {
+      "req": "out"
+    },
+    "joined": {
+      "req": "out"
+    },
+    "signup": {
+      "req": "out"
+    },
+    "signup--error": {
+      "req": "out"
+    },
+    "home": {
+      "req": "out"
+    },
+    "concert": {
+      "req": "out"
+    },
+    "zone-map": {
+      "req": "out"
+    },
+    "queue": {
+      "req": "out"
+    },
+    "queue--error": {
+      "req": "out"
+    },
+    "queue-back": {
+      "req": "out"
+    },
+    "round": {
+      "req": "out"
+    },
+    "round--error": {
+      "req": "out"
+    },
+    "zone": {
+      "req": "out"
+    },
+    "seat": {
+      "req": "out",
+      "replaced": [
+        "out → REQ-002"
+      ]
+    },
+    "seat--error": {
+      "req": "out",
+      "replaced": [
+        "out → REQ-002"
+      ]
+    },
+    "checkout": {
+      "req": "out",
+      "replaced": [
+        "out → REQ-002"
+      ]
+    },
+    "checkout--error": {
+      "req": "out"
+    },
+    "booked": {
+      "req": "out",
+      "replaced": [
+        "out → REQ-002"
+      ]
+    },
+    "booking": {
+      "req": "REQ-002",
+      "replaced": [
+        "out → REQ-002"
+      ]
+    },
+    "transfer": {
+      "req": "out"
+    },
+    "transfer--error": {
+      "req": "out"
+    },
+    "transfer--done": {
+      "req": "out"
+    },
+    "my-bookings": {
+      "req": "out",
+      "replaced": [
+        "out → REQ-002"
+      ]
+    },
+    "booking-sj": {
+      "req": "out"
+    },
+    "cancel-sheet": {
+      "req": "out"
+    },
+    "cancelled": {
+      "req": "out"
+    },
+    "organizer": {
+      "req": "out"
+    },
+    "organizer--empty": {
+      "req": "out"
+    },
+    "organizer-new": {
+      "req": "out"
+    },
+    "organizer-show": {
+      "req": "out"
+    },
+    "organizer-show--done": {
+      "req": "out"
+    },
+    "organizer-edit": {
+      "req": "out"
+    },
+    "organizer-live": {
+      "req": "out"
+    },
+    "organizer-cancel-sheet": {
+      "req": "out"
+    },
+    "organizer-cancelled": {
+      "req": "out"
+    },
+    "organizer-only": {
+      "req": "out"
+    },
+    "organizer-new--error": {
+      "req": "out"
+    },
+    "organizer-edit--error": {
+      "req": "out"
+    },
+    "verify-email-sent": {
+      "req": "out"
+    },
+    "verify-email": {
+      "req": "out"
+    },
+    "verify-email-checking": {
+      "req": "out"
+    },
+    "verify-email-invalid": {
+      "req": "out"
+    },
+    "login-unverified": {
+      "req": "out"
+    },
+    "forgot-password": {
+      "req": "out"
+    },
+    "forgot-password--error": {
+      "req": "out"
+    },
+    "forgot-password--done": {
+      "req": "out"
+    },
+    "reset-password": {
+      "req": "out"
+    },
+    "reset-password--error": {
+      "req": "out"
+    },
+    "reset-password--done": {
+      "req": "out"
+    },
+    "reset-link-invalid": {
+      "req": "out"
+    },
+    "seats--overview": {
+      "req": "REQ-002"
+    },
+    "seats": {
+      "req": "REQ-002"
+    },
+    "seats--taken": {
+      "req": "REQ-002"
+    },
+    "seats--limit": {
+      "req": "REQ-002"
+    },
+    "seats--expired": {
+      "req": "REQ-002"
+    },
+    "seats--released": {
+      "req": "REQ-002"
+    },
+    "hold": {
+      "req": "REQ-002"
+    },
+    "reserved": {
+      "req": "REQ-002"
+    },
+    "bookings": {
+      "req": "REQ-002"
+    },
+    "bookings--empty": {
+      "req": "REQ-002"
+    },
+    "bookings--confirmed": {
+      "req": "REQ-002"
+    },
+    "booking--confirmed": {
+      "req": "REQ-002"
+    },
+    "booking--cancelled": {
+      "req": "REQ-002"
+    },
+    "d-seats": {
+      "req": "REQ-002"
+    },
+    "d-seats--taken": {
+      "req": "REQ-002"
+    },
+    "d-seats--limit": {
+      "req": "REQ-002"
+    },
+    "d-seats--expired": {
+      "req": "REQ-002"
+    },
+    "d-seats--released": {
+      "req": "REQ-002"
+    },
+    "d-hold": {
+      "req": "REQ-002"
+    },
+    "d-reserved": {
+      "req": "REQ-002"
+    },
+    "d-bookings": {
+      "req": "REQ-002"
+    },
+    "d-bookings--empty": {
+      "req": "REQ-002"
+    },
+    "d-bookings--confirmed": {
+      "req": "REQ-002"
+    },
+    "d-bookings--cancelled": {
+      "req": "REQ-002"
+    }
+  }
+}

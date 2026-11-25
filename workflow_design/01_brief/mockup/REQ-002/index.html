@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>전체 화면 한눈에 보기</title>
+<!-- 캔버스 템플릿(정적). build_canvas.py 가 아래 hd-data 에 데이터만 끼워 넣는다. 외부 라이브러리 없음. -->
+<link id="tokens" rel="stylesheet" href="tokens.css" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{display:flex;flex-direction:column;background:#ECECE8;color:#1c1c1c;font-family:-apple-system,BlinkMacSystemFont,'Pretendard','Apple SD Gothic Neo',sans-serif;word-break:keep-all;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+
+/* ---------- 헤더: 제목 · 탭 · 팔레트 · 보기 (조작 그룹 3개) ---------- */
+.hd{flex:none;display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:8px 16px;background:#fff;border-bottom:1px solid #dcdcd7;position:relative;z-index:5}
+.hd h1{font-size:17px;font-weight:700;margin:0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px}
+.tabs{display:flex;gap:2px;background:#EFEFEB;border-radius:12px;padding:3px}
+.tab{min-height:44px;min-width:44px;padding:0 16px;border:0;border-radius:9px;background:transparent;font-size:15px;font-weight:600;color:#5a5a55;cursor:pointer}
+.tab[aria-selected="true"]{background:#fff;color:#1c1c1c;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.pal{display:flex;align-items:center;gap:2px;margin-left:auto}
+.pal-label{font-size:13px;color:#777;margin-right:4px}
+.dot{display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 10px;border:0;border-radius:999px;background:transparent;font-size:14px;color:#444;cursor:pointer}
+.dot i{flex:none;width:22px;height:22px;border-radius:999px;background:var(--dot);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.dot[aria-pressed="true"]{background:#F1F1ED;color:#1c1c1c;font-weight:700}
+.dot[aria-pressed="true"] i{box-shadow:0 0 0 2px #fff,0 0 0 4px #1c1c1c}
+.dot:hover{background:#F5F5F2}
+.view{display:flex;align-items:center;gap:4px}
+.vbtn{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #dcdcd7;border-radius:10px;background:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.vbtn:hover{background:#F5F5F2}
+.zoom{min-width:64px;font-variant-numeric:tabular-nums;color:#555}
+body:not([data-tab="screens"]) .view{visibility:hidden}
+@media (max-width:760px){
+  .hd{padding:6px 10px;gap:4px 8px}
+  .hd h1{flex:1 1 0;font-size:16px;order:1;max-width:none}
+  .pal{order:2;margin-left:0}
+  .tabs{order:3}
+  .view{order:4;margin-left:auto}
+  .tab{padding:0 7px;font-size:13px}
+  .fit-long{display:none}
+  .zoom{min-width:52px}
+  .dot{padding:0}
+  .dot{justify-content:center}
+  .dot b,.pal-label{display:none}
+  .vbtn{padding:0 10px}
+}
+
+/* ---------- 판 ---------- */
+.panes{flex:1;position:relative;overflow:hidden}
+.pane{position:absolute;inset:0}
+.pane[hidden]{display:none}
+.pane iframe.doc{width:100%;height:100%;border:0;display:block;background:#F6F6F3}
+#screens{overflow:hidden;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
+#screens.dragging{cursor:grabbing}
+#screens.dragging .cover{cursor:grabbing}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0;width:max-content;will-change:transform}
+
+/* 판 안의 글 — 첫 배율 0.72 기준으로 읽히게 크게 쓴다(22px → 약 16px) */
+.intro{padding:48px 0 0;max-width:1760px}
+.intro-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:56px;align-items:start}
+.hint{font-size:20px;color:#6b6b66;margin:0 0 18px}
+.story h2{font-size:42px;line-height:1.3;margin:0 0 14px}
+.story h2 em{font-style:normal;color:var(--c-brand,#2563eb)}
+.story .sum{font-size:22px;line-height:1.6;color:#444;margin:0 0 24px}
+.ideas{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.idea{background:#fff;border-radius:20px;padding:22px}
+.idea b{font-size:22px}
+.idea p{font-size:19px;line-height:1.55;color:#555;margin:8px 0 0}
+.people{margin-top:20px}
+.people h3{font-size:22px;margin:0 0 10px}
+.people ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.people li{background:#fff;border-radius:16px;padding:14px 16px;font-size:17px;line-height:1.45;color:#555}
+.people li b{display:block;font-size:18px;color:#1c1c1c;margin-bottom:2px}
+.people li .win{display:block;color:#1c1c1c;margin-top:4px}
+.decisions{margin-top:6px}
+.narrow .ideas,.narrow .decisions ul,.narrow .people ul,.narrow .intro-grid{grid-template-columns:1fr}
+.narrow .decisions{margin-top:0}
+.narrow .story h2{font-size:38px}
+.decisions h3{font-size:27px;margin:0 0 8px}
+.decisions .core{font-size:21px;color:#333;margin:0 0 14px}
+.decisions ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.decisions li{background:#fff;border-radius:16px;padding:14px 18px;font-size:19px;line-height:1.45}
+.decisions li b{margin-right:4px}
+.decisions .why{display:block;color:#666;font-size:18px}
+.v{display:inline-block;font-size:15px;font-weight:700;border-radius:8px;padding:2px 9px;margin-right:8px;background:#eee;color:#444;vertical-align:2px}
+.v-cut{background:#fde8e8;color:#9b1c1c}
+.v-lighten{background:#e7f0ff;color:#1d4ed8}
+.v-follow{background:#e6f6ec;color:#166534}
+.decisions h3.mk{margin-top:18px}
+
+.rows{position:relative;padding-bottom:40px}
+.flow{padding-top:90px}
+.glabel{font-size:31px;font-weight:700;margin:0 0 104px;white-space:nowrap}
+.cards{display:flex;gap:84px;align-items:flex-start}
+.card{flex:none;width:375px}
+.phone{position:relative;width:375px;height:812px;border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 3px 14px rgba(0,0,0,.10)}
+.phone iframe{display:block;width:375px;height:812px;border:0;pointer-events:none;background:#fff}
+.cover{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;background:transparent;border-radius:28px;cursor:pointer}
+.cover:hover,.cover:focus-visible{outline:4px solid #2563eb;outline-offset:0}
+.ftitle{font-size:22px;font-weight:700;margin-top:16px;line-height:1.35}
+/* 데스크톱 카드 — 1280×800 화면 (ui-mockup 추가) */
+.card.desk{width:1280px}.card.desk .phone{width:1280px;height:800px;border-radius:12px}.card.desk .phone iframe{width:1280px;height:800px}.card.desk .cover{border-radius:12px}
+.glabel .dk{display:inline-block;margin-right:12px;padding:2px 12px;border-radius:8px;background:#1c1c1c;color:#fff;font-size:22px;vertical-align:4px}
+.merges{font-size:17px;color:#555;margin-top:6px}.merges b{font-weight:600;color:#1c1c1c}
+.state{display:inline-block;font-size:15px;font-weight:700;color:#8a5a00;background:#fff3cf;border-radius:8px;padding:2px 8px;margin-right:8px;vertical-align:2px}
+.fdesc{font-size:18px;color:#555;margin-top:4px;line-height:1.45}
+.pol{margin:8px 0 0;padding-left:22px;font-size:17px;line-height:1.5;color:#444}
+.more{font-size:17px;color:#666;margin-top:4px}
+.more summary,.foot summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+.more .pol{margin-top:0}
+svg.ar{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+svg.ar path.ln{fill:none;stroke:var(--c-brand,#2563eb);stroke-width:3;marker-start:url(#hd-dot);marker-end:url(#hd-head)}
+svg.ar marker path,svg.ar marker circle{fill:var(--c-brand,#2563eb)}
+.alabel{position:absolute;transform:translate(-50%,-100%);background:#fff;border:1.5px solid var(--c-brand,#2563eb);color:var(--c-brand-text,#1d4ed8);font-size:17px;font-weight:600;padding:4px 12px;border-radius:999px;white-space:nowrap;pointer-events:none}
+.alabel.side{transform:translate(-100%,-50%);white-space:normal;max-width:220px;text-align:right;border-radius:14px}
+/* ---------- 연결 보기: 카드 아래 '갈 수 있는 곳'(또는 Shift+클릭) → 버튼별 색 선 (아이디어: eungshin #29) ---------- */
+.lkbtn{margin-top:10px;min-height:44px;padding:0 14px;border:1.5px solid #d0d5dd;border-radius:12px;background:#fff;font:inherit;font-size:17px;font-weight:600;color:#333;cursor:pointer}
+.lkbtn:hover{border-color:#1c1c1c}
+.lkbtn[aria-pressed="true"]{background:#1c1c1c;border-color:#1c1c1c;color:#fff}
+.rows.lkon .card{opacity:.28;transition:opacity .15s}
+.rows.lkon .card.lkfrom,.rows.lkon .card.lkto{opacity:1}
+.rows.lkon svg.ar path.ln,.rows.lkon .alabel{opacity:.12}
+.card.lkfrom .phone{outline:4px solid #1c1c1c;outline-offset:6px}
+.card.lkto .phone{outline:4px solid var(--ring,#2563eb);outline-offset:6px}
+svg.ar path.lk{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.lklabel{position:absolute;transform:translate(-50%,-50%);background:#fff;border:2px solid;font-size:16px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap;pointer-events:none;z-index:3}
+.foot{padding:20px 0 120px;font-size:17px;color:#777;max-width:1500px}
+.foot p{margin:0 0 6px}
+.foot ul{margin:4px 0 0;padding-left:22px;line-height:1.6}
+.foot a{color:#555}
+
+/* ---------- 크게 보기 ---------- */
+#modal{position:fixed;inset:0;z-index:20;background:rgba(20,20,20,.62);display:flex;align-items:center;justify-content:center}
+#modal[hidden]{display:none}
+#modal .box{position:relative;border-radius:30px;overflow:hidden;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+#modal iframe{display:block;width:390px;height:844px;border:0;transform-origin:0 0;background:#fff}
+#modal .close{position:absolute;top:max(10px,env(safe-area-inset-top));right:12px;min-width:44px;min-height:44px;padding:0 16px;border:0;border-radius:12px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;z-index:2}
+#modal .mtitle{position:absolute;top:max(10px,env(safe-area-inset-top));left:16px;right:190px;color:#fff;font-size:15px;font-weight:600;min-height:44px;display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ---------- 의견: 크게 보기에서 요소를 골라 의견을 남기고 한 번에 복사 ---------- */
+#modal .fbtn{position:absolute;top:max(10px,env(safe-area-inset-top));right:96px;min-width:44px;min-height:44px;padding:0 16px;border:0;border-radius:12px;background:#fff;color:#1c1c1c;font-size:15px;font-weight:600;cursor:pointer;z-index:2}
+#modal .fbtn[aria-pressed="true"]{background:#f59e0b;color:#1c1c1c}
+#modal .fbtn .n{margin-left:6px;font-variant-numeric:tabular-nums}
+#modal.fb-on{gap:20px}
+#fb{width:340px;max-height:calc(100vh - 96px);margin-top:48px;background:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto;font-size:15px;line-height:1.5}
+#fb[hidden]{display:none}
+#fb h2{font-size:17px;margin:0}
+#fb .tip{color:#666;margin:0}
+#fb .picked{background:#FFF7E6;border-radius:12px;padding:10px 12px;color:#333;word-break:break-all}
+#fb .picked code{display:block;font-size:12px;color:#777;margin-top:2px}
+#fb textarea{width:100%;min-height:88px;padding:10px 12px;border:1px solid #dcdcd7;border-radius:12px;font:inherit;resize:vertical}
+#fb .acts{display:flex;gap:8px;flex-wrap:wrap}
+#fb .acts button{min-height:44px;padding:0 14px;border:1px solid #dcdcd7;border-radius:10px;background:#fff;font-weight:600;cursor:pointer}
+#fb .acts button.pri{background:#1c1c1c;border-color:#1c1c1c;color:#fff}
+#fb .acts button:disabled{opacity:.4;cursor:default}
+#fb ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+#fb li{color:#333}
+#fb li small{color:#777}
+#fb li button{min-width:44px;min-height:32px;margin-left:4px;border:0;background:transparent;color:#9b1c1c;cursor:pointer;font-size:13px}
+#fb .done{color:#166534;font-weight:600;margin:0}
+@media (max-width:760px){#modal.fb-on{flex-direction:column;justify-content:flex-start;overflow:auto}#fb{width:calc(100vw - 16px);margin-top:8px;max-height:none}}
+</style>
+</head>
+<body data-tab="screens">
+<header class="hd">
+  <h1 id="title">전체 화면 한눈에 보기</h1>
+  <div class="tabs" role="tablist" data-group="tabs">
+    <button class="tab" role="tab" data-tab="screens" aria-selected="true">Screens</button>
+    <button class="tab" role="tab" data-tab="foundation" aria-selected="false">Foundation</button>
+    <button class="tab" role="tab" data-tab="components" aria-selected="false">Components</button>
+  </div>
+  <div class="pal" data-group="palette" aria-label="색 바꾸기"></div>
+  <div class="view" data-group="view">
+    <button class="vbtn" id="fit" title="모든 화면이 한 번에 들어오게">전체<span class="fit-long"> 보기</span></button>
+    <button class="vbtn zoom" id="zoom" title="처음 배율로">72%</button>
+  </div>
+</header>
+<main class="panes">
+  <section class="pane" id="screens" aria-label="화면 판">
+    <div id="stage" style="transform:translate(0px,0px) scale(0.72)">
+      <div class="intro" id="intro"></div>
+      <div class="rows" id="rows"></div>
+      <div class="foot" id="foot"></div>
+    </div>
+  </section>
+  <section class="pane" id="foundation" hidden><iframe class="doc" title="Foundation — 색·글자·여백" data-src="foundation.html"></iframe></section>
+  <section class="pane" id="components" hidden><iframe class="doc" title="Components — 이 앱이 쓴 부품" data-src="components.html"></iframe></section>
+</main>
+<div id="modal" hidden role="dialog" aria-modal="true" aria-label="화면 크게 보기">
+  <div class="mtitle" id="mtitle"></div>
+  <button class="fbtn" id="fbtn" aria-pressed="false" title="화면 요소를 눌러 고칠 점을 적어요">의견<span class="n" id="fbn"></span></button>
+  <button class="close" id="mclose">닫기</button>
+  <div class="box" id="mbox"><iframe id="mframe" title="크게 보기"></iframe></div>
+  <aside id="fb" hidden aria-label="의견">
+    <h2>의견 남기기</h2>
+    <p class="tip" id="fbtip">화면에서 고칠 곳을 누르세요.</p>
+    <div class="picked" id="fbpick" hidden></div>
+    <textarea id="fbnote" placeholder="어떻게 바뀌면 좋을지 적어 주세요 (예: 글씨가 작아요)" disabled></textarea>
+    <div class="acts"><button class="pri" id="fbadd" disabled>의견 더하기</button></div>
+    <ol id="fblist"></ol>
+    <div class="acts"><button class="pri" id="fbcopy" disabled>의견 복사</button><button id="fbclear" disabled>모두 지우기</button></div>
+    <p class="done" id="fbdone" hidden>복사했어요. 대화창에 붙여넣으면 그 요소만 고쳐요.</p>
+  </aside>
+</div>
+<noscript id="hd-links"><ul><li><a href="screens/seats.html">좌석 선택</a></li><li><a href="screens/seats--overview.html">좌석 선택 — 구역 전체</a></li><li><a href="screens/seats--taken.html">좌석 선택 — 먼저 잡힌 좌석</a></li><li><a href="screens/seats--limit.html">좌석 선택 — 4석 한도</a></li><li><a href="screens/seats--expired.html">좌석 선택 — 선점 만료</a></li><li><a href="screens/seats--released.html">좌석 선택 — 선점 해제</a></li><li><a href="screens/hold.html">선점 완료 · 예약</a></li><li><a href="screens/reserved.html">예약 완료</a></li><li><a href="screens/bookings.html">내 예매</a></li><li><a href="screens/bookings--empty.html">내 예매 — 처음</a></li><li><a href="screens/bookings--confirmed.html">내 예매 — 확정 반영</a></li><li><a href="screens/booking.html">예매 상세 — 입금 대기</a></li><li><a href="screens/booking--confirmed.html">예매 확정</a></li><li><a href="screens/booking--cancelled.html">예약 취소됨</a></li><li><a href="screens/desktop/d-seats.html">좌석 선택</a></li><li><a href="screens/desktop/d-seats--taken.html">좌석 선택 — 먼저 잡힌 좌석</a></li><li><a href="screens/desktop/d-seats--limit.html">좌석 선택 — 4석 한도</a></li><li><a href="screens/desktop/d-seats--expired.html">좌석 선택 — 선점 만료</a></li><li><a href="screens/desktop/d-seats--released.html">좌석 선택 — 선점 해제</a></li><li><a href="screens/desktop/d-hold.html">선점 완료 · 예약</a></li><li><a href="screens/desktop/d-reserved.html">예약 완료</a></li><li><a href="screens/desktop/d-bookings.html">내 예매</a></li><li><a href="screens/desktop/d-bookings--empty.html">내 예매 — 처음</a></li><li><a href="screens/desktop/d-bookings--confirmed.html">내 예매 — 예매 확정</a></li><li><a href="screens/desktop/d-bookings--cancelled.html">내 예매 — 자동 취소</a></li><li><a href="foundation.html">Foundation</a></li><li><a href="components.html">Components</a></li></ul></noscript>
+<script id="hd-data" type="application/json">{"title": "REQ-002 예매 흐름 — 좌석 선점 → 무통장 예약 → 입금 확인 → 예매 확정", "scale": 0.72, "card": {"w": 375, "h": 812}, "modal": {"w": 390, "h": 844}, "desk_card": {"w": 1280, "h": 800}, "story": {"headline": "고른 자리는 <em>7분 동안 내 것<\/em>, 입금이 확인되면 내 예매에 <em>예매 확정<\/em>", "summary": "좌석을 1~4개 고르면 7분 동안 다른 관객이 못 고른다. 그 안에 무통장 예약을 하면 계좌·금액·기한이 보이고, 운영자가 입금을 확인하는 순간 내 예매가 '예매 확정'으로 바뀐다. 기한까지 입금이 없으면 예약은 저절로 취소되고 좌석은 다시 판매된다.", "ideas": [{"title": "남은 시간이 주인공", "desc": "선점 화면의 가장 큰 숫자는 남은 시간 6:42 — 무엇을 언제까지 해야 하는지 한눈에."}, {"title": "결제 수단 고르기 없음", "desc": "무통장 하나뿐이라 고르는 단계를 없애고 계좌·금액·기한 세 값만 크게(ADR-0025)."}, {"title": "빠진 좌석만 빠진다", "desc": "누가 먼저 잡은 좌석 하나만 선택에서 빠지고 나머지는 그대로 — 처음부터 다시 고르지 않는다."}]}, "people": [{"name": "관객 정민지", "why": "기다리던 공연 좌석을 붙여서 3장 잡고 싶다", "win": "내 예매에 '예매 확정'이 보일 때", "core": true, "wants": ["고른 자리가 지금 내 것인가, 얼마 동안인가", "어디로 얼마를 언제까지 보내나", "확정은 언제 어떻게 아나", "자리를 놓쳤으면 왜, 이제 뭘 하나", "몇 장까지 한 번에 잡나"]}, {"name": "운영/관리자 한도윤", "why": "들어온 입금을 예약과 맞춰 확정해야 한다(화면 없음, 입금 확인 API)", "win": "확인 한 번에 관객 쪽이 예매 확정으로 바뀐다", "core": false, "wants": ["이 입금이 어느 예약인가(예매번호·입금자명·금액)", "기한이 지났나"]}], "decisions": {"core": "고른 자리가 '7분 동안 내 것'임을 숫자로 보여 주고, 예약 뒤에는 계좌·금액·기한 세 가지만 크게 — 확정은 내 예매에서 배지 하나로 안다.", "items": [{"verdict": "cut", "label": "뺌", "name": "입금자명 입력 칸", "how": "", "why": "입력 칸은 관객의 새 할 일이고 새 필드다. 운영자는 예매번호·금액으로도 맞출 수 있다."}, {"verdict": "later", "label": "나중에", "name": "예매 확정·자동 취소 알림(문자·메일)", "how": "", "why": "목표는 '내 예매에서 확인'. 메일은 새 기능 — 결과 화면에 '알림은 보내지 않아요'를 적는다."}, {"verdict": "lighten", "label": "가볍게", "name": "기한 뒤 입금한 관객 안내", "how": "취소 화면 블록 안 안내 한 줄", "why": "드물지만(빈도 낮음) 돈이 걸린다(피해 큼). 환불 송금은 product.md §4 범위 밖이라 화면은 안내까지."}, {"verdict": "later", "label": "나중에", "name": "관객 직접 취소·양도 버튼", "how": "", "why": "BRIEF out_of_scope(FR-19·20)."}], "market": [{"verdict": "cut", "label": "벗어남", "name": "결제 수단 고르기 목록", "how": "무통장 입금 한 줄을 고정 정보로", "why": "결제 수단이 하나뿐(ADR-0025) — 누를 수 없는 카드 행은 '왜 안 되지'만 남긴다."}, {"verdict": "follow", "label": "따름", "name": "좌석도 + 아래 선택 요약·선점 버튼", "how": "등급 세그먼트 → 좌석도 → 고른 좌석·금액 → 하단 버튼", "why": "국내 예매 앱이 이미 가르친 조작."}, {"verdict": "follow", "label": "따름", "name": "예매 내역 목록 → 상세", "how": "", "why": "관객이 이미 아는 구조. 상태 배지로 입금 대기/확정을 가른다."}]}, "stage": "", "pending": 0, "rows": [{"group": "좌석 선점", "screens": [{"id": "seats", "file": "screens/seats.html", "title": "좌석 선택", "purpose": "확대한 구역(A~E열 2~6번)에서 44px 좌석을 1~4개 고르고 선점한다", "policies": ["구역은 최대 26열 × 수백 석 — 처음엔 구역 전체(빈자리 분포), 누른 곳 주변을 44px 좌석으로 확대(D10)", "미니맵에 구역 모양·무대·보는 범위(A~E열 2~6번)·고른 좌석 점과 위치 글자 — 전체 보기로 돌아간다", "선택 수 3/4 가 늘 보이고, 고를 수 없는 좌석은 선점·판매 구분 없이 회색"], "state": false}, {"id": "seats--overview", "file": "screens/seats--overview.html", "title": "좌석 선택 — 구역 전체", "purpose": "처음 모습 — 구역 전체의 빈자리 분포를 보고 고를 곳을 누른다(좌석은 누를 수 없음)", "policies": ["구역은 최대 26열 × 수백 석 — 처음엔 구역 전체(빈자리 분포), 누른 곳 주변을 44px 좌석으로 확대(D10)", "작은 좌석은 분포만 보여 주고 누를 수 없다 — 누른 곳 주변이 확대된다", "기존 공연 상세의 예매 버튼에서 들어온다(대기열은 후속 요청)"], "state": true}, {"id": "seats--taken", "file": "screens/seats--taken.html", "title": "좌석 선택 — 먼저 잡힌 좌석", "purpose": "AC-2 — R-B5 가 빠졌다는 안내와 다시 고르기", "policies": ["빠진 R-B5 만 선택에서 빠지고 R-B4·R-B6 은 고른 그대로 — 아직 선점 전(부분 선점 없음, D17)", "안내는 좌석도 바로 위, 해결 행동(다시 선점하기)이 주 버튼"], "state": true}, {"id": "seats--limit", "file": "screens/seats--limit.html", "title": "좌석 선택 — 4석 한도", "purpose": "AC-3 — 5장째를 누르면 고르지 않고 4석 한도를 알린다", "policies": ["5장째 좌석은 선택되지 않는다 — 서버도 5장 이상 요청을 거절", "다른 좌석으로 바꾸려면 고른 좌석을 먼저 눌러 뺀다"], "state": true}, {"id": "seats--expired", "file": "screens/seats--expired.html", "title": "좌석 선택 — 선점 만료", "purpose": "AC-8 — 7분이 지나 선점이 풀렸고 좌석을 다시 고를 수 있다", "policies": ["선점 화면 타이머가 0 이 되면 재조회 없이 이 화면으로(ADR-0026)", "풀린 좌석은 다른 관객도 고를 수 있다 — 아직 남아 있으면 다시 고를 수 있다"], "state": true}, {"id": "seats--released", "file": "screens/seats--released.html", "title": "좌석 선택 — 선점 해제", "purpose": "AC-10 — 좌석 다시 고르기로 선점이 바로 풀렸다", "policies": ["본인 선점만 풀 수 있다(D7, 해제 API 1개)", "풀린 R-B4·B5·B6 은 즉시 다른 관객도 고를 수 있다"], "state": true}]}, {"group": "무통장 예약", "screens": [{"id": "hold", "file": "screens/hold.html", "title": "선점 완료 · 예약", "purpose": "7분 안에 무통장 예약을 한다 — 남은 시간·좌석·금액", "policies": ["이 화면을 떠나면(뒤로·좌석 다시 고르기) 선점이 바로 풀린다(D7·D12)", "입금자명 칸 없이 예약자 이름으로 안내, 결제는 무통장 하나(D9·ADR-0025)", "기한까지 1시간 미만이면 기한 문장 옆에 '입금 시간이 짧아요'(D22)"], "state": false}, {"id": "reserved", "file": "screens/reserved.html", "title": "예약 완료", "purpose": "AC-4 — 보낼 금액·입금 기한(오늘 오후 11:59)·입금 계좌를 보여 주는 결과 화면", "policies": ["정해진 것: 3석 예약·입금 대기 / 전해진 곳: 이 화면과 내 예매(알림 발송 없음)", "다음: 입금 확인되면 예매 확정, 기한 지나면 자동 취소·좌석 재판매", "입금 정보 묶음: 금액(가장 크게) → 남은 시간·기한 → 계좌 행(오른쪽 복사, 누르면 '계좌번호를 복사했어요')"], "state": false}]}, {"group": "내 예매", "screens": [{"id": "bookings", "file": "screens/bookings.html", "title": "내 예매", "purpose": "내 예매의 상태를 훑는다 — 입금 대기와 자동 취소", "policies": ["상태는 배지(입금 대기·예매 확정), 끝난 자동 취소는 평문", "입금 대기 행에는 기한을 글자로"], "state": false}, {"id": "bookings--empty", "file": "screens/bookings--empty.html", "title": "내 예매 — 처음", "purpose": "아직 예매가 없을 때", "policies": ["공연 둘러보기로 이어진다(기존 공연 목록)"], "state": true}, {"id": "bookings--confirmed", "file": "screens/bookings--confirmed.html", "title": "내 예매 — 확정 반영", "purpose": "AC-5 — 입금 확인 뒤 목록에 '예매 확정'", "policies": ["입금 확인이 기록되면 다음 조회 때 배지가 입금 대기 → 예매 확정"], "state": true}, {"id": "booking", "file": "screens/booking.html", "title": "예매 상세 — 입금 대기", "purpose": "입금 대기 예매의 진행 단계와 보낼 금액·입금 기한·입금 계좌", "policies": ["진행 단계: 선점 → 예약 → 입금 확인 → 예매 확정(D21), 지금은 입금 확인 기다림", "열 때마다 최신 상태로 조회한다(D20) · 직접 취소는 후속 요청"], "state": false}, {"id": "booking--confirmed", "file": "screens/booking--confirmed.html", "title": "예매 확정", "purpose": "AC-5 — 입금 확인으로 예매가 확정됐다", "policies": ["진행 단계 선점 → 예약 → 입금 확인 → 예매 확정(D21) — 입금 확인 11월 24일 오후 4:20", "모바일 티켓·취소·양도는 후속 요청에서 다룸(D6)"], "state": true}, {"id": "booking--cancelled", "file": "screens/booking--cancelled.html", "title": "예약 취소됨", "purpose": "AC-6·9 — 입금 기한이 지나 예약이 자동 취소됐다", "policies": ["진행 단계 선점 → 예약 → 자동 취소(D21) · 예약은 평문, 입금 기한 자리는 '기한 지남'(due is-off)", "'다시 예매하기'는 구역 전체 좌석도(seats--overview)로(D19)", "기한 뒤 입금은 확정되지 않는다(AC-9) — 예매번호로 문의 한 줄(D9)"], "state": true}]}, {"group": "좌석 선점", "desk": true, "screens": [{"id": "d-seats", "file": "screens/desktop/d-seats.html", "title": "좌석 선택", "purpose": "좌석도를 보며 오른쪽에서 선택 수·금액을 확인하고 선점", "policies": ["44px 좌석이라 20번 중 1~16번이 보이고 17~20번은 옆으로 넘긴다 — 미니맵에 보는 범위·고른 좌석", "보조 열은 스크롤해도 따라온다"], "state": false, "desk": true, "merges": ["seats", "seats--overview"]}, {"id": "d-seats--taken", "file": "screens/desktop/d-seats--taken.html", "title": "좌석 선택 — 먼저 잡힌 좌석", "purpose": "AC-2 — 빠진 좌석 안내와 다시 선점", "policies": [], "state": true, "desk": true, "merges": ["seats--taken"]}, {"id": "d-seats--limit", "file": "screens/desktop/d-seats--limit.html", "title": "좌석 선택 — 4석 한도", "purpose": "AC-3 — 5장째 거절", "policies": [], "state": true, "desk": true, "merges": ["seats--limit"]}, {"id": "d-seats--expired", "file": "screens/desktop/d-seats--expired.html", "title": "좌석 선택 — 선점 만료", "purpose": "AC-8 — 7분 만료 후 다시 고르기", "policies": [], "state": true, "desk": true, "merges": ["seats--expired"]}, {"id": "d-seats--released", "file": "screens/desktop/d-seats--released.html", "title": "좌석 선택 — 선점 해제", "purpose": "AC-10 — 선점을 풀고 다시 고르기", "policies": [], "state": true, "desk": true, "merges": ["seats--released"]}]}, {"group": "무통장 예약", "desk": true, "screens": [{"id": "d-hold", "file": "screens/desktop/d-hold.html", "title": "선점 완료 · 예약", "purpose": "좌석도에 내 선점을 보며 7분 안에 무통장 예약", "policies": ["좌석 다시 고르기는 선점을 바로 푼다(D7)"], "state": false, "desk": true, "merges": ["hold"]}, {"id": "d-reserved", "file": "screens/desktop/d-reserved.html", "title": "예약 완료", "purpose": "AC-4 — 입금 정보 묶음(보낼 금액 → 기한 → 계좌)을 본문 첫 블록에", "policies": [], "state": false, "desk": true, "merges": ["reserved"]}]}, {"group": "내 예매", "desk": true, "screens": [{"id": "d-bookings", "file": "screens/desktop/d-bookings.html", "title": "내 예매", "purpose": "예매 목록과 선택한 입금 대기 예매 상세", "policies": ["상세 첫 블록은 상태, 다음은 입금 정보 묶음 — 확정·취소 상태도 같은 자리에서 기한 칸만 바뀐다"], "state": false, "desk": true, "merges": ["bookings", "booking"]}, {"id": "d-bookings--empty", "file": "screens/desktop/d-bookings--empty.html", "title": "내 예매 — 처음", "purpose": "아직 예매가 없을 때", "policies": [], "state": true, "desk": true, "merges": ["bookings--empty"]}, {"id": "d-bookings--confirmed", "file": "screens/desktop/d-bookings--confirmed.html", "title": "내 예매 — 예매 확정", "purpose": "AC-5 — 목록 배지와 상세가 함께 예매 확정", "policies": [], "state": true, "desk": true, "merges": ["bookings--confirmed", "booking--confirmed"]}, {"id": "d-bookings--cancelled", "file": "screens/desktop/d-bookings--cancelled.html", "title": "내 예매 — 자동 취소", "purpose": "AC-6·9 — 기한 경과로 취소된 예매", "policies": [], "state": true, "desk": true, "merges": ["booking--cancelled"]}]}], "arrows": [{"from": "seats", "to": "seats--taken", "label": "먼저 잡힌 좌석"}, {"from": "seats", "to": "seats--limit", "label": "5장째 누름"}, {"from": "hold", "to": "seats--expired", "label": "7분 지남"}, {"from": "bookings", "to": "booking", "label": "입금 대기 예매"}, {"from": "bookings", "to": "booking--cancelled", "label": "취소된 예매"}], "links": {"seats": [{"to": "seats--overview", "texts": ["전체 보기"], "n": 1}, {"to": "hold", "texts": ["좌석 3개 선점하기"], "n": 1}], "seats--overview": [{"to": "seats", "texts": ["A"], "n": 1}], "seats--taken": [{"to": "seats--overview", "texts": ["전체 보기"], "n": 1}, {"to": "hold", "texts": ["좌석 2개 선점하기"], "n": 1}], "seats--limit": [{"to": "seats--overview", "texts": ["전체 보기"], "n": 1}, {"to": "hold", "texts": ["좌석 4개 선점하기"], "n": 1}], "seats--expired": [{"to": "seats--overview", "texts": ["전체 보기"], "n": 1}], "seats--released": [{"to": "seats--overview", "texts": ["전체 보기"], "n": 1}], "hold": [{"to": "seats--released", "texts": ["좌석 다시 고르기"], "n": 1}, {"to": "reserved", "texts": ["297,000원 무통장 예약하기"], "n": 1}], "reserved": [{"to": "bookings", "texts": ["확인"], "n": 1}], "bookings": [{"to": "booking", "texts": ["입금 대기"], "n": 1}, {"to": "booking--cancelled", "texts": ["새벽공방 단독 콘서트 〈밤의 정…"], "n": 1}], "bookings--confirmed": [{"to": "booking--confirmed", "texts": ["예매 확정"], "n": 1}, {"to": "booking--cancelled", "texts": ["새벽공방 단독 콘서트 〈밤의 정…"], "n": 1}], "booking--confirmed": [{"to": "bookings--confirmed", "texts": ["확인"], "n": 1}], "booking--cancelled": [{"to": "seats--overview", "texts": ["다시 예매하기"], "n": 1}], "d-seats": [{"to": "d-hold", "texts": ["좌석 3개 선점하기"], "n": 1}], "d-seats--taken": [{"to": "d-hold", "texts": ["좌석 2개 선점하기"], "n": 1}], "d-seats--limit": [{"to": "d-hold", "texts": ["좌석 4개 선점하기"], "n": 1}], "d-hold": [{"to": "d-reserved", "texts": ["무통장 예약하기"], "n": 1}, {"to": "d-seats--released", "texts": ["좌석 다시 고르기"], "n": 1}], "d-reserved": [{"to": "d-bookings", "texts": ["확인"], "n": 1}], "d-bookings": [{"to": "d-bookings--cancelled", "texts": ["새벽공방 단독 콘서트 〈밤의 정…"], "n": 1}], "d-bookings--confirmed": [{"to": "d-bookings--cancelled", "texts": ["새벽공방 단독 콘서트 〈밤의 정…"], "n": 1}], "d-bookings--cancelled": [{"to": "d-bookings", "texts": ["입금 대기"], "n": 1}, {"to": "d-seats", "texts": ["다시 예매하기"], "n": 1}]}, "palettes": null, "credits": []}</script>
+<script>
+(function () {
+'use strict';
+var D = JSON.parse(document.getElementById('hd-data').textContent || '{}');
+var Z0 = D.scale || 0.72, ZMIN = 0.25, ZMAX = 1.5;
+var CARD = D.card || {w: 375, h: 812}, MW = (D.modal || {}).w || 390, MH = (D.modal || {}).h || 844;
+var LINKS = D.links || {};                       // 연결 보기: {화면 id: [{to, texts, n}]} — build_canvas가 화면의 <a href>에서 읽음
+var LEFT = 300;                                  // 카드 왼쪽 통로(줄을 넘는 화살표가 지나는 곳)
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+
+if (D.title) { $('#title').textContent = D.title; document.title = D.title; }
+var pane = $('#screens'), stage = $('#stage'), rowsEl = $('#rows');
+
+/* ---------- 판 내용 ---------- */
+var intro = '';
+var st = D.story;
+if (st && (st.headline || st.summary)) {
+  var head = esc(st.headline).replace(/&lt;(\/?)em&gt;/g, '<$1em>');
+  intro += '<section class="story"><h2>' + head + '</h2>' + (st.summary ? '<p class="sum">' + esc(st.summary) + '</p>' : '') +
+    '<div class="ideas">' + (st.ideas || []).slice(0, 3).map(function (d) {
+      return '<div class="idea"><b>' + esc(d.title) + '</b><p>' + esc(d.desc) + '</p></div>'; }).join('') + '</div>' +
+    ((D.people || []).length ? '<div class="people"><h3>누구를 위한 앱인가</h3><ul>' + D.people.map(function (p) {
+      return '<li><b>' + esc(p.name) + (p.core ? ' · 핵심' : '') + '</b>' + esc(p.why) + '<span class="win">→ ' + esc(p.win) + '</span>' + '</li>'; }).join('') + '</ul></div>' : '') + '</section>';
+}
+var dc = D.decisions;
+if (dc && ((dc.items || []).length || dc.core)) {
+  intro += '<section class="decisions"><h3>정한 것 · 뺀 것</h3>' + (dc.core ? '<p class="core">' + esc(dc.core) + '</p>' : '') +
+    '<ul>' + (dc.items || []).map(function (i) {
+      return '<li><span class="v v-' + esc(i.verdict) + '">' + esc(i.label) + '</span><b>' + esc(i.name) + '</b>' +
+        (i.how ? ' → ' + esc(i.how) : '') + '<span class="why">' + esc(i.why) + '</span></li>'; }).join('') + '</ul>' +
+    ((dc.market || []).length ? '<h3 class="mk">시장 관례 — 따른 것 · 벗어난 것</h3><ul>' + dc.market.map(function (i) {
+      return '<li><span class="v v-' + esc(i.verdict) + '">' + esc(i.label) + '</span><b>' + esc(i.name) + '</b>' +
+        '<span class="why">' + esc(i.verdict === 'cut' ? i.why : (i.how || i.why)) + '</span></li>'; }).join('') + '</ul>' : '') + '</section>';
+}
+$('#intro').innerHTML = '<p class="hint">끌어서 둘러보고, 화면을 누르면 크게 보고 직접 눌러볼 수 있어요 · 화살표는 갈래 · <b>갈 수 있는 곳</b>은 버튼별 길' + (D.stage === 'go' && D.pending ? ' · 오류·확인·빈 화면 같은 상태 ' + D.pending + '개는 <b>상태 화면 단계</b>에서 더할 수 있어요' : '') + '</p><div class="intro-grid">' + intro + '</div>';
+$('#intro').style.marginLeft = LEFT + 'px';
+
+var html = '<svg class="ar" id="ar" width="1" height="1"><defs><marker id="hd-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker><marker id="hd-dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4"><circle cx="5" cy="5" r="4"/></marker></defs></svg>';
+(D.rows || []).forEach(function (row) {
+  html += '<div class="flow' + (row.desk ? ' desk' : '') + '"><div class="glabel">' + (row.desk ? '<span class="dk">데스크톱</span>' : '') + esc(row.group) + '</div><div class="cards">';
+  row.screens.forEach(function (s) {
+    var pol = s.policies || [];
+    var shown = pol.slice(0, 3).map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('');
+    var more = pol.length > 3 ? '<details class="more"><summary>정책 ' + (pol.length - 3) + '개 더</summary><ul class="pol">' +
+      pol.slice(3).map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul></details>' : '';
+    html += '<div class="card' + (s.desk ? ' desk' : '') + '" data-id="' + esc(s.id) + '"><div class="phone"><iframe scrolling="no" tabindex="-1" title="' + esc(s.title) +
+      '" data-src="' + esc(s.file) + '"></iframe><button class="cover" data-desk="' + (s.desk ? '1' : '') + '" data-file="' + esc(s.file) + '" data-title="' + esc(s.title) +
+      '" aria-label="' + esc(s.title) + ' 크게 보기"></button></div>' +
+      '<div class="ftitle">' + (s.state ? '<span class="state">상태</span>' : '') + esc(s.title) + '</div>' +
+      (s.purpose ? '<div class="fdesc">' + esc(s.purpose) + '</div>' : '') + ((s.merges || []).length ? '<div class="merges">묶은 모바일 화면 <b>' + s.merges.map(esc).join(' · ') + '</b></div>' : '') + (shown ? '<ul class="pol">' + shown + '</ul>' : '') + more +
+      ((LINKS[s.id] || []).length ? '<button class="lkbtn" data-id="' + esc(s.id) + '" aria-pressed="false">갈 수 있는 곳 ' + LINKS[s.id].length + '</button>' : '') + '</div>';
+  });
+  html += '</div></div>';
+});
+rowsEl.innerHTML = html;
+rowsEl.style.paddingLeft = LEFT + 'px';
+
+var foot = '';
+var P = D.palettes;
+if (P && P.options && P.options.length) {
+  foot += '<p>색 출처: ' + P.options.map(function (o) { return esc(o.name) + ' 웹 팔레트'; }).join(' · ') +
+    ' — 시안용 참고. 출시 전 자체 브랜드 색으로 바꾸세요.</p>';
+}
+if (D.credits && D.credits.length) {
+  foot += '<details><summary>사진 출처 ' + D.credits.length + '장</summary><ul>' + D.credits.map(function (c) {
+    var t = esc(c.title || c.file || c.slot);
+    var link = c.url ? '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + t + '</a>' : t;
+    return '<li>' + (c.slot ? esc(c.slot) + ' — ' : '') + link + (c.author ? ' · ' + esc(c.author) : '') + (c.license ? ' · ' + esc(c.license) : '') + '</li>';
+  }).join('') + '</ul></details>';
+}
+$('#foot').innerHTML = foot;
+$('#foot').style.marginLeft = LEFT + 'px';
+
+/* ---------- 화살표: 갈래(branches)에만. 같은 줄은 위쪽 호, 다른 줄은 왼쪽 통로로 우회 ---------- */
+var contentLeft = LEFT;
+function roundPath(pts, r) {
+  var d = 'M' + pts[0][0] + ',' + pts[0][1];
+  for (var i = 1; i < pts.length - 1; i++) {
+    var p = pts[i - 1], c = pts[i], n = pts[i + 1];
+    var l1 = Math.hypot(c[0] - p[0], c[1] - p[1]), l2 = Math.hypot(n[0] - c[0], n[1] - c[1]);
+    var rr = Math.min(r, l1 / 2, l2 / 2);
+    if (rr < 1) { d += ' L' + c[0] + ',' + c[1]; continue; }
+    var a = [c[0] - (c[0] - p[0]) / l1 * rr, c[1] - (c[1] - p[1]) / l1 * rr];
+    var b = [c[0] + (n[0] - c[0]) / l2 * rr, c[1] + (n[1] - c[1]) / l2 * rr];
+    d += ' L' + a[0].toFixed(1) + ',' + a[1].toFixed(1) + ' Q' + c[0] + ',' + c[1] + ' ' + b[0].toFixed(1) + ',' + b[1].toFixed(1);
+  }
+  var e = pts[pts.length - 1];
+  return d + ' L' + e[0] + ',' + e[1];
+}
+function drawArrows() {
+  var svg = $('#ar'), box = {};
+  $$('.card', rowsEl).forEach(function (c) {
+    box[c.dataset.id] = {x: c.offsetLeft, y: c.offsetTop, row: c.parentNode};   // offsetParent = .rows
+  });
+  $$('.alabel', rowsEl).forEach(function (n) { n.remove(); });
+  $$('path.ln', svg).forEach(function (n) { n.remove(); });
+  var paths = '', labels = '', k = 0, minX = LEFT, placed = [];
+  /* 왼쪽 통로 이름표가 서로 덮지 않게 — 같은 통로 근처에 이미 놓인 이름표가 있으면 아래로 민다 (ui-mockup 고침) */
+  function freeY(lx, ly) {
+    for (var guard = 0; guard < 40; guard++) {
+      var hit = placed.some(function (p) { return Math.abs(p.x - lx) < 200 && Math.abs(p.y - ly) < 34; });
+      if (!hit) break;
+      ly += 36;
+    }
+    placed.push({x: lx, y: ly});
+    return ly;
+  }
+  (D.arrows || []).forEach(function (a) {
+    var s = box[a.from], t = box[a.to]; if (!s || !t) return;
+    var d, lx, ly, side = false;
+    if (s.row === t.row) {
+      var ax = s.x + CARD.w / 2, cx = t.x + CARD.w / 2, y = s.y - 10, peak = s.y - 58;
+      d = 'M' + ax + ',' + y + ' C' + ax + ',' + peak + ' ' + cx + ',' + peak + ' ' + cx + ',' + (y - 2);
+      lx = (ax + cx) / 2; ly = peak + 6;
+    } else {
+      var lane = LEFT - 56 - 22 * (k % 4), off = 22 + 12 * (k % 4);
+      var sx = s.x + 60 + 24 * (k % 3), tx = t.x + 60 + 24 * (k % 3);
+      var sg = s.y - off, tg = t.y - off;
+      d = roundPath([[sx, s.y - 6], [sx, sg], [lane, sg], [lane, tg], [tx, tg], [tx, t.y - 8]], 18);
+      lx = lane - 12; ly = freeY(lx, (sg + tg) / 2); side = true; k++;
+      minX = Math.min(minX, lane - 240);
+    }
+    paths += '<path class="ln" d="' + d + '"/>';
+    if (a.label) labels += '<div class="alabel' + (side ? ' side' : '') + '" style="left:' + lx + 'px;top:' + ly + 'px">' + esc(a.label) + '</div>';
+  });
+  svg.insertAdjacentHTML('beforeend', paths);
+  rowsEl.insertAdjacentHTML('beforeend', labels);
+  if (labels) $$('.alabel.side', rowsEl).forEach(function (n) { minX = Math.min(minX, n.offsetLeft - n.offsetWidth); });
+  contentLeft = Math.max(0, minX - 24);
+}
+
+/* ---------- 연결 보기 ---------- */
+var LKC = ['#e11d48', '#2563eb', '#059669', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d'], lkFrom = null;
+function lkLabel(g) {
+  var a = g.texts || [], first = a[0] || '이동';
+  return a.length > 1 ? first + ' 외 ' + (g.n - 1) + '개' : first + (g.n > 1 ? ' (' + g.n + ')' : '');
+}
+function drawLinks() {
+  var svg = $('#ar');
+  $$('path.lk, marker.lkm', svg).forEach(function (n) { n.remove(); });
+  $$('.lklabel', rowsEl).forEach(function (n) { n.remove(); });
+  $$('.card', rowsEl).forEach(function (c) { c.classList.remove('lkfrom', 'lkto'); c.style.removeProperty('--ring'); });
+  $$('.lkbtn', rowsEl).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.id === lkFrom)); });
+  rowsEl.classList.toggle('lkon', !!lkFrom);
+  if (!lkFrom) return;
+  var box = {};
+  $$('.card', rowsEl).forEach(function (c) { box[c.dataset.id] = {x: c.offsetLeft, y: c.offsetTop, row: c.parentNode, el: c}; });
+  var s = box[lkFrom]; if (!s) return;
+  s.el.classList.add('lkfrom');
+  var defs = $('defs', svg), paths = '', labels = '';
+  (LINKS[lkFrom] || []).forEach(function (g, i) {
+    var t = box[g.to]; if (!t) return;
+    var col = LKC[i % LKC.length], d, lx, ly;
+    defs.insertAdjacentHTML('beforeend', '<marker class="lkm" id="lkh' + i + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + col + '"/></marker>');
+    var sx = s.x + 70 + 34 * (i % 7), tx = t.x + CARD.w / 2;
+    if (s.row === t.row) {
+      var peak = s.y - 70 - 26 * i;
+      d = 'M' + sx + ',' + (s.y - 8) + ' C' + sx + ',' + peak + ' ' + tx + ',' + peak + ' ' + tx + ',' + (t.y - 10);
+      lx = (sx + tx) / 2; ly = peak + 18;
+    } else {
+      var lane = LEFT - 70 - 20 * i, sg = s.y - 30 - 14 * i, tg = t.y - 30 - 14 * i;
+      d = roundPath([[sx, s.y - 8], [sx, sg], [lane, sg], [lane, tg], [tx, tg], [tx, t.y - 10]], 18);
+      lx = (lane + tx) / 2; ly = tg;
+    }
+    paths += '<path class="lk" data-to="' + esc(g.to) + '" d="' + d + '" stroke="' + col + '" marker-end="url(#lkh' + i + ')"/>';
+    labels += '<div class="lklabel" style="left:' + lx + 'px;top:' + ly + 'px;border-color:' + col + ';color:' + col + '">' + esc(lkLabel(g)) + '</div>';
+    t.el.classList.add('lkto'); t.el.style.setProperty('--ring', col);
+  });
+  svg.insertAdjacentHTML('beforeend', paths);
+  rowsEl.insertAdjacentHTML('beforeend', labels);
+}
+function setLinks(id) { lkFrom = (id && id !== lkFrom && (LINKS[id] || []).length) ? id : null; drawLinks(); }
+
+/* ---------- 이동·확대 ---------- */
+var z = Z0, tx = 0, ty = 0;
+function apply() {
+  stage.style.transform = 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) scale(' + z.toFixed(4) + ')';
+  stage.dataset.zoom = z.toFixed(4);
+  $('#zoom').textContent = Math.round(z * 100) + '%';
+  scheduleVisible();
+}
+var fitMin = ZMIN;                                // 전체 보기가 0.25 보다 작아야 하면 그만큼은 허용
+function clampZ(v) { return Math.min(ZMAX, Math.max(fitMin, v)); }
+function zoomAt(px, py, nz) {
+  nz = clampZ(nz);
+  var bx = (px - tx) / z, by = (py - ty) / z;
+  z = nz; tx = px - bx * z; ty = py - by * z; apply();
+}
+function home() {
+  z = Z0;
+  tx = pane.clientWidth < 600 ? 12 - LEFT * z : 24 - contentLeft * z;   // 폰: 화면 줄이 바로 보이게 통로는 화면 밖으로
+  ty = 0; apply();
+}
+function fit() {
+  var w = stage.offsetWidth - contentLeft, h = stage.offsetHeight;
+  var pw = pane.clientWidth, ph = pane.clientHeight;
+  var fz = Math.min((pw - 32) / w, (ph - 32) / h);
+  fitMin = Math.min(ZMIN, fz);
+  z = clampZ(fz);
+  tx = (pw - w * z) / 2 - contentLeft * z;
+  ty = Math.max(16, (ph - h * z) / 2);
+  apply();
+}
+$('#fit').addEventListener('click', fit);
+$('#zoom').addEventListener('click', home);
+
+pane.addEventListener('wheel', function (e) {
+  e.preventDefault();
+  var r = pane.getBoundingClientRect(), k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? pane.clientHeight : 1;
+  var dx = e.deltaX * k, dy = e.deltaY * k;
+  if (e.ctrlKey || e.metaKey) { zoomAt(e.clientX - r.left, e.clientY - r.top, z * Math.exp(-dy * 0.0022)); return; }
+  if (e.shiftKey && !dx) { dx = dy; dy = 0; }
+  tx -= dx; ty -= dy; apply();
+}, {passive: false});
+
+var ptrs = new Map(), drag = null, pinch = null, justDragged = false;
+function mid() { var a = Array.from(ptrs.values()); return {x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1}; }
+function startDrag(id, p, type) { drag = {id: id, x: p.x, y: p.y, tx: tx, ty: ty, moved: false, thr: type === 'touch' ? 8 : 4}; }
+pane.addEventListener('pointerdown', function (e) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  justDragged = false;
+  ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if (ptrs.size === 1) startDrag(e.pointerId, {x: e.clientX, y: e.clientY}, e.pointerType);
+  else if (ptrs.size === 2) {
+    var m = mid(); pinch = {m: m, z: z, tx: tx, ty: ty};
+    if (drag) drag.moved = true;
+    try { ptrs.forEach(function (_, id) { pane.setPointerCapture(id); }); } catch (err) {}
+  }
+});
+pane.addEventListener('pointermove', function (e) {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  var r = pane.getBoundingClientRect();
+  if (pinch && ptrs.size >= 2) {
+    var m = mid(), nz = clampZ(pinch.z * m.d / pinch.m.d);
+    var bx = (pinch.m.x - r.left - pinch.tx) / pinch.z, by = (pinch.m.y - r.top - pinch.ty) / pinch.z;
+    z = nz; tx = m.x - r.left - bx * z; ty = m.y - r.top - by * z; apply();
+    return;
+  }
+  if (!drag || drag.id !== e.pointerId) return;
+  var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) > drag.thr) {
+    drag.moved = true; pane.classList.add('dragging');
+    try { pane.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  if (drag.moved) { tx = drag.tx + dx; ty = drag.ty + dy; apply(); }
+});
+function endPtr(e) {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if (drag && drag.moved) justDragged = true;
+  if (ptrs.size === 1) {                          // 핀치 끝 → 남은 손가락으로 이어서 이동
+    pinch = null;
+    var id = ptrs.keys().next().value, p = ptrs.get(id);
+    startDrag(id, p, 'touch'); drag.moved = true;
+  } else if (ptrs.size === 0) { drag = null; pinch = null; pane.classList.remove('dragging'); }
+}
+pane.addEventListener('pointerup', endPtr);
+pane.addEventListener('pointercancel', endPtr);
+pane.addEventListener('click', function (e) {
+  if (justDragged) { justDragged = false; e.preventDefault(); e.stopPropagation(); return; }
+  var b = e.target.closest && e.target.closest('.lkbtn');
+  if (b) { e.preventDefault(); e.stopPropagation(); setLinks(b.dataset.id); return; }
+  var c = e.target.closest && e.target.closest('.cover');
+  if (c && e.shiftKey) { e.preventDefault(); setLinks(c.closest('.card').dataset.id); return; }
+  if (c) openModal(c.dataset.file, c.dataset.title, c.dataset.desk === '1');
+  else if (lkFrom && !(e.target.closest && e.target.closest('.card'))) setLinks(null);
+}, true);
+
+/* ---------- 보이는 카드만 로드(이동·확대 후 100ms 묶어서) ---------- */
+var visT = 0;
+function loadVisible() {
+  var pr = pane.getBoundingClientRect();
+  if (!pr.width || pane.hidden) return;
+  $$('.phone iframe[data-src]', rowsEl).forEach(function (f) {
+    var r = f.parentNode.getBoundingClientRect();
+    if (r.right > pr.left - 80 && r.left < pr.right + 80 && r.bottom > pr.top - 80 && r.top < pr.bottom + 80) {
+      f.addEventListener('load', function () { sendTo(f); });
+      f.src = f.getAttribute('data-src'); f.removeAttribute('data-src');
+    }
+  });
+}
+function scheduleVisible() { clearTimeout(visT); visT = setTimeout(loadVisible, 100); }
+addEventListener('resize', scheduleVisible);
+
+/* ---------- 크게 보기 ---------- */
+var modal = $('#modal'), mframe = $('#mframe'), mbox = $('#mbox');
+function sizeModal() {
+  var side = fbOn && innerWidth > 760 ? 360 : 0;
+  var s = Math.min(1, (innerHeight - 72) / MH, (innerWidth - 16 - side) / MW);
+  mframe.style.transform = s < 1 ? 'scale(' + s.toFixed(4) + ')' : '';
+  mbox.style.width = Math.floor(MW * s) + 'px'; mbox.style.height = Math.floor(MH * s) + 'px';
+  mbox.style.marginTop = '48px';
+}
+var DW = (D.desk_card || {}).w || 1280, DH = (D.desk_card || {}).h || 800, MW0 = MW, MH0 = MH;
+function openModal(file, title, desk) {
+  MW = desk ? DW : MW0; MH = desk ? DH : MH0;
+  mframe.style.width = MW + 'px'; mframe.style.height = MH + 'px';
+  mbox.style.borderRadius = desk ? '12px' : '';
+  sizeModal(); $('#mtitle').textContent = title || '';
+  mframe.src = file; modal.hidden = false; $('#mclose').focus();
+}
+function closeModal() { modal.hidden = true; mframe.removeAttribute('src'); }
+mframe.addEventListener('load', function () { sendTo(mframe); sendPick(); });
+$('#mclose').addEventListener('click', closeModal);
+modal.addEventListener('click', function (e) { if (e.target === modal || e.target.id === 'mtitle') closeModal(); });
+/* ---------- 의견: 고른 요소(palette.js 의 hd-picked) + 적은 말 → localStorage(결과 폴더별) → 복사 ---------- */
+var fbOn = false, picked = null;
+var outDir = decodeURIComponent(location.pathname).replace(/\/[^\/]*$/, '').replace(/^\/([A-Za-z]:)/, '$1');
+var FBKEY = 'hd-feedback:' + outDir;
+function fbLoad() { try { return JSON.parse(localStorage.getItem(FBKEY) || '[]'); } catch (e) { return []; } }
+function fbSave(a) { try { localStorage.setItem(FBKEY, JSON.stringify(a)); } catch (e) {} }
+function fbText() {
+  return '[ui-mockup 수정 요청] out=' + outDir + '\n' + fbLoad().map(function (i) {
+    return '- ' + i.screen + ' · \'' + (i.text || '(글자 없음)') + '\' (' + i.path + ') — ' + i.note.replace(/\s+/g, ' ');
+  }).join('\n');
+}
+window.__hdFeedbackText = fbText;
+function fbRender() {
+  var a = fbLoad();
+  $('#fbn').textContent = a.length ? String(a.length) : '';
+  $('#fblist').innerHTML = a.map(function (i, k) {
+    return '<li><small>' + esc(i.screen) + ' · ‘' + esc(i.text || '(글자 없음)') + '’</small><br>' + esc(i.note) +
+      '<button data-k="' + k + '" aria-label="이 의견 지우기">지우기</button></li>'; }).join('');
+  $('#fbcopy').disabled = $('#fbclear').disabled = !a.length;
+  $('#fbcopy').textContent = a.length ? '의견 ' + a.length + '개 복사' : '의견 복사';
+  $('#fbpick').hidden = !picked;
+  if (picked) $('#fbpick').innerHTML = '‘' + esc(picked.text || '(글자 없음)') + '’<code>' + esc(picked.screen + ' · ' + picked.path) + '</code>';
+  $('#fbtip').textContent = picked ? '다른 곳을 누르면 바꿔 고를 수 있어요.' : '화면에서 고칠 곳을 누르세요.';
+  $('#fbnote').disabled = !picked;
+  $('#fbadd').disabled = !picked || !$('#fbnote').value.trim();
+}
+function sendPick() { try { mframe.contentWindow.postMessage({type: 'hd-pick', on: fbOn}, '*'); } catch (e) {} }
+function setFb(on) {
+  fbOn = on; picked = null;
+  $('#fbtn').setAttribute('aria-pressed', String(on));
+  $('#fb').hidden = !on; modal.classList.toggle('fb-on', on);
+  $('#fbdone').hidden = true;
+  sendPick(); sizeModal(); fbRender();
+}
+$('#fbtn').addEventListener('click', function () { setFb(!fbOn); });
+addEventListener('message', function (e) {
+  var d = e.data;
+  if (!fbOn || !d || d.type !== 'hd-picked' || e.source !== mframe.contentWindow) return;
+  picked = {screen: String(d.screen || ''), path: String(d.path || ''), text: String(d.text || '')};
+  fbRender(); $('#fbnote').focus();
+});
+$('#fbnote').addEventListener('input', fbRender);
+$('#fbnote').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('#fbadd').click(); });
+$('#fbadd').addEventListener('click', function () {
+  var note = $('#fbnote').value.trim(); if (!picked || !note) return;
+  var a = fbLoad(); a.push({screen: picked.screen, path: picked.path, text: picked.text, note: note}); fbSave(a);
+  $('#fbnote').value = ''; picked = null; $('#fbdone').hidden = true; sendPick(); fbRender();
+});
+$('#fblist').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-k]'); if (!b) return;
+  var a = fbLoad(); a.splice(+b.dataset.k, 1); fbSave(a); fbRender();
+});
+$('#fbclear').addEventListener('click', function () { fbSave([]); $('#fbdone').hidden = true; fbRender(); });
+function copyText(t) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).catch(function () { return legacyCopy(t); });
+  return Promise.resolve(legacyCopy(t));
+}
+function legacyCopy(t) {
+  var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove();
+}
+$('#fbcopy').addEventListener('click', function () { copyText(fbText()).then(function () { $('#fbdone').hidden = false; }); });
+fbRender();
+addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (!modal.hidden) closeModal(); else if (lkFrom) setLinks(null); });
+addEventListener('resize', function () { if (!modal.hidden) sizeModal(); });
+
+/* ---------- 탭 ---------- */
+function showTab(name) {
+  document.body.dataset.tab = name;
+  $$('.tab').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
+  $$('.pane').forEach(function (p) { p.hidden = p.id !== name; });
+  var f = $('#' + name + ' iframe.doc');
+  if (f && f.hasAttribute('data-src')) {
+    f.addEventListener('load', function () { sendTo(f); });
+    f.src = f.getAttribute('data-src'); f.removeAttribute('data-src');
+  }
+  if (name === 'screens') scheduleVisible();
+  try { history.replaceState(null, '', name === 'screens' ? location.pathname + location.search : '#' + name); } catch (e) {}
+}
+$$('.tab').forEach(function (b) { b.addEventListener('click', function () { showTab(b.dataset.tab); }); });
+
+/* ---------- 팔레트: #tokens 교체 + 모든 iframe 에 postMessage + localStorage ---------- */
+var KEY = 'hd-palette:' + location.pathname.replace(/\/[^/]*\.html?$/, ''), cur = null;   // palette.js 와 같은 키 — 시안 폴더마다 따로
+function sendTo(f) { if (!cur) return; try { f.contentWindow.postMessage({type: 'hd-palette', slug: cur}, '*'); } catch (e) {} }
+function setPalette(slug) {
+  cur = slug;
+  var l = $('#tokens'), base = l.getAttribute('data-base') || l.getAttribute('href');
+  l.setAttribute('data-base', base);
+  l.setAttribute('href', base.replace(/tokens(-[^/]*)?\.css$/, 'tokens-' + slug + '.css'));
+  $$('iframe').forEach(sendTo);
+  $$('.dot').forEach(function (d) { d.setAttribute('aria-pressed', String(d.dataset.slug === slug)); });
+}
+if (P && P.options && P.options.length) {
+  var pal = $('.pal');
+  pal.innerHTML = '<span class="pal-label">색</span>' + P.options.slice(0, 3).map(function (o) {
+    return '<button class="dot" data-slug="' + esc(o.slug) + '" style="--dot:' + esc(o.brand) + '" aria-pressed="false" title="' +
+      esc(o.name) + ' 색으로 보기' + (o.source ? ' — ' + esc(o.source) : '') + '" aria-label="' + esc(o.name) + ' 색으로 보기"><i></i><b>' + esc(o.name) + '</b></button>';
+  }).join('');
+  $$('.dot').forEach(function (d) {
+    d.addEventListener('click', function () { setPalette(d.dataset.slug); try { localStorage.setItem(KEY, cur); } catch (e) {} });
+  });
+  var start = new URLSearchParams(location.search).get('p');
+  try { start = start || localStorage.getItem(KEY); } catch (e) {}
+  if (!start || !P.options.some(function (o) { return o.slug === start; })) start = P.default || P.options[0].slug;
+  setPalette(start);
+}
+
+/* ---------- 시작 ---------- */
+(function () {                                    // 판 위 글은 첫 배율에서 화면 폭에 들어오게
+  var pw = pane.clientWidth, narrow = pw < 600;
+  if (narrow) stage.classList.add('narrow');
+  var left = narrow ? 12 : 24 + LEFT * Z0;
+  var mw = Math.round((pw - left - 24) / Z0) + 'px';
+  $('#intro').style.maxWidth = mw; $('#foot').style.maxWidth = mw;
+})();
+drawArrows();
+home();
+loadVisible();
+var hashTab = (location.hash || '').slice(1);
+if (hashTab === 'foundation' || hashTab === 'components') showTab(hashTab);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawArrows(); drawLinks(); });
+window.__hdReady = performance.now();
+})();
+</script>
+</body>
+</html>

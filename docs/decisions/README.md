@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-11-16 · 총 34건
+마지막 재생성: 2026-11-25 · 총 38건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -25,7 +25,6 @@
 | [ADR-0018](ADR-0018-client-session-generation.md) | 클라이언트 세션 상태는 세대로 직렬화하고, 늦게 온 복원 응답은 버린다 | 채택됨 | 2026-10-22 |
 | [ADR-0019](ADR-0019-string-input-validation-server-canonical.md) | 문자열 입력 검증은 서버가 정본이고, 제어문자는 거부하며 이메일 외에는 정규화하지 않는다 | 채택됨 | 2026-10-22 |
 | [ADR-0021](ADR-0021-social-login-token-via-url-fragment.md) | 소셜 로그인 토큰은 URL fragment 로 프론트에 넘긴다 | 채택됨 | 2026-10-26 |
-| [ADR-0022](ADR-0022-design-source-from-out-mockups.md) | 디자인 정본을 `out/` 시안으로 바꾸고, 토큰 값은 `out/tokens.css` 를 그대로 옮긴다 | 채택됨 | 2026-11-04 |
 | [ADR-0023](ADR-0023-queue-in-redis-seat-hold-in-db.md) | 대기열 순번은 Redis 에 두고, 좌석 선점은 계속 DB 트랜잭션으로 처리한다 | 채택됨 | 2026-11-04 |
 | [ADR-0024](ADR-0024-countdown-by-server-clock-offset.md) | 오픈 카운트다운은 서버 시각과의 차이(오프셋)로 계산하고, 오픈 판정은 서버만 한다 | 채택됨 | 2026-11-04 |
 | [ADR-0026](ADR-0026-client-timer-transition-server-judgment.md) | 시간 제한 화면은 기한이 되면 다시 조회하지 않고 클라이언트가 전환하고, 판정은 다음 요청에서 서버가 한다 | 채택됨 | 2026-11-10 |
@@ -37,11 +36,15 @@
 | [ADR-0032](ADR-0032-email-link-token-hashed-fragment-post.md) | 이메일 링크 토큰은 해시로 저장하고, 링크는 URL fragment 로, 확인은 POST 로 한다 | 채택됨 | 2026-11-12 |
 | [ADR-0034](ADR-0034-accept-detail-minor-variants-history-dup-and-time-order.md) | 공연 상세의 경미한 변종 두 건(시트 재진입 뒤 중복 history 칸, 시각 순서 미검증)은 고치지 않고 수용한다 | 채택됨 | 2026-11-16 |
 | [ADR-0035](ADR-0035-accept-mail-token-minor-variants-direct-issue-and-bracket-timeout.md) | 메일·토큰 기반의 경미한 변종 두 건(토큰 직접 동시 발급, 대괄호 표기 타임아웃)은 고치지 않고 수용한다 | 채택됨 | 2026-11-20 |
+| [ADR-0036](ADR-0036-deposit-confirm-caller-minimal-admin-role.md) | 입금 확인 API 의 호출자는 최소 ADMIN 역할로 한정하고, ADMIN 계정은 DB 로만 만든다 | 채택됨 | 2026-11-25 |
+| [ADR-0037](ADR-0037-judge-hold-and-booking-expiry-at-read-time.md) | 좌석 선점과 예약의 만료는 만료 시각을 저장하고 조회·쓰기 시점에 판정한다 (스케줄러를 두지 않는다) | 채택됨 | 2026-11-25 |
+| [ADR-0038](ADR-0038-screen-mockup-source-per-screen.md) | 화면 시안 정본을 화면 단위로 나눈다 — 기존 화면은 `out/`, 요청이 새로 만들거나 대체한 화면은 그 요청의 시안 | 채택됨 | 2026-11-25 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다 | 2026-10-14 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로, 쓰기 가드 자체는 ADR-0029 로 대체됨) | 2026-10-14 |
 | [ADR-0017](ADR-0017-keep-write-guard-until-ownership-check.md) | 쓰기 가드는 공연 쓰기 API 에 소유권 검사가 붙을 때까지 유지한다 | ADR-0029 로 대체됨 | 2026-10-21 |
 | [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) | 자동 연결은 이메일 소유가 확인된 계정에만 한다 | 채택됨 (ADR-0014 의 "이메일이 같으면 이메일 가입 계정에도 연결" 부분을 대체) | 2026-10-23 |
-| [ADR-0025](ADR-0025-bank-transfer-only-with-internal-confirm-api.md) | 결제는 무통장 입금만 두고, 입금 확인은 쓰기 키로 보호한 내부 API 로 처리한다 | 채택됨 (입금 확인 API 의 보호 수단 `X-Write-Key` 는 ADR-0029 로 대체됨 — 운영자 역할 + JWT 방향) | 2026-11-04 |
+| [ADR-0022](ADR-0022-design-source-from-out-mockups.md) | 디자인 정본을 `out/` 시안으로 바꾸고, 토큰 값은 `out/tokens.css` 를 그대로 옮긴다 | 채택됨 (화면 시안 정본을 `out/` 하나로 둔 부분은 ADR-0038 로 대체됨 — 화면 단위 정본) | 2026-11-04 |
+| [ADR-0025](ADR-0025-bank-transfer-only-with-internal-confirm-api.md) | 결제는 무통장 입금만 두고, 입금 확인은 쓰기 키로 보호한 내부 API 로 처리한다 | 채택됨 (입금 확인 API 의 보호 수단 `X-Write-Key` 는 ADR-0029 로 대체됨 — 운영자 역할 + JWT 방향. 경로·호출자는 ADR-0036 으로 대체됨 — `/api/admin/…/confirm-deposit`, 최소 ADMIN 역할) | 2026-11-04 |
 | [ADR-0033](ADR-0033-require-email-ownership-before-password-login.md) | 이메일(비밀번호) 로그인은 이메일 소유를 확인한 뒤에만 허용한다 | 채택됨 (ADR-0020 의 「이메일 가입은 소유 확인이 없다」는 전제를 보완) | 2026-11-12 |
 
 대체된 ADR 도 목록에 남깁니다. 과거에 왜 그렇게 판단했는지가 지워지면 같은 논의를 다시 하게 됩니다.

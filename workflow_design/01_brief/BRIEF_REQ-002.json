@@ -1,0 +1,936 @@
+{
+  "id": "REQ-002",
+  "status": "locked",
+  "prompt": "(REQ-001 의 D1 에서 파생) 모바일 티켓보다 먼저 예매 흐름 — 좌석 선점 → 무통장 예약 → 입금 확인 → 확정 — 을 만든다",
+  "posture": "reduce",
+  "goal": "관객이 좌석을 골라 선점하고 무통장으로 예약하면, 입금이 확인되는 순간 예매가 확정되고 관객이 내 예매에서 확정을 확인한다",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "text": "관객이 좌석 1~4개를 골라 선점하면 7분 동안 다른 관객은 그 좌석을 고를 수 없다",
+      "kind": "happy",
+      "ui": true
+    },
+    {
+      "id": "AC-2",
+      "text": "이미 선점·판매된 좌석을 고르면 거절되고, 화면에 그 좌석이 빠졌다는 안내와 다시 고르기가 보인다",
+      "kind": "error",
+      "ui": true
+    },
+    {
+      "id": "AC-3",
+      "text": "한 번에 5장 이상 선점하려 하면 거절된다",
+      "kind": "error",
+      "ui": true
+    },
+    {
+      "id": "AC-4",
+      "text": "선점한 좌석으로 무통장 예약하면 입금 계좌·금액·입금 기한(예약 당일 오후 11:59)이 보인다",
+      "kind": "happy",
+      "ui": true
+    },
+    {
+      "id": "AC-5",
+      "text": "입금 확인이 기록되면 예매가 확정되고, 관객의 내 예매에 '예매 확정'이 보인다",
+      "kind": "happy",
+      "ui": true
+    },
+    {
+      "id": "AC-6",
+      "text": "입금 기한까지 입금이 확인되지 않으면 예약이 자동 취소되고 좌석이 다시 판매된다",
+      "kind": "error",
+      "ui": true
+    },
+    {
+      "id": "AC-7",
+      "text": "두 관객이 같은 좌석을 동시에 선점하면 한 명만 성공한다",
+      "kind": "error",
+      "ui": false
+    },
+    {
+      "id": "AC-8",
+      "text": "선점 7분이 지나 예약하지 않은 좌석은 다시 고를 수 있게 된다",
+      "kind": "error",
+      "ui": true
+    },
+    {
+      "id": "AC-9",
+      "text": "입금 기한(예약 당일 오후 11:59, product.md 정본)이 지난 뒤의 입금 확인 요청은 거절되고 예약은 취소 상태로 보인다",
+      "kind": "error",
+      "ui": false
+    },
+    {
+      "id": "AC-10",
+      "text": "선점한 관객이 '좌석 다시 고르기'를 누르면 그 선점이 바로 풀려 다른 관객이 고를 수 있다",
+      "kind": "happy",
+      "ui": true
+    },
+    {
+      "id": "AC-11",
+      "text": "로그인하지 않은 사람이 좌석 조회를 요청하면 401 로 거절되고 화면은 로그인으로 안내한다",
+      "kind": "error",
+      "ui": false
+    },
+    {
+      "id": "AC-12",
+      "text": "한 관객이 같은 공연에서 입금 대기·확정 좌석 합계 4석을 넘게 예약하려 하면 거절되고, 새로 선점하면 이전 미예약 선점은 풀린다",
+      "kind": "error",
+      "ui": false
+    }
+  ],
+  "out_of_scope": [
+    "대기열 (FR-6~9, ADR-0023 Redis) — 후속 요청에서 다룸",
+    "매수 지정 연석 자동 선점 (FR-11·12) — 후속 요청에서 다룸",
+    "관객 직접 취소(FR-19)·양도(FR-20) — 후속 요청에서 다룸",
+    "카드·간편결제 (FR-18, ADR-0025)",
+    "ADMIN 의 화면·가입 경로와 그 밖의 운영자 기능 (product.md §4)",
+    "모바일 티켓 — REQ-001 (이 요청이 끝난 뒤 재개)"
+  ],
+  "assumptions": [
+    {
+      "text": "좌석 선점 동시성은 좌석-예매 매핑의 유니크 제약 + 조건부 UPSERT 로 한다",
+      "verified_by": "docs/decisions/ADR-0004-seat-hold-concurrency.md · docs/architecture/architecture.md:59-62"
+    },
+    {
+      "text": "선점 유지 7분, 입금 기한 예약 당일 오후 11:59",
+      "verified_by": "docs/product/product.md §7 열린 질문(해소됨, 2026-11-04)"
+    },
+    {
+      "text": "입금 확인은 화면 없는 내부 API, 보호는 운영자 역할 + JWT",
+      "verified_by": "docs/architecture/architecture.md:74-77 · ADR-0025 · ADR-0029"
+    },
+    {
+      "text": "운영자 역할이 있다",
+      "verified_by": null,
+      "note": "없다 — UserRole 은 AUDIENCE · ORGANIZER 뿐. 운영자 기능은 product.md 범위 밖(다음 단계) → ADMIN 최소 추가 (D2)"
+    },
+    {
+      "text": "기한 경과를 처리할 스케줄러가 있다",
+      "verified_by": null,
+      "note": "없다 — @Scheduled·EnableScheduling 없음 → 필요 없음 (D5 조회 시점 판정)"
+    },
+    {
+      "text": "ADMIN 을 UserRole 에 더해도 기존 호출자(역할 CHECK 제약, /api/auth/me role, 프론트 역할 타입, 가입 API)가 깨지지 않는다",
+      "verified_by": "backend/.../migration/V3__create_users.sql:6 (CHECK 없음) · SignUpRequest.java:25 · frontend/src/api/auth.ts:9,46",
+      "note": "DB 는 참, 가입 API·프론트는 아님 → D25"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "class": "user_challenge",
+      "source": "draft",
+      "status": "approved",
+      "question": "예매 흐름을 어디까지 만들까?",
+      "options": [
+        "최소 경로 — 선점·예약·입금 확인·확정·자동 취소",
+        "PRD 의 예매 전체 — 대기열·연석·취소·양도까지",
+        "최소 경로 + 관객 직접 취소"
+      ],
+      "recommended": "최소 경로 — 선점·예약·입금 확인·확정·자동 취소",
+      "answer": "최소 경로 (추천)",
+      "scope": "선점·예약·입금 확인·확정·만료. 대기열·연석·취소·양도는 후속 요청"
+    },
+    {
+      "id": "D2",
+      "class": "user_challenge",
+      "source": "draft",
+      "status": "approved",
+      "question": "운영자 역할이 없다. 입금 확인 API 를 누가 호출하게 할까?",
+      "options": [
+        "ADMIN 역할 최소 추가",
+        "그 공연의 주최자가 확인",
+        "공유 키(X-Write-Key)"
+      ],
+      "recommended": "ADMIN 역할 최소 추가",
+      "answer": "ADMIN 역할 최소 추가 (추천) — 이름은 ADR-0029 의 ADMIN. 화면·가입 경로 없이 입금 확인 API 보호에만, 계정은 DB 로 지정",
+      "scope": "입금 확인 API 호출자 한정. 다른 운영자 기능은 여전히 범위 밖 — product.md §4 에 예외 한 줄"
+    },
+    {
+      "id": "D3",
+      "class": "mechanical",
+      "source": "draft",
+      "status": "approved",
+      "question": "선점 유지 시간·입금 기한",
+      "answer": "선점 7분, 입금 기한 예약 당일 오후 11:59 — product.md §7 에서 해소된 값"
+    },
+    {
+      "id": "D4",
+      "class": "mechanical",
+      "source": "draft",
+      "status": "approved",
+      "question": "선점 동시성",
+      "answer": "유니크 제약 + 조건부 UPSERT (ADR-0004). 별도 락 계층 없음"
+    },
+    {
+      "id": "D5",
+      "class": "user_challenge",
+      "source": "ceo",
+      "status": "approved",
+      "question": "선점 7분 만료와 입금 기한 자동 취소 방식",
+      "options": [
+        "조회할 때 만료 판정",
+        "스케줄러로 주기 처리",
+        "둘 다"
+      ],
+      "recommended": "조회할 때 만료 판정",
+      "answer": "조회할 때 만료 판정 (추천)",
+      "scope": "선점·예약 모두. 만료 시각을 저장하고 읽을 때 판정. 스케줄러는 두지 않는다"
+    },
+    {
+      "id": "D6",
+      "class": "taste",
+      "source": "ceo",
+      "status": "approved",
+      "question": "범위 외 표기",
+      "answer": "취소·양도·대기열·연석에 '후속 요청에서 다룸' 표기, FR 번호 PRD 대조"
+    },
+    {
+      "id": "D7",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "'좌석 다시 고르기'가 선점을 바로 풀까",
+      "answer": "Q1 다시 고르면 선점 바로 해제",
+      "scope": "선점 해제 API 1개 — 본인 선점만"
+    },
+    {
+      "id": "D8",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "예매번호를 보여 줄까",
+      "answer": "Q4 예매번호 표시",
+      "scope": "예약 완료·예매 상세·내 예매. 새 데이터 필드(예매번호)"
+    },
+    {
+      "id": "D9",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "입금자명 칸·확정/취소 알림·기한 뒤 입금 안내",
+      "answer": "세 가지 모두 추천안 (추천) — 입금자명 칸 없이 예매자 이름으로 안내, 메일·문자는 나중에, 기한 뒤 입금은 '예매번호로 문의해 주세요' 한 줄",
+      "scope": "문의 창구는 정해지기 전까지 문구만"
+    },
+    {
+      "id": "D10",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "모바일에서 큰 구역(최대 26열 × 수백 석) 좌석을 44px 로 누르게 하는 방식",
+      "options": [
+        "확대해서 고르기",
+        "열 묶음으로 나눠 고르기",
+        "큰 구역은 매수 지정 자동 배정"
+      ],
+      "recommended": "확대해서 고르기",
+      "answer": "확대해서 고르기 (추천)",
+      "scope": "구역 좌석도는 처음에 전체(빈자리 분포), 누른 곳 주변을 44px 로 확대, 미니맵으로 위치. 좌석 수와 무관"
+    },
+    {
+      "id": "D11",
+      "class": "user_challenge",
+      "source": "mockup",
+      "status": "approved",
+      "question": "좌석 화면 상태 6장 — 한 화면 최대 3장 규칙을 넘는다",
+      "answer": "6장 그대로 (추천)",
+      "scope": "REQ-002 좌석 고르기 화면만"
+    },
+    {
+      "id": "D12",
+      "class": "user_challenge",
+      "source": "design",
+      "status": "approved",
+      "question": "선점 뒤 예약 화면을 떠나면",
+      "options": [
+        "떠나면 선점이 풀린다",
+        "내 예매에서 다시 이어가기"
+      ],
+      "recommended": "떠나면 선점이 풀린다",
+      "answer": "떠나면 선점이 풀린다 (추천)",
+      "scope": "뒤로·이동 = 선점 해제(D7 과 같은 API). 강제 종료는 7분 만료로 풀림. 예약 화면에 안내 한 줄"
+    },
+    {
+      "id": "D13",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "새 API 계약",
+      "answer": "PLAN 에 계약표 고정 — POST /api/performances/{id}/seat-holds(seatIds) · DELETE /api/seat-holds/{holdId}(본인, 204) · POST /api/bookings(holdId → bookingNumber·계좌·금액·depositDeadline) · GET /api/bookings/me(page/size 0/20, 최신순) · GET /api/bookings/{id}(본인) · POST /api/admin/bookings/{id}/confirm-deposit(ADMIN). camelCase, 시각은 ISO·서버 시각(/api/time) 기준"
+    },
+    {
+      "id": "D14",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "에러 코드",
+      "answer": "SEAT_UNAVAILABLE 409(빠진 좌석 id 목록 — ErrorResponse 에 선택 필드 추가, 추가형) · SEAT_LIMIT_EXCEEDED 400 · HOLD_EXPIRED 409 · HOLD_NOT_OWNED 404 · DEPOSIT_DEADLINE_PASSED 409 · BOOKING_NOT_FOUND 404. BookingExceptionHandler 분리"
+    },
+    {
+      "id": "D15",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "예매 상태",
+      "answer": "저장하지 않고 만료 시각에서 파생(CONFIRMED / PENDING_DEPOSIT / CANCELLED). 기한 지난 입금 확인은 409 만 반환, 쓰기 없음"
+    },
+    {
+      "id": "D16",
+      "class": "mechanical",
+      "source": "devex",
+      "status": "approved",
+      "question": "설정값",
+      "answer": "선점 7분·입금 기한 23:59(Asia/Seoul)·최대 4석을 설정 한 곳에"
+    },
+    {
+      "id": "D17",
+      "class": "mechanical",
+      "source": "design",
+      "status": "approved",
+      "question": "먼저 잡힌 좌석 안내 문구",
+      "answer": "'아직 선점 전이에요' — 부분 선점 없음(전부-아니면-없음)을 Eng 가 확인"
+    },
+    {
+      "id": "D18",
+      "class": "taste",
+      "source": "devex",
+      "status": "approved",
+      "question": "입금 확인 경로·중복 호출",
+      "answer": "/api/admin/ 접두, 이미 확정이면 200 멱등"
+    },
+    {
+      "id": "D19",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "취소 화면 버튼",
+      "answer": "'다시 예매하기' → seats--overview"
+    },
+    {
+      "id": "D20",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "확정 확인 방법",
+      "answer": "입금 대기 상세에 '열 때마다 최신으로 확인돼요' 한 줄"
+    },
+    {
+      "id": "D21",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "진행 단계 표기",
+      "answer": "확정·취소 상세도 선점 → 예약 → 입금 확인 → 확정 틀로 통일"
+    },
+    {
+      "id": "D22",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "짧은 입금 기한",
+      "answer": "기한까지 1시간 미만이면 예약 화면 문장에 '입금 시간이 짧아요'"
+    },
+    {
+      "id": "D23",
+      "class": "taste",
+      "source": "design",
+      "status": "approved",
+      "question": "동명이인·같은 금액 입금",
+      "answer": "알려진 한계로 기록 — 운영자는 예매번호로 확정"
+    },
+    {
+      "id": "D24",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "보안 매처와 경로 (E1)",
+      "answer": "선점은 /api/seat-holds(본문 performanceId) — /api/performances/** 의 ORGANIZER 매처 밖. /api/admin/** 에 hasRole(ADMIN) 명시. 거절 문구는 역할 중립(기존 FORBIDDEN_ROLE 테스트 문구 단언 확인)"
+    },
+    {
+      "id": "D25",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "ADMIN 권한 상승 차단 (E2)",
+      "answer": "가입 API 두 곳(SignUpRequest·CompleteSocialSignUpRequest)에서 role==ADMIN 이면 400. ADMIN 계정은 DB 로만. 프론트 UserRole·ROLES 에 'ADMIN' 추가(화면 없음). DB 마이그레이션 불필요(V3 role VARCHAR(20), CHECK 없음)"
+    },
+    {
+      "id": "D26",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "좌석 잠금과 예매 좌석 기록 (E3)",
+      "answer": "seat_lock(seat_id UNIQUE, hold_id, expires_at) 과 booking·booking_seat 분리. ON CONFLICT (seat_id) DO UPDATE … WHERE seat_lock.expires_at <= :now — 판매 확정은 expires_at NULL. 입금 대기 예약의 잠금 만료 = depositDeadline. 시각은 앱 Clock 하나로"
+    },
+    {
+      "id": "D27",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "부분 선점 없음 (E4)",
+      "answer": "INSERT … SELECT … ON CONFLICT … RETURNING 한 번, seatIds 오름차순, 반환 수 < 요청 수면 롤백 + 빠진 id 를 SEAT_UNAVAILABLE 에. 입력 검증: 중복 제거·1~4개·같은 공연 소속·공개 공연"
+    },
+    {
+      "id": "D28",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "깨지는 승인 테스트 (E5)",
+      "answer": "마이그레이션 버전 '9' 단언 3개(PerformanceOwner·PerformancePublished·Task027EmailToken MigrationTest)를 target 버전 단언으로 — Phase 3 에서 사람 승인 필요. ErrorResponse 는 2-인자 생성자 유지 + 선택 필드 @JsonInclude(NON_NULL)"
+    },
+    {
+      "id": "D29",
+      "class": "mechanical",
+      "source": "eng",
+      "status": "approved",
+      "question": "테스트 DB (E6)",
+      "answer": "선점·동시성 테스트는 PostgreSQL(Testcontainers) 공용 베이스에서 — ADR-0006 전환 조건 충족 기록. 기존 H2 테스트는 그대로"
+    },
+    {
+      "id": "D30",
+      "class": "user_challenge",
+      "source": "eng",
+      "status": "approved",
+      "question": "좌석 조회 API 추가와 공개 범위 (E7)",
+      "options": [
+        "추가 — 누구나 조회",
+        "추가 — 로그인한 관객만"
+      ],
+      "recommended": "추가 — 누구나 조회",
+      "answer": "추가 — 로그인한 관객만",
+      "scope": "GET /api/performances/{id}/seats — 좌석별 available(선점·판매 구분 없음)·등급별 남은 석수. 비로그인은 401 → 로그인으로. 좌석 화면 진입 전 로그인"
+    },
+    {
+      "id": "D31",
+      "class": "user_challenge",
+      "source": "eng",
+      "status": "approved",
+      "question": "태스크 분할 (E8)",
+      "options": [
+        "A 를 둘로, C 는 그대로",
+        "A 둘 + C 둘",
+        "나누지 않음"
+      ],
+      "recommended": "A 를 둘로, C 는 그대로",
+      "answer": "A 를 둘로, C 는 그대로 (추천)",
+      "scope": "A1·A2·B·C·D 5개"
+    },
+    {
+      "id": "D32",
+      "class": "user_challenge",
+      "source": "outside",
+      "status": "approved",
+      "question": "1인 상한 (O1)",
+      "options": [
+        "둘 다 넣기",
+        "활성 선점 하나만",
+        "알려진 한계로 기록"
+      ],
+      "recommended": "둘 다 넣기",
+      "answer": "둘 다 넣기 (추천)",
+      "scope": "사용자당 활성 선점 1개(새 선점이 이전 미예약 선점을 대체) + 공연별 '입금 대기+확정' 합계 4석. product.md '1인 최대 4장'과 일치"
+    },
+    {
+      "id": "D33",
+      "class": "user_challenge",
+      "source": "outside",
+      "status": "approved",
+      "question": "범위를 반으로 줄일까 (O8)",
+      "options": [
+        "지금 범위 유지",
+        "반으로 줄이기"
+      ],
+      "recommended": "(리뷰어 제안: 반으로 줄이기)",
+      "answer": "지금 범위 유지",
+      "scope": "확대·미니맵, 떠나면 해제, 데스크톱 전용 화면 모두 이번 요청에"
+    },
+    {
+      "id": "D34",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "좌석 조회 매처 (O2 — Eng D24 와 다름)",
+      "answer": "GET /api/performances/*/seats 를 GET /api/performances/** permitAll 매처 앞에 authenticated 로. AC-11 401 테스트를 A1 에"
+    },
+    {
+      "id": "D35",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "예약 전환·해제 조건 (O3)",
+      "answer": "예약: UPDATE seat_lock SET expires_at=:deadline WHERE hold_id=:h AND 본인 AND expires_at > :now, 영향 행 = 좌석 수일 때만. 해제: DELETE … WHERE hold_id AND 본인 AND 예약 없음, 이미 예약된 hold 는 204 no-op. 프론트는 예약 성공 뒤 이동에 해제를 보내지 않는다(C 테스트)"
+    },
+    {
+      "id": "D36",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "기한 경계 (O4)",
+      "answer": "입금 확인 = 한 트랜잭션 조건부 쓰기(UPDATE … SET expires_at=NULL WHERE hold_id AND expires_at > :now, 영향 행 = 좌석 수). 유효 = now < expires_at 하나로 정의. 기한은 23:59:00 Asia/Seoul Instant. 단일 인스턴스라 앱 Clock"
+    },
+    {
+      "id": "D37",
+      "class": "mechanical",
+      "source": "outside",
+      "status": "approved",
+      "question": "재시도·멱등 (O5)",
+      "answer": "booking.hold_id·booking_number UNIQUE, 같은 hold 재예약은 기존 예약 200. 예매번호 DB 시퀀스. 입금 확인 경로 /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit, 응답에 금액·예매자·좌석"
+    },
+    {
+      "id": "D38",
+      "class": "taste",
+      "source": "outside",
+      "status": "approved",
+      "question": "ADMIN 회수 지연·감사 (O6)",
+      "answer": "확정 시 DB 역할 재확인 + booking.confirmed_by·confirmed_at. ADR 에 회수 지연 한 줄"
+    },
+    {
+      "id": "D39",
+      "class": "taste",
+      "source": "outside",
+      "status": "approved",
+      "question": "여정 사실 정정 (O7)",
+      "answer": "'주최자 화면 남은 좌석 수가 움직인다' — D40 으로 남은 좌석 수가 조회 시점 계산이 되어 주최자·공개 화면 모두 움직인다 (D40 에 따라 정정)",
+      "note": "D40 으로 다시 열고 정정"
+    },
+    {
+      "id": "D40",
+      "class": "user_challenge",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "예매가 생겨도 공연의 남은 좌석 수(available_seats — 판매 중/매진 상태·공개 목록 매진 필터의 근거)를 어떻게 할까",
+      "answer": "조회 시점에 계산 (추천) — 전체 − 유효한 선점·예약(만료 전·입금 확인된 것). ADR-0037 과 같은 방식. 저장 컬럼은 더 쓰지 않는다",
+      "phase": "dispatch",
+      "note": "Dispatch 중 발견(기능 문서 작성 에이전트) — 확정 뒤 추가 결정, AskUserQuestion 응답 2026-11-25",
+      "estimate_delta_h": 3,
+      "placed_in": "B — 선점(A1)·예약(A2) 둘 다 있어야 계산할 수 있다"
+    },
+    {
+      "id": "D41",
+      "class": "user_challenge",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "지금 앱은 데스크톱에서도 모바일 폭 한 줄 화면인데 REQ-002 시안에는 1280 데스크톱 배치가 있다. 데스크톱을 어떻게 할까",
+      "answer": "이번엔 모바일 폭으로 (추천) — REQ-002 화면도 기존 화면처럼 한 줄(appMaxWidth). 데스크톱 시안(screens/desktop/)은 보관하고 앱 전체 데스크톱 배치는 별도 요청으로",
+      "phase": "dispatch",
+      "note": "사용자 질문 '기존 시안과 새 스킬 시안이 다를 텐데 어떻게 진행하나' 에서 — AskUserQuestion 응답 2026-11-25"
+    },
+    {
+      "id": "D42",
+      "class": "mechanical",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "화면 시안 정본이 out/(기존 k-style)과 요청별 시안으로 둘이 된다",
+      "answer": "정본은 화면 단위로 나뉜다 — 기존 화면은 out/, REQ-002 가 새로 만들거나 대체한 화면은 workflow_design/01_brief/mockup/REQ-002/ 의 모바일 화면. 대체되는 out/ 화면(seat, seat--error, checkout, booked, my-bookings)은 지우지 않고 대응표로 표시. 토큰은 같다(대조함). 새 부품(picker·mini·due)은 frontend components/ui 공통 부품으로",
+      "note": "design.md §0 과 ADR 로 옮긴다"
+    },
+    {
+      "id": "D43",
+      "class": "user_challenge",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "대응표에 없던 out/ 화면 3장(checkout--error·booking·booking-sj)을 어떻게 표시할까",
+      "answer": "장면별로 나눠 표시 (추천) — booking 은 booking--confirmed 가 확정 상세 장면만 대체(양도·취소 부분은 out/ 정본으로 남김), checkout--error·booking-sj 는 대체하지 않고 카드결제(FR-18)·직접 취소(FR-19) 요청의 출발점",
+      "phase": "dispatch",
+      "note": "AskUserQuestion 응답 2026-11-25 — design.md §0 대응표에 반영"
+    }
+  ],
+  "completeness": [
+    {
+      "id": "C1",
+      "text": "기한 경계 — PRD '자정' 대신 product.md '오후 11:59' 를 정본으로, 기한 뒤 입금 확인 거절(AC-9)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "ceo"
+    },
+    {
+      "id": "C2",
+      "text": "가입 API ADMIN 거절 + 프론트 역할 타입 (E2)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
+    },
+    {
+      "id": "C3",
+      "text": "선점 입력 검증·좌석 정렬·반환 수 대조 (E4)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
+    },
+    {
+      "id": "C4",
+      "text": "마이그레이션 버전 단언 3개 갱신·ErrorResponse 호환 (E5)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
+    },
+    {
+      "id": "C5",
+      "text": "PostgreSQL 테스트 베이스·동시 선점 테스트 (E6)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "eng"
+    },
+    {
+      "id": "C6",
+      "text": "매처 순서 + AC-11 테스트 (O2)",
+      "in_radius": true,
+      "estimate_delta_h": 0.5,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C7",
+      "text": "예약 전환·해제 조건부 쓰기 (O3)",
+      "in_radius": true,
+      "estimate_delta_h": 1.5,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C8",
+      "text": "입금 확인 조건부 쓰기·경계 정의 (O4)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C9",
+      "text": "재시도·멱등·예매번호 시퀀스 (O5)",
+      "in_radius": true,
+      "estimate_delta_h": 1,
+      "status": "included",
+      "source": "outside"
+    },
+    {
+      "id": "C10",
+      "text": "1인 상한 두 가지 (O1, D32)",
+      "in_radius": true,
+      "estimate_delta_h": 2,
+      "status": "included",
+      "source": "outside"
+    }
+  ],
+  "scope": {
+    "wru": true,
+    "routes": [
+      "Backend",
+      "Frontend"
+    ],
+    "product_change": true,
+    "architecture": {
+      "change": true,
+      "adr": [
+        "입금 확인 호출자 — 최소 ADMIN 역할",
+        "선점·예약 만료를 조회 시점에 판정"
+      ]
+    },
+    "design_tokens": false,
+    "ui": "mockup",
+    "migration": true,
+    "paths": [
+      "backend/src/main/java/com/example/ticket_booking/domain/Seat.java",
+      "backend/src/main/java/com/example/ticket_booking/domain/UserRole.java",
+      "backend/src/main/resources/db/migration/V10__create_bookings.sql",
+      "frontend/src/pages",
+      "backend/src/main/java/com/example/ticket_booking/domain/PerformanceStatusRules.java",
+      "backend/src/main/java/com/example/ticket_booking/repository/PerformanceRepositoryImpl.java",
+      "workflow_design/01_brief/mockup/REQ-002/screens"
+    ]
+  },
+  "split": [
+    {
+      "key": "A1",
+      "title": "좌석 잠금 스키마·선점·해제·좌석 조회 API (동시성, PostgreSQL 테스트 베이스)",
+      "route": "Backend",
+      "estimate_h": 15,
+      "ac": [
+        "AC-1",
+        "AC-2",
+        "AC-3",
+        "AC-7",
+        "AC-8",
+        "AC-10",
+        "AC-11",
+        "AC-12"
+      ],
+      "depends_on": []
+    },
+    {
+      "key": "A2",
+      "title": "무통장 예약·예매번호·ADMIN 역할·가입 차단·보안 매처",
+      "route": "Backend",
+      "estimate_h": 10,
+      "ac": [
+        "AC-4"
+      ],
+      "depends_on": [
+        "A1"
+      ]
+    },
+    {
+      "key": "B",
+      "title": "입금 확인 API(ADMIN)·기한 판정·재판매·남은 좌석 조회 시점 계산",
+      "route": "Backend",
+      "estimate_h": 10.5,
+      "ac": [
+        "AC-5",
+        "AC-6",
+        "AC-9"
+      ],
+      "depends_on": [
+        "A2"
+      ]
+    },
+    {
+      "key": "C",
+      "title": "좌석 선택(확대·미니맵)·예약·예약 완료 화면",
+      "route": "Frontend",
+      "estimate_h": 16,
+      "ac": [
+        "AC-1",
+        "AC-2",
+        "AC-3",
+        "AC-4",
+        "AC-8",
+        "AC-10"
+      ],
+      "depends_on": [
+        "A2"
+      ]
+    },
+    {
+      "key": "D",
+      "title": "내 예매 목록·상세 화면",
+      "route": "Frontend",
+      "estimate_h": 8,
+      "ac": [
+        "AC-5",
+        "AC-6"
+      ],
+      "depends_on": [
+        "B"
+      ]
+    }
+  ],
+  "draft_commit": "dfe95c9",
+  "reviews": [
+    {
+      "role": "ceo",
+      "model": "claude-sonnet",
+      "findings": 4,
+      "accepted": 4
+    },
+    {
+      "role": "devex",
+      "model": "claude-sonnet",
+      "findings": 7,
+      "accepted": 7
+    },
+    {
+      "role": "design",
+      "model": "claude-sonnet",
+      "findings": 7,
+      "accepted": 7
+    },
+    {
+      "role": "eng",
+      "model": "claude-sonnet",
+      "findings": 8,
+      "accepted": 8
+    },
+    {
+      "role": "outside",
+      "model": "claude-opus",
+      "findings": 8,
+      "accepted": 7,
+      "note": "O8(범위 축소) 미채택 — D33"
+    }
+  ],
+  "mockup": {
+    "status": "approved",
+    "rev": 6,
+    "coverage": {
+      "AC-1": [
+        "seats",
+        "seats--overview",
+        "hold",
+        "d-seats",
+        "d-hold"
+      ],
+      "AC-2": [
+        "seats--taken",
+        "d-seats--taken"
+      ],
+      "AC-3": [
+        "seats--limit",
+        "d-seats--limit"
+      ],
+      "AC-4": [
+        "hold",
+        "reserved",
+        "booking",
+        "d-reserved"
+      ],
+      "AC-5": [
+        "bookings--confirmed",
+        "booking--confirmed",
+        "d-bookings--confirmed"
+      ],
+      "AC-6": [
+        "bookings",
+        "booking--cancelled",
+        "d-bookings--cancelled"
+      ],
+      "AC-8": [
+        "seats--expired",
+        "d-seats--expired"
+      ],
+      "AC-10": [
+        "hold",
+        "seats--released",
+        "d-hold",
+        "d-seats--released"
+      ]
+    },
+    "feedback": [
+      {
+        "rev": 1,
+        "text": "모바일 좌석 33×40px — 큰 구역(최대 26열×수백 석)은 확대해서 고르기",
+        "impact": "screen"
+      },
+      {
+        "rev": 1,
+        "text": "다시 고르면 선점 바로 해제(D7)·예매번호 표시(D8)",
+        "impact": "data"
+      },
+      {
+        "rev": 2,
+        "text": "갈래 화살표를 실제 갈래 5개로 정리(캔버스 이름표 겹침)",
+        "impact": "visual"
+      },
+      {
+        "rev": 2,
+        "text": "좌석 배치도 둥글기·축소판 글자 크기",
+        "impact": "visual"
+      },
+      {
+        "rev": 5,
+        "text": "금액·입금 기한·입금 계좌 표시를 한 부품·순서·이름표로 통일(모바일끼리·데스크톱끼리)",
+        "impact": "visual"
+      },
+      {
+        "rev": 5,
+        "text": "좌석 배치도 미니맵을 구역 모양·무대·보는 범위·고른 좌석이 보이는 키트 부품으로",
+        "impact": "visual"
+      },
+      {
+        "rev": 6,
+        "text": "금액·입금 기한 구분 없음·박스가 밋밋함 → 입금 정보 묶음을 금액(주인공)·기한(시간 부품, 상태별)·계좌 행으로 재설계, 데이터 묶음 표로 화면 간 통일",
+        "impact": "visual"
+      },
+      {
+        "rev": 6,
+        "text": "rev6 보정: countdown → due",
+        "impact": "visual"
+      },
+      {
+        "rev": 6,
+        "text": "취소 화면 금액 이름표 '보낼 금액' → '예약 금액' (승인 시 함께)",
+        "impact": "visual"
+      }
+    ],
+    "exceptions": [
+      "좌석 고르기 화면 상태 6장 — '한 화면 최대 3장' 규칙 예외. 모두 완료 조건 장면 (사용자 결정 2026-11-24)"
+    ]
+  },
+  "human_review": {
+    "approved": true,
+    "locked_commit": "779afa8",
+    "note": "HITL#0 확정 — AskUserQuestion 응답 '확정' (2026-11-25). 시안 rev 6 승인 포함"
+  },
+  "dispatch": [
+    {
+      "job": "product",
+      "why": "product.md 범위를 바꾼다",
+      "status": "done",
+      "result": [
+        "docs/product/product.md §4 — REQ-002 진행 범위·제외 목록, ADMIN 최소 역할 예외"
+      ]
+    },
+    {
+      "job": "adr",
+      "why": "확정한 결정을 ADR 로",
+      "ref": "입금 확인 호출자 — 최소 ADMIN 역할",
+      "status": "done",
+      "result": [
+        "docs/decisions/ADR-0036-deposit-confirm-caller-minimal-admin-role.md",
+        "docs/decisions/ADR-0025 상태 줄 — 경로·호출자 ADR-0036 으로 대체"
+      ]
+    },
+    {
+      "job": "adr",
+      "why": "확정한 결정을 ADR 로",
+      "ref": "선점·예약 만료를 조회 시점에 판정",
+      "status": "done",
+      "result": [
+        "docs/decisions/ADR-0037-judge-hold-and-booking-expiry-at-read-time.md"
+      ]
+    },
+    {
+      "job": "architecture",
+      "why": "새 계층·의존 방향 — architecture.md 와 constraints.yaml",
+      "status": "done",
+      "result": [
+        "docs/architecture/architecture.md — §4 좌석 조회·선점·예약·입금 확인·만료 흐름, §4-1 seat_lock/booking 모델, §4-2 보안 매처 순서, §6 ADR-0036·0037, §7 부채 5건",
+        "docs/architecture/constraints.yaml — ARCH-005, AUTH-002, AUTH-003, AUTH-004 (모두 error, 심은 위반으로 검출 확인)",
+        "docs/decisions/ADR-0036·0037 검사 가능한 제약 절에 ID 기입",
+        "check_architecture.py — 위반 0, 경고 1 (DESIGN-003 기존), AUTH-001 승격 기한 지남 알림(기존)"
+      ]
+    },
+    {
+      "job": "feature_doc",
+      "why": "태스크 분할·화면 설계를 기능 문서로 남긴다",
+      "status": "done",
+      "result": [
+        "docs/product/features/booking-hold-deposit.md — §1-2 태스크 분리 5행(A1·A2·B·C·D), §2 화면 설계(캔버스 링크·태스크별 화면·데이터 묶음 payment/booking), §5 완료 조건"
+      ]
+    },
+    {
+      "job": "tasks",
+      "why": "태스크 5개 생성",
+      "status": "done",
+      "result": {
+        "A1": "TASK-032",
+        "A2": "TASK-033",
+        "B": "TASK-034",
+        "C": "TASK-035",
+        "D": "TASK-036",
+        "files": [
+          "workflow_design/02_tasks/tasks.json (+5)",
+          "docs/product/features/booking-hold-deposit.md §1-2 태스크 ID 열"
+        ],
+        "validate_tasks": "통과 — 36건, 오류 0, 경고 3(기존 TASK-003·017·026)"
+      }
+    },
+    {
+      "job": "start",
+      "why": "선행이 없는 첫 태스크",
+      "ref": "A1",
+      "status": "pending"
+    }
+  ],
+  "tasks": [
+    "TASK-032",
+    "TASK-033",
+    "TASK-034",
+    "TASK-035",
+    "TASK-036"
+  ]
+}

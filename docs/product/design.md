@@ -1,6 +1,6 @@
 # 디자인 방향
 
-**최종 갱신**: 2026-11-11
+**최종 갱신**: 2026-11-25
 
 ---
 
@@ -9,13 +9,44 @@
 | 무엇 | 어디 | 역할 |
 |---|---|---|
 | 토큰 값 | `docs/product/design-tokens.css` | 색·글자·여백·모양의 **정본**. 값의 출처는 `out/tokens.css` |
-| 화면 시안 | `out/screens/*.html` | 화면별 구조·문구·상태. **화면 코드는 이 시안과 같아야 한다** |
+| 화면 시안 — 기존 화면 | `out/screens/*.html` | 화면별 구조·문구·상태. 아래 대응표에서 대체된 화면은 정본이 아니다 |
+| 화면 시안 — 요청이 새로 만들거나 대체한 화면 | `workflow_design/01_brief/mockup/<REQ>/screens/*.html` (모바일) | 그 요청의 화면 정본. 데스크톱 시안 `screens/desktop/` 은 보관(참고용) |
+| 정본 고르기 | 화면 단위 | **화면 코드는 그 화면의 정본 시안과 같아야 한다** — 화면마다 정본은 하나다 (ADR-0038) |
 | 화면 흐름 | `out/index.html` | 30장의 이동·갈래·화면 정책을 한눈에 |
 | 부품 | `out/components.css` · `out/components.html` | 시안이 쓰는 부품(행·블록·배지·버튼·시트…)의 모양 |
 | 시안의 근거 | `out/journey.md` · `out/decisions.json` | 사람 카드, 사실 표, 뺀 것과 이유 |
 
 2026-11-04 에 정본을 「잉크 + 별색 1도」에서 `out/` 시안으로 바꿨다 → ADR-0022.
 이전 방향(명조 공연명, 그림자 없음, 모서리 2px)은 이 문서의 git 이력에 있다.
+2026-11-25 에 화면 시안 정본을 화면 단위로 나눴다 → ADR-0038. 토큰 값은 그대로 하나다 — REQ-002 시안 `tokens.css` 는
+`design-tokens.css` 와 같은 값이다(대조함).
+
+**데스크톱** — 앱 전체가 모바일 폭 한 줄(`appMaxWidth`)이다. 요청 시안의 데스크톱 배치는 보관만 하고, 앱 전체 데스크톱 배치는
+별도 요청에서 정한다 (D41).
+
+**부품** — 요청 키트에만 있는 부품은 `frontend/src/components/ui` 의 공통 부품으로 만든다(화면 안 개별 구현 금지).
+REQ-002 키트(`workflow_design/01_brief/mockup/REQ-002/components.css`)와 `out/components.css` 의 차이는 `picker*`·`seat`·`due*`
+추가와 `toast` 없음(새 키트) 뿐이다. 새 공통 부품: `picker`(좌석 칸 고르기)·`picker-mini`(미니맵)·`due`(기한 줄).
+
+**대응표 — 대체된 `out/` 화면** (지우지 않고 남긴다)
+
+| `out/screens/` | 대체한 요청 | 정본 화면 id (`workflow_design/01_brief/mockup/REQ-002/screens/`) |
+|---|---|---|
+| `seat` | REQ-002 | `seats--overview` · `seats` (상태 `seats--limit`·`seats--expired`·`seats--released` 는 새 화면) |
+| `seat--error` | REQ-002 | `seats--taken` |
+| `checkout` | REQ-002 | `hold` |
+| `booked` | REQ-002 | `reserved` |
+| `my-bookings` | REQ-002 | `bookings` (상태 `bookings--empty`·`bookings--confirmed` 는 새 화면) |
+| `booking` | REQ-002 (일부) | `booking--confirmed` — 확정 상세 장면만. 「일행에게 넘기기(양도)」·무료 취소 안내는 대체하지 않는다 — 양도(FR-20)·직접 취소(FR-19) 요청의 출발점으로 `out/` 이 정본 |
+
+**대체하지 않은 `out/` 화면** — 이번 범위 밖이라 `out/` 이 그대로 정본이다 (D43)
+
+| `out/screens/` | 왜 | 이어받을 요청 |
+|---|---|---|
+| `checkout--error` | 결제 수단 고르기 단계의 오류 — REQ-002 는 무통장뿐이라 이 단계가 없다 | 카드·간편결제 (FR-18, ADR-0025) |
+| `booking-sj` | 관객 직접 취소 흐름 | 관객 직접 취소 (FR-19) |
+
+REQ-002 의 `booking`(입금 대기 상세)·`booking--cancelled` 는 `out/` 에 대응 화면이 없는 새 화면이다.
 
 ## 1. 이 제품은 무엇인가 (디자인 관점)
 

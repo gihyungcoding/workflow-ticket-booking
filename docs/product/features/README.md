@@ -1,6 +1,6 @@
 # 기능 요구사항 문서
 
-마지막 재생성: 2026-11-13 · 총 7건
+마지막 재생성: 2026-11-25 · 총 8건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -8,6 +8,7 @@
 
 | 문서 | 제목 | 상태 | 태스크 | 갱신 |
 |---|---|---|---|---|
+| [booking-hold-deposit.md](booking-hold-deposit.md) | [관객] 예매 흐름 최소 경로 — 좌석 선점 → 무통장 예약 → 입금 확인 → 확정 (REQ-002) | 확정 | TASK-032, TASK-033, TASK-034, TASK-035, TASK-036 | 2026-11-25 |
 | [booking-ux-01-auth.md](booking-ux-01-auth.md) | [관객] 흐름 1 — 로그인·가입을 시안대로 (booking-ux-01) | 확정 | TASK-016, TASK-017, TASK-018 | 2026-11-04 (아이디 생성 규칙 변경) |
 | [booking-ux-02-browse.md](booking-ux-02-browse.md) | [관객] 흐름 2 — 공연 찾기와 오픈 전 대기를 시안대로 (booking-ux-02) | 확정 | TASK-019, TASK-020, TASK-021 | 2026-11-10 |
 | [email-verification-password-reset.md](email-verification-password-reset.md) | [관객/주최자] 이메일 인증과 비밀번호 찾기 | 초안 | TASK-027, TASK-028, TASK-029, TASK-030, TASK-031 | 2026-11-13 |
