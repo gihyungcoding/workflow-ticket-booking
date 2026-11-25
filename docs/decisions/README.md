@@ -1,6 +1,6 @@
 # 기술 결정 기록 (ADR)
 
-마지막 재생성: 2026-11-25 · 총 36건
+마지막 재생성: 2026-11-25 · 총 37건
 
 > 이 파일은 `scripts/rebuild_doc_index.py` 가 생성합니다. 직접 편집하지 마세요 — 다음 재생성 때 사라집니다.
 
@@ -38,6 +38,7 @@
 | [ADR-0034](ADR-0034-accept-detail-minor-variants-history-dup-and-time-order.md) | 공연 상세의 경미한 변종 두 건(시트 재진입 뒤 중복 history 칸, 시각 순서 미검증)은 고치지 않고 수용한다 | 채택됨 | 2026-11-16 |
 | [ADR-0035](ADR-0035-accept-mail-token-minor-variants-direct-issue-and-bracket-timeout.md) | 메일·토큰 기반의 경미한 변종 두 건(토큰 직접 동시 발급, 대괄호 표기 타임아웃)은 고치지 않고 수용한다 | 채택됨 | 2026-11-20 |
 | [ADR-0036](ADR-0036-deposit-confirm-caller-minimal-admin-role.md) | 입금 확인 API 의 호출자는 최소 ADMIN 역할로 한정하고, ADMIN 계정은 DB 로만 만든다 | 채택됨 | 2026-11-25 |
+| [ADR-0037](ADR-0037-judge-hold-and-booking-expiry-at-read-time.md) | 좌석 선점과 예약의 만료는 만료 시각을 저장하고 조회·쓰기 시점에 판정한다 (스케줄러를 두지 않는다) | 채택됨 | 2026-11-25 |
 | [ADR-0014](ADR-0014-social-account-auto-link-policy.md) | 이메일이 일치하고 검증된 경우에만 소셜 계정을 자동 연결한다 | 일부 대체됨 — 이메일 가입 계정에도 연결한다는 부분은 [ADR-0020](ADR-0020-auto-link-only-to-email-verified-accounts.md) 로 바뀌었다 | 2026-10-14 |
 | [ADR-0016](ADR-0016-split-deploy-with-cors-and-write-guard.md) | 프론트와 백엔드를 따로 배포하고, 교차 출처 직접 호출과 임시 쓰기 가드를 둔다 | 채택됨 (쓰기 가드 제거 시점은 ADR-0017 로, 쓰기 가드 자체는 ADR-0029 로 대체됨) | 2026-10-14 |
 | [ADR-0017](ADR-0017-keep-write-guard-until-ownership-check.md) | 쓰기 가드는 공연 쓰기 API 에 소유권 검사가 붙을 때까지 유지한다 | ADR-0029 로 대체됨 | 2026-10-21 |

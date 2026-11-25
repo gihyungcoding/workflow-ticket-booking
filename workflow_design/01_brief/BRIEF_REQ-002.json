@@ -837,7 +837,10 @@
       "job": "adr",
       "why": "확정한 결정을 ADR 로",
       "ref": "선점·예약 만료를 조회 시점에 판정",
-      "status": "pending"
+      "status": "done",
+      "result": [
+        "docs/decisions/ADR-0037-judge-hold-and-booking-expiry-at-read-time.md"
+      ]
     },
     {
       "job": "architecture",
