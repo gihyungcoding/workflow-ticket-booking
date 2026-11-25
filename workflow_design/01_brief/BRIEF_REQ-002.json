@@ -523,6 +523,16 @@
       "question": "화면 시안 정본이 out/(기존 k-style)과 요청별 시안으로 둘이 된다",
       "answer": "정본은 화면 단위로 나뉜다 — 기존 화면은 out/, REQ-002 가 새로 만들거나 대체한 화면은 workflow_design/01_brief/mockup/REQ-002/ 의 모바일 화면. 대체되는 out/ 화면(seat, seat--error, checkout, booked, my-bookings)은 지우지 않고 대응표로 표시. 토큰은 같다(대조함). 새 부품(picker·mini·due)은 frontend components/ui 공통 부품으로",
       "note": "design.md §0 과 ADR 로 옮긴다"
+    },
+    {
+      "id": "D43",
+      "class": "user_challenge",
+      "source": "dispatch",
+      "status": "approved",
+      "question": "대응표에 없던 out/ 화면 3장(checkout--error·booking·booking-sj)을 어떻게 표시할까",
+      "answer": "장면별로 나눠 표시 (추천) — booking 은 booking--confirmed 가 확정 상세 장면만 대체(양도·취소 부분은 out/ 정본으로 남김), checkout--error·booking-sj 는 대체하지 않고 카드결제(FR-18)·직접 취소(FR-19) 요청의 출발점",
+      "phase": "dispatch",
+      "note": "AskUserQuestion 응답 2026-11-25 — design.md §0 대응표에 반영"
     }
   ],
   "completeness": [

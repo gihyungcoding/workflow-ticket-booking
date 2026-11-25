@@ -37,8 +37,16 @@ REQ-002 키트(`workflow_design/01_brief/mockup/REQ-002/components.css`)와 `out
 | `checkout` | REQ-002 | `hold` |
 | `booked` | REQ-002 | `reserved` |
 | `my-bookings` | REQ-002 | `bookings` (상태 `bookings--empty`·`bookings--confirmed` 는 새 화면) |
+| `booking` | REQ-002 (일부) | `booking--confirmed` — 확정 상세 장면만. 「일행에게 넘기기(양도)」·무료 취소 안내는 대체하지 않는다 — 양도(FR-20)·직접 취소(FR-19) 요청의 출발점으로 `out/` 이 정본 |
 
-REQ-002 의 `booking`·`booking--confirmed`·`booking--cancelled` 의 정본은 REQ-002 시안이다. `out/` 의 `checkout--error`·`booking`·`booking-sj` 는 D42 대체 목록에 없다 — 대응 여부는 정해지지 않았다.
+**대체하지 않은 `out/` 화면** — 이번 범위 밖이라 `out/` 이 그대로 정본이다 (D43)
+
+| `out/screens/` | 왜 | 이어받을 요청 |
+|---|---|---|
+| `checkout--error` | 결제 수단 고르기 단계의 오류 — REQ-002 는 무통장뿐이라 이 단계가 없다 | 카드·간편결제 (FR-18, ADR-0025) |
+| `booking-sj` | 관객 직접 취소 흐름 | 관객 직접 취소 (FR-19) |
+
+REQ-002 의 `booking`(입금 대기 상세)·`booking--cancelled` 는 `out/` 에 대응 화면이 없는 새 화면이다.
 
 ## 1. 이 제품은 무엇인가 (디자인 관점)
 
