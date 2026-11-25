@@ -2,7 +2,7 @@
 
 **상태**: 확정
 **최종 갱신**: 2026-11-25
-**계획**: `workflow_design/01_brief/BRIEF_REQ-002.json` (HITL#0 확정 2026-11-25, 결정 D1~D40 · 완전성 C1~C10 · AC-1~12)
+**계획**: `workflow_design/01_brief/BRIEF_REQ-002.json` (HITL#0 확정 2026-11-25, 결정 D1~D42 · 완전성 C1~C10 · AC-1~12)
 
 ---
 
@@ -31,8 +31,8 @@
 | A1. 백엔드 — 좌석 잠금 스키마·선점·해제·좌석 조회 API (동시성, PostgreSQL 테스트 베이스) | `seat_lock` 스키마, 좌석 조회(로그인 관객만, 매처 순서), 선점 1~4석 전부-아니면-없음·입력 검증·오름차순·반환 수 대조, 사용자당 활성 선점 1개 대체, 공연별 1인 4석 합계, 선점 해제(본인·미예약만), 에러 코드·`ErrorResponse` 선택 필드, 마이그레이션 버전 단언 3개 갱신, Testcontainers 공용 베이스와 동시 선점 테스트, 설정값(7분·4석) | `seat_lock` 마이그레이션, `GET /api/performances/{id}/seats`, `POST /api/seat-holds`, `DELETE /api/seat-holds/{holdId}`, `SecurityConfig` 좌석 조회 매처, `BookingExceptionHandler`(신규), `ErrorResponse` 선택 필드 | 예약(`booking`)·예매번호, ADMIN 역할, 입금 확인, 대기열 입장권 검사, 매수 지정 연석 자동 선점 | — | 15h | TASK-032 |
 | A2. 백엔드 — 무통장 예약·예매번호·ADMIN 역할·가입 차단·보안 매처 | `booking`·`booking_seat`·예매번호 시퀀스, 예약(선점 → 입금 대기, 조건부 전환, 같은 hold 재예약 200), 입금 기한 계산(23:59 Asia/Seoul), 응답에 예매번호·계좌·금액·기한, `UserRole.ADMIN`, 가입 API 두 곳 ADMIN 400, 프론트 `UserRole`·`ROLES` 에 `'ADMIN'`, `/api/admin/**` `hasRole(ADMIN)` 매처, 입금 계좌·기한 설정값 | `booking` 마이그레이션, `POST /api/bookings`, `UserRole.ADMIN`, `SignUpRequest`·`CompleteSocialSignUpRequest` 검증, `SecurityConfig` 관리자 매처, `frontend/src/api/auth.ts` 타입 | 입금 확인 API, 내 예매 조회 API, ADMIN 화면·계정 생성 화면, 카드·간편결제 | A1 | 10h | TASK-033 |
 | B. 백엔드 — 입금 확인 API(ADMIN)·기한 판정·재판매·남은 좌석 조회 시점 계산 | 예매번호로 입금 확인(조건부 쓰기, 기한 뒤 409·쓰기 없음, 이미 확정이면 200), DB 역할 재확인·`confirmed_by`·`confirmed_at`, 예매 상태 파생(`CONFIRMED`·`PENDING_DEPOSIT`·`CANCELLED`), 내 예매 목록·상세 조회 API, 취소된 예약 좌석의 재판매, 공연의 남은 좌석 수를 조회 시점에 계산(전체 − 유효한 잠금)해 공연 상태(OPEN/SOLD_OUT)·공개 목록 매진 필터·주최자 응답에 반영 | `POST /api/admin/bookings/by-number/{bookingNumber}/confirm-deposit`, `GET /api/bookings/me`, `GET /api/bookings/{id}`, `PerformanceStatusRules`·`PerformanceRepositoryImpl`·`OrganizerPerformanceResponse` 의 남은 좌석 계산 | 은행 입금 자동 연동, 확정·취소 알림(메일·문자), 관객 직접 취소·환불, 운영자 화면 | A2 | 10.5h | TASK-034 |
-| C. 프론트 — 좌석 선택(확대·미니맵)·예약·예약 완료 화면 | 좌석 화면(구역 전체 → 확대 44px·미니맵, 등급 전환, 1~4석 선택, 상태 6장), 선점 완료·예약 화면(남은 시간·다시 고르기 = 해제·떠나면 해제), 예약 완료 화면(입금 정보 묶음·계좌 복사), 데스크톱 화면, 공연 상세 「예매하기」 → 좌석 화면, 비로그인 → 로그인 | 모바일 `seats`·`seats--*`·`hold`·`reserved`, 데스크톱 `d-seats`·`d-seats--*`·`d-hold`·`d-reserved` (§2), `api/` 의 선점·예약 호출 | 내 예매 목록·상세, 대기열 화면, 매수 지정 자동 배정, 카드·간편결제 수단 | A2 | 16h | TASK-035 |
-| D. 프론트 — 내 예매 목록·상세 화면 | 내 예매 목록(입금 대기·확정·취소, 빈 상태), 예매 상세(진행 단계 선점 → 예약 → 입금 확인 → 확정, 입금 정보 묶음 상태별, 취소 화면 「다시 예매하기」), 데스크톱 목록·상세 나란히 | 모바일 `bookings`·`bookings--empty`·`bookings--confirmed`·`booking`·`booking--confirmed`·`booking--cancelled`, 데스크톱 `d-bookings`·`d-bookings--*` (§2) | 직접 취소·양도 버튼(「아직 할 수 없어요」 한 줄만), 모바일 티켓, 알림 | B | 8h | TASK-036 |
+| C. 프론트 — 좌석 선택(확대·미니맵)·예약·예약 완료 화면 | 좌석 화면(구역 전체 → 확대 44px·미니맵, 등급 전환, 1~4석 선택, 상태 6장), 선점 완료·예약 화면(남은 시간·다시 고르기 = 해제·떠나면 해제), 예약 완료 화면(입금 정보 묶음·계좌 복사), 모바일 폭 한 줄(데스크톱도 같음, D41), 공통 부품 `picker`·`picker-mini`·`due`, 공연 상세 「예매하기」 → 좌석 화면, 비로그인 → 로그인 | 모바일 `seats`·`seats--*`·`hold`·`reserved`, `components/ui` 공통 부품 3종 (§2), `api/` 의 선점·예약 호출 | 내 예매 목록·상세, 대기열 화면, 매수 지정 자동 배정, 카드·간편결제 수단 | A2 | 16h | TASK-035 |
+| D. 프론트 — 내 예매 목록·상세 화면 | 내 예매 목록(입금 대기·확정·취소, 빈 상태), 예매 상세(진행 단계 선점 → 예약 → 입금 확인 → 확정, 입금 정보 묶음 상태별, 취소 화면 「다시 예매하기」), 모바일 폭 한 줄(D41), 공통 부품 `due` 재사용 | 모바일 `bookings`·`bookings--empty`·`bookings--confirmed`·`booking`·`booking--confirmed`·`booking--cancelled` (§2) | 직접 취소·양도 버튼(「아직 할 수 없어요」 한 줄만), 모바일 티켓, 알림 | B | 8h | TASK-036 |
 
 [태스크 생성 2026-11-25]
 
@@ -69,8 +69,11 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 **UI 라이브러리**: MUI (Material UI) — ADR-0002
 **디자인 정본**: `docs/product/design.md` · `design-tokens.css`
 **시안** [rev 6 승인 2026-11-25]: 캔버스 `workflow_design/01_brief/mockup/REQ-002/index.html` — 화면 목록
-`screens.json`, 여정 `journey.md`, 데스크톱 배치·데이터 묶음 `layout.md`. 화면은 시안과 같아야 한다. 아래 ASCII 는
-요약이고, 다르면 시안이 이긴다
+`screens.json`, 여정 `journey.md`, 데이터 묶음 `layout.md`.
+**구현 기준은 모바일 화면** `workflow_design/01_brief/mockup/REQ-002/screens/*.html` — 이 화면들의 정본이다(ADR-0038, D42).
+앱은 데스크톱에서도 모바일 폭 한 줄(`appMaxWidth`)이라 데스크톱 시안 `screens/desktop/` 은 **보관(D41)** — 구현하지 않는다.
+화면 코드는 그 화면의 정본 시안과 같아야 한다. 아래 ASCII 는 요약이고, 다르면 시안이 이긴다.
+대체된 `out/` 화면(`seat`·`seat--error`·`checkout`·`booked`·`my-bookings`)과의 대응은 `design.md` §0
 
 ### 2-1. 이 화면에서 사용자가 하려는 일
 
@@ -108,7 +111,7 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 
 **화면 목록 — 태스크별** (`screens.json`)
 
-| 태스크 | 묶음 | 모바일 (375) | 데스크톱 (1280) |
+| 태스크 | 묶음 | 모바일 (375) — 구현 기준 | 데스크톱 (1280) — 보관(D41) |
 |---|---|---|---|
 | C | 좌석 선점 | `seats--overview` · `seats` · `seats--taken` · `seats--limit` · `seats--expired` · `seats--released` | `d-seats` · `d-seats--taken` · `d-seats--limit` · `d-seats--expired` · `d-seats--released` |
 | C | 무통장 예약 | `hold` · `reserved` | `d-hold` · `d-reserved` |
@@ -120,7 +123,7 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 
 | 묶음 | 항목(순서) | 쓰는 화면 | 모양 |
 |---|---|---|---|
-| `payment` | amount → deadline → account | `reserved`·`booking`·`booking--confirmed`·`booking--cancelled`, `d-reserved`(본문 첫 블록), `d-bookings` 계열 상세(둘째 블록) | 블록 「입금 정보」: 금액(제목 크기 숫자 + "R석 99,000원 × 3") → 기한 줄(키트 `due` — 대기 = 남은 시간(경고) + 오늘 오후 11:59까지, 확정 = `is-done` 입금 확인 시각, 취소 = `is-off` 기한 지남) → 계좌 행(은행 아이콘 + 은행·계좌번호 + 예금주·입금자명 + 복사). **확정·취소는 계좌 행을 뺀다**. 취소 화면 금액 이름표는 「예약 금액」 |
+| `payment` | amount → deadline → account | `reserved`·`booking`·`booking--confirmed`·`booking--cancelled` | 블록 「입금 정보」: 금액(제목 크기 숫자 + "R석 99,000원 × 3") → 기한 줄(키트 `due` — 대기 = 남은 시간(경고) + 오늘 오후 11:59까지, 확정 = `is-done` 입금 확인 시각, 취소 = `is-off` 기한 지남) → 계좌 행(은행 아이콘 + 은행·계좌번호 + 예금주·입금자명 + 복사). **확정·취소는 계좌 행을 뺀다**. 취소 화면 금액 이름표는 「예약 금액」 |
 | `booking` | show → when → seats → number | 예약 완료·예매 상세·내 예매 목록 행 | 티켓 일러스트 행: 공연명 → 일시·장소 → 좌석 → 예매번호 |
 
 **모바일 — 좌석 선점 (C)**
@@ -139,11 +142,11 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 └─────────────────────────────┘
 ```
 
-**데스크톱 — 좌석·선점 (C)** — 좌석도 + 보조 열(sticky). 선점하면 보조 열만 예약 패널로 바뀐다(`layout.md` §3).
-**데스크톱 — 내 예매 (D)** — 목록·상세 나란히. 다른 예매로 넘어가도 목록이 그대로 보인다.
+**데스크톱** — 보관(D41). 시안의 보조 열·목록·상세 나란히 배치(`layout.md` §3)는 구현하지 않는다 — 데스크톱에서도 위 모바일 화면이 한 줄로 보인다.
+앱 전체 데스크톱 배치는 별도 요청.
 
 **이 배치인 이유**: 좌석은 위치를 따라 놓이고(좌석도가 가장 큰 면적) 최대 4석·7분이라 선택 수·남은 시간·금액이
-늘 보여야 한다. 관객 한 명의 예매는 몇 건이라 상태 보드 대신 목록·상세다.
+늘 보여야 한다. 관객 한 명의 예매는 몇 건이라 상태 보드 대신 목록 → 상세다.
 
 ### 2-5. 상태별로 무엇이 보이나
 
@@ -246,14 +249,14 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 - [ ] 남은 시간이 0 이 되면 좌석 화면으로 전환되고 만료 안내가 보인다 (AC-8)
 - [ ] 「좌석 다시 고르기」·뒤로는 해제 요청을 보내고 좌석 화면으로 간다. 예약 성공 뒤 이동은 해제를 보내지 않는다 (AC-10)
 - [ ] 좌석 조회 401 이면 로그인으로 안내하고 로그인 뒤 돌아온다 (AC-11)
-- [ ] 화면이 시안과 같다 — 모바일·데스크톱 (Phase 4 화면 확인 — 상태를 실제로 만들어)
+- [ ] 화면이 정본 시안(REQ-002 모바일 화면)과 같다. 데스크톱에서도 모바일 폭 한 줄이다 (Phase 4 화면 확인 — 상태를 실제로 만들어)
 
 ### Task D (프론트 — 내 예매)
 
 - [ ] 확정된 예매는 목록·상세에 「예매 확정」과 입금 확인 시각이 보인다 (AC-5)
 - [ ] 기한이 지난 예매는 「입금 기한이 지나 취소됨」과 「다시 예매하기」가 보인다 (AC-6)
 - [ ] 예매가 없으면 빈 안내가 보인다. 조회 실패면 오류 문구가 보인다
-- [ ] 화면이 시안과 같다 — 모바일·데스크톱 (Phase 4 화면 확인 — 상태를 실제로 만들어)
+- [ ] 화면이 정본 시안(REQ-002 모바일 화면)과 같다. 데스크톱에서도 모바일 폭 한 줄이다 (Phase 4 화면 확인 — 상태를 실제로 만들어)
 
 ---
 
@@ -275,6 +278,14 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 - `frontend/src/pages/PerformanceDetailPage.tsx` — 「예매하기」가 지금 `/performances/:id/queue` 로 간다 → 좌석 화면으로 (C)
 - `frontend/src/pages/QueuePlaceholderPage.tsx` · `frontend/src/App.tsx` — 라우트 (C·D)
 - `frontend/src/hooks/useServerClock.ts` — 서버 시각 오프셋 (남은 시간, ADR-0024·0026)
+- `frontend/src/components/ui/` — 공통 부품 자리(`index.ts` 로 내보냄). 새 공통 부품 3종은 여기에 만든다 — 화면 안 개별 구현 금지 (ADR-0038, D42)
+  - `picker` — 좌석 칸 고르기(좌석 배치도·좌석 칸 상태: 고를 수 있음·고를 수 없음·내가 고름). 시안 키트 `components.css` 의 `.picker*`·`.seat` (C)
+  - `picker-mini` — 미니맵(구역 모양·무대·보는 범위·고른 좌석) (C)
+  - `due` — 기한 줄(대기 = 남은 시간 경고 + 기한, 확정 = `is-done` 입금 확인 시각, 취소 = `is-off` 기한 지남). 시안 키트 `.due*` (C 가 만들고 D 가 재사용)
+- 데이터 묶음 (`workflow_design/01_brief/mockup/REQ-002/layout.md` 「데이터 묶음」, §2-4) — 화면마다 같은 순서·부품으로
+  - `payment`: amount → deadline(`due`) → account (확정·취소는 account 없음) — `reserved`·`booking` 계열
+  - `booking`: show → when → seats → number — 예약 완료·예매 상세·내 예매 목록 행
+- `frontend/src/theme/tokens.ts` — `componentSizes.appMaxWidth`(375px), 모바일 폭 한 줄 (D41)
 - 신규 화면·API 모듈의 파일 이름은 Phase 1 PLAN 에서 정한다
 
 ---
@@ -311,3 +322,5 @@ C 는 예약 응답(A2)이, D 는 상태 파생·조회 API(B)가 있어야 화�
 | 공연의 남은 좌석 수를 저장값이 아니라 조회 시점에 계산 (`available_seats` 컬럼은 더 쓰지 않음, 컬럼 처리는 PLAN) | 만료가 쓰기 사건이 아니라 저장값으로는 맞출 수 없다 — 선점·만료와 같은 기준 (D40) | **전체** | ADR-0037 |
 | 예매번호를 보이고 DB 시퀀스로 만든다 | 운영자 입금 대조 (D8·D37) | 이 기능만 | — |
 | 떠나면 선점 해제 | 선점이 남아 다른 관객을 막지 않게 (D7·D12) | 이 기능만 | — |
+| 데스크톱도 모바일 폭 한 줄, 데스크톱 시안은 보관 | 기존 앱이 모바일 폭 한 줄이다 — 앱 전체 데스크톱 배치는 별도 요청 (D41) | **전체** | ADR-0038 |
+| 시안 정본을 화면 단위로 — 이 요청 화면은 REQ-002 모바일 시안, 새 부품은 `components/ui` 공통 부품 | 같은 화면에 정본이 둘이면 Phase 4 판정이 성립하지 않는다 (D42) | **전체** | ADR-0038 |
